@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement ReplaceWith(Func<Statement, Statement> replaceFunction)
 		{
-			if (replaceFunction is null) throw new ArgumentNullException(nameof(replaceFunction));
+			ArgumentNullException.ThrowIfNull(replaceFunction);
 			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
 		}
 
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator Statement(Pattern? pattern)
+		public static implicit operator Statement(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
@@ -101,8 +101,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool INode.DoMatchCollection(Role role, INode? pos,
-				Match match, BacktrackingInfo backtrackingInfo)
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}

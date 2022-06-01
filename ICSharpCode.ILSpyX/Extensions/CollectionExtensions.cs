@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpyX.Extensions
 
 		private static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
 		{
-			if (list is null) throw new ArgumentNullException(nameof(list));
+			ArgumentNullException.ThrowIfNull(list);
 			if (start < 0 || start >= list.Count)
 				throw new ArgumentOutOfRangeException(nameof(start), start,
 					"Value must be between 0 and " + (list.Count - 1));
@@ -73,8 +73,8 @@ namespace ICSharpCode.ILSpyX.Extensions
 		public static int BinarySearch<T, TKey>(this IList<T> instance, TKey itemKey, Func<T, TKey> keySelector)
 			where TKey : IComparable<TKey>, IComparable
 		{
-			if (instance is null) throw new ArgumentNullException(nameof(instance));
-			if (keySelector is null) throw new ArgumentNullException(nameof(keySelector));
+			ArgumentNullException.ThrowIfNull(instance);
+			ArgumentNullException.ThrowIfNull(keySelector);
 
 			int start = 0;
 			int end = instance.Count - 1;
@@ -102,8 +102,8 @@ namespace ICSharpCode.ILSpyX.Extensions
 
 		public static void InsertSorted<T>(this IList<T> list, T item, IComparer<T> comparer)
 		{
-			if (list is null) throw new ArgumentNullException(nameof(list));
-			if (comparer is null) throw new ArgumentNullException(nameof(comparer));
+			ArgumentNullException.ThrowIfNull(list);
+			ArgumentNullException.ThrowIfNull(comparer);
 
 			if (list.Count == 0)
 			{

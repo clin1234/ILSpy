@@ -54,53 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public DecompilerSettings? Settings { get; }
 
-		LanguageVersion? languageVersion;
-
-		public LanguageVersion LanguageVersion {
-			get { return languageVersion ?? Settings.GetMinimumRequiredVersion(); }
-			set {
-				var minVersion = Settings.GetMinimumRequiredVersion();
-				if (value < minVersion)
-					throw new InvalidOperationException($"The chosen settings require at least {minVersion}." +
-					                                    $" Please change the DecompilerSettings accordingly.");
-				languageVersion = value;
-			}
-		}
-
-		public IAssemblyResolver? AssemblyResolver { get; }
-
-		public AssemblyReferenceClassifier? AssemblyReferenceClassifier { get; }
-
-		public IDebugInfoProvider? DebugInfoProvider { get; }
-
-		/// <summary>
-		/// The MSBuild ProjectGuid to use for the new project.
-		/// </summary>
-		public Guid ProjectGuid { get; }
-
-		/// <summary>
-		/// The target directory that the decompiled files are written to.
-		/// </summary>
-		/// <remarks>
-		/// This property is set by DecompileProject() and protected so that overridden protected members
-		/// can access it.
-		/// </remarks>
-		public string TargetDirectory { get; protected set; }
-
-		/// <summary>
-		/// Path to the snk file to use for signing.
-		/// <c>null</c> to not sign.
-		/// </summary>
-		public string? StrongNameKeyFile { get; set; }
-
-		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
-
-		public IProgress<DecompilationProgress> ProgressIndicator { get; init; }
+		// per-run members
+		readonly HashSet<string> directories = new(Platform.FileNameComparer);
+		readonly IProjectFileWriter projectWriter;
 
 		#endregion
 		
 		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
-			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null, debugInfoProvider: null)
+			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null,
+				debugInfoProvider: null)
 		{
 		}
 
@@ -125,26 +87,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
 			AssemblyReferenceClassifier = assemblyReferenceClassifier ?? new AssemblyReferenceClassifier();
 			DebugInfoProvider = debugInfoProvider;
-			projectWriter = Settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create();
+			projectWriter = Settings.UseSdkStyleProjectFormat
+				? ProjectFileWriterSdkStyle.Create()
+				: ProjectFileWriterDefault.Create();
 		}
-		
-		// per-run members
-		readonly HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
-		readonly IProjectFileWriter projectWriter;
-		
-		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
+
+		public void DecompileProject(PEFile moduleDefinition, string targetDirectory,
+			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
 			using var writer = new StreamWriter(projectFileName);
 			DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 		}
 
-		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter,
+			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory))
 			{
 				throw new InvalidOperationException("Must set TargetDirectory");
 			}
+
 			TargetDirectory = targetDirectory;
 			directories.Clear();
 			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
@@ -152,7 +115,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
 			if (StrongNameKeyFile != null)
 			{
-				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
+				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)),
+					overwrite: true);
 			}
 
 			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
@@ -625,8 +589,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					}
 				}
 			}
+
 			// Whitelist allowed characters, replace everything else:
-			StringBuilder b = new StringBuilder(text.Length + (extension?.Length ?? 0));
+			StringBuilder b = new(text.Length + (extension?.Length ?? 0));
 			foreach (var c in text)
 			{
 				currentSegmentLength++;
@@ -662,6 +627,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						b.Append('-');
 				}
 			}
+
 			if (b.Length == 0)
 				b.Append('-');
 			string name = b.ToString();
@@ -669,10 +635,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				name += extension;
 			if (IsReservedFileSystemName(name))
 				return name + "_";
-			else if (name == ".")
+			if (name == ".")
 				return "_";
-			else
-				return name;
+			return name;
 		}
 
 		/// <summary>
@@ -725,6 +690,463 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}
+
+		#region Settings
+
+		/// <summary>
+		/// Gets the setting this instance uses for decompiling.
+		/// </summary>
+		public DecompilerSettings Settings { get; }
+
+		LanguageVersion? languageVersion;
+
+		public LanguageVersion LanguageVersion {
+			get { return languageVersion ?? Settings.GetMinimumRequiredVersion(); }
+			set {
+				var minVersion = Settings.GetMinimumRequiredVersion();
+				if (value < minVersion)
+					throw new InvalidOperationException($"The chosen settings require at least {minVersion}." +
+					                                    $" Please change the DecompilerSettings accordingly.");
+				languageVersion = value;
+			}
+		}
+
+		public IAssemblyResolver AssemblyResolver { get; }
+
+		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
+
+		public IDebugInfoProvider DebugInfoProvider { get; }
+
+		/// <summary>
+		/// The MSBuild ProjectGuid to use for the new project.
+		/// </summary>
+		public Guid ProjectGuid { get; }
+
+		/// <summary>
+		/// The target directory that the decompiled files are written to.
+		/// </summary>
+		/// <remarks>
+		/// This property is set by DecompileProject() and protected so that overridden protected members
+		/// can access it.
+		/// </remarks>
+		public string TargetDirectory { get; protected set; }
+
+		/// <summary>
+		/// Path to the snk file to use for signing.
+		/// <c>null</c> to not sign.
+		/// </summary>
+		public string StrongNameKeyFile { get; set; }
+
+		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
+
+		public IProgress<DecompilationProgress> ProgressIndicator { get; init; }
+
+		#endregion
+
+		#region WriteCodeFilesInProject
+
+		protected bool IncludeTypeWhenDecompilingProject(PEFile module, TypeDefinitionHandle type)
+		{
+			var metadata = module.Metadata;
+			var typeDef = metadata.GetTypeDefinition(type);
+			if (metadata.GetString(typeDef.Name) == "<Module>" ||
+			    CSharpDecompiler.MemberIsHidden(module, type, Settings))
+				return false;
+			if (metadata.GetString(typeDef.Namespace) == "XamlGeneratedNamespace" &&
+			    metadata.GetString(typeDef.Name) == "GeneratedInternalTypeHelper")
+				return false;
+			return true;
+		}
+
+		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
+		{
+			var decompiler = new CSharpDecompiler(ts, Settings) {
+				DebugInfoProvider = DebugInfoProvider
+			};
+			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
+			return decompiler;
+		}
+
+		IEnumerable<(string itemType, string fileName)> WriteAssemblyInfo(DecompilerTypeSystem ts,
+			CancellationToken cancellationToken)
+		{
+			var decompiler = CreateDecompiler(ts);
+			decompiler.CancellationToken = cancellationToken;
+			decompiler.AstTransforms.Add(new RemoveCompilerGeneratedAssemblyAttributes());
+			SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
+
+			const string prop = "Properties";
+			if (directories.Add(prop))
+				Directory.CreateDirectory(Path.Combine(TargetDirectory, prop));
+			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
+			using (StreamWriter w = new(Path.Combine(TargetDirectory, assemblyInfo)))
+			{
+				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
+			}
+
+			return new[] { ("Compile", assemblyInfo) };
+		}
+
+		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(PEFile module,
+			CancellationToken cancellationToken)
+		{
+			var metadata = module.Metadata;
+			var files = module.Metadata.GetTopLevelTypeDefinitions()
+				.Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
+					delegate(TypeDefinitionHandle h) {
+						var type = metadata.GetTypeDefinition(h);
+						string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
+						string ns = metadata.GetString(type.Namespace);
+						if (string.IsNullOrEmpty(ns))
+						{
+							return file;
+						}
+
+						string dir = Settings.UseNestedDirectoriesForNamespaces
+							? CleanUpPath(ns)
+							: CleanUpDirectoryName(ns);
+						if (directories.Add(dir))
+							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+						return Path.Combine(dir, file);
+					}, StringComparer.OrdinalIgnoreCase).ToList();
+			int total = files.Count;
+			var progress = ProgressIndicator;
+			DecompilerTypeSystem ts = new(module, AssemblyResolver, Settings);
+			Parallel.ForEach(
+				Partitioner.Create(files, loadBalance: true),
+				new ParallelOptions {
+					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
+					CancellationToken = cancellationToken
+				},
+				delegate(IGrouping<string, TypeDefinitionHandle> file) {
+					using (StreamWriter w = new(Path.Combine(TargetDirectory, file.Key)))
+					{
+						try
+						{
+							CSharpDecompiler decompiler = CreateDecompiler(ts);
+							decompiler.CancellationToken = cancellationToken;
+							var syntaxTree = decompiler.DecompileTypes(file.ToArray());
+							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
+						}
+						catch (Exception innerException) when (innerException is not (OperationCanceledException
+							                                       or DecompilerException))
+						{
+							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'",
+								innerException);
+						}
+					}
+
+					progress?.Report(new DecompilationProgress(total, file.Key));
+				});
+			return files.Select(f => ("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
+		}
+
+		#endregion
+
+		#region WriteResourceFilesInProject
+
+		protected IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(PEFile module)
+		{
+			foreach (var r in module.Resources.Where(static r => r.ResourceType == ResourceType.Embedded))
+			{
+				Stream stream = r.TryOpenStream();
+				stream.Position = 0;
+
+				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+				{
+					bool decodedIntoIndividualFiles;
+					var individualResources = new List<(string itemType, string fileName)>();
+					try
+					{
+						var resourcesFile = new ResourcesFile(stream);
+						if (resourcesFile.AllEntriesAreStreams())
+						{
+							foreach ((string name, object value) in resourcesFile)
+							{
+								string fileName = SanitizeFileName(name)
+									.Replace('/', Path.DirectorySeparatorChar);
+								string dirName = Path.GetDirectoryName(fileName);
+								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
+								{
+									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
+								}
+
+								Stream entryStream = (Stream)value;
+								entryStream.Position = 0;
+								individualResources.AddRange(
+									WriteResourceToFile(fileName, entryStream));
+							}
+
+							decodedIntoIndividualFiles = true;
+						}
+						else
+						{
+							decodedIntoIndividualFiles = false;
+						}
+					}
+					catch (BadImageFormatException)
+					{
+						decodedIntoIndividualFiles = false;
+					}
+					catch (EndOfStreamException)
+					{
+						decodedIntoIndividualFiles = false;
+					}
+
+					if (decodedIntoIndividualFiles)
+					{
+						foreach (var entry in individualResources)
+						{
+							yield return entry;
+						}
+					}
+					else
+					{
+						stream.Position = 0;
+						string fileName = GetFileNameForResource(r.Name);
+						foreach (var entry in WriteResourceToFile(fileName, stream))
+						{
+							yield return entry;
+						}
+					}
+				}
+				else
+				{
+					string fileName = GetFileNameForResource(r.Name);
+					using (FileStream fs = new(Path.Combine(TargetDirectory, fileName), FileMode.Create,
+						       FileAccess.Write))
+					{
+						stream.Position = 0;
+						stream.CopyTo(fs);
+					}
+
+					yield return ("EmbeddedResource", fileName);
+				}
+			}
+		}
+
+		private IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, Stream entryStream)
+		{
+			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+			{
+				string resx = Path.ChangeExtension(fileName, ".resx");
+				try
+				{
+					using (FileStream fs = new(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
+					using (ResXResourceWriter writer = new(fs))
+					{
+						foreach (var entry in new ResourcesFile(entryStream))
+						{
+							writer.AddResource(entry.Key, entry.Value);
+						}
+					}
+
+					return new[] { ("EmbeddedResource", resx) };
+				}
+				catch (BadImageFormatException)
+				{
+					// if the .resources can't be decoded, just save them as-is
+				}
+				catch (EndOfStreamException)
+				{
+					// if the .resources can't be decoded, just save them as-is
+				}
+			}
+
+			using (FileStream fs = new(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+			{
+				entryStream.CopyTo(fs);
+			}
+
+			return new[] { ("EmbeddedResource", fileName) };
+		}
+
+		string GetFileNameForResource(string fullName)
+		{
+			// Clean up the name first and ensure the length does not exceed the maximum length
+			// supported by the OS.
+			fullName = SanitizeFileName(fullName);
+			// The purpose of the below algorithm is to "maximize" the directory name and "minimize" the file name.
+			// That is, a full name of the form "Namespace1.Namespace2{...}.NamespaceN.ResourceName" is split such that
+			// the directory part Namespace1\Namespace2\... reuses as many existing directories as
+			// possible, and only the remaining name parts are used as prefix for the filename.
+			// This is not affected by the UseNestedDirectoriesForNamespaces setting.
+			string[] splitName = fullName.Split(Path.DirectorySeparatorChar);
+			string fileName = string.Join(".", splitName);
+			string separator = Path.DirectorySeparatorChar.ToString();
+			for (int i = splitName.Length - 1; i > 0; i--)
+			{
+				string ns = string.Join(separator, splitName, 0, i);
+				if (directories.Contains(ns))
+				{
+					string name = string.Join(".", splitName, i, splitName.Length - i);
+					fileName = Path.Combine(ns, name);
+					break;
+				}
+			}
+
+			return fileName;
+		}
+
+		#endregion
+
+		#region WriteMiscellaneousFilesInProject
+
+		protected IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
+		{
+			var resources = module.Reader.ReadWin32Resources();
+			if (resources == null)
+				yield break;
+
+			byte[] appIcon = CreateApplicationIcon(resources);
+			if (appIcon != null)
+			{
+				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
+				yield return ("ApplicationIcon", "app.ico");
+			}
+
+			byte[] appManifest = CreateApplicationManifest(resources);
+			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
+			{
+				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
+				yield return ("ApplicationManifest", "app.manifest");
+			}
+
+			var appConfig = module.FileName + ".config";
+			if (File.Exists(appConfig))
+			{
+				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
+				yield return ("ApplicationConfig", Path.GetFileName(appConfig));
+			}
+		}
+
+		const int RT_ICON = 3;
+		const int RT_GROUP_ICON = 14;
+
+		static unsafe byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
+		{
+			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
+			if (iconGroup == null)
+				return null;
+
+			var iconDir = resources.Find(new Win32ResourceName(RT_ICON));
+			if (iconDir == null)
+				return null;
+
+			using var outStream = new MemoryStream();
+			using var writer = new BinaryWriter(outStream);
+			fixed (byte* pIconGroupData = iconGroup)
+			{
+				var pIconGroup = (GRPICONDIR*)pIconGroupData;
+				writer.Write(pIconGroup->idReserved);
+				writer.Write(pIconGroup->idType);
+				writer.Write(pIconGroup->idCount);
+
+				int iconCount = pIconGroup->idCount;
+				uint offset = (2 * 3) + ((uint)iconCount * 0x10);
+				for (int i = 0; i < iconCount; i++)
+				{
+					var pIconEntry = pIconGroup->idEntries + i;
+					writer.Write(pIconEntry->bWidth);
+					writer.Write(pIconEntry->bHeight);
+					writer.Write(pIconEntry->bColorCount);
+					writer.Write(pIconEntry->bReserved);
+					writer.Write(pIconEntry->wPlanes);
+					writer.Write(pIconEntry->wBitCount);
+					writer.Write(pIconEntry->dwBytesInRes);
+					writer.Write(offset);
+					offset += pIconEntry->dwBytesInRes;
+				}
+
+				for (int i = 0; i < iconCount; i++)
+				{
+					var icon = iconDir.FindDirectory(new Win32ResourceName(pIconGroup->idEntries[i].nID))?.FirstData()
+						?.Data;
+					if (icon == null)
+						return null;
+					writer.Write(icon);
+				}
+			}
+
+			return outStream.ToArray();
+		}
+
+		[StructLayout(LayoutKind.Sequential, Pack = 2)]
+		unsafe struct GRPICONDIR
+		{
+			public readonly ushort idReserved;
+			public readonly ushort idType;
+			public readonly ushort idCount;
+			private fixed byte _idEntries[1];
+
+			[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
+				Justification = "<Pending>")]
+			public GRPICONDIRENTRY* idEntries {
+				get {
+					fixed (byte* p = _idEntries)
+						return (GRPICONDIRENTRY*)p;
+				}
+			}
+		};
+
+		[StructLayout(LayoutKind.Sequential, Pack = 2)]
+		struct GRPICONDIRENTRY
+		{
+			public readonly byte bWidth;
+			public readonly byte bHeight;
+			public readonly byte bColorCount;
+			public readonly byte bReserved;
+			public readonly ushort wPlanes;
+			public readonly ushort wBitCount;
+			public readonly uint dwBytesInRes;
+			public readonly short nID;
+		};
+
+		const int RT_MANIFEST = 24;
+
+		static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
+		{
+			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
+		}
+
+		static bool IsDefaultApplicationManifest(byte[] appManifest)
+		{
+			const string DEFAULT_APPMANIFEST =
+				"<?xmlversion=\"1.0\"encoding=\"UTF-8\"standalone=\"yes\"?><assemblyxmlns=\"urn:schemas-microsoft-com" +
+				":asm.v1\"manifestVersion=\"1.0\"><assemblyIdentityversion=\"1.0.0.0\"name=\"MyApplication.app\"/><tr" +
+				"ustInfoxmlns=\"urn:schemas-microsoft-com:asm.v2\"><security><requestedPrivilegesxmlns=\"urn:schemas-" +
+				"microsoft-com:asm.v3\"><requestedExecutionLevellevel=\"asInvoker\"uiAccess=\"false\"/></requestedPri" +
+				"vileges></security></trustInfo></assembly>";
+
+			string s = CleanUpApplicationManifest(appManifest);
+			return s == DEFAULT_APPMANIFEST;
+		}
+
+		static string CleanUpApplicationManifest(byte[] appManifest)
+		{
+			bool bom = appManifest.Length >= 3 && appManifest[0] == 0xEF && appManifest[1] == 0xBB &&
+			           appManifest[2] == 0xBF;
+			string s = Encoding.UTF8.GetString(appManifest, bom ? 3 : 0, appManifest.Length - (bom ? 3 : 0));
+			var sb = new StringBuilder(s.Length);
+			foreach (var c in s)
+			{
+				switch (c)
+				{
+					case '\t':
+					case '\n':
+					case '\r':
+					case ' ':
+						continue;
+				}
+
+				sb.Append(c);
+			}
+
+			return sb.ToString();
+		}
+
+		#endregion
 	}
 
 	public readonly struct DecompilationProgress

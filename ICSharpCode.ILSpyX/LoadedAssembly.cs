@@ -103,7 +103,6 @@ namespace ICSharpCode.ILSpyX
 			: this(bundle.AssemblyList, fileName, stream, assemblyResolver, null,
 				applyWinRTProjections, useDebugSymbols)
 		{
-			this.ParentBundle = bundle;
 		}
 		public LoadedAssembly? ParentBundle { get; }
 
@@ -166,7 +165,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public bool HasLoadError => loadingTask.IsFaulted;
 
-		internal bool IsAutoLoaded { get; set; }
+		internal bool IsAutoLoaded { get; init; }
 
 		/// <summary>
 		/// Gets the PDB file name or null, if no PDB was found or it's embedded.
@@ -464,7 +463,7 @@ namespace ICSharpCode.ILSpyX
 			return new MyAssemblyResolver(this, snapshot, loadOnDemand, applyWinRTProjections);
 		}
 
-		public UniversalAssemblyResolver GetUniversalResolver(bool applyWinRTProjections)
+		private UniversalAssemblyResolver GetUniversalResolver(bool applyWinRTProjections)
 		{
 			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
 				var targetFramework = this.GetTargetFrameworkIdAsync().Result;

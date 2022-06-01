@@ -27,7 +27,7 @@ namespace LightJson.Serialization
 		/// <returns>The parsed <see cref="JsonValue"/>.</returns>
 		public static JsonValue Parse(TextReader reader)
 		{
-			if (reader is null) throw new ArgumentNullException(nameof(reader));
+			ArgumentNullException.ThrowIfNull(reader);
 
 			return new JsonReader(reader).Parse();
 		}
@@ -39,7 +39,7 @@ namespace LightJson.Serialization
 		/// <returns>The parsed <see cref="JsonValue"/>.</returns>
 		public static JsonValue Parse(string source)
 		{
-			if (source is null) throw new ArgumentNullException(nameof(source));
+			ArgumentNullException.ThrowIfNull(source);
 
 			using var reader = new StringReader(source);
 			return Parse(reader);

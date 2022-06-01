@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.Semantics
 	{
 		public TupleResolveResult(ICompilation compilation,
 			ImmutableArray<ResolveResult> elements,
-			ImmutableArray<string?> elementNames = default(ImmutableArray<string>),
-			IModule? valueTupleAssembly = null)
+			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
+			IModule valueTupleAssembly = null)
 			: base(GetTupleType(compilation, elements, elementNames, valueTupleAssembly))
 		{
 			this.Elements = elements;
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		}
 
 		static IType GetTupleType(ICompilation compilation, ImmutableArray<ResolveResult> elements,
-			ImmutableArray<string?> elementNames, IModule? valueTupleAssembly)
+			ImmutableArray<string> elementNames, IModule valueTupleAssembly)
 		{
 			if (elements.Any(e => e.Type.Kind is TypeKind.None or TypeKind.Null))
 				return SpecialType.NoType;

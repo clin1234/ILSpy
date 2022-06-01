@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// this context doesn't support extraction, but maybe we can create a block here?
 					if (ifInst.ResultType == StackType.Void)
 					{
-						Block? newBlock = new();
+						Block newBlock = new();
 						inst.ReplaceWith(newBlock);
 						newBlock.Instructions.Add(inst);
 					}

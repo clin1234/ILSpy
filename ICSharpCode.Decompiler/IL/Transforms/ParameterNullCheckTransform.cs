@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		// call <PrivateImplementationDetails>.ThrowIfNull(ldloc parameterVariable, ldstr "parameterVariable")
-		private bool MatchThrowIfNullCall(ILInstruction? instruction,
+		private bool MatchThrowIfNullCall(ILInstruction instruction,
 			[NotNullWhen(true)] out ILVariable? parameterVariable)
 		{
 			parameterVariable = null;

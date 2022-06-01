@@ -27,7 +27,6 @@
     <Authors>ILSpy Team</Authors>
     <TargetFrameworks>net6.0</TargetFrameworks>
     <LangVersion>default</LangVersion>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

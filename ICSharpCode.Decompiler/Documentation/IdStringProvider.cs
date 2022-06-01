@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// Provides ID strings for entities. (C# 4.0 spec, §A.3.1)
 	/// ID strings are used to identify members in XML documentation files.
 	/// </summary>
-	public static class IdStringProvider
+	internal static class IdStringProvider
 	{
 		#region GetIdString
 
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				b.Append('#');
 			}
 
-			b.Append(member.Name?.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
 			if (member is IMethod method && method.TypeParameters.Count > 0)
 			{
 				b.Append("``");
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </remarks>
 		public static IMemberReference ParseMemberIdString(string memberIdString)
 		{
-			if (memberIdString is null) throw new ArgumentNullException(nameof(memberIdString));
+			ArgumentNullException.ThrowIfNull(memberIdString);
 			if (memberIdString.Length < 2 || memberIdString[1] != ':')
 				throw new ReflectionNameParseException(0, "Missing type tag");
 			char typeChar = memberIdString[0];
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			int dotPos = memberIdString.LastIndexOf('.', parenPos - 1);
 			if (dotPos < 0)
 				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
-			string? typeName = memberIdString[..dotPos];
+			string typeName = memberIdString[..dotPos];
 			int pos = 2;
 			ITypeReference typeReference = ParseTypeName(typeName, ref pos);
 			if (pos != typeName.Length)
@@ -158,10 +158,10 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <param name="context">Type resolve context</param>
 		/// <returns>Returns the entity, or null if it is not found.</returns>
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
-		public static IEntity? FindEntity(string idString, ITypeResolveContext context)
+		public static IEntity FindEntity(string idString, ITypeResolveContext context)
 		{
-			if (idString is null) throw new ArgumentNullException(nameof(idString));
-			if (context is null) throw new ArgumentNullException(nameof(context));
+			ArgumentNullException.ThrowIfNull(idString);
+			ArgumentNullException.ThrowIfNull(context);
 			if (idString.StartsWith("T:", StringComparison.Ordinal))
 			{
 				return ParseTypeName(idString[2..]).Resolve(context).GetDefinition();
@@ -174,9 +174,9 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		#region GetTypeName
 
-		public static string GetTypeName(IType? type)
+		public static string GetTypeName(IType type)
 		{
-			if (type is null) throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 			StringBuilder b = new();
 			AppendTypeName(b, type, false);
 			return b.ToString();
@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </remarks>
 		public static ITypeReference ParseTypeName(string? typeName)
 		{
-			if (typeName is null) throw new ArgumentNullException(nameof(typeName));
+			ArgumentNullException.ThrowIfNull(typeName);
 			int pos = 0;
 			if (typeName.StartsWith("T:", StringComparison.Ordinal))
 				pos = 2;
@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			return result;
 		}
 
-		static string ReadTypeName(string? typeName, ref int pos, bool allowDottedName, out int typeParameterCount,
+		static string ReadTypeName(string typeName, ref int pos, bool allowDottedName, out int typeParameterCount,
 			List<ITypeReference> typeArguments)
 		{
 			int startPos = pos;

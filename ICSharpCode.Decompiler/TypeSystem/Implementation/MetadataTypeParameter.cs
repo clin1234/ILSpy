@@ -32,14 +32,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		readonly GenericParameterAttributes attr;
 		readonly GenericParameterHandle handle;
-		readonly MetadataModule? module;
+		readonly MetadataModule module;
 
 		// lazy-loaded:
 		IReadOnlyList<TypeConstraint> constraints;
 		byte nullabilityConstraint = nullabilityNotYetLoaded;
 		byte unmanagedConstraint = ThreeState.Unknown;
 
-		private MetadataTypeParameter(MetadataModule? module, IEntity? owner, int index, string name,
+		private MetadataTypeParameter(MetadataModule module, IEntity owner, int index, string name,
 			GenericParameterHandle handle, GenericParameterAttributes attr)
 			: base(owner, index, name, GetVariance(attr))
 		{
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public static ITypeParameter[]? Create(MetadataModule? module, ITypeDefinition copyFromOuter, IEntity? owner,
+		public static ITypeParameter[] Create(MetadataModule module, ITypeDefinition copyFromOuter, IEntity owner,
 			GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return tps;
 		}
 
-		public static ITypeParameter[]? Create(MetadataModule? module, IEntity? owner,
+		public static ITypeParameter[] Create(MetadataModule module, IEntity owner,
 			GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return tps;
 		}
 
-		private static MetadataTypeParameter Create(MetadataModule? module, IEntity? owner, int index,
+		private static MetadataTypeParameter Create(MetadataModule module, IEntity owner, int index,
 			GenericParameterHandle handle)
 		{
 			var metadata = module.metadata;
@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			};
 		}
 
-		public override IEnumerable<IAttribute?> GetAttributes()
+		public override IEnumerable<IAttribute> GetAttributes()
 		{
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);

@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return false;
 		}
 
-		public MetadataReader? GetMetadataReader()
+		private MetadataReader? GetMetadataReader()
 		{
 			try
 			{

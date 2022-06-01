@@ -31,9 +31,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class Identifier : AstNode
 	{
 		const uint verbatimBit = 1u << AstNodeFlagsUsedBits;
-		public new static readonly Identifier? Null = new NullIdentifier();
+		public new static readonly Identifier Null = new NullIdentifier();
 
-		string? name;
+		string name;
 
 		TextLocation startLocation;
 
@@ -54,10 +54,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public string? Name {
+		public string Name {
 			get { return this.name; }
 			set {
-				if (value is null) throw new ArgumentNullException(nameof(value));
+				ArgumentNullException.ThrowIfNull(value);
 				ThrowIfFrozen();
 				this.name = value;
 			}
@@ -95,12 +95,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.startLocation = value;
 		}
 
-		public static Identifier? Create(string? name)
+		public static Identifier Create(string name)
 		{
 			return Create(name, TextLocation.Empty);
 		}
 
-		public static Identifier? Create(string? name, TextLocation location)
+		public static Identifier Create(string name, TextLocation location)
 		{
 			if (string.IsNullOrEmpty(name))
 				return Null;
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new Identifier(name, location);
 		}
 
-		public static Identifier? Create(string? name, TextLocation location, bool isVerbatim)
+		public static Identifier Create(string name, TextLocation location, bool isVerbatim)
 		{
 			if (string.IsNullOrEmpty(name))
 				return Null;
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIdentifier(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			return other is Identifier { IsNull: false } o && MatchString(this.Name, o.Name);
 		}

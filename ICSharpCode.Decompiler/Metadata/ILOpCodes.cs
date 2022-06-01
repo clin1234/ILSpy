@@ -18,7 +18,7 @@
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public static partial class ILOpCodeExtensions
+	internal static partial class ILOpCodeExtensions
 	{
 		// We use a byte array instead of an enum array because it can be initialized more efficiently
 		static readonly byte[] operandTypes = {
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			(byte)OperandType.None, 255, (byte)OperandType.Type, (byte)OperandType.None, (byte)OperandType.None,
 		};
 
-		static readonly string?[] operandNames = {
+		static readonly string[] operandNames = {
 			"nop", "break", "ldarg.0", "ldarg.1", "ldarg.2", "ldarg.3", "ldloc.0", "ldloc.1", "ldloc.2", "ldloc.3",
 			"stloc.0", "stloc.1", "stloc.2", "stloc.3", "ldarg.s", "ldarga.s", "starg.s", "ldloc.s", "ldloca.s",
 			"stloc.s", "ldnull", "ldc.i4.m1", "ldc.i4.0", "ldc.i4.1", "ldc.i4.2", "ldc.i4.3", "ldc.i4.4", "ldc.i4.5",

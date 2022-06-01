@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return false;
 		}
 
-		protected override bool VisitChildren(AstNode? node)
+		protected override bool VisitChildren(AstNode node)
 		{
 			// unhandled node: probably not syntactically valid in a typename
 

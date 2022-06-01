@@ -57,21 +57,21 @@ namespace ICSharpCode.Decompiler.Documentation
 	[Serializable]
 	public class XmlDocumentationProvider : IDeserializationCallback, IDocumentationProvider
 	{
-		readonly Encoding? encoding;
+		readonly Encoding encoding;
 
-		readonly string? fileName;
+		readonly string fileName;
 
 		[NonSerialized] private XmlDocumentationCache cache = new();
 		volatile IndexEntry[] index; // SORTED array of index entries
 
-		public virtual void OnDeserialization(object? sender)
+		public virtual void OnDeserialization(object sender)
 		{
 			cache = new XmlDocumentationCache();
 		}
 
 		#region Load / Read XML
 
-		string? LoadDocumentation(string? key, int positionInFile)
+		string LoadDocumentation(string key, int positionInFile)
 		{
 			using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
 			fs.Position = positionInFile;
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			{
 				if (r.NodeType == XmlNodeType.Element)
 				{
-					string? memberAttr = r.GetAttribute("name");
+					string memberAttr = r.GetAttribute("name");
 					if (memberAttr == key)
 					{
 						return r.ReadInnerXml();
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <exception cref="XmlException">Invalid XML file</exception>
 		public XmlDocumentationProvider(string? fileName)
 		{
-			if (fileName is null) throw new ArgumentNullException(nameof(fileName));
+			ArgumentNullException.ThrowIfNull(fileName);
 
 			using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
 			using XmlTextReader xmlReader = new(fs);
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 			else
 			{
-				string? redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
+				string redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
 				if (redirectionTarget != null)
 				{
 					Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
@@ -231,9 +231,9 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public static string? LookupLocalizedXmlDoc(string? fileName)
 		{
-			string? xmlFileName = Path.ChangeExtension(fileName, ".xml");
+			string xmlFileName = Path.ChangeExtension(fileName, ".xml");
 			string currentCulture = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-			string? localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
+			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
 
 			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
 			if (File.Exists(localizedXmlDocFile))
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.Documentation
 						{
 							int pos = linePosMapper.GetPositionForLine(reader.LineNumber) +
 							          Math.Max(reader.LinePosition - 2, 0);
-							string? memberAttr = reader.GetAttribute("name");
+							string memberAttr = reader.GetAttribute("name");
 							if (memberAttr != null)
 								indexList.Add(new IndexEntry(GetHashCode(memberAttr), pos));
 							reader.Skip();
@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string? GetDocumentation(string? key)
 		{
-			if (key is null) throw new ArgumentNullException(nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 			return GetDocumentation(key, true);
 		}
 
@@ -405,7 +405,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string? GetDocumentation(IEntity entity)
 		{
-			if (entity is null) throw new ArgumentNullException(nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 			return GetDocumentation(entity.GetIdString());
 		}
 

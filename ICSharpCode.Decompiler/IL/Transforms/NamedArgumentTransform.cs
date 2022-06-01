@@ -16,7 +16,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInlining.InlineOneIfPossible(block, pos, options, context: context);
 		}
 
-		internal static ILInlining.FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction? child,
+		internal static ILInlining.FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction child,
 			ILVariable v, ILInstruction expressionBeingMoved)
 		{
 			Debug.Assert(child.Parent == call);

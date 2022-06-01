@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Destructor; }
 		}
 
-		internal BlockStatement? Body {
+		internal BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler
 {
 	public class TextTokenWriter : TokenWriter
 	{
-		readonly Stack<AstNode?> nodeStack = new();
+		readonly Stack<AstNode> nodeStack = new();
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
 		int braceLevelWithinType = -1;
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler
 
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression &&
 			    node.Parent is InvocationExpression &&
-			    symbol is IMember { DeclaringType.Kind: TypeKind.Delegate }) return null;
+			    symbol is IMember { DeclaringType: { Kind: TypeKind.Delegate } }) return null;
 			return FilterMember(symbol);
 		}
 

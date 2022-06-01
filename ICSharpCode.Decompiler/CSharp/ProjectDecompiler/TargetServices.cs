@@ -120,9 +120,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="module">The module to get the target framework description for. Cannot be null.</param>
 		/// <returns>A new instance of the <see cref="TargetFramework"/> class that describes the specified <paramref name="module"/>.
 		/// </returns>
-		public static TargetFramework DetectTargetFramework(PEFile? module)
+		public static TargetFramework DetectTargetFramework(PEFile module)
 		{
-			if (module is null) throw new ArgumentNullException(nameof(module));
+			ArgumentNullException.ThrowIfNull(module);
 
 			int versionNumber = module.GetRuntime() switch {
 				TargetRuntime.Net_1_0 => 100,
@@ -131,8 +131,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				_ => 400
 			};
 
-			string? targetFrameworkIdentifier = null;
-			string? targetFrameworkProfile = null;
+			string targetFrameworkIdentifier = null;
+			string targetFrameworkProfile = null;
 
 			string targetFramework = module.DetectTargetFrameworkId();
 			if (!string.IsNullOrEmpty(targetFramework))
@@ -165,9 +165,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		/// <param name="module">The module to get the target framework description for. Cannot be null.</param>
 		/// <returns>The platform name, e.g. "AnyCPU" or "x86".</returns>
-		public static string GetPlatformName(PEFile? module)
+		public static string GetPlatformName(PEFile module)
 		{
-			if (module is null) throw new ArgumentNullException(nameof(module));
+			ArgumentNullException.ThrowIfNull(module);
 
 			var headers = module.Reader.PEHeaders;
 			var architecture = headers.CoffHeader.Machine;
@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets exact <see cref="TargetFramework"/> if <see cref="PEFile.GetRuntime"/> is <see cref="TargetRuntime.Net_2_0"/>
 		/// </summary>
-		public static TargetFramework DetectTargetFrameworkNET20(PEFile? module, IAssemblyResolver assemblyResolver,
+		public static TargetFramework DetectTargetFrameworkNET20(PEFile module, IAssemblyResolver assemblyResolver,
 			TargetFramework targetFramework)
 		{
 			var resolvedAssemblies = new HashSet<string>();
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return new TargetFramework(targetFramework.Identifier, version, targetFramework.Profile);
 		}
 
-		static void GetFrameworkVersionNET20(PEFile? module, IAssemblyResolver assemblyResolver,
+		static void GetFrameworkVersionNET20(PEFile module, IAssemblyResolver assemblyResolver,
 			HashSet<string> resolvedAssemblies, ref int version)
 		{
 			foreach (var r in module.Metadata.AssemblyReferences)

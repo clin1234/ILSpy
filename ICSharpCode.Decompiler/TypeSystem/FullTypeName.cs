@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <example><c>new FullTypeName("NS.A+B").NestedType("C", 1)</c> will return <c>new FullTypeName("NS.A+B+C`1")</c></example>
 		public FullTypeName NestedType(string name, int additionalTypeParameterCount)
 		{
-			if (name is null) throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 			var newNestedType = new NestedTypeName(name, additionalTypeParameterCount);
 			if (nestedTypes == null)
 				return new FullTypeName(topLevelType, new[] { newNestedType });
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Equals and GetHashCode implementation
 
-		public override bool Equals(object? obj)
+		public override bool Equals(object obj)
 		{
 			return obj is FullTypeName name && Equals(name);
 		}

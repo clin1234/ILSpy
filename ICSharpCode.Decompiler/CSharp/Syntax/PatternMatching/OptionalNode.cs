@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	public sealed class OptionalNode : Pattern
 	{
-		public OptionalNode(INode? childNode)
+		public OptionalNode(INode childNode)
 		{
 			this.ChildNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
 		}
@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public INode ChildNode { get; }
 
-		public override bool DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
+		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
 			backtrackingInfo.backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
 			return ChildNode.DoMatch(pos, match);

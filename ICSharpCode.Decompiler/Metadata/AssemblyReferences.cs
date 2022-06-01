@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.Reference = reference ?? throw new ArgumentNullException(nameof(reference));
 		}
 
-		public ResolutionException(string mainModule, string? moduleName, string? resolvedPath,
+		public ResolutionException(string mainModule, string moduleName, string? resolvedPath,
 			Exception? innerException)
 			: base($"Failed to resolve module: '{moduleName} of {mainModule}'{Environment.NewLine}" +
 			       $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static AssemblyNameReference Parse(string? fullName)
 		{
-			if (fullName is null) throw new ArgumentNullException(nameof(fullName));
+			ArgumentNullException.ThrowIfNull(fullName);
 			if (fullName.Length == 0)
 				throw new ArgumentException("Name can not be empty");
 
@@ -225,7 +225,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			entry = metadata.GetAssemblyReference(handle);
 		}
 
-		public AssemblyReference(PEFile? module, AssemblyReferenceHandle handle) {
+		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
+		{
+			ArgumentNullException.ThrowIfNull(module);
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			Metadata = module.Metadata;

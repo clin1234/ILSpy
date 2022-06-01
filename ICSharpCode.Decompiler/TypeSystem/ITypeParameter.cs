@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the attributes declared on this type parameter.
 		/// </summary>
-		IEnumerable<IAttribute?> GetAttributes();
+		IEnumerable<IAttribute> GetAttributes();
 	}
 
 	public readonly struct TypeConstraint

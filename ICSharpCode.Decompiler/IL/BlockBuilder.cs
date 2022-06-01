@@ -30,13 +30,13 @@ namespace ICSharpCode.Decompiler.IL
 {
 	sealed class BlockBuilder
 	{
-		readonly MethodBodyBlock? body;
+		readonly MethodBodyBlock body;
 		readonly ICompilation compilation;
 		readonly Stack<BlockContainer> containerStack = new();
 		readonly Dictionary<int, BlockContainer> handlerContainers = new();
 
-		readonly Dictionary<TryCatch?, OnErrorDispatch> onErrorDispatchers = new();
-		readonly Dictionary<ExceptionRegion, ILVariable?> variableByExceptionHandler;
+		readonly Dictionary<TryCatch, OnErrorDispatch> onErrorDispatchers = new();
+		readonly Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
 
 		/// <summary>
 		/// Gets/Sets whether to create extended basic blocks instead of basic blocks.
@@ -49,12 +49,12 @@ namespace ICSharpCode.Decompiler.IL
 		BlockContainer currentContainer;
 
 		int currentTryIndex;
-		TryInstruction? nextTry;
+		TryInstruction nextTry;
 
-		List<TryInstruction?> tryInstructionList = new();
+		List<TryInstruction> tryInstructionList = new();
 
-		internal BlockBuilder(MethodBodyBlock? body,
-			Dictionary<ExceptionRegion, ILVariable?> variableByExceptionHandler,
+		internal BlockBuilder(MethodBodyBlock body,
+			Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler,
 			ICompilation compilation)
 		{
 			Debug.Assert(body != null);
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL
 					tryInstructionList.Add(tryCatch);
 				}
 
-				ILInstruction? filter;
+				ILInstruction filter;
 				if (eh.Kind == ExceptionRegionKind.Filter)
 				{
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction?> instructions,
+		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions,
 			BitArray incomingBranches, CancellationToken cancellationToken)
 		{
 			CreateContainerStructure();
@@ -315,7 +315,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (container.SlotInfo == TryCatchHandler.BodySlot)
 				{
 					// catch handler is allowed to branch back into try block (VB On Error)
-					TryCatch? tryCatch = (TryCatch)container.Parent.Parent;
+					TryCatch tryCatch = (TryCatch)container.Parent.Parent;
 					if (tryCatch.TryBlock.StartILOffset < targetILOffset &&
 					    targetILOffset < tryCatch.TryBlock.EndILOffset)
 					{
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			dispatch.TargetILOffsets.Add(targetILOffset);
 
-			Block? block = new();
+			Block block = new();
 			block.Instructions.Add(new StLoc(dispatch.Variable, new LdcI4(targetILOffset)));
 			var branch = new Branch(tryCatch.TryBlock.StartILOffset);
 			block.Instructions.Add(branch);
@@ -353,14 +353,14 @@ namespace ICSharpCode.Decompiler.IL
 
 		void CreateOnErrorDispatchers()
 		{
-			foreach ((TryCatch? tryCatch, OnErrorDispatch dispatch) in onErrorDispatchers)
+			foreach ((TryCatch tryCatch, OnErrorDispatch dispatch) in onErrorDispatchers)
 			{
 				Block block = (Block)tryCatch.Parent;
 				// Before the regular entry point of the try-catch, insert an. instruction that resets the dispatcher variable
 				block.Instructions.Insert(tryCatch.ChildIndex, new StLoc(dispatch.Variable, new LdcI4(-1)));
 				// Split the block, so that we can introduce branches that jump directly into the try block
 				int splitAt = tryCatch.ChildIndex;
-				Block? newBlock = new();
+				Block newBlock = new();
 				newBlock.AddILRange(tryCatch);
 				newBlock.Instructions.AddRange(block.Instructions.Skip(splitAt));
 				block.Instructions.RemoveRange(splitAt, block.Instructions.Count - splitAt);
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.IL
 
 				// Inside the try-catch, create the dispatch switch
 				BlockContainer tryBody = (BlockContainer)tryCatch.TryBlock;
-				Block? dispatchBlock = new();
+				Block dispatchBlock = new();
 				dispatchBlock.AddILRange(new Interval(tryCatch.StartILOffset, tryCatch.StartILOffset + 1));
 				var switchInst = new SwitchInstruction(new LdLoc(dispatch.Variable));
 				switchInst.AddILRange(new Interval(tryCatch.StartILOffset, tryCatch.StartILOffset + 1));
@@ -412,11 +412,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		sealed class OnErrorDispatch
 		{
-			public readonly List<Branch?> Branches = new();
+			public readonly List<Branch> Branches = new();
 			public readonly HashSet<int> TargetILOffsets = new();
 			public readonly ILVariable Variable;
 
-			public OnErrorDispatch(ILVariable? variable)
+			public OnErrorDispatch(ILVariable variable)
 			{
 				Debug.Assert(variable != null);
 				this.Variable = variable;

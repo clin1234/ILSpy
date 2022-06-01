@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return type.SkipModifiers().GetStackType();
 			}
 
-			ITypeDefinition typeDef = type.GetEnumUnderlyingType()?.GetDefinition();
+			ITypeDefinition typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return StackType.O;
 			switch (typeDef.KnownTypeCode)
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return Sign.Signed;
 			}
 
-			ITypeDefinition typeDef = type.GetEnumUnderlyingType()?.GetDefinition();
+			var typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return Sign.None;
 			switch (typeDef.KnownTypeCode)
@@ -434,7 +434,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return PrimitiveType.U;
 			}
 
-			ITypeDefinition def = type.GetEnumUnderlyingType()?.GetDefinition();
+			var def = type.GetEnumUnderlyingType().GetDefinition();
 			return def != null ? def.KnownTypeCode.ToPrimitiveType() : PrimitiveType.None;
 		}
 

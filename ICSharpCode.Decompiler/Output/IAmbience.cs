@@ -18,8 +18,6 @@
 
 using System;
 
-using ICSharpCode.Decompiler.TypeSystem;
-
 namespace ICSharpCode.Decompiler.Output
 {
 	[Flags]
@@ -148,14 +146,7 @@ namespace ICSharpCode.Decompiler.Output
 	/// <summary>
 	/// Ambiences are used to convert type system symbols to text (usually for displaying the symbol to the user; e.g. in editor tooltips).
 	/// </summary>
-	public interface IAmbience
+	internal interface IAmbience
 	{
-		ConversionFlags ConversionFlags { get; set; }
-
-		string ConvertSymbol(ISymbol symbol);
-		string ConvertType(IType? type);
-		string ConvertConstantValue(object constantValue);
-
-		string WrapComment(string comment);
 	}
 }

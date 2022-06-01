@@ -18,7 +18,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns></returns>
 		public static unsafe Win32ResourceDirectory? ReadWin32Resources(this PEReader pe)
 		{
-			if (pe is null) throw new ArgumentNullException(nameof(pe));
+			ArgumentNullException.ThrowIfNull(pe);
 
 			int rva = pe.PEHeaders.PEHeader?.ResourceTableDirectory.RelativeVirtualAddress ?? 0;
 			if (rva == 0)
@@ -29,10 +29,10 @@ namespace ICSharpCode.Decompiler.Util
 
 		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName? type)
 		{
-			if (root is null) throw new ArgumentNullException(nameof(root));
-			if (type is null) throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(root);
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
+			ArgumentNullException.ThrowIfNull(type);
 
 			return root.FindDirectory(type);
 		}
@@ -40,11 +40,11 @@ namespace ICSharpCode.Decompiler.Util
 		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type,
 			Win32ResourceName name)
 		{
-			if (root is null) throw new ArgumentNullException(nameof(root));
-			if (type is null) throw new ArgumentNullException(nameof(type));
-			if (name is null) throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(root);
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
+			ArgumentNullException.ThrowIfNull(type);
+			ArgumentNullException.ThrowIfNull(name);
 
 			return root.FindDirectory(type)?.FindDirectory(name);
 		}
@@ -52,12 +52,12 @@ namespace ICSharpCode.Decompiler.Util
 		public static Win32ResourceData? Find(this Win32ResourceDirectory root, Win32ResourceName type,
 			Win32ResourceName name, Win32ResourceName langId)
 		{
-			if (root is null) throw new ArgumentNullException(nameof(root));
-			if (type is null) throw new ArgumentNullException(nameof(type));
-			if (name is null) throw new ArgumentNullException(nameof(name));
-			if (langId is null) throw new ArgumentNullException(nameof(langId));
+			ArgumentNullException.ThrowIfNull(root);
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
+			ArgumentNullException.ThrowIfNull(type);
+			ArgumentNullException.ThrowIfNull(name);
+			ArgumentNullException.ThrowIfNull(langId);
 
 			return root.FindDirectory(type)?.FindDirectory(name)?.FindData(langId);
 		}

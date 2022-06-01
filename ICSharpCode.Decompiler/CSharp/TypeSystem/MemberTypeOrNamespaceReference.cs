@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public sealed class MemberTypeOrNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
-		public MemberTypeOrNamespaceReference(TypeOrNamespaceReference? target, string identifier,
-			IList<ITypeReference?> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
+		public MemberTypeOrNamespaceReference(TypeOrNamespaceReference target, string identifier,
+			IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
 		{
 			this.Target = target ?? throw new ArgumentNullException(nameof(target));
 			this.Identifier = identifier ?? throw new ArgumentNullException(nameof(identifier));
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public string Identifier { get; }
 
-		public TypeOrNamespaceReference? Target { get; }
+		public TypeOrNamespaceReference Target { get; }
 
 		public IList<ITypeReference> TypeArguments { get; }
 
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			ResolveResult targetRR = Target.Resolve(resolver);
 			if (targetRR.IsError)
 				return targetRR;
-			IReadOnlyList<IType>? typeArgs = TypeArguments.Resolve(resolver.CurrentTypeResolveContext);
+			IReadOnlyList<IType> typeArgs = TypeArguments.Resolve(resolver.CurrentTypeResolveContext);
 			return resolver.ResolveMemberAccess(targetRR, Identifier, typeArgs, LookupMode);
 		}
 

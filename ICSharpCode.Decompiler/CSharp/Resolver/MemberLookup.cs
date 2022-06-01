@@ -31,12 +31,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public sealed class MemberLookup
 	{
-		readonly IModule? currentModule;
+		readonly IModule currentModule;
 
-		readonly ITypeDefinition? currentTypeDefinition;
+		readonly ITypeDefinition currentTypeDefinition;
 		readonly bool isInEnumMemberInitializer;
 
-		public MemberLookup(ITypeDefinition currentTypeDefinition, IModule? currentModule,
+		public MemberLookup(ITypeDefinition currentTypeDefinition, IModule currentModule,
 			bool isInEnumMemberInitializer = false)
 		{
 			this.currentTypeDefinition = currentTypeDefinition;
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public static bool IsInvocable(IMember member)
 		{
-			if (member is null) throw new ArgumentNullException(nameof(member));
+			ArgumentNullException.ThrowIfNull(member);
 			// C# 4.0 spec, §7.4 member lookup
 			if (member is IEvent or IMethod)
 				return true;
@@ -67,9 +67,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Retrieves all members that are accessible and not hidden (by being overridden or shadowed).
 		/// Returns both members and nested type definitions. Does not include extension methods.
 		/// </summary>
-		public IEnumerable<IEntity> GetAccessibleMembers(ResolveResult? targetResolveResult)
+		public IEnumerable<IEntity> GetAccessibleMembers(ResolveResult targetResolveResult)
 		{
-			if (targetResolveResult is null) throw new ArgumentNullException(nameof(targetResolveResult));
+			ArgumentNullException.ThrowIfNull(targetResolveResult);
 
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
@@ -96,17 +96,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).Where(td => td != null));
 				}
 
-				foreach (var entityGroup in entities.GroupBy(static e => e.Name))
+				foreach (var entityGroup in entities.GroupBy(e => e.Name))
 				{
 					List<LookupGroup> lookupGroups = new();
 					if (!lookupGroupDict.TryGetValue(entityGroup.Key, out lookupGroups))
 						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new List<LookupGroup>());
 
-					List<IType>? newNestedTypes = null;
-					List<IParameterizedMember>? newMethods = null;
-					IMember? newNonMethod = null;
+					List<IType> newNestedTypes = null;
+					List<IParameterizedMember> newMethods = null;
+					IMember newNonMethod = null;
 
-					IEnumerable<IType>? typeBaseTypes = null;
+					IEnumerable<IType> typeBaseTypes = null;
 
 					if (!targetIsTypeParameter)
 					{
@@ -136,9 +136,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					if (!lookupGroup.MethodsAreHidden)
 					{
-						foreach (var parameterizedMember in lookupGroup.Methods)
+						foreach (IMethod method in lookupGroup.Methods)
 						{
-							var method = (IMethod)parameterizedMember;
 							yield return method;
 						}
 					}
@@ -152,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						foreach (IType type in lookupGroup.NestedTypes)
 						{
-							ITypeDefinition? typeDef = type.GetDefinition();
+							ITypeDefinition typeDef = type.GetDefinition();
 							if (typeDef != null)
 								yield return typeDef;
 						}
@@ -168,18 +167,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Performs a member lookup.
 		/// </summary>
-		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IReadOnlyList<IType>? typeArguments,
+		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IReadOnlyList<IType> typeArguments,
 			bool isInvocation)
 		{
-			if (targetResolveResult is null) throw new ArgumentNullException(nameof(targetResolveResult));
-			if (name is null) throw new ArgumentNullException(nameof(name));
-			if (typeArguments is null) throw new ArgumentNullException(nameof(typeArguments));
+			ArgumentNullException.ThrowIfNull(targetResolveResult);
+			ArgumentNullException.ThrowIfNull(name);
+			ArgumentNullException.ThrowIfNull(typeArguments);
 
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
 
-			bool NestedTypeFilter(ITypeDefinition? entity)
+			bool NestedTypeFilter(ITypeDefinition entity)
 			{
 				return entity.Name == name && IsAccessible(entity, allowProtectedAccess);
 			}
@@ -201,11 +200,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			//    lookup group belonging to the base class.
 			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes())
 			{
-				List<IType>? newNestedTypes = null;
-				List<IParameterizedMember>? newMethods = null;
-				IMember? newNonMethod = null;
+				List<IType> newNestedTypes = null;
+				List<IParameterizedMember> newMethods = null;
+				IMember newNonMethod = null;
 
-				IEnumerable<IType>? typeBaseTypes = null;
+				IEnumerable<IType> typeBaseTypes = null;
 
 				if (!isInvocation && !targetIsTypeParameter)
 				{
@@ -261,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IReadOnlyList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
 		{
-			if (targetResolveResult is null) throw new ArgumentNullException(nameof(targetResolveResult));
+			ArgumentNullException.ThrowIfNull(targetResolveResult);
 
 			IType targetType = targetResolveResult.Type;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
@@ -270,10 +269,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			List<LookupGroup> lookupGroups = new();
 			foreach (IType type in targetType.GetNonInterfaceBaseTypes())
 			{
-				List<IParameterizedMember>? newMethods = null;
-				IMember? newNonMethod = null;
+				List<IParameterizedMember> newMethods = null;
+				IMember newNonMethod = null;
 
-				IEnumerable<IType>? typeBaseTypes = null;
+				IEnumerable<IType> typeBaseTypes = null;
 
 				var members = type.GetProperties(Filter, GetMemberOptions.IgnoreInheritedMembers);
 				AddMembers(type, members, allowProtectedAccess, lookupGroups, true, ref typeBaseTypes, ref newMethods,
@@ -318,8 +317,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="newNestedTypes">The target list (created on demand).</param>
 		void AddNestedTypes(IType type, IEnumerable<IType> nestedTypes, int typeArgumentCount,
 			List<LookupGroup> lookupGroups,
-			ref IEnumerable<IType>? typeBaseTypes,
-			ref List<IType>? newNestedTypes)
+			ref IEnumerable<IType> typeBaseTypes,
+			ref List<IType> newNestedTypes)
 		{
 			foreach (IType nestedType in nestedTypes)
 			{
@@ -366,14 +365,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			bool allowProtectedAccess,
 			List<LookupGroup> lookupGroups,
 			bool treatAllParameterizedMembersAsMethods,
-			ref IEnumerable<IType>? typeBaseTypes, ref List<IParameterizedMember>? newMethods, ref IMember? newNonMethod)
+			ref IEnumerable<IType> typeBaseTypes, ref List<IParameterizedMember> newMethods, ref IMember newNonMethod)
 		{
 			foreach (IMember member in members)
 			{
 				if (!IsAccessible(member, allowProtectedAccess))
 					continue;
 
-				IParameterizedMember? method;
+				IParameterizedMember method;
 				if (treatAllParameterizedMembersAsMethods)
 					method = member as IParameterizedMember;
 				else
@@ -464,7 +463,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region CreateResult
 
 		ResolveResult CreateResult(ResolveResult targetResolveResult, List<LookupGroup> lookupGroups, string name,
-			IReadOnlyList<IType>? typeArguments)
+			IReadOnlyList<IType> typeArguments)
 		{
 			// Remove all hidden groups
 			lookupGroups.RemoveAll(g => g.AllHidden);
@@ -519,7 +518,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			if (isInEnumMemberInitializer)
 			{
-				if (resultGroup.NonMethod is IField { DeclaringTypeDefinition.Kind: TypeKind.Enum } field)
+				if (resultGroup.NonMethod is IField { DeclaringTypeDefinition: { Kind: TypeKind.Enum } } field)
 				{
 					return new MemberResolveResult(
 						targetResolveResult, field,
@@ -546,13 +545,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public bool MethodsAreHidden;
 
 			// When a nested type is hidden, it is simply removed from the list.
-			public List<IType>? NestedTypes;
+			public List<IType> NestedTypes;
 
-			public IMember? NonMethod;
+			public IMember NonMethod;
 			public bool NonMethodIsHidden;
 
-			public LookupGroup(IType declaringType, List<IType>? nestedTypes, List<IParameterizedMember>? methods,
-				IMember? nonMethod)
+			public LookupGroup(IType declaringType, List<IType> nestedTypes, List<IParameterizedMember> methods,
+				IMember nonMethod)
 			{
 				this.DeclaringType = declaringType;
 				this.NestedTypes = nestedTypes;
@@ -617,7 +616,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </param>
 		public bool IsAccessible(IEntity entity, bool allowProtectedAccess)
 		{
-			if (entity is null) throw new ArgumentNullException(nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 			// C# 4.0 spec, §3.5.2 Accessiblity domains
 			switch (entity.Accessibility)
 			{
@@ -679,12 +678,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region LookupType
 
-		public ResolveResult LookupType(IType declaringType, string name, IReadOnlyList<IType>? typeArguments,
+		public ResolveResult LookupType(IType declaringType, string name, IReadOnlyList<IType> typeArguments,
 			bool parameterizeResultType = true)
 		{
-			if (declaringType is null) throw new ArgumentNullException(nameof(declaringType));
-			if (name is null) throw new ArgumentNullException(nameof(name));
-			if (typeArguments is null) throw new ArgumentNullException(nameof(typeArguments));
+			ArgumentNullException.ThrowIfNull(declaringType);
+			ArgumentNullException.ThrowIfNull(name);
+			ArgumentNullException.ThrowIfNull(typeArguments);
 
 			int typeArgumentCount = typeArguments.Count;
 
@@ -796,7 +795,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// return true if type is an interface or System.Object
 			if (type.Kind == TypeKind.Interface)
 				return true;
-			ITypeDefinition? d = type.GetDefinition();
+			ITypeDefinition d = type.GetDefinition();
 			return d is { KnownTypeCode: KnownTypeCode.Object };
 		}
 

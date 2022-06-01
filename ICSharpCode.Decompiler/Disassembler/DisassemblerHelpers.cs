@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteLocalReference(OffsetToString(offset.Value), offset);
 		}
 
-		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, PEFile? module,
+		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, PEFile module,
 			MetadataGenericContext context,
 			ITextOutput writer)
 		{
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static void WriteOperand(ITextOutput writer, object operand)
 		{
-			if (operand is null) throw new ArgumentNullException(nameof(operand));
+			ArgumentNullException.ThrowIfNull(operand);
 
 			if (operand is string s)
 			{
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return sb.ToString();
 		}
 
-		public static string? PrimitiveTypeName(string fullName)
+		public static string PrimitiveTypeName(string fullName)
 		{
 			return fullName switch {
 				"System.SByte" => "int8",

@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public FixedVariableInitializer(string name, Expression? initializer = null)
+		public FixedVariableInitializer(string name, Expression initializer = null)
 		{
 			this.Name = name;
 			this.CountExpression = initializer;

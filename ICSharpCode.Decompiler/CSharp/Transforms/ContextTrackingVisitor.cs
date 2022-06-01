@@ -26,8 +26,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public abstract class ContextTrackingVisitor<TResult> : DepthFirstAstVisitor<TResult>
 	{
-		protected IMethod? currentMethod;
-		protected ITypeDefinition? currentTypeDefinition;
+		protected IMethod currentMethod;
+		protected ITypeDefinition currentTypeDefinition;
 
 		protected void Initialize(TransformContext context)
 		{

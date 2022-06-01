@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 		}
 
-		public string? Name {
+		public string Name {
 			get;
 			set;
 		}

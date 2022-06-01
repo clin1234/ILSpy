@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public Interpolation(Expression expression, string? suffix = null)
+		public Interpolation(Expression expression, string suffix = null)
 		{
 			Expression = expression;
 			Suffix = suffix;
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Text = text;
 		}
 
-		public string? Text { get; set; }
+		public string Text { get; set; }
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{

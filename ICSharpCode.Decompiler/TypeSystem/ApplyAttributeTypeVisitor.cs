@@ -35,13 +35,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		readonly ICompilation compilation;
 		readonly Nullability defaultNullability;
-		readonly bool[]? dynamicAttributeData;
+		readonly bool[] dynamicAttributeData;
 		readonly bool hasDynamicAttribute;
 		readonly bool hasNativeIntegersAttribute;
-		readonly bool[]? nativeIntegersAttributeData;
+		readonly bool[] nativeIntegersAttributeData;
 		readonly Nullability[] nullableAttributeData;
 		readonly TypeSystemOptions options;
-		readonly string[]? tupleElementNames;
+		readonly string[] tupleElementNames;
 		int dynamicTypeIndex;
 		int nativeIntTypeIndex;
 		int nullabilityTypeIndex;
@@ -75,11 +75,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			bool isSignatureReturnType = false)
 		{
 			bool hasDynamicAttribute = false;
-			bool[]? dynamicAttributeData = null;
+			bool[] dynamicAttributeData = null;
 			bool hasNativeIntegersAttribute = false;
-			bool[]? nativeIntegersAttributeData = null;
-			string[]? tupleElementNames = null;
-			Nullability[]? nullableAttributeData = null;
+			bool[] nativeIntegersAttributeData = null;
+			string[] tupleElementNames = null;
+			Nullability[] nullableAttributeData = null;
 			Nullability nullability = (options & TypeSystemOptions.NullabilityAnnotations) != 0
 				? nullableContext
 				: Nullability.Oblivious;
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							var arg = ctor.FixedArguments[0];
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-							    && values.All(static v => v.Value is bool))
+							    && values.All(v => v.Value is bool))
 							{
 								dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
 							}
@@ -130,9 +130,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							var arg = ctor.FixedArguments[0];
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-							    && values.All(static v => v.Value is string or null))
+							    && values.All(v => v.Value is string or null))
 							{
-								tupleElementNames = values.SelectArray(static v => v.Value as string);
+								tupleElementNames = values.SelectArray(v => (string)v.Value);
 							}
 						}
 					}
@@ -143,15 +143,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						if (ctor.FixedArguments.Length == 1)
 						{
 							var arg = ctor.FixedArguments[0];
-							switch (arg.Value)
+							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+							    && values.All(static v => v.Value is byte and <= 2))
 							{
-								case ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values 
-							    when values.All(static v => v.Value is byte and <= 2):
-									nullableAttributeData = values.SelectArray(static v => (Nullability)(byte)v.Value);
-									break;
-								case byte b and <= 2:
-									nullability = (Nullability)b;
-									break;
+								nullableAttributeData = values.SelectArray(static v => (Nullability)(byte)v.Value);
+							}
+							else if (arg.Value is byte b and <= 2)
+							{
+								nullability = (Nullability)b;
 							}
 						}
 					}
@@ -189,21 +188,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return inputType;
 		}
 
-		public override IType VisitModOpt(ModifiedType type)
+		internal override IType VisitModOpt(ModifiedType type)
 		{
 			if ((options & TypeSystemOptions.KeepModifiers) != 0)
 				return base.VisitModOpt(type);
 			return type.ElementType.AcceptVisitor(this);
 		}
 
-		public override IType VisitModReq(ModifiedType type)
+		internal override IType VisitModReq(ModifiedType type)
 		{
 			if ((options & TypeSystemOptions.KeepModifiers) != 0)
 				return base.VisitModReq(type);
 			return type.ElementType.AcceptVisitor(this);
 		}
 
-		public override IType VisitPointerType(PointerType type)
+		internal override IType VisitPointerType(PointerType type)
 		{
 			dynamicTypeIndex++;
 			return base.VisitPointerType(type);
@@ -222,20 +221,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			Debug.Assert(n == Nullability.Oblivious);
 		}
 
-		public override IType VisitArrayType(ArrayType type)
+		internal override IType VisitArrayType(ArrayType type)
 		{
 			var nullability = GetNullability();
 			dynamicTypeIndex++;
 			return base.VisitArrayType(type).ChangeNullability(nullability);
 		}
 
-		public override IType VisitByReferenceType(ByReferenceType type)
+		internal override IType VisitByReferenceType(ByReferenceType type)
 		{
 			dynamicTypeIndex++;
 			return base.VisitByReferenceType(type);
 		}
 
-		public override IType VisitParameterizedType(ParameterizedType? type)
+		internal override IType VisitParameterizedType(ParameterizedType type)
 		{
 			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality))
@@ -320,7 +319,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new ParameterizedType(genericType, arguments);
 		}
 
-		public override IType VisitFunctionPointerType(FunctionPointerType? type)
+		internal override IType VisitFunctionPointerType(FunctionPointerType type)
 		{
 			dynamicTypeIndex++;
 			if (type is { ReturnIsRefReadOnly: true })
@@ -349,7 +348,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type.WithSignature(returnType, parameters.ToImmutableArray());
 		}
 
-		public override IType VisitTypeDefinition(ITypeDefinition type)
+		internal override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			IType newType = type;
 			var ktc = type.KnownTypeCode;
@@ -384,7 +383,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return newType;
 		}
 
-		public override IType VisitOtherType(IType type)
+		internal override IType VisitOtherType(IType type)
 		{
 			type = base.VisitOtherType(type);
 			if (type.Kind == TypeKind.Unknown && type.IsReferenceType == true)
@@ -396,7 +395,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type;
 		}
 
-		public override IType VisitTypeParameter(ITypeParameter type)
+		internal override IType VisitTypeParameter(ITypeParameter type)
 		{
 			Nullability nullability = GetNullability();
 			return type.ChangeNullability(nullability);

@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		static readonly List<string> gac_paths = GetGacPaths();
 		static readonly DecompilerRuntime decompilerRuntime;
+		readonly string? baseDirectory;
 		readonly List<string?> directories = new();
 
 		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
@@ -115,6 +116,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			string? runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default,
 			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
+			string? baseDirectory = null;
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.throwOnError = throwOnError;
 			this.streamOptions = streamOptions;
@@ -332,10 +334,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
-			foreach (var folder in new DirectoryInfo(basePath).GetDirectories()
+			foreach ((Version version, string directoryName) folder in new DirectoryInfo(basePath).GetDirectories()
 				         .Select(static d => DotNetCorePathFinder.ConvertToVersion(d.Name))
 				         .Where(static v => v.Item1 != null)
-				         .OrderByDescending(static v => v.Item1).Where(folder => path == null || version == null || folder.Item1 >= version))
+				         .OrderByDescending(static v => v.Item1))
 			{
 				path = folder.Item2;
 			}
@@ -345,7 +347,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			if (name is null) throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
@@ -395,9 +397,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
 		}
 
-		public PEFile? ResolveModule(PEFile? mainModule, string moduleName)
+		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
 		{
-			string? baseDirectory = Path.GetDirectoryName(mainModule?.FileName);
+			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
 			if (baseDirectory == null)
 				return null;
 			string moduleFileName = Path.Combine(baseDirectory, moduleName);
@@ -438,7 +440,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return Task.Run(() => Resolve(name));
 		}
 
-		public Task<PEFile?> ResolveModuleAsync(PEFile? mainModule, string? moduleName)
+		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
 		{
 			return Task.Run(() => ResolveModule(mainModule, moduleName));
 		}
@@ -725,8 +727,9 @@ namespace ICSharpCode.Decompiler.Metadata
 					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll",
 						         SearchOption.AllDirectories))
 					{
-						string[]? name = Path.GetDirectoryName(item.FullName)?[(rootPath.Length + 1)..]
-							?.Split(new[] {
+						string[]? name = Path.GetDirectoryName(item.FullName)
+							?.Substring(rootPath.Length + 1)
+							.Split(new[] {
 									"\\"
 								},
 								StringSplitOptions.RemoveEmptyEntries);

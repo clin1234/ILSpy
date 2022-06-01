@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					info.Definition);
 				try
 				{
-					foreach ((int index, List<ILInstruction?> arguments) in info.LocalFunctionArguments)
+					foreach ((int index, List<ILInstruction> arguments) in info.LocalFunctionArguments)
 					{
 						var targetVariable = info.Definition.Variables.SingleOrDefault(p =>
 							p.Kind == VariableKind.Parameter && p.Index == index);
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private ILInstruction? FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction?> arguments,
+		private ILInstruction FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments,
 			bool ignoreStructure = false)
 		{
 			foreach (var arg in arguments)
@@ -810,7 +810,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context);
 		}
 
-		public static bool IsLocalFunctionMethod(PEFile? module, MethodDefinitionHandle methodHandle,
+		public static bool IsLocalFunctionMethod(PEFile module, MethodDefinitionHandle methodHandle,
 			ILTransformContext context = null)
 		{
 			if (context != null && context.PEFile != module)
@@ -851,7 +851,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		public static bool IsLocalFunctionDisplayClass(PEFile? module, TypeDefinitionHandle typeHandle,
+		public static bool IsLocalFunctionDisplayClass(PEFile module, TypeDefinitionHandle typeHandle,
 			ILTransformContext context = null)
 		{
 			if (context != null && context.PEFile != module)
@@ -903,7 +903,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			/// We use a dictionary instead of a simple array, because -1 is used for the this parameter
 			/// and there might be many non-synthesized arguments in between.
 			/// </summary>
-			public Dictionary<int, List<ILInstruction?>> LocalFunctionArguments;
+			public Dictionary<int, List<ILInstruction>> LocalFunctionArguments;
 		}
 
 		sealed class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>

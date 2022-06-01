@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// If this parameter is null, the GetClassTypeReference will search in all
 		/// assemblies belonging to the compilation.
 		/// </param>
-		public GetClassTypeReference(FullTypeName fullTypeName, IModuleReference? module = null,
+		public GetClassTypeReference(FullTypeName fullTypeName, IModuleReference module = null,
 			bool? isReferenceType = null)
 		{
 			this.fullTypeName = fullTypeName;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="namespaceName">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
 		/// <param name="name">The name of the type, e.g. "List".</param>
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
-		public GetClassTypeReference(IModuleReference? module, string namespaceName, string name,
+		public GetClassTypeReference(IModuleReference module, string namespaceName, string name,
 			int typeParameterCount = 0, bool? isReferenceType = null)
 		{
 			Module = module;
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// This property returns null if the GetClassTypeReference is searching in all assemblies
 		/// of the compilation.
 		/// </summary>
-		public IModuleReference? Module { get; }
+		public IModuleReference Module { get; }
 
 		/// <summary>
 		/// Gets the full name of the type this reference is searching for.
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			if (context is null) throw new ArgumentNullException(nameof(context));
+			ArgumentNullException.ThrowIfNull(context);
 
 			IType type = null;
 			if (Module == null)
@@ -107,8 +107,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// But if that's not loaded in the compilation, allow fall back to other assemblies.
 				// (the non-loaded assembly might be a facade containing type forwarders -
 				//  for example, when referencing a portable library from a non-portable project)
-				IModule? asm = Module.Resolve(context);
-				type = asm?.GetTypeDefinition(fullTypeName) ?? ResolveInAllAssemblies(context.Compilation, in fullTypeName);
+				IModule asm = Module.Resolve(context);
+				type = asm != null
+					? asm.GetTypeDefinition(fullTypeName)
+					: ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 			}
 
 			return type ?? new UnknownType(fullTypeName, isReferenceType);

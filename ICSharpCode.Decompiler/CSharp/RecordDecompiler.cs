@@ -28,10 +28,10 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	public sealed class RecordDecompiler
+	sealed class RecordDecompiler
 	{
 		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new();
-		readonly Dictionary<IProperty, IParameter?> autoPropertyToPrimaryCtorParameter = new();
+		readonly Dictionary<IProperty, IParameter> autoPropertyToPrimaryCtorParameter = new();
 		readonly Dictionary<IField, IProperty> backingFieldToAutoProperty = new();
 		readonly IType baseClass;
 		readonly CancellationToken cancellationToken;
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Gets the detected primary constructor. Returns null, if there was no primary constructor detected.
 		/// </summary>
-		public IMethod? PrimaryConstructor { get; }
+		public IMethod PrimaryConstructor { get; }
 
 		public bool IsInheritedRecord { get; }
 
@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(IsRecordType(other.Type));
 			int pos = 0;
 			// First instruction is the base constructor call
-			if (body.Instructions[pos] is not Call { Method.IsConstructor: true } baseCtorCall)
+			if (body.Instructions[pos] is not Call { Method: { IsConstructor: true } } baseCtorCall)
 				return false;
 			if (!Equals(baseCtorCall.Method.DeclaringType, baseClass))
 				return false;
@@ -484,7 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			int pos = 0;
 			//Roslyn 4.0.0-3.final start to insert an call to RuntimeHelpers.EnsureSufficientExecutionStack()
 			if (!isStruct && !IsInheritedRecord && body.Instructions[pos] is Call {
-				    Arguments.Count: 0,
+				    Arguments: { Count: 0 },
 				    Method: {
 					    Name: "EnsureSufficientExecutionStack",
 					    DeclaringType: { Namespace: "System.Runtime.CompilerServices", Name: "RuntimeHelpers" }
@@ -520,7 +520,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				bool IsBaseCall(ILInstruction inst)
 				{
-					if (inst is not CallInstruction { Method.Name: "PrintMembers" } call)
+					if (inst is not CallInstruction { Method: { Name: "PrintMembers" } } call)
 						return false;
 					if (call.Arguments.Count != 2)
 						return false;
@@ -675,8 +675,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!body.Instructions[0].MatchStLoc(out var stringBuilder, out var stringBuilderInit))
 				return false;
 			if (stringBuilderInit is not NewObj {
-				    Arguments.Count: 0,
-				    Method.DeclaringTypeDefinition: { Name: "StringBuilder", Namespace: "System.Text" }
+				    Arguments: { Count: 0 },
+				    Method: { DeclaringTypeDefinition: { Name: "StringBuilder", Namespace: "System.Text" } }
 			    })
 				return false;
 			// callvirt Append(ldloc stringBuilder, ldstr "R")
@@ -688,7 +688,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// if (callvirt PrintMembers(ldloc this, ldloc stringBuilder)) { trueInst }
 			if (!body.Instructions[3].MatchIfInstruction(out var condition, out var trueInst))
 				return true;
-			if (!((condition is CallInstruction { Method.Name: "PrintMembers" } printMembersCall) &&
+			if (!((condition is CallInstruction { Method: { Name: "PrintMembers" } } printMembersCall) &&
 			      (condition is CallVirt || (isSealed && condition is Call))))
 				return false;
 			if (printMembersCall.Arguments.Count != 2)
@@ -704,7 +704,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!MatchAppendCallWithValue(body.Instructions[4], "}"))
 				return false;
 			// leave IL_0000 (callvirt ToString(ldloc stringBuilder))
-			if (body.Instructions[5] is not Leave { Value: CallVirt { Method.Name: "ToString" } toStringCall })
+			if (body.Instructions[5] is not Leave { Value: CallVirt { Method: { Name: "ToString" } } toStringCall })
 				return false;
 			if (toStringCall.Arguments.Count != 1)
 				return false;
@@ -712,7 +712,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool MatchAppendCallWithValue(ILInstruction inst, string val)
 			{
-				if (inst is not CallVirt { Method.Name: "Append" } call)
+				if (inst is not CallVirt { Method: { Name: "Append" } } call)
 					return false;
 				if (call.Arguments.Count != 2)
 					return false;
@@ -779,7 +779,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// call BaseClass::Equals(ldloc this, ldloc other)
 					if (pos >= conditions.Count)
 						return false;
-					if (conditions[pos] is not Call { Method.Name: "Equals" } call)
+					if (conditions[pos] is not Call { Method: { Name: "Equals" } } call)
 						return false;
 					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(call.Method.DeclaringType, baseClass))
 						return false;
@@ -838,7 +838,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// callvirt Equals(call get_Default(), ldfld <A>k__BackingField(ldloc this), ldfld <A>k__BackingField(ldloc other))
 				if (pos >= conditions.Count)
 					return false;
-				if (conditions[pos] is not CallVirt { Method.Name: "Equals" } equalsCall)
+				if (conditions[pos] is not CallVirt { Method: { Name: "Equals" } } equalsCall)
 					return false;
 				if (equalsCall.Arguments.Count != 3)
 					return false;
@@ -885,7 +885,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		private bool MatchGetEqualityContract(ILInstruction? inst, out ILInstruction? target)
 		{
 			target = null;
-			if (inst is not CallInstruction { Method.Name: "get_EqualityContract" } call)
+			if (inst is not CallInstruction { Method: { Name: "get_EqualityContract" } } call)
 				return false;
 			if (!(inst is CallVirt || (isSealed && inst is Call)))
 				return false;
@@ -998,7 +998,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				// callvirt GetHashCode(call get_Default(), callvirt get_EqualityContract(ldloc this))
 				// callvirt GetHashCode(call get_Default(), ldfld <A>k__BackingField(ldloc this)))
-				if (inst is not CallVirt { Method.Name: "GetHashCode" } getHashCodeCall)
+				if (inst is not CallVirt { Method: { Name: "GetHashCode" } } getHashCodeCall)
 					return false;
 				if (getHashCodeCall.Arguments.Count != 2)
 					return false;

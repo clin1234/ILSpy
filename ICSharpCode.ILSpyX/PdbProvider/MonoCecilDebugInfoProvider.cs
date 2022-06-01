@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 
 		public unsafe MonoCecilDebugInfoProvider(PEFile module, string? pdbFileName, string? description = null)
 		{
-			if (module is null) throw new ArgumentNullException(nameof(module));
+			ArgumentNullException.ThrowIfNull(module);
 
 			if (!module.Reader.IsEntireImageAvailable)
 			{

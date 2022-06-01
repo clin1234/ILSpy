@@ -36,17 +36,17 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public readonly bool CheckForOverflow;
 
-		public readonly Conversion? Conversion;
+		public readonly Conversion Conversion;
 		public readonly ResolveResult Input;
 
-		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion? conversion)
+		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion)
 			: base(targetType)
 		{
 			this.Input = input ?? throw new ArgumentNullException(nameof(input));
 			this.Conversion = conversion ?? throw new ArgumentNullException(nameof(conversion));
 		}
 
-		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion? conversion,
+		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion,
 			bool checkForOverflow)
 			: this(targetType, input, conversion)
 		{

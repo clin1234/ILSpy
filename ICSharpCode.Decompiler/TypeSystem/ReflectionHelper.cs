@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Static helper methods for reflection names.
 	/// </summary>
-	public static class ReflectionHelper
+	internal static class ReflectionHelper
 	{
 		#region Type.ToTypeReference()
 
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			else
 			{
-				IModuleReference? assemblyReference = new DefaultAssemblyReference(type.Assembly.FullName);
+				IModuleReference assemblyReference = new DefaultAssemblyReference(type.Assembly.FullName);
 				string name = SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 				return new GetClassTypeReference(assemblyReference, type.Namespace, name, typeParameterCount);
 			}
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public static IType FindType(this ICompilation compilation, Type type)
 		{
-			return type.ToTypeReference()?.Resolve(new SimpleTypeResolveContext(compilation));
+			return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(compilation));
 		}
 
 		public static IType FindType(this ICompilation compilation, StackType stackType, Sign sign = Sign.None)
@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <seealso cref="FullTypeName(string)"/>
 		public static ITypeReference ParseReflectionName(string? reflectionTypeName)
 		{
-			if (reflectionTypeName is null) throw new ArgumentNullException(nameof(reflectionTypeName));
+			ArgumentNullException.ThrowIfNull(reflectionTypeName);
 			int pos = 0;
 			ITypeReference r = ParseReflectionName(reflectionTypeName, ref pos);
 			if (pos < reflectionTypeName.Length)
@@ -441,7 +441,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		static ITypeReference CreateGetClassTypeReference(string? assemblyName, string typeName, int tpc)
 		{
-			IModuleReference? assemblyReference =
+			IModuleReference assemblyReference =
 				assemblyName != null ? new DefaultAssemblyReference(assemblyName) : null;
 			int pos = typeName.LastIndexOf('.');
 			if (pos < 0)

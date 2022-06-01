@@ -79,10 +79,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// List of extension methods, used to avoid re-calculating it in ResolveInvocation() when it was already
 		/// calculated by ResolveMemberAccess().
 		/// </summary>
-		internal List<List<IMethod>>? extensionMethods;
+		internal List<List<IMethod>> extensionMethods;
 
 		// the resolver is used to fetch extension methods on demand
-		internal CSharpResolver? resolver;
+		internal CSharpResolver resolver;
 
 		public MethodGroupResolveResult(ResolveResult targetResult, string methodName,
 			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType>? typeArguments)
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the resolve result for the target object.
 		/// </summary>
-		public ResolveResult? TargetResult { get; }
+		public ResolveResult TargetResult { get; }
 
 		/// <summary>
 		/// Gets the type of the reference to the target object.
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				foreach (var method in methodGroup)
 				{
 					if (CSharpResolver.IsEligibleExtensionMethod(this.TargetType, method, true,
-						    out IType[]? inferredTypes))
+						    out IType[] inferredTypes))
 					{
 						if (substituteInferredTypes && inferredTypes != null)
 						{
@@ -219,12 +219,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		public OverloadResolution PerformOverloadResolution(ICompilation compilation, ResolveResult[] arguments,
-			string[]? argumentNames = null,
+			string[] argumentNames = null,
 			bool allowExtensionMethods = true,
 			bool allowExpandingParams = true,
 			bool allowOptionalParameters = true,
 			bool allowImplicitIn = true,
-			bool checkForOverflow = false, CSharpConversions? conversions = null)
+			bool checkForOverflow = false, CSharpConversions conversions = null)
 		{
 			Log.WriteLine("Performing overload resolution for " + this);
 			Log.WriteCollection("  Arguments: ", arguments);

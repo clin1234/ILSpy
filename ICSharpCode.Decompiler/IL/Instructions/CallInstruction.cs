@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public static CallInstruction? Create(OpCode opCode, IMethod method)
+		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
 			return opCode switch {
 				OpCode.Call => new Call(method),
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		protected internal sealed override bool PerformMatch(ILInstruction other, ref Match match)
+		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Match match)
 		{
 			return other is CallInstruction o && this.OpCode == o.OpCode && this.Method.Equals(o.Method) &&
 			       this.IsTail == o.IsTail

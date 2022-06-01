@@ -6,7 +6,6 @@
     <RootNamespace>ICSharpCode.Decompiler.PowerShell</RootNamespace>
     <LangVersion>default</LangVersion>
     <TargetFrameworks>net6.0</TargetFrameworks>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <Import Project="..\packages.props" />

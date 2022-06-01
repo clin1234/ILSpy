@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public string GroupName { get; }
 
-		public override bool DoMatch(INode? other, Match match)
+		public override bool DoMatch(INode other, Match match)
 		{
 			if (other == null)
 			{

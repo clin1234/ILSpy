@@ -25,11 +25,11 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public sealed class
+	internal sealed class
 		DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, MetadataGenericContext>
 	{
 		readonly MetadataReader metadata;
-		readonly PEFile? module;
+		readonly PEFile module;
 		readonly ITextOutput output;
 
 		public DisassemblerSignatureTypeProvider(PEFile? module, ITextOutput output)

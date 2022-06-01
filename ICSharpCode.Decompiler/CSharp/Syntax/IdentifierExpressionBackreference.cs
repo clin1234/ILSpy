@@ -26,9 +26,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Matches identifier expressions that have the same identifier as the referenced variable/type definition/method definition.
 	/// </summary>
-	public sealed class IdentifierExpressionBackreference : Pattern
+	public sealed class IdentifierExpressionBackreference : PatternMatching.Pattern
 	{
-		public IdentifierExpressionBackreference(string? referencedGroupName)
+		public IdentifierExpressionBackreference(string referencedGroupName)
 		{
 			this.ReferencedGroupName =
 				referencedGroupName ?? throw new ArgumentNullException(nameof(referencedGroupName));
@@ -36,11 +36,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string ReferencedGroupName { get; }
 
-		public override bool DoMatch(INode? other, Match match)
+		public override bool DoMatch(PatternMatching.INode other, PatternMatching.Match match)
 		{
 			if (other is not IdentifierExpression ident || ident.TypeArguments.Any())
 				return false;
-			AstNode? referenced = (AstNode?)match.Get(ReferencedGroupName).Last();
+			AstNode referenced = (AstNode)match.Get(ReferencedGroupName).Last();
 			if (referenced == null)
 				return false;
 			return ident.Identifier == referenced.GetChildByRole(Roles.Identifier)?.Name;

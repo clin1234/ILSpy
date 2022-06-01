@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Public,
 	}
 
-	public static class AccessibilityExtensions
+	internal static class AccessibilityExtensions
 	{
 		// This code depends on the fact that the enum values are sorted similar to the partial order
 		// where an accessibility is smaller than another if it makes an entity visibible to a subset of the code:
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The result is accessible from any given point in the code
 		/// iff both a and b are accessible from that point.
 		/// </summary>
-		public static Accessibility Intersect(this Accessibility a, Accessibility b)
+		private static Accessibility Intersect(this Accessibility a, Accessibility b)
 		{
 			if (a > b)
 			{

@@ -69,8 +69,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return result.ToArray();
 		}
 
-		readonly IParameter?[] normalParameters = new IParameter?[TypeCode.String + 1 - TypeCode.Object];
-		readonly IParameter?[] nullableParameters = new IParameter?[TypeCode.Decimal + 1 - TypeCode.Boolean];
+		readonly IParameter[] normalParameters = new IParameter[TypeCode.String + 1 - TypeCode.Object];
+		readonly IParameter[] nullableParameters = new IParameter[TypeCode.Decimal + 1 - TypeCode.Boolean];
 
 		void InitParameterArrays()
 		{
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		internal class OperatorMethod : IParameterizedMember
 		{
-			internal readonly List<IParameter?> parameters = new();
+			internal readonly List<IParameter> parameters = new();
 
 			protected OperatorMethod(ICompilation compilation)
 			{
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return false; }
 			}
 
-			IModule? IEntity.ParentModule {
+			IModule IEntity.ParentModule {
 				get { return Compilation.MainModule; }
 			}
 
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return "operator"; }
 			}
 
-			bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
+			bool IMember.Equals(IMember? obj, TypeVisitor? typeNormalization)
 			{
 				return this == obj;
 			}
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 
-			public virtual object? Invoke(CSharpResolver resolver, object input)
+			public virtual object? Invoke(CSharpResolver resolver, object? input)
 			{
 				throw new NotSupportedException();
 			}
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public BinaryOperatorMethod(ICompilation compilation) : base(compilation) { }
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 
-			public virtual object? Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public virtual object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				throw new NotSupportedException();
 			}
@@ -599,7 +599,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override bool CanEvaluateAtCompileTime { get; }
 
-			public override object Invoke(CSharpResolver? resolver, object lhs, object rhs)
+			public override object Invoke(CSharpResolver? resolver, object? lhs, object? rhs)
 			{
 				return string.Concat(lhs, rhs);
 			}
@@ -737,10 +737,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return baseMethod.CanEvaluateAtCompileTime; }
 			}
 
-			public IReadOnlyList<IParameter?> NonLiftedParameters => baseMethod.Parameters;
+			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 
-			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
 			}

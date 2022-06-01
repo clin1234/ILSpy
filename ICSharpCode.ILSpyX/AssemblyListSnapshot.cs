@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpyX
 			this.assemblies = assemblies;
 		}
 
-		public ImmutableArray<LoadedAssembly?> Assemblies => assemblies;
+		public ImmutableArray<LoadedAssembly> Assemblies => assemblies;
 
 		public async Task<PEFile?> TryGetModuleAsync(IAssemblyReference reference, string tfm)
 		{

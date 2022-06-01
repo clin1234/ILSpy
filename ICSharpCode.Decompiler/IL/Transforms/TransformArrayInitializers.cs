@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILInstruction? inst = body.Instructions[pos];
+			ILInstruction inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) &&
 			    MatchNewArr(newarrExpr, out var elementType, out var arrayLength))
 			{
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.Add(new StLoc(tempStore,
 							new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) =>
-							StElem(new LdLoc(tempStore), new LdcI4[] { new LdcI4(i) }, value, elementType)));
+							StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);
 						body.Instructions[pos] = new StLoc(finalStore, block);
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILInstruction? inst = body.Instructions[pos];
+			ILInstruction inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) &&
 			    MatchNewArr(newarrExpr, out var elementType, out var length))
 			{
@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				elementType = ((PointerType)finalStore.Type).ElementType;
 			}
-			else if (value is NewObj { Arguments.Count: 2 } newObj
+			else if (value is NewObj { Arguments: { Count: 2 } } newObj
 			         && newObj.Method.DeclaringType.IsKnownType(KnownTypeCode.SpanOfT)
 			         && newObj.Arguments[0].MatchLdLoc(v)
 			         && newObj.Arguments[1].MatchLdcI4((int)length))

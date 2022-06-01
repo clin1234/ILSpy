@@ -29,12 +29,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public TypeReferenceExpression(AstType? type)
+		public TypeReferenceExpression(AstType type)
 		{
 			AddChild(type, Roles.Type);
 		}
 
-		public AstType? Type {
+		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitTypeReferenceExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			return other is TypeReferenceExpression o && this.Type.DoMatch(o.Type, match);
 		}

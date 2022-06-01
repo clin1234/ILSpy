@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class LocalFunctionMethod : IMethod
 	{
-		List<IParameter?> parameters;
+		List<IParameter> parameters;
 
 		List<IType> typeArguments;
 
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		internal bool IsStaticLocalFunction { get; }
 
-		public bool Equals(IMember obj, TypeVisitor? typeNormalization)
+		public bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			if (obj is not LocalFunctionMethod other)
 				return false;
@@ -60,6 +60,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			       && NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
 			       && NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
 			       && IsStaticLocalFunction == other.IsStaticLocalFunction;
+		}
+
+		public IMember MemberDefinition => this;
+
+		public IType ReturnType => ReducedFrom.ReturnType;
+
+		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers =>
+			ReducedFrom.ExplicitlyImplementedInterfaceMembers;
+
+		bool IMember.IsExplicitInterfaceImplementation => ReducedFrom.IsExplicitInterfaceImplementation;
+		public bool IsVirtual => ReducedFrom.IsVirtual;
+		public bool IsOverride => ReducedFrom.IsOverride;
+		public bool IsOverridable => ReducedFrom.IsOverridable;
+		public TypeParameterSubstitution Substitution => ReducedFrom.Substitution;
+
+		public IMethod Specialize(TypeParameterSubstitution substitution)
+		{
+			return new LocalFunctionMethod(
+				ReducedFrom.Specialize(substitution),
+				Name, IsStaticLocalFunction, NumberOfCompilerGeneratedParameters,
+				NumberOfCompilerGeneratedTypeParameters);
 		}
 
 		public IMember MemberDefinition => this;
@@ -99,34 +120,34 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public MethodSemanticsAttributes AccessorKind => ReducedFrom.AccessorKind;
 		public IMethod ReducedFrom { get; }
 
-		public IReadOnlyList<ITypeParameter>? TypeParameters {
+		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				return typeParameters ??=
 					new List<ITypeParameter>(ReducedFrom.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
 			}
 		}
 
-		public IReadOnlyList<IType>? TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get {
 				return typeArguments ??=
 					new List<IType>(ReducedFrom.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
 			}
 		}
 
-		public IReadOnlyList<IParameter?> Parameters {
+		public IReadOnlyList<IParameter> Parameters {
 			get {
 				return parameters ??=
-					new List<IParameter?>(ReducedFrom.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
+					new List<IParameter>(ReducedFrom.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
 			}
 		}
 
 		public System.Reflection.Metadata.EntityHandle MetadataToken => ReducedFrom.MetadataToken;
 		public SymbolKind SymbolKind => ReducedFrom.SymbolKind;
-		public ITypeDefinition? DeclaringTypeDefinition => ReducedFrom.DeclaringTypeDefinition;
+		public ITypeDefinition DeclaringTypeDefinition => ReducedFrom.DeclaringTypeDefinition;
 		public IType DeclaringType => ReducedFrom.DeclaringType;
-		public IModule? ParentModule => ReducedFrom.ParentModule;
-		IEnumerable<IAttribute?> IEntity.GetAttributes() => ReducedFrom.GetAttributes();
-		IEnumerable<IAttribute?> IMethod.GetReturnTypeAttributes() => ReducedFrom.GetReturnTypeAttributes();
+		public IModule ParentModule => ReducedFrom.ParentModule;
+		IEnumerable<IAttribute> IEntity.GetAttributes() => ReducedFrom.GetAttributes();
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => ReducedFrom.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => ReducedFrom.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => ReducedFrom.ThisIsRefReadOnly;
 		bool IMethod.IsInitOnly => ReducedFrom.IsInitOnly;
@@ -149,7 +170,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ICompilation Compilation => ReducedFrom.Compilation;
 
-		public override bool Equals(object? obj)
+		public override bool Equals(object obj)
 		{
 			if (obj is not LocalFunctionMethod other)
 				return false;

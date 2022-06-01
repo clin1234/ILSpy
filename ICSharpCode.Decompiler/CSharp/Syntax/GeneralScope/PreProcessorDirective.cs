@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public string? FileName {
+		public string FileName {
 			get;
 			set;
 		}
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
-		public static readonly Role<PrimitiveExpression?> WarningRole = new("Warning", null);
+		public static readonly Role<PrimitiveExpression> WarningRole = new("Warning", null);
 
 		public static readonly TokenRole PragmaKeywordRole = new("#pragma");
 		public static readonly TokenRole WarningKeywordRole = new("warning");

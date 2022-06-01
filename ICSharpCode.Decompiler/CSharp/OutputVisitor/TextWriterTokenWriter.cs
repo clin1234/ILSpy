@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Writes C# code into a TextWriter.
 	/// </summary>
-	public sealed class TextWriterTokenWriter : TokenWriter, ILocatable
+	internal sealed class TextWriterTokenWriter : TokenWriter, ILocatable
 	{
 		readonly TextWriter textWriter;
 		bool isAtStartOfLine = true;
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int Length { get; private set; }
 
-		public override void WriteIdentifier(Identifier? identifier)
+		public override void WriteIdentifier(Identifier identifier)
 		{
 			WriteIndentation();
 			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier))

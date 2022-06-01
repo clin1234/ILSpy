@@ -33,13 +33,13 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// Description of DecompilerException.
 	/// </summary>
-	public sealed class DecompilerException : Exception
+	internal sealed class DecompilerException : Exception
 	{
-		public DecompilerException(MetadataModule? module, IEntity decompiledEntity,
-			Exception innerException, string? message = null)
+		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
+			Exception innerException, string message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
-			this.File = module?.PEFile;
+			this.File = module.PEFile;
 		}
 
 		public DecompilerException(PEFile? file, string message, Exception innerException)
@@ -48,13 +48,13 @@ namespace ICSharpCode.Decompiler
 			this.File = file;
 		}
 
-		private string FileName => File?.FileName;
+		private string FileName => File.FileName;
 
-		private PEFile? File { get; }
+		private PEFile File { get; }
 
 		public override string StackTrace => GetStackTrace(this);
 
-		static string GetDefaultMessage(IEntity? entity)
+		static string GetDefaultMessage(IEntity entity)
 		{
 			if (entity == null)
 				return "Error decompiling";
@@ -65,8 +65,8 @@ namespace ICSharpCode.Decompiler
 
 		string ToString(Exception exception)
 		{
-			if (exception is null) throw new ArgumentNullException(nameof(exception));
-			string? exceptionType = GetTypeName(exception);
+			ArgumentNullException.ThrowIfNull(exception);
+			string exceptionType = GetTypeName(exception);
 			string stacktrace = GetStackTrace(exception);
 			while (exception.InnerException != null)
 			{
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler
 
 		static string? GetTypeName(Exception exception)
 		{
-			string? type = exception.GetType().FullName;
+			string type = exception.GetType().FullName;
 			if (exception is ExternalException or IOException)
 			{
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";

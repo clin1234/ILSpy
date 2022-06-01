@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL
 				targetBlock.IncomingEdgeCount--;
 		}
 
-		internal static bool GetExecutesFinallyBlock(ILInstruction inst, BlockContainer container)
+		internal static bool GetExecutesFinallyBlock(ILInstruction? inst, BlockContainer? container)
 		{
 			for (; inst != container && inst != null; inst = inst.Parent)
 			{

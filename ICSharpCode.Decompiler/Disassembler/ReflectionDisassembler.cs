@@ -87,9 +87,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public bool ExpandMemberDefinitions { get; set; } = false;
 
-		public IAssemblyResolver AssemblyResolver { get; set; }
+		public IAssemblyResolver AssemblyResolver { get; init; }
 
-		public void DisassembleNamespace(string? nameSpace, PEFile? module, IEnumerable<TypeDefinitionHandle> types)
+		public void DisassembleNamespace(string nameSpace, PEFile module, IEnumerable<TypeDefinitionHandle> types)
 		{
 			if (!string.IsNullOrEmpty(nameSpace))
 			{
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void WriteAssemblyHeader(PEFile? module)
+		public void WriteAssemblyHeader(PEFile module)
 		{
 			var metadata = module.Metadata;
 			if (!metadata.IsAssembly)
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void WriteModuleHeader(PEFile? module, bool skipMVID = false)
+		public void WriteModuleHeader(PEFile module, bool skipMVID = false)
 		{
 			var metadata = module.Metadata;
 
@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteAttributes(module, metadata.GetCustomAttributes(EntityHandle.ModuleDefinition));
 		}
 
-		public void WriteModuleContents(PEFile? module)
+		public void WriteModuleContents(PEFile module)
 		{
 			foreach (var handle in module.Metadata.GetTopLevelTypeDefinitions())
 			{
@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleMethodHeaderInternal(module, handle, genericContext);
 		}
 
-		void DisassembleMethodHeaderInternal(PEFile? module, MethodDefinitionHandle handle,
+		void DisassembleMethodHeaderInternal(PEFile module, MethodDefinitionHandle handle,
 			MetadataGenericContext genericContext)
 		{
 			var metadata = module.Metadata;
@@ -578,7 +578,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		#region Write Security Declarations
 
-		void WriteSecurityDeclarations(PEFile? module, DeclarativeSecurityAttributeHandleCollection secDeclProvider)
+		void WriteSecurityDeclarations(PEFile module, DeclarativeSecurityAttributeHandleCollection secDeclProvider)
 		{
 			if (secDeclProvider.Count == 0)
 				return;
@@ -676,8 +676,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		sealed class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string)>
 		{
-			readonly PEFile? module;
+			readonly PEFile module;
 			readonly IAssemblyResolver resolver;
+
+			PEFile mscorlib;
 
 			PEFile? mscorlib;
 
@@ -740,7 +742,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
 				string[] typeNameParts = nameParts[0].Split('.');
-				PEFile? containingModule = null;
+				PEFile containingModule = null;
 				TypeDefinitionHandle typeDefHandle;
 				// if we deal with an assembly-qualified name, resolve the assembly
 				if (nameParts.Length == 2)
@@ -810,7 +812,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 
-			bool TryResolveMscorlib(out PEFile? mscorlib)
+			bool TryResolveMscorlib(out PEFile mscorlib)
 			{
 				mscorlib = null;
 				if (this.mscorlib != null)
@@ -846,7 +848,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					currentAssemblyName = "<ERR: invalid assembly name>";
 				}
 
-				if (!module.Metadata.TryGetFullAssemblyName(out string _))
+				if (!module.Metadata.TryGetFullAssemblyName(out currentFullAssemblyName))
 				{
 				}
 			}
@@ -982,7 +984,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("'" + DisassemblerHelpers.EscapeString(value.ToString()).Replace("'", "\\'") + "'");
 					break;
 				case "type":
-					var info = ((PrimitiveTypeCode Code, string? Name))value;
+					var info = ((PrimitiveTypeCode Code, string Name))value;
 					output.Write(info.Name.StartsWith("enum ", StringComparison.Ordinal) ? info.Name[5..] : info.Name);
 					break;
 				default:
@@ -1327,7 +1329,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 		}
 
-		void WriteGenericParameterAttributes(PEFile? module, MetadataGenericContext context,
+		void WriteGenericParameterAttributes(PEFile module, MetadataGenericContext context,
 			GenericParameterHandle handle)
 		{
 			var metadata = module.Metadata;
@@ -1521,7 +1523,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleFieldHeaderInternal(module, handle, metadata, fieldDefinition);
 		}
 
-		private char DisassembleFieldHeaderInternal(PEFile? module, FieldDefinitionHandle handle,
+		private char DisassembleFieldHeaderInternal(PEFile module, FieldDefinitionHandle handle,
 			MetadataReader metadata, FieldDefinition fieldDefinition)
 		{
 			output.WriteReference(module, handle, ".field", isDefinition: true);
@@ -1619,7 +1621,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassemblePropertyHeaderInternal(module, property, metadata, propertyDefinition);
 		}
 
-		private PropertyAccessors DisassemblePropertyHeaderInternal(PEFile? module, PropertyDefinitionHandle handle,
+		private PropertyAccessors DisassemblePropertyHeaderInternal(PEFile module, PropertyDefinitionHandle handle,
 			MetadataReader metadata, PropertyDefinition propertyDefinition)
 		{
 			output.WriteReference(module, handle, ".property", isDefinition: true);
@@ -1698,7 +1700,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleEventHeaderInternal(module, handle, eventDefinition, accessors);
 		}
 
-		private void DisassembleEventHeaderInternal(PEFile? module, EventDefinitionHandle handle,
+		private void DisassembleEventHeaderInternal(PEFile module, EventDefinitionHandle handle,
 			EventDefinition eventDefinition, EventAccessors accessors)
 		{
 			TypeDefinitionHandle declaringType;
@@ -1898,7 +1900,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleTypeHeaderInternal(module, type, typeDefinition, genericContext);
 		}
 
-		private void DisassembleTypeHeaderInternal(PEFile? module, TypeDefinitionHandle handle,
+		private void DisassembleTypeHeaderInternal(PEFile module, TypeDefinitionHandle handle,
 			TypeDefinition typeDefinition, MetadataGenericContext genericContext)
 		{
 			output.WriteReference(module, handle, ".class", isDefinition: true);
@@ -1931,7 +1933,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void WriteTypeParameters(ITextOutput output, PEFile? module, MetadataGenericContext context,
+		void WriteTypeParameters(ITextOutput output, PEFile module, MetadataGenericContext context,
 			GenericParameterHandleCollection p)
 		{
 			if (p.Count > 0)
@@ -1997,7 +1999,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		#region Helper methods
 
-		void WriteAttributes(PEFile? module, CustomAttributeHandleCollection attributes)
+		void WriteAttributes(PEFile module, CustomAttributeHandleCollection attributes)
 		{
 			var metadata = module.Metadata;
 			foreach (CustomAttributeHandle a in attributes)

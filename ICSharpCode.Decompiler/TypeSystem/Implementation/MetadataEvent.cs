@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly EventAccessors accessors;
 		readonly EventDefinitionHandle handle;
-		readonly MetadataModule? module;
+		readonly MetadataModule module;
 
 		// lazy-loaded:
 		IType returnType;
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region Attributes
 
-		public IEnumerable<IAttribute?> GetAttributes()
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
@@ -132,12 +132,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public IMember Specialize(TypeParameterSubstitution? substitution)
+		public IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedEvent.Create(this, substitution);
 		}

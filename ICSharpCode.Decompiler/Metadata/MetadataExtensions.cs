@@ -15,7 +15,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public static class MetadataExtensions
+	internal static class MetadataExtensions
 	{
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
 			new(new SimpleCompilation(MinimalCorlib.Instance));
@@ -24,15 +24,15 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// An attribute type provider that can be used to decode attribute signatures
 		/// that only mention built-in types.
 		/// </summary>
-		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
+		public static SRM.ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
 			get => minimalCorlibTypeProvider;
 		}
 
-		public static ISignatureTypeProvider<IType, GenericContext> MinimalSignatureTypeProvider {
+		public static SRM.ISignatureTypeProvider<IType, GenericContext> MinimalSignatureTypeProvider {
 			get => minimalCorlibTypeProvider;
 		}
 
-		static HashAlgorithm GetHashAlgorithm(this MetadataReader reader)
+		static HashAlgorithm GetHashAlgorithm(this SRM.MetadataReader reader)
 		{
 			return reader.GetAssemblyDefinition().HashAlgorithm switch {
 				AssemblyHashAlgorithm.None =>
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			};
 		}
 
-		static string CalculatePublicKeyToken(BlobHandle blob, MetadataReader reader)
+		static string CalculatePublicKeyToken(SRM.BlobHandle blob, SRM.MetadataReader reader)
 		{
 			// Calculate public key token:
 			// 1. hash the public key using the appropriate algorithm.
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);
 		}
 
-		public static string GetPublicKeyToken(this MetadataReader reader)
+		private static string GetPublicKeyToken(this SRM.MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
 				return string.Empty;
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return publicKey;
 		}
 
-		public static string GetFullAssemblyName(this MetadataReader reader)
+		public static string GetFullAssemblyName(this SRM.MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
 				return string.Empty;
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			       $"PublicKeyToken={publicKey}";
 		}
 
-		public static bool TryGetFullAssemblyName(this MetadataReader reader, out string? assemblyName)
+		public static bool TryGetFullAssemblyName(this SRM.MetadataReader reader, out string assemblyName)
 		{
 			try
 			{
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
+		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, SRM.MetadataReader reader)
 		{
 			StringBuilder builder = new();
 			builder.Append(reader.GetString(reference.Name));
@@ -130,8 +130,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			return builder.ToString();
 		}
 
-		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader,
-			out string? assemblyName)
+		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, SRM.MetadataReader reader,
+			out string assemblyName)
 		{
 			try
 			{
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
-			if (bytes is null) throw new ArgumentNullException(nameof(bytes));
+			ArgumentNullException.ThrowIfNull(bytes);
 
 			StringBuilder sb = new(estimatedLength * 2);
 			foreach (var b in bytes)
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return sb.ToString();
 		}
 
-		private static void AppendHexString(this StringBuilder builder, BlobReader reader)
+		private static void AppendHexString(this StringBuilder builder, SRM.BlobReader reader)
 		{
 			for (int i = 0; i < reader.Length; i++)
 			{
@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string ToHexString(this BlobReader reader)
+		public static string ToHexString(this SRM.BlobReader reader)
 		{
 			StringBuilder sb = new(reader.Length * 3);
 			for (int i = 0; i < reader.Length; i++)
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return sb.ToString();
 		}
 
-		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
+		public static IEnumerable<SRM.TypeDefinitionHandle> GetTopLevelTypeDefinitions(this SRM.MetadataReader reader)
 		{
 			foreach (var handle in reader.TypeDefinitions)
 			{
@@ -221,8 +221,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		[Obsolete("Use MetadataModule.GetDeclaringModule() instead")]
-		public static IModuleReference GetDeclaringModule(this TypeReferenceHandle handle,
-			MetadataReader reader)
+		public static IModuleReference GetDeclaringModule(this SRM.TypeReferenceHandle handle,
+			SRM.MetadataReader reader)
 		{
 			var tr = reader.GetTypeReference(handle);
 			switch (tr.ResolutionScope.Kind)
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// Converts <see cref="KnownTypeCode"/> to <see cref="PrimitiveTypeCode"/>.
 		/// Returns 0 for known types that are not primitive types (such as <see cref="Span{T}"/>).
 		/// </summary>
-		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
+		public static SRM.PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
 		{
 			return typeCode switch {
 				KnownTypeCode.Object => PrimitiveTypeCode.Object,

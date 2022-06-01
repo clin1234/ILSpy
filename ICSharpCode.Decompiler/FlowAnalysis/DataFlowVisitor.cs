@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	internal abstract class DataFlowVisitor<State> : ILVisitor
 		where State : IDataFlowState<State>
 	{
-		private readonly List<(IBranchOrLeaveInstruction?, State)> branchesTriggeringFinally = new();
+		private readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new();
 
 		/// <summary>
 		/// Holds the state for incoming branches.
@@ -574,7 +574,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			int outPos = branchesTriggeringFinallyOldCount;
 			for (int i = branchesTriggeringFinallyOldCount; i < branchesTriggeringFinally.Count; ++i)
 			{
-				(IBranchOrLeaveInstruction? branch, State stateOnBranch) = branchesTriggeringFinally[i];
+				(IBranchOrLeaveInstruction branch, State stateOnBranch) = branchesTriggeringFinally[i];
 				Debug.Assert(((ILInstruction)branch).IsDescendantOf(tryFinally));
 				Debug.Assert(tryFinally.IsDescendantOf(branch.TargetContainer));
 				stateOnBranch.TriggerFinally(state);

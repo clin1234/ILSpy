@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		ShortVariable
 	}
 
-	public static partial class ILOpCodeExtensions
+	internal static partial class ILOpCodeExtensions
 	{
 		public static readonly HashSet<string> ILKeywords;
 
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return (OperandType)operandTypes[index];
 		}
 
-		public static string? GetDisplayName(this ILOpCode opCode)
+		public static string GetDisplayName(this ILOpCode opCode)
 		{
 			ushort index = (ushort)((((int)opCode & 0x200) >> 1) | ((int)opCode & 0xff));
 			if (index >= operandNames.Length)
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			HashSet<string> s = new(keywords);
 			foreach (var inst in operandNames.Where(static inst => !string.IsNullOrEmpty(inst)))
 			{
-				s.Add(inst!);
+				s.Add(inst);
 			}
 
 			return s;

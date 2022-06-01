@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public string MemberName { get; }
 
-		public ReadOnlyCollection<IType>? TypeArguments { get; }
+		public ReadOnlyCollection<IType> TypeArguments { get; }
 
 		public override bool IsError {
 			get { return true; }

@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			this.context = context;
 
-			Dictionary<IField?, CallSiteInfo> callsites = new();
+			Dictionary<IField, CallSiteInfo> callsites = new();
 			HashSet<BlockContainer> modifiedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		ILInstruction? MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall,
+		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall,
 			List<ILInstruction> deadArguments)
 		{
 			switch (callsite.Kind)
@@ -288,7 +288,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField? callSiteCacheField, IType callSiteDelegateType,
+		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType,
 			out CallSiteInfo callSiteInfo, out Block blockAfterInit)
 		{
 			callSiteInfo = default(CallSiteInfo);
@@ -593,7 +593,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField? callSiteCacheField,
+		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField,
 			out IType callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;

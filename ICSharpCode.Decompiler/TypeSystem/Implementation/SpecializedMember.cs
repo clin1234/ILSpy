@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected SpecializedMember(IMember memberDefinition)
 		{
-			if (memberDefinition is null) throw new ArgumentNullException(nameof(memberDefinition));
+			ArgumentNullException.ThrowIfNull(memberDefinition);
 			if (memberDefinition is SpecializedMember)
 				throw new ArgumentException(
 					"Member definition cannot be specialized. Please use IMember.Specialize() instead of directly constructing SpecializedMember instances.");
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Gets the substitution belonging to this specialized member.
 		/// </summary>
-		public TypeParameterSubstitution? Substitution { get; private set; }
+		public TypeParameterSubstitution Substitution { get; private set; }
 
 		public IType DeclaringType {
 			get {
@@ -202,14 +202,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Performs a substitution. This method may only be called by constructors in derived classes.
 		/// </summary>
-		protected void AddSubstitution(TypeParameterSubstitution? newSubstitution)
+		protected void AddSubstitution(TypeParameterSubstitution newSubstitution)
 		{
 			Debug.Assert(declaringType == null);
 			Debug.Assert(returnType == null);
 			this.Substitution = TypeParameterSubstitution.Compose(newSubstitution, this.Substitution);
 		}
 
-		internal IMethod WrapAccessor(ref IMethod? cachingField, IMethod accessorDefinition)
+		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
 		{
 			if (accessorDefinition == null)
 				return null;
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return Empty<IParameter>.Array;
 			}
 
-			var parameters = new IParameter?[paramDefs.Count];
+			var parameters = new IParameter[paramDefs.Count];
 			for (int i = 0; i < parameters.Length; i++)
 			{
 				var p = paramDefs[i];

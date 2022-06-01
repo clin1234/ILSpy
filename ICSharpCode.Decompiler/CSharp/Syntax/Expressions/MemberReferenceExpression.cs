@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public MemberReferenceExpression(Expression? target, string memberName, IEnumerable<AstType?>? arguments = null)
+		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
 		{
 			AddChild(target, Roles.TargetExpression);
 			MemberName = memberName;
@@ -50,12 +50,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public MemberReferenceExpression(Expression? target, string memberName, params AstType[] arguments) : this(
+		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(
 			target, memberName, (IEnumerable<AstType>)arguments)
 		{
 		}
 
-		public Expression? Target {
+		public Expression Target {
 			get {
 				return GetChildByRole(Roles.TargetExpression);
 			}

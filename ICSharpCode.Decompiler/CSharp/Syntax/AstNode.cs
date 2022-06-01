@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return Role.GetByIndex(flags & roleIndexMask);
 			}
 			set {
-				if (value is null) throw new ArgumentNullException(nameof(value));
+				ArgumentNullException.ThrowIfNull(value);
 				if (!value.IsValid(this))
 					throw new ArgumentException("This node is not valid in the new role.");
 				ThrowIfFrozen();
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T GetChildByRole<T>(Role<T>? role) where T : AstNode?
 		{
-			if (role is null) throw new ArgumentNullException(nameof(role));
+			ArgumentNullException.ThrowIfNull(role);
 			uint roleIndex = role.Index;
 			for (var cur = FirstChild; cur != null; cur = cur.NextSibling)
 			{
@@ -258,12 +258,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return role.NullObject;
 		}
 
-		internal AstNode? GetParent(Func<AstNode, bool> pred)
+		internal AstNode? GetParent(Func<AstNode, bool>? pred)
 		{
 			return pred != null ? Ancestors.FirstOrDefault(pred) : Ancestors.FirstOrDefault();
 		}
 
-		internal AstNodeCollection<T?> GetChildrenByRole<T>(Role<T> role) where T : AstNode?
+		internal AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
 		{
 			return new AstNodeCollection<T?>(this, role);
 		}
@@ -277,9 +277,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				oldChild.ReplaceWith(newChild);
 		}
 
-		public void AddChild<T>(T? child, Role<T?> role) where T : AstNode
+		public void AddChild<T>(T? child, Role<T> role) where T : AstNode
 		{
-			if (role is null) throw new ArgumentNullException(nameof(role));
+			ArgumentNullException.ThrowIfNull(role);
 			if (child == null || child.IsNull)
 				return;
 			ThrowIfFrozen();
@@ -325,9 +325,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public void InsertChildBefore<T>(AstNode? nextSibling, T? child, Role<T?> role) where T : AstNode
+		public void InsertChildBefore<T>(AstNode? nextSibling, T? child, Role<T> role) where T : AstNode
 		{
-			if (role is null) throw new ArgumentNullException(nameof(role));
+			ArgumentNullException.ThrowIfNull(role);
 			if (nextSibling == null || nextSibling.IsNull)
 			{
 				AddChild(child, role);
@@ -492,7 +492,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNode? ReplaceWith(Func<AstNode, AstNode?> replaceFunction)
 		{
-			if (replaceFunction is null) throw new ArgumentNullException(nameof(replaceFunction));
+			ArgumentNullException.ThrowIfNull(replaceFunction);
 			if (Parent == null)
 			{
 				throw new InvalidOperationException(this.IsNull

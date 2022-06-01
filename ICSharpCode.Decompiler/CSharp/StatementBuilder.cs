@@ -41,14 +41,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly CancellationToken cancellationToken;
 		readonly ILFunction currentFunction;
 		internal readonly DecompileRun decompileRun;
-		readonly Dictionary<string?, int> duplicateLabels = new();
+		readonly Dictionary<string, int> duplicateLabels = new();
 
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
-		readonly Dictionary<BlockContainer?, string> endContainerLabels = new();
+		readonly Dictionary<BlockContainer, string> endContainerLabels = new();
 
 		private readonly ExpressionBuilder exprBuilder;
 
-		readonly Dictionary<Block?, string> labels = new();
+		readonly Dictionary<Block, string> labels = new();
 		readonly DecompilerSettings settings;
 		readonly IDecompilerTypeSystem typeSystem;
 
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.cancellationToken = cancellationToken;
 		}
 
-		private Statement? Convert(ILInstruction inst)
+		private Statement Convert(ILInstruction inst)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			return inst.AcceptVisitor(this);
@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type,
-			List<(string Key, int Value)>? map = null)
+			List<(string Key, int Value)> map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			SwitchSection? defaultSection = inst.GetDefaultSection();
 
 			var stmt = new SwitchStatement() { Expression = value };
-			Dictionary<SwitchSection?, Syntax.SwitchSection?> translationDictionary = new();
+			Dictionary<IL.SwitchSection, Syntax.SwitchSection> translationDictionary = new();
 			// initialize C# switch sections.
 			foreach (var section in inst.Sections)
 			{
@@ -518,7 +518,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var fixedStmt = new FixedStatement {
 				Type = exprBuilder.ConvertType(inst.Variable.Type)
 			};
-			Expression? initExpr;
+			Expression initExpr;
 			if (inst.Init is GetPinnableReference gpr)
 			{
 				if (gpr.Method != null)
@@ -809,7 +809,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		BlockStatement? ConvertBlockContainer(BlockStatement? blockStatement, BlockContainer container,
+		BlockStatement ConvertBlockContainer(BlockStatement blockStatement, BlockContainer container,
 			IEnumerable<Block> blocks, bool isLoop)
 		{
 			foreach (var block in blocks)
@@ -960,11 +960,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			var transformed = TransformToForeach(inst, resource);
 			if (transformed != null)
 				return transformed.WithILInstruction(inst);
-			AstNode? usingInit = resource;
+			AstNode usingInit = resource;
 			var var = inst.Variable;
 			KnownTypeCode knownTypeCode;
 			IType disposeType;
-			string? disposeTypeMethodName;
+			string disposeTypeMethodName;
 			if (inst.IsAsync)
 			{
 				knownTypeCode = KnownTypeCode.IAsyncDisposable;
@@ -986,7 +986,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					VariableKind.Local, disposeType,
 					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
 				);
-				Expression? disposeInvocation = new InvocationExpression(
+				Expression disposeInvocation = new InvocationExpression(
 					new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression,
 						disposeTypeMethodName));
 				if (inst.IsAsync)
@@ -1041,7 +1041,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Statement? TransformToForeach(UsingInstruction inst, Expression? resource)
+		Statement TransformToForeach(UsingInstruction inst, Expression resource)
 		{
 			if (!settings.ForEachStatement)
 			{
@@ -1129,7 +1129,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// This is the case if an explicit type different from the collection-item-type was used.
 			// For example: foreach (ClassA item in nonGenericEnumerable)
 			var type = singleGetter.Method.ReturnType;
-			ILInstruction? instToReplace = singleGetter;
+			ILInstruction instToReplace = singleGetter;
 			bool useVar = false;
 			switch (instToReplace.Parent)
 			{
@@ -1156,7 +1156,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 			}
 
-			VariableDesignation? designation = null;
+			VariableDesignation designation = null;
 
 			// Handle the required foreach-variable transformation:
 			switch (transformation)
@@ -1211,7 +1211,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 
 			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
-			Statement? firstStatement = foreachBody.Statements.First();
+			Statement firstStatement = foreachBody.Statements.First();
 			if (firstStatement is LabelStatement)
 			{
 				// skip the entry-point label, if any
@@ -1263,7 +1263,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return foreachStmt;
 		}
 
-		internal static VariableDesignation? TranslateDeconstructionDesignation(DeconstructInstruction inst,
+		internal static VariableDesignation TranslateDeconstructionDesignation(DeconstructInstruction inst,
 			bool isForeach)
 		{
 			var assignments = inst.Assignments.Instructions;
@@ -1271,7 +1271,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return ConstructDesignation(inst.Pattern);
 
-			VariableDesignation? ConstructDesignation(MatchInstruction matchInstruction)
+			VariableDesignation ConstructDesignation(MatchInstruction matchInstruction)
 			{
 				var designations = new ParenthesizedVariableDesignation();
 				foreach (var subPattern in matchInstruction.SubPatterns.Cast<MatchInstruction>())
@@ -1310,7 +1310,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(a, b);
 		}
 
-		private bool IsDynamicCastToIEnumerable(Expression? expr, out Expression? dynamicExpr)
+		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
 		{
 			if (expr is not CastExpression cast)
 			{
@@ -1334,7 +1334,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Otherwise returns the unmodified container.
 		/// </summary>
 		/// <param name="optionalLeaveInst">If the leave is a return/break and has no side-effects, we can move the return out of the using-block and put it after the loop, otherwise returns null.</param>
-		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave? optionalLeaveInst)
+		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalLeaveInst)
 		{
 			optionalLeaveInst = null;
 			// Check block structure:
@@ -1421,7 +1421,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <returns><see cref="RequiredGetCurrentTransformation"/> for details.</returns>
 		RequiredGetCurrentTransformation DetectGetCurrentTransformation(BlockContainer usingContainer, Block loopBody,
 			BlockContainer loopContainer, ILVariable enumerator, ILInstruction moveNextUsage,
-			out CallInstruction? singleGetter, out ILVariable foreachVariable)
+			out CallInstruction singleGetter, out ILVariable foreachVariable)
 		{
 			singleGetter = null;
 			foreachVariable = null;
@@ -1475,7 +1475,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return RequiredGetCurrentTransformation.IntroduceNewVariable;
 		}
 
-		bool CanBeDeconstructedInForeach(DeconstructInstruction deconstruction, ILInstruction? singleGetter,
+		bool CanBeDeconstructedInForeach(DeconstructInstruction deconstruction, ILInstruction singleGetter,
 			BlockContainer usingContainer, BlockContainer loopContainer)
 		{
 			ILInstruction testedOperand = deconstruction.Pattern.TestedOperand;
@@ -1493,7 +1493,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expectedType = deconstruction.Pattern.Variable.Type;
 			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(operandType, expectedType))
 				return false;
-			var usedVariables = new HashSet<ILVariable?>(ILVariableEqualityComparer.Instance);
+			var usedVariables = new HashSet<ILVariable>(ILVariableEqualityComparer.Instance);
 			foreach (var item in deconstruction.Assignments.Instructions)
 			{
 				if (!item.MatchStLoc(out var v, out var value))
@@ -1551,7 +1551,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Returns true if singleGetter is a value type and its address is used as setter target.
 		/// </summary>
-		bool CurrentIsStructSetterTarget(ILInstruction inst, CallInstruction? singleGetter)
+		bool CurrentIsStructSetterTarget(ILInstruction inst, CallInstruction singleGetter)
 		{
 			if (inst.Parent is not AddressOf addr)
 				return false;

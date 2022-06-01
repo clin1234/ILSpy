@@ -26,9 +26,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole NewKeywordRole = new("new");
 
-		public static readonly Role<ArraySpecifier?> AdditionalArraySpecifierRole = new("AdditionalArraySpecifier", null);
+		public static readonly Role<ArraySpecifier>
+			AdditionalArraySpecifierRole = new("AdditionalArraySpecifier", null);
 
-		public static readonly Role<ArrayInitializerExpression?> InitializerRole =
+		public static readonly Role<ArrayInitializerExpression> InitializerRole =
 			new("Initializer", ArrayInitializerExpression.Null);
 
 		public CSharpTokenNode NewToken {

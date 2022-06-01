@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		private readonly MetadataReader _reader;
 		private readonly bool _provideBoxingTypeInfo;
 
-		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType?> provider, MetadataReader reader,
+		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType> provider, MetadataReader reader,
 			bool provideBoxingTypeInfo = false)
 		{
 			_reader = reader;
@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			_provideBoxingTypeInfo = provideBoxingTypeInfo;
 		}
 
-		public ImmutableArray<CustomAttributeNamedArgument<TType?>> DecodeNamedArguments(ref BlobReader valueReader,
+		public ImmutableArray<CustomAttributeNamedArgument<TType>> DecodeNamedArguments(ref BlobReader valueReader,
 			int count)
 		{
 			ImmutableArray<CustomAttributeNamedArgument<TType?>>.Builder arguments = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<TType?>>(count);
@@ -200,14 +200,14 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject)
 			{
-				return new CustomAttributeTypedArgument<TType?>(outer.Type,
-					new CustomAttributeTypedArgument<TType?>(info.Type, value));
+				return new CustomAttributeTypedArgument<TType>(outer.Type,
+					new CustomAttributeTypedArgument<TType>(info.Type, value));
 			}
 
 			return new CustomAttributeTypedArgument<TType?>(info.Type, value);
 		}
 
-		private ImmutableArray<CustomAttributeTypedArgument<TType?>>? DecodeArrayArgument(ref BlobReader blobReader,
+		private ImmutableArray<CustomAttributeTypedArgument<TType>>? DecodeArrayArgument(ref BlobReader blobReader,
 			ArgumentTypeInfo info)
 		{
 			int count = blobReader.ReadInt32();
@@ -216,12 +216,12 @@ namespace ICSharpCode.Decompiler.Metadata
 				case -1:
 					return null;
 				case 0:
-					return ImmutableArray<CustomAttributeTypedArgument<TType?>>.Empty;
+					return ImmutableArray<CustomAttributeTypedArgument<TType>>.Empty;
 				case < 0:
 					throw new BadImageFormatException();
 			}
 
-			ArgumentTypeInfo elementInfo = new ArgumentTypeInfo {
+			var elementInfo = new ArgumentTypeInfo {
 				Type = info.ElementType,
 				TypeCode = info.ElementTypeCode,
 			};

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// <summary>
 		/// Gets the string that matches any string.
 		/// </summary>
-		public const string AnyString = "$any$";
+		public static readonly string AnyString = "$any$";
 
 		bool INode.IsNull {
 			get { return false; }
@@ -54,15 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return DoMatch(pos, match);
 		}
 
-		public static bool MatchString(string? pattern, string? text)
+		public static bool MatchString(string pattern, string text)
 		{
 			return pattern == AnyString || pattern == text;
 		}
 
-		public static bool DoMatchCollection(Role role, INode? firstPatternChild, INode? firstOtherChild, Match match)
+		public static bool DoMatchCollection(Role role, INode firstPatternChild, INode firstOtherChild, Match match)
 		{
 			BacktrackingInfo backtrackingInfo = new();
-			Stack<INode?> patternStack = new();
+			Stack<INode> patternStack = new();
 			Stack<PossibleMatch> stack = backtrackingInfo.backtrackingStack;
 			patternStack.Push(firstPatternChild);
 			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
@@ -102,10 +102,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		internal struct PossibleMatch
 		{
-			public readonly INode? NextOther; // next node after the last matched node
+			public readonly INode NextOther; // next node after the last matched node
 			public readonly int Checkpoint; // checkpoint
 
-			public PossibleMatch(INode? nextOther, int checkpoint)
+			public PossibleMatch(INode nextOther, int checkpoint)
 			{
 				this.NextOther = nextOther;
 				this.Checkpoint = checkpoint;

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole UsingKeywordRole = new("using");
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
-		public static readonly Role<AstNode?> ResourceAcquisitionRole = new("ResourceAcquisition", AstNode.Null);
+		public static readonly Role<AstNode> ResourceAcquisitionRole = new("ResourceAcquisition", AstNode.Null);
 
 		public CSharpTokenNode UsingToken {
 			get { return GetChildByRole(UsingKeywordRole); }

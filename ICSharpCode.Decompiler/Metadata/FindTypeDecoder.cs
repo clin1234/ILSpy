@@ -27,12 +27,12 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public sealed class FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
+	internal sealed class FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
 	{
 		readonly MetadataModule? currentModule;
-		readonly PEFile? declaringModule;
+		readonly PEFile declaringModule;
 		readonly TypeDefinitionHandle handle;
-		readonly string namespaceName;
+		readonly string? namespaceName;
 		readonly PrimitiveTypeCode primitiveType;
 		readonly string? typeName;
 

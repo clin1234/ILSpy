@@ -50,8 +50,8 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public readonly string ParameterName;
 
-		public NamedArgumentResolveResult(IParameter? parameter, ResolveResult argument,
-			IParameterizedMember? member = null)
+		public NamedArgumentResolveResult(IParameter parameter, ResolveResult argument,
+			IParameterizedMember member = null)
 			: base(argument.Type)
 		{
 			this.Member = member;

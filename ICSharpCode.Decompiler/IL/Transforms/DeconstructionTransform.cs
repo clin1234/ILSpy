@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (deconstructionResults[0] == null)
 				return false;
 			context.Step("Deconstruction", block.Instructions[startPos]);
-			DeconstructInstruction? replacement = new();
+			DeconstructInstruction replacement = new();
 			IType deconstructedType;
 			if (deconstructMethod == null)
 			{
@@ -451,8 +451,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchAssignment(ILInstruction? inst, out IType targetType, out ILInstruction valueInst,
-			out Action<DeconstructInstruction?> addAssignment)
+		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst,
+			out Action<DeconstructInstruction> addAssignment)
 		{
 			targetType = null;
 			valueInst = null;

@@ -26,7 +26,6 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -901,7 +900,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public bool CanPropagate { get; private set; }
 			public bool UsesInitialValue { get; set; }
 
-			public HashSet<ILInstruction?> Initializers { get; } = new();
+			public HashSet<ILInstruction> Initializers { get; } = new();
 
 			public void Propagate(ILVariable variable)
 			{

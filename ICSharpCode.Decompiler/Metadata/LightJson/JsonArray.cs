@@ -32,7 +32,7 @@ namespace LightJson
 		public JsonArray(params JsonValue[] values)
 			: this()
 		{
-			if (values is null) throw new ArgumentNullException(nameof(values));
+			ArgumentNullException.ThrowIfNull(values);
 
 			foreach (var value in values)
 			{

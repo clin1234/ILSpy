@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public AnonymousTypeCreateExpression(IEnumerable<Expression?> initializers)
+		public AnonymousTypeCreateExpression(IEnumerable<Expression> initializers)
 		{
 			foreach (var ini in initializers)
 			{
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AnonymousTypeCreateExpression(params Expression[] initializer) : this(
-			(IEnumerable<Expression?>)initializer)
+			(IEnumerable<Expression>)initializer)
 		{
 		}
 

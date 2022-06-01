@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (beforeExceptionCaptureBlock == null)
 					continue;
 
-				(Block? noThrowBlock, Block exceptionCaptureBlock, ILVariable objectVariableCopy) =
+				(Block noThrowBlock, Block exceptionCaptureBlock, ILVariable objectVariableCopy) =
 					FindBlockAfterFinally(context, beforeExceptionCaptureBlock, objectVariable);
 				if (noThrowBlock == null || exceptionCaptureBlock == null)
 					continue;
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 
 				StateRangeAnalysis sra = new(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
-				sra.AssignStateRanges(noThrowBlock, LongSet.Universe);
+				sra.AssignStateRanges(noThrowBlock, Util.LongSet.Universe);
 				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
 				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();
 
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							value = 0;
 						}
 
-						if (mapping.TryGetValue(value, out Block? targetBlock))
+						if (mapping.TryGetValue(value, out Block targetBlock))
 						{
 							context.Step(
 								$"branch to finally with state {value} => branch to state target " + targetBlock.Label,
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		static (Block?, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block,
+		static (Block, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block,
 			ILVariable objectVariable)
 		{
 			// Block IL_0327 (incoming: 2) {

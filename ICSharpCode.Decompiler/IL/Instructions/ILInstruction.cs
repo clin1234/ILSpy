@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IEnumerable<ILInstruction> Ancestors {
 			get {
-				for (ILInstruction node = this; node != null; node = node.Parent)
+				for (ILInstruction? node = this; node != null; node = node.Parent)
 				{
 					yield return node;
 				}
@@ -266,9 +266,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		protected void ValidateChild(ILInstruction inst)
+		protected void ValidateChild(ILInstruction? inst)
 		{
-			if (inst is null) throw new ArgumentNullException(nameof(inst));
+			ArgumentNullException.ThrowIfNull(inst);
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILInstruction GetCommonParent(ILInstruction other)
 		{
-			if (other is null) throw new ArgumentNullException(nameof(other));
+			ArgumentNullException.ThrowIfNull(other);
 
 			ILInstruction a = this;
 			ILInstruction b = other;
@@ -357,7 +357,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsBefore(ILInstruction other)
 		{
-			if (other is null) throw new ArgumentNullException(nameof(other));
+			ArgumentNullException.ThrowIfNull(other);
 
 			ILInstruction a = this;
 			ILInstruction? b = other;
@@ -434,7 +434,7 @@ namespace ICSharpCode.Decompiler.IL
 		private protected void MakeDirty()
 		{
 #if DEBUG
-			for (ILInstruction inst = this; inst is { IsDirty: false }; inst = inst.Parent)
+			for (ILInstruction? inst = this; inst is { IsDirty: false }; inst = inst.Parent)
 			{
 				inst.IsDirty = true;
 			}
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void InvalidateFlags()
 		{
-			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
+			for (ILInstruction? inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
 				inst.flags = invalidFlags;
 		}
 
@@ -742,7 +742,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the method returns true, it adds the capture groups (if any) to the match.
 		/// If the method returns false, the match object may remain in a partially-updated state and
 		/// needs to be restored before it can be reused.</returns>
-		protected internal abstract bool PerformMatch(ILInstruction other, ref Match match);
+		protected internal abstract bool PerformMatch(ILInstruction? other, ref Match match);
 
 		/// <summary>
 		/// Attempts matching this instruction against a list of other instructions (or a part of said list).
@@ -945,7 +945,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			}
 
-			readonly object IEnumerator.Current {
+			object IEnumerator.Current {
 				get { return this.Current; }
 			}
 

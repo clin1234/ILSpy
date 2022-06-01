@@ -25,10 +25,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class EntityDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection?> AttributeRole = new("Attribute", null);
-		public static readonly Role<CSharpModifierToken?> ModifierRole = new("Modifier", null);
+		public static readonly Role<AttributeSection> AttributeRole = new("Attribute", null);
+		public static readonly Role<CSharpModifierToken> ModifierRole = new("Modifier", null);
 
-		public static readonly Role<AstType?> PrivateImplementationTypeRole =
+		public static readonly Role<AstType> PrivateImplementationTypeRole =
 			new("PrivateImplementationType", AstType.Null);
 
 		public override NodeType NodeType {
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetModifiers(this, value); }
 		}
 
-		public IEnumerable<CSharpModifierToken?> ModifierTokens {
+		public IEnumerable<CSharpModifierToken> ModifierTokens {
 			get { return GetChildrenByRole(ModifierRole); }
 		}
 

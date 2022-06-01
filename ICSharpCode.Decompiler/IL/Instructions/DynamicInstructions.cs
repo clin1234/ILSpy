@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	public struct CSharpArgumentInfo
 	{
-		public string Name { get; init; }
+		public string? Name { get; init; }
 		public CSharpArgumentInfoFlags Flags { get; init; }
 		public IType CompileTimeType { get; init; }
 
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicInstruction
 	{
-		protected DynamicInstruction(OpCode opCode, CSharpBinderFlags binderFlags, IType context)
+		protected DynamicInstruction(OpCode opCode, CSharpBinderFlags binderFlags, IType? context)
 			: base(opCode)
 		{
 			BinderFlags = binderFlags;
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public CSharpBinderFlags BinderFlags { get; }
-		public IType CallingContext { get; }
+		public IType? CallingContext { get; }
 
 		protected void WriteBinderFlags(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicConvertInstruction
 	{
-		public DynamicConvertInstruction(CSharpBinderFlags binderFlags, IType type, IType context,
+		public DynamicConvertInstruction(CSharpBinderFlags binderFlags, IType type, IType? context,
 			ILInstruction argument)
 			: base(OpCode.DynamicConvertInstruction, binderFlags, context)
 		{
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class DynamicInvokeMemberInstruction
 	{
 		public DynamicInvokeMemberInstruction(CSharpBinderFlags binderFlags, string name, IType[]? typeArguments,
-			IType context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
+			IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicInvokeMemberInstruction, binderFlags, context)
 		{
 			Name = name;
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicGetMemberInstruction
 	{
-		public DynamicGetMemberInstruction(CSharpBinderFlags binderFlags, string name, IType context,
+		public DynamicGetMemberInstruction(CSharpBinderFlags binderFlags, string? name, IType? context,
 			CSharpArgumentInfo targetArgumentInfo, ILInstruction target)
 			: base(OpCode.DynamicGetMemberInstruction, binderFlags, context)
 		{
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL
 			Target = target;
 		}
 
-		public string Name { get; }
+		public string? Name { get; }
 		public CSharpArgumentInfo TargetArgumentInfo { get; }
 
 		public override StackType ResultType => StackType.O;
@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicSetMemberInstruction
 	{
-		public DynamicSetMemberInstruction(CSharpBinderFlags binderFlags, string name, IType context,
+		public DynamicSetMemberInstruction(CSharpBinderFlags binderFlags, string? name, IType? context,
 			CSharpArgumentInfo targetArgumentInfo, ILInstruction target, CSharpArgumentInfo valueArgumentInfo,
 			ILInstruction value)
 			: base(OpCode.DynamicSetMemberInstruction, binderFlags, context)
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL
 			Value = value;
 		}
 
-		public string Name { get; }
+		public string? Name { get; }
 		public CSharpArgumentInfo TargetArgumentInfo { get; }
 		public CSharpArgumentInfo ValueArgumentInfo { get; }
 
@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicGetIndexInstruction
 	{
-		public DynamicGetIndexInstruction(CSharpBinderFlags binderFlags, IType context,
+		public DynamicGetIndexInstruction(CSharpBinderFlags binderFlags, IType? context,
 			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicGetIndexInstruction, binderFlags, context)
 		{
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicSetIndexInstruction
 	{
-		public DynamicSetIndexInstruction(CSharpBinderFlags binderFlags, IType context,
+		public DynamicSetIndexInstruction(CSharpBinderFlags binderFlags, IType? context,
 			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicSetIndexInstruction, binderFlags, context)
 		{
@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		readonly IType? resultType;
 
-		public DynamicInvokeConstructorInstruction(CSharpBinderFlags binderFlags, IType? type, IType context,
+		public DynamicInvokeConstructorInstruction(CSharpBinderFlags binderFlags, IType? type, IType? context,
 			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicInvokeConstructorInstruction, binderFlags, context)
 		{
@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicBinaryOperatorInstruction
 	{
-		public DynamicBinaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType context,
+		public DynamicBinaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context,
 			CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo,
 			ILInstruction right)
 			: base(OpCode.DynamicBinaryOperatorInstruction, binderFlags, context)
@@ -439,7 +439,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicLogicOperatorInstruction
 	{
-		public DynamicLogicOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType context,
+		public DynamicLogicOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context,
 			CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo,
 			ILInstruction right)
 			: base(OpCode.DynamicLogicOperatorInstruction, binderFlags, context)
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicUnaryOperatorInstruction
 	{
-		public DynamicUnaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType context,
+		public DynamicUnaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context,
 			CSharpArgumentInfo operandArgumentInfo, ILInstruction operand)
 			: base(OpCode.DynamicUnaryOperatorInstruction, binderFlags, context)
 		{
@@ -534,7 +534,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicInvokeInstruction
 	{
-		public DynamicInvokeInstruction(CSharpBinderFlags binderFlags, IType context,
+		public DynamicInvokeInstruction(CSharpBinderFlags binderFlags, IType? context,
 			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicInvokeInstruction, binderFlags, context)
 		{
@@ -566,7 +566,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicIsEventInstruction
 	{
-		public DynamicIsEventInstruction(CSharpBinderFlags binderFlags, string name, IType context,
+		public DynamicIsEventInstruction(CSharpBinderFlags binderFlags, string? name, IType? context,
 			ILInstruction argument)
 			: base(OpCode.DynamicIsEventInstruction, binderFlags, context)
 		{
@@ -574,7 +574,7 @@ namespace ICSharpCode.Decompiler.IL
 			Argument = argument;
 		}
 
-		public string Name { get; }
+		public string? Name { get; }
 
 		public override StackType ResultType => StackType.I4;
 

@@ -723,7 +723,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
-			StringWriter output = new();
+			StringWriter output = new StringWriter();
 			CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
 			var visitor = new CSharpOutputVisitor(output, formattingPolicy);
 			syntaxTree.AcceptVisitor(visitor);

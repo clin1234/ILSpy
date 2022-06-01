@@ -54,6 +54,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"),
 				new Repeat(new AnyNode())));
 
+		TransformContext context;
+
+		static readonly AstNode thisCallPattern = new ExpressionStatement(
+			new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"),
+				new Repeat(new AnyNode())));
+
 		TransformContext? context;
 
 		public void Run(AstNode? node, TransformContext context)
@@ -141,13 +147,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 
-			if (context != null
-			    && context.DecompileRun.RecordDecompilers.TryGetValue(currentCtor.DeclaringTypeDefinition, out var record) 
+			if (context.DecompileRun.RecordDecompilers.TryGetValue(currentCtor.DeclaringTypeDefinition, out var record)
 			    && currentCtor.Equals(record.PrimaryConstructor))
 			{
 				if (record.IsInheritedRecord &&
 				    ci?.ConstructorInitializerType == ConstructorInitializerType.Base &&
-				    constructorDeclaration.Parent is TypeDeclaration { BaseTypes.Count: >= 1 } typeDecl)
+				    constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
 				{
 					var baseType = typeDecl.BaseTypes.First();
 					var newBaseType = new InvocationAstType();
@@ -160,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitTypeDeclaration(TypeDeclaration? typeDeclaration)
+		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
 			// Handle initializers on instance fields
 			HandleInstanceFieldInitializers(typeDeclaration.Members);
@@ -302,7 +307,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (contextTypeDefinition == null)
 				return;
 			// first get non-static constructor declarations from the AST
-			ConstructorDeclaration?[] instanceCtors = members.OfType<ConstructorDeclaration>()
+			var instanceCtors = members.OfType<ConstructorDeclaration>()
 				.Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			// if there's exactly one ctor and it's part of a type declaration or there's more than one member in the current selection
 			// we can remove the constructor. (We do not want to hide the constructor if the user explicitly selected it in the tree view.) 
@@ -333,7 +338,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>()
-				.FirstOrDefault(static c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
+				.FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null)
 			{
 				bool ctorIsUnsafe = staticCtor.HasModifier(Modifiers.Unsafe);

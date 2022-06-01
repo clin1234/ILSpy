@@ -25,17 +25,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Provides helper methods for inheritance.
 	/// </summary>
-	public static class InheritanceHelper
+	internal static class InheritanceHelper
 	{
 		#region GetDerivedMember
 
 		/// <summary>
 		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
 		/// </summary>
-		public static IMember? GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
+		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
 		{
-			if (baseMember is null) throw new ArgumentNullException(nameof(baseMember));
-			if (derivedType is null) throw new ArgumentNullException(nameof(derivedType));
+			ArgumentNullException.ThrowIfNull(baseMember);
+			ArgumentNullException.ThrowIfNull(derivedType);
 
 			if (baseMember.Compilation != derivedType.Compilation)
 				throw new ArgumentException("baseMember and derivedType must be from the same compilation");
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </returns>
 		public static IEnumerable<IMember> GetBaseMembers(IMember member, bool includeImplementedInterfaces)
 		{
-			if (member is null) throw new ArgumentNullException(nameof(member));
+			ArgumentNullException.ThrowIfNull(member);
 
 			if (includeImplementedInterfaces)
 			{
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Attributes
 
-		internal static IEnumerable<IAttribute?> GetAttributes(ITypeDefinition typeDef)
+		internal static IEnumerable<IAttribute> GetAttributes(ITypeDefinition typeDef)
 		{
 			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
 			{

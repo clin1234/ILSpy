@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public sealed class NamedNode : Pattern
 	{
-		public NamedNode(string groupName, INode? childNode)
+		public NamedNode(string groupName, INode childNode)
 		{
 			this.GroupName = groupName;
 			this.ChildNode = childNode ?? throw new ArgumentNullException(nameof(childNode));

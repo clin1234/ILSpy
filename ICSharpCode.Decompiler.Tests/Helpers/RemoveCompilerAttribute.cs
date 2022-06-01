@@ -18,8 +18,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			var section = (AttributeSection)attribute.Parent;
 			SimpleType type = attribute.Type as SimpleType;
-			if (section?.AttributeTarget == "assembly" &&
-			    type?.Identifier is "CompilationRelaxations" or "RuntimeCompatibility" or "SecurityPermission"
+			if (section.AttributeTarget == "assembly" &&
+			    type.Identifier is "CompilationRelaxations" or "RuntimeCompatibility" or "SecurityPermission"
 				    or "PermissionSet" or "AssemblyVersion" or "Debuggable" or "TargetFramework")
 			{
 				attribute.Remove();
@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					section.Remove();
 			}
 
-			if (section?.AttributeTarget == "module" && type?.Identifier == "UnverifiableCode")
+			if (section.AttributeTarget == "module" && type.Identifier == "UnverifiableCode")
 			{
 				attribute.Remove();
 				if (section.Attributes.Count == 0)

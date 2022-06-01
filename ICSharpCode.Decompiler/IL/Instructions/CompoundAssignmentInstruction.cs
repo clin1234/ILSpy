@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly Sign Sign;
 
-		public NumericCompoundAssign(BinaryNumericInstruction? binary, ILInstruction target,
+		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target,
 			CompoundTargetKind targetKind, ILInstruction value, IType type, CompoundEvalMode evalMode)
 			: base(OpCode.NumericCompoundAssign, evalMode, target, targetKind, value)
 		{
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
 		/// </summary>
-		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction? binary, IType type,
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type,
 			DecompilerSettings? settings)
 		{
 			if (binary is { IsLifted: true })
@@ -200,47 +200,14 @@ namespace ICSharpCode.Decompiler.IL
 				type = NullableType.GetUnderlyingType(type);
 			}
 
-			switch (type.Kind)
+			if (type.Kind == TypeKind.Unknown)
 			{
-				case TypeKind.Unknown:
-					return false; // avoid introducing a potentially-incorrect compound assignment
-				case TypeKind.Enum:
-					if (binary != null)
-					{
-						switch (binary.Operator)
-						{
-							case BinaryNumericOperator.Add:
-							case BinaryNumericOperator.Sub:
-							case BinaryNumericOperator.BitAnd:
-							case BinaryNumericOperator.BitOr:
-							case BinaryNumericOperator.BitXor:
-								break; // OK
-							default:
-								return false; // operator not supported on enum types
-						}
-					}
+				return false; // avoid introducing a potentially-incorrect compound assignment
+			}
 
-					break;
-				case TypeKind.Pointer:
-					if (binary != null)
-					{
-						switch (binary.Operator)
-						{
-							case BinaryNumericOperator.Add:
-							case BinaryNumericOperator.Sub:
-								// ensure that the byte offset is a multiple of the pointer size
-								return PointerArithmeticOffset.Detect(
-									binary.Right,
-									((PointerType)type).ElementType,
-									checkForOverflow: binary.CheckForOverflow
-								) != null;
-							default:
-								return false; // operator not supported on pointer types
-						}
-					}
-
-					break;
-				default:
+			if (type.Kind == TypeKind.Enum)
+			{
+				switch (binary.Operator)
 				{
 					if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
 					{
@@ -267,8 +234,42 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				}
 			}
+			else if (type.Kind == TypeKind.Pointer)
+			{
+				switch (binary.Operator)
+				{
+					case BinaryNumericOperator.Add:
+					case BinaryNumericOperator.Sub:
+						// ensure that the byte offset is a multiple of the pointer size
+						return PointerArithmeticOffset.Detect(
+							binary.Right,
+							((PointerType)type).ElementType,
+							checkForOverflow: binary.CheckForOverflow
+						) != null;
+					default:
+						return false; // operator not supported on pointer types
+				}
+			}
+			else if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
+			{
+				// "target.intptr *= 2;" is compiler error, but
+				// "target.intptr *= (nint)2;" works
+				if (settings is { NativeIntegers: false })
+				{
+					// But if native integers are not available, we cannot use compound assignment.
+					return false;
+				}
 
-			if (binary != null && binary.Sign != Sign.None)
+				// The trick with casting the RHS to n(u)int doesn't work for shifts:
+				switch (binary.Operator)
+				{
+					case BinaryNumericOperator.ShiftLeft:
+					case BinaryNumericOperator.ShiftRight:
+						return false;
+				}
+			}
+
+			if (binary.Sign != Sign.None)
 			{
 				if (type.IsCSharpSmallIntegerType())
 				{
@@ -308,7 +309,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(".ovf");
 			}
 
-			switch (Sign)
+			if (Sign == Sign.Unsigned)
 			{
 				case Sign.Unsigned:
 					output.Write(".unsigned");

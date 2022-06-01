@@ -92,6 +92,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType Create(IEnumerable<IType> types)
 		{
 			IType[] arr = types.Distinct().ToArray();
+			foreach (IType type in arr)
+			{
+				if (type == null)
+					throw new ArgumentNullException();
+			}
+
+			return arr.Length switch {
+				0 => SpecialType.UnknownType,
+				1 => arr[0],
+				_ => new IntersectionType(arr)
+			};
+		}
+
+		public override IEnumerable<IType> DirectBaseTypes {
+			get { return Types; }
+		}
+
+		public static IType Create(IEnumerable<IType> types)
+		{
+			IType[] arr = types.Distinct().ToArray();
 			foreach (IType? type in arr)
 			{
 				if (type == null)
@@ -136,13 +156,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter = null,
-			GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+			GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}

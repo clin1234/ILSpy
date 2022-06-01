@@ -8,7 +8,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// NormalizeTypeVisitor that does not normalize type parameters,
 		/// but performs type erasure (object->dynamic; tuple->underlying type).
 		/// </summary>
-		public static readonly NormalizeTypeVisitor? TypeErasure = new() {
+		internal static readonly NormalizeTypeVisitor TypeErasure = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = true,
@@ -19,7 +19,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			RemoveNullability = true,
 		};
 
-		public static readonly NormalizeTypeVisitor IgnoreNullabilityAndTuples = new() {
+		internal static readonly NormalizeTypeVisitor IgnoreNullabilityAndTuples = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = false,
@@ -42,12 +42,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public bool EquivalentTypes(IType a, IType b)
 		{
-			a = a?.AcceptVisitor(this);
-			b = b?.AcceptVisitor(this);
+			a = a.AcceptVisitor(this);
+			b = b.AcceptVisitor(this);
 			return a.Equals(b);
 		}
 
-		public override IType VisitTypeParameter(ITypeParameter type)
+		internal override IType VisitTypeParameter(ITypeParameter type)
 		{
 			switch (type.OwnerType)
 			{
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp)
 					{
-						return natp.TypeWithoutAnnotation?.AcceptVisitor(this);
+						return natp.TypeWithoutAnnotation.AcceptVisitor(this);
 					}
 
 					return base.VisitTypeParameter(type);
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public override IType VisitTypeDefinition(ITypeDefinition type)
+		internal override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			switch (type.KnownTypeCode)
 			{
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					// we do this the opposite direction, so that we don't need a compilation to find the object type.
 					if (RemoveNullability)
 						return SpecialType.Dynamic;
-					return SpecialType.Dynamic?.ChangeNullability(type.Nullability);
+					return SpecialType.Dynamic.ChangeNullability(type.Nullability);
 				case KnownTypeCode.IntPtr when IntPtrToNInt:
 					return SpecialType.NInt;
 				case KnownTypeCode.UIntPtr when IntPtrToNInt:
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitTypeDefinition(type);
 		}
 
-		public override IType VisitTupleType(TupleType type)
+		internal override IType VisitTupleType(TupleType type)
 		{
 			if (TupleToUnderlyingType)
 			{
@@ -96,35 +96,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitTupleType(type);
 		}
 
-		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		internal override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (RemoveNullability)
-				return type.TypeWithoutAnnotation?.AcceptVisitor(this);
+				return type.TypeWithoutAnnotation.AcceptVisitor(this);
 			return base.VisitNullabilityAnnotatedType(type);
 		}
 
-		public override IType VisitArrayType(ArrayType type)
+		internal override IType VisitArrayType(ArrayType type)
 		{
 			if (RemoveNullability)
-				return base.VisitArrayType(type)?.ChangeNullability(Nullability.Oblivious);
+				return base.VisitArrayType(type).ChangeNullability(Nullability.Oblivious);
 			return base.VisitArrayType(type);
 		}
 
-		public override IType VisitModOpt(ModifiedType type)
+		internal override IType VisitModOpt(ModifiedType type)
 		{
 			if (RemoveModOpt)
 			{
-				return type.ElementType?.AcceptVisitor(this);
+				return type.ElementType.AcceptVisitor(this);
 			}
 
 			return base.VisitModOpt(type);
 		}
 
-		public override IType VisitModReq(ModifiedType type)
+		internal override IType VisitModReq(ModifiedType type)
 		{
 			if (RemoveModReq)
 			{
-				return type.ElementType?.AcceptVisitor(this);
+				return type.ElementType.AcceptVisitor(this);
 			}
 
 			return base.VisitModReq(type);

@@ -56,14 +56,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		public void Run(AstNode? rootNode, TransformContext context)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
 			CombineQueries(rootNode, new Dictionary<string, object>());
 		}
 
-		void CombineQueries(AstNode? node, Dictionary<string, object> fromOrLetIdentifiers)
+		void CombineQueries(AstNode node, Dictionary<string, object> fromOrLetIdentifiers)
 		{
 			AstNode next;
 			for (AstNode? child = node.FirstChild; child != null; child = next)

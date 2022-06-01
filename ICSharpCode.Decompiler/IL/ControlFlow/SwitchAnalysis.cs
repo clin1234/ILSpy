@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			var remainingValues = inputValues.ExceptWith(trueValues);
-			ILInstruction? falseInst = block.Instructions.Last();
+			ILInstruction falseInst = block.Instructions.Last();
 			if (falseInst.MatchBranch(out Block falseBlock) && AnalyzeBlock(falseBlock, remainingValues))
 			{
 				// OK, false block was further analyzed.

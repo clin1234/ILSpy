@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.Util
 			string[] bPath = baseDirectoryPath != "."
 				? baseDirectoryPath.TrimEnd(separators).Split(separators)
 				: Array.Empty<string>();
-			string[]? aPath = absPath != "." ? absPath?.TrimEnd(separators).Split(separators) : Array.Empty<string>();
+			string[] aPath = absPath != "." ? absPath.TrimEnd(separators).Split(separators) : Array.Empty<string>();
 			int indx = 0;
 			for (; indx < Math.Min(bPath.Length, aPath.Length); ++indx)
 			{

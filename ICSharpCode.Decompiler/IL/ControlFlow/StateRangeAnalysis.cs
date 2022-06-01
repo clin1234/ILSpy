@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			IEnumerable<(LongSet, Block?)> GetMapping()
 			{
 				// First, consider container exits:
-				foreach ((Block block, LongSet states) in ranges)
+				foreach ((Block? block, LongSet states) in ranges)
 				{
 					if (block.Parent != container)
 						yield return (states, block);

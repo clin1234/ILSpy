@@ -16,13 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Concurrent;
-using System.Threading;
-
-using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpyX.Abstractions;
-
 namespace ICSharpCode.ILSpyX.Search
 {
 	public class MemberSearchStrategy : AbstractEntitySearchStrategy

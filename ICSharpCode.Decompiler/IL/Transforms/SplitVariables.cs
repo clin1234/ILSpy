@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		static AddressUse HandleCall(ILInstruction addressLoadingInstruction, ILVariable targetVar,
-			CallInstruction? call)
+			CallInstruction call)
 		{
 			// Address is passed to method.
 			// We'll assume the method only uses the address locally,

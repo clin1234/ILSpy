@@ -31,6 +31,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyCollection<IType> effectiveInterfaceSet;
 
+		IReadOnlyCollection<IType> effectiveInterfaceSet;
+
 		protected AbstractTypeParameter(IEntity? owner, int index, string name, VarianceModifier variance)
 		{
 			this.Owner = owner ?? throw new ArgumentNullException(nameof(owner));
@@ -42,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Variance = variance;
 		}
 
-		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string? name,
+		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name,
 			VarianceModifier variance)
 		{
 			this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
@@ -215,13 +217,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return EmptyList<IType>.Instance;
 		}
 
-		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType?>? typeArguments, Predicate<ITypeDefinition>? filter,
+		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter,
 			GetMemberOptions options)
 		{
 			return EmptyList<IType>.Instance;
 		}
 
-		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod>? filter = null,
+		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null,
 			GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -241,7 +243,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetConstructors(this, filter, options);
 		}
 
-		public IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null,
+		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -249,7 +251,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 
-		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter = null,
+		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -257,7 +259,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetMethods(this, typeArguments, FilterNonStatic(filter), options);
 		}
 
-		public IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null,
+		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -265,7 +267,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetProperties(this, FilterNonStatic(filter), options);
 		}
 
-		public IEnumerable<IField> GetFields(Predicate<IField>? filter = null,
+		public IEnumerable<IField> GetFields(Predicate<IField> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -273,7 +275,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetFields(this, FilterNonStatic(filter), options);
 		}
 
-		public IEnumerable<IEvent> GetEvents(Predicate<IEvent>? filter = null,
+		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -281,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetEvents(this, FilterNonStatic(filter), options);
 		}
 
-		public IEnumerable<IMember> GetMembers(Predicate<IMember>? filter = null,
+		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -289,7 +291,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetMembers(this, FilterNonStatic(filter), options);
 		}
 
-		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null,
+		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -362,7 +364,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return result.ToArray();
 		}
 
-		static Predicate<T> FilterNonStatic<T>(Predicate<T>? filter) where T : class, IMember
+		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
 		{
 			if (filter == null)
 				return member => !member.IsStatic;

@@ -124,6 +124,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						return new NamedArgumentExpression(name, AddAnnotations(arg.Expression));
 					});
 
+				Debug.Assert(skipCount == 0);
+				return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
+					(arg, name) => {
+						if (name == null)
+							return AddAnnotations(arg.Expression);
+						return new NamedArgumentExpression(name, AddAnnotations(arg.Expression));
+					});
+
 				Expression? AddAnnotations(Expression? expression)
 				{
 					if (!useImplicitlyTypedOut)
@@ -360,7 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (tokens.Count > 0)
 				{
-					foreach ((TokenKind kind, int index, string? text) in tokens)
+					foreach ((TokenKind kind, int index, string text) in tokens)
 					{
 						TranslatedExpression argument;
 						switch (kind)
@@ -587,7 +595,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		private bool TryGetStringInterpolationTokens(ArgumentList argumentList, out string format,
-			out List<(TokenKind, int, string?)> tokens)
+			out List<(TokenKind, int, string)> tokens)
 		{
 			tokens = null;
 			format = null;
@@ -845,7 +853,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		private bool TransformParamsArgument(ExpectedTargetDetails expectedTargetDetails,
 			ResolveResult targetResolveResult,
-			IMethod method, IParameter? parameter, TranslatedExpression arg, ref List<IParameter?> expectedParameters,
+			IMethod method, IParameter parameter, TranslatedExpression arg, ref List<IParameter> expectedParameters,
 			ref List<TranslatedExpression> arguments)
 		{
 			if (CheckArgument(out int length, out IType elementType))
@@ -1644,7 +1652,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			ExpressionBuilder expressionBuilder = this.expressionBuilder;
 			ExpressionWithResolveResult targetExpression;
-			(TranslatedExpression target, bool addTypeArguments, string? methodName, ResolveResult result) =
+			(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) =
 				DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
 			if (target.Expression != null)
 			{
@@ -1670,7 +1678,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return targetExpression;
 		}
 
-		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult? result)
+		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result)
 			DisambiguateDelegateReference(IMethod method, IMethod invokeMethod,
 				ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg)
 		{
@@ -1823,7 +1831,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			ResolveResult target, IReadOnlyList<IType>? typeArguments, bool isExtensionMethodReference,
+			ResolveResult target, IReadOnlyList<IType> typeArguments, bool isExtensionMethodReference,
 			out ResolveResult result)
 		{
 			Log.WriteLine("IsUnambiguousMethodReference: Performing overload resolution for " + method);

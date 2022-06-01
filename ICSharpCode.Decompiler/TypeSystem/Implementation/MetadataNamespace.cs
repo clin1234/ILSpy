@@ -42,11 +42,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Name = module.GetString(ns.Name);
 		}
 
-		public INamespace? ParentNamespace { get; }
+		public INamespace ParentNamespace { get; }
 		public string FullName { get; }
 		public string Name { get; }
 
-		string? INamespace.ExternAlias => string.Empty;
+		string INamespace.ExternAlias => string.Empty;
 
 		public IEnumerable<INamespace?> ChildNamespaces {
 			get {

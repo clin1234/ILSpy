@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; init; }
 		public Stepper Stepper { get; set; }
-		public PEFile? PEFile => TypeSystem.MainModule.PEFile;
+		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
 
 		internal DecompileRun? DecompileRun { get; init; }
 		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);

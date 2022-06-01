@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// List of parameters of this function.
 		/// </summary>
-		public readonly IReadOnlyList<IParameter?> Parameters;
+		public readonly IReadOnlyList<IParameter> Parameters;
 
 		/// <summary>
 		/// Return type of this function.
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// If this function is an iterator/async, this field stores the compiler-generated MoveNext() method.
 		/// </summary>
-		public IMethod MoveNextMethod;
+		public IMethod? MoveNextMethod;
 
 		/// <summary>
 		/// Gets the name of this function, usually this returns the name from metadata.
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// If this function is a local function, this field stores the reduced version of the function.
 		/// </summary>
-		internal LocalFunctionMethod ReducedMethod;
+		internal LocalFunctionMethod? ReducedMethod;
 
 		/// <summary>
 		/// Gets whether the YieldReturnDecompiler determined that the Mono C# compiler was used to compile this function.
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// This constructor is only to be used by the TransformExpressionTrees step.
 		/// </summary>
-		internal ILFunction(IType returnType, IReadOnlyList<IParameter?> parameters, GenericContext genericContext,
+		internal ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext,
 			ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.GenericContext = genericContext;

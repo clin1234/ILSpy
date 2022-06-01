@@ -32,11 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class SyntaxTree : AstNode
 	{
-		public static readonly Role<AstNode?> MemberRole = new("Member", Null);
+		public static readonly Role<AstNode> MemberRole = new("Member", Null);
 
-		IList<string>? conditionalSymbols;
+		IList<string> conditionalSymbols;
 
-		string? fileName;
+		string fileName;
 
 		public override NodeType NodeType {
 			get {
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode?> nodeStack = new();
+			Stack<AstNode> nodeStack = new();
 			nodeStack.Push(this);
 			while (nodeStack.Count > 0)
 			{

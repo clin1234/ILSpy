@@ -23,7 +23,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -32,25 +31,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public readonly SignatureCallingConvention CallingConvention;
 		public readonly ImmutableArray<IType> CustomCallingConventions;
 
-		private readonly MetadataModule? module;
+		private readonly MetadataModule module;
 		public readonly ImmutableArray<ReferenceKind> ParameterReferenceKinds;
-		public readonly ImmutableArray<IType?> ParameterTypes;
+		public readonly ImmutableArray<IType> ParameterTypes;
 		public readonly bool ReturnIsRefReadOnly;
 		public readonly IType ReturnType;
 
-		public FunctionPointerType(MetadataModule? module,
+		public FunctionPointerType(MetadataModule module,
 			SignatureCallingConvention callingConvention, ImmutableArray<IType> customCallingConventions,
 			IType returnType, bool returnIsRefReadOnly,
-			ImmutableArray<IType?> parameterTypes, ImmutableArray<ReferenceKind> parameterReferenceKinds)
+			ImmutableArray<IType> parameterTypes, ImmutableArray<ReferenceKind> parameterReferenceKinds)
 		{
-			this.module = module;
-			this.CallingConvention = callingConvention;
-			this.CustomCallingConventions = customCallingConventions;
-			this.ReturnType = returnType;
-			this.ReturnIsRefReadOnly = returnIsRefReadOnly;
-			this.ParameterTypes = parameterTypes;
-			this.ParameterReferenceKinds = parameterReferenceKinds;
-			Debug.Assert(parameterTypes.Length == parameterReferenceKinds.Length);
+			// If FunctionPointers are not enabled in the TS, we still use FunctionPointerType instances;
+			// but have them act as if they were aliases for UIntPtr.
+			return (module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0
+				? null
+				: module.Compilation.FindType(KnownTypeCode.UIntPtr)?.GetDefinition();
 		}
 
 		public override string Name => "delegate*";
@@ -61,11 +57,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			? TypeKind.FunctionPointer
 			: TypeKind.Struct;
 
-		public static FunctionPointerType FromSignature(MethodSignature<IType> signature, MetadataModule? module)
+		public static FunctionPointerType FromSignature(MethodSignature<IType> signature, MetadataModule module)
 		{
 			IType returnType = signature.ReturnType;
 			bool returnIsRefReadOnly = false;
-			ImmutableArray<IType>.Builder customCallConvs = ImmutableArray.CreateBuilder<IType>();
+			var customCallConvs = ImmutableArray.CreateBuilder<IType>();
 			while (returnType is ModifiedType modReturn)
 			{
 				if (modReturn.Modifier.IsKnownType(KnownAttribute.In))
@@ -85,7 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 
-			ImmutableArray<IType?>.Builder parameterTypes = ImmutableArray.CreateBuilder<IType>(signature.ParameterTypes.Length);
+			var parameterTypes = ImmutableArray.CreateBuilder<IType>(signature.ParameterTypes.Length);
 			var parameterReferenceKinds = ImmutableArray.CreateBuilder<ReferenceKind>(signature.ParameterTypes.Length);
 			foreach (var p in signature.ParameterTypes)
 			{
@@ -125,18 +121,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());
 		}
 
-		public override ITypeDefinition? GetDefinition()
+		public override ITypeDefinition GetDefinition()
 		{
 			// If FunctionPointers are not enabled in the TS, we still use FunctionPointerType instances;
 			// but have them act as if they were aliases for UIntPtr.
 			return (module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0
 				? null
-				: module.Compilation.FindType(KnownTypeCode.UIntPtr)?.GetDefinition();
-		}
-
-		public override IType AcceptVisitor(TypeVisitor? visitor)
-		{
-			return visitor?.VisitFunctionPointerType(this);
+				: module.Compilation.FindType(KnownTypeCode.UIntPtr).GetDefinition();
 		}
 
 		public override IType VisitChildren(TypeVisitor? visitor)

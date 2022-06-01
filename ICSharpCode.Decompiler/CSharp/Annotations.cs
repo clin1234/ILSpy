@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 	}
 
-	public static class AnnotationExtensions
+	internal static class AnnotationExtensions
 	{
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression? expression,
 			ILInstruction instruction)
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
 		{
-			foreach (ILInstruction? annotation in other.Annotations.OfType<ILInstruction>())
+			foreach (ILInstruction annotation in other.Annotations.OfType<ILInstruction>())
 			{
 				node.AddAnnotation(annotation);
 			}
@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Represents a reference to a local variable.
 	/// </summary>
-	public sealed class ILVariableResolveResult : ResolveResult
+	internal sealed class ILVariableResolveResult : ResolveResult
 	{
 		public readonly ILVariable Variable;
 
@@ -339,8 +339,8 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	internal sealed class QueryJoinClauseAnnotation
 	{
-		public readonly ILFunction? EqualsLambda;
-		public readonly ILFunction? OnLambda;
+		public readonly ILFunction EqualsLambda;
+		public readonly ILFunction OnLambda;
 
 		public QueryJoinClauseAnnotation(ILFunction? on, ILFunction? equals)
 		{

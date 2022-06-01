@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			} while (string.IsNullOrWhiteSpace(firstLine));
 
 			string indentation = firstLine[..^firstLine.TrimStart().Length];
-			string? line = firstLine;
+			string line = firstLine;
 			int skippedWhitespaceLines = 0;
 			// Copy all lines from input to output, except for empty lines at the end.
 			while (line != null)

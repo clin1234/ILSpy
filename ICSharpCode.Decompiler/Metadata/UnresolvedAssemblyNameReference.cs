@@ -23,12 +23,12 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public sealed class UnresolvedAssemblyNameReference
 	{
-		public UnresolvedAssemblyNameReference(string? fullName)
+		public UnresolvedAssemblyNameReference(string fullName)
 		{
 			this.FullName = fullName;
 		}
 
-		public string? FullName { get; }
+		public string FullName { get; }
 
 		public bool HasErrors => Messages.Any(m => m.Item1 == MessageKind.Error);
 

@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			Reader.Dispose();
 		}
 
-		IModule? IModuleReference.Resolve(ITypeResolveContext context)
+		IModule IModuleReference.Resolve(ITypeResolveContext context)
 		{
 			return new MetadataModule(context.Compilation, this, TypeSystemOptions.Default);
 		}
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					}
 
 					var nsHandle = td.Namespace;
-					string? ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
+					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
 					string name =
 						ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name),
 							out int typeParameterCount);
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		private sealed class PEFileWithOptions : IModuleReference
 		{
 			readonly TypeSystemOptions options;
-			readonly PEFile? peFile;
+			readonly PEFile peFile;
 
 			public PEFileWithOptions(PEFile? peFile, TypeSystemOptions options)
 			{
@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				this.options = options;
 			}
 
-			IModule? IModuleReference.Resolve(ITypeResolveContext context)
+			IModule IModuleReference.Resolve(ITypeResolveContext context)
 			{
 				return new MetadataModule(context.Compilation, peFile, options);
 			}

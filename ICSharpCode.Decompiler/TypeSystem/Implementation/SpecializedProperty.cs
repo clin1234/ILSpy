@@ -27,10 +27,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly IProperty propertyDefinition;
 
-		IMethod? getter;
-		IMethod? setter;
+		IMethod getter, setter;
 
-		public SpecializedProperty(IProperty propertyDefinition, TypeParameterSubstitution? substitution)
+		public SpecializedProperty(IProperty propertyDefinition, TypeParameterSubstitution substitution)
 			: base(propertyDefinition)
 		{
 			this.propertyDefinition = propertyDefinition;
@@ -59,7 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool ReturnTypeIsRefReadOnly => propertyDefinition.ReturnTypeIsRefReadOnly;
 
-		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution? substitution)
+		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution) ||
 			    propertyDefinition.DeclaringType.TypeParameterCount == 0)

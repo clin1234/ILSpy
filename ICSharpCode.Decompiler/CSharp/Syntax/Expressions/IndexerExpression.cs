@@ -49,12 +49,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IndexerExpression(Expression? target, params Expression?[] arguments) : this(target,
-			(IEnumerable<Expression?>)arguments)
+		public IndexerExpression(Expression target, params Expression[] arguments) : this(target,
+			(IEnumerable<Expression>)arguments)
 		{
 		}
 
-		public Expression? Target {
+		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
 			init { SetChildByRole(Roles.TargetExpression, value); }
 		}
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBracket); }
 		}
 
-		public AstNodeCollection<Expression?> Arguments {
+		public AstNodeCollection<Expression> Arguments {
 			get { return GetChildrenByRole(Roles.Argument); }
 		}
 

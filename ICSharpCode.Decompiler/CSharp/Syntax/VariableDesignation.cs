@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -65,8 +65,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class SingleVariableDesignation : VariableDesignation
 	{
-		public string? Identifier {
-			get { return GetChildByRole(Roles.Identifier)?.Name; }
+		public string Identifier {
+			get { return GetChildByRole(Roles.Identifier).Name; }
 			set { SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value)); }
 		}
 

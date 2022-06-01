@@ -31,24 +31,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class ConditionalExpression : Expression
 	{
-		public static readonly Role<Expression?> ConditionRole = Roles.Condition;
+		public static readonly Role<Expression> ConditionRole = Roles.Condition;
 		public static readonly TokenRole QuestionMarkRole = new("?");
-		public static readonly Role<Expression?> TrueRole = new("True", Null);
+		public static readonly Role<Expression> TrueRole = new("True", Null);
 		public static readonly TokenRole ColonRole = Roles.Colon;
-		public static readonly Role<Expression?> FalseRole = new("False", Null);
+		public static readonly Role<Expression> FalseRole = new("False", Null);
 
 		public ConditionalExpression()
 		{
 		}
 
-		public ConditionalExpression(Expression? condition, Expression? trueExpression, Expression? falseExpression)
+		public ConditionalExpression(Expression condition, Expression trueExpression, Expression falseExpression)
 		{
 			AddChild(condition, ConditionRole);
 			AddChild(trueExpression, TrueRole);
 			AddChild(falseExpression, FalseRole);
 		}
 
-		public Expression? Condition {
+		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }
 			init { SetChildByRole(ConditionRole, value); }
 		}
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(QuestionMarkRole); }
 		}
 
-		public Expression? TrueExpression {
+		public Expression TrueExpression {
 			get { return GetChildByRole(TrueRole); }
 			init { SetChildByRole(TrueRole, value); }
 		}
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(ColonRole); }
 		}
 
-		public Expression? FalseExpression {
+		public Expression FalseExpression {
 			get { return GetChildByRole(FalseRole); }
 			init { SetChildByRole(FalseRole, value); }
 		}

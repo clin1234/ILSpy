@@ -165,8 +165,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				case 0x2c: // CustomMarshaler
 					marshalInfo.ReadSerializedString();
 					marshalInfo.ReadSerializedString();
-					string? managedType = marshalInfo.ReadSerializedString();
-					string? cookie = marshalInfo.ReadSerializedString();
+					string managedType = marshalInfo.ReadSerializedString();
+					string cookie = marshalInfo.ReadSerializedString();
 					if (managedType != null)
 					{
 						b.AddNamedArg("MarshalType", KnownTypeCode.String, managedType);
@@ -327,7 +327,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, SRM.CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader,
+			SRM.CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
@@ -336,7 +337,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
-		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, SRM.CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader,
+			SRM.CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string? attributeTypeName = reader.ReadSerializedString();
 			IType attributeType = module.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
@@ -346,7 +348,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int numNamed = reader.ReadCompressedInteger();
 
 			var decoder = new CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
-			ImmutableArray<SRM.CustomAttributeNamedArgument<IType>> namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
+			var namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
 
 			return new DefaultAttribute(
 				attributeType,
@@ -376,7 +378,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 		}
 
-		private AttributeBuilder(MetadataModule? module, IType attributeType)
+		private AttributeBuilder(MetadataModule module, IType attributeType)
 		{
 			this.compilation = module.Compilation;
 			this.attributeType = attributeType;

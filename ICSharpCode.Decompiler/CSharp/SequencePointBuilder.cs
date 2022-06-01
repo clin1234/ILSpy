@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		// Stack holding information for outer statements.
 		readonly Stack<StatePerSequencePoint> outerStates = new();
 
-		readonly List<(ILFunction?, SequencePoint)> sequencePoints = new();
+		readonly List<(ILFunction, SequencePoint)> sequencePoints = new();
 
 		// Collects information for the current sequence point.
 		StatePerSequencePoint current;
@@ -457,7 +457,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal Dictionary<ILFunction, List<SequencePoint>> GetSequencePoints()
 		{
 			var dict = new Dictionary<ILFunction, List<SequencePoint>>();
-			foreach ((ILFunction? function, SequencePoint sequencePoint) in this.sequencePoints)
+			foreach ((ILFunction function, SequencePoint sequencePoint) in this.sequencePoints)
 			{
 				if (!dict.TryGetValue(function, out var list))
 				{
@@ -467,7 +467,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				list.Add(sequencePoint);
 			}
 
-			foreach ((ILFunction? function, List<SequencePoint> list) in dict.ToList())
+			foreach ((ILFunction function, List<SequencePoint> list) in dict.ToList())
 			{
 				// For each function, sort sequence points and fix overlaps
 				var newList = new List<SequencePoint>();
@@ -571,7 +571,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// Main AST node associated with this sequence point.
 			/// </summary>
-			private readonly AstNode? PrimaryNode;
+			private readonly AstNode PrimaryNode;
 
 			/// <summary>
 			/// List of IL intervals that are associated with this sequence point.
@@ -581,9 +581,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// The function containing this sequence point.
 			/// </summary>
-			internal ILFunction? Function;
+			internal ILFunction Function;
 
-			public StatePerSequencePoint(AstNode? primaryNode)
+			public StatePerSequencePoint(AstNode primaryNode)
 			{
 				this.PrimaryNode = primaryNode;
 				this.Intervals = new List<Interval>();

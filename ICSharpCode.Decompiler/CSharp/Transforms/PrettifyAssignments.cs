@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		TransformContext context;
 
-		void IAstTransform.Run(AstNode? node, TransformContext context)
+		void IAstTransform.Run(AstNode node, TransformContext context)
 		{
 			this.context = context;
 			try

@@ -25,62 +25,62 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public abstract class TypeVisitor
 	{
-		public virtual IType VisitTypeDefinition(ITypeDefinition type)
+		internal virtual IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			return type?.VisitChildren(this);
 		}
 
-		public virtual IType VisitTypeParameter(ITypeParameter type)
+		internal virtual IType VisitTypeParameter(ITypeParameter type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitParameterizedType(ParameterizedType type)
+		internal virtual IType VisitParameterizedType(ParameterizedType type)
 		{
 			return type?.VisitChildren(this);
 		}
 
-		public virtual IType VisitArrayType(ArrayType type)
+		internal virtual IType VisitArrayType(ArrayType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitPointerType(PointerType type)
+		internal virtual IType VisitPointerType(PointerType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitByReferenceType(ByReferenceType type)
+		internal virtual IType VisitByReferenceType(ByReferenceType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitTupleType(TupleType type)
+		internal virtual IType VisitTupleType(TupleType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitOtherType(IType type)
+		internal virtual IType VisitOtherType(IType type)
 		{
 			return type?.VisitChildren(this);
 		}
 
-		public virtual IType VisitModReq(ModifiedType type)
+		internal virtual IType VisitModReq(ModifiedType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitModOpt(ModifiedType type)
+		internal virtual IType VisitModOpt(ModifiedType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		internal virtual IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			return type.VisitChildren(this);
 		}
 
-		public virtual IType VisitFunctionPointerType(FunctionPointerType? type)
+		internal virtual IType VisitFunctionPointerType(FunctionPointerType type)
 		{
 			return type?.VisitChildren(this);
 		}

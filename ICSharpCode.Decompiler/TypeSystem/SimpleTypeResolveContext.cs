@@ -32,22 +32,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public SimpleTypeResolveContext(IModule? module)
 		{
-			if (module is null) throw new ArgumentNullException(nameof(module));
+			ArgumentNullException.ThrowIfNull(module);
 			this.Compilation = module.Compilation;
 			this.CurrentModule = module;
 		}
 
 		public SimpleTypeResolveContext(IEntity entity)
 		{
-			if (entity is null) throw new ArgumentNullException(nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 			this.Compilation = entity.Compilation;
 			this.CurrentModule = entity.ParentModule;
 			this.CurrentTypeDefinition = (entity as ITypeDefinition) ?? entity.DeclaringTypeDefinition;
 			this.CurrentMember = entity as IMember;
 		}
 
-		private SimpleTypeResolveContext(ICompilation compilation, IModule? currentModule,
-			ITypeDefinition currentTypeDefinition, IMember? currentMember)
+		private SimpleTypeResolveContext(ICompilation compilation, IModule currentModule,
+			ITypeDefinition currentTypeDefinition, IMember currentMember)
 		{
 			this.Compilation = compilation;
 			this.CurrentModule = currentModule;
@@ -57,11 +57,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ICompilation Compilation { get; }
 
-		public IModule? CurrentModule { get; }
+		public IModule CurrentModule { get; }
 
 		public ITypeDefinition CurrentTypeDefinition { get; }
 
-		public IMember? CurrentMember { get; }
+		public IMember CurrentMember { get; }
 
 		public ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{

@@ -36,8 +36,8 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.Operands = operands ?? throw new ArgumentNullException(nameof(operands));
 		}
 
-		public OperatorResolveResult(IType resultType, ExpressionType operatorType, IMethod? userDefinedOperatorMethod,
-			bool isLiftedOperator, IList<ResolveResult>? operands)
+		public OperatorResolveResult(IType resultType, ExpressionType operatorType, IMethod userDefinedOperatorMethod,
+			bool isLiftedOperator, IList<ResolveResult> operands)
 			: base(resultType)
 		{
 			this.OperatorType = operatorType;
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// Gets the user defined operator method.
 		/// Returns null if this is a predefined operator.
 		/// </summary>
-		public IMethod? UserDefinedOperatorMethod { get; }
+		public IMethod UserDefinedOperatorMethod { get; }
 
 		/// <summary>
 		/// Gets whether this is a lifted operator.

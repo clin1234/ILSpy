@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				nextPos = pos + 1;
 			}
 
-			switch (block.Instructions[nextPos])
+			if (block.Instructions[nextPos] is StObj stobj)
 			{
 				case StObj stobj when !stobj.Value.MatchLdLoc(inst.Variable):
 					return false;
@@ -134,20 +134,51 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				case StObj stobj:
 				{
-					var pointerType = stobj.Target.InferType(context.TypeSystem);
-					IType newType = stobj.Type;
-					if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointerType, stobj.Type))
-					{
-						newType = pointerType switch {
-							ByReferenceType byref => byref.ElementType,
-							PointerType pointer => pointer.ElementType,
-							_ => newType
-						};
-					}
+					if (pointerType is ByReferenceType byref)
+						newType = byref.ElementType;
+					else if (pointerType is PointerType pointer)
+						newType = pointer.ElementType;
+				}
 
-					if (IsImplicitTruncation(inst.Value, newType, context.TypeSystem))
-					{
-						// 'stobj' is implicitly truncating the value
+				if (IsImplicitTruncation(inst.Value, newType, context.TypeSystem))
+				{
+					// 'stobj' is implicitly truncating the value
+					return false;
+				}
+
+				context.Step("Inline assignment stobj", stobj);
+				stobj.Type = newType;
+				block.Instructions.Remove(localStore);
+				block.Instructions.Remove(stobj);
+				stobj.Value = inst.Value;
+				inst.ReplaceWith(new StLoc(local, stobj));
+				// note: our caller will trigger a re-run, which will call HandleStObjCompoundAssign if applicable
+				return true;
+			}
+
+			if (block.Instructions[nextPos] is CallInstruction call)
+			{
+				// call must be a setter call:
+				if (call.OpCode is not (OpCode.Call or OpCode.CallVirt))
+					return false;
+				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
+					return false;
+				if (call.Method.AccessorOwner is not IProperty property)
+					return false;
+				if (!call.Method.Equals(property.Setter))
+					return false;
+				if (!(property.IsIndexer || property.Setter.Parameters.Count == 1))
+				{
+					// this is a parameterized property, which cannot be expressed as C# code.
+					// setter calls are not valid in expression context, if property syntax cannot be used.
+					return false;
+				}
+
+				if (!call.Arguments.Last().MatchLdLoc(inst.Variable))
+					return false;
+				foreach (var arg in call.Arguments.SkipLast(1))
+				{
+					if (!SemanticHelper.IsPure(arg.Flags) || inst.Variable.IsUsedWithin(arg))
 						return false;
 					}
 
@@ -160,12 +191,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// note: our caller will trigger a re-run, which will call HandleStObjCompoundAssign if applicable
 					return true;
 				}
-				// call must be a setter call:
-				case CallInstruction { OpCode: not (OpCode.Call or OpCode.CallVirt) }:
+
+				if (IsImplicitTruncation(inst.Value, call.Method.Parameters.Last().Type, context.TypeSystem))
+				{
+					// setter call is implicitly truncating the value
 					return false;
-				case CallInstruction call when call.ResultType != StackType.Void || call.Arguments.Count == 0:
-					return false;
-				case CallInstruction call:
+				}
+
+				// stloc s(Block InlineAssign { call set_Property(..., stloc i(value)); final: ldloc i })
+				context.Step("Inline assignment call", call);
+				block.Instructions.Remove(localStore);
+				block.Instructions.Remove(call);
+				var newVar =
+					context.Function.RegisterVariable(VariableKind.StackSlot, call.Method.Parameters.Last().Type);
+				call.Arguments[^1] = new StLoc(newVar, inst.Value);
+				var inlineBlock = new Block(BlockKind.CallInlineAssign) {
+					Instructions = { call },
+					FinalInstruction = new LdLoc(newVar)
+				};
+				inst.ReplaceWith(new StLoc(local, inlineBlock));
+				// because the ExpressionTransforms don't look into inline blocks, manually trigger HandleCallCompoundAssign
+				if (HandleCompoundAssign(call, context))
 				{
 					if (call.Method.AccessorOwner is not IProperty property)
 						return false;
@@ -213,9 +259,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					return true;
 				}
-				default:
-					return false;
+
+				return true;
 			}
+
+			return false;
 		}
 
 		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, out Conv conv)
@@ -230,19 +278,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		static bool ValidateCompoundAssign(BinaryNumericInstruction? binary, Conv? conv, IType targetType,
+		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv conv, IType targetType,
 			DecompilerSettings settings)
 		{
 			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType, settings))
 				return false;
-			if (binary != null && conv != null && !(conv.TargetType == targetType.ToPrimitiveType() &&
-			                                        conv.CheckForOverflow == binary.CheckForOverflow))
+			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() &&
+			                      conv.CheckForOverflow == binary.CheckForOverflow))
 				return false; // conv does not match binary operation
 			return true;
 		}
 
-		static bool MatchingGetterAndSetterCalls(CallInstruction? getterCall, CallInstruction? setterCall,
-			out Action<ILTransformContext>? finalizeMatch)
+		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall,
+			out Action<ILTransformContext> finalizeMatch)
 		{
 			finalizeMatch = null;
 			if (getterCall == null || setterCall == null ||
@@ -263,7 +311,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (getterCall.Arguments[j].MatchLdLoc(v))
 					{
 						// OK, setter call argument is saved in temporary that is re-used for getter call
-						finalizeMatch ??= AdjustArguments;
+						if (finalizeMatch == null)
+						{
+							finalizeMatch = AdjustArguments;
+						}
 
 						continue;
 					}
@@ -344,7 +395,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			ILInstruction? newInst;
+			ILInstruction newInst;
 			if (UnwrapSmallIntegerConv(setterValue, out var smallIntConv) is BinaryNumericInstruction binary)
 			{
 				if (compoundStore is StLoc)
@@ -366,31 +417,48 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else switch (setterValue)
 			{
-				case Call operatorCall when operatorCall.Method.IsOperator:
+				if (operatorCall.Arguments.Count == 0)
+					return false;
+				if (!IsMatchingCompoundLoad(operatorCall.Arguments[0], compoundStore, out var target,
+					    out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
+					return false;
+				ILInstruction rhs;
+				if (operatorCall.Arguments.Count == 2)
 				{
-					if (operatorCall.Arguments.Count == 0)
+					if (CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name) ==
+					    null)
 						return false;
-					if (!IsMatchingCompoundLoad(operatorCall.Arguments[0], compoundStore, out var target,
-						    out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
+					rhs = operatorCall.Arguments[1];
+				}
+				else if (operatorCall.Arguments.Count == 1)
+				{
+					if (operatorCall.Method.Name is not ("op_Increment" or "op_Decrement"))
 						return false;
-					ILInstruction rhs;
-					switch (operatorCall.Arguments.Count)
-					{
-						case 2 when CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name) ==
-						            null:
-							return false;
-						case 2:
-							rhs = operatorCall.Arguments[1];
-							break;
-						case 1 when operatorCall.Method.Name is not ("op_Increment" or "op_Decrement"):
-							return false;
-						// use a dummy node so that we don't need a dedicated instruction for user-defined unary operator calls
-						case 1:
-							rhs = new LdcI4(1);
-							break;
-						default:
-							return false;
-					}
+					// use a dummy node so that we don't need a dedicated instruction for user-defined unary operator calls
+					rhs = new LdcI4(1);
+				}
+				else
+				{
+					return false;
+				}
+
+				if (operatorCall.IsLifted)
+					return false; // TODO: add tests and think about whether nullables need special considerations
+				context.Step($"Compound assignment (user-defined binary)", compoundStore);
+				finalizeMatch?.Invoke(context);
+				newInst = new UserDefinedCompoundAssign(operatorCall.Method, CompoundEvalMode.EvaluatesToNewValue,
+					target, targetKind, rhs);
+			}
+			else if (setterValue is DynamicBinaryOperatorInstruction dynamicBinaryOp)
+			{
+				if (!IsMatchingCompoundLoad(dynamicBinaryOp.Left, compoundStore, out var target, out var targetKind,
+					    out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
+					return false;
+				context.Step($"Compound assignment (dynamic binary)", compoundStore);
+				finalizeMatch?.Invoke(context);
+				newInst = new DynamicCompoundAssign(ToCompound(dynamicBinaryOp.Operation), dynamicBinaryOp.BinderFlags,
+					target, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo,
+					targetKind);
 
 					if (operatorCall.IsLifted)
 						return false; // TODO: add tests and think about whether nullables need special considerations
@@ -434,30 +502,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					break;
 				}
-				case Call concatCall when UserDefinedCompoundAssign.IsStringConcat(concatCall.Method):
-				{
-					// setterValue is a string.Concat() invocation
-					if (compoundStore is StLoc)
-					{
-						// transform local variables only for user-defined operators
-						return false;
-					}
 
-					if (concatCall.Arguments.Count != 2)
-						return false; // for now we only support binary compound assignments
-					if (!targetType.IsKnownType(KnownTypeCode.String))
-						return false;
-					if (!IsMatchingCompoundLoad(concatCall.Arguments[0], compoundStore, out var target, out var targetKind,
-						    out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
-						return false;
-					context.Step($"Compound assignment (string concatenation)", compoundStore);
-					finalizeMatch?.Invoke(context);
-					newInst = new UserDefinedCompoundAssign(concatCall.Method, CompoundEvalMode.EvaluatesToNewValue,
-						target, targetKind, concatCall.Arguments[1]);
-					break;
-				}
-				default:
+				if (concatCall.Arguments.Count != 2)
+					return false; // for now we only support binary compound assignments
+				if (!targetType.IsKnownType(KnownTypeCode.String))
 					return false;
+				if (!IsMatchingCompoundLoad(concatCall.Arguments[0], compoundStore, out var target, out var targetKind,
+					    out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
+					return false;
+				context.Step($"Compound assignment (string concatenation)", compoundStore);
+				finalizeMatch?.Invoke(context);
+				newInst = new UserDefinedCompoundAssign(concatCall.Method, CompoundEvalMode.EvaluatesToNewValue,
+					target, targetKind, concatCall.Arguments[1]);
+			}
+			else
+			{
+				return false;
 			}
 
 			newInst.AddILRange(setterValue);
@@ -539,7 +599,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Gets whether 'stobj type(..., value)' would evaluate to a different value than 'value'
 		/// due to implicit truncation.
 		/// </summary>
-		internal static bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation? compilation,
+		internal static bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation compilation,
 			bool allowNullableValue = false)
 		{
 			if (!type.IsSmallIntegerType())
@@ -594,18 +654,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					       || IsImplicitTruncation(ifInst.FalseInst, type, compilation, allowNullableValue);
 				default:
 				{
-					IType inferredType = value.InferType(compilation);
-					if (allowNullableValue)
-					{
-						inferredType = NullableType.GetUnderlyingType(inferredType);
-					}
+					case BinaryNumericOperator.BitAnd:
+					case BinaryNumericOperator.BitOr:
+					case BinaryNumericOperator.BitXor:
+						// If both input values fit into the type without truncation,
+						// the result of a binary operator will also fit.
+						return IsImplicitTruncation(bni.Left, type, compilation, allowNullableValue)
+						       || IsImplicitTruncation(bni.Right, type, compilation, allowNullableValue);
+				}
+			}
+			else if (value is IfInstruction ifInst)
+			{
+				return IsImplicitTruncation(ifInst.TrueInst, type, compilation, allowNullableValue)
+				       || IsImplicitTruncation(ifInst.FalseInst, type, compilation, allowNullableValue);
+			}
+			else
+			{
+				IType inferredType = value.InferType(compilation);
+				if (allowNullableValue)
+				{
+					inferredType = NullableType.GetUnderlyingType(inferredType);
+				}
 
-					if (inferredType.Kind != TypeKind.Unknown)
-					{
-						return !(inferredType.GetSize() <= type.GetSize() && inferredType.GetSign() == type.GetSign());
-					}
-
-					break;
+				if (inferredType.Kind != TypeKind.Unknown)
+				{
+					return !(inferredType.GetSize() <= type.GetSize() && inferredType.GetSign() == type.GetSign());
 				}
 			}
 
@@ -629,51 +702,77 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			storeType = null;
 			switch (inst)
 			{
-				case StObj stobj:
-					// stobj.Type may just be 'int' (due to stind.i4) when we're actually operating on a 'ref MyEnum'.
-					// Try to determine the real type of the object we're modifying:
-					storeType = stobj.Target.InferType(compilation);
-					storeType = storeType switch {
-						ByReferenceType refType => TypeUtils.IsCompatibleTypeForMemoryAccess(refType.ElementType,
-							stobj.Type)
-							? refType.ElementType
-							: stobj.Type,
-						PointerType pointerType when TypeUtils.IsCompatibleTypeForMemoryAccess(pointerType.ElementType,
-							stobj.Type) => pointerType.ElementType,
-						PointerType => stobj.Type,
-						_ => stobj.Type
-					};
+				// stobj.Type may just be 'int' (due to stind.i4) when we're actually operating on a 'ref MyEnum'.
+				// Try to determine the real type of the object we're modifying:
+				storeType = stobj.Target.InferType(compilation);
+				if (storeType is ByReferenceType refType)
+				{
+					if (TypeUtils.IsCompatibleTypeForMemoryAccess(refType.ElementType, stobj.Type))
+					{
+						storeType = refType.ElementType;
+					}
+					else
+					{
+						storeType = stobj.Type;
+					}
+				}
+				else if (storeType is PointerType pointerType)
+				{
+					if (TypeUtils.IsCompatibleTypeForMemoryAccess(pointerType.ElementType, stobj.Type))
+					{
+						storeType = pointerType.ElementType;
+					}
+					else
+					{
+						storeType = stobj.Type;
+					}
+				}
+				else
+				{
+					storeType = stobj.Type;
+				}
 
-					value = stobj.Value;
-					return SemanticHelper.IsPure(stobj.Target.Flags);
-				case CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call when call.Method.Parameters.Count == 0:
+				value = stobj.Value;
+				return SemanticHelper.IsPure(stobj.Target.Flags);
+			}
+
+			if (inst is CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call)
+			{
+				if (call.Method.Parameters.Count == 0)
+				{
 					return false;
-				case CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call:
+				}
+
+				foreach (var arg in call.Arguments.SkipLast(1))
 				{
 					foreach (var arg in call.Arguments.SkipLast(1))
 					{
-						if (arg.MatchStLoc(out var v) && v.IsSingleDefinition && v.LoadCount == 1)
-						{
-							continue; // OK, IsMatchingCompoundLoad can perform an adjustment in this special case
-						}
+						continue; // OK, IsMatchingCompoundLoad can perform an adjustment in this special case
+					}
 
-						if (!SemanticHelper.IsPure(arg.Flags))
-						{
-							return false;
-						}
+					if (!SemanticHelper.IsPure(arg.Flags))
+					{
+						return false;
 					}
 
 					storeType = call.Method.Parameters.Last().Type;
 					value = call.Arguments.Last();
 					return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
 				}
-				case StLoc stloc when stloc.Variable.Kind is VariableKind.Local or VariableKind.Parameter:
-					storeType = stloc.Variable.Type;
-					value = stloc.Value;
-					return true;
-				default:
-					return false;
+
+				storeType = call.Method.Parameters.Last().Type;
+				value = call.Arguments.Last();
+				return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
 			}
+
+			if (inst is StLoc stloc && stloc.Variable.Kind is VariableKind.Local or VariableKind.Parameter)
+			{
+				storeType = stloc.Variable.Type;
+				value = stloc.Value;
+				return true;
+			}
+
+			return false;
 		}
 
 		/// <summary>

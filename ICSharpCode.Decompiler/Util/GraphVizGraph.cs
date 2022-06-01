@@ -57,6 +57,11 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Show(string? name = null)
 		{
+			Show(null);
+		}
+
+		public void Show(string? name)
+		{
 			name ??= Title;
 			if (name != null)
 				foreach (char c in Path.GetInvalidFileNameChars())
@@ -114,7 +119,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(TextWriter writer)
 		{
-			if (writer is null) throw new ArgumentNullException(nameof(writer));
+			ArgumentNullException.ThrowIfNull(writer);
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);

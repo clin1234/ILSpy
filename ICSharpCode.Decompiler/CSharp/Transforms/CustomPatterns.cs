@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	sealed class TypePattern : Pattern
 	{
 		readonly string name;
-		readonly string? ns;
+		readonly string ns;
 
 		public TypePattern(Type type)
 		{
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool DoMatch(INode? other, Match match)
 		{
-			AstType? o;
+			AstType o;
 			if (other is ComposedType { HasRefSpecifier: false, HasNullableSpecifier: false, PointerRank: 0 } ct &&
 			    !ct.ArraySpecifiers.Any())
 			{
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return false;
 			}
 
-			return o!.GetResolveResult() is TypeResolveResult trr && trr.Type.Namespace == ns && trr.Type.Name == name;
+			return o.GetResolveResult() is TypeResolveResult trr && trr.Type.Namespace == ns && trr.Type.Name == name;
 		}
 
 		public override string ToString()

@@ -11,7 +11,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
 {
-	public sealed class DecompileRun
+	internal sealed class DecompileRun
 	{
 		public DecompileRun(DecompilerSettings settings)
 		{
@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler
 		public HashSet<string> Namespaces { get; } = new();
 		public CancellationToken CancellationToken { get; init; }
 		public DecompilerSettings Settings { get; }
-		public IDocumentationProvider? DocumentationProvider { get; init; }
+		public IDocumentationProvider DocumentationProvider { get; init; }
 		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new();
 
 		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler
 
 		public UsingScope UsingScope => usingScope.Value;
 
-		internal EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
+		public EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
 
 		private static UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
 		{

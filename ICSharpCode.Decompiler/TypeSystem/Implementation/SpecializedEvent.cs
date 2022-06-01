@@ -27,11 +27,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly IEvent eventDefinition;
 
-		IMethod? addAccessor;
-		IMethod? removeAccessor;
-		IMethod? invokeAccessor;
+		IMethod addAccessor, removeAccessor, invokeAccessor;
 
-		public SpecializedEvent(IEvent eventDefinition, TypeParameterSubstitution? substitution)
+		public SpecializedEvent(IEvent eventDefinition, TypeParameterSubstitution substitution)
 			: base(eventDefinition)
 		{
 			this.eventDefinition = eventDefinition;
@@ -62,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return WrapAccessor(ref this.invokeAccessor, eventDefinition.InvokeAccessor); }
 		}
 
-		public static IEvent Create(IEvent ev, TypeParameterSubstitution? substitution)
+		public static IEvent Create(IEvent ev, TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution)
 			    || ev.DeclaringType.TypeParameterCount == 0)

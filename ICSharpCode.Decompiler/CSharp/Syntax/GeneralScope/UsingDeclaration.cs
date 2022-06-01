@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class UsingDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new("using");
-		public static readonly Role<AstType?> ImportRole = new("Import", AstType.Null);
+		public static readonly Role<AstType> ImportRole = new("Import", AstType.Null);
 
 		public UsingDeclaration()
 		{
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(AstType.Create(nameSpace), ImportRole);
 		}
 
-		public UsingDeclaration(AstType? import)
+		public UsingDeclaration(AstType import)
 		{
 			AddChild(import, ImportRole);
 		}
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(UsingKeywordRole); }
 		}
 
-		public AstType? Import {
+		public AstType Import {
 			get { return GetChildByRole(ImportRole); }
 			init { SetChildByRole(ImportRole, value); }
 		}
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		internal static string ConstructNamespace(AstType? type)
+		internal static string ConstructNamespace(AstType type)
 		{
 			var stack = new Stack<string>();
 			while (type is MemberType mt)

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public sealed class ByReferenceResolveResult : ResolveResult
 	{
-		public readonly ResolveResult? ElementResult;
+		public readonly ResolveResult ElementResult;
 
 		public ByReferenceResolveResult(ResolveResult elementResult, ReferenceKind kind)
 			: this(elementResult.Type, kind)

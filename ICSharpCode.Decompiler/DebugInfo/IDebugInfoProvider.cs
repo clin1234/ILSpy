@@ -21,6 +21,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		string SourceFileName { get; }
 		IList<SequencePoint> GetSequencePoints(MethodDefinitionHandle method);
 		IList<Variable> GetVariables(MethodDefinitionHandle method);
-		bool TryGetName(MethodDefinitionHandle method, int index, out string? name);
+		bool TryGetName(MethodDefinitionHandle method, int index, out string name);
 	}
 }

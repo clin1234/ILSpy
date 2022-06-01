@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class MemberType : AstType
 	{
-		public static readonly Role<AstType?> TargetRole = new("Target", Null);
+		public static readonly Role<AstType> TargetRole = new("Target", Null);
 
 		bool isDoubleColon;
 
@@ -42,13 +42,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public MemberType(AstType? target, string memberName)
+		public MemberType(AstType target, string memberName)
 		{
 			this.Target = target;
 			this.MemberName = memberName;
 		}
 
-		public MemberType(AstType? target, string memberName, IEnumerable<AstType?> typeArguments)
+		public MemberType(AstType target, string memberName, IEnumerable<AstType> typeArguments)
 		{
 			this.Target = target;
 			this.MemberName = memberName;
@@ -58,8 +58,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public MemberType(AstType? target, string memberName, params AstType[] typeArguments) : this(target, memberName,
-			(IEnumerable<AstType?>)typeArguments)
+		public MemberType(AstType target, string memberName, params AstType[] typeArguments) : this(target, memberName,
+			(IEnumerable<AstType>)typeArguments)
 		{
 		}
 
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider? interningProvider = null)
+			InterningProvider interningProvider = null)
 		{
 			interningProvider ??= InterningProvider.Dummy;
 
@@ -151,8 +151,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
 
-			string? memberName = interningProvider?.Intern(this.MemberName);
-			return interningProvider?.Intern(new MemberTypeOrNamespaceReference(t, memberName,
+			string memberName = interningProvider.Intern(this.MemberName);
+			return interningProvider.Intern(new MemberTypeOrNamespaceReference(t, memberName,
 				interningProvider.InternList(typeArguments), lookupMode));
 		}
 	}

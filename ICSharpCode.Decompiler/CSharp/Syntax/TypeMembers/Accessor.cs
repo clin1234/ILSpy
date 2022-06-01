@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public CSharpTokenNode Keyword {
 			get {
-				for (AstNode? child = this.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling)
 				{
 					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role ==
 					                                                     PropertyDeclaration.SetKeywordRole
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAccessor(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			return other is Accessor { IsNull: false } o && this.MatchAttributesAndModifiers(o, match) &&
 			       this.Body.DoMatch(o.Body, match);
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}

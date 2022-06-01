@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler
 
 		bool covariantReturns = true;
 
-		CSharpFormattingOptions? csharpFormattingOptions;
+		CSharpFormattingOptions csharpFormattingOptions;
 
 		bool decimalConstants = true;
 
@@ -1640,7 +1640,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public event PropertyChangedEventHandler? PropertyChanged;
+		public event PropertyChangedEventHandler PropertyChanged;
 
 		/// <summary>
 		/// Deactivates all language features from versions newer than <paramref name="languageVersion"/>.
@@ -1794,7 +1794,7 @@ namespace ICSharpCode.Decompiler
 			return CSharp.LanguageVersion.CSharp1;
 		}
 
-		private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}

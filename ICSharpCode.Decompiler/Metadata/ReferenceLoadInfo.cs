@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			get {
 				lock (loadedAssemblyReferences)
 				{
-					return loadedAssemblyReferences.Any(static i => i.Value.HasErrors);
+					return loadedAssemblyReferences.Any(i => i.Value.HasErrors);
 				}
 			}
 		}

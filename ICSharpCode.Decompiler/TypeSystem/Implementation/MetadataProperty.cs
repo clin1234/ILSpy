@@ -93,11 +93,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;
 		public IType DeclaringType => AnyAccessor?.DeclaringType;
 		IMember IMember.MemberDefinition => this;
-		TypeParameterSubstitution? IMember.Substitution => TypeParameterSubstitution.Identity;
+		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		#region Attributes
 
-		public IEnumerable<IAttribute?> GetAttributes()
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
@@ -127,19 +127,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
 		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
 
-		public IModule? ParentModule => module;
+		public IModule ParentModule => module;
 		public ICompilation Compilation => module.Compilation;
 
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public IMember Specialize(TypeParameterSubstitution? substitution)
+		public IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedProperty.Create(this, substitution);
 		}
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region Signature (ReturnType + Parameters)
 
-		public IReadOnlyList<IParameter?> Parameters {
+		public IReadOnlyList<IParameter> Parameters {
 			get {
 				var parameters = LazyInit.VolatileRead(ref this.parameters);
 				if (parameters != null)

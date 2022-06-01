@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Temporary stores for 'yield break'.
 		/// </summary>
-		readonly List<StLoc?> returnStores = new();
+		readonly List<StLoc> returnStores = new();
 
 		/// <summary>
 		/// Set of variables might hold copies of the generated state field.
@@ -342,14 +342,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				if (inst is LdObj { Target: LdLoca ldloca } ldobj && ldloca.Variable.StateMachineField != null)
 				{
-					LdLoc? ldloc = new(ldloca.Variable);
+					LdLoc ldloc = new(ldloca.Variable);
 					ldloc.AddILRange(ldobj);
 					ldloc.AddILRange(ldloca);
 					inst.ReplaceWith(ldloc);
 				}
 				else if (inst is StObj { Target: LdLoca ldloca2 } stobj && ldloca2.Variable.StateMachineField != null)
 				{
-					StLoc? stloc = new(ldloca2.Variable, stobj.Value);
+					StLoc stloc = new(ldloca2.Variable, stobj.Value);
 					stloc.AddILRange(stobj);
 					stloc.AddILRange(ldloca2);
 					inst.ReplaceWith(stloc);
@@ -1252,13 +1252,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Reconstuct try-finally blocks", newBody);
 			var blockState = new int[newBody.Blocks.Count];
 			blockState[0] = -1;
-			var stateToContainer = new Dictionary<int, BlockContainer?> { { -1, newBody } };
+			var stateToContainer = new Dictionary<int, BlockContainer> { { -1, newBody } };
 			// First, analyse the newBody: for each block, determine the active state number.
 			foreach (var block in newBody.Blocks)
 			{
 				context.CancellationToken.ThrowIfCancellationRequested();
 				int oldState = blockState[block.ChildIndex];
-				BlockContainer? container; // new container for the block
+				BlockContainer container; // new container for the block
 				if (GetNewState(block) is { } newState)
 				{
 					// OK, state change

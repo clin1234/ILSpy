@@ -40,7 +40,6 @@ namespace ICSharpCode.ILSpyX
 	{
 		private LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
-			this.Kind = kind;
 			this.Entries = entries.ToArray();
 			var folders = new Dictionary<string, PackageFolder>();
 			var rootFolder = new PackageFolder(this, null, "");
@@ -77,13 +76,12 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal LoadedAssembly? LoadedAssembly { get; set; }
 
-		public SingleFileBundle.Header BundleHeader { get; init; }
-		public PackageKind Kind { get; }
+		private SingleFileBundle.Header BundleHeader { get; init; }
 
 		/// <summary>
 		/// List of all entries, including those in sub-directories within the package.
 		/// </summary>
-		public IReadOnlyList<PackageEntry> Entries { get; }
+		private IReadOnlyList<PackageEntry> Entries { get; }
 
 		internal PackageFolder RootFolder { get; }
 
@@ -121,7 +119,7 @@ namespace ICSharpCode.ILSpyX
 			}
 		}
 
-		public enum PackageKind
+		private enum PackageKind
 		{
 			Zip,
 			Bundle,
@@ -221,7 +219,7 @@ namespace ICSharpCode.ILSpyX
 		}
 	}
 
-	public abstract class PackageEntry : Resource
+	internal abstract class PackageEntry : Resource
 	{
 		/// <summary>
 		/// Gets the file name of the entry (may include path components, relative to the package root).
@@ -244,7 +242,6 @@ namespace ICSharpCode.ILSpyX
 		{
 			this.package = package;
 			this.parent = parent;
-			this.Name = name;
 		}
 		
 		/// <summary>

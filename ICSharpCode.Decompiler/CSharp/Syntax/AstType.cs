@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
 		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider? interningProvider = null);
+			InterningProvider interningProvider = null);
 
 		/// <summary>
 		/// Gets the name lookup mode from the context (looking at the ancestors of this <see cref="AstType"/>).
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Null
 
-		public new static readonly AstType? Null = new NullAstType();
+		public new static readonly AstType Null = new NullAstType();
 
 		sealed class NullAstType : AstType
 		{
@@ -201,13 +201,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider? interningProvider = null)
+				InterningProvider interningProvider = null)
 			{
 				return SpecialType.UnknownType;
 			}
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator AstType?(Pattern? pattern)
+		public static implicit operator AstType(Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool INode.DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -256,12 +256,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider? interningProvider = null)
+				InterningProvider interningProvider = null)
 			{
 				throw new NotSupportedException();
 			}
 
-			protected internal override bool DoMatch(AstNode? other, Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}

@@ -47,8 +47,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected abstract string NameSuffix { get; }
 
-		public IType ElementType {
+		internal IType ElementType {
 			get { return elementType; }
+		}
+
+		public override string ToString()
+		{
+			return elementType + NameSuffix;
 		}
 
 		public override string ToString()

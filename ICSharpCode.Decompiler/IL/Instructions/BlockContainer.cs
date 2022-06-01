@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BlockSlot = new("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
 
-		Block entryPoint;
+		Block? entryPoint;
 
 		int leaveCount;
 
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override ILInstruction Clone()
 		{
-			BlockContainer? clone = new();
+			BlockContainer clone = new();
 			clone.AddILRange(this);
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.IL
 				b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
 			Debug.Assert(TopologicalSort(deleteUnreachableBlocks: true).Count == Blocks.Count,
 				"Container should not have any unreachable blocks");
-			Block bodyStartBlock;
+			Block? bodyStartBlock;
 			switch (Kind)
 			{
 				case ContainerKind.Normal:
@@ -362,8 +362,8 @@ namespace ICSharpCode.Decompiler.IL
 			return null;
 		}
 
-		public bool MatchConditionBlock(Block block, [NotNullWhen(true)] out ILInstruction condition,
-			[NotNullWhen(true)] out Block bodyStartBlock)
+		public bool MatchConditionBlock(Block block, [NotNullWhen(true)] out ILInstruction? condition,
+			[NotNullWhen(true)] out Block? bodyStartBlock)
 		{
 			condition = null;
 			bodyStartBlock = null;

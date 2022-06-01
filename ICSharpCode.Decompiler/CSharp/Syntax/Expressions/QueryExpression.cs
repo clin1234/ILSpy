@@ -20,9 +20,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class QueryExpression : Expression
 	{
-		public static readonly Role<QueryClause?> ClauseRole = new("Clause", null);
+		public static readonly Role<QueryClause> ClauseRole = new("Clause", null);
 
-		public AstNodeCollection<QueryClause?> Clauses {
+		public AstNodeCollection<QueryClause> Clauses {
 			get { return GetChildrenByRole(ClauseRole); }
 		}
 
@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			return other is QueryExpression { IsNull: false } o && this.Clauses.DoMatch(o.Clauses, match);
 		}

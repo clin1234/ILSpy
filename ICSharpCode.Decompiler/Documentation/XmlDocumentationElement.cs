@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// Gets the entity on which this documentation was originally declared.
 		/// May return null.
 		/// </summary>
-		public IEntity DeclaringEntity { get; }
+		public IEntity? DeclaringEntity { get; }
 
 		/// <summary>
 		/// Gets the entity referenced by the 'cref' attribute.
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 
 		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject?> childObjects,
-			IEntity declaringEntity, Func<string, IEntity?>? crefResolver, int nestingLevel)
+			IEntity? declaringEntity, Func<string, IEntity?>? crefResolver, int nestingLevel)
 		{
 			List<XmlDocumentationElement> list = new();
 			foreach (var child in childObjects)

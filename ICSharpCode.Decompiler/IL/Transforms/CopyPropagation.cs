@@ -57,12 +57,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static void Propagate(StLoc store, ILTransformContext context)
 		{
 			Debug.Assert(store.Variable.IsSingleDefinition);
-			Block? block = (Block)store.Parent;
+			Block block = (Block)store.Parent;
 			int i = store.ChildIndex;
 			DoPropagate(store.Variable, store.Value, block, ref i, context);
 		}
 
-		static void RunOnBlock(Block? block, ILTransformContext context, HashSet<ILVariable> splitVariables = null)
+		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable> splitVariables = null)
 		{
 			for (int i = 0; i < block.Instructions.Count; i++)
 			{
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block? block, ref int i,
+		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i,
 			ILTransformContext context)
 		{
 			context.Step($"Copy propagate {v.Name}", copiedExpr);

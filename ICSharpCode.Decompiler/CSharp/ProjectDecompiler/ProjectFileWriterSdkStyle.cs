@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			TextWriter target,
 			IProjectInfoProvider project,
 			IEnumerable<(string itemType, string fileName)> files,
-			PEFile? module)
+			PEFile module)
 		{
 			using XmlTextWriter xmlWriter = new(target);
 			xmlWriter.Formatting = Formatting.Indented;
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public static IProjectFileWriter Create() => new ProjectFileWriterSdkStyle();
 
 		static void Write(XmlTextWriter xml, IProjectInfoProvider project,
-			IEnumerable<(string itemType, string fileName)> files, PEFile? module)
+			IEnumerable<(string itemType, string fileName)> files, PEFile module)
 		{
 			xml.WriteStartElement("Project");
 
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile? module, IProjectInfoProvider project,
+		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, IProjectInfoProvider project,
 			ProjectType projectType)
 		{
 			xml.WriteElementString("AssemblyName", module?.Name);
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, PEFile? module, IProjectInfoProvider project,
+		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project,
 			ProjectType projectType)
 		{
 			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";

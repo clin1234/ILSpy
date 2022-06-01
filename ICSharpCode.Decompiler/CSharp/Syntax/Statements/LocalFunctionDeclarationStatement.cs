@@ -22,14 +22,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class LocalFunctionDeclarationStatement : Statement
 	{
-		public static readonly Role<MethodDeclaration?> MethodDeclarationRole = new("Method", null);
+		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new("Method", null);
 
-		public LocalFunctionDeclarationStatement(MethodDeclaration? methodDeclaration)
+		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
 		{
 			AddChild(methodDeclaration, MethodDeclarationRole);
 		}
 
-		public MethodDeclaration? Declaration {
+		public MethodDeclaration Declaration {
 			get { return GetChildByRole(MethodDeclarationRole); }
 			set { SetChildByRole(MethodDeclarationRole, value); }
 		}

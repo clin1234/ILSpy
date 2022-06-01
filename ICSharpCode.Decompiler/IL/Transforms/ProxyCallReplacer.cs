@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			context.Step("Replace proxy: " + inst.Method.Name + " with " + call.Method.Name, inst);
 			// Apply the wrapper call's substitution to the actual method call.
-			Call? newInst = new(call.Method.Specialize(inst.Method.Substitution)) {
+			Call newInst = new(call.Method.Specialize(inst.Method.Substitution)) {
 				// copy flags
 				ConstrainedTo = call.ConstrainedTo,
 				ILStackWasEmpty = inst.ILStackWasEmpty,

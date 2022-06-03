@@ -92,9 +92,9 @@ Examples:
 		                                   typeof(FullTypeName).Assembly.GetName().Version;
 
 		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
-		                                           "CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-		                                           "CSharp_10_0 or Latest", CommandOptionType.SingleValue)]
-		private LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
+			"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
+			"CSharp10_0, Preview or Latest", CommandOptionType.SingleValue)]
+		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>",

@@ -18,7 +18,7 @@
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class CombineExitsTransform : IILTransform
+	sealed class CombineExitsTransform : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

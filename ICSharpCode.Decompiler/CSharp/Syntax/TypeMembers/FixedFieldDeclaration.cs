@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class FixedFieldDeclaration : EntityDeclaration
+	public sealed class FixedFieldDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole FixedKeywordRole = new("fixed");
 		public static readonly Role<FixedVariableInitializer> VariableRole = new("FixedVariable", null);

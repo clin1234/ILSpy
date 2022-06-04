@@ -107,14 +107,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// 	new QuerySelectClause(e)
 	/// }
 	/// </summary>
-	public class QueryContinuationClause : QueryClause
+	public sealed class QueryContinuationClause : QueryClause
 	{
 		public static readonly Role<QueryExpression> PrecedingQueryRole = new("PrecedingQuery", QueryExpression.Null);
 		public static readonly TokenRole IntoKeywordRole = new("into");
 
 		public QueryExpression PrecedingQuery {
 			get { return GetChildByRole(PrecedingQueryRole); }
-			set { SetChildByRole(PrecedingQueryRole, value); }
+			init { SetChildByRole(PrecedingQueryRole, value); }
 		}
 
 		public CSharpTokenNode IntoKeyword {
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
 			}
 		}
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class QueryFromClause : QueryClause
+	public sealed class QueryFromClause : QueryClause
 	{
 		public static readonly TokenRole FromKeywordRole = new("from");
 		public static readonly TokenRole InKeywordRole = new("in");
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
 			}
 		}
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class QueryLetClause : QueryClause
+	public sealed class QueryLetClause : QueryClause
 	{
 		public static readonly TokenRole LetKeywordRole = new("let");
 
@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
 			}
 		}
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 
-	public class QueryWhereClause : QueryClause
+	public sealed class QueryWhereClause : QueryClause
 	{
 		public static readonly TokenRole WhereKeywordRole = new("where");
 
@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Condition {
 			get { return GetChildByRole(Roles.Condition); }
-			set { SetChildByRole(Roles.Condition, value); }
+			init { SetChildByRole(Roles.Condition, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a join or group join clause.
 	/// </summary>
-	public class QueryJoinClause : QueryClause
+	public sealed class QueryJoinClause : QueryClause
 	{
 		public static readonly TokenRole JoinKeywordRole = new("join");
 		public static readonly Role<AstType> TypeRole = Roles.Type;
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(JoinIdentifierRole).Name;
 			}
-			set {
+			init {
 				SetChildByRole(JoinIdentifierRole, Identifier.Create(value));
 			}
 		}
@@ -416,7 +416,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class QueryOrderClause : QueryClause
+	public sealed class QueryOrderClause : QueryClause
 	{
 		public static readonly TokenRole OrderbyKeywordRole = new("orderby");
 		public static readonly Role<QueryOrdering> OrderingRole = new("Ordering", null);
@@ -450,7 +450,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class QueryOrdering : AstNode
+	public sealed class QueryOrdering : AstNode
 	{
 		public static readonly TokenRole AscendingKeywordRole = new("ascending");
 		public static readonly TokenRole DescendingKeywordRole = new("descending");
@@ -461,12 +461,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public QueryOrderingDirection Direction {
 			get;
-			set;
+			init;
 		}
 
 		public CSharpTokenNode DirectionToken {
@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Descending
 	}
 
-	public class QuerySelectClause : QueryClause
+	public sealed class QuerySelectClause : QueryClause
 	{
 		public static readonly TokenRole SelectKeywordRole = new("select");
 
@@ -516,7 +516,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -540,7 +540,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class QueryGroupClause : QueryClause
+	public sealed class QueryGroupClause : QueryClause
 	{
 		public static readonly TokenRole GroupKeywordRole = new("group");
 		public static readonly Role<Expression> ProjectionRole = new("Projection", Expression.Null);
@@ -553,7 +553,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Projection {
 			get { return GetChildByRole(ProjectionRole); }
-			set { SetChildByRole(ProjectionRole, value); }
+			init { SetChildByRole(ProjectionRole, value); }
 		}
 
 		public CSharpTokenNode ByKeyword {
@@ -562,7 +562,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Key {
 			get { return GetChildByRole(KeyRole); }
-			set { SetChildByRole(KeyRole, value); }
+			init { SetChildByRole(KeyRole, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

@@ -22,7 +22,7 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	public interface ICodeContext : ITypeResolveContext
+	internal interface ICodeContext : ITypeResolveContext
 	{
 		/// <summary>
 		/// Gets all currently visible local variables and lambda parameters.

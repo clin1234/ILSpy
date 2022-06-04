@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents an ambiguous type resolve result.
 	/// </summary>
-	public class AmbiguousTypeResolveResult : TypeResolveResult
+	public sealed class AmbiguousTypeResolveResult : TypeResolveResult
 	{
 		public AmbiguousTypeResolveResult(IType type) : base(type)
 		{
@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents an ambiguous field/property/event access.
 	/// </summary>
-	public class AmbiguousMemberResolveResult : MemberResolveResult
+	public sealed class AmbiguousMemberResolveResult : MemberResolveResult
 	{
 		public AmbiguousMemberResolveResult(ResolveResult targetResult, IMember member) : base(targetResult, member)
 		{

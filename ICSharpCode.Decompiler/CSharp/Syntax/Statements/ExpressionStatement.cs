@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression;
 	/// </summary>
-	public class ExpressionStatement : Statement
+	public sealed class ExpressionStatement : Statement
 	{
 		public ExpressionStatement()
 		{

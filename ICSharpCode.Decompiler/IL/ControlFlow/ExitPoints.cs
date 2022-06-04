@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// This makes it easier for the following transforms to construct
 	/// control flow that falls out of blocks instead of using goto/break statements.
 	/// </summary>
-	public class DetectExitPoints : ILVisitor, IILTransform
+	public sealed class DetectExitPoints : ILVisitor, IILTransform
 	{
 		static readonly Nop ExitNotYetDetermined = new() { Comment = "ExitNotYetDetermined" };
 		static readonly Nop NoExit = new() { Comment = "NoExit" };
@@ -263,7 +263,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		class ContainerContext
+		sealed class ContainerContext
 		{
 			public readonly BlockContainer Container;
 
@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			/// If <c>currentExit==ExitNotYetDetermined</c>, holds the list of potential exit instructions.
 			/// After the currentContainer was visited completely, one of these will be selected as exit instruction.
 			/// </summary>
-			public readonly List<ILInstruction>? PotentialExits = null;
+			public readonly List<ILInstruction>? PotentialExits;
 
 			public ContainerContext(BlockContainer container, ILInstruction currentExit)
 			{

@@ -20,14 +20,14 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	public sealed class PinnedType : TypeWithElementType
+	internal sealed class PinnedType : TypeWithElementType
 	{
 		public PinnedType(IType elementType)
 			: base(elementType)
 		{
 		}
 
-		public override string NameSuffix => " pinned";
+		protected override string NameSuffix => " pinned";
 
 		public override bool? IsReferenceType => elementType.IsReferenceType;
 		public override bool IsByRefLike => elementType.IsByRefLike;

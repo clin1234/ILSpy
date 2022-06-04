@@ -23,14 +23,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression with Initializer
 	/// </summary>
-	public class WithInitializerExpression : Expression
+	public sealed class WithInitializerExpression : Expression
 	{
 		public static readonly TokenRole WithKeywordRole = new("with");
 		public static readonly Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode WithToken {
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ArrayInitializerExpression Initializer {
 			get { return GetChildByRole(InitializerRole); }
-			set { SetChildByRole(InitializerRole, value); }
+			init { SetChildByRole(InitializerRole, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

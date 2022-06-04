@@ -38,7 +38,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
-	public class PortablePdbWriter
+	public static class PortablePdbWriter
 	{
 		static readonly FileVersionInfo decompilerVersion =
 			FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
@@ -59,7 +59,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 			var sequencePointBlobs =
 				new Dictionary<MethodDefinitionHandle, (DocumentHandle Document, BlobHandle SequencePoints)>();
-			var emptyList = new List<SequencePoint>();
 			var localScopes =
 				new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length,
 					HashSet<ILVariable> Locals)>();
@@ -124,7 +123,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 						var method = function.MoveNextMethod ?? function.Method;
 						var methodHandle = (MethodDefinitionHandle)method.MetadataToken;
 						sequencePoints.TryGetValue(function, out var points);
-						ProcessMethod(methodHandle, document, points, syntaxTree);
+						ProcessMethod(methodHandle, document, points);
 						if (function.MoveNextMethod != null)
 						{
 							stateMachineMethods.Add((
@@ -150,7 +149,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 			foreach (var method in reader.MethodDefinitions)
 			{
-				var md = reader.GetMethodDefinition(method);
+				reader.GetMethodDefinition(method);
 
 				if (sequencePointBlobs.TryGetValue(method, out var info))
 				{
@@ -222,21 +221,19 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			blobBuilder.WriteContentTo(targetStream);
 
 			void ProcessMethod(MethodDefinitionHandle method, DocumentHandle document,
-				List<SequencePoint> sequencePoints, SyntaxTree syntaxTree)
+				List<SequencePoint> sequencePoints)
 			{
 				var methodDef = reader.GetMethodDefinition(method);
 				int localSignatureRowId;
-				MethodBodyBlock methodBody;
 				if (methodDef.RelativeVirtualAddress != 0)
 				{
-					methodBody = file.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+					MethodBodyBlock methodBody = file.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 					localSignatureRowId = methodBody.LocalSignature.IsNil
 						? 0
 						: MetadataTokens.GetRowNumber(methodBody.LocalSignature);
 				}
 				else
 				{
-					methodBody = null;
 					localSignatureRowId = 0;
 				}
 
@@ -245,11 +242,10 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				// but its method definition is not removed from the syntax tree.
 				if (!sequencePointBlobs.ContainsKey(method))
 				{
-					if (sequencePoints?.Count > 0)
-						sequencePointBlobs.Add(method,
-							(document, EncodeSequencePoints(metadata, localSignatureRowId, sequencePoints)));
-					else
-						sequencePointBlobs.Add(method, (default, default));
+					sequencePointBlobs.Add(method,
+						sequencePoints?.Count > 0
+							? (document, EncodeSequencePoints(metadata, localSignatureRowId, sequencePoints))
+							: (default, default));
 				}
 				else
 				{
@@ -263,7 +259,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		static BlobBuilder BuildStateMachineHoistedLocalScopes(ILFunction function)
 		{
 			var builder = new BlobBuilder();
-			foreach (var variable in function.Variables.Where(v => v.StateMachineField != null)
+			foreach (var unused in function.Variables.Where(v => v.StateMachineField != null)
 				         .OrderBy(v => MetadataTokens.GetRowNumber(v.StateMachineField.MetadataToken)))
 			{
 				builder.WriteUInt32(0);

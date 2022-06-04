@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
-	class InsertRequiredSpacesDecorator : DecoratingTokenWriter
+	sealed class InsertRequiredSpacesDecorator : DecoratingTokenWriter
 	{
 		/// <summary>
 		/// Used to insert the minimal amount of spaces so that the lexer recognizes the tokens that were written.

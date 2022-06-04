@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace ICSharpCode.Decompiler.Util
@@ -27,7 +28,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// Improved version of BitArray
 	/// </summary>
-	public class BitSet
+	public sealed class BitSet
 	{
 		const int BitsPerWord = 64;
 		const int Log2BitsPerWord = 6;
@@ -76,13 +77,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public bool Any()
 		{
-			for (int i = 0; i < words.Length; i++)
-			{
-				if (words[i] != 0)
-					return true;
-			}
-
-			return false;
+			return Enumerable.Any(words, static t => t != 0);
 		}
 
 		/// <summary>

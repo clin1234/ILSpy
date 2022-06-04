@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Name [ CountExpression ]
 	/// </summary>
-	public class FixedVariableInitializer : AstNode
+	public sealed class FixedVariableInitializer : AstNode
 	{
 		public FixedVariableInitializer()
 		{
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression CountExpression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RBracketToken {

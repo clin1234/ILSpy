@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ( Expression )
 	/// </summary>
-	public class ParenthesizedExpression : Expression
+	public sealed class ParenthesizedExpression : Expression
 	{
 		public ParenthesizedExpression()
 		{
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RParToken {

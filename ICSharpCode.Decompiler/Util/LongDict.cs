@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Util
 	static class LongDict
 	{
 		internal static readonly KeyComparer<LongInterval, long> StartComparer =
-			KeyComparer.Create((LongInterval i) => i.Start);
+			KeyComparer.Create(static (LongInterval i) => i.Start);
 
 		public static LongDict<T> Create<T>(IEnumerable<(LongSet, T)> entries)
 		{
@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// An immutable mapping from keys of type long to values of type T.
 	/// </summary>
-	struct LongDict<T> : IEnumerable<KeyValuePair<LongInterval, T>>
+	readonly struct LongDict<T> : IEnumerable<KeyValuePair<LongInterval, T>>
 	{
 		readonly LongInterval[] keys;
 		readonly T[] values;

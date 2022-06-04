@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// throw Expression
 	/// </summary>
-	public class ThrowExpression : Expression
+	public sealed class ThrowExpression : Expression
 	{
 		public static readonly TokenRole ThrowKeywordRole = ThrowStatement.ThrowKeywordRole;
 

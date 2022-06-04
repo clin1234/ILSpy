@@ -53,11 +53,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ICompilationProvider gp = genericType as ICompilationProvider;
 			for (int i = 0; i < this.typeArguments.Length; i++)
 			{
-				if (this.typeArguments[i] == null)
-					throw new ArgumentNullException("typeArguments[" + i + "]");
-				if (this.typeArguments[i] is ICompilationProvider p && gp != null && p.Compilation != gp.Compilation)
-					throw new InvalidOperationException(
-						"Cannot parameterize a type with type arguments from a different compilation.");
+				switch (this.typeArguments[i])
+				{
+					case null:
+						throw new ArgumentNullException("typeArguments[" + i + "]");
+					case ICompilationProvider p when gp != null && p.Compilation != gp.Compilation:
+						throw new InvalidOperationException(
+							"Cannot parameterize a type with type arguments from a different compilation.");
+				}
 			}
 		}
 
@@ -319,7 +322,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (i > 0)
 					b.Append(',');
 				b.Append('[');
-				b.Append(typeArguments[i].ToString());
+				b.Append(typeArguments[i]);
 				b.Append(']');
 			}
 
@@ -395,38 +398,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			int hashCode = GenericType.GetHashCode();
-			unchecked
-			{
-				foreach (ITypeReference t in typeArguments)
-				{
-					hashCode *= 27;
-					hashCode += t.GetHashCode();
-				}
-			}
-
-			return hashCode;
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			if (other is ParameterizedTypeReference o && GenericType == o.GenericType &&
-			    typeArguments.Length == o.typeArguments.Length)
-			{
-				for (int i = 0; i < typeArguments.Length; i++)
-				{
-					if (typeArguments[i] != o.typeArguments[i])
-						return false;
-				}
-
-				return true;
-			}
-
-			return false;
-		}
-
 		public IType Resolve(ITypeResolveContext context)
 		{
 			IType baseType = GenericType.Resolve(context);
@@ -454,12 +425,44 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (i > 0)
 					b.Append(',');
 				b.Append('[');
-				b.Append(typeArguments[i].ToString());
+				b.Append(typeArguments[i]);
 				b.Append(']');
 			}
 
 			b.Append(']');
 			return b.ToString();
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			int hashCode = GenericType.GetHashCode();
+			unchecked
+			{
+				foreach (ITypeReference t in typeArguments)
+				{
+					hashCode *= 27;
+					hashCode += t.GetHashCode();
+				}
+			}
+
+			return hashCode;
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			if (other is ParameterizedTypeReference o && GenericType == o.GenericType &&
+			    typeArguments.Length == o.typeArguments.Length)
+			{
+				for (int i = 0; i < typeArguments.Length; i++)
+				{
+					if (typeArguments[i] != o.typeArguments[i])
+						return false;
+				}
+
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

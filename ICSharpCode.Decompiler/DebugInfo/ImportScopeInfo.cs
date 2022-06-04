@@ -21,7 +21,7 @@ using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
-	class ImportScopeInfo
+	sealed class ImportScopeInfo
 	{
 		public readonly HashSet<string> Imports = new();
 		public readonly ImportScopeInfo Parent;

@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			for (; inst != container && inst != null; inst = inst.Parent)
 			{
-				if (inst.Parent is TryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
+				if (inst.Parent is TryFinally && inst.SlotInfo == TryInstruction.TryBlockSlot)
 					return true;
 			}
 

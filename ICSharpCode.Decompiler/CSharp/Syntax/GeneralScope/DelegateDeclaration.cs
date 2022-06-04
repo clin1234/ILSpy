@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// delegate ReturnType Name&lt;TypeParameters&gt;(Parameters) where Constraints;
 	/// </summary>
-	public class DelegateDeclaration : EntityDeclaration
+	public sealed class DelegateDeclaration : EntityDeclaration
 	{
 		public override NodeType NodeType {
 			get { return NodeType.TypeDeclaration; }

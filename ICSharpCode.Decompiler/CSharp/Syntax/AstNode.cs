@@ -282,7 +282,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				oldChild.ReplaceWith(newChild);
 		}
 
-		public void AddChild<T>(T child, Role<T> role) where T : AstNode
+		public void AddChild<T>(T? child, Role<T> role) where T : AstNode
 		{
 			ArgumentNullException.ThrowIfNull(role);
 			if (child == null || child.IsNull)
@@ -330,7 +330,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public void InsertChildBefore<T>(AstNode? nextSibling, T child, Role<T> role) where T : AstNode
+		public void InsertChildBefore<T>(AstNode? nextSibling, T? child, Role<T> role) where T : AstNode
 		{
 			ArgumentNullException.ThrowIfNull(role);
 			if (nextSibling == null || nextSibling.IsNull)
@@ -442,8 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (!this.Role.IsValid(newNode))
 			{
 				throw new ArgumentException(
-					$"The new node '{newNode.GetType().Name}' is not valid in the role {this.Role.ToString()}",
-					nameof(newNode));
+					$"The new node '{newNode.GetType().Name}' is not valid in the role {this.Role}", nameof(newNode));
 			}
 
 			if (newNode.Parent != null)
@@ -520,7 +519,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (!oldRole.IsValid(replacement))
 				{
 					throw new InvalidOperationException(
-						$"The new node '{replacement.GetType().Name}' is not valid in the role {oldRole.ToString()}");
+						$"The new node '{replacement.GetType().Name}' is not valid in the role {oldRole}");
 				}
 
 				if (oldSuccessor != null)
@@ -569,9 +568,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (NextSibling != null)
 				return NextSibling;
-			if (Parent != null)
-				return Parent.GetNextNode();
-			return null;
+			return Parent?.GetNextNode();
 		}
 
 		/// <summary>
@@ -591,9 +588,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (PrevSibling != null)
 				return PrevSibling;
-			if (Parent != null)
-				return Parent.GetPrevNode();
-			return null;
+			return Parent?.GetPrevNode();
 		}
 
 		/// <summary>
@@ -690,14 +685,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				else
 				{
-					if (node.EndLocation <= start)
-					{
-						next = node.GetNextNode();
-					}
-					else
-					{
-						next = node.FirstChild;
-					}
+					next = node.EndLocation <= start ? node.GetNextNode() : node.FirstChild;
 				}
 
 				if (next != null && next.StartLocation > end)

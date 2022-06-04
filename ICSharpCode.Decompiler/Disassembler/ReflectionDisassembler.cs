@@ -38,10 +38,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// </summary>
 	public sealed class ReflectionDisassembler
 	{
+		readonly CancellationToken cancellationToken;
+		readonly MethodBodyDisassembler methodBodyDisassembler;
 		readonly ITextOutput output;
-		CancellationToken cancellationToken;
 		bool isInType; // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
-		MethodBodyDisassembler methodBodyDisassembler;
 
 		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
 			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
@@ -57,7 +57,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 
 		public bool DetectControlStructure {
-			get => methodBodyDisassembler.DetectControlStructure;
 			set => methodBodyDisassembler.DetectControlStructure = value;
 		}
 
@@ -429,7 +428,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			output.WriteLine();
 			output.Indent();
-			var declaringType = methodDefinition.GetDeclaringType();
+			methodDefinition.GetDeclaringType();
 			MethodSignature<Action<ILNameSyntax>>? signature;
 			try
 			{
@@ -472,15 +471,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 
-			if (isCompilerControlled)
-			{
-				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name) + "$PST" +
-				                                        MetadataTokens.GetToken(handle).ToString("X8")));
-			}
-			else
-			{
-				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
-			}
+			output.Write(isCompilerControlled
+				? DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name) + "$PST" +
+				                             MetadataTokens.GetToken(handle).ToString("X8"))
+				: DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
 
 			WriteTypeParameters(output, module, genericContext, methodDefinition.GetGenericParameters());
 
@@ -497,10 +491,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Write(") ");
 			//cil managed
 			WriteEnum(methodDefinition.ImplAttributes & MethodImplAttributes.CodeTypeMask, methodCodeType);
-			if ((methodDefinition.ImplAttributes & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Managed)
-				output.Write("managed ");
-			else
-				output.Write("unmanaged ");
+			output.Write(
+				(methodDefinition.ImplAttributes & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Managed
+					? "managed "
+					: "unmanaged ");
 			WriteFlags(
 				methodDefinition.ImplAttributes &
 				~(MethodImplAttributes.CodeTypeMask | MethodImplAttributes.ManagedMask), methodImpl);
@@ -680,17 +674,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string)>
+		sealed class SecurityDeclarationDecoder : ICustomAttributeTypeProvider<(PrimitiveTypeCode, string)>
 		{
 			readonly PEFile module;
-			readonly ITextOutput output;
 			readonly IAssemblyResolver resolver;
 
 			PEFile mscorlib;
 
 			public SecurityDeclarationDecoder(ITextOutput output, IAssemblyResolver resolver, PEFile module)
 			{
-				this.output = output;
 				this.resolver = resolver;
 				this.module = module;
 			}
@@ -749,7 +741,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
 				string[] typeNameParts = nameParts[0].Split('.');
 				PEFile containingModule = null;
-				TypeDefinitionHandle typeDefHandle = default;
+				TypeDefinitionHandle typeDefHandle;
 				// if we deal with an assembly-qualified name, resolve the assembly
 				if (nameParts.Length == 2)
 					containingModule = resolver.Resolve(AssemblyNameReference.Parse(nameParts[1]));
@@ -816,17 +808,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 					return default;
 				}
-			}
-
-			PrimitiveTypeCode ResolveEnumUnderlyingType(string typeName, PEFile module)
-			{
-				if (typeName.StartsWith("enum ", StringComparison.Ordinal))
-					typeName = typeName[5..];
-				(PEFile containingModule, TypeDefinitionHandle typeDefHandle) = ResolveType(typeName, module);
-
-				if (typeDefHandle.IsNil || !typeDefHandle.IsEnum(containingModule.Metadata, out var typeCode))
-					throw new EnumUnderlyingTypeResolveException();
-				return typeCode;
 			}
 
 			bool TryResolveMscorlib(out PEFile mscorlib)
@@ -943,51 +924,55 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteValue(ITextOutput output, (PrimitiveTypeCode Code, string Name) type, object value)
 		{
-			if (value is CustomAttributeTypedArgument<(PrimitiveTypeCode, string)> boxedValue)
+			switch (value)
 			{
-				output.Write("object(");
-				WriteValue(output, boxedValue.Type, boxedValue.Value);
-				output.Write(")");
-			}
-			else if (value is ImmutableArray<CustomAttributeTypedArgument<(PrimitiveTypeCode, string)>> arrayValue)
-			{
-				string elementType = type.Name != null && !type.Name.StartsWith("enum ", StringComparison.Ordinal)
-					? type.Name.Remove(type.Name.Length - 2)
-					: PrimitiveTypeCodeToString(type.Code);
-
-				output.Write(elementType);
-				output.Write("[");
-				output.Write(arrayValue.Length.ToString());
-				output.Write("](");
-				bool first = true;
-				foreach (var item in arrayValue)
+				case CustomAttributeTypedArgument<(PrimitiveTypeCode, string)> boxedValue:
+					output.Write("object(");
+					WriteValue(output, boxedValue.Type, boxedValue.Value);
+					output.Write(")");
+					break;
+				case ImmutableArray<CustomAttributeTypedArgument<(PrimitiveTypeCode, string)>> arrayValue:
 				{
-					if (!first)
-						output.Write(" ");
-					if (item.Value is CustomAttributeTypedArgument<(PrimitiveTypeCode, string)> boxedItem)
+					string elementType = type.Name != null && !type.Name.StartsWith("enum ", StringComparison.Ordinal)
+						? type.Name.Remove(type.Name.Length - 2)
+						: PrimitiveTypeCodeToString(type.Code);
+
+					output.Write(elementType);
+					output.Write("[");
+					output.Write(arrayValue.Length.ToString());
+					output.Write("](");
+					bool first = true;
+					foreach (var item in arrayValue)
 					{
-						WriteValue(output, boxedItem.Type, boxedItem.Value);
-					}
-					else
-					{
-						WriteSimpleValue(output, item.Value, elementType);
+						if (!first)
+							output.Write(" ");
+						if (item.Value is CustomAttributeTypedArgument<(PrimitiveTypeCode, string)> boxedItem)
+						{
+							WriteValue(output, boxedItem.Type, boxedItem.Value);
+						}
+						else
+						{
+							WriteSimpleValue(output, item.Value, elementType);
+						}
+
+						first = false;
 					}
 
-					first = false;
+					output.Write(")");
+					break;
 				}
+				default:
+				{
+					string typeName = type.Name != null && !type.Name.StartsWith("enum ", StringComparison.Ordinal)
+						? type.Name
+						: PrimitiveTypeCodeToString(type.Code);
 
-				output.Write(")");
-			}
-			else
-			{
-				string typeName = type.Name != null && !type.Name.StartsWith("enum ", StringComparison.Ordinal)
-					? type.Name
-					: PrimitiveTypeCodeToString(type.Code);
-
-				output.Write(typeName);
-				output.Write("(");
-				WriteSimpleValue(output, value, typeName);
-				output.Write(")");
+					output.Write(typeName);
+					output.Write("(");
+					WriteSimpleValue(output, value, typeName);
+					output.Write(")");
+					break;
+				}
 			}
 		}
 
@@ -1000,15 +985,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				case "type":
 					var info = ((PrimitiveTypeCode Code, string Name))value;
-					if (info.Name.StartsWith("enum ", StringComparison.Ordinal))
-					{
-						output.Write(info.Name[5..]);
-					}
-					else
-					{
-						output.Write(info.Name);
-					}
-
+					output.Write(info.Name.StartsWith("enum ", StringComparison.Ordinal) ? info.Name[5..] : info.Name);
 					break;
 				default:
 					DisassemblerHelpers.WriteOperand(output, value);
@@ -1429,17 +1406,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 						string typeName = DisassemblerHelpers.PrimitiveTypeName(value.GetType().FullName);
 						output.Write(typeName);
 						output.Write('(');
-						if (value is float cf && (float.IsNaN(cf) || float.IsInfinity(cf)))
+						switch (value)
 						{
-							output.Write("0x{0:x8}", BitConverter.ToInt32(BitConverter.GetBytes(cf), 0));
-						}
-						else if (value is double cd && (double.IsNaN(cd) || double.IsInfinity(cd)))
-						{
-							output.Write("0x{0:x16}", BitConverter.DoubleToInt64Bits(cd));
-						}
-						else
-						{
-							DisassemblerHelpers.WriteOperand(output, value);
+							case float cf when (float.IsNaN(cf) || float.IsInfinity(cf)):
+								output.Write("0x{0:x8}", BitConverter.ToInt32(BitConverter.GetBytes(cf), 0));
+								break;
+							case double cd when (double.IsNaN(cd) || double.IsInfinity(cd)):
+								output.Write("0x{0:x16}", BitConverter.DoubleToInt64Bits(cd));
+								break;
+							default:
+								DisassemblerHelpers.WriteOperand(output, value);
+								break;
 						}
 
 						output.Write(')');
@@ -1512,17 +1489,23 @@ namespace ICSharpCode.Decompiler.Disassembler
 					{
 						var sectionHeader = module.Reader.PEHeaders.SectionHeaders[sectionIndex];
 						output.Write(".data ");
-						if (sectionHeader.Name == ".text")
+						switch (sectionHeader.Name)
 						{
-							output.Write("cil ");
-						}
-						else if (sectionHeader.Name == ".tls")
-						{
-							output.Write("tls ");
-						}
-						else if (sectionHeader.Name != ".data")
-						{
-							output.Write($"/* {sectionHeader.Name} */ ");
+							case ".text":
+								output.Write("cil ");
+								break;
+							case ".tls":
+								output.Write("tls ");
+								break;
+							default:
+							{
+								if (sectionHeader.Name != ".data")
+								{
+									output.Write($"/* {sectionHeader.Name} */ ");
+								}
+
+								break;
+							}
 						}
 
 						output.Write($"{sectionPrefix}_{rva:X8} = bytearray ");
@@ -1808,10 +1791,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				{
 					if (!first)
 						output.WriteLine(",");
-					if (first)
-						output.Write("implements ");
-					else
-						output.Write("           ");
+					output.Write(first ? "implements " : "           ");
 					first = false;
 					var iface = module.Metadata.GetInterfaceImplementation(i);
 					WriteAttributes(module, iface.GetCustomAttributes());

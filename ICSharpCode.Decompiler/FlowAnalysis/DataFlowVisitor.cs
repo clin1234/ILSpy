@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// <typeparam name="State">
 	/// The state type used for the data flow analysis. See <see cref="IDataFlowState{Self}"/> for details.
 	/// </typeparam>
-	public abstract class DataFlowVisitor<State> : ILVisitor
+	internal abstract class DataFlowVisitor<State> : ILVisitor
 		where State : IDataFlowState<State>
 	{
 		private readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new();
@@ -646,45 +646,37 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </remarks>
 		(State OnTrue, State OnFalse) EvaluateCondition(ILInstruction inst)
 		{
-			if (inst is IfInstruction ifInst)
+			switch (inst)
 			{
-				// 'if (a?b:c)' or similar.
-				// This also includes conditions that are logic.not, logic.and, logic.or.
-				DebugStartPoint(ifInst);
-				(State beforeThen, State beforeElse) = EvaluateCondition(ifInst.Condition);
-				state = beforeThen;
-				(State afterThenTrue, State afterThenFalse) = EvaluateCondition(ifInst.TrueInst);
-				state = beforeElse;
-				(State afterElseTrue, State afterElseFalse) = EvaluateCondition(ifInst.FalseInst);
-
-				var onTrue = afterThenTrue;
-				onTrue.JoinWith(afterElseTrue);
-				var onFalse = afterThenFalse;
-				onFalse.JoinWith(afterElseFalse);
-
-				DebugEndPoint(ifInst);
-				return (onTrue, onFalse);
-			}
-			else if (inst is LdcI4 constant)
-			{
-				if (constant.Value == 0)
+				case IfInstruction ifInst:
 				{
+					// 'if (a?b:c)' or similar.
+					// This also includes conditions that are logic.not, logic.and, logic.or.
+					DebugStartPoint(ifInst);
+					(State beforeThen, State beforeElse) = EvaluateCondition(ifInst.Condition);
+					state = beforeThen;
+					(State afterThenTrue, State afterThenFalse) = EvaluateCondition(ifInst.TrueInst);
+					state = beforeElse;
+					(State afterElseTrue, State afterElseFalse) = EvaluateCondition(ifInst.FalseInst);
+
+					var onTrue = afterThenTrue;
+					onTrue.JoinWith(afterElseTrue);
+					var onFalse = afterThenFalse;
+					onFalse.JoinWith(afterElseFalse);
+
+					DebugEndPoint(ifInst);
+					return (onTrue, onFalse);
+				}
+				case LdcI4 { Value: 0 }:
 					return (bottomState.Clone(), state);
-				}
-				else
-				{
+				case LdcI4:
 					return (state, bottomState.Clone());
-				}
-			}
-			else if (inst is MatchInstruction match)
-			{
-				return EvaluateMatch(match);
-			}
-			else
-			{
-				// other kind of condition
-				inst.AcceptVisitor(this);
-				return (state, state.Clone());
+				case MatchInstruction match:
+					return EvaluateMatch(match);
+				default:
+					// other kind of condition
+					inst.AcceptVisitor(this);
+					return (state, state.Clone());
 			}
 		}
 

@@ -128,17 +128,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			retry: // Retry until successful
 			object oldAnnotations = this.annotations;
-			if (oldAnnotations is AnnotationList list)
+			switch (oldAnnotations)
 			{
-				lock (list)
-					list.RemoveAll(obj => obj is T);
-			}
-			else if (oldAnnotations is T)
-			{
-				if (Interlocked.CompareExchange(ref this.annotations, null, oldAnnotations) != oldAnnotations)
+				case AnnotationList list:
 				{
-					// Operation failed (some other thread wrote to this.annotations first)
-					goto retry;
+					lock (list)
+						list.RemoveAll(obj => obj is T);
+					break;
+				}
+				case T:
+				{
+					if (Interlocked.CompareExchange(ref this.annotations, null, oldAnnotations) != oldAnnotations)
+					{
+						// Operation failed (some other thread wrote to this.annotations first)
+						goto retry;
+					}
+
+					break;
 				}
 			}
 		}

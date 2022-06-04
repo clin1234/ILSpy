@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ref Expression
 	/// </summary>
-	public class DirectionExpression : Expression
+	public sealed class DirectionExpression : Expression
 	{
 		public static readonly TokenRole RefKeywordRole = new("ref");
 		public static readonly TokenRole OutKeywordRole = new("out");
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

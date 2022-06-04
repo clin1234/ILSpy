@@ -25,8 +25,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Parameter class holding various arguments for <see cref="IBlockTransform.Run"/>.
 	/// </summary>
-	public class BlockTransformContext : ILTransformContext
+	public sealed class BlockTransformContext : ILTransformContext
 	{
+		public BlockTransformContext(ILTransformContext context) : base(context)
+		{
+		}
+
 		/// <summary>
 		/// The block to process.
 		/// </summary>
@@ -52,32 +56,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// block transforms (before loop detection).
 		/// </summary>
 		public ControlFlowGraph ControlFlowGraph { get; set; }
-
-		public BlockTransformContext(ILTransformContext context) : base(context)
-		{
-		}
 	}
 
 
 	/// <summary>
 	/// IL transform that runs a list of per-block transforms.
 	/// </summary>
-	public class BlockILTransform : IILTransform
+	public sealed class BlockILTransform : IILTransform
 	{
+		bool running;
 		public IList<IBlockTransform> PreOrderTransforms { get; } = new List<IBlockTransform>();
 		public IList<IBlockTransform> PostOrderTransforms { get; } = new List<IBlockTransform>();
-
-		bool running;
-
-		public override string ToString()
-		{
-			return $"{nameof(BlockILTransform)} ({string.Join(", ", PreOrderTransforms.Concat(PostOrderTransforms).Select(t => t.GetType().Name))})";
-		}
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			if (running)
-				throw new InvalidOperationException("Reentrancy detected. Transforms (and the CSharpDecompiler) are neither thread-safe nor re-entrant.");
+				throw new InvalidOperationException(
+					"Reentrancy detected. Transforms (and the CSharpDecompiler) are neither thread-safe nor re-entrant.");
 			try
 			{
 				running = true;
@@ -94,6 +89,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				running = false;
 			}
+		}
+
+		public override string ToString()
+		{
+			return
+				$"{nameof(BlockILTransform)} ({string.Join(", ", PreOrderTransforms.Concat(PostOrderTransforms).Select(t => t.GetType().Name))})";
 		}
 
 		void VisitBlock(ControlFlowNode cfgNode, BlockTransformContext context)

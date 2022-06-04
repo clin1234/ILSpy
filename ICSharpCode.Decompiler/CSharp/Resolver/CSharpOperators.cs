@@ -72,8 +72,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return result.ToArray();
 		}
 
-		IParameter[] normalParameters = new IParameter[TypeCode.String + 1 - TypeCode.Object];
-		IParameter[] nullableParameters = new IParameter[TypeCode.Decimal + 1 - TypeCode.Boolean];
+		readonly IParameter[] normalParameters = new IParameter[TypeCode.String + 1 - TypeCode.Object];
+		readonly IParameter[] nullableParameters = new IParameter[TypeCode.Decimal + 1 - TypeCode.Boolean];
 
 		void InitParameterArrays()
 		{
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return parameters; }
 			}
 
-			public IType ReturnType { get; internal set; } = null!; // initialized by derived class ctor
+			public IType ReturnType { get; internal init; } = null!; // initialized by derived class ctor
 
 			public ICompilation Compilation { get; }
 
@@ -288,7 +288,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, ILiftedOperator
 		{
-			UnaryOperatorMethod baseMethod;
+			readonly UnaryOperatorMethod baseMethod;
 
 			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(
 				operators.compilation)
@@ -346,9 +346,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return LazyInit.GetOrSet(ref uncheckedUnaryMinusOperators, Lift(
 						new LambdaUnaryOperatorMethod<int>(this, i => unchecked(-i)),
 						new LambdaUnaryOperatorMethod<long>(this, i => unchecked(-i)),
-						new LambdaUnaryOperatorMethod<float>(this, i => unchecked(-i)),
-						new LambdaUnaryOperatorMethod<double>(this, i => unchecked(-i)),
-						new LambdaUnaryOperatorMethod<decimal>(this, i => unchecked(-i))
+						new LambdaUnaryOperatorMethod<float>(this, i => -i),
+						new LambdaUnaryOperatorMethod<double>(this, i => -i),
+						new LambdaUnaryOperatorMethod<decimal>(this, i => -i)
 					));
 				}
 			}
@@ -368,9 +368,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return LazyInit.GetOrSet(ref checkedUnaryMinusOperators, Lift(
 						new LambdaUnaryOperatorMethod<int>(this, i => checked(-i)),
 						new LambdaUnaryOperatorMethod<long>(this, i => checked(-i)),
-						new LambdaUnaryOperatorMethod<float>(this, i => checked(-i)),
-						new LambdaUnaryOperatorMethod<double>(this, i => checked(-i)),
-						new LambdaUnaryOperatorMethod<decimal>(this, i => checked(-i))
+						new LambdaUnaryOperatorMethod<float>(this, i => -i),
+						new LambdaUnaryOperatorMethod<double>(this, i => -i),
+						new LambdaUnaryOperatorMethod<decimal>(this, i => -i)
 					));
 				}
 			}
@@ -516,12 +516,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							(a, b) => unchecked(a * b)),
 						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a * b),
 							(a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a * b),
-							(a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a * b),
-							(a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a * b),
-							(a, b) => unchecked(a * b))
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => a * b, (a, b) => a * b),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => a * b, (a, b) => a * b),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => a * b, (a, b) => a * b)
 					));
 				}
 			}
@@ -540,20 +537,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref divisionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a / b),
-							(a, b) => unchecked(a / b))
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a / b, (a, b) => a / b),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => a / b, (a, b) => a / b),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => a / b, (a, b) => a / b),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => a / b, (a, b) => a / b),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => a / b, (a, b) => a / b),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => a / b, (a, b) => a / b),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => a / b, (a, b) => a / b)
 					));
 				}
 			}
@@ -572,20 +562,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref remainderOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a % b),
-							(a, b) => unchecked(a % b))
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => a % b, (a, b) => a % b),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => a % b, (a, b) => a % b),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => a % b, (a, b) => a % b),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => a % b, (a, b) => a % b),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => a % b, (a, b) => a % b),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => a % b, (a, b) => a % b),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => a % b, (a, b) => a % b)
 					));
 				}
 			}
@@ -612,12 +595,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							(a, b) => unchecked(a + b)),
 						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a + b),
 							(a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a + b),
-							(a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a + b),
-							(a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a + b),
-							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => a + b, (a, b) => a + b),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => a + b, (a, b) => a + b),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => a + b, (a, b) => a + b),
 						new StringConcatenation(this, TypeCode.String, TypeCode.String),
 						new StringConcatenation(this, TypeCode.String, TypeCode.Object),
 						new StringConcatenation(this, TypeCode.Object, TypeCode.String)
@@ -667,12 +647,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							(a, b) => unchecked(a - b)),
 						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a - b),
 							(a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a - b),
-							(a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a - b),
-							(a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a - b),
-							(a, b) => unchecked(a - b))
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => a - b, (a, b) => a - b),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => a - b, (a, b) => a - b),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => a - b, (a, b) => a - b)
 					));
 				}
 			}

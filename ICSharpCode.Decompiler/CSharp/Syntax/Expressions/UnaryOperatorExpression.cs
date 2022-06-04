@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Operator Expression
 	/// </summary>
-	public class UnaryOperatorExpression : Expression
+	public sealed class UnaryOperatorExpression : Expression
 	{
 		public static readonly TokenRole NotRole = new("!");
 		public static readonly TokenRole BitNotRole = new("~");
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UnaryOperatorType Operator {
 			get;
-			set;
+			init;
 		}
 
 		public CSharpTokenNode OperatorToken {
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class UserDefinedLogicTransform : IStatementTransform
+	public sealed class UserDefinedLogicTransform : IStatementTransform
 	{
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{

@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// Decompiles query expressions.
 	/// Based on C# 4.0 spec, §7.16.2 Query expression translation
 	/// </summary>
-	public class IntroduceQueryExpressions : IAstTransform
+	internal sealed class IntroduceQueryExpressions : IAstTransform
 	{
 		TransformContext context;
 
@@ -107,9 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		QueryExpression DecompileQuery(InvocationExpression invocation)
 		{
-			if (invocation == null)
-				return null;
-			if (invocation.Target is not MemberReferenceExpression mre || IsNullConditional(mre.Target))
+			if (invocation?.Target is not MemberReferenceExpression mre || IsNullConditional(mre.Target))
 				return null;
 			switch (mre.MemberName)
 			{
@@ -134,40 +132,50 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				case "GroupBy":
 				{
-					if (invocation.Arguments.Count == 2)
+					switch (invocation.Arguments.Count)
 					{
-						Expression keyLambda = invocation.Arguments.ElementAt(0);
-						Expression projectionLambda = invocation.Arguments.ElementAt(1);
-						if (MatchSimpleLambda(keyLambda, out ParameterDeclaration parameter1,
-							    out Expression keySelector)
-						    && MatchSimpleLambda(projectionLambda, out ParameterDeclaration parameter2,
-							    out Expression elementSelector)
-						    && parameter1.Name == parameter2.Name)
+						case 2:
 						{
-							QueryExpression query = new();
-							query.Clauses.Add(MakeFromClause(parameter1, mre.Target.Detach()));
-							var queryGroupClause = new QueryGroupClause {
-								Projection = elementSelector.Detach(),
-								Key = keySelector.Detach()
-							};
-							queryGroupClause.AddAnnotation(new QueryGroupClauseAnnotation(
-								keyLambda.Annotation<IL.ILFunction>(), projectionLambda.Annotation<IL.ILFunction>()));
-							query.Clauses.Add(queryGroupClause);
-							return query;
+							Expression keyLambda = invocation.Arguments.ElementAt(0);
+							Expression projectionLambda = invocation.Arguments.ElementAt(1);
+							if (MatchSimpleLambda(keyLambda, out ParameterDeclaration parameter1,
+								    out Expression keySelector)
+							    && MatchSimpleLambda(projectionLambda, out ParameterDeclaration parameter2,
+								    out Expression elementSelector)
+							    && parameter1.Name == parameter2.Name)
+							{
+								QueryExpression query = new();
+								query.Clauses.Add(MakeFromClause(parameter1, mre.Target.Detach()));
+								var queryGroupClause = new QueryGroupClause {
+									Projection = elementSelector.Detach(),
+									Key = keySelector.Detach()
+								};
+								queryGroupClause.AddAnnotation(new QueryGroupClauseAnnotation(
+									keyLambda.Annotation<IL.ILFunction>(),
+									projectionLambda.Annotation<IL.ILFunction>()));
+								query.Clauses.Add(queryGroupClause);
+								return query;
+							}
+
+							break;
 						}
-					}
-					else if (invocation.Arguments.Count == 1)
-					{
-						Expression lambda = invocation.Arguments.Single();
-						if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter, out Expression keySelector))
+						case 1:
 						{
-							QueryExpression query = new();
-							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
-							query.Clauses.Add(new QueryGroupClause {
-								Projection = new IdentifierExpression(parameter.Name).CopyAnnotationsFrom(parameter),
-								Key = keySelector.Detach()
-							});
-							return query;
+							Expression lambda = invocation.Arguments.Single();
+							if (MatchSimpleLambda(lambda, out ParameterDeclaration parameter,
+								    out Expression keySelector))
+							{
+								QueryExpression query = new();
+								query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
+								query.Clauses.Add(new QueryGroupClause {
+									Projection =
+										new IdentifierExpression(parameter.Name).CopyAnnotationsFrom(parameter),
+									Key = keySelector.Detach()
+								});
+								return query;
+							}
+
+							break;
 						}
 					}
 
@@ -374,12 +382,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (parameter.Name != expectedParameterName)
 				return false;
 
-			if (mre.MemberName is "OrderBy" or "OrderByDescending")
-				return !IsNullConditional(mre.Target);
-			else if (mre.MemberName is "ThenBy" or "ThenByDescending")
-				return ValidateThenByChain(mre.Target as InvocationExpression, expectedParameterName);
-			else
-				return false;
+			return mre.MemberName switch {
+				"OrderBy" or "OrderByDescending" => !IsNullConditional(mre.Target),
+				"ThenBy" or "ThenByDescending" => ValidateThenByChain(mre.Target as InvocationExpression,
+					expectedParameterName),
+				_ => false
+			};
 		}
 
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
@@ -404,25 +412,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		private static bool ValidateParameter(ParameterDeclaration p)
 		{
 			return p.ParameterModifier == ParameterModifier.None && p.Attributes.Count == 0;
-		}
-
-		class ApplyAnnotationVisitor : DepthFirstAstVisitor<AstNode>
-		{
-			private LetIdentifierAnnotation annotation;
-			private string identifier;
-
-			public ApplyAnnotationVisitor(LetIdentifierAnnotation annotation, string identifier)
-			{
-				this.annotation = annotation;
-				this.identifier = identifier;
-			}
-
-			public override AstNode VisitIdentifier(Identifier identifier)
-			{
-				if (identifier.Name == this.identifier)
-					identifier.AddAnnotation(annotation);
-				return identifier;
-			}
 		}
 	}
 }

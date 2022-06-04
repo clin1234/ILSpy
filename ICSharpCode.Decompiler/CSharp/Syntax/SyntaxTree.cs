@@ -30,17 +30,13 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class SyntaxTree : AstNode
+	public sealed class SyntaxTree : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = new("Member", Null);
 
-		IList<string> conditionalSymbols = null;
+		IList<string> conditionalSymbols;
 
 		string fileName;
-
-		public SyntaxTree()
-		{
-		}
 
 		public override NodeType NodeType {
 			get {

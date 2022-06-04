@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return (flags & verbatimBit) != 0;
 			}
-			set {
+			init {
 				ThrowIfFrozen();
 				if (value)
 					flags |= verbatimBit;

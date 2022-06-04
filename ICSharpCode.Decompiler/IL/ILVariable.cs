@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	[DebuggerDisplay("{Name} : {Type}")]
-	public class ILVariable
+	public sealed class ILVariable
 	{
 		readonly List<LdLoca> addressInstructions = new();
 
@@ -658,7 +658,7 @@ namespace ICSharpCode.Decompiler.IL
 		int IndexInAddressInstructionList { get; set; }
 	}
 
-	public class ILVariableEqualityComparer : IEqualityComparer<ILVariable>
+	public sealed class ILVariableEqualityComparer : IEqualityComparer<ILVariable>
 	{
 		public static readonly ILVariableEqualityComparer Instance = new();
 

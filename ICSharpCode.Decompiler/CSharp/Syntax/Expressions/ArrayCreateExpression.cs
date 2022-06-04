@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new Type[Dimensions]
 	/// </summary>
-	public class ArrayCreateExpression : Expression
+	public sealed class ArrayCreateExpression : Expression
 	{
 		public static readonly TokenRole NewKeywordRole = new("new");
 

@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 #nullable enable
 
 using System.Collections.Generic;
@@ -24,22 +25,9 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// Union-Find data structure.
 	/// </summary>
-	public class UnionFind<T> where T : notnull
+	internal sealed class UnionFind<T> where T : notnull
 	{
-		Dictionary<T, Node> mapping;
-
-		class Node
-		{
-			public int rank;
-			public Node parent;
-			public T value;
-
-			internal Node(T value)
-			{
-				this.value = value;
-				this.parent = this;
-			}
-		}
+		readonly Dictionary<T, Node> mapping;
 
 		public UnionFind()
 		{
@@ -54,6 +42,7 @@ namespace ICSharpCode.Decompiler.Util
 				node.parent = node;
 				mapping.Add(element, node);
 			}
+
 			return node;
 		}
 
@@ -83,6 +72,19 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				rootB.parent = rootA;
 				rootA.rank++;
+			}
+		}
+
+		sealed class Node
+		{
+			public readonly T value;
+			public Node parent;
+			public int rank;
+
+			internal Node(T value)
+			{
+				this.value = value;
+				this.parent = this;
 			}
 		}
 	}

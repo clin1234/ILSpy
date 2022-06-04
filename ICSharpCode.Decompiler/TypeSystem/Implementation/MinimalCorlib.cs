@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static readonly IModuleReference Instance = new CorlibModuleReference(KnownTypeReference.AllKnownTypes);
 
 		readonly CorlibNamespace rootNamespace;
-		CorlibTypeDefinition[] typeDefinitions;
+		readonly CorlibTypeDefinition[] typeDefinitions;
 
 		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		PEFile IModule.PEFile => null;
 		INamespace IModule.RootNamespace => rootNamespace;
 
-		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(td => td != null);
+		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(static td => td != null);
 		public IEnumerable<ITypeDefinition> TypeDefinitions => TopLevelTypeDefinitions;
 
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return module == this;
 		}
 
-		public static IModuleReference CreateWithTypes(IEnumerable<KnownTypeReference> types)
+		internal static IModuleReference CreateWithTypes(IEnumerable<KnownTypeReference> types)
 		{
 			return new CorlibModuleReference(types);
 		}
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		sealed class CorlibNamespace : INamespace
 		{
-			internal readonly List<INamespace> childNamespaces = new();
+			private readonly List<INamespace> childNamespaces = new();
 			readonly MinimalCorlib corlib;
 
 			public CorlibNamespace(MinimalCorlib corlib, INamespace parentNamespace, string fullName, string name)

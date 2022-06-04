@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class CachedDelegateInitialization : IBlockTransform
+	public sealed class CachedDelegateInitialization : IBlockTransform
 	{
 		BlockTransformContext context;
 

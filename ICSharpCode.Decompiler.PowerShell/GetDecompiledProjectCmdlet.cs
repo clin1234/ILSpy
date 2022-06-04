@@ -58,17 +58,17 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 				while (!task.IsCompleted)
 				{
-					ProgressRecord progress;
+					ProgressRecord progressRecord;
 					lock (syncObject)
 					{
-						progress = this.progress;
+						progressRecord = this.progress;
 						this.progress = null;
 					}
 
-					if (progress != null)
+					if (progressRecord != null)
 					{
 						timeout = 100;
-						WriteProgress(progress);
+						WriteProgress(progressRecord);
 					}
 					else
 					{

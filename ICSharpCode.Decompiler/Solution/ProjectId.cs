@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Solution
 		public string PlatformName { get; }
 	}
 
-	public static class ProjectTypeGuids
+	internal static class ProjectTypeGuids
 	{
 		public static readonly Guid SolutionFolder = Guid.Parse("{2150E333-8FDC-42A3-9474-1A3956D46DE8}");
 

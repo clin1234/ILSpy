@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// This transform is used to remove CLSCompliant attributes added by the compiler. We remove them in order to get rid of many warnings.
 	/// </summary>
 	/// <remarks>This transform is only enabled, when exporting a full assembly as project.</remarks>
-	public class RemoveCLSCompliantAttribute : IAstTransform
+	public sealed class RemoveCLSCompliantAttribute : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{

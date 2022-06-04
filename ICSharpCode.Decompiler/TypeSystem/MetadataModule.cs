@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// Type system implementation for Metadata.PEFile.
 	/// </summary>
 	[DebuggerDisplay("<MetadataModule: {" + nameof(AssemblyName) + "}>")]
-	public class MetadataModule : IModule
+	public sealed class MetadataModule : IModule
 	{
 		readonly MetadataEvent[] eventDefs;
 		readonly MetadataField[] fieldDefs;
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public TypeSystemOptions TypeSystemOptions { get; }
+		internal TypeSystemOptions TypeSystemOptions { get; }
 		public ICompilation Compilation { get; }
 
 		internal string GetString(StringHandle name)
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public INamespace RootNamespace => rootNamespace;
 
 		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions =>
-			TypeDefinitions.Where(td => td.DeclaringTypeDefinition == null);
+			TypeDefinitions.Where(static td => td.DeclaringTypeDefinition == null);
 
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
@@ -527,23 +527,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (declaringTypeDefinition != null)
 				{
 					// Find the set of overloads to search:
-					IEnumerable<IMethod> methods;
-					if (name == ".ctor")
-					{
-						methods = declaringTypeDefinition.GetConstructors();
-					}
-					else if (name == ".cctor")
-					{
-						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
-					}
-					else
-					{
-						methods = declaringTypeDefinition
+					IEnumerable<IMethod> methods = name switch {
+						".ctor" => declaringTypeDefinition.GetConstructors(),
+						".cctor" => declaringTypeDefinition.Methods.Where(static m => m.IsConstructor && m.IsStatic),
+						_ => declaringTypeDefinition
 							.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
 							.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name,
-								GetMemberOptions.IgnoreInheritedMembers));
-					}
-
+								GetMemberOptions.IgnoreInheritedMembers))
+					};
 					// Determine the expected parameters from the signature:
 					ImmutableArray<IType> parameterTypes;
 					if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
@@ -577,10 +568,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					method = null;
 				}
 
-				if (method == null)
-				{
-					method = CreateFakeMethod(declaringType, name, signature);
-				}
+				method ??= CreateFakeMethod(declaringType, name, signature);
 			}
 
 			if (classTypeArguments != null || methodTypeArguments != null)

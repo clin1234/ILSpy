@@ -22,50 +22,7 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Util
 {
-	public sealed class ProjectedList<TInput, TOutput> : IReadOnlyList<TOutput> where TOutput : class
-	{
-		readonly IList<TInput> input;
-		readonly TOutput?[] items;
-		readonly Func<TInput, TOutput> projection;
-
-		public ProjectedList(IList<TInput> input, Func<TInput, TOutput> projection)
-		{
-			this.input = input ?? throw new ArgumentNullException(nameof(input));
-			this.projection = projection ?? throw new ArgumentNullException(nameof(projection));
-			this.items = new TOutput?[input.Count];
-		}
-
-		public TOutput this[int index] {
-			get {
-				TOutput? output = LazyInit.VolatileRead(ref items[index]);
-				if (output != null)
-				{
-					return output;
-				}
-
-				return LazyInit.GetOrSet(ref items[index], projection(input[index]));
-			}
-		}
-
-		public int Count {
-			get { return items.Length; }
-		}
-
-		public IEnumerator<TOutput> GetEnumerator()
-		{
-			for (int i = 0; i < this.Count; i++)
-			{
-				yield return this[i];
-			}
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
-	}
-
-	public sealed class ProjectedList<TContext, TInput, TOutput> : IReadOnlyList<TOutput> where TOutput : class
+	internal sealed class ProjectedList<TContext, TInput, TOutput> : IReadOnlyList<TOutput> where TOutput : class
 	{
 		readonly TContext context;
 		readonly IList<TInput> input;

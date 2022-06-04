@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 <#@ template debug="false" hostspecific="false" language="C#" #>
-<#@ assembly name="System.Core" #>
+<#@ assembly name="System"#>
 <#@ output extension=".cs" #>
 using System;
 using System.Collections.Generic;
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	}
 #>
 
-	static partial class ILOpCodeExtensions
+	internal static partial class ILOpCodeExtensions
 	{
 		// We use a byte array instead of an enum array because it can be initialized more efficiently
 		static readonly byte[] operandTypes = { <#

@@ -37,9 +37,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class UsingInstruction
 	{
-		public bool IsAsync { get; set; }
+		public bool IsAsync { get; init; }
 
-		public bool IsRefStruct { get; set; }
+		public bool IsRefStruct { get; init; }
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -49,10 +49,12 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".async");
 			}
+
 			if (IsRefStruct)
 			{
 				output.Write(".ref");
 			}
+
 			output.Write(" (");
 			Variable.WriteTo(output);
 			output.Write(" = ");

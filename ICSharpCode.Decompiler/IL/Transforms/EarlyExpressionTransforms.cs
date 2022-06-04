@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class EarlyExpressionTransforms : ILVisitor, IILTransform
+	public sealed class EarlyExpressionTransforms : ILVisitor, IILTransform
 	{
 		ILTransformContext context;
 
@@ -52,6 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return;
 			}
+
 			if (inst.Right.MatchLdNull())
 			{
 				if (inst.Kind == ComparisonKind.GreaterThan)
@@ -79,13 +80,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			if (inst.Right.MatchLdNull() && inst.Left.MatchBox(out var arg, out var type) && type.Kind == TypeKind.TypeParameter)
+			if (inst.Right.MatchLdNull() && inst.Left.MatchBox(out var arg, out var type) &&
+			    type.Kind == TypeKind.TypeParameter)
 			{
 				if (inst.Kind == ComparisonKind.Equality)
 				{
 					context.Step("comp(box T(..) == ldnull) -> comp(.. == ldnull)", inst);
 					inst.Left = arg;
 				}
+
 				if (inst.Kind == ComparisonKind.Inequality)
 				{
 					context.Step("comp(box T(..) != ldnull) -> comp(.. != ldnull)", inst);
@@ -104,21 +107,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool StObjToStLoc(StObj inst, ILTransformContext context)
 		{
 			if (inst.Target.MatchLdLoca(out ILVariable v)
-				&& TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type)
-				&& inst.UnalignedPrefix == 0
-				&& !inst.IsVolatile)
+			    && TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type)
+			    && inst.UnalignedPrefix == 0
+			    && !inst.IsVolatile)
 			{
 				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
 				ILInstruction replacement = new StLoc(v, inst.Value).WithILRange(inst);
 				if (v.StackType == StackType.Unknown && inst.Type.Kind != TypeKind.Unknown
-					&& inst.SlotInfo != Block.InstructionSlot)
+				                                     && inst.SlotInfo != Block.InstructionSlot)
 				{
 					replacement = new Conv(replacement, inst.Type.ToPrimitiveType(),
 						checkForOverflow: false, Sign.None);
 				}
+
 				inst.ReplaceWith(replacement);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -132,9 +137,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool LdObjToLdLoc(LdObj inst, ILTransformContext context)
 		{
 			if (inst.Target.MatchLdLoca(out ILVariable v)
-				&& TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type)
-				&& inst.UnalignedPrefix == 0
-				&& !inst.IsVolatile)
+			    && TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type)
+			    && inst.UnalignedPrefix == 0
+			    && !inst.IsVolatile)
 			{
 				context.Step($"ldobj(ldloca {v.Name}) => ldloc {v.Name}", inst);
 				ILInstruction replacement = new LdLoc(v).WithILRange(inst);
@@ -143,9 +148,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					replacement = new Conv(replacement, inst.Type.ToPrimitiveType(),
 						checkForOverflow: false, Sign.None);
 				}
+
 				inst.ReplaceWith(replacement);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -161,6 +168,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				temp = ldfldaTarget;
 				range = range.Concat(temp.ILRanges);
 			}
+
 			if (temp.MatchAddressOf(out var addressOfTarget, out _) && addressOfTarget.MatchLdLoc(out var v))
 			{
 				context.Step($"ldobj(...(addressof(ldloca {v.Name}))) => ldobj(...(ldloca {v.Name}))", inst);
@@ -169,6 +177,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					replacement = replacement.WithILRange(r);
 				}
+
 				temp.ReplaceWith(replacement);
 			}
 		}

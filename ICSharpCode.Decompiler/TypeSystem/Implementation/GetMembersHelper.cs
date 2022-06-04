@@ -159,14 +159,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							continue;
 					}
 
-					if (substitution == null)
-					{
-						if (pt != null)
-							substitution = pt.GetSubstitution(methodTypeArguments);
-						else
-							substitution = new TypeParameterSubstitution(null, methodTypeArguments);
-					}
-
+					substitution ??= pt != null
+						? pt.GetSubstitution(methodTypeArguments)
+						: new TypeParameterSubstitution(null, methodTypeArguments);
 					yield return new SpecializedMethod(m, substitution);
 				}
 			}
@@ -252,14 +247,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IEnumerable<IProperty> GetProperties(IType type, Predicate<IProperty> filter,
 			GetMemberOptions options)
 		{
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
-			{
-				return GetPropertiesImpl(type, filter, options);
-			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetPropertiesImpl(t, filter, options));
-			}
+			return (options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers
+				? GetPropertiesImpl(type, filter, options)
+				: type.GetNonInterfaceBaseTypes().SelectMany(t => GetPropertiesImpl(t, filter, options));
 		}
 
 		static IEnumerable<IProperty> GetPropertiesImpl(IType baseType, Predicate<IProperty> filter,

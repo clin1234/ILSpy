@@ -23,12 +23,12 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Context struct passed in to ExpressionBuilder.Visit() methods.
 	/// </summary>
-	public struct TranslationContext
+	internal struct TranslationContext
 	{
 		/// <summary>
 		/// The expected type during ILAst->C# translation; or <c>SpecialType.Unknown</c>
 		/// if no specific type is expected.
 		/// </summary>
-		public IType TypeHint;
+		internal IType TypeHint;
 	}
 }

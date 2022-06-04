@@ -122,8 +122,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static ITypeDefinition GetTypeDefinition(this IModule module, string namespaceName, string name,
 			int typeParameterCount = 0)
 		{
-			if (module == null)
-				throw new ArgumentNullException("assembly");
+			ArgumentNullException.ThrowIfNull(module);
 			return module.GetTypeDefinition(new TopLevelTypeName(namespaceName, name, typeParameterCount));
 		}
 
@@ -133,24 +132,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static ISymbol GetSymbol(this ResolveResult rr)
 		{
-			if (rr is LocalResolveResult result)
-			{
-				return result.Variable;
-			}
-			else if (rr is MemberResolveResult resolveResult)
-			{
-				return resolveResult.Member;
-			}
-			else if (rr is TypeResolveResult typeResolveResult)
-			{
-				return typeResolveResult.Type.GetDefinition();
-			}
-			else if (rr is ConversionResolveResult conversionResolveResult)
-			{
-				return conversionResolveResult.Input.GetSymbol();
-			}
-
-			return null;
+			return rr switch {
+				LocalResolveResult result => result.Variable,
+				MemberResolveResult resolveResult => resolveResult.Member,
+				TypeResolveResult typeResolveResult => typeResolveResult.Type.GetDefinition(),
+				ConversionResolveResult conversionResolveResult => conversionResolveResult.Input.GetSymbol(),
+				_ => null
+			};
 		}
 
 		#endregion
@@ -194,7 +182,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static bool FullNameIs(this IMember member, string type, string name)
 		{
-			return member.Name == name && member.DeclaringType?.FullName == type;
+			return member.Name == name && member.DeclaringType.FullName == type;
 		}
 
 		public static KnownAttribute IsBuiltinAttribute(this ITypeDefinition type)
@@ -353,7 +341,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		sealed class TypeClassificationVisitor : TypeVisitor
 		{
 			internal bool isOpen;
-			internal IEntity typeParameterOwner;
 			int typeParameterOwnerNestingLevel;
 
 			public override IType VisitTypeParameter(ITypeParameter type)
@@ -364,7 +351,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				int newNestingLevel = GetNestingLevel(type.Owner);
 				if (newNestingLevel > typeParameterOwnerNestingLevel)
 				{
-					typeParameterOwner = type.Owner;
 					typeParameterOwnerNestingLevel = newNestingLevel;
 				}
 
@@ -403,20 +389,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			TypeClassificationVisitor v = new();
 			type.AcceptVisitor(v);
 			return v.isOpen;
-		}
-
-		/// <summary>
-		/// Gets the entity that owns the type parameters occurring in the specified type.
-		/// If both class and method type parameters are present, the method is returned.
-		/// Returns null if the specified type is closed.
-		/// </summary>
-		/// <seealso cref="IsOpen"/>
-		static IEntity GetTypeParameterOwner(IType type)
-		{
-			ArgumentNullException.ThrowIfNull(type);
-			TypeClassificationVisitor v = new();
-			type.AcceptVisitor(v);
-			return v.typeParameterOwner;
 		}
 
 		/// <summary>
@@ -499,11 +471,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						return false;
 					}
 
-					if (types == null)
-					{
-						types = new HashSet<IType>();
-					}
-
+					types ??= new HashSet<IType>();
 					types.Add(type);
 					foreach (var f in type.GetFields())
 					{
@@ -621,8 +589,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static ITypeDefinition GetTypeDefinition(this IModule module, FullTypeName fullTypeName)
 		{
-			if (module == null)
-				throw new ArgumentNullException("assembly");
+			ArgumentNullException.ThrowIfNull(module);
 			TopLevelTypeName topLevelTypeName = fullTypeName.TopLevelTypeName;
 			ITypeDefinition typeDef = module.GetTypeDefinition(topLevelTypeName);
 			if (typeDef == null)
@@ -708,18 +675,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (inherit)
 			{
-				if (entity is ITypeDefinition td)
-				{
-					return InheritanceHelper.GetAttributes(td);
-				}
-				else if (entity is IMember m)
-				{
-					return InheritanceHelper.GetAttributes(m);
-				}
-				else
-				{
-					throw new NotSupportedException("Unknown entity type");
-				}
+				return entity switch {
+					ITypeDefinition td => InheritanceHelper.GetAttributes(td),
+					IMember m => InheritanceHelper.GetAttributes(m),
+					_ => throw new NotSupportedException("Unknown entity type")
+				};
 			}
 			else
 			{

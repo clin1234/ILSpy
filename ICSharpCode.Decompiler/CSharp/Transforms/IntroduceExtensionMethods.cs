@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Converts extension method calls into infix syntax.
 	/// </summary>
-	public class IntroduceExtensionMethods : DepthFirstAstVisitor, IAstTransform
+	internal sealed class IntroduceExtensionMethods : DepthFirstAstVisitor, IAstTransform
 	{
 		TransformContext context;
 		CSharpConversions conversions;
@@ -111,26 +111,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitInvocationExpression(invocationExpression);
 			if (!CanTransformToExtensionMethodCall(resolver, invocationExpression, out var memberRefExpr,
-				    out var target, out var firstArgument))
+				    out ResolveResult _, out var firstArgument))
 			{
 				return;
 			}
 
 			var method = (IMethod)invocationExpression.GetSymbol();
-			if (firstArgument is DirectionExpression dirExpr)
+			switch (firstArgument)
 			{
-				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)
+				case DirectionExpression dirExpr when !context.Settings.RefExtensionMethods ||
+				                                      dirExpr.FieldDirection == FieldDirection.Out:
 					return;
-				firstArgument = dirExpr.Expression;
-				target = firstArgument.GetResolveResult();
-				dirExpr.Detach();
-			}
-			else if (firstArgument is NullReferenceExpression)
-			{
-				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
-				firstArgument = firstArgument.ReplaceWith(expr =>
-					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type),
-						expr.Detach()));
+				case DirectionExpression dirExpr:
+					firstArgument = dirExpr.Expression;
+					firstArgument.GetResolveResult();
+					dirExpr.Detach();
+					break;
+				case NullReferenceExpression:
+					Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
+					firstArgument = firstArgument.ReplaceWith(expr =>
+						new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type),
+							expr.Detach()));
+					break;
 			}
 
 			if (invocationExpression.Target is IdentifierExpression identifierExpression)
@@ -166,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			memberRefExpr = null;
 			target = null;
 			firstArgument = null;
-			if (method == null || !method.IsExtensionMethod || !invocationExpression.Arguments.Any())
+			if (method is not { IsExtensionMethod: true } || !invocationExpression.Arguments.Any())
 				return false;
 			IReadOnlyList<IType> typeArguments;
 			switch (invocationExpression.Target)
@@ -204,11 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (arg is NamedArgumentExpression nae)
 				{
-					if (argNames == null)
-					{
-						argNames = new string[args.Length];
-					}
-
+					argNames ??= new string[args.Length];
 					argNames[pos] = nae.Name;
 					args[pos] = nae.Expression.GetResolveResult();
 				}

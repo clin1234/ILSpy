@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// lock (Expression) EmbeddedStatement;
 	/// </summary>
-	public class LockStatement : Statement
+	public sealed class LockStatement : Statement
 	{
 		public static readonly TokenRole LockKeywordRole = new("lock");
 
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
+			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

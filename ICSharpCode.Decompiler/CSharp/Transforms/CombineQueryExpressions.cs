@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Combines query expressions and removes transparent identifiers.
 	/// </summary>
-	public class CombineQueryExpressions : IAstTransform
+	public sealed class CombineQueryExpressions : IAstTransform
 	{
 		static readonly InvocationExpression castPattern = new() {
 			Target = new MemberReferenceExpression {
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 	}
 
-	public class LetIdentifierAnnotation
+	public sealed class LetIdentifierAnnotation
 	{
 	}
 }

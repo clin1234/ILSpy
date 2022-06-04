@@ -24,8 +24,6 @@ using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -41,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// ConditionDetection also has a block exit priority system to assist exit point reduction which in some cases ignores IL order.
 	/// After HighLevelLoopTransform has run, all structures have been detected and preference can be returned to maintaining IL ordering.
 	/// </remarks>
-	public class ReduceNestingTransform : IILTransform
+	public sealed class ReduceNestingTransform : IILTransform
 	{
 		private ILTransformContext context;
 

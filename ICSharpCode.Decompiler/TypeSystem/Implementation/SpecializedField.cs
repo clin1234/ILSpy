@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Represents a specialized IField (field after type substitution).
 	/// </summary>
-	public class SpecializedField : SpecializedMember, IField
+	internal sealed class SpecializedField : SpecializedMember, IField
 	{
 		readonly IField fieldDefinition;
 

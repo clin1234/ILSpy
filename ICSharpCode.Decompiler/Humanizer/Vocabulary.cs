@@ -8,7 +8,7 @@ namespace Humanizer.Inflections
 	/// Vocabularies.Default contains an extensive list of rules for US English.
 	/// At this time, multiple vocabularies and removing existing rules are not supported.
 	/// </summary>
-	internal class Vocabulary
+	internal sealed class Vocabulary
 	{
 		private readonly List<Rule> _plurals = new();
 		private readonly List<Rule> _singulars = new();
@@ -155,7 +155,7 @@ namespace Humanizer.Inflections
 			return _uncountables.Contains(word.ToLower());
 		}
 
-		private class Rule
+		private sealed class Rule
 		{
 			private readonly Regex _regex;
 			private readonly string _replacement;

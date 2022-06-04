@@ -83,12 +83,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IReadOnlyList<TypeConstraint> TypeConstraints {
 			get {
-				var constraints = LazyInit.VolatileRead(ref this.constraints);
-				if (constraints == null)
-				{
-					constraints = LazyInit.GetOrSet(ref this.constraints, DecodeConstraints());
-				}
-
+				var constraints = LazyInit.VolatileRead(ref this.constraints) ??
+				                  LazyInit.GetOrSet(ref this.constraints, DecodeConstraints());
 				return constraints;
 			}
 		}
@@ -129,7 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return tps;
 		}
 
-		public static MetadataTypeParameter Create(MetadataModule module, IEntity owner, int index,
+		private static MetadataTypeParameter Create(MetadataModule module, IEntity owner, int index,
 			GenericParameterHandle handle)
 		{
 			var metadata = module.metadata;
@@ -191,37 +187,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 
-			if (Owner is MetadataMethod method)
-			{
-				return method.NullableContext;
-			}
-			else if (Owner is ITypeDefinition td)
-			{
-				return td.NullableContext;
-			}
-			else
-			{
-				return Nullability.Oblivious;
-			}
+			return Owner switch {
+				MetadataMethod method => method.NullableContext,
+				ITypeDefinition td => td.NullableContext,
+				_ => Nullability.Oblivious
+			};
 		}
 
 		private IReadOnlyList<TypeConstraint> DecodeConstraints()
 		{
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
-			Nullability nullableContext;
-			if (Owner is ITypeDefinition typeDef)
-			{
-				nullableContext = typeDef.NullableContext;
-			}
-			else if (Owner is MetadataMethod method)
-			{
-				nullableContext = method.NullableContext;
-			}
-			else
-			{
-				nullableContext = Nullability.Oblivious;
-			}
+			Nullability nullableContext = Owner switch {
+				ITypeDefinition typeDef => typeDef.NullableContext,
+				MetadataMethod method => method.NullableContext,
+				_ => Nullability.Oblivious
+			};
 
 			var constraintHandleCollection = gp.GetConstraints();
 			var result = new List<TypeConstraint>(constraintHandleCollection.Count + 1);

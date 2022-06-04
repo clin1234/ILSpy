@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// <summary>
 	/// Description of Dominance.
 	/// </summary>
-	public static class Dominance
+	internal static class Dominance
 	{
 		/// <summary>
 		/// Computes the dominator tree.
@@ -100,8 +100,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			foreach (ControlFlowNode node in nodes)
 			{
 				// Create list of children in dominator tree
-				if (node.ImmediateDominator != null)
-					node.ImmediateDominator.DominatorTreeChildren.Add(node);
+				node.ImmediateDominator?.DominatorTreeChildren.Add(node);
 				// Also reset the visited flag
 				node.Visited = false;
 			}

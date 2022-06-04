@@ -6,7 +6,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.PowerShell
 {
-	public static class TypesParser
+	internal static class TypesParser
 	{
 		public static HashSet<TypeKind> ParseSelection(string[] values)
 		{

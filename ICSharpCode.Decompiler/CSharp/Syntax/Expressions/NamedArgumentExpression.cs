@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents a named argument passed to a method or attribute.
 	/// name: expression
 	/// </summary>
-	public class NamedArgumentExpression : Expression
+	public sealed class NamedArgumentExpression : Expression
 	{
 		public NamedArgumentExpression()
 		{
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

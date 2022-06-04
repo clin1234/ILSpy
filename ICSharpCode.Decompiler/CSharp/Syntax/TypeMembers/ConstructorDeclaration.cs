@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ConstructorDeclaration : EntityDeclaration
+	public sealed class ConstructorDeclaration : EntityDeclaration
 	{
 		public static readonly Role<ConstructorInitializer> InitializerRole =
 			new("Initializer", ConstructorInitializer.Null);
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			       this.Arguments.DoMatch(o.Arguments, match);
 		}
 
-		class NullConstructorInitializer : ConstructorInitializer
+		sealed class NullConstructorInitializer : ConstructorInitializer
 		{
 			public override NodeType NodeType {
 				get {

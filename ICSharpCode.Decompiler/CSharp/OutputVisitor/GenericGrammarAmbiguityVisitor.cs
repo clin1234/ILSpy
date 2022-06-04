@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Used to test for the "F(G&lt;A,B&gt;(7));" grammar ambiguity.
 	/// </summary>
-	class GenericGrammarAmbiguityVisitor : DepthFirstAstVisitor<bool>
+	sealed class GenericGrammarAmbiguityVisitor : DepthFirstAstVisitor<bool>
 	{
 		bool ambiguityFound;
 

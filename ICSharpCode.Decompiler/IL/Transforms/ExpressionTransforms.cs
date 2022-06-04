@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
 	/// </remarks>
-	public class ExpressionTransforms : ILVisitor, IStatementTransform
+	public sealed class ExpressionTransforms : ILVisitor, IStatementTransform
 	{
 		internal StatementTransformContext context;
 
@@ -544,9 +544,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			    || inst.FalseInst.MatchLdcI4(1) && !inst.TrueInst.MatchLdcI4(1))
 			{
 				context.Step("canonicalize logic and/or", inst);
-				var t = inst.TrueInst;
-				inst.TrueInst = inst.FalseInst;
-				inst.FalseInst = t;
+				(inst.TrueInst, inst.FalseInst) = (inst.FalseInst, inst.TrueInst);
 				inst.Condition = Comp.LogicNot(inst.Condition);
 			}
 

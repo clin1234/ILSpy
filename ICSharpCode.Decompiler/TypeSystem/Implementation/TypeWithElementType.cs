@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public abstract class TypeWithElementType : AbstractType
 	{
-		protected IType elementType;
+		protected readonly IType elementType;
 
 		protected TypeWithElementType(IType elementType)
 		{
@@ -45,15 +45,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return elementType.ReflectionName + NameSuffix; }
 		}
 
-		public abstract string NameSuffix { get; }
+		protected abstract string NameSuffix { get; }
 
-		public IType ElementType {
+		internal IType ElementType {
 			get { return elementType; }
 		}
 
 		public override string ToString()
 		{
-			return elementType.ToString() + NameSuffix;
+			return elementType + NameSuffix;
 		}
 
 		// Force concrete implementations to override VisitChildren - the base implementation

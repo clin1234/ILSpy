@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// be erroneous if the conversion is invalid.
 	/// </summary>
 	/// <seealso cref="ResolveResult.IsError"/>.
-	public class ErrorResolveResult : ResolveResult
+	public sealed class ErrorResolveResult : ResolveResult
 	{
 		/// <summary>
 		/// Gets an ErrorResolveResult instance with <c>Type</c> = <c>SpecialType.UnknownType</c>.

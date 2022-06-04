@@ -30,9 +30,9 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// 
 	/// Check <see cref="ResolveResult.IsCompileTimeConstant"/> to determine is a resolve result is a constant.
 	/// </summary>
-	public class ConstantResolveResult : ResolveResult
+	public sealed class ConstantResolveResult : ResolveResult
 	{
-		object constantValue;
+		readonly object constantValue;
 
 		public ConstantResolveResult(IType type, object constantValue) : base(type)
 		{
@@ -49,7 +49,8 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} = {2}]", GetType().Name, this.Type, constantValue);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} = {2}]", GetType().Name, this.Type,
+				constantValue);
 		}
 	}
 }

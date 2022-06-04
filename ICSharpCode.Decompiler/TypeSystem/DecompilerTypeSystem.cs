@@ -146,9 +146,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <remarks>
 	/// This class is thread-safe.
 	/// </remarks>
-	public class DecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
+	public sealed class DecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 	{
-		static readonly string[] implicitReferences = new[] {
+		static readonly string[] implicitReferences = {
 			"System.Runtime.InteropServices",
 			"System.Runtime.CompilerServices.Unsafe"
 		};
@@ -237,10 +237,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var referencedAssemblies = new List<PEFile>();
 			var assemblyReferenceQueue =
 				new Queue<(bool IsAssembly, PEFile MainModule, object Reference, Task<PEFile> ResolveTask)>();
-			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
-				reference.IsAssembly
-					? "A:" + ((IAssemblyReference)reference.Reference).FullName
-					: "M:" + reference.Reference);
+			var comparer = KeyComparer.Create(
+				static ((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
+					reference.IsAssembly
+						? "A:" + ((IAssemblyReference)reference.Reference).FullName
+						: "M:" + reference.Reference);
 			var assemblyReferencesInQueue = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			var mainMetadata = mainModule.Metadata;
 			var tfm = mainModule.DetectTargetFrameworkId();
@@ -349,16 +350,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					// Immediately start loading the referenced module as we add the entry to the queue.
 					// This allows loading multiple modules in parallel.
-					Task<PEFile> asm;
-					if (isAssembly)
-					{
-						asm = assemblyResolver.ResolveAsync((IAssemblyReference)reference);
-					}
-					else
-					{
-						asm = assemblyResolver.ResolveModuleAsync(mainModule, (string)reference);
-					}
-
+					Task<PEFile> asm = isAssembly
+						? assemblyResolver.ResolveAsync((IAssemblyReference)reference)
+						: assemblyResolver.ResolveModuleAsync(mainModule, (string)reference);
 					assemblyReferenceQueue.Enqueue((isAssembly, mainModule, reference, asm));
 				}
 			}

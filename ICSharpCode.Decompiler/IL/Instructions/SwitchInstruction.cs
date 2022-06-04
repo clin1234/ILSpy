@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL
 		public SwitchSection GetDefaultSection()
 		{
 			// Pick the section with the most labels as default section.
-			IL.SwitchSection defaultSection = Sections.First();
+			SwitchSection defaultSection = Sections.First();
 			foreach (var section in Sections)
 			{
 				if (section.Labels.Count() > defaultSection.Labels.Count())

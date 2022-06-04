@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// 
 	/// replace br IL_0019 with br IL_0027
 	/// </summary>
-	class RemoveInfeasiblePathTransform : IILTransform
+	sealed class RemoveInfeasiblePathTransform : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -72,21 +72,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//  stloc s(ldc.i4 1)
 		//  br IL_0019
 		// }
-		private bool MatchBlock1(Block block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue, [NotNullWhen(true)] out Branch? branch)
+		private bool MatchBlock1(Block block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue,
+			[NotNullWhen(true)] out Branch? branch)
 		{
 			variable = null;
 			constantValue = 0;
 			branch = null;
 			if (block.Instructions.Count != 2)
 				return false;
-			if (block.Instructions[0] is not StLoc
-				{
-					Variable: { Kind: VariableKind.StackSlot } s,
-					Value: LdcI4 { Value: 0 or 1 } valueInst
-				})
+			if (block.Instructions[0] is not StLoc {
+				    Variable: { Kind: VariableKind.StackSlot } s,
+				    Value: LdcI4 { Value: 0 or 1 } valueInst
+			    })
 			{
 				return false;
 			}
+
 			if (block.Instructions[1] is not Branch br)
 				return false;
 			variable = s;

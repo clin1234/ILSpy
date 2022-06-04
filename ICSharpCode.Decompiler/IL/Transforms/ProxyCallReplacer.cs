@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class ProxyCallReplacer : IILTransform
+	sealed class ProxyCallReplacer : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

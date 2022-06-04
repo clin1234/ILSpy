@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// Currently, we only rename private fields that collide with property or event names.
 	/// This helps especially with compiler-generated events that were not detected as a pattern.
 	/// </remarks>
-	public class FixNameCollisions : IAstTransform
+	internal sealed class FixNameCollisions : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{

@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transforms collection and object initialization patterns.
 	/// </summary>
-	public class TransformCollectionAndObjectInitializers : IStatementTransform
+	public sealed class TransformCollectionAndObjectInitializers : IStatementTransform
 	{
 		StatementTransformContext context;
 		List<AccessPathElement> currentPath;
@@ -175,23 +175,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case CallInstruction call:
 						if (call is not (CallVirt or Call))
 							continue;
-						var newCall = call;
-						var newTarget = newCall.Arguments[0];
+						var newTarget = call.Arguments[0];
 						foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
 							if (load is LdLoc or LdLoca && load.Variable == v)
 								load.Variable = finalSlot;
-						initializerBlock.Instructions.Add(newCall);
+						initializerBlock.Instructions.Add(call);
 						break;
 					case StObj stObj:
-						var newStObj = stObj;
-						foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
+						foreach (var load in stObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
 							if (load is LdLoc or LdLoca && load.Variable == v)
 								load.Variable = finalSlot;
-						initializerBlock.Instructions.Add(newStObj);
+						initializerBlock.Instructions.Add(stObj);
 						break;
 					case StLoc stLoc:
-						var newStLoc = stLoc;
-						initializerBlock.Instructions.Add(newStLoc);
+						initializerBlock.Instructions.Add(stLoc);
 						break;
 				}
 			}
@@ -315,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		Adder
 	}
 
-	public struct AccessPathElement : IEquatable<AccessPathElement>
+	public readonly struct AccessPathElement : IEquatable<AccessPathElement>
 	{
 		public AccessPathElement(OpCode opCode, IMember member, ILInstruction[] indices = null)
 		{
@@ -567,7 +564,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 	}
 
-	class ILInstructionMatchComparer : IEqualityComparer<ILInstruction>
+	sealed class ILInstructionMatchComparer : IEqualityComparer<ILInstruction>
 	{
 		public static readonly ILInstructionMatchComparer Instance = new();
 

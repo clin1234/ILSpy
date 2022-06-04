@@ -26,7 +26,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ErrorExpression : Expression
+	public sealed class ErrorExpression : Expression
 	{
 		public ErrorExpression()
 		{
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is ErrorExpression o;
+			return other is ErrorExpression;
 		}
 	}
 }

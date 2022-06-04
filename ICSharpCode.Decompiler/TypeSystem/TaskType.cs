@@ -50,10 +50,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ITypeDefinition def = type.GetDefinition();
 			if (def != null)
 			{
-				if (def.KnownTypeCode == KnownTypeCode.Task)
-					return true;
-				if (def.KnownTypeCode == KnownTypeCode.TaskOfT)
-					return type is ParameterizedType;
+				switch (def.KnownTypeCode)
+				{
+					case KnownTypeCode.Task:
+						return true;
+					case KnownTypeCode.TaskOfT:
+						return type is ParameterizedType;
+				}
 			}
 
 			return false;
@@ -71,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (def.TypeParameterCount > 1)
 					return false;
 				var attribute = def.GetAttribute(KnownAttribute.AsyncMethodBuilder);
-				if (attribute == null || attribute.FixedArguments.Length != 1)
+				if (attribute is not { FixedArguments.Length: 1 })
 					return false;
 				var arg = attribute.FixedArguments[0];
 				if (!arg.Type.IsKnownType(KnownTypeCode.Type))

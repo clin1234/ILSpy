@@ -29,13 +29,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// would incorrectly result in "2 * 1 + 1". By running InsertParenthesesVisitor, the necessary
 	/// parentheses are inserted: "2 * (1 + 1)".
 	/// </summary>
-	public class InsertParenthesesVisitor : DepthFirstAstVisitor
+	public sealed class InsertParenthesesVisitor : DepthFirstAstVisitor
 	{
 		/// <summary>
 		/// Gets/Sets whether the visitor should insert parentheses to make the code better looking.
 		/// If this property is false, it will insert parentheses only where strictly required by the language spec.
 		/// </summary>
-		public bool InsertParenthesesForReadability { get; set; }
+		public bool InsertParenthesesForReadability { get; init; }
 
 		/// <summary>
 		/// Gets the row number in the C# 4.0 spec operator precedence table.

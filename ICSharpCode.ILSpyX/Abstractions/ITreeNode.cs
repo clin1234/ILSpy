@@ -25,18 +25,17 @@ namespace ICSharpCode.ILSpyX.Abstractions
 	public interface ITreeNode
 	{
 		object Text { get; }
-		object Icon { get; }
 		IEnumerable<ITreeNode> Children { get; }
 
 		void EnsureLazyChildren();
 	}
 
-	public interface IResourcesFileTreeNode : ITreeNode
+	internal interface IResourcesFileTreeNode : ITreeNode
 	{
 		Resource Resource { get; }
 	}
 
-	public interface ITreeNodeFactory
+	internal interface ITreeNodeFactory
 	{
 		ITreeNode CreateResourcesList(PEFile module);
 		ITreeNode Create(Resource resource);

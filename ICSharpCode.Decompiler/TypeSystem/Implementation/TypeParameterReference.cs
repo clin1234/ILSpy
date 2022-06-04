@@ -41,28 +41,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			if (ownerType == SymbolKind.Method)
+			switch (ownerType)
 			{
-				if (context.CurrentMember is IMethod method && Index < method.TypeParameters.Count)
-				{
+				case SymbolKind.Method
+					when context.CurrentMember is IMethod method && Index < method.TypeParameters.Count:
 					return method.TypeParameters[Index];
-				}
-
-				return DummyTypeParameter.GetMethodTypeParameter(Index);
-			}
-			else if (ownerType == SymbolKind.TypeDefinition)
-			{
-				ITypeDefinition typeDef = context.CurrentTypeDefinition;
-				if (typeDef != null && Index < typeDef.TypeParameters.Count)
+				case SymbolKind.Method:
+					return DummyTypeParameter.GetMethodTypeParameter(Index);
+				case SymbolKind.TypeDefinition:
 				{
-					return typeDef.TypeParameters[Index];
-				}
+					ITypeDefinition typeDef = context.CurrentTypeDefinition;
+					if (typeDef != null && Index < typeDef.TypeParameters.Count)
+					{
+						return typeDef.TypeParameters[Index];
+					}
 
-				return DummyTypeParameter.GetClassTypeParameter(Index);
-			}
-			else
-			{
-				return SpecialType.UnknownType;
+					return DummyTypeParameter.GetClassTypeParameter(Index);
+				}
+				default:
+					return SpecialType.UnknownType;
 			}
 		}
 
@@ -77,12 +74,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				TypeParameterReference[] arr = (ownerType == SymbolKind.TypeDefinition)
 					? classTypeParameterReferences
 					: methodTypeParameterReferences;
-				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]);
-				if (result == null)
-				{
-					result = LazyInit.GetOrSet(ref arr[index], new TypeParameterReference(ownerType, index));
-				}
-
+				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]) ??
+				                                LazyInit.GetOrSet(ref arr[index],
+					                                new TypeParameterReference(ownerType, index));
 				return result;
 			}
 			else

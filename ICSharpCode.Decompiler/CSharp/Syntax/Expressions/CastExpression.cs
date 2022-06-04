@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// (CastTo)Expression
 	/// </summary>
-	public class CastExpression : Expression
+	public sealed class CastExpression : Expression
 	{
 		public CastExpression()
 		{
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

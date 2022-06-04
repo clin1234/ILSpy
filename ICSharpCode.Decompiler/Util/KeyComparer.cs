@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 
-	public class KeyComparer<TElement, TKey> : IComparer<TElement>, IEqualityComparer<TElement>
+	public sealed class KeyComparer<TElement, TKey> : IComparer<TElement>, IEqualityComparer<TElement>
 	{
 		readonly IComparer<TKey> keyComparer;
 		readonly IEqualityComparer<TKey> keyEqualityComparer;

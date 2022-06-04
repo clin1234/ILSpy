@@ -86,20 +86,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public FullTypeName FullTypeName { get { return fullTypeName; } }
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			unchecked
-			{
-				return 33 * Module.GetHashCode() + fullTypeName.GetHashCode();
-			}
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is GetClassTypeReference o && Module == o.Module && fullTypeName == o.fullTypeName &&
-			       isReferenceType == o.isReferenceType;
-		}
-
 		public IType Resolve(ITypeResolveContext context)
 		{
 			ArgumentNullException.ThrowIfNull(context);
@@ -113,10 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					type = context.CurrentModule.GetTypeDefinition(fullTypeName);
 				}
 
-				if (type == null)
-				{
-					type = ResolveInAllAssemblies(context.Compilation, in fullTypeName);
-				}
+				type ??= ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 			}
 			else
 			{
@@ -125,14 +108,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// (the non-loaded assembly might be a facade containing type forwarders -
 				//  for example, when referencing a portable library from a non-portable project)
 				IModule asm = Module.Resolve(context);
-				if (asm != null)
-				{
-					type = asm.GetTypeDefinition(fullTypeName);
-				}
-				else
-				{
-					type = ResolveInAllAssemblies(context.Compilation, in fullTypeName);
-				}
+				type = asm != null
+					? asm.GetTypeDefinition(fullTypeName)
+					: ResolveInAllAssemblies(context.Compilation, in fullTypeName);
 			}
 
 			return type ?? new UnknownType(fullTypeName, isReferenceType);
@@ -153,6 +131,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string ToString()
 		{
 			return fullTypeName + (Module != null ? ", " + Module : null);
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			unchecked
+			{
+				return 33 * Module.GetHashCode() + fullTypeName.GetHashCode();
+			}
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is GetClassTypeReference o && Module == o.Module && fullTypeName == o.fullTypeName &&
+			       isReferenceType == o.isReferenceType;
 		}
 	}
 }

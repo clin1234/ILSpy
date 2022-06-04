@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// Provides ID strings for entities. (C# 4.0 spec, §A.3.1)
 	/// ID strings are used to identify members in XML documentation files.
 	/// </summary>
-	public static class IdStringProvider
+	internal static class IdStringProvider
 	{
 		#region GetIdString
 
@@ -334,27 +334,26 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		static ITypeReference ParseTypeName(string typeName, ref int pos)
 		{
-			string reflectionTypeName = typeName;
 			if (pos == typeName.Length)
 				throw new ReflectionNameParseException(pos, "Unexpected end");
 			ITypeReference result;
-			if (reflectionTypeName[pos] == '`')
+			if (typeName[pos] == '`')
 			{
 				// type parameter reference
 				pos++;
-				if (pos == reflectionTypeName.Length)
+				if (pos == typeName.Length)
 					throw new ReflectionNameParseException(pos, "Unexpected end");
-				if (reflectionTypeName[pos] == '`')
+				if (typeName[pos] == '`')
 				{
 					// method type parameter reference
 					pos++;
-					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
+					int index = ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
 					result = TypeParameterReference.Create(SymbolKind.Method, index);
 				}
 				else
 				{
 					// class type parameter reference
-					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
+					int index = ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
 					result = TypeParameterReference.Create(SymbolKind.TypeDefinition, index);
 				}
 			}

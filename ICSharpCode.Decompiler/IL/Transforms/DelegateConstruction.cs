@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transforms anonymous methods and lambdas by creating nested ILFunctions.
 	/// </summary>
-	public class DelegateConstruction : IILTransform
+	public sealed class DelegateConstruction : IILTransform
 	{
 		readonly Stack<MethodDefinitionHandle> activeMethods = new();
 		ILTransformContext context;
@@ -276,7 +276,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Replaces loads of 'this' with the target expression.
 		/// Async delegates use: ldobj(ldloca this).
 		/// </summary>
-		internal class ReplaceDelegateTargetVisitor : ILVisitor
+		internal sealed class ReplaceDelegateTargetVisitor : ILVisitor
 		{
 			readonly ILInstruction target;
 			readonly ILVariable thisVariable;

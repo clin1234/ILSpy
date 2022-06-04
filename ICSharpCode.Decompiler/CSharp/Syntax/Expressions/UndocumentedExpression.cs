@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents undocumented expressions.
 	/// </summary>
-	public class UndocumentedExpression : Expression
+	public sealed class UndocumentedExpression : Expression
 	{
 		public static readonly TokenRole ArglistKeywordRole = new("__arglist");
 		public static readonly TokenRole RefvalueKeywordRole = new("__refvalue");
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UndocumentedExpressionType UndocumentedExpressionType {
 			get;
-			set;
+			init;
 		}
 
 		public CSharpTokenNode UndocumentedToken {

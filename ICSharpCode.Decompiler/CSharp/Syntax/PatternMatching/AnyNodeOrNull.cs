@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// Matches any node.
 	/// </summary>
 	/// <remarks>Does not match null nodes.</remarks>
-	public class AnyNodeOrNull : Pattern
+	public sealed class AnyNodeOrNull : Pattern
 	{
 		public AnyNodeOrNull(string groupName = null)
 		{

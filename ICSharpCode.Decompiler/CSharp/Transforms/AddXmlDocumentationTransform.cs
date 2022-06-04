@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Adds XML documentation for member definitions.
 	/// </summary>
-	public class AddXmlDocumentationTransform : IAstTransform
+	internal sealed class AddXmlDocumentationTransform : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
@@ -54,8 +54,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' },
 					StringSplitOptions.RemoveEmptyEntries);
 				var insertionPoint = rootNode.FirstChild;
-				for (int i = 0; i < msg.Length; i++)
-					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation),
+				foreach (var t in msg)
+					rootNode.InsertChildBefore(insertionPoint, new Comment(t, CommentType.Documentation),
 						Roles.Comment);
 			}
 		}

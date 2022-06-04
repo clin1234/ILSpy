@@ -33,16 +33,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///    then we can replace the variable with the argument.
 	/// 2) assignments of address-loading instructions to local variables
 	/// </summary>
-	public class CopyPropagation : IILTransform
+	public sealed class CopyPropagation : IILTransform
 	{
-		public static void Propagate(StLoc store, ILTransformContext context)
-		{
-			Debug.Assert(store.Variable.IsSingleDefinition);
-			Block block = (Block)store.Parent;
-			int i = store.ChildIndex;
-			DoPropagate(store.Variable, store.Value, block, ref i, context);
-		}
-
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			var splitVariables = new HashSet<ILVariable>(ILVariableEqualityComparer.Instance);
@@ -53,12 +45,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					splitVariables.Add(g.Key);
 				}
 			}
+
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
 				if (block.Kind != BlockKind.ControlFlow)
 					continue;
 				RunOnBlock(block, context, splitVariables);
 			}
+		}
+
+		public static void Propagate(StLoc store, ILTransformContext context)
+		{
+			Debug.Assert(store.Variable.IsSingleDefinition);
+			Block block = (Block)store.Parent;
+			int i = store.ChildIndex;
+			DoPropagate(store.Variable, store.Value, block, ref i, context);
 		}
 
 		static void RunOnBlock(Block block, ILTransformContext context, HashSet<ILVariable> splitVariables = null)
@@ -82,7 +83,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						else
 						{
 							// evaluate the value for its side-effects
-							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
+							context.Step("remove dead store to stack: evaluate the value for its side-effects",
+								block.Instructions[i]);
 							copiedExpr.AddILRange(block.Instructions[i]);
 							block.Instructions[i] = copiedExpr;
 						}
@@ -95,7 +97,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool CanPerformCopyPropagation(ILVariable target, ILInstruction value, HashSet<ILVariable> splitVariables)
+		static bool CanPerformCopyPropagation(ILVariable target, ILInstruction value,
+			HashSet<ILVariable> splitVariables)
 		{
 			Debug.Assert(target.StackType == value.ResultType);
 			if (target.Type.IsSmallIntegerType())
@@ -104,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false; // non-local code move might change semantics when there's split variables
 			}
+
 			switch (value.OpCode)
 			{
 				case OpCode.LdLoca:
@@ -121,6 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return false; // non-local code move might change semantics when there's split variables
 					}
+
 					switch (v.Kind)
 					{
 						case VariableKind.Parameter:
@@ -132,15 +137,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// To avoid removing too many variables, we do this only if the target
 							// is either a stackslot or a ref local.
 							Debug.Assert(target.IsSingleDefinition);
-							return v.IsSingleDefinition && (target.Kind == VariableKind.StackSlot || target.StackType == StackType.Ref);
+							return v.IsSingleDefinition && (target.Kind == VariableKind.StackSlot ||
+							                                target.StackType == StackType.Ref);
 					}
 				default:
 					// All instructions without special behavior that target a stack-variable can be copied.
-					return value.Flags == InstructionFlags.None && value.Children.Count == 0 && target.Kind == VariableKind.StackSlot;
+					return value.Flags == InstructionFlags.None && value.Children.Count == 0 &&
+					       target.Kind == VariableKind.StackSlot;
 			}
 		}
 
-		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i, ILTransformContext context)
+		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i,
+			ILTransformContext context)
 		{
 			context.Step($"Copy propagate {v.Name}", copiedExpr);
 			// un-inline the arguments of the ldArg instruction
@@ -155,6 +163,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				};
 				block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
 			}
+
 			v.Function.Variables.AddRange(uninlinedArgs);
 			// perform copy propagation:
 			foreach (var expr in v.LoadInstructions.ToArray())
@@ -164,13 +173,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
 				}
+
 				expr.ReplaceWith(clone);
 			}
+
 			block.Instructions.RemoveAt(i);
 			int c = ILInlining.InlineInto(block, i, InliningOptions.None, context: context);
 			i -= c + 1;
 		}
 	}
 }
-
-

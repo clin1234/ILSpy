@@ -38,9 +38,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			this.TargetResult = targetResult;
 			this.Member = member;
-			this.IsVirtualCall = member.IsOverridable && targetResult is not ThisResolveResult {
-				CausesNonVirtualInvocation: true
-			};
 
 			if (member is IField field)
 			{
@@ -56,7 +53,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			this.TargetResult = targetResult;
 			this.Member = member;
-			this.IsVirtualCall = isVirtualCall;
 			if (member is IField field)
 			{
 				isConstant = field.IsConst;
@@ -83,7 +79,6 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.Member = member;
 			this.isConstant = isConstant;
 			this.ConstantValue = constantValue;
-			this.IsVirtualCall = isVirtualCall;
 		}
 
 		public ResolveResult TargetResult { get; }
@@ -93,11 +88,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// This property never returns null.
 		/// </summary>
 		public IMember Member { get; }
-
-		/// <summary>
-		/// Gets whether this MemberResolveResult is a virtual call.
-		/// </summary>
-		public bool IsVirtualCall { get; }
 
 		public override bool IsCompileTimeConstant {
 			get { return isConstant; }

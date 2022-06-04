@@ -15,7 +15,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public static class MetadataExtensions
+	internal static class MetadataExtensions
 	{
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
 			new(new SimpleCompilation(MinimalCorlib.Instance));
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);
 		}
 
-		public static string GetPublicKeyToken(this SRM.MetadataReader reader)
+		private static string GetPublicKeyToken(this SRM.MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
 				return string.Empty;
@@ -105,14 +105,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			builder.Append(", Version=");
 			builder.Append(reference.Version);
 			builder.Append(", Culture=");
-			if (reference.Culture.IsNil)
-			{
-				builder.Append("neutral");
-			}
-			else
-			{
-				builder.Append(reader.GetString(reference.Culture));
-			}
+			builder.Append(reference.Culture.IsNil ? "neutral" : reader.GetString(reference.Culture));
 
 			if (reference.PublicKeyOrToken.IsNil)
 			{
@@ -158,15 +151,15 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			StringBuilder sb = new(estimatedLength * 2);
 			foreach (var b in bytes)
-				sb.AppendFormat("{0:x2}", b);
+				sb.Append($"{b:x2}");
 			return sb.ToString();
 		}
 
-		public static void AppendHexString(this StringBuilder builder, SRM.BlobReader reader)
+		private static void AppendHexString(this StringBuilder builder, SRM.BlobReader reader)
 		{
 			for (int i = 0; i < reader.Length; i++)
 			{
-				builder.AppendFormat("{0:x2}", reader.ReadByte());
+				builder.Append($"{reader.ReadByte():x2}");
 			}
 		}
 
@@ -175,10 +168,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			StringBuilder sb = new(reader.Length * 3);
 			for (int i = 0; i < reader.Length; i++)
 			{
-				if (i == 0)
-					sb.AppendFormat("{0:X2}", reader.ReadByte());
-				else
-					sb.AppendFormat("-{0:X2}", reader.ReadByte());
+				sb.Append(i == 0
+					? $"{reader.ReadByte():X2}"
+					: $"-{reader.ReadByte():X2}");
 			}
 
 			return sb.ToString();

@@ -33,10 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public DefaultAssemblyReference(string assemblyName)
 		{
 			int pos = assemblyName?.IndexOf(',') ?? -1;
-			if (pos >= 0)
-				shortName = assemblyName[..pos];
-			else
-				shortName = assemblyName;
+			shortName = pos >= 0 ? assemblyName[..pos] : assemblyName;
 		}
 
 		public IModule Resolve(ITypeResolveContext context)
@@ -53,22 +50,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return null;
 		}
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			unchecked
-			{
-				return shortName.GetHashCode();
-			}
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is DefaultAssemblyReference o && shortName == o.shortName;
-		}
-
 		public override string ToString()
 		{
 			return shortName;
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			return shortName.GetHashCode();
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is DefaultAssemblyReference o && shortName == o.shortName;
 		}
 
 		[Serializable]

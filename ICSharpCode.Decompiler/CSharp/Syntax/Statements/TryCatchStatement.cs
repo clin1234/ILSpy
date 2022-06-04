@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// try TryBlock CatchClauses finally FinallyBlock
 	/// </summary>
-	public class TryCatchStatement : Statement
+	public sealed class TryCatchStatement : Statement
 	{
 		public static readonly TokenRole TryKeywordRole = new("try");
 		public static readonly Role<BlockStatement> TryBlockRole = new("TryBlock", BlockStatement.Null);

@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Resolve result for a C# 7 tuple literal.
 	/// </summary>
-	public class TupleResolveResult : ResolveResult
+	public sealed class TupleResolveResult : ResolveResult
 	{
 		public TupleResolveResult(ICompilation compilation,
 			ImmutableArray<ResolveResult> elements,

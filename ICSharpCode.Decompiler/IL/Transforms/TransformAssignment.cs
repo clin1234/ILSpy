@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// but some portions are executed as an expression transform instead
 	/// (with HandleCompoundAssign() as entry point)
 	/// </remarks>
-	public class TransformAssignment : IStatementTransform
+	public sealed class TransformAssignment : IStatementTransform
 	{
 		StatementTransformContext context;
 
@@ -846,9 +846,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			}
 
-			if (stloc == null)
-				return false;
-			if (stloc.Variable.Kind is not (VariableKind.Local or VariableKind.StackSlot))
+			if (stloc?.Variable.Kind is not (VariableKind.Local or VariableKind.StackSlot))
 				return false;
 			if (!IsMatchingCompoundLoad(stloc.Value, store, out var target, out var targetKind, out var finalizeMatch,
 				    forbiddenVariable: stloc.Variable))

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// If possible, transforms plain ILAst loops into while (condition), do-while and for-loops.
 	/// For the invariants of the transforms <see cref="BlockContainer.CheckInvariant(ILPhase)"/>.
 	/// </summary>
-	public class HighLevelLoopTransform : IILTransform
+	public sealed class HighLevelLoopTransform : IILTransform
 	{
 		ILTransformContext context;
 

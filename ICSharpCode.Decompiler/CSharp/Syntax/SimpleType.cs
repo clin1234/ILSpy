@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, value);
 			}
 		}
@@ -113,8 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
 			InterningProvider interningProvider = null)
 		{
-			if (interningProvider == null)
-				interningProvider = InterningProvider.Dummy;
+			interningProvider ??= InterningProvider.Dummy;
 			var typeArguments = new List<ITypeReference>();
 			foreach (var ta in this.TypeArguments)
 			{
@@ -166,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider interningProvider)
+				InterningProvider interningProvider = null)
 			{
 				return SpecialType.UnknownType;
 			}

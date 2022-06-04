@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// this
 	/// </summary>
-	public class ThisReferenceExpression : Expression
+	public sealed class ThisReferenceExpression : Expression
 	{
 		public TextLocation Location {
 			get;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is ThisReferenceExpression o;
+			return other is ThisReferenceExpression;
 		}
 	}
 }

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Insert variable declarations.
 	/// </summary>
-	public class DeclareVariables : IAstTransform
+	internal sealed class DeclareVariables : IAstTransform
 	{
 		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new();
 		TransformContext context;
@@ -433,7 +433,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, out DirectionExpression dirExpr)
 		{
 			dirExpr = v.FirstUse.Parent as DirectionExpression;
-			if (dirExpr == null || dirExpr.FieldDirection != FieldDirection.Out)
+			if (dirExpr is not { FieldDirection: FieldDirection.Out })
 				return false;
 			if (!context.Settings.OutVariables)
 				return false;
@@ -532,6 +532,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
+		[Flags]
 		enum VariableInitKind
 		{
 			None,
@@ -540,7 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		[DebuggerDisplay("VariableToDeclare(Name={" + nameof(Name) + "})")]
-		class VariableToDeclare
+		sealed class VariableToDeclare
 		{
 			public readonly ILVariable ILVariable;
 			public bool DeclaredInDeconstruction;
@@ -579,14 +580,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.ILVariable = variable;
 				if (variable.UsesInitialValue)
 				{
-					if (variable.InitialValueIsInitialized)
-					{
-						this.DefaultInitialization = VariableInitKind.NeedsDefaultValue;
-					}
-					else
-					{
-						this.DefaultInitialization = VariableInitKind.NeedsSkipInit;
-					}
+					this.DefaultInitialization = variable.InitialValueIsInitialized
+						? VariableInitKind.NeedsDefaultValue
+						: VariableInitKind.NeedsSkipInit;
 				}
 				else
 				{
@@ -673,7 +669,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region FindInsertionPoints
 
-		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new();
+		readonly List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new();
 
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`
@@ -712,9 +708,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						FindInsertionPointForVariable(rr.Variable);
 					}
-					else if (identExpr.Annotation<ILFunction>() is ILFunction {
-						         Kind: ILFunctionKind.LocalFunction
-					         } localFunction)
+					else if (identExpr.Annotation<ILFunction>() is { Kind: ILFunctionKind.LocalFunction } localFunction)
 					{
 						foreach (var v in localFunction.CapturedVariables)
 						{

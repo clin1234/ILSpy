@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// default(Type)
 	/// </summary>
-	public class DefaultValueExpression : Expression
+	public sealed class DefaultValueExpression : Expression
 	{
 		public static readonly TokenRole DefaultKeywordRole = new("default");
 

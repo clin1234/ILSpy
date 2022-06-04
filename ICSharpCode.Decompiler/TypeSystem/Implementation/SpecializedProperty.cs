@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Represents a specialized IProperty (property after type substitution).
 	/// </summary>
-	public class SpecializedProperty : SpecializedParameterizedMember, IProperty
+	public sealed class SpecializedProperty : SpecializedParameterizedMember, IProperty
 	{
 		readonly IProperty propertyDefinition;
 

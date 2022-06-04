@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// switch (Expression) { SwitchSections }
 	/// </summary>
-	public class SwitchStatement : Statement
+	public sealed class SwitchStatement : Statement
 	{
 		public static readonly TokenRole SwitchKeywordRole = new("switch");
 		public static readonly Role<SwitchSection> SwitchSectionRole = new("SwitchSection", null);
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 	}
 
-	public class CaseLabel : AstNode
+	public sealed class CaseLabel : AstNode
 	{
 		public static readonly TokenRole CaseKeywordRole = new("case");
 		public static readonly TokenRole DefaultKeywordRole = new("default");
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode ColonToken {

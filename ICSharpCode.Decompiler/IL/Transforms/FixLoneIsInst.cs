@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// This transform un-inlines the argument of `isinst` instructions that can't be directly translated to C#,
 	/// thus allowing the emulation via "expr is T ? (T)expr : null".
 	/// </summary>
-	public class FixLoneIsInst : IILTransform
+	public sealed class FixLoneIsInst : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -37,26 +37,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (isInst.Type.IsReferenceType == true)
 				{
-					continue;  // reference-type isinst is always supported
+					continue; // reference-type isinst is always supported
 				}
+
 				if (SemanticHelper.IsPure(isInst.Argument.Flags))
 				{
 					continue; // emulated via "expr is T ? (T)expr : null"
 				}
+
 				if (isInst.Parent is UnboxAny unboxAny && ExpressionBuilder.IsUnboxAnyWithIsInst(unboxAny, isInst))
 				{
 					continue; // supported pattern "expr as T?"
 				}
+
 				if (isInst.Parent.MatchCompEqualsNull(out _) || isInst.Parent.MatchCompNotEqualsNull(out _))
 				{
 					continue; // supported pattern "expr is T"
 				}
+
 				if (isInst.Parent is Block { Kind: BlockKind.ControlFlow })
 				{
 					continue; // supported via StatementBuilder.VisitIsInst
 				}
+
 				instructionsToFix.Add(isInst);
 			}
+
 			// Need to delay fixing until we're done with iteration, because Extract() modifies parents
 			foreach (var isInst in instructionsToFix)
 			{

@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Context object for the ILInstruction.Extract() operation.
 	/// </summary>
-	class ExtractionContext
+	sealed class ExtractionContext
 	{
 		readonly ILTransformContext context;
 

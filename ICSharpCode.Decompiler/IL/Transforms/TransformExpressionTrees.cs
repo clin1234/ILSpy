@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// 
 	/// We build a tree of Func{ILInstruction}s, which are only executed, if the whole transform succeeds.
 	/// </summary>
-	public class TransformExpressionTrees : IStatementTransform
+	public sealed class TransformExpressionTrees : IStatementTransform
 	{
 		StatementTransformContext context;
 		CSharpConversions conversions;
@@ -115,8 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (parameterReferenceVar.Kind is not (VariableKind.Local or VariableKind.StackSlot))
 				return false;
-			if (parameterReferenceVar.Type == null ||
-			    parameterReferenceVar.Type.FullName != "System.Linq.Expressions.ParameterExpression")
+			if (parameterReferenceVar.Type is not { FullName: "System.Linq.Expressions.ParameterExpression" })
 				return false;
 			if (!(init is CallInstruction initCall && initCall.Arguments.Count == 2))
 				return false;
@@ -1491,10 +1490,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							ldloc.Variable.CaptureScope = BlockContainer.FindClosestContainer(context);
 							var f = ldloc.Variable.CaptureScope.Ancestors.OfType<ILFunction>().FirstOrDefault();
-							if (f != null)
-							{
-								f.CapturedVariables.Add(ldloc.Variable);
-							}
+							f?.CapturedVariables.Add(ldloc.Variable);
 						}
 
 						return ldloc;

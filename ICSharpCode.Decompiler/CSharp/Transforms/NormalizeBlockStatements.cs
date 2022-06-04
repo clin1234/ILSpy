@@ -5,7 +5,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
-	class NormalizeBlockStatements : DepthFirstAstVisitor, IAstTransform
+	sealed class NormalizeBlockStatements : DepthFirstAstVisitor, IAstTransform
 	{
 		/// <summary>
 		/// Modifiers that are emitted on accessors, but can be moved to the property declaration.
@@ -173,16 +173,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				case IfElseStatement ies:
 					return parent is IfElseStatement && ies.Role == IfElseStatement.FalseRole;
-				case VariableDeclarationStatement vds:
-				case WhileStatement ws:
-				case DoWhileStatement dws:
-				case SwitchStatement ss:
-				case ForeachStatement fes:
-				case ForStatement fs:
-				case LockStatement ls:
-				case FixedStatement fxs:
+				case VariableDeclarationStatement:
+				case WhileStatement:
+				case DoWhileStatement:
+				case SwitchStatement:
+				case ForeachStatement:
+				case ForStatement:
+				case LockStatement:
+				case FixedStatement:
 					return false;
-				case UsingStatement us:
+				case UsingStatement:
 					return parent is UsingStatement;
 				default:
 					return parent?.Parent is not IfElseStatement;

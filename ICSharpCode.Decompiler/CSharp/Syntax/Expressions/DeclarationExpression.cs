@@ -23,16 +23,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// TypeName VariableDesignation
 	/// </summary>
-	public class DeclarationExpression : Expression
+	public sealed class DeclarationExpression : Expression
 	{
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public VariableDesignation Designation {
 			get { return GetChildByRole(Roles.VariableDesignationRole); }
-			set { SetChildByRole(Roles.VariableDesignationRole, value); }
+			init { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

@@ -122,28 +122,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// A type parameter is known to be a reference type if it has the reference type constraint
 				// or its effective base class is not object or System.ValueType.
 				IType effectiveBaseClass = this.EffectiveBaseClass;
-				if (effectiveBaseClass.Kind is TypeKind.Class or TypeKind.Delegate)
+				switch (effectiveBaseClass.Kind)
 				{
-					ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
-					if (effectiveBaseClassDef != null)
+					case TypeKind.Class or TypeKind.Delegate:
 					{
-						switch (effectiveBaseClassDef.KnownTypeCode)
+						ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
+						if (effectiveBaseClassDef != null)
 						{
-							case KnownTypeCode.Object:
-							case KnownTypeCode.ValueType:
-							case KnownTypeCode.Enum:
-								return null;
+							switch (effectiveBaseClassDef.KnownTypeCode)
+							{
+								case KnownTypeCode.Object:
+								case KnownTypeCode.ValueType:
+								case KnownTypeCode.Enum:
+									return null;
+							}
 						}
+
+						return true;
 					}
-
-					return true;
+					case TypeKind.Struct or TypeKind.Enum:
+						return false;
+					default:
+						return null;
 				}
-				else if (effectiveBaseClass.Kind is TypeKind.Struct or TypeKind.Enum)
-				{
-					return false;
-				}
-
-				return null;
 			}
 		}
 
@@ -326,15 +327,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			List<IType> classTypeConstraints = new();
 			foreach (IType constraint in this.DirectBaseTypes)
 			{
-				if (constraint.Kind == TypeKind.Class)
+				switch (constraint.Kind)
 				{
-					classTypeConstraints.Add(constraint);
-				}
-				else if (constraint.Kind == TypeKind.TypeParameter)
-				{
-					IType baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
-					if (baseClass.Kind == TypeKind.Class)
-						classTypeConstraints.Add(baseClass);
+					case TypeKind.Class:
+						classTypeConstraints.Add(constraint);
+						break;
+					case TypeKind.TypeParameter:
+					{
+						IType baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
+						if (baseClass.Kind == TypeKind.Class)
+							classTypeConstraints.Add(baseClass);
+						break;
+					}
 				}
 			}
 
@@ -356,13 +360,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			HashSet<IType> result = new();
 			foreach (IType constraint in this.DirectBaseTypes)
 			{
-				if (constraint.Kind == TypeKind.Interface)
+				switch (constraint.Kind)
 				{
-					result.Add(constraint);
-				}
-				else if (constraint.Kind == TypeKind.TypeParameter)
-				{
-					result.UnionWith(((ITypeParameter)constraint).EffectiveInterfaceSet);
+					case TypeKind.Interface:
+						result.Add(constraint);
+						break;
+					case TypeKind.TypeParameter:
+						result.UnionWith(((ITypeParameter)constraint).EffectiveInterfaceSet);
+						break;
 				}
 			}
 

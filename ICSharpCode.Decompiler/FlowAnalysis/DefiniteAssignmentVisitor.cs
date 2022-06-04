@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// <summary>
 	/// DataFlowVisitor that performs definite assignment analysis.
 	/// </summary>
-	class DefiniteAssignmentVisitor : DataFlowVisitor<DefiniteAssignmentVisitor.State>
+	sealed class DefiniteAssignmentVisitor : DataFlowVisitor<DefiniteAssignmentVisitor.State>
 	{
 		readonly CancellationToken cancellationToken;
 		private readonly HashSet<IMethod> localFunctionsNeedingAnalysis = new();
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			bool hasOutArgs = false;
 			foreach (var arg in call.Arguments)
 			{
-				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true)
+				if (arg.MatchLdLoca(out ILVariable _) && call.GetParameter(arg.ChildIndex)?.IsOut == true)
 				{
 					// Visiting ldloca would require the variable to be initialized,
 					// but we don't need out arguments to be initialized.
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// State for definite assignment analysis.
 		/// </summary>
 		[DebuggerDisplay("{" + nameof(bits) + "}")]
-		public struct State : IDataFlowState<State>
+		public readonly struct State : IDataFlowState<State>
 		{
 			/// <summary>
 			/// bits[i]: There is a code path from the entry point to this state's position

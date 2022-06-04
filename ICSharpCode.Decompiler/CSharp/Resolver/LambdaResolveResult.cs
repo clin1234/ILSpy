@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 	}
 
-	class LambdaConversion : Conversion
+	sealed class LambdaConversion : Conversion
 	{
 		public static readonly LambdaConversion Instance = new();
 

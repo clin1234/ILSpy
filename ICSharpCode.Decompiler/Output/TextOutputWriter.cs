@@ -22,7 +22,7 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler
 {
-	public class TextOutputWriter : TextWriter
+	public sealed class TextOutputWriter : TextWriter
 	{
 		readonly ITextOutput output;
 

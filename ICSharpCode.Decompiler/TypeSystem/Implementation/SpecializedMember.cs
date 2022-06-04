@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 				return LazyInit.GetOrSet(ref this.declaringType, result);
 			}
-			internal set {
+			internal init {
 				// This setter is used as an optimization when the code constructing
 				// the SpecializedMember already knows the declaring type.
 				Debug.Assert(this.declaringType == null);
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else
 					return LazyInit.GetOrSet(ref this.returnType, baseMember.ReturnType.AcceptVisitor(Substitution));
 			}
-			protected set {
+			protected init {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
 				// (not a normal type parameter substitution).
 
@@ -247,11 +247,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
-			b.Append(this.DeclaringType.ToString());
+			b.Append(this.DeclaringType);
 			b.Append('.');
 			b.Append(this.Name);
 			b.Append(':');
-			b.Append(this.ReturnType.ToString());
+			b.Append(this.ReturnType);
 			b.Append(']');
 			return b.ToString();
 		}
@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return LazyInit.GetOrSet(ref this.parameters,
 						CreateParameters(t => t.AcceptVisitor(this.Substitution)));
 			}
-			protected set {
+			protected init {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
 				// (not a normal type parameter substitution).
 
@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				if (i > 0)
 					b.Append(", ");
-				b.Append(this.Parameters[i].ToString());
+				b.Append(this.Parameters[i]);
 			}
 
 			b.Append("):");

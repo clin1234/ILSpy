@@ -12,7 +12,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
-	public static partial class SRMExtensions
+	internal static partial class SRMExtensions
 	{
 		public static bool HasFlag(this SRM.TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;
@@ -64,12 +64,10 @@ namespace ICSharpCode.Decompiler
 			return reader.GetTypeDefinition(handle).IsEnum(reader);
 		}
 
-		public static bool IsEnum(this SRM.TypeDefinition typeDefinition, SRM.MetadataReader reader)
+		private static bool IsEnum(this SRM.TypeDefinition typeDefinition, SRM.MetadataReader reader)
 		{
 			SRM.EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
-			if (baseType.IsNil)
-				return false;
-			return baseType.IsKnownType(reader, KnownTypeCode.Enum);
+			return !baseType.IsNil && baseType.IsKnownType(reader, KnownTypeCode.Enum);
 		}
 
 		public static bool IsEnum(this SRM.TypeDefinitionHandle handle, SRM.MetadataReader reader,
@@ -204,7 +202,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static SRM.TypeReferenceHandle GetDeclaringType(this in SRM.TypeReference tr)
+		private static SRM.TypeReferenceHandle GetDeclaringType(this in SRM.TypeReference tr)
 		{
 			return tr.ResolutionScope.Kind switch {
 				SRM.HandleKind.TypeReference => (SRM.TypeReferenceHandle)tr.ResolutionScope,
@@ -359,7 +357,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static FullTypeName GetFullTypeName(this SRM.TypeSpecificationHandle handle, SRM.MetadataReader reader)
+		private static FullTypeName GetFullTypeName(this SRM.TypeSpecificationHandle handle, SRM.MetadataReader reader)
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
@@ -465,7 +463,7 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
-		public static unsafe SRM.BlobReader GetInitialValue(this SRM.FieldDefinition field, PEReader pefile,
+		public static SRM.BlobReader GetInitialValue(this SRM.FieldDefinition field, PEReader pefile,
 			ICompilation typeSystem)
 		{
 			if (!field.HasFlag(FieldAttributes.HasFieldRVA))

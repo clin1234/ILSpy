@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Util
 {
 	public sealed class ReferenceComparer : IEqualityComparer<object?>
 	{
-		public static readonly ReferenceComparer Instance = new();
+		internal static readonly ReferenceComparer Instance = new();
 
 		public new bool Equals(object? x, object? y)
 		{

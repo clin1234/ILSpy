@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// This means this transform must run before LoopDetection.
 	/// To make our detection job easier, we must run after variable inlining.
 	/// </summary>
-	public class DetectPinnedRegions : IILTransform
+	public sealed class DetectPinnedRegions : IILTransform
 	{
 		ILTransformContext context;
 

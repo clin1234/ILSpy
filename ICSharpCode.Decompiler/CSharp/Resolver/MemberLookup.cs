@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// Implementation of member lookup (C# 4.0 spec, §7.4).
 	/// </summary>
-	public class MemberLookup
+	public sealed class MemberLookup
 	{
 		readonly IModule currentModule;
 
@@ -331,8 +331,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						lookupGroup.MethodsAreHidden = true;
 						lookupGroup.NonMethodIsHidden = true;
-						if (lookupGroup.NestedTypes != null)
-							lookupGroup.NestedTypes.RemoveAll(t => InnerTypeParameterCount(t) == typeArgumentCount);
+						lookupGroup.NestedTypes?.RemoveAll(t => InnerTypeParameterCount(t) == typeArgumentCount);
 					}
 				}
 

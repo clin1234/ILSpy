@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// A method list that belongs to a declaring type.
 	/// </summary>
-	public class MethodListWithDeclaringType : List<IParameterizedMember>
+	public sealed class MethodListWithDeclaringType : List<IParameterizedMember>
 	{
 		public MethodListWithDeclaringType(IType declaringType)
 		{
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// The MethodGroupResolveResult has no type.
 	/// To retrieve the delegate type or the chosen overload, look at the method group conversion.
 	/// </summary>
-	public class MethodGroupResolveResult : ResolveResult
+	public sealed class MethodGroupResolveResult : ResolveResult
 	{
 		readonly IReadOnlyList<MethodListWithDeclaringType> methodLists;
 

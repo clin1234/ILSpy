@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// Represents the 'this' reference.
 	/// Also used for the 'base' reference.
 	/// </summary>
-	public class ThisResolveResult : ResolveResult
+	public sealed class ThisResolveResult : ResolveResult
 	{
 		public ThisResolveResult(IType type, bool causesNonVirtualInvocation = false) : base(type)
 		{

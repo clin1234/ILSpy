@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// This is (int.MinValue, int.MaxValue) for the first instruction.
 	/// These ranges are propagated depending on the conditional jumps performed by the code.
 	/// </remarks>
-	class StateRangeAnalysis
+	sealed class StateRangeAnalysis
 	{
 		readonly SymbolicEvaluationContext evalContext;
 		internal readonly Dictionary<IMethod, LongSet>? finallyMethodToStateRange; // used only for IteratorDispose

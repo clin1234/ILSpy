@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// Represents the implicitly-typed "out var".
 	/// Special-cased in overload resolution to be compatible with any out-parameter.
 	/// </summary>
-	class OutVarResolveResult : ResolveResult
+	sealed class OutVarResolveResult : ResolveResult
 	{
 		public static readonly OutVarResolveResult Instance = new();
 

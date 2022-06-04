@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// yield break;
 	/// </summary>
-	public class YieldBreakStatement : Statement
+	public sealed class YieldBreakStatement : Statement
 	{
 		public static readonly TokenRole YieldKeywordRole = new("yield");
 		public static readonly TokenRole BreakKeywordRole = new("break");
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is YieldBreakStatement o;
+			return other is YieldBreakStatement;
 		}
 	}
 }

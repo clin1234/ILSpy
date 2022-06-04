@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// A local function has zero or more compiler-generated parameters added at the end.
 	/// </summary>
-	class LocalFunctionMethod : IMethod
+	sealed class LocalFunctionMethod : IMethod
 	{
 		List<IParameter> parameters;
 
@@ -101,29 +101,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
-				if (typeParameters == null)
-					typeParameters =
-						new List<ITypeParameter>(
-							ReducedFrom.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
-				return typeParameters;
+				return typeParameters ??=
+					new List<ITypeParameter>(ReducedFrom.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
 			}
 		}
 
 		public IReadOnlyList<IType> TypeArguments {
 			get {
-				if (typeArguments == null)
-					typeArguments =
-						new List<IType>(ReducedFrom.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
-				return typeArguments;
+				return typeArguments ??=
+					new List<IType>(ReducedFrom.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
 			}
 		}
 
 		public IReadOnlyList<IParameter> Parameters {
 			get {
-				if (parameters == null)
-					parameters =
-						new List<IParameter>(ReducedFrom.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
-				return parameters;
+				return parameters ??=
+					new List<IParameter>(ReducedFrom.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
 			}
 		}
 

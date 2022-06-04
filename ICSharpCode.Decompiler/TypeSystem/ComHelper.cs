@@ -40,9 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			Justification = "Consistent with CoClassAttribute")]
 		public static IType GetCoClass(ITypeDefinition typeDefinition)
 		{
-			if (typeDefinition == null)
-				return SpecialType.UnknownType;
-			var coClassAttribute = typeDefinition.GetAttribute(KnownAttribute.CoClass, inherit: false);
+			var coClassAttribute = typeDefinition?.GetAttribute(KnownAttribute.CoClass, inherit: false);
 			if (coClassAttribute is { FixedArguments.Length: 1 })
 			{
 				if (coClassAttribute.FixedArguments[0].Value is IType ty)

@@ -42,10 +42,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly Nullability[] nullableAttributeData;
 		readonly TypeSystemOptions options;
 		readonly string[] tupleElementNames;
-		int dynamicTypeIndex = 0;
-		int nativeIntTypeIndex = 0;
-		int nullabilityTypeIndex = 0;
-		int tupleTypeIndex = 0;
+		int dynamicTypeIndex;
+		int nativeIntTypeIndex;
+		int nullabilityTypeIndex;
+		int tupleTypeIndex;
 
 		private ApplyAttributeTypeVisitor(ICompilation compilation,
 			bool hasDynamicAttribute, bool[] dynamicAttributeData,
@@ -79,17 +79,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			bool hasNativeIntegersAttribute = false;
 			bool[] nativeIntegersAttributeData = null;
 			string[] tupleElementNames = null;
-			Nullability nullability;
 			Nullability[] nullableAttributeData = null;
-			if ((options & TypeSystemOptions.NullabilityAnnotations) != 0)
-			{
-				nullability = nullableContext;
-			}
-			else
-			{
-				nullability = Nullability.Oblivious;
-			}
-
+			Nullability nullability = (options & TypeSystemOptions.NullabilityAnnotations) != 0
+				? nullableContext
+				: Nullability.Oblivious;
 			const TypeSystemOptions relevantOptions = TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple |
 			                                          TypeSystemOptions.NullabilityAnnotations |
 			                                          TypeSystemOptions.NativeIntegers;
@@ -306,11 +299,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						valueTupleAssembly
 					);
 				}
-				else
-				{
-					// C# doesn't have syntax for tuples of cardinality <= 1
-					tupleTypeIndex += tupleCardinality;
-				}
+
+				// C# doesn't have syntax for tuples of cardinality <= 1
+				tupleTypeIndex += tupleCardinality;
 			}
 
 			// Visit generic type and type arguments.
@@ -368,21 +359,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IType newType = type;
 			var ktc = type.KnownTypeCode;
-			if (ktc == KnownTypeCode.Object && hasDynamicAttribute)
+			switch (ktc)
 			{
-				if (dynamicAttributeData == null || dynamicTypeIndex >= dynamicAttributeData.Length)
-					newType = SpecialType.Dynamic;
-				else if (dynamicAttributeData[dynamicTypeIndex])
-					newType = SpecialType.Dynamic;
-			}
-			else if (ktc is KnownTypeCode.IntPtr or KnownTypeCode.UIntPtr && hasNativeIntegersAttribute)
-			{
-				// native integers use the same indexing logic as 'dynamic'
-				if (nativeIntegersAttributeData == null || nativeIntTypeIndex >= nativeIntegersAttributeData.Length)
-					newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
-				else if (nativeIntegersAttributeData[nativeIntTypeIndex])
-					newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
-				nativeIntTypeIndex++;
+				case KnownTypeCode.Object when hasDynamicAttribute:
+				{
+					if (dynamicAttributeData == null || dynamicTypeIndex >= dynamicAttributeData.Length)
+						newType = SpecialType.Dynamic;
+					else if (dynamicAttributeData[dynamicTypeIndex])
+						newType = SpecialType.Dynamic;
+					break;
+				}
+				case KnownTypeCode.IntPtr or KnownTypeCode.UIntPtr when hasNativeIntegersAttribute:
+				{
+					// native integers use the same indexing logic as 'dynamic'
+					if (nativeIntegersAttributeData == null || nativeIntTypeIndex >= nativeIntegersAttributeData.Length)
+						newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
+					else if (nativeIntegersAttributeData[nativeIntTypeIndex])
+						newType = (ktc == KnownTypeCode.IntPtr ? SpecialType.NInt : SpecialType.NUInt);
+					nativeIntTypeIndex++;
+					break;
+				}
 			}
 
 			if (type.IsReferenceType == true)

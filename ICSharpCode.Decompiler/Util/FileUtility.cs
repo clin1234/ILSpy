@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Util
 		[return: NotNullIfNotNull("fileName")]
 		public static string? NormalizePath(string? fileName)
 		{
-			if (fileName == null || fileName.Length == 0)
+			if (string.IsNullOrEmpty(fileName))
 				return fileName;
 
 			int i;
@@ -210,12 +210,12 @@ namespace ICSharpCode.Decompiler.Util
 		[return: NotNullIfNotNull("input")]
 		static string? AddTrailingSeparator(string? input)
 		{
-			if (input == null || input.Length == 0)
+			if (string.IsNullOrEmpty(input))
 				return input;
 			if (input[^1] == Path.DirectorySeparatorChar || input[^1] == Path.AltDirectorySeparatorChar)
 				return input;
 			else
-				return input + GetSeparatorForPath(input).ToString();
+				return input + GetSeparatorForPath(input);
 		}
 
 		static char GetSeparatorForPath(string input)
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static string GetRelativePath(string? baseDirectoryPath, string absPath)
 		{
-			if (baseDirectoryPath == null || baseDirectoryPath.Length == 0)
+			if (string.IsNullOrEmpty(baseDirectoryPath))
 			{
 				return absPath;
 			}
@@ -241,8 +241,8 @@ namespace ICSharpCode.Decompiler.Util
 
 			string[] bPath = baseDirectoryPath != "."
 				? baseDirectoryPath.TrimEnd(separators).Split(separators)
-				: new string[0];
-			string[] aPath = absPath != "." ? absPath.TrimEnd(separators).Split(separators) : new string[0];
+				: Array.Empty<string>();
+			string[] aPath = absPath != "." ? absPath.TrimEnd(separators).Split(separators) : Array.Empty<string>();
 			int indx = 0;
 			for (; indx < Math.Min(bPath.Length, aPath.Length); ++indx)
 			{

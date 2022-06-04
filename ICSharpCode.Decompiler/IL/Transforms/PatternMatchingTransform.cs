@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class PatternMatchingTransform : IILTransform
+	sealed class PatternMatchingTransform : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{

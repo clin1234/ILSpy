@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// Refers to the object that is currently being initialized.
 	/// Used within <see cref="InvocationResolveResult.InitializerStatements"/>.
 	/// </summary>
-	public class InitializedObjectResolveResult : ResolveResult
+	public sealed class InitializedObjectResolveResult : ResolveResult
 	{
 		public InitializedObjectResolveResult(IType type) : base(type)
 		{

@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// Platform-specific code.
 	/// </summary>
-	public static class Platform
+	internal static class Platform
 	{
 		public static StringComparer FileNameComparer {
 			get {

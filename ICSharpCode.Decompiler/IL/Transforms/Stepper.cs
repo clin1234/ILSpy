@@ -29,17 +29,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Exception thrown when an IL transform runs into the <see cref="Stepper.StepLimit"/>.
 	/// </summary>
-	public class StepLimitReachedException : Exception
+	public sealed class StepLimitReachedException : Exception
 	{
 	}
 
 	/// <summary>
 	/// Helper class that manages recording transform steps.
 	/// </summary>
-	public class Stepper
+	public sealed class Stepper
 	{
 		readonly Stack<Node> groups;
-		int step = 0;
+		int step;
 
 		public Stepper()
 		{
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			node.EndStep = step;
 		}
 
-		public class Node
+		public sealed class Node
 		{
 			public Node(string description)
 			{

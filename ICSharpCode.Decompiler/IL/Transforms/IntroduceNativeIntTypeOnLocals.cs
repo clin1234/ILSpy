@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class IntroduceNativeIntTypeOnLocals : IILTransform
+	sealed class IntroduceNativeIntTypeOnLocals : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

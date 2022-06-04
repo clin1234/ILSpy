@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents the 'sizeof'.
 	/// </summary>
-	public class SizeOfResolveResult : ResolveResult
+	public sealed class SizeOfResolveResult : ResolveResult
 	{
 		readonly int? constantValue;
 

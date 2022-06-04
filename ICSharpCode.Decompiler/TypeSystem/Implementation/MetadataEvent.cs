@@ -147,12 +147,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
 		}
 
-		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
+		private static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
 		{
 			if (method == null)
 				return EmptyList<IMember>.Instance;
-			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner)
-				.Where(m => m != null);
+			return method.ExplicitlyImplementedInterfaceMembers.Select(static m => ((IMethod)m).AccessorOwner)
+				.Where(static m => m != null);
 		}
 
 		public override bool Equals(object obj)

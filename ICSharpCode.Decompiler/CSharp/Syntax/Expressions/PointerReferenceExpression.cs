@@ -30,13 +30,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target->MemberName
 	/// </summary>
-	public class PointerReferenceExpression : Expression
+	public sealed class PointerReferenceExpression : Expression
 	{
 		public static readonly TokenRole ArrowRole = new("->");
 
 		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
+			init { SetChildByRole(Roles.TargetExpression, value); }
 		}
 
 		public CSharpTokenNode ArrowToken {
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}

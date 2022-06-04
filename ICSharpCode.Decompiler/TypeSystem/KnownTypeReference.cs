@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		internal const int KnownTypeCodeCount = (int)KnownTypeCode.Range + 1;
 
-		static readonly KnownTypeReference?[] knownTypeReferences = new KnownTypeReference?[KnownTypeCodeCount] {
+		static readonly KnownTypeReference?[] knownTypeReferences = {
 			null, // None
 			new(KnownTypeCode.Object, TypeKind.Class, "System", "Object", baseType: KnownTypeCode.None),
 			new(KnownTypeCode.DBNull, TypeKind.Class, "System", "DBNull"),
@@ -285,13 +285,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new(KnownTypeCode.SpanOfT, TypeKind.Struct, "System", "Span", 1),
 			new(KnownTypeCode.ReadOnlySpanOfT, TypeKind.Struct, "System", "ReadOnlySpan", 1),
 			new(KnownTypeCode.MemoryOfT, TypeKind.Struct, "System", "Memory", 1),
-			new(KnownTypeCode.Unsafe, TypeKind.Class, "System.Runtime.CompilerServices", "Unsafe", 0),
+			new(KnownTypeCode.Unsafe, TypeKind.Class, "System.Runtime.CompilerServices", "Unsafe"),
 			new(KnownTypeCode.IAsyncEnumerableOfT, TypeKind.Interface, "System.Collections.Generic", "IAsyncEnumerable",
 				1),
 			new(KnownTypeCode.IAsyncEnumeratorOfT, TypeKind.Interface, "System.Collections.Generic", "IAsyncEnumerator",
 				1),
-			new(KnownTypeCode.Index, TypeKind.Struct, "System", "Index", 0),
-			new(KnownTypeCode.Range, TypeKind.Struct, "System", "Range", 0),
+			new(KnownTypeCode.Index, TypeKind.Struct, "System", "Index"),
+			new(KnownTypeCode.Range, TypeKind.Struct, "System", "Range"),
 		};
 
 		internal readonly KnownTypeCode baseType;

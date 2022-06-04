@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const string VersionToken = "Version=";
 		const string ProfileToken = "Profile=";
 
-		static HashSet<string> dotNet30Assemblies = new(StringComparer.OrdinalIgnoreCase) {
+		static readonly HashSet<string> dotNet30Assemblies = new(StringComparer.OrdinalIgnoreCase) {
 			"ComSvcConfig, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
 			"infocard, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"Microsoft.Transactions.Bridge, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			"WsatConfig, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
 		};
 
-		static HashSet<string> dotNet35Assemblies = new(StringComparer.OrdinalIgnoreCase) {
+		static readonly HashSet<string> dotNet35Assemblies = new(StringComparer.OrdinalIgnoreCase) {
 			"AddInProcess, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"AddInProcess32, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"AddInUtil, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
@@ -122,10 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </returns>
 		public static TargetFramework DetectTargetFramework(PEFile module)
 		{
-			if (module is null)
-			{
-				throw new ArgumentNullException(nameof(module));
-			}
+			ArgumentNullException.ThrowIfNull(module);
 
 			int versionNumber = module.GetRuntime() switch {
 				TargetRuntime.Net_1_0 => 100,
@@ -170,10 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <returns>The platform name, e.g. "AnyCPU" or "x86".</returns>
 		public static string GetPlatformName(PEFile module)
 		{
-			if (module is null)
-			{
-				throw new ArgumentNullException(nameof(module));
-			}
+			ArgumentNullException.ThrowIfNull(module);
 
 			var headers = module.Reader.PEHeaders;
 			var architecture = headers.CoffHeader.Machine;

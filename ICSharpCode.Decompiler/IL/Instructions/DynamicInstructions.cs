@@ -60,9 +60,9 @@ namespace ICSharpCode.Decompiler.IL
 
 	public struct CSharpArgumentInfo
 	{
-		public string? Name { get; set; }
-		public CSharpArgumentInfoFlags Flags { get; set; }
-		public IType CompileTimeType { get; set; }
+		public string? Name { get; init; }
+		public CSharpArgumentInfoFlags Flags { get; init; }
+		public IType CompileTimeType { get; init; }
 
 		public bool HasFlag(CSharpArgumentInfoFlags flag) => (Flags & flag) != 0;
 	}

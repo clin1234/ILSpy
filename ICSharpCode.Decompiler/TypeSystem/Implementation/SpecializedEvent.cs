@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Represents a specialized IEvent (event after type substitution).
 	/// </summary>
-	public class SpecializedEvent : SpecializedMember, IEvent
+	internal sealed class SpecializedEvent : SpecializedMember, IEvent
 	{
 		readonly IEvent eventDefinition;
 

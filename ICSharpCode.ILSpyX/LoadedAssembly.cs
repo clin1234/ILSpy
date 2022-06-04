@@ -103,10 +103,7 @@ namespace ICSharpCode.ILSpyX
 			: this(bundle.AssemblyList, fileName, stream, assemblyResolver, null,
 				applyWinRTProjections, useDebugSymbols)
 		{
-			this.ParentBundle = bundle;
 		}
-
-		public LoadedAssembly? ParentBundle { get; }
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new();
 
@@ -169,7 +166,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public bool HasLoadError => loadingTask.IsFaulted;
 
-		public bool IsAutoLoaded { get; set; }
+		internal bool IsAutoLoaded { get; init; }
 
 		/// <summary>
 		/// Gets the PDB file name or null, if no PDB was found or it's embedded.
@@ -482,7 +479,7 @@ namespace ICSharpCode.ILSpyX
 
 				return new UniversalAssemblyResolver(rootedPath, throwOnError: false, targetFramework,
 					runtimePack, PEStreamOptions.PrefetchEntireImage, readerOptions);
-			})!;
+			});
 		}
 
 		public AssemblyReferenceClassifier GetAssemblyReferenceClassifier(bool applyWinRTProjections)
@@ -493,7 +490,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Returns the debug info for this assembly. Returns null in case of load errors or no debug info is available.
 		/// </summary>
-		public IDebugInfoProvider? GetDebugInfoOrNull()
+		internal IDebugInfoProvider? GetDebugInfoOrNull()
 		{
 			if (GetPEFileOrNull() == null)
 				return null;

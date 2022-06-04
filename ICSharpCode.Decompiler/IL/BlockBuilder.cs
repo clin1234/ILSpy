@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class BlockBuilder
+	sealed class BlockBuilder
 	{
 		readonly MethodBodyBlock body;
 		readonly ICompilation compilation;
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 
 				ILInstruction filter;
-				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Filter)
+				if (eh.Kind == ExceptionRegionKind.Filter)
 				{
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
 					filterBlock.AddILRange(new Interval(eh.FilterOffset, eh.HandlerOffset));
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		class OnErrorDispatch
+		sealed class OnErrorDispatch
 		{
 			public readonly List<Branch> Branches = new();
 			public readonly HashSet<int> TargetILOffsets = new();

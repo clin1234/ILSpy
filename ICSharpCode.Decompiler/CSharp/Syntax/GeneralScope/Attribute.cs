@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Attribute(Arguments)
 	/// </summary>
-	public class Attribute : AstNode
+	public sealed class Attribute : AstNode
 	{
 		public override NodeType NodeType {
 			get {
@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public CSharpTokenNode LParToken {

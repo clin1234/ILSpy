@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Condition ? TrueExpression : FalseExpression
 	/// </summary>
-	public class ConditionalExpression : Expression
+	public sealed class ConditionalExpression : Expression
 	{
 		public static readonly Role<Expression> ConditionRole = Roles.Condition;
 		public static readonly TokenRole QuestionMarkRole = new("?");
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }
-			set { SetChildByRole(ConditionRole, value); }
+			init { SetChildByRole(ConditionRole, value); }
 		}
 
 		public CSharpTokenNode QuestionMarkToken {
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression TrueExpression {
 			get { return GetChildByRole(TrueRole); }
-			set { SetChildByRole(TrueRole, value); }
+			init { SetChildByRole(TrueRole, value); }
 		}
 
 		public CSharpTokenNode ColonToken {
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression FalseExpression {
 			get { return GetChildByRole(FalseRole); }
-			set { SetChildByRole(FalseRole, value); }
+			init { SetChildByRole(FalseRole, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

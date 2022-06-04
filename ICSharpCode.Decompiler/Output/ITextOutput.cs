@@ -34,7 +34,10 @@ namespace ICSharpCode.Decompiler
 		void Write(string text);
 		void WriteLine();
 		void WriteReference(OpCodeInfo opCode, bool omitSuffix = false);
-		void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile", bool isDefinition = false);
+
+		void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile",
+			bool isDefinition = false);
+
 		void WriteReference(IType type, string text, bool isDefinition = false);
 		void WriteReference(IMember member, string text, bool isDefinition = false);
 		void WriteLocalReference(string text, object reference, bool isDefinition = false);
@@ -43,7 +46,7 @@ namespace ICSharpCode.Decompiler
 		void MarkFoldEnd();
 	}
 
-	public static class TextOutputExtensions
+	internal static class TextOutputExtensions
 	{
 		public static void Write(this ITextOutput output, string format, params object[] args)
 		{

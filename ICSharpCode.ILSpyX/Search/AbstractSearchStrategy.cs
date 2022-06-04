@@ -63,10 +63,10 @@ namespace ICSharpCode.ILSpyX.Search
 	{
 		protected readonly bool fullNameSearch;
 		protected readonly bool omitGenerics;
-		protected readonly Regex regex;
+		private readonly Regex regex;
 		private readonly IProducerConsumerCollection<SearchResult> resultQueue;
 		protected readonly SearchRequest searchRequest;
-		protected readonly string[] searchTerm;
+		private readonly string[] searchTerm;
 
 		protected AbstractSearchStrategy(SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
 		{
@@ -87,20 +87,19 @@ namespace ICSharpCode.ILSpyX.Search
 				return regex.IsMatch(name);
 			}
 
-			for (int i = 0; i < searchTerm.Length; ++i)
+			foreach (var t in searchTerm)
 			{
 				// How to handle overlapping matches?
-				var term = searchTerm[i];
+				var term = t;
 				if (string.IsNullOrEmpty(term))
 					continue;
-				string text = name;
 				switch (term[0])
 				{
 					case '+': // must contain
 						term = term[1..];
 						goto default;
 					case '-': // should not contain
-						if (term.Length > 1 && text.IndexOf(term[1..], StringComparison.OrdinalIgnoreCase) >= 0)
+						if (term.Length > 1 && name.IndexOf(term[1..], StringComparison.OrdinalIgnoreCase) >= 0)
 						{
 							return false;
 						}
@@ -108,25 +107,25 @@ namespace ICSharpCode.ILSpyX.Search
 						break;
 					case '=': // exact match
 					{
-						var equalCompareLength = text.IndexOf('`');
+						var equalCompareLength = name.IndexOf('`');
 						if (equalCompareLength == -1)
-							equalCompareLength = text.Length;
+							equalCompareLength = name.Length;
 
-						if (term.Length > 1 && String.Compare(term, 1, text, 0,
+						if (term.Length > 1 && String.Compare(term, 1, name, 0,
 							    Math.Max(term.Length, equalCompareLength),
 							    StringComparison.OrdinalIgnoreCase) != 0)
 							return false;
 					}
 						break;
 					case '~':
-						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term[1..].ToLower()))
+						if (term.Length > 1 && !IsNoncontiguousMatch(name.ToLower(), term[1..].ToLower()))
 						{
 							return false;
 						}
 
 						break;
 					default:
-						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+						if (name.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
 							return false;
 						break;
 				}

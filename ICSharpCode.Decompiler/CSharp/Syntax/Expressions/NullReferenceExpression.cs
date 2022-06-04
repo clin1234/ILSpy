@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// null
 	/// </summary>
-	public class NullReferenceExpression : Expression
+	public sealed class NullReferenceExpression : Expression
 	{
 		TextLocation location;
 
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is NullReferenceExpression o;
+			return other is NullReferenceExpression;
 		}
 	}
 }

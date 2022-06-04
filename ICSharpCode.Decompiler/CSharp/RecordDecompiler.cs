@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	class RecordDecompiler
+	sealed class RecordDecompiler
 	{
 		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new();
 		readonly Dictionary<IProperty, IParameter> autoPropertyToPrimaryCtorParameter = new();
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (!isStruct)
 				{
-					if (body.Instructions.SecondToLastOrDefault() is not CallInstruction baseCtorCall)
+					if (body.Instructions.SecondToLastOrDefault() is not CallInstruction)
 						return false;
 				}
 
@@ -556,21 +556,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				if (!MatchStringBuilderAppend(body.Instructions[pos], builder, out var val))
 					return false;
-				if (val is CallInstruction { Method: { Name: "ToString", IsStatic: false } } toStringCall)
+				switch (val)
 				{
-					if (toStringCall.Arguments.Count != 1)
+					case CallInstruction { Method: { Name: "ToString", IsStatic: false } } toStringCall
+						when toStringCall.Arguments.Count != 1:
 						return false;
-					val = toStringCall.Arguments[0];
-					if (val is AddressOf addressOf)
+					case CallInstruction { Method: { Name: "ToString", IsStatic: false } } toStringCall:
 					{
-						val = addressOf.Value;
+						val = toStringCall.Arguments[0];
+						if (val is AddressOf addressOf)
+						{
+							val = addressOf.Value;
+						}
+
+						break;
 					}
-				}
-				else if (val is Box box)
-				{
-					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(box.Type, member.ReturnType))
+					case Box box when !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(box.Type, member.ReturnType):
 						return false;
-					val = box.Argument;
+					case Box box:
+						val = box.Argument;
+						break;
 				}
 
 				if (val is CallInstruction getterCall && member is IProperty property)
@@ -1131,18 +1136,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
 					CancellationToken = cancellationToken
 				});
-			if (il.Body is BlockContainer container)
-			{
-				return container.EntryPoint;
-			}
-			else if (il.Body is Block block)
-			{
-				return block;
-			}
-			else
-			{
-				return null;
-			}
+			return il.Body switch {
+				BlockContainer container => container.EntryPoint,
+				Block block => block,
+				_ => null
+			};
 		}
 	}
 }

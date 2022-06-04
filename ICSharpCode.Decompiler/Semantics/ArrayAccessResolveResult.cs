@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Resolve result representing an array access.
 	/// </summary>
-	public class ArrayAccessResolveResult : ResolveResult
+	public sealed class ArrayAccessResolveResult : ResolveResult
 	{
 		public readonly ResolveResult Array;
 		public readonly IList<ResolveResult> Indexes;

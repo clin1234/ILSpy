@@ -18,13 +18,6 @@
 
 #nullable enable
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Text.RegularExpressions;
-
 namespace ICSharpCode.Decompiler.Util
 {
 #if DEBUG
@@ -33,8 +26,8 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	sealed class GraphVizGraph
 	{
-		List<GraphVizEdge> edges = new();
-		List<GraphVizNode> nodes = new();
+		readonly List<GraphVizEdge> edges = new();
+		readonly List<GraphVizNode> nodes = new();
 
 		public string? rankdir;
 		public string? Title;
@@ -62,8 +55,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Show(string? name)
 		{
-			if (name == null)
-				name = Title;
+			name ??= Title;
 			if (name != null)
 				foreach (char c in Path.GetInvalidFileNameChars())
 					name = name.Replace(c, '-');

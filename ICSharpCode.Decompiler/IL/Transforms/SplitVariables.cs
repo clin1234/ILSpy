@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Live range splitting for IL variables.
 	/// </summary>
-	public class SplitVariables : IILTransform
+	public sealed class SplitVariables : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <remarks>
 		/// Instructions in a group are stores to the same variable that must stay together (cannot be split).
 		/// </remarks>
-		class GroupStores : ReachingDefinitionsVisitor
+		sealed class GroupStores : ReachingDefinitionsVisitor
 		{
 			readonly Dictionary<IInstructionWithVariableOperand, ILVariable> newVariables = new();
 

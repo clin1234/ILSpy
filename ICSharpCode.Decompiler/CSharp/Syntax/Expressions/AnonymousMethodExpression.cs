@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] delegate(Parameters) {Body}
 	/// </summary>
-	public class AnonymousMethodExpression : Expression
+	public sealed class AnonymousMethodExpression : Expression
 	{
 		public static readonly TokenRole DelegateKeywordRole = new("delegate");
 		public static readonly TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync {
 			get { return isAsync; }
-			set {
+			init {
 				ThrowIfFrozen();
 				isAsync = value;
 			}

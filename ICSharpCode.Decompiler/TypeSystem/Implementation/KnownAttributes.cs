@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		internal const int Count = (int)KnownAttribute.PreserveBaseOverrides + 1;
 
-		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count] {
+		static readonly TopLevelTypeName[] typeNames = {
 			default,
 			new("System.Runtime.CompilerServices", nameof(CompilerGeneratedAttribute)),
 			new("System.Runtime.CompilerServices", nameof(ExtensionAttribute)),
@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static KnownAttribute IsKnownAttributeType(this ITypeDefinition attributeType)
 		{
-			if (!attributeType.GetNonInterfaceBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.Attribute)))
+			if (!attributeType.GetNonInterfaceBaseTypes().Any(static t => t.IsKnownType(KnownTypeCode.Attribute)))
 				return KnownAttribute.None;
 			for (int i = 1; i < typeNames.Length; i++)
 			{

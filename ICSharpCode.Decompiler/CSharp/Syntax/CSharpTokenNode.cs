@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return other is CSharpTokenNode { IsNull: false } and not CSharpModifierToken;
 		}
 
-		class NullCSharpTokenNode : CSharpTokenNode
+		sealed class NullCSharpTokenNode : CSharpTokenNode
 		{
 			public NullCSharpTokenNode() : base(TextLocation.Empty, null)
 			{

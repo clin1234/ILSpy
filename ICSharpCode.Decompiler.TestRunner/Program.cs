@@ -22,7 +22,7 @@ using System.Runtime.Loader;
 
 namespace ICSharpCode.Decompiler.TestRunner;
 
-public static class Program
+internal static class Program
 {
 	static int Main(string[] args)
 	{

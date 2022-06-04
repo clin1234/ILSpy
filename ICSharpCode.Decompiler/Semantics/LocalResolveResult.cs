@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents a local variable or parameter.
 	/// </summary>
-	public class LocalResolveResult : ResolveResult
+	internal sealed class LocalResolveResult : ResolveResult
 	{
 		public LocalResolveResult(IVariable variable)
 			: base(UnpackTypeIfByRefParameter(variable))

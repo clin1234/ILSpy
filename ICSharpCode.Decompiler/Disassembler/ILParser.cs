@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public static class ILParser
+	internal static class ILParser
 	{
 		public static ILOpCode DecodeOpCode(this ref BlobReader blob)
 		{

@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Decompiler step for C# 7.0 local functions
 	/// </summary>
-	public class LocalFunctionDecompiler : IILTransform
+	public sealed class LocalFunctionDecompiler : IILTransform
 	{
 		/// <summary>
 		/// Newer Roslyn versions use the format "&lt;callerName&gt;g__functionName|x_y"
@@ -472,8 +472,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!hasBody)
 			{
 				function = new ILFunction(targetMethod, 0,
-					new TypeSystem.GenericContext(genericContext?.ClassTypeParameters,
-						genericContext?.MethodTypeParameters),
+					new GenericContext(genericContext?.ClassTypeParameters, genericContext?.MethodTypeParameters),
 					new Nop(), ILFunctionKind.LocalFunction);
 			}
 			else
@@ -525,7 +524,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return skipCount;
 		}
 
-		static TypeSystem.GenericContext? GenericContextFromTypeArguments(IMethod targetMethod, int skipCount)
+		static GenericContext? GenericContextFromTypeArguments(IMethod targetMethod, int skipCount)
 		{
 			if (skipCount < 0 || skipCount > targetMethod.TypeParameters.Count)
 			{
@@ -535,7 +534,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			int total = targetMethod.DeclaringType.TypeParameters.Count + skipCount;
 			if (total == 0)
-				return default(TypeSystem.GenericContext);
+				return default(GenericContext);
 
 			var classTypeParameters = new List<ITypeParameter>(targetMethod.DeclaringType.TypeParameters);
 			var methodTypeParameters = new List<ITypeParameter>(targetMethod.TypeParameters);
@@ -572,7 +571,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			}
 
-			return new TypeSystem.GenericContext(classTypeParameters, methodTypeParameters);
+			return new GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
 		static T FindCommonAncestorInstruction<T>(ILInstruction a, ILInstruction b)
@@ -908,7 +907,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public Dictionary<int, List<ILInstruction>> LocalFunctionArguments;
 		}
 
-		class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>
+		sealed class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>
 		{
 			public readonly List<TypeDefinitionHandle> RefStructTypes = new();
 

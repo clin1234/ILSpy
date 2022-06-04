@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	//
 	// AddToSequencePoint(AstNode) handles the list of ILInstructions and visits each ILInstruction and its descendants.
 	// We do not descend into nested ILFunctions as these create their own list of sequence points.
-	class SequencePointBuilder : DepthFirstAstVisitor
+	sealed class SequencePointBuilder : DepthFirstAstVisitor
 	{
 		readonly HashSet<ILInstruction> mappedInstructions = new();
 
@@ -575,7 +575,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// Main AST node associated with this sequence point.
 			/// </summary>
-			internal readonly AstNode PrimaryNode;
+			private readonly AstNode PrimaryNode;
 
 			/// <summary>
 			/// List of IL intervals that are associated with this sequence point.

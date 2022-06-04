@@ -35,9 +35,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public static BusyLock Enter(object? obj)
 		{
-			List<object?>? activeObjects = _activeObjects;
-			if (activeObjects == null)
-				activeObjects = _activeObjects = new List<object?>();
+			List<object?> activeObjects = _activeObjects ??= new List<object?>();
 			for (int i = 0; i < activeObjects.Count; i++)
 			{
 				if (activeObjects[i] == obj)
@@ -52,7 +50,7 @@ namespace ICSharpCode.Decompiler.Util
 			"CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible",
 			Justification = "Should always be used with 'var'")]
-		public struct BusyLock : IDisposable
+		public readonly struct BusyLock : IDisposable
 		{
 			public static readonly BusyLock Failed = new(null);
 
@@ -69,10 +67,7 @@ namespace ICSharpCode.Decompiler.Util
 
 			public void Dispose()
 			{
-				if (objectList != null)
-				{
-					objectList.RemoveAt(objectList.Count - 1);
-				}
+				objectList?.RemoveAt(objectList.Count - 1);
 			}
 		}
 	}

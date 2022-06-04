@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class EnumMemberDeclaration : EntityDeclaration
+	public sealed class EnumMemberDeclaration : EntityDeclaration
 	{
 		public static readonly Role<Expression> InitializerRole = new("Initializer", Expression.Null);
 

@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override Nullability Nullability { get; }
 
-		public override string NameSuffix {
+		protected override string NameSuffix {
 			get {
 				return "[" + new string(',', Dimensions - 1) + "]";
 			}
@@ -106,9 +106,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override string ToString()
 		{
 			return Nullability switch {
-				Nullability.Nullable => elementType.ToString() + NameSuffix + "?",
-				Nullability.NotNullable => elementType.ToString() + NameSuffix + "!",
-				_ => elementType.ToString() + NameSuffix
+				Nullability.Nullable => elementType + NameSuffix + "?",
+				Nullability.NotNullable => elementType + NameSuffix + "!",
+				_ => elementType + NameSuffix
 			};
 		}
 
@@ -181,16 +181,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public int Dimensions { get; }
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			return ElementType.GetHashCode() ^ Dimensions;
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is ArrayTypeReference o && ElementType == o.ElementType && Dimensions == o.Dimensions;
-		}
-
 		public IType Resolve(ITypeResolveContext context)
 		{
 			return new ArrayType(context.Compilation, ElementType.Resolve(context), Dimensions);
@@ -198,7 +188,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			return ElementType.ToString() + "[" + new string(',', Dimensions - 1) + "]";
+			return ElementType + "[" + new string(',', Dimensions - 1) + "]";
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			return ElementType.GetHashCode() ^ Dimensions;
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is ArrayTypeReference o && ElementType == o.ElementType && Dimensions == o.Dimensions;
 		}
 	}
 }

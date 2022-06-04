@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transforms the "callsite initialization pattern" into DynamicInstructions.
 	/// </summary>
-	public class DynamicCallSiteTransform : IILTransform
+	public sealed class DynamicCallSiteTransform : IILTransform
 	{
 		const string CallSiteTypeName = "System.Runtime.CompilerServices.CallSite";
 		const string CSharpBinderTypeName = "Microsoft.CSharp.RuntimeBinder.Binder";

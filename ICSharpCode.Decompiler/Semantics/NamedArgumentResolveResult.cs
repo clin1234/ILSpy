@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents a named argument.
 	/// </summary>
-	public class NamedArgumentResolveResult : ResolveResult
+	internal sealed class NamedArgumentResolveResult : ResolveResult
 	{
 		/// <summary>
 		/// Gets the argument passed to the parameter.

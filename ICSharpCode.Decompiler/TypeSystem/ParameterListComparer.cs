@@ -30,9 +30,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// For generic methods, "Method{T}(T a)" and "Method{S}(S b)" are considered equal.
 	/// However, "Method(T a)" and "Method(S b)" are not considered equal when the type parameters T and S belong to classes.
 	/// </remarks>
-	public sealed class ParameterListComparer : IEqualityComparer<IReadOnlyList<IParameter>>
+	internal sealed class ParameterListComparer : IEqualityComparer<IReadOnlyList<IParameter>>
 	{
-		public static readonly ParameterListComparer Instance = new();
+		internal static readonly ParameterListComparer Instance = new();
 
 		static readonly NormalizeTypeVisitor normalizationVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = false,
@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return hashCode;
 		}
 
-		public static ParameterListComparer WithOptions(bool includeModifiers = false)
+		internal static ParameterListComparer WithOptions(bool includeModifiers = false)
 		{
 			return new ParameterListComparer() {
 				includeModifiers = includeModifiers
@@ -114,11 +114,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets a signature comparer that uses an ordinal comparison for the member name.
 		/// </summary>
-		public static readonly SignatureComparer Ordinal = new(StringComparer.Ordinal);
+		internal static readonly SignatureComparer Ordinal = new(StringComparer.Ordinal);
 
-		StringComparer nameComparer;
+		readonly StringComparer nameComparer;
 
-		public SignatureComparer(StringComparer nameComparer)
+		private SignatureComparer(StringComparer nameComparer)
 		{
 			this.nameComparer = nameComparer ?? throw new ArgumentNullException(nameof(nameComparer));
 		}

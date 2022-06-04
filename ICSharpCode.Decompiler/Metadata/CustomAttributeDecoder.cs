@@ -20,19 +20,22 @@ namespace ICSharpCode.Decompiler.Metadata
 		private readonly MetadataReader _reader;
 		private readonly bool _provideBoxingTypeInfo;
 
-		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType> provider, MetadataReader reader, bool provideBoxingTypeInfo = false)
+		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType> provider, MetadataReader reader,
+			bool provideBoxingTypeInfo = false)
 		{
 			_reader = reader;
 			_provider = provider;
 			_provideBoxingTypeInfo = provideBoxingTypeInfo;
 		}
 
-		public ImmutableArray<CustomAttributeNamedArgument<TType>> DecodeNamedArguments(ref BlobReader valueReader, int count)
+		public ImmutableArray<CustomAttributeNamedArgument<TType>> DecodeNamedArguments(ref BlobReader valueReader,
+			int count)
 		{
 			var arguments = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<TType>>(count);
 			for (int i = 0; i < count; i++)
 			{
-				CustomAttributeNamedArgumentKind kind = (CustomAttributeNamedArgumentKind)valueReader.ReadSerializationTypeCode();
+				CustomAttributeNamedArgumentKind kind =
+					(CustomAttributeNamedArgumentKind)valueReader.ReadSerializationTypeCode();
 				if (kind != CustomAttributeNamedArgumentKind.Field && kind != CustomAttributeNamedArgumentKind.Property)
 				{
 					throw new BadImageFormatException();
@@ -193,28 +196,25 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject)
 			{
-				return new CustomAttributeTypedArgument<TType>(outer.Type, new CustomAttributeTypedArgument<TType>(info.Type, value));
+				return new CustomAttributeTypedArgument<TType>(outer.Type,
+					new CustomAttributeTypedArgument<TType>(info.Type, value));
 			}
 
 			return new CustomAttributeTypedArgument<TType>(info.Type, value);
 		}
 
-		private ImmutableArray<CustomAttributeTypedArgument<TType>>? DecodeArrayArgument(ref BlobReader blobReader, ArgumentTypeInfo info)
+		private ImmutableArray<CustomAttributeTypedArgument<TType>>? DecodeArrayArgument(ref BlobReader blobReader,
+			ArgumentTypeInfo info)
 		{
 			int count = blobReader.ReadInt32();
-			if (count == -1)
+			switch (count)
 			{
-				return null;
-			}
-
-			if (count == 0)
-			{
-				return ImmutableArray<CustomAttributeTypedArgument<TType>>.Empty;
-			}
-
-			if (count < 0)
-			{
-				throw new BadImageFormatException();
+				case -1:
+					return null;
+				case 0:
+					return ImmutableArray<CustomAttributeTypedArgument<TType>>.Empty;
+				case < 0:
+					throw new BadImageFormatException();
 			}
 
 			var elementInfo = new ArgumentTypeInfo {

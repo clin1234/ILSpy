@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	public static class FreezableHelper
+	internal static class FreezableHelper
 	{
 		public static void ThrowIfFrozen(IFreezable freezable)
 		{
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public static void Freeze(object item)
+		private static void Freeze(object item)
 		{
 			if (item is IFreezable f)
 				f.Freeze();

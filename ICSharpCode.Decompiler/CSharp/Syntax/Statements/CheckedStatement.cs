@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// checked BodyBlock
 	/// </summary>
-	public class CheckedStatement : Statement
+	public sealed class CheckedStatement : Statement
 	{
 		public static readonly TokenRole CheckedKeywordRole = new("checked");
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
+			init { SetChildByRole(Roles.Body, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

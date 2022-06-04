@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <remarks>
 	/// This transform is not enabled by default.
 	/// </remarks>
-	public class EscapeInvalidIdentifiers : IAstTransform
+	internal sealed class EscapeInvalidIdentifiers : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
@@ -62,92 +62,96 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// thus don't need to be declared. (We have to remove them, in order to avoid conflicts while compiling.)
 	/// </summary>
 	/// <remarks>This transform is only enabled, when exporting a full assembly as project.</remarks>
-	public class RemoveCompilerGeneratedAssemblyAttributes : IAstTransform
+	internal sealed class RemoveCompilerGeneratedAssemblyAttributes : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			foreach (var section in rootNode.Children.OfType<AttributeSection>())
 			{
-				if (section.AttributeTarget == "assembly")
+				switch (section.AttributeTarget)
 				{
-					foreach (var attribute in section.Attributes)
+					case "assembly":
 					{
-						var trr = attribute.Type.Annotation<TypeResolveResult>();
-						if (trr == null)
-							continue;
-
-						string fullName = trr.Type.FullName;
-						var arguments = attribute.Arguments;
-						switch (fullName)
+						foreach (var attribute in section.Attributes)
 						{
-							case "System.Diagnostics.DebuggableAttribute":
+							var trr = attribute.Type.Annotation<TypeResolveResult>();
+							if (trr == null)
+								continue;
+
+							string fullName = trr.Type.FullName;
+							var arguments = attribute.Arguments;
+							switch (fullName)
 							{
-								attribute.Remove();
-								break;
-							}
-							case "System.Runtime.CompilerServices.CompilationRelaxationsAttribute":
-							{
-								if (arguments.Count == 1 && arguments.First() is PrimitiveExpression {
-									    Value: int and 8
-								    })
+								case "System.Diagnostics.DebuggableAttribute":
+								{
 									attribute.Remove();
-								break;
-							}
-							case "System.Runtime.CompilerServices.RuntimeCompatibilityAttribute":
-							{
-								if (arguments.Count != 1)
 									break;
-								if (arguments.First() is not NamedExpression expr1 ||
-								    expr1.Name != "WrapNonExceptionThrows")
+								}
+								case "System.Runtime.CompilerServices.CompilationRelaxationsAttribute":
+								{
+									if (arguments.Count == 1 && arguments.First() is PrimitiveExpression {
+										    Value: int and 8
+									    })
+										attribute.Remove();
 									break;
-								if (expr1.Expression is not PrimitiveExpression expr2 ||
-								    expr2.Value is not (bool and true))
+								}
+								case "System.Runtime.CompilerServices.RuntimeCompatibilityAttribute":
+								{
+									if (arguments.Count != 1)
+										break;
+									if (arguments.First() is not NamedExpression {
+										    Name: "WrapNonExceptionThrows",
+										    Expression: PrimitiveExpression { Value: true }
+									    })
+										break;
+									attribute.Remove();
 									break;
-								attribute.Remove();
-								break;
-							}
-							case "System.Runtime.Versioning.TargetFrameworkAttribute":
-							{
-								attribute.Remove();
-								break;
-							}
-							case "System.Security.Permissions.SecurityPermissionAttribute":
-							{
-								if (arguments.Count != 2)
+								}
+								case "System.Runtime.Versioning.TargetFrameworkAttribute":
+								{
+									attribute.Remove();
 									break;
-								if (arguments.First() is not MemberReferenceExpression expr1 ||
-								    expr1.MemberName != "RequestMinimum")
+								}
+								case "System.Security.Permissions.SecurityPermissionAttribute":
+								{
+									if (arguments.Count != 2)
+										break;
+									if (arguments.First() is not MemberReferenceExpression {
+										    MemberName: "RequestMinimum",
+										    NextSibling: NamedExpression {
+											    Name: "SkipVerification",
+											    Expression: PrimitiveExpression { Value: true }
+										    }
+									    })
+										break;
+									attribute.Remove();
 									break;
-								if (expr1.NextSibling is not NamedExpression expr2 || expr2.Name != "SkipVerification")
-									break;
-								if (expr2.Expression is not PrimitiveExpression expr3 ||
-								    expr3.Value is not (bool and true))
-									break;
-								attribute.Remove();
-								break;
+								}
 							}
 						}
-					}
-				}
-				else if (section.AttributeTarget == "module")
-				{
-					foreach (var attribute in section.Attributes)
-					{
-						var trr = attribute.Type.Annotation<TypeResolveResult>();
-						if (trr == null)
-							continue;
 
-						switch (trr.Type.FullName)
-						{
-							case "System.Security.UnverifiableCodeAttribute":
-								attribute.Remove();
-								break;
-						}
+						break;
 					}
-				}
-				else
-				{
-					continue;
+					case "module":
+					{
+						foreach (var attribute in section.Attributes)
+						{
+							var trr = attribute.Type.Annotation<TypeResolveResult>();
+							if (trr == null)
+								continue;
+
+							switch (trr.Type.FullName)
+							{
+								case "System.Security.UnverifiableCodeAttribute":
+									attribute.Remove();
+									break;
+							}
+						}
+
+						break;
+					}
+					default:
+						continue;
 				}
 
 				if (section.Attributes.Count == 0)

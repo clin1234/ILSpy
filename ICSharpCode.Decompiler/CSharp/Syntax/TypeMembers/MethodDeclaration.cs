@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class MethodDeclaration : EntityDeclaration
+	public sealed class MethodDeclaration : EntityDeclaration
 	{
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Method; }

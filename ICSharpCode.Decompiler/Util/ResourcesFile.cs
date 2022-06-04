@@ -31,14 +31,13 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// .resources file.
 	/// </summary>
-	public class ResourcesFile : IEnumerable<KeyValuePair<string, object?>>, IDisposable
+	internal sealed class ResourcesFile : IEnumerable<KeyValuePair<string, object?>>, IDisposable
 	{
 		/// <summary>Holds the number used to identify resource files.</summary>
-		public const int MagicNumber = unchecked((int)0xBEEFCACE);
+		private const int MagicNumber = unchecked((int)0xBEEFCACE);
 
 		const int ResourceSetVersion = 2;
 		readonly long dataSectionPosition;
-		readonly long fileStartPosition;
 		readonly int[] namePositions;
 		readonly long nameSectionPosition;
 
@@ -58,7 +57,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </remarks>
 		public ResourcesFile(Stream stream, bool leaveOpen = true)
 		{
-			fileStartPosition = stream.Position;
+			long fileStartPosition = stream.Position;
 			reader = new MyBinaryReader(stream, leaveOpen);
 
 			const string ResourcesHeaderCorrupted = "Resources header corrupted.";
@@ -176,7 +175,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		public int ResourceCount { get; }
+		private int ResourceCount { get; }
 
 		public void Dispose()
 		{
@@ -349,7 +348,7 @@ namespace ICSharpCode.Decompiler.Util
 						bits[i] = reader.ReadInt32();
 					return new decimal(bits);
 				default:
-					return new ResourceSerializedObject(FindType(typeIndex), this, reader.BaseStream.Position);
+					return new ResourceSerializedObject(this, reader.BaseStream.Position);
 			}
 		}
 
@@ -444,8 +443,7 @@ namespace ICSharpCode.Decompiler.Util
 						throw new BadImageFormatException("Invalid typeCode");
 					}
 
-					return new ResourceSerializedObject(FindType(typeCode - ResourceTypeCode.StartOfUserTypes), this,
-						reader.BaseStream.Position);
+					return new ResourceSerializedObject(this, reader.BaseStream.Position);
 			}
 		}
 
@@ -495,16 +493,7 @@ namespace ICSharpCode.Decompiler.Util
 
 			lock (reader)
 			{
-				long endPos;
-				if (i == positions.Length)
-				{
-					endPos = reader.BaseStream.Length;
-				}
-				else
-				{
-					endPos = positions[i];
-				}
-
+				long endPos = i == positions.Length ? reader.BaseStream.Length : positions[i];
 				int len = (int)(endPos - pos);
 				reader.Seek(pos, SeekOrigin.Begin);
 				return reader.ReadBytes(len);
@@ -555,19 +544,16 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 
-	public class ResourceSerializedObject
+	internal sealed class ResourceSerializedObject
 	{
 		readonly ResourcesFile file;
 		readonly long position;
 
-		internal ResourceSerializedObject(string? typeName, ResourcesFile file, long position)
+		internal ResourceSerializedObject(ResourcesFile file, long position)
 		{
-			this.TypeName = typeName;
 			this.file = file;
 			this.position = position;
 		}
-
-		public string? TypeName { get; }
 
 		/// <summary>
 		/// Gets a stream that starts with the serialized object data.

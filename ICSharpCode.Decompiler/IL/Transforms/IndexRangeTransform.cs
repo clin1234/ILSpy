@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transform for the C# 8 System.Index / System.Range feature
 	/// </summary>
-	class IndexRangeTransform : IStatementTransform
+	sealed class IndexRangeTransform : IStatementTransform
 	{
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
@@ -727,7 +727,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		class IndexMethods
+		sealed class IndexMethods
 		{
 			public readonly IMethod IndexCtor;
 			public readonly IMethod IndexImplicitConv;

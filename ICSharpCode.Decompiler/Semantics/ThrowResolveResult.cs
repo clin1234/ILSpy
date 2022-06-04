@@ -20,7 +20,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
 {
-	class ThrowResolveResult : ResolveResult
+	sealed class ThrowResolveResult : ResolveResult
 	{
 		public ThrowResolveResult() : base(SpecialType.NoType)
 		{

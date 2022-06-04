@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// 
 	/// </summary>
-	class DeconstructionTransform : IStatementTransform
+	sealed class DeconstructionTransform : IStatementTransform
 	{
 		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new();
 		StatementTransformContext context;

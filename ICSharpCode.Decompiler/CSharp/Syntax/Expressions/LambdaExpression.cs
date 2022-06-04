@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [async] Parameters => Body
 	/// </summary>
-	public class LambdaExpression : Expression
+	public sealed class LambdaExpression : Expression
 	{
 		public static readonly TokenRole AsyncModifierRole = new("async");
 		public static readonly Role<AstNode> BodyRole = new("Body", AstNode.Null);
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync {
 			get { return isAsync; }
-			set {
+			init {
 				ThrowIfFrozen();
 				isAsync = value;
 			}

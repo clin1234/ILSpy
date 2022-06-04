@@ -236,8 +236,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				foreach (var h in interfaceImplCollection)
 				{
 					var iface = metadata.GetInterfaceImplementation(h);
-					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(),
-						Nullability.Oblivious));
+					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes()));
 				}
 
 				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
@@ -612,12 +611,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IMethod>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
-				return GetFiltered(this.Methods, ExtensionMethods.And(m => !m.IsConstructor, filter));
+				return GetFiltered(this.Methods, ExtensionMethods.And(static m => !m.IsConstructor, filter));
 			}
-			else
-			{
-				return GetMembersHelper.GetMethods(this, filter, options);
-			}
+
+			return GetMembersHelper.GetMethods(this, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null,
@@ -648,12 +645,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
-				return GetFiltered(this.Methods, ExtensionMethods.And(m => m.IsConstructor && !m.IsStatic, filter));
+				return GetFiltered(this.Methods,
+					ExtensionMethods.And(static m => m.IsConstructor && !m.IsStatic, filter));
 			}
-			else
-			{
-				return GetMembersHelper.GetConstructors(this, filter, options);
-			}
+
+			return GetMembersHelper.GetConstructors(this, filter, options);
 		}
 
 		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,

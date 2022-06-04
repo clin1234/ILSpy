@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
 		{
 			// remove phase
-			foreach ((string itemType, string fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach ((string _, string fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
 				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch {
 					".CS" => "Compile",
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 
 			// include phase
-			foreach ((string itemType, string fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach ((string _, string fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
 				if (Path.GetExtension(fileName) == ".resx")
 					continue;

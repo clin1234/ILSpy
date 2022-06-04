@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Replaces method calls with the appropriate operator expressions.
 	/// </summary>
-	public class ReplaceMethodCallsWithOperators : DepthFirstAstVisitor, IAstTransform
+	internal sealed class ReplaceMethodCallsWithOperators : DepthFirstAstVisitor, IAstTransform
 	{
 		static readonly MemberReferenceExpression typeHandleOnTypeOfPattern = new() {
 			Target = new Choice {
@@ -240,21 +240,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			}
 
-			if (method.Name == "op_Explicit" && arguments.Length == 1)
+			switch (method.Name)
 			{
-				arguments[0].Remove(); // detach argument
-				invocationExpression.ReplaceWith(
-					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType),
-							arguments[0].UnwrapInDirectionExpression())
-						.CopyAnnotationsFrom(invocationExpression)
-				);
-				return;
-			}
-
-			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition)
-			{
-				invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
-				return;
+				case "op_Explicit" when arguments.Length == 1:
+					arguments[0].Remove(); // detach argument
+					invocationExpression.ReplaceWith(
+						new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType),
+								arguments[0].UnwrapInDirectionExpression())
+							.CopyAnnotationsFrom(invocationExpression)
+					);
+					return;
+				case "op_True" when arguments.Length == 1 && invocationExpression.Role == Roles.Condition:
+					invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
+					return;
 			}
 		}
 
@@ -363,7 +361,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// The C# compiler will generate an equivalent call if the code is recompiled.
 			return target;
 
-			bool IsStringParameter(IParameter p)
+			static bool IsStringParameter(IParameter p)
 			{
 				IType ty = p.Type;
 				if (p.IsParams && ty.Kind == TypeKind.Array)

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression as TypeReference
 	/// </summary>
-	public class AsExpression : Expression
+	public sealed class AsExpression : Expression
 	{
 		public static readonly TokenRole AsKeywordRole = new("as");
 

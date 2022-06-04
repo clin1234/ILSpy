@@ -134,12 +134,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (accessorOwner.IsNil)
 					return null;
-				if (accessorOwner.Kind == HandleKind.PropertyDefinition)
-					return module.GetDefinition((PropertyDefinitionHandle)accessorOwner);
-				else if (accessorOwner.Kind == HandleKind.EventDefinition)
-					return module.GetDefinition((EventDefinitionHandle)accessorOwner);
-				else
-					return null;
+				return accessorOwner.Kind switch {
+					HandleKind.PropertyDefinition => module.GetDefinition((PropertyDefinitionHandle)accessorOwner),
+					HandleKind.EventDefinition => module.GetDefinition((EventDefinitionHandle)accessorOwner),
+					_ => null
+				};
 			}
 		}
 
@@ -228,7 +227,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
 		}
 
-		internal static Accessibility GetAccessibility(MethodAttributes attr)
+		private static Accessibility GetAccessibility(MethodAttributes attr)
 		{
 			return (attr & MethodAttributes.MemberAccessMask) switch {
 				MethodAttributes.Public => Accessibility.Public,
@@ -349,10 +348,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						// are instead stored as normal attributes on the property.
 						// So MetadataProperty provides a non-null value for returnTypeAttributes,
 						// which then should be preferred over the attributes on the accessor's parameters.
-						if (returnTypeAttributes == null)
-						{
-							returnTypeAttributes = par.GetCustomAttributes();
-						}
+						returnTypeAttributes ??= par.GetCustomAttributes();
 					}
 					else if (i < par.SequenceNumber && par.SequenceNumber <= signature.RequiredParameterCount)
 					{
@@ -412,7 +408,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IType FindInteropType(string name)
 		{
 			return module.Compilation.FindType(new TopLevelTypeName(
-				"System.Runtime.InteropServices", name, 0
+				"System.Runtime.InteropServices", name
 			));
 		}
 

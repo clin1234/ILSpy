@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents a literal value.
 	/// </summary>
-	public class PrimitiveExpression : Expression
+	public sealed class PrimitiveExpression : Expression
 	{
 		public static readonly object AnyValue = new();
 		TextLocation endLocation;
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public object Value {
 			get { return this.value; }
-			set {
+			init {
 				ThrowIfFrozen();
 				this.value = value;
 			}

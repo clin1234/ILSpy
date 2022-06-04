@@ -108,13 +108,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		private static IType FindValueTupleType(ICompilation compilation, IModule valueTupleAssembly, int tpc)
 		{
 			var typeName = new TopLevelTypeName("System", "ValueTuple", tpc);
-			if (valueTupleAssembly != null)
-			{
-				var typeDef = valueTupleAssembly.GetTypeDefinition(typeName);
-				if (typeDef != null)
-					return typeDef;
-			}
-
+			var typeDef = valueTupleAssembly?.GetTypeDefinition(typeName);
+			if (typeDef != null)
+				return typeDef;
 			return compilation.FindType(typeName);
 		}
 
@@ -134,18 +130,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (type.Namespace == "System" && type.Name == "ValueTuple")
 					{
 						int tpc = type.TypeParameterCount;
-						if (tpc is > 0 and < RestPosition)
+						switch (tpc)
 						{
-							tupleCardinality = tpc;
-							return true;
-						}
-						else if (tpc == RestPosition && type is ParameterizedType pt)
-						{
-							if (IsTupleCompatible(pt.TypeArguments[RestIndex], out tupleCardinality))
-							{
+							case > 0 and < RestPosition:
+								tupleCardinality = tpc;
+								return true;
+							case RestPosition when type is ParameterizedType pt &&
+							                       IsTupleCompatible(pt.TypeArguments[RestIndex], out tupleCardinality):
 								tupleCardinality += RestPosition - 1;
 								return true;
-							}
 						}
 					}
 
@@ -197,26 +190,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				switch (type.Kind)
 				{
 					case TypeKind.Tuple:
-						if (output == null)
-							output = new List<IType>();
+						output ??= new List<IType>();
 						output.AddRange(((TupleType)type).ElementTypes);
 						return true;
 					case TypeKind.Class:
 					case TypeKind.Struct:
 						if (type.Namespace == "System" && type.Name == "ValueTuple")
 						{
-							if (output == null)
-								output = new List<IType>();
+							output ??= new List<IType>();
 							int tpc = type.TypeParameterCount;
-							if (tpc is > 0 and < RestPosition)
+							switch (tpc)
 							{
-								output.AddRange(type.TypeArguments);
-								return true;
-							}
-							else if (tpc == RestPosition)
-							{
-								output.AddRange(type.TypeArguments.Take(RestPosition - 1));
-								return Collect(type.TypeArguments[RestIndex]);
+								case > 0 and < RestPosition:
+									output.AddRange(type.TypeArguments);
+									return true;
+								case RestPosition:
+									output.AddRange(type.TypeArguments.Take(RestPosition - 1));
+									return Collect(type.TypeArguments[RestIndex]);
 							}
 						}
 
@@ -286,11 +276,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				var newType = type.AcceptVisitor(visitor);
 				if (newType != type)
 				{
-					if (newElementTypes == null)
-					{
-						newElementTypes = ElementTypes.ToArray();
-					}
-
+					newElementTypes ??= ElementTypes.ToArray();
 					newElementTypes[i] = newType;
 				}
 			}
@@ -389,7 +375,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 	}
 
-	public class TupleTypeReference : ITypeReference
+	public sealed class TupleTypeReference : ITypeReference
 	{
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
 		{

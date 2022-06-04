@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -29,8 +30,6 @@ using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-
-using Enumerable = System.Linq.Enumerable;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -69,8 +68,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				var expectedParameters = ExpectedParameters;
 				var useImplicitlyTypedOut = UseImplicitlyTypedOut;
 
-				return Enumerable.ToArray(Enumerable.Take(Enumerable.Skip(Arguments
-					.SelectWithIndex(GetResolveResult), skipCount), GetActualArgumentCount()));
+				return Arguments
+					.SelectWithIndex(GetResolveResult)
+					.Skip(skipCount)
+					.Take(GetActualArgumentCount())
+					.ToArray();
 
 				ResolveResult GetResolveResult(int index, TranslatedExpression expression)
 				{
@@ -83,9 +85,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			public IList<ResolveResult> GetArgumentResolveResultsDirect(int skipCount = 0)
 			{
-				return Enumerable.ToArray(Enumerable.Select(
-					Enumerable.Take(Enumerable.Skip(Arguments, skipCount), GetActualArgumentCount()),
-					a => a.ResolveResult));
+				return Arguments
+					.Skip(skipCount)
+					.Take(GetActualArgumentCount())
+					.Select(a => a.ResolveResult)
+					.ToArray();
 			}
 
 			public IEnumerable<Expression> GetArgumentExpressions(int skipCount = 0)
@@ -109,14 +113,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				var useImplicitlyTypedOut = UseImplicitlyTypedOut;
 				if (ArgumentNames == null)
 				{
-					return Enumerable.Select(Enumerable.Take(Enumerable.Skip(Arguments, skipCount), argumentCount),
-						arg => AddAnnotations(arg.Expression));
+					return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => AddAnnotations(arg.Expression));
 				}
 				else
 				{
 					Debug.Assert(skipCount == 0);
-					return Enumerable.Zip(Enumerable.Take(Arguments, argumentCount),
-						Enumerable.Take(ArgumentNames, argumentCount),
+					return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
 						(arg, name) => {
 							if (name == null)
 								return AddAnnotations(arg.Expression);
@@ -224,11 +226,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Direct non-virtual call to explicit interface implementation.
 				// This can't really be represented in C#, but at least in the case where
 				// the class is sealed, we can equivalently call the interface member instead:
-				var interfaceMembers = Enumerable.ToList(method.ExplicitlyImplementedInterfaceMembers);
+				var interfaceMembers = method.ExplicitlyImplementedInterfaceMembers.ToList();
 				if (method.DeclaringTypeDefinition is { Kind: TypeKind.Class, IsSealed: true } &&
 				    interfaceMembers.Count == 1)
 				{
-					method = (IMethod)Enumerable.Single(interfaceMembers);
+					method = (IMethod)interfaceMembers.Single();
 					callOpCode = OpCode.CallVirt;
 				}
 			}
@@ -254,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var ide = new IdentifierExpression(localFunction.Name);
 				if (method.TypeArguments.Count > 0)
 				{
-					ide.TypeArguments.AddRange(Enumerable.Select(method.TypeArguments, expressionBuilder.ConvertType));
+					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}
 
 				ide.AddAnnotation(localFunction);
@@ -264,7 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				target = expressionBuilder.TranslateTarget(
-					Enumerable.FirstOrDefault(callArguments),
+					callArguments.FirstOrDefault(),
 					nonVirtualInvocation: callOpCode == OpCode.Call || method.IsConstructor,
 					memberStatic: method.IsStatic,
 					memberDeclaringType: constrainedTo ?? method.DeclaringType);
@@ -308,15 +310,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				int paramIndex = regularParameterCount;
 				var builder = expressionBuilder;
 				Debug.Assert(argumentToParameterMap == null && argumentList.ArgumentNames == null);
-				argListArg.Arguments.AddRange(Enumerable.Select(
-					Enumerable.Skip(argumentList.Arguments, regularParameterCount),
-					arg => arg.ConvertTo(argumentList.ExpectedParameters[paramIndex++].Type, builder).Expression));
+				argListArg.Arguments.AddRange(argumentList.Arguments.Skip(regularParameterCount).Select(arg =>
+					arg.ConvertTo(argumentList.ExpectedParameters[paramIndex++].Type, builder).Expression));
 				var argListRR = new ResolveResult(SpecialType.ArgList);
-				argumentList.Arguments = Enumerable.ToArray(Enumerable.Concat(
-					Enumerable.Take(argumentList.Arguments, regularParameterCount),
-					new[] { argListArg.WithoutILInstruction().WithRR(argListRR) }));
+				argumentList.Arguments = argumentList.Arguments.Take(regularParameterCount)
+					.Concat(new[] { argListArg.WithoutILInstruction().WithRR(argListRR) }).ToArray();
 				method = instanceMethod.BaseMethod;
-				argumentList.ExpectedParameters = Enumerable.ToArray(method.Parameters);
+				argumentList.ExpectedParameters = method.Parameters.ToArray();
 			}
 
 			if (settings.Ranges)
@@ -357,8 +357,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return;
 					var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
 					var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
-					var element = Enumerable.First(arrayCreation.Initializer.Elements).Detach();
-					argument = new TranslatedExpression(element, Enumerable.First(arrayCreationRR.InitializerElements));
+					var element = arrayCreation.Initializer.Elements.First().Detach();
+					argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
 				}
 
 				if (tokens.Count > 0)
@@ -387,7 +387,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var formattableStringType = expressionBuilder.compilation.FindType(KnownTypeCode.FormattableString);
 					var isrr = new InterpolatedStringResolveResult(
 						expressionBuilder.compilation.FindType(KnownTypeCode.String),
-						format, Enumerable.ToArray(argumentList.GetArgumentResolveResults(1)));
+						format, argumentList.GetArgumentResolveResults(1).ToArray());
 					var expr = new InterpolatedStringExpression();
 					expr.Content.AddRange(content);
 					if (method.Name == "Format")
@@ -404,8 +404,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			                          argumentList.ExpectedParameters.Length == allowedParamCount))
 			{
 				argumentList.CheckNoNamedOrOptionalArguments();
-				return HandleAccessorCall(expectedTargetDetails, method, target,
-					Enumerable.ToList(argumentList.Arguments), argumentList.ArgumentNames);
+				return HandleAccessorCall(expectedTargetDetails, method, target, argumentList.Arguments.ToList(),
+					argumentList.ArgumentNames);
 			}
 
 			if (IsDelegateEqualityComparison(method, argumentList.Arguments))
@@ -456,7 +456,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				                                                 settings
 					                                                 .AlwaysCastTargetsOfExplicitInterfaceImplementationCalls))
 				{
-					var interfaceMember = Enumerable.First(method.ExplicitlyImplementedInterfaceMembers);
+					var interfaceMember = method.ExplicitlyImplementedInterfaceMembers.First();
 					var castExpression =
 						new CastExpression(expressionBuilder.ConvertType(interfaceMember.DeclaringType),
 							target.Expression.Detach());
@@ -472,9 +472,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			if ((transform & CallTransformation.RequireTypeArguments) != 0 && (!settings.AnonymousTypes ||
-			                                                                   !Enumerable.Any(method.TypeArguments,
-				                                                                   a => a.ContainsAnonymousType())))
-				typeArgumentList.AddRange(Enumerable.Select(method.TypeArguments, expressionBuilder.ConvertType));
+			                                                                   !method.TypeArguments.Any(a =>
+				                                                                   a.ContainsAnonymousType())))
+				typeArgumentList.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions())
 				.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod,
 					argumentList.GetArgumentResolveResultsDirect(), isExpandedForm: argumentList.IsExpandedForm));
@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			ExpectedTargetDetails expectedTargetDetails = new() { CallOpCode = callOpCode };
 			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
-			var args = Enumerable.ToList(callArguments);
+			var args = callArguments.ToList();
 			if (method.IsExtensionMethod)
 				args.Insert(0, new Nop());
 
@@ -541,7 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return new ArrayInitializerExpression(argumentList.GetArgumentExpressions(skipCount))
 				.WithRR(new CSharpInvocationResolveResult(target, method,
-					Enumerable.ToArray(argumentList.GetArgumentResolveResults(skipCount)),
+					argumentList.GetArgumentResolveResults(skipCount).ToArray(),
 					isExtensionMethodInvocation: method.IsExtensionMethod,
 					isExpandedForm: argumentList.IsExpandedForm));
 		}
@@ -559,7 +559,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
 
 			var assignment = HandleAccessorCall(expectedTargetDetails, method, unused,
-				Enumerable.ToList(argumentList.Arguments), argumentList.ArgumentNames);
+				argumentList.Arguments.ToList(), argumentList.ArgumentNames);
 
 			if (((AssignmentExpression)assignment).Left is IndexerExpression indexer && !indexer.Target.IsNull)
 				indexer.Target.Remove();
@@ -582,7 +582,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			                       && argumentList.ArgumentNames == null // Argument names are not allowed
 			                       && (
 				                       argumentList.IsExpandedForm // Must be expanded form
-				                       || !Enumerable.Last(method.Parameters).IsParams // -or- not a params overload
+				                       || !method.Parameters.Last().IsParams // -or- not a params overload
 				                       || (argumentList.Length == 2 &&
 				                           argumentList.Arguments[1]
 					                           .Expression is ArrayCreateExpression) // -or- an array literal
@@ -601,9 +601,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(arguments[0].ResolveResult is ConstantResolveResult crr &&
 			      crr.Type.IsKnownType(KnownTypeCode.String)))
 				return false;
-			if (!Enumerable.All(Enumerable.Skip(arguments, 1),
-				    a => !Enumerable.Any(Enumerable.OfType<PrimitiveExpression>(a.Expression.DescendantsAndSelf),
-					    p => p.Value is string)))
+			if (!arguments.Skip(1).All(a =>
+				    !a.Expression.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
 				return false;
 			tokens = new List<(TokenKind, int, string)>();
 			int i = 0;
@@ -858,8 +857,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var expandedArguments = new List<TranslatedExpression>(arguments);
 				if (length > 0)
 				{
-					var arrayElements =
-						Enumerable.ToArray(((ArrayCreateExpression)arg.Expression).Initializer.Elements);
+					var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
 					for (int j = 0; j < length; j++)
 					{
 						expandedParameters.Add(new DefaultParameter(elementType, parameter.Name + j));
@@ -887,26 +885,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				len = 0;
 				t = null;
-				if (arg.ResolveResult is CSharpInvocationResolveResult csirr &&
-				    csirr.Arguments.Count == 0 &&
-				    csirr.Member is IMethod { IsStatic: true, FullName: "System.Array.Empty" } emptyMethod &&
-				    emptyMethod.TypeArguments.Count == 1)
+				switch (arg.ResolveResult)
 				{
-					t = emptyMethod.TypeArguments[0];
-					return true;
+					case CSharpInvocationResolveResult csirr when csirr.Arguments.Count == 0 &&
+					                                              csirr.Member is IMethod {
+						                                              IsStatic: true, FullName: "System.Array.Empty"
+					                                              } emptyMethod &&
+					                                              emptyMethod.TypeArguments.Count == 1:
+						t = emptyMethod.TypeArguments[0];
+						return true;
+					case ArrayCreateResolveResult acrr when acrr.SizeArguments.Count == 1 &&
+					                                        acrr.SizeArguments[0].IsCompileTimeConstant &&
+					                                        acrr.SizeArguments[0].ConstantValue is int l:
+						len = l;
+						t = ((ArrayType)acrr.Type).ElementType;
+						return true;
+					default:
+						return false;
 				}
-
-				if (arg.ResolveResult is ArrayCreateResolveResult acrr &&
-				    acrr.SizeArguments.Count == 1 &&
-				    acrr.SizeArguments[0].IsCompileTimeConstant &&
-				    acrr.SizeArguments[0].ConstantValue is int l)
-				{
-					len = l;
-					t = ((ArrayType)acrr.Type).ElementType;
-					return true;
-				}
-
-				return false;
 			}
 		}
 
@@ -914,10 +910,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!parameter.IsOptional || !arg.ResolveResult.IsCompileTimeConstant)
 				return false;
-			if (Enumerable.Any(parameter.GetAttributes(), a =>
-				    a.AttributeType.IsKnownType(KnownAttribute.CallerMemberName)
-				    || a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
-				    || a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
+			if (parameter.GetAttributes().Any(a => a.AttributeType.IsKnownType(KnownAttribute.CallerMemberName)
+			                                       || a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
+			                                       || a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
 				return false;
 			return Equals(parameter.GetConstantValue(), arg.ResolveResult.ConstantValue);
 		}
@@ -990,7 +985,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!CanInferTypeArgumentsFromArguments(method, argumentList, expressionBuilder.typeInference))
 				{
 					requireTypeArguments = true;
-					typeArguments = Enumerable.ToArray(method.TypeArguments);
+					typeArguments = method.TypeArguments.ToArray();
 					appliedRequireTypeArgumentsShortcut = true;
 				}
 				else
@@ -1009,7 +1004,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool argumentsCasted = false;
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
-				       Enumerable.ToArray(argumentList.GetArgumentResolveResults()), argumentList.ArgumentNames,
+				       argumentList.GetArgumentResolveResults().ToArray(), argumentList.ArgumentNames,
 				       argumentList.FirstOptionalArgumentIndex, out foundMethod,
 				       out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None ||
 			       bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
@@ -1028,7 +1023,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (requireTypeArguments)
 							goto default;
 						requireTypeArguments = true;
-						typeArguments = Enumerable.ToArray(method.TypeArguments);
+						typeArguments = method.TypeArguments.ToArray();
 						continue;
 					case OverloadResolutionErrors.MissingArgumentForRequiredParameter:
 						if (argumentList.FirstOptionalArgumentIndex == -1)
@@ -1072,7 +1067,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						         !requireTypeArguments)
 						{
 							requireTypeArguments = true;
-							typeArguments = Enumerable.ToArray(method.TypeArguments);
+							typeArguments = method.TypeArguments.ToArray();
 						}
 						else
 						{
@@ -1166,16 +1161,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (var child in parent.Children)
 			{
-				if (child is LambdaExpression or AnonymousMethodExpression)
-					continue;
-				if (child is ReturnStatement ret)
+				switch (child)
 				{
-					ret.Expression =
-						new TranslatedExpression(ret.Expression.Detach()).ConvertTo(returnType, expressionBuilder);
-					continue;
+					case LambdaExpression or AnonymousMethodExpression:
+						continue;
+					case ReturnStatement ret:
+						ret.Expression =
+							new TranslatedExpression(ret.Expression.Detach()).ConvertTo(returnType, expressionBuilder);
+						continue;
+					default:
+						ModifyReturnStatementInsideLambda(returnType, child);
+						break;
 				}
-
-				ModifyReturnStatementInsideLambda(returnType, child);
 			}
 		}
 
@@ -1241,7 +1238,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			argumentNames = firstOptionalArgumentIndex < 0 || argumentNames == null
 				? argumentNames
-				: Enumerable.ToArray(Enumerable.Take(argumentNames, firstOptionalArgumentIndex));
+				: argumentNames.Take(firstOptionalArgumentIndex).ToArray();
 
 			var or = new OverloadResolution(resolver.Compilation,
 				arguments, argumentNames, typeArguments,
@@ -1261,33 +1258,38 @@ namespace ICSharpCode.Decompiler.CSharp
 			else if (method.IsOperator)
 			{
 				IEnumerable<IParameterizedMember> operatorCandidates;
-				if (arguments.Length == 1)
+				switch (arguments.Length)
 				{
-					IType argType = NullableType.GetUnderlyingType(arguments[0].Type);
-					operatorCandidates = resolver.GetUserDefinedOperatorCandidates(argType, method.Name);
-					if (method.Name == "op_Explicit")
+					case 1:
 					{
-						// For casts, also consider candidates from the target type we are casting to.
-						var hashSet = new HashSet<IParameterizedMember>(operatorCandidates);
-						IType targetType = NullableType.GetUnderlyingType(method.ReturnType);
-						hashSet.UnionWith(
-							resolver.GetUserDefinedOperatorCandidates(targetType, method.Name)
-						);
-						operatorCandidates = hashSet;
+						IType argType = NullableType.GetUnderlyingType(arguments[0].Type);
+						operatorCandidates = resolver.GetUserDefinedOperatorCandidates(argType, method.Name);
+						if (method.Name == "op_Explicit")
+						{
+							// For casts, also consider candidates from the target type we are casting to.
+							var hashSet = new HashSet<IParameterizedMember>(operatorCandidates);
+							IType targetType = NullableType.GetUnderlyingType(method.ReturnType);
+							hashSet.UnionWith(
+								resolver.GetUserDefinedOperatorCandidates(targetType, method.Name)
+							);
+							operatorCandidates = hashSet;
+						}
+
+						break;
 					}
-				}
-				else if (arguments.Length == 2)
-				{
-					IType lhsType = NullableType.GetUnderlyingType(arguments[0].Type);
-					IType rhsType = NullableType.GetUnderlyingType(arguments[1].Type);
-					var hashSet = new HashSet<IParameterizedMember>();
-					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(lhsType, method.Name));
-					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(rhsType, method.Name));
-					operatorCandidates = hashSet;
-				}
-				else
-				{
-					operatorCandidates = EmptyList<IParameterizedMember>.Instance;
+					case 2:
+					{
+						IType lhsType = NullableType.GetUnderlyingType(arguments[0].Type);
+						IType rhsType = NullableType.GetUnderlyingType(arguments[1].Type);
+						var hashSet = new HashSet<IParameterizedMember>();
+						hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(lhsType, method.Name));
+						hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(rhsType, method.Name));
+						operatorCandidates = hashSet;
+						break;
+					}
+					default:
+						operatorCandidates = EmptyList<IParameterizedMember>.Instance;
+						break;
 				}
 
 				foreach (var m in operatorCandidates)
@@ -1300,14 +1302,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: true) is not
 				    MethodGroupResolveResult result)
 					return OverloadResolutionErrors.AmbiguousMatch;
-				or.AddMethodLists(Enumerable.ToArray(result.MethodsGroupedByDeclaringType));
+				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 			}
 			else
 			{
 				if (lookup.Lookup(target, method.Name, typeArguments, isInvocation: true) is not
 				    MethodGroupResolveResult result)
 					return OverloadResolutionErrors.AmbiguousMatch;
-				or.AddMethodLists(Enumerable.ToArray(result.MethodsGroupedByDeclaringType));
+				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 			}
 
 			bestCandidateIsExpandedForm = or.BestCandidateIsExpandedForm;
@@ -1325,7 +1327,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			IList<TranslatedExpression> arguments, string[] argumentNames, out IMember foundMember)
 		{
 			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
-			Log.WriteCollection("  Arguments: ", Enumerable.Select(arguments, a => a.ResolveResult));
+			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
 
 			foundMember = null;
 			if (target == null)
@@ -1400,7 +1402,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!argumentsCasted)
 				{
 					argumentsCasted = true;
-					CastArguments(arguments, Enumerable.ToList(method.Parameters));
+					CastArguments(arguments, method.Parameters.ToList());
 				}
 				else if (!requireTarget)
 				{
@@ -1430,7 +1432,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					expr = new IndexerExpression(
 							target.ResolveResult is InitializedObjectResolveResult ? null : target.Expression,
-							Enumerable.Select(arguments, a => a.Expression))
+							arguments.Select(a => a.Expression))
 						.WithoutILInstruction().WithRR(rr);
 				}
 				else if (requireTarget)
@@ -1465,8 +1467,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (arguments.Count != 0)
 				{
-					return new IndexerExpression(target.Expression,
-							Enumerable.Select(arguments, static a => a.Expression))
+					return new IndexerExpression(target.Expression, arguments.Select(static a => a.Expression))
 						.WithoutILInstruction().WithRR(rr);
 				}
 				else if (requireTarget)
@@ -1538,7 +1539,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array,
-					       Enumerable.ToArray(argumentList.GetArgumentResolveResults()),
+					       argumentList.GetArgumentResolveResults().ToArray(),
 					       argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _,
 					       out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None ||
 				       bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
@@ -1557,7 +1558,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					expressionBuilder.ConvertType(method.DeclaringType),
 					argumentList.GetArgumentExpressions()
 				).WithRR(new CSharpInvocationResolveResult(
-					target, method, Enumerable.ToArray(argumentList.GetArgumentResolveResults()),
+					target, method, argumentList.GetArgumentResolveResults().ToArray(),
 					isExpandedForm: argumentList.IsExpandedForm,
 					argumentToParameterMap: argumentList.ArgumentToParameterMap
 				));
@@ -1665,7 +1666,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var mre = new MemberReferenceExpression(target, methodName);
 				if (addTypeArguments)
 				{
-					mre.TypeArguments.AddRange(Enumerable.Select(method.TypeArguments, expressionBuilder.ConvertType));
+					mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}
 
 				targetExpression = mre.WithRR(result);
@@ -1675,7 +1676,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var ide = new IdentifierExpression(methodName);
 				if (addTypeArguments)
 				{
-					ide.TypeArguments.AddRange(Enumerable.Select(method.TypeArguments, expressionBuilder.ConvertType));
+					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}
 
 				targetExpression = ide.WithRR(result);
@@ -1866,7 +1867,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					arguments: method.Parameters.SelectReadOnlyArray(p =>
 						new TypeResolveResult(p.Type)), // there are no arguments, use parameter types
 					argumentNames: null, // argument names are not possible
-					Enumerable.ToArray(typeArguments),
+					typeArguments.ToArray(),
 					conversions: expressionBuilder.resolver.conversions
 				);
 				if (target == null)
@@ -1874,14 +1875,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					result = resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: false);
 					if (result is not MethodGroupResolveResult mgrr)
 						return false;
-					or.AddMethodLists(Enumerable.ToArray(mgrr.MethodsGroupedByDeclaringType));
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
 				}
 				else
 				{
 					result = lookup.Lookup(target, method.Name, typeArguments, isInvocation: false);
 					if (result is not MethodGroupResolveResult mgrr)
 						return false;
-					or.AddMethodLists(Enumerable.ToArray(mgrr.MethodsGroupedByDeclaringType));
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
 				}
 			}
 
@@ -1914,12 +1915,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			int firstParamIndex = call.IsInstanceCall ? 1 : 0;
 			// Arguments from temporary variables (VariableKind.NamedArgument):
 			int pos = 0;
-			foreach (StLoc stloc in block.Instructions)
+			foreach (var ilInstruction in block.Instructions)
 			{
-				Debug.Assert(Enumerable.Single(stloc.Variable.LoadInstructions).Parent == call);
+				var stloc = (StLoc)ilInstruction;
+				Debug.Assert(stloc.Variable.LoadInstructions.Single().Parent == call);
 				arguments[pos] = stloc.Value;
-				argumentToParameterMap[pos] =
-					Enumerable.Single(stloc.Variable.LoadInstructions).ChildIndex - firstParamIndex;
+				argumentToParameterMap[pos] = stloc.Variable.LoadInstructions.Single().ChildIndex - firstParamIndex;
 				pos++;
 			}
 
@@ -1952,32 +1953,28 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			if (method.DeclaringType.IsKnownType(KnownTypeCode.Range))
 			{
-				if (callOpCode == OpCode.NewObj && argumentList.Length == 2)
+				switch (callOpCode)
 				{
-					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range,
-							argumentList.Arguments[1])
-						.WithRR(new MemberResolveResult(null, method));
-					return true;
-				}
-				else if (callOpCode == OpCode.Call && method.Name == "get_All" && argumentList.Length == 0)
-				{
-					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, Expression.Null)
-						.WithRR(new MemberResolveResult(null, method.AccessorOwner ?? method));
-					return true;
-				}
-				else if (callOpCode == OpCode.Call && method.Name == "StartAt" && argumentList.Length == 1)
-				{
-					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range,
-							Expression.Null)
-						.WithRR(new MemberResolveResult(null, method));
-					return true;
-				}
-				else if (callOpCode == OpCode.Call && method.Name == "EndAt" && argumentList.Length == 1)
-				{
-					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range,
-							argumentList.Arguments[0])
-						.WithRR(new MemberResolveResult(null, method));
-					return true;
+					case OpCode.NewObj when argumentList.Length == 2:
+						result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range,
+								argumentList.Arguments[1])
+							.WithRR(new MemberResolveResult(null, method));
+						return true;
+					case OpCode.Call when method.Name == "get_All" && argumentList.Length == 0:
+						result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range,
+								Expression.Null)
+							.WithRR(new MemberResolveResult(null, method.AccessorOwner ?? method));
+						return true;
+					case OpCode.Call when method.Name == "StartAt" && argumentList.Length == 1:
+						result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range,
+								Expression.Null)
+							.WithRR(new MemberResolveResult(null, method));
+						return true;
+					case OpCode.Call when method.Name == "EndAt" && argumentList.Length == 1:
+						result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range,
+								argumentList.Arguments[0])
+							.WithRR(new MemberResolveResult(null, method));
+						return true;
 				}
 			}
 			else if (callOpCode == OpCode.NewObj && method.DeclaringType.IsKnownType(KnownTypeCode.Index))
@@ -1994,7 +1991,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// For slicing the method is called Slice()/Substring(), but we still need to output indexer notation.
 				// So special-case range-based slicing here.
-				result = new IndexerExpression(target, Enumerable.Select(argumentList.Arguments, a => a.Expression))
+				result = new IndexerExpression(target, argumentList.Arguments.Select(a => a.Expression))
 					.WithRR(new MemberResolveResult(target.ResolveResult, method));
 				return true;
 			}

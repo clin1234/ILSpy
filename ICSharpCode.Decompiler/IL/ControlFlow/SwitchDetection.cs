@@ -25,8 +25,6 @@ using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
 	/// <summary>
@@ -36,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// Detect sequences of conditional branches that all test a single integer value,
 	/// and simplify them into a ILAst switch instruction (which like C# does not require contiguous values).
 	/// </summary>
-	public class SwitchDetection : IILTransform
+	public sealed class SwitchDetection : IILTransform
 	{
 		const ulong MaxValuesPerSection = 100;
 		private readonly SwitchAnalysis analysis = new();
@@ -212,14 +210,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private bool UseCSharpSwitch(out KeyValuePair<LongSet, ILInstruction> defaultSection)
 		{
-			if (!CollectionExtensions.Any(analysis.InnerBlocks))
+			if (!analysis.InnerBlocks.Any())
 			{
 				defaultSection = default;
 				return false;
 			}
 
-			defaultSection =
-				CollectionExtensions.FirstOrDefault(analysis.Sections, s => s.Key.Count() > MaxValuesPerSection);
+			defaultSection = analysis.Sections.FirstOrDefault(s => s.Key.Count() > MaxValuesPerSection);
 			if (defaultSection.Value == null)
 			{
 				// no default section found?
@@ -228,8 +225,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			var defaultSectionKey = defaultSection.Key;
-			if (CollectionExtensions.Any(analysis.Sections,
-				    s => !s.Key.SetEquals(defaultSectionKey) && s.Key.Count() > MaxValuesPerSection))
+			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey) && s.Key.Count() > MaxValuesPerSection))
 			{
 				// Only the default section is allowed to have tons of keys.
 				// C# doesn't support "case 1 to 100000000", and we don't want to generate
@@ -332,16 +328,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			// cases with predecessors that aren't part of the switch logic 
 			// must either require "goto case" statements, or consist of a single "break;"
-			var externalCases = caseNodes
-				.Where(c => CollectionExtensions.Any(c.Predecessors, n => !flowNodes.Contains(n))).ToList();
+			var externalCases = caseNodes.Where(c => c.Predecessors.Any(n => !flowNodes.Contains(n))).ToList();
 
 			breakBlock = null;
 			if (externalCases.Count > 1)
 				return true; // cannot have more than one break case without gotos
 
 			// check that case nodes flow through a single point
-			var breakTargets =
-				Enumerable.ToHashSet(caseNodes.Except(externalCases).SelectMany(n => loopContext.GetBreakTargets(n)));
+			var breakTargets = caseNodes.Except(externalCases).SelectMany(n => loopContext.GetBreakTargets(n))
+				.ToHashSet();
 
 			// if there are multiple break targets, then gotos are required
 			// if there are none, then the external case (if any) can be the break target
@@ -469,7 +464,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					break;
 			}
 
-			var ret = CollectionExtensions.All(flowNodes, f => f.Visited);
+			var ret = flowNodes.All(f => f.Visited);
 			ResetVisited(controlFlowGraph.cfg);
 			return ret;
 		}
@@ -490,7 +485,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// This class also supplies the depth of the loop targetted by a continue; statement relative to the
 		/// context node, to avoid (or eventually support) labelled continues to outer loops
 		/// </summary>
-		public class LoopContext
+		public sealed class LoopContext
 		{
 			private readonly IDictionary<ControlFlowNode, int> continueDepth = new Dictionary<ControlFlowNode, int>();
 
@@ -521,8 +516,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			private static ControlFlowNode FindContinue(ControlFlowNode loopHead)
 			{
 				// potential continue target
-				var pred = CollectionExtensions.OnlyOrDefault(loopHead.Predecessors,
-					p => p != loopHead && loopHead.Dominates(p));
+				var pred = loopHead.Predecessors.OnlyOrDefault(p => p != loopHead && loopHead.Dominates(p));
 				if (pred == null)
 					return loopHead;
 

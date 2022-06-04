@@ -30,13 +30,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Label:
 	/// </summary>
-	public class LabelStatement : Statement
+	public sealed class LabelStatement : Statement
 	{
 		public string Label {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}

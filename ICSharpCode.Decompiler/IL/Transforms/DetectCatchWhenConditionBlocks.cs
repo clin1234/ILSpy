@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class DetectCatchWhenConditionBlocks : IILTransform
+	public sealed class DetectCatchWhenConditionBlocks : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			exceptionType = null;
 			exceptionSlot = null;
 			whenConditionBlock = null;
-			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1)
+			if (entryPoint is not { IncomingEdgeCount: 1 })
 				return false;
 			if (entryPoint.Instructions.Count == 3)
 			{

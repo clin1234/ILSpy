@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// leaving the whole function (<c>return</c>/<c>yield break</c>) that can be made implicit
 	/// without using goto.
 	/// </summary>
-	class RemoveRedundantReturn : IILTransform
+	sealed class RemoveRedundantReturn : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

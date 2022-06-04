@@ -18,7 +18,7 @@
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	static partial class ILOpCodeExtensions
+	internal static partial class ILOpCodeExtensions
 	{
 		// We use a byte array instead of an enum array because it can be initialized more efficiently
 		static readonly byte[] operandTypes = {

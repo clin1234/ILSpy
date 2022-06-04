@@ -161,23 +161,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			IModule resolvedModule = module?.GetDeclaringModule(handle);
 			var fullTypeName = handle.GetFullTypeName(reader);
-			IType type;
-			if (resolvedModule != null)
-			{
-				type = resolvedModule.GetTypeDefinition(fullTypeName);
-			}
-			else
-			{
-				type = GetClassTypeReference.ResolveInAllAssemblies(Compilation, in fullTypeName);
-			}
-
+			IType type = resolvedModule != null
+				? resolvedModule.GetTypeDefinition(fullTypeName)
+				: GetClassTypeReference.ResolveInAllAssemblies(Compilation, in fullTypeName);
 			return type ?? new UnknownType(fullTypeName, IsReferenceType(reader, handle, rawTypeKind));
 		}
 
 		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext,
 			SRM.TypeSpecificationHandle handle, byte rawTypeKind)
 		{
-			return reader.GetTypeSpecification(handle).DecodeSignature<IType, GenericContext>(this, genericContext);
+			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 		}
 
 		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)

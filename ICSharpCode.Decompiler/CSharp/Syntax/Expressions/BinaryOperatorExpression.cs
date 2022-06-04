@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Left Operator Right
 	/// </summary>
-	public class BinaryOperatorExpression : Expression
+	public sealed class BinaryOperatorExpression : Expression
 	{
 		public static readonly TokenRole BitwiseAndRole = new("&");
 		public static readonly TokenRole BitwiseOrRole = new("|");
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public BinaryOperatorType Operator {
 			get;
-			set;
+			init;
 		}
 
 		public Expression Left {

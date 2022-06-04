@@ -58,11 +58,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		new string Name { get; }
 
 		/// <summary>
-		/// Gets the attributes declared on this type parameter.
-		/// </summary>
-		IEnumerable<IAttribute> GetAttributes();
-
-		/// <summary>
 		/// Gets the variance of this type parameter.
 		/// </summary>
 		VarianceModifier Variance { get; }
@@ -106,15 +101,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Nullability NullabilityConstraint { get; }
 
 		IReadOnlyList<TypeConstraint> TypeConstraints { get; }
+
+		/// <summary>
+		/// Gets the attributes declared on this type parameter.
+		/// </summary>
+		IEnumerable<IAttribute> GetAttributes();
 	}
 
 	public readonly struct TypeConstraint
 	{
 		public SymbolKind SymbolKind => SymbolKind.Constraint;
-		public IType Type { get; }
-		public IReadOnlyList<IAttribute> Attributes { get; }
+		internal IType Type { get; }
+		internal IReadOnlyList<IAttribute> Attributes { get; }
 
-		public TypeConstraint(IType type, IReadOnlyList<IAttribute>? attributes = null)
+		internal TypeConstraint(IType type, IReadOnlyList<IAttribute>? attributes = null)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 			this.Attributes = attributes ?? EmptyList<IAttribute>.Instance;
@@ -130,10 +130,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The type parameter is not variant.
 		/// </summary>
 		Invariant,
+
 		/// <summary>
 		/// The type parameter is covariant (used in output position).
 		/// </summary>
 		Covariant,
+
 		/// <summary>
 		/// The type parameter is contravariant (used in input position).
 		/// </summary>

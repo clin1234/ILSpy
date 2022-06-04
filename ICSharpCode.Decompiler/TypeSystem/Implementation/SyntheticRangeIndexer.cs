@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// Can also be a setter.
 	/// Used for the "Implicit Index support"/"Implicit Range support" for the C# 8 ranges feature.
 	/// </summary>
-	class SyntheticRangeIndexAccessor : IMethod
+	sealed class SyntheticRangeIndexAccessor : IMethod
 	{
 		readonly IType indexOrRangeType;
 		readonly IReadOnlyList<IParameter> parameters;

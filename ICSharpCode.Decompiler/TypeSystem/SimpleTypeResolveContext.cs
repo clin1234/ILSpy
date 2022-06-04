@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Default ITypeResolveContext implementation.
 	/// </summary>
-	public class SimpleTypeResolveContext : ITypeResolveContext
+	public sealed class SimpleTypeResolveContext : ITypeResolveContext
 	{
 		public SimpleTypeResolveContext(ICompilation compilation)
 		{

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// "goto Label;"
 	/// </summary>
-	public class GotoStatement : Statement
+	public sealed class GotoStatement : Statement
 	{
 		public static readonly TokenRole GotoKeywordRole = new("goto");
 
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				if (string.IsNullOrEmpty(value))
 					SetChildByRole(Roles.Identifier, null);
 				else
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// or "goto case LabelExpression;"
 	/// </summary>
-	public class GotoCaseStatement : Statement
+	public sealed class GotoCaseStatement : Statement
 	{
 		public static readonly TokenRole GotoKeywordRole = new("goto");
 		public static readonly TokenRole CaseKeywordRole = new("case");
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public Expression LabelExpression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode SemicolonToken {
@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// or "goto default;"
 	/// </summary>
-	public class GotoDefaultStatement : Statement
+	public sealed class GotoDefaultStatement : Statement
 	{
 		public static readonly TokenRole GotoKeywordRole = new("goto");
 		public static readonly TokenRole DefaultKeywordRole = new("default");
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is GotoDefaultStatement o;
+			return other is GotoDefaultStatement;
 		}
 	}
 }

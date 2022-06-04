@@ -20,7 +20,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleExpression : Expression
+	public sealed class TupleExpression : Expression
 	{
 		public AstNodeCollection<Expression> Elements {
 			get { return GetChildrenByRole(Roles.Expression); }

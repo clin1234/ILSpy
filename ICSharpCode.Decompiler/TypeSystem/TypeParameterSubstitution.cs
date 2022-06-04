@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -31,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// The identity function.
 		/// </summary>
-		public static readonly TypeParameterSubstitution Identity = new(null, null);
+		internal static readonly TypeParameterSubstitution Identity = new(null, null);
 
 		/// <summary>
 		/// Creates a new type parameter substitution.
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The type arguments to substitute for method type parameters.
 		/// Pass <c>null</c> to keep method type parameters unmodified.
 		/// </param>
-		public TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments,
+		internal TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments,
 			IReadOnlyList<IType> methodTypeArguments)
 		{
 			this.ClassTypeArguments = classTypeArguments;
@@ -55,13 +56,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the list of class type arguments.
 		/// Returns <c>null</c> if this substitution keeps class type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> ClassTypeArguments { get; }
+		internal IReadOnlyList<IType> ClassTypeArguments { get; }
 
 		/// <summary>
 		/// Gets the list of method type arguments.
 		/// Returns <c>null</c> if this substitution keeps method type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> MethodTypeArguments { get; }
+		internal IReadOnlyList<IType> MethodTypeArguments { get; }
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
@@ -170,7 +171,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <c>t.AcceptVisitor(Compose(g, f)) equals t.AcceptVisitor(f).AcceptVisitor(g)</c>
 		/// </summary>
 		/// <remarks>If you consider type parameter substitution to be a function, this is function composition.</remarks>
-		public static TypeParameterSubstitution Compose(TypeParameterSubstitution g, TypeParameterSubstitution f)
+		internal static TypeParameterSubstitution Compose(TypeParameterSubstitution g, TypeParameterSubstitution f)
 		{
 			if (g == null)
 				return f;
@@ -204,7 +205,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Equals and GetHashCode implementation
 
-		public bool Equals(TypeParameterSubstitution other, TypeVisitor normalization)
+		internal bool Equals(TypeParameterSubstitution other, TypeVisitor normalization)
 		{
 			if (other == null)
 				return false;
@@ -236,13 +237,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return false;
 			if (a.Count != b.Count)
 				return false;
-			for (int i = 0; i < a.Count; i++)
-			{
-				if (!a[i].Equals(b[i]))
-					return false;
-			}
-
-			return true;
+			return !a.Where((t, i) => !t.Equals(b[i])).Any();
 		}
 
 		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b, TypeVisitor normalization)

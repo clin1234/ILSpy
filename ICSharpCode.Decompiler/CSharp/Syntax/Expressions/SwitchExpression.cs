@@ -22,14 +22,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression switch { SwitchSections }
 	/// </summary>
-	public class SwitchExpression : Expression
+	public sealed class SwitchExpression : Expression
 	{
 		public static readonly TokenRole SwitchKeywordRole = new("switch");
 		public static readonly Role<SwitchExpressionSection> SwitchSectionRole = new("SwitchSection", null);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode SwitchToken {
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Pattern => Expression
 	/// </summary>
-	public class SwitchExpressionSection : AstNode
+	public sealed class SwitchExpressionSection : AstNode
 	{
 		public static readonly Role<Expression> PatternRole = new("Pattern", Expression.Null);
 		public static readonly Role<Expression> BodyRole = new("Body", Expression.Null);

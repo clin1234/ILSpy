@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// <summary>
 	/// An IL structure.
 	/// </summary>
-	public class ILStructure
+	public sealed class ILStructure
 	{
 		/// <summary>
 		/// The list of child structures.
@@ -235,18 +235,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 			var result = new List<Branch>();
 			var bitset = new BitSet(body.Length + 1);
 			body.Reset();
-			int target;
 			while (body.RemainingBytes > 0)
 			{
 				var offset = body.Offset;
-				int endOffset;
 				var thisOpCode = body.DecodeOpCode();
 				switch (thisOpCode.GetOperandType())
 				{
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
-						target = body.DecodeBranchTarget(thisOpCode);
-						endOffset = body.Offset;
+						int target = body.DecodeBranchTarget(thisOpCode);
+						int endOffset = body.Offset;
 						result.Add(new Branch(offset, endOffset, target));
 						bitset[endOffset] = IsUnconditionalBranch(thisOpCode);
 						break;
@@ -286,7 +284,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void SortChildren()
 		{
-			Children.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+			Children.Sort(static (a, b) => a.StartOffset.CompareTo(b.StartOffset));
 			foreach (ILStructure child in Children)
 				child.SortChildren();
 		}
@@ -306,10 +304,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return this;
 		}
 
-		struct Branch
+		readonly struct Branch
 		{
-			public Interval Source;
-			public int Target;
+			public readonly Interval Source;
+			public readonly int Target;
 
 			public Branch(int start, int end, int target)
 			{

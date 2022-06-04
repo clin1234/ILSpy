@@ -26,14 +26,5 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface ISupportsInterning
 	{
-		/// <summary>
-		/// Gets a hash code for interning.
-		/// </summary>
-		int GetHashCodeForInterning();
-
-		/// <summary>
-		/// Equality test for interning.
-		/// </summary>
-		bool EqualsForInterning(ISupportsInterning other);
 	}
 }

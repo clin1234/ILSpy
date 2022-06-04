@@ -12,9 +12,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 	public class GetDecompiledSourceCmdlet : PSCmdlet
 	{
 		[Parameter(Position = 0, Mandatory = true)]
-		public CSharpDecompiler Decompiler { get; set; }
+		private CSharpDecompiler Decompiler { get; set; }
 
-		[Parameter] public string TypeName { get; set; } = string.Empty;
+		[Parameter] private string TypeName { get; set; } = string.Empty;
 
 		protected override void ProcessRecord()
 		{

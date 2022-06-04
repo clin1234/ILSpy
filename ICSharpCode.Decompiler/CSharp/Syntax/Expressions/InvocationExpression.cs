@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target(Arguments)
 	/// </summary>
-	public class InvocationExpression : Expression
+	public sealed class InvocationExpression : Expression
 	{
 		public InvocationExpression()
 		{
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
+			get { return GetChildrenByRole(Roles.Argument); }
 		}
 
 		public CSharpTokenNode RParToken {

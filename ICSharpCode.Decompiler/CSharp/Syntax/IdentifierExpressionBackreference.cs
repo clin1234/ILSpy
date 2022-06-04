@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Matches identifier expressions that have the same identifier as the referenced variable/type definition/method definition.
 	/// </summary>
-	public class IdentifierExpressionBackreference : PatternMatching.Pattern
+	public sealed class IdentifierExpressionBackreference : PatternMatching.Pattern
 	{
 		public IdentifierExpressionBackreference(string referencedGroupName)
 		{

@@ -650,10 +650,8 @@ namespace ICSharpCode.Decompiler.IL
 				// The new value may be a subtree of the old value.
 				// We first call AddRef(), then ReleaseRef() to prevent the subtree
 				// that stays connected from receiving a Disconnected() notification followed by a Connected() notification.
-				if (newValue != null)
-					newValue.AddRef();
-				if (oldValue != null)
-					oldValue.ReleaseRef();
+				newValue?.AddRef();
+				oldValue?.ReleaseRef();
 			}
 		}
 

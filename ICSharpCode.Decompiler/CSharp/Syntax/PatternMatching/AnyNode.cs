@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// Matches any node.
 	/// </summary>
 	/// <remarks>Does not match null nodes.</remarks>
-	public class AnyNode : Pattern
+	public sealed class AnyNode : Pattern
 	{
 		public AnyNode(string groupName = null)
 		{

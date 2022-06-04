@@ -35,24 +35,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// <summary>
 	/// Decompiler step for C# 5 async/await.
 	/// </summary>
-	public class AsyncAwaitDecompiler : IILTransform
+	public sealed class AsyncAwaitDecompiler : IILTransform
 	{
 		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
 		// across the yield point.
-		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new();
-		List<AsyncDebugInfo.Await> awaitDebugInfos = new();
+		readonly Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new();
+		readonly List<AsyncDebugInfo.Await> awaitDebugInfos = new();
+		readonly Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new();
+		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new();
+		readonly HashSet<Leave> moveNextLeaves = new();
 		IField builderField;
 		IType builderType;
-		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new();
 		ILVariable cachedStateVar; // variable in MoveNext that caches the stateField.
 
 		int catchHandlerOffset;
 
 		ILTransformContext context;
 		IField disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
-		ILVariable doFinallyBodies;
 
-		Dictionary<IField, ILVariable> fieldToParameterMap = new();
+		ILVariable doFinallyBodies;
 
 		// Note: for async enumerators, a jump to setResultReturnBlock is a 'yield break;'
 		int finalState; // final state after the setResultAndExitBlock
@@ -63,7 +64,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		// These fields are set by AnalyzeMoveNext():
 		ILFunction moveNextFunction;
-		HashSet<Leave> moveNextLeaves = new();
 		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
 		Block setResultReturnBlock; // block that is jumped to for return statements
 		Block setResultYieldBlock; // block that is jumped to for 'yield return' statements
@@ -913,10 +913,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			      disposedCombinedTokensBlock.Parent == blockContainer))
 				return false;
 
-			var block = disposedCombinedTokensBlock;
 			int pos = 0;
 			// callvirt Dispose(ldfld <>x__combinedTokens(ldloc this))
-			if (block.Instructions[pos] is not CallVirt { Method: { Name: "Dispose" } } disposeCall)
+			if (disposedCombinedTokensBlock.Instructions[pos] is not CallVirt {
+				    Method: { Name: "Dispose" }
+			    } disposeCall)
 				return false;
 			if (disposeCall.Arguments.Count != 1)
 				return false;
@@ -926,7 +927,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			pos++;
 			// stfld <>x__combinedTokens(ldloc this, ldnull)
-			if (!block.Instructions[pos].MatchStFld(out var target3, out var ctsField3, out var storedValue))
+			if (!disposedCombinedTokensBlock.Instructions[pos]
+				    .MatchStFld(out var target3, out var ctsField3, out var storedValue))
 				return false;
 			if (!(target3.MatchLdThis() && ctsField3.Equals(ctsField)))
 				return false;
@@ -934,9 +936,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			pos++;
 			// br setResultAndExit
-			if (!block.Instructions[pos].MatchBranch(setResultAndExitBlock))
+			if (!disposedCombinedTokensBlock.Instructions[pos].MatchBranch(setResultAndExitBlock))
 				return false;
-			blocksAnalyzed[block.ChildIndex] = true;
+			blocksAnalyzed[disposedCombinedTokensBlock.ChildIndex] = true;
 
 			return true;
 		}

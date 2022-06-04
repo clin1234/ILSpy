@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// 
 	/// Additionally infers IType of stack slots that have StackType.Ref
 	/// </summary>
-	public class RemoveDeadVariableInit : IILTransform
+	public sealed class RemoveDeadVariableInit : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -71,6 +71,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							stloc.ReplaceWith(stloc.Value);
 						}
+
 						if (stloc.Value is LdLoc ldloc)
 						{
 							variableQueue.Enqueue(ldloc.Variable);
@@ -96,8 +97,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							newType = SpecialType.UnknownType;
 							break;
 						}
+
 						newType = inferredType;
 					}
+
 					// Only overwrite existing type, if a "better" type was found.
 					if (newType != null && newType != SpecialType.UnknownType)
 						v.Type = newType;

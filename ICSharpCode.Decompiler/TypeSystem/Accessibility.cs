@@ -33,35 +33,41 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The entity is completely inaccessible. This is used for C# explicit interface implementations.
 		/// </summary>
 		None,
+
 		/// <summary>
 		/// The entity is only accessible within the same class.
 		/// </summary>
 		Private,
+
 		/// <summary>
 		/// The entity is accessible in derived classes within the same assembly.
 		/// This corresponds to C# <c>private protected</c>.
 		/// </summary>
 		ProtectedAndInternal,
+
 		/// <summary>
 		/// The entity is only accessible within the same class and in derived classes.
 		/// </summary>
 		Protected,
+
 		/// <summary>
 		/// The entity is accessible within the same assembly.
 		/// </summary>
 		Internal,
+
 		/// <summary>
 		/// The entity is accessible both everywhere in the assembly, and in all derived classes.
 		/// This corresponds to C# <c>protected internal</c>.
 		/// </summary>
 		ProtectedOrInternal,
+
 		/// <summary>
 		/// The entity is accessible everywhere.
 		/// </summary>
 		Public,
 	}
 
-	public static class AccessibilityExtensions
+	internal static class AccessibilityExtensions
 	{
 		// This code depends on the fact that the enum values are sorted similar to the partial order
 		// where an accessibility is smaller than another if it makes an entity visibible to a subset of the code:
@@ -86,12 +92,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The result is accessible from any given point in the code
 		/// iff both a and b are accessible from that point.
 		/// </summary>
-		public static Accessibility Intersect(this Accessibility a, Accessibility b)
+		private static Accessibility Intersect(this Accessibility a, Accessibility b)
 		{
 			if (a > b)
 			{
 				ExtensionMethods.Swap(ref a, ref b);
 			}
+
 			if (a == Accessibility.Protected && b == Accessibility.Internal)
 			{
 				return Accessibility.ProtectedAndInternal;
@@ -114,6 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				ExtensionMethods.Swap(ref a, ref b);
 			}
+
 			if (a == Accessibility.Protected && b == Accessibility.Internal)
 			{
 				return Accessibility.ProtectedOrInternal;
@@ -132,10 +140,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static Accessibility EffectiveAccessibility(this IEntity entity)
 		{
 			Accessibility accessibility = entity.Accessibility;
-			for (ITypeDefinition typeDef = entity.DeclaringTypeDefinition; typeDef != null; typeDef = typeDef.DeclaringTypeDefinition)
+			for (ITypeDefinition typeDef = entity.DeclaringTypeDefinition;
+			     typeDef != null;
+			     typeDef = typeDef.DeclaringTypeDefinition)
 			{
 				accessibility = Intersect(accessibility, typeDef.Accessibility);
 			}
+
 			return accessibility;
 		}
 	}

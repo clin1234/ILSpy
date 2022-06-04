@@ -39,19 +39,14 @@ using System.Xml;
 
 namespace ICSharpCode.Decompiler.Util
 {
-#if INSIDE_SYSTEM_WEB
-	internal
-#else
-	public
-#endif
-		class ResXResourceWriter : IDisposable
+	internal sealed class ResXResourceWriter : IDisposable
 	{
 		const string WinFormsAssemblyName =
 			", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 
 		const string ResXNullRefTypeName = "System.Resources.ResXNullRef" + WinFormsAssemblyName;
 
-		static string schema = @"
+		static readonly string schema = @"
 	<xsd:schema id='root' xmlns='' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'>
 		<xsd:element name='root' msdata:IsDataSet='true'>
 			<xsd:complexType>
@@ -81,13 +76,7 @@ namespace ICSharpCode.Decompiler.Util
 	</xsd:schema>
 ".Replace("'", "\"").Replace("\t", "  ");
 
-		#region Public Properties
-
-		public string BasePath { get; set; }
-
-		#endregion
-
-		public virtual void Dispose()
+		public void Dispose()
 		{
 			Dispose(true);
 			GC.SuppressFinalize(this);
@@ -97,8 +86,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			if (filename != null)
 				stream = File.Open(filename, FileMode.Create);
-			if (textwriter == null)
-				textwriter = new StreamWriter(stream, Encoding.UTF8);
+			textwriter ??= new StreamWriter(stream, Encoding.UTF8);
 
 			writer = new XmlTextWriter(textwriter);
 			writer.Formatting = Formatting.Indented;
@@ -179,16 +167,6 @@ namespace ICSharpCode.Decompiler.Util
 			WriteBytes(name, type, value, 0, value.Length, comment);
 		}
 
-		void WriteString(string name, string value)
-		{
-			WriteString(name, value, null);
-		}
-
-		void WriteString(string name, string value, string type)
-		{
-			WriteString(name, value, type, String.Empty);
-		}
-
 		void WriteString(string name, string value, string type, string comment)
 		{
 			writer.WriteStartElement("data");
@@ -245,24 +223,21 @@ namespace ICSharpCode.Decompiler.Util
 			if (writer == null)
 				InitWriter();
 
-			if (value is byte[] o)
+			switch (value)
 			{
-				WriteBytes(name, o.GetType(), o, comment);
-				return;
-			}
-
-			if (value is ResourceSerializedObject rso)
-			{
-				var bytes = rso.GetBytes();
-				WriteBytes(name, null, bytes, 0, bytes.Length, comment);
-				return;
-			}
-
-			if (value == null)
-			{
-				// nulls written as ResXNullRef
-				WriteString(name, "", ResXNullRefTypeName, comment);
-				return;
+				case byte[] o:
+					WriteBytes(name, o.GetType(), o, comment);
+					return;
+				case ResourceSerializedObject rso:
+				{
+					var bytes = rso.GetBytes();
+					WriteBytes(name, null, bytes, 0, bytes.Length, comment);
+					return;
+				}
+				case null:
+					// nulls written as ResXNullRef
+					WriteString(name, "", ResXNullRefTypeName, comment);
+					return;
 			}
 
 			if (value != null && !value.GetType().IsSerializable)
@@ -271,21 +246,21 @@ namespace ICSharpCode.Decompiler.Util
 
 			TypeConverter converter = TypeDescriptor.GetConverter(value);
 
-			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
+			if (converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
 			{
 				string str = converter.ConvertToInvariantString(value);
 				WriteString(name, str, value.GetType().AssemblyQualifiedName, comment);
 				return;
 			}
 
-			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
+			if (converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
 			{
 				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
 				WriteBytes(name, value.GetType(), b, comment);
 				return;
 			}
 
-			MemoryStream ms = new();
+			using MemoryStream ms = new();
 			BinaryFormatter fmt = new();
 			try
 			{
@@ -299,12 +274,6 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			WriteBytes(name, null, ms.GetBuffer(), 0, (int)ms.Length, comment);
-			ms.Close();
-		}
-
-		public void AddResource(string name, string value)
-		{
-			AddResource(name, value, string.Empty);
 		}
 
 		private void AddResource(string name, string value, string comment)
@@ -322,158 +291,7 @@ namespace ICSharpCode.Decompiler.Util
 			WriteString(name, value, null, comment);
 		}
 
-		public void AddMetadata(string name, string value)
-		{
-			ArgumentNullException.ThrowIfNull(name);
-
-			ArgumentNullException.ThrowIfNull(value);
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			writer.WriteStartElement("metadata");
-			writer.WriteAttributeString("name", name);
-			writer.WriteAttributeString("xml:space", "preserve");
-
-			writer.WriteElementString("value", value);
-
-			writer.WriteEndElement();
-		}
-
-		public void AddMetadata(string name, byte[] value)
-		{
-			ArgumentNullException.ThrowIfNull(name);
-
-			ArgumentNullException.ThrowIfNull(value);
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			writer.WriteStartElement("metadata");
-			writer.WriteAttributeString("name", name);
-
-			writer.WriteAttributeString("type", value.GetType().AssemblyQualifiedName);
-
-			writer.WriteStartElement("value");
-			WriteNiceBase64(value, 0, value.Length);
-			writer.WriteEndElement();
-
-			writer.WriteEndElement();
-		}
-
-		public void AddMetadata(string name, object value)
-		{
-			if (value is string s)
-			{
-				AddMetadata(name, s);
-				return;
-			}
-
-			if (value is byte[] bytes)
-			{
-				AddMetadata(name, bytes);
-				return;
-			}
-
-			ArgumentNullException.ThrowIfNull(name);
-
-			ArgumentNullException.ThrowIfNull(value);
-
-			if (!value.GetType().IsSerializable)
-				throw new InvalidOperationException(
-					$"The element '{name}' of type '{value.GetType().Name}' is not serializable.");
-
-			if (written)
-				throw new InvalidOperationException("The resource is already generated.");
-
-			if (writer == null)
-				InitWriter();
-
-			Type type = value.GetType();
-
-			TypeConverter converter = TypeDescriptor.GetConverter(value);
-			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
-			{
-				string str = converter.ConvertToInvariantString(value);
-				writer.WriteStartElement("metadata");
-				writer.WriteAttributeString("name", name);
-				if (type != null)
-					writer.WriteAttributeString("type", type.AssemblyQualifiedName);
-				writer.WriteStartElement("value");
-				writer.WriteString(str);
-				writer.WriteEndElement();
-				writer.WriteEndElement();
-				writer.WriteWhitespace("\n  ");
-				return;
-			}
-
-			if (converter != null && converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
-			{
-				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
-				writer.WriteStartElement("metadata");
-				writer.WriteAttributeString("name", name);
-
-				if (type != null)
-				{
-					writer.WriteAttributeString("type", type.AssemblyQualifiedName);
-					writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
-					writer.WriteStartElement("value");
-					WriteNiceBase64(b, 0, b.Length);
-				}
-				else
-				{
-					writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
-					writer.WriteStartElement("value");
-					writer.WriteBase64(b, 0, b.Length);
-				}
-
-				writer.WriteEndElement();
-				writer.WriteEndElement();
-				return;
-			}
-
-			MemoryStream ms = new();
-			BinaryFormatter fmt = new();
-			try
-			{
-				fmt.Serialize(ms, value);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidOperationException("Cannot add a " + value.GetType() +
-				                                    "because it cannot be serialized: " +
-				                                    e.Message);
-			}
-
-			writer.WriteStartElement("metadata");
-			writer.WriteAttributeString("name", name);
-
-			if (type != null)
-			{
-				writer.WriteAttributeString("type", type.AssemblyQualifiedName);
-				writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
-				writer.WriteStartElement("value");
-				WriteNiceBase64(ms.GetBuffer(), 0, ms.GetBuffer().Length);
-			}
-			else
-			{
-				writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
-				writer.WriteStartElement("value");
-				writer.WriteBase64(ms.GetBuffer(), 0, ms.GetBuffer().Length);
-			}
-
-			writer.WriteEndElement();
-			writer.WriteEndElement();
-			ms.Close();
-		}
-
-		public void Close()
+		private void Close()
 		{
 			if (writer != null)
 			{
@@ -483,13 +301,14 @@ namespace ICSharpCode.Decompiler.Util
 				}
 
 				writer.Close();
+				stream.Dispose();
 				stream = null;
 				filename = null;
 				textwriter = null;
 			}
 		}
 
-		public void Generate()
+		private void Generate()
 		{
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -499,7 +318,7 @@ namespace ICSharpCode.Decompiler.Util
 			writer.Flush();
 		}
 
-		protected virtual void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 		{
 			if (disposing)
 				Close();
@@ -517,15 +336,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		#region Static Fields
 
-		public static readonly string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
-
-		public static readonly string ByteArraySerializedObjectMimeType =
-			"application/x-microsoft.net.object.bytearray.base64";
-
-		public static readonly string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
-		public static readonly string ResMimeType = "text/microsoft-resx";
-		public static readonly string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
-		public static readonly string Version = "2.0";
+		private const string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
+		private const string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
 
 		#endregion // Static Fields
 

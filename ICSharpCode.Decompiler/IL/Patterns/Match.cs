@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.IL.Patterns
 {
-	public class CaptureGroup
+	public abstract class CaptureGroup
 	{
 	}
 
@@ -88,8 +88,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 
 		internal void RestoreCheckPoint(int checkPoint)
 		{
-			if (results != null)
-				results.RemoveRange(checkPoint, results.Count - checkPoint);
+			results?.RemoveRange(checkPoint, results.Count - checkPoint);
 		}
 
 		public IEnumerable<ILInstruction> Get(CaptureGroup captureGroup)

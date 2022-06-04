@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// C# ambience. Used to convert type system symbols to text (usually for displaying the symbol to the user; e.g. in editor tooltips)
 	/// </summary>
-	public class CSharpAmbience : IAmbience
+	internal sealed class CSharpAmbience : IAmbience
 	{
 		public ConversionFlags ConversionFlags { get; set; }
 
@@ -97,45 +97,44 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			if ((ConversionFlags & ConversionFlags.ShowDefinitionKeyword) == ConversionFlags.ShowDefinitionKeyword)
 			{
-				if (node is TypeDeclaration declaration)
+				switch (node)
 				{
-					switch (declaration.ClassType)
-					{
-						case ClassType.Class:
-							writer.WriteKeyword(Roles.ClassKeyword, "class");
-							break;
-						case ClassType.Struct:
-							writer.WriteKeyword(Roles.StructKeyword, "struct");
-							break;
-						case ClassType.Interface:
-							writer.WriteKeyword(Roles.InterfaceKeyword, "interface");
-							break;
-						case ClassType.Enum:
-							writer.WriteKeyword(Roles.EnumKeyword, "enum");
-							break;
-						case ClassType.RecordClass:
-							writer.WriteKeyword(Roles.RecordKeyword, "record");
-							break;
-						default:
-							throw new Exception("Invalid value for ClassType");
-					}
+					case TypeDeclaration declaration:
+						switch (declaration.ClassType)
+						{
+							case ClassType.Class:
+								writer.WriteKeyword(Roles.ClassKeyword, "class");
+								break;
+							case ClassType.Struct:
+								writer.WriteKeyword(Roles.StructKeyword, "struct");
+								break;
+							case ClassType.Interface:
+								writer.WriteKeyword(Roles.InterfaceKeyword, "interface");
+								break;
+							case ClassType.Enum:
+								writer.WriteKeyword(Roles.EnumKeyword, "enum");
+								break;
+							case ClassType.RecordClass:
+								writer.WriteKeyword(Roles.RecordKeyword, "record");
+								break;
+							default:
+								throw new Exception("Invalid value for ClassType");
+						}
 
-					writer.Space();
-				}
-				else if (node is DelegateDeclaration)
-				{
-					writer.WriteKeyword(Roles.DelegateKeyword, "delegate");
-					writer.Space();
-				}
-				else if (node is EventDeclaration)
-				{
-					writer.WriteKeyword(EventDeclaration.EventKeywordRole, "event");
-					writer.Space();
-				}
-				else if (node is NamespaceDeclaration)
-				{
-					writer.WriteKeyword(Roles.NamespaceKeyword, "namespace");
-					writer.Space();
+						writer.Space();
+						break;
+					case DelegateDeclaration:
+						writer.WriteKeyword(Roles.DelegateKeyword, "delegate");
+						writer.Space();
+						break;
+					case EventDeclaration:
+						writer.WriteKeyword(EventDeclaration.EventKeywordRole, "event");
+						writer.Space();
+						break;
+					case NamespaceDeclaration:
+						writer.WriteKeyword(Roles.NamespaceKeyword, "namespace");
+						writer.Space();
+						break;
 				}
 			}
 
@@ -151,12 +150,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 
-			if (symbol is ITypeDefinition definition)
-				WriteTypeDeclarationName(definition, writer, formattingPolicy);
-			else if (symbol is IMember member)
-				WriteMemberDeclarationName(member, writer, formattingPolicy);
-			else
-				writer.WriteIdentifier(Identifier.Create(symbol.Name));
+			switch (symbol)
+			{
+				case ITypeDefinition definition:
+					WriteTypeDeclarationName(definition, writer, formattingPolicy);
+					break;
+				case IMember member:
+					WriteMemberDeclarationName(member, writer, formattingPolicy);
+					break;
+				default:
+					writer.WriteIdentifier(Identifier.Create(symbol.Name));
+					break;
+			}
 
 			if ((ConversionFlags & ConversionFlags.ShowParameterList) == ConversionFlags.ShowParameterList &&
 			    HasParameters(symbol))
@@ -320,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			EntityDeclaration node = astBuilder.ConvertEntity(member);
 			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType &&
-			    member.DeclaringType != null && member is not LocalFunctionMethod)
+			    member is not LocalFunctionMethod)
 			{
 				ConvertType(member.DeclaringType, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");

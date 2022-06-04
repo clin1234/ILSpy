@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// which allows us to efficient clear out all stores that get overwritten by a new store.
 		/// </remarks>
 		[DebuggerDisplay("{" + nameof(bits) + "}")]
-		public struct State : IDataFlowState<State>
+		public readonly struct State : IDataFlowState<State>
 		{
 			/// <summary>
 			/// This bitset contains three different kinds of bits:

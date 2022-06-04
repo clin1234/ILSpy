@@ -38,7 +38,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
-	public class MonoCecilDebugInfoProvider : IDebugInfoProvider
+	internal sealed class MonoCecilDebugInfoProvider : IDebugInfoProvider
 	{
 		readonly Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables
 			)> debugInfo;
@@ -66,17 +66,17 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			{
 				MethodDefinition? cecilMethod =
 					moduleDef.LookupToken(MetadataTokens.GetToken(method)) as MethodDefinition;
-				MethodDebugInformation? debugInfo = cecilMethod?.DebugInformation;
-				if (debugInfo == null)
+				MethodDebugInformation? methodDebugInfo = cecilMethod?.DebugInformation;
+				if (methodDebugInfo == null)
 				{
 					continue;
 				}
 
 				IList<SequencePoint> sequencePoints = EmptyList<SequencePoint>.Instance;
-				if (debugInfo.HasSequencePoints)
+				if (methodDebugInfo.HasSequencePoints)
 				{
-					sequencePoints = new List<SequencePoint>(debugInfo.SequencePoints.Count);
-					foreach (Mono.Cecil.Cil.SequencePoint? point in debugInfo.SequencePoints)
+					sequencePoints = new List<SequencePoint>(methodDebugInfo.SequencePoints.Count);
+					foreach (Mono.Cecil.Cil.SequencePoint? point in methodDebugInfo.SequencePoints)
 					{
 						sequencePoints.Add(new SequencePoint {
 							Offset = point.Offset,
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				}
 
 				List<Variable> variables = new();
-				foreach (ScopeDebugInformation? scope in debugInfo.GetScopes())
+				foreach (ScopeDebugInformation? scope in methodDebugInfo.GetScopes())
 				{
 					if (!scope.HasVariables)
 					{

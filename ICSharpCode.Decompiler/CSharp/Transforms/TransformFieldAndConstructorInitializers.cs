@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// This transform moves field initializers at the start of constructors to their respective field declarations
 	/// and transforms this-/base-ctor calls in constructors to constructor initializers.
 	/// </summary>
-	public class TransformFieldAndConstructorInitializers : DepthFirstAstVisitor, IAstTransform
+	internal sealed class TransformFieldAndConstructorInitializers : DepthFirstAstVisitor, IAstTransform
 	{
 		static readonly ExpressionStatement fieldInitializerPattern = new() {
 			Expression = new AssignmentExpression {
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// Pattern for reference types:
 					// this..ctor(...);
 					case InvocationExpression invocation:
-						if (invocation.Target is not MemberReferenceExpression mre || mre.MemberName != ".ctor")
+						if (invocation.Target is not MemberReferenceExpression { MemberName: ".ctor" } mre)
 							return;
 						if (invocation.GetSymbol() is not IMethod { IsConstructor: true } ctor)
 							return;
@@ -98,10 +98,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							target = cast.Expression;
 						if (target is ThisReferenceExpression or BaseReferenceExpression)
 						{
-							if (ctor.DeclaringTypeDefinition == currentCtor.DeclaringTypeDefinition)
-								ci.ConstructorInitializerType = ConstructorInitializerType.This;
-							else
-								ci.ConstructorInitializerType = ConstructorInitializerType.Base;
+							ci.ConstructorInitializerType =
+								ctor.DeclaringTypeDefinition == currentCtor.DeclaringTypeDefinition
+									? ConstructorInitializerType.This
+									: ConstructorInitializerType.Base;
 						}
 						else
 							return;
@@ -190,7 +190,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				if (!context.DecompileRun.RecordDecompilers.TryGetValue(ctorMethodDef.DeclaringTypeDefinition,
 					    out var record))
-					record = null;
+				{
+				}
 
 				// Filter out copy constructor of records
 				if (record != null)
@@ -345,10 +346,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					while (true)
 					{
 						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
-						if (es == null)
-							break;
-						if (es.Expression is not AssignmentExpression assignment ||
-						    assignment.Operator != AssignmentOperatorType.Assign)
+						if (es?.Expression is not AssignmentExpression {
+							    Operator: AssignmentOperatorType.Assign
+						    } assignment)
 							break;
 						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
 						if (fieldOrProperty is not (IField or IProperty) || !fieldOrProperty.IsStatic)
@@ -423,51 +423,48 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			switch (expression)
 			{
 				case CSharpInvocationResolveResult rr:
-					if (rr.GetSymbol() is not IMethod { SymbolKind: SymbolKind.Constructor } ctor)
+					if (rr.GetSymbol() is not IMethod { SymbolKind: SymbolKind.Constructor })
 						return false;
 					var args = rr.GetArgumentsForCall();
-					if (args.Count == 1)
+					switch (args.Count)
 					{
-						switch (args[0].ConstantValue)
-						{
-							case double d:
-								value = new decimal(d);
-								return true;
-							case float f:
-								value = new decimal(f);
-								return true;
-							case long l:
-								value = new decimal(l);
-								return true;
-							case int i:
-								value = new decimal(i);
-								return true;
-							case ulong ul:
-								value = new decimal(ul);
-								return true;
-							case uint ui:
-								value = new decimal(ui);
-								return true;
-							case int[] { Length: 4 } bits
-								when (bits[3] & 0x7F00FFFF) == 0 && (bits[3] & 0xFF000000) <= 0x1C000000:
-								value = new decimal(bits);
-								return true;
-							default:
-								return false;
-						}
-					}
-					else if (args.Count == 5 &&
-					         args[0].ConstantValue is int lo &&
-					         args[1].ConstantValue is int mid &&
-					         args[2].ConstantValue is int hi &&
-					         args[3].ConstantValue is bool isNegative &&
-					         args[4].ConstantValue is byte scale)
-					{
-						value = new decimal(lo, mid, hi, isNegative, scale);
-						return true;
-					}
+						case 1:
+							switch (args[0].ConstantValue)
+							{
+								case double d:
+									value = new decimal(d);
+									return true;
+								case float f:
+									value = new decimal(f);
+									return true;
+								case long l:
+									value = new decimal(l);
+									return true;
+								case int i:
+									value = new decimal(i);
+									return true;
+								case ulong ul:
+									value = new decimal(ul);
+									return true;
+								case uint ui:
+									value = new decimal(ui);
+									return true;
+								case int[] { Length: 4 } bits
+									when (bits[3] & 0x7F00FFFF) == 0 && (bits[3] & 0xFF000000) <= 0x1C000000:
+									value = new decimal(bits);
+									return true;
+								default:
+									return false;
+							}
 
-					return false;
+						case 5 when args[0].ConstantValue is int lo && args[1].ConstantValue is int mid &&
+						            args[2].ConstantValue is int hi && args[3].ConstantValue is bool isNegative &&
+						            args[4].ConstantValue is byte scale:
+							value = new decimal(lo, mid, hi, isNegative, scale);
+							return true;
+						default:
+							return false;
+					}
 				default:
 					if (expression.ConstantValue is decimal v)
 					{

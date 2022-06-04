@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	public sealed class DummyTypeParameter : AbstractType, ITypeParameter
+	internal sealed class DummyTypeParameter : AbstractType, ITypeParameter
 	{
 		static ITypeParameter[] methodTypeParameters = { new DummyTypeParameter(SymbolKind.Method, 0) };
 		static ITypeParameter[] classTypeParameters = { new DummyTypeParameter(SymbolKind.TypeDefinition, 0) };
@@ -136,16 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 
 				ITypeParameter[] oldTps = Interlocked.CompareExchange(ref typeParameters, newTps, tps);
-				if (oldTps == tps)
-				{
-					// exchange successful
-					tps = newTps;
-				}
-				else
-				{
-					// exchange not successful
-					tps = oldTps;
-				}
+				tps = oldTps == tps ? newTps : oldTps;
 			}
 
 			return tps[index];
@@ -176,16 +167,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 
 				var oldTps = Interlocked.CompareExchange(ref classTypeParameterLists, newTps, tps);
-				if (oldTps == tps)
-				{
-					// exchange successful
-					tps = newTps;
-				}
-				else
-				{
-					// exchange not successful
-					tps = oldTps;
-				}
+				tps = oldTps == tps ? newTps : oldTps;
 			}
 
 			return tps[length];

@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Construct a builtin attribute.
 		/// </summary>
-		public void Add(KnownAttribute type, ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> fixedArguments)
+		private void Add(KnownAttribute type, ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> fixedArguments)
 		{
 			Add(new DefaultAttribute(module.GetAttributeType(type), fixedArguments,
 				ImmutableArray.Create<SRM.CustomAttributeNamedArgument<IType>>()));
@@ -163,8 +163,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 					break;
 				case 0x2c: // CustomMarshaler
-					string guidValue = marshalInfo.ReadSerializedString();
-					string unmanagedType = marshalInfo.ReadSerializedString();
+					marshalInfo.ReadSerializedString();
+					marshalInfo.ReadSerializedString();
 					string managedType = marshalInfo.ReadSerializedString();
 					string cookie = marshalInfo.ReadSerializedString();
 					if (managedType != null)
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public void AddSecurityAttributes(SRM.DeclarativeSecurityAttribute secDecl)
+		private void AddSecurityAttributes(SRM.DeclarativeSecurityAttribute secDecl)
 		{
 			var securityActionType =
 				module.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
@@ -367,19 +367,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	struct AttributeBuilder
+	readonly struct AttributeBuilder
 	{
 		readonly ICompilation compilation;
 		readonly IType attributeType;
-		ImmutableArray<SRM.CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
-		ImmutableArray<SRM.CustomAttributeNamedArgument<IType>>.Builder namedArgs;
+		readonly ImmutableArray<SRM.CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
+		readonly ImmutableArray<SRM.CustomAttributeNamedArgument<IType>>.Builder namedArgs;
 
 		public AttributeBuilder(MetadataModule module, KnownAttribute attributeType)
 			: this(module, module.GetAttributeType(attributeType))
 		{
 		}
 
-		public AttributeBuilder(MetadataModule module, IType attributeType)
+		private AttributeBuilder(MetadataModule module, IType attributeType)
 		{
 			this.compilation = module.Compilation;
 			this.attributeType = attributeType;

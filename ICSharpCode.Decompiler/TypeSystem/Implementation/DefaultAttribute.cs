@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// IAttribute implementation for already-resolved attributes.
 	/// </summary>
-	public class DefaultAttribute : IAttribute
+	internal sealed class DefaultAttribute : IAttribute
 	{
 		volatile IMethod constructor;
 
@@ -37,20 +37,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.AttributeType = attributeType ?? throw new ArgumentNullException(nameof(attributeType));
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
-		}
-
-		public DefaultAttribute(IMethod constructor,
-			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
-			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
-		{
-			this.constructor = constructor ?? throw new ArgumentNullException(nameof(constructor));
-			this.AttributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
-			this.FixedArguments = fixedArguments;
-			this.NamedArguments = namedArguments;
-			if (fixedArguments.Length != constructor.Parameters.Count)
-			{
-				throw new ArgumentException("Positional argument count must match the constructor's parameter count");
-			}
 		}
 
 		public ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }
@@ -68,8 +54,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					foreach (IMethod candidate in this.AttributeType.GetConstructors(m =>
 						         m.Parameters.Count == FixedArguments.Length))
 					{
-						if (candidate.Parameters.Select(p => p.Type)
-						    .SequenceEqual(this.FixedArguments.Select(a => a.Type)))
+						if (candidate.Parameters.Select(static p => p.Type)
+						    .SequenceEqual(this.FixedArguments.Select(static a => a.Type)))
 						{
 							ctor = candidate;
 							break;

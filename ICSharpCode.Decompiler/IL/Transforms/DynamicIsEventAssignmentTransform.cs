@@ -20,7 +20,7 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class DynamicIsEventAssignmentTransform : IStatementTransform
+	public sealed class DynamicIsEventAssignmentTransform : IStatementTransform
 	{
 		/// stloc V_1(dynamic.isevent (target))
 		/// if (logic.not(ldloc V_1)) Block IL_004a {
@@ -40,24 +40,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			if (!(pos + 3 < block.Instructions.Count && block.Instructions[pos].MatchStLoc(out var flagVar, out var inst) && inst is DynamicIsEventInstruction isEvent))
+			if (!(pos + 3 < block.Instructions.Count &&
+			      block.Instructions[pos].MatchStLoc(out var flagVar, out var inst) &&
+			      inst is DynamicIsEventInstruction isEvent))
 				return;
 			if (!(flagVar.IsSingleDefinition && flagVar.LoadCount == 2))
 				return;
 			if (!MatchLhsCacheIfInstruction(block.Instructions[pos + 1], flagVar, out var dynamicGetMemberStore))
 				return;
-			if (!(dynamicGetMemberStore.MatchStLoc(out var getMemberVar, out inst) && inst is DynamicGetMemberInstruction getMemberInst))
+			if (!(dynamicGetMemberStore.MatchStLoc(out var getMemberVar, out inst) &&
+			      inst is DynamicGetMemberInstruction getMemberInst))
 				return;
 			int offset = 2;
 			if (block.Instructions[pos + offset].MatchStLoc(out var valueVariable)
-				&& pos + 4 < block.Instructions.Count && valueVariable.IsSingleDefinition && valueVariable.LoadCount == 2
-				&& valueVariable.LoadInstructions.All(ld => ld.Parent is DynamicInstruction))
+			    && pos + 4 < block.Instructions.Count && valueVariable.IsSingleDefinition &&
+			    valueVariable.LoadCount == 2
+			    && valueVariable.LoadInstructions.All(ld => ld.Parent is DynamicInstruction))
 			{
 				offset++;
 			}
+
 			foreach (var descendant in block.Instructions[pos + offset].Descendants)
 			{
-				if (!MatchIsEventAssignmentIfInstruction(descendant, isEvent, flagVar, getMemberVar, out var setMemberInst, out var getMemberVarUse, out var isEventConditionUse))
+				if (!MatchIsEventAssignmentIfInstruction(descendant, isEvent, flagVar, getMemberVar,
+					    out var setMemberInst, out var getMemberVarUse, out var isEventConditionUse))
 					continue;
 				context.Step("DynamicIsEventAssignmentTransform", block.Instructions[pos]);
 				// Collapse duplicate condition
@@ -78,8 +84,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	dynamic.invokemember.invokespecial.discard add_B(target, value)
 		/// }
 		/// </summary>
-		static bool MatchIsEventAssignmentIfInstruction(ILInstruction ifInst, DynamicIsEventInstruction isEvent, ILVariable flagVar, ILVariable getMemberVar,
-			out DynamicSetMemberInstruction setMemberInst, out ILInstruction getMemberVarUse, out ILInstruction isEventConditionUse)
+		static bool MatchIsEventAssignmentIfInstruction(ILInstruction ifInst, DynamicIsEventInstruction isEvent,
+			ILVariable flagVar, ILVariable getMemberVar,
+			out DynamicSetMemberInstruction setMemberInst, out ILInstruction getMemberVarUse,
+			out ILInstruction isEventConditionUse)
 		{
 			setMemberInst = null;
 			getMemberVarUse = null;
@@ -94,19 +102,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (condition.MatchLdLoc(flagVar))
 			{
-				var tmp = trueInst;
-				trueInst = falseInst;
-				falseInst = tmp;
+				(trueInst, falseInst) = (falseInst, trueInst);
 				isEventConditionUse = condition;
 			}
 			else
 				return false;
+
 			setMemberInst = Block.Unwrap(trueInst) as DynamicSetMemberInstruction;
 			if (setMemberInst == null)
 				return false;
 			if (!isEvent.Argument.Match(setMemberInst.Target).Success)
 				return false;
-			if (!(Block.Unwrap(falseInst) is DynamicInvokeMemberInstruction invokeMemberInst && invokeMemberInst.Arguments.Count == 2))
+			if (!(Block.Unwrap(falseInst) is DynamicInvokeMemberInstruction invokeMemberInst &&
+			      invokeMemberInst.Arguments.Count == 2))
 				return false;
 			if (!isEvent.Argument.Match(invokeMemberInst.Arguments[0]).Success)
 				return false;
@@ -135,8 +143,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool MatchFlagEqualsZero(ILInstruction condition, ILVariable flagVar)
 		{
 			return condition.MatchCompEquals(out var left, out var right)
-				&& left.MatchLdLoc(flagVar)
-				&& right.MatchLdcI4(0);
+			       && left.MatchLdLoc(flagVar)
+			       && right.MatchLdcI4(0);
 		}
 	}
 }

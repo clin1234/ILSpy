@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Finds the expanded form of using statements using pattern matching and replaces it with a UsingStatement.
 	/// </summary>
-	public sealed class PatternStatementTransform : ContextTrackingVisitor<AstNode>, IAstTransform
+	internal sealed class PatternStatementTransform : ContextTrackingVisitor<AstNode>, IAstTransform
 	{
 		/// <summary>
 		/// $variable = $initializer;
@@ -415,7 +415,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool VariableCanBeUsedAsForeachLocal(IL.ILVariable itemVar, Statement loop)
 		{
-			if (itemVar == null || itemVar.Kind is not (IL.VariableKind.Local or IL.VariableKind.StackSlot))
+			if (itemVar is not { Kind: (IL.VariableKind.Local or IL.VariableKind.StackSlot) })
 			{
 				// only locals/temporaries can be converted into foreach loop variable
 				return false;
@@ -507,7 +507,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		static readonly ForStatement forOnArrayMultiDimPattern = new() {
-			Initializers = { },
 			Condition = new BinaryOperatorExpression(
 				new NamedNode("indexVariable", new IdentifierExpression(Pattern.AnyString)),
 				BinaryOperatorType.LessThanOrEqual,
@@ -661,12 +660,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt);
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
-			if (itemVariable == null || !itemVariable.IsSingleDefinition
-			                         || (itemVariable.Kind != IL.VariableKind.Local &&
-			                             itemVariable.Kind != IL.VariableKind.StackSlot)
-			                         || !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
-			                         || !lowerBounds.All(lb =>
-				                         lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
+			if (itemVariable is not { IsSingleDefinition: true } ||
+			    (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot) ||
+			    !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1) || !lowerBounds.All(lb =>
+				    lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
 			var body = new BlockStatement();
 			foreach (var statement in statements)
@@ -744,7 +741,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			if (accessorsMustBeCompilerGenerated && !property.Getter.IsCompilerGenerated())
 				return false;
-			if (property.Setter is IMethod setter)
+			if (property.Setter is { } setter)
 			{
 				if (accessorsMustBeCompilerGenerated && !setter.IsCompilerGenerated())
 					return false;
@@ -1035,13 +1032,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return combineMethod.DeclaringType.FullName == "System.Delegate";
 		}
 
-		static readonly string[] attributeTypesToRemoveFromAutoEvents = new[] {
+		static readonly string[] attributeTypesToRemoveFromAutoEvents = {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute",
 			"System.Runtime.CompilerServices.MethodImplAttribute"
 		};
 
-		internal static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+		internal static readonly string[] attributeTypesToRemoveFromAutoProperties = {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
@@ -1097,7 +1094,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
 			const Modifiers withoutBody = Modifiers.Abstract | Modifiers.Extern;
-			if ((ev.Modifiers & withoutBody) == 0 && ev.GetSymbol() is IEvent symbol)
+			if ((ev.Modifiers & withoutBody) == 0 && ev.GetSymbol() is IEvent)
 			{
 				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) &&
 				    !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
@@ -1287,8 +1284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static readonly Expression addressOfPinnableReference = new UnaryOperatorExpression {
 			Operator = UnaryOperatorType.AddressOf,
 			Expression = new InvocationExpression {
-				Target = new MemberReferenceExpression(new AnyNode("target"), "GetPinnableReference"),
-				Arguments = { }
+				Target = new MemberReferenceExpression(new AnyNode("target"), "GetPinnableReference")
 			}
 		};
 

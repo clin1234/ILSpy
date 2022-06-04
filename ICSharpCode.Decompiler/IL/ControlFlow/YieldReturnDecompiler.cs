@@ -27,11 +27,9 @@ using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
-	public class YieldReturnDecompiler : IILTransform
+	public sealed class YieldReturnDecompiler : IILTransform
 	{
 		/// <summary>
 		/// For each finally method, stores the target state when entering the finally block,
@@ -152,8 +150,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var oldBody = function.Body;
 			function.Body = newBody;
 			// register any locals used in newBody
-			CollectionExtensions.AddRange(function.Variables,
-				newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
+			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>()
+				.Select(inst => inst.Variable).Distinct());
 
 			PrintFinallyMethodStateRanges(newBody);
 
@@ -438,7 +436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					tryFinally.FinallyBlock = finallyFunction.Body;
 					var variables = finallyFunction.Variables.ToArray();
 					finallyFunction.Variables.Clear();
-					CollectionExtensions.AddRange(function.Variables, variables);
+					function.Variables.AddRange(variables);
 				}
 			}
 
@@ -918,7 +916,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				CancellationToken = context.CancellationToken
 			};
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
-			cachedStateVars = Enumerable.ToHashSet(rangeAnalysis.CachedStateVars);
+			cachedStateVars = rangeAnalysis.CachedStateVars.ToHashSet();
 
 			var newBody = ConvertBody(body, rangeAnalysis);
 			moveNextFunction.Variables.Clear();
@@ -933,9 +931,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Roslyn may optimize MoveNext() by copying fields from the iterator class into local variables
 			// at the beginning of MoveNext(). Undo this optimization.
 			context.StepStartGroup("PropagateCopiesOfFields");
-			var mutableFields = Enumerable.ToHashSet(body.Descendants.OfType<LdFlda>()
+			var mutableFields = body.Descendants.OfType<LdFlda>()
 				.Where(static ldflda => ldflda.Parent.OpCode != OpCode.LdObj)
-				.Select(static ldflda => ldflda.Field));
+				.Select(static ldflda => ldflda.Field)
+				.ToHashSet();
 			for (int i = 0; i < body.EntryPoint.Instructions.Count; i++)
 			{
 				if (body.EntryPoint.Instructions[i] is StLoc store
@@ -1352,7 +1351,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					finallyBlock = decompiledMethod.function.Body;
 					var vars = decompiledMethod.function.Variables.ToArray();
 					decompiledMethod.function.Variables.Clear();
-					CollectionExtensions.AddRange(iteratorFunction.Variables, vars);
+					iteratorFunction.Variables.AddRange(vars);
 				}
 				else
 				{

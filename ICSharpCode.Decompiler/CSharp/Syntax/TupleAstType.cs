@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class TupleAstType : AstType
+	public sealed class TupleAstType : AstType
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new("Element", TupleTypeElement.Null);
 
@@ -67,12 +67,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public string Name {
 			get { return GetChildByRole(Roles.Identifier).Name; }
-			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
+			init { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
 
 		public Identifier NameToken {

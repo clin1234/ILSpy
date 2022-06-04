@@ -1161,7 +1161,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#endregion
 	}
 
-	public class NullableLiftingStatementTransform : IStatementTransform
+	public sealed class NullableLiftingStatementTransform : IStatementTransform
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{

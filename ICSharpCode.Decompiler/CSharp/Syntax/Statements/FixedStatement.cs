@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// fixed (Type Variables) EmbeddedStatement
 	/// </summary>
-	public class FixedStatement : Statement
+	public sealed class FixedStatement : Statement
 	{
 		public static readonly TokenRole FixedKeywordRole = new("fixed");
 
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public AstNodeCollection<VariableInitializer> Variables {

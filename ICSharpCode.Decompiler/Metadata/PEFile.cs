@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	/// decompiled type systems.
 	/// </remarks>
 	[DebuggerDisplay("{" + nameof(FileName) + "}")]
-	public class PEFile : IDisposable, IModuleReference
+	public sealed class PEFile : IDisposable, IModuleReference
 	{
 		ImmutableArray<AssemblyReference> assemblyReferences;
 
@@ -94,10 +94,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				var value = LazyInit.VolatileRead(ref name);
 				if (value == null)
 				{
-					var metadata = Metadata;
-					value = metadata.IsAssembly
-						? metadata.GetString(metadata.GetAssemblyDefinition().Name)
-						: metadata.GetString(metadata.GetModuleDefinition().Name);
+					value = Metadata.IsAssembly
+						? Metadata.GetString(Metadata.GetAssemblyDefinition().Name)
+						: Metadata.GetString(Metadata.GetModuleDefinition().Name);
 					value = LazyInit.GetOrSet(ref name, value);
 				}
 
@@ -110,8 +109,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				var value = LazyInit.VolatileRead(ref fullName);
 				if (value == null)
 				{
-					var metadata = Metadata;
-					value = metadata.IsAssembly ? metadata.GetFullAssemblyName() : Name;
+					value = Metadata.IsAssembly ? Metadata.GetFullAssemblyName() : Name;
 					value = LazyInit.GetOrSet(ref fullName, value);
 				}
 
@@ -157,7 +155,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public TargetRuntime GetRuntime()
 		{
 			string version = Metadata.MetadataVersion;
-			if (version == null || version.Length <= 1)
+			if (version is not { Length: > 1 })
 				return TargetRuntime.Unknown;
 			switch (version[1])
 			{
@@ -179,11 +177,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		IEnumerable<Resource> GetResources()
 		{
-			var metadata = Metadata;
-			foreach (var h in metadata.ManifestResources)
-			{
-				yield return new MetadataResource(this, h);
-			}
+			return Metadata.ManifestResources.Select(h => new MetadataResource(this, h));
 		}
 
 		/// <summary>
@@ -249,7 +243,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return new PEFileWithOptions(this, options);
 		}
 
-		private class PEFileWithOptions : IModuleReference
+		private sealed class PEFileWithOptions : IModuleReference
 		{
 			readonly TypeSystemOptions options;
 			readonly PEFile peFile;

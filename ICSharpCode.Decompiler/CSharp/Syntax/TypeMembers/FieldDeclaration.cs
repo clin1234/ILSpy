@@ -31,7 +31,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class FieldDeclaration : EntityDeclaration
+	public sealed class FieldDeclaration : EntityDeclaration
 	{
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }

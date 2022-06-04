@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Expression is Type
 	/// </summary>
-	public class IsExpression : Expression
+	public sealed class IsExpression : Expression
 	{
 		public static readonly TokenRole IsKeywordRole = new("is");
 
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode IsToken {
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 

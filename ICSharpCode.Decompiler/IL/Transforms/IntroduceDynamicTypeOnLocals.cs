@@ -21,7 +21,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public class IntroduceDynamicTypeOnLocals : IILTransform
+	public sealed class IntroduceDynamicTypeOnLocals : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

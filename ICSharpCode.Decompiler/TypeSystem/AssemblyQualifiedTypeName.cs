@@ -20,7 +20,7 @@ using System;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	public struct AssemblyQualifiedTypeName : IEquatable<AssemblyQualifiedTypeName>
+	public readonly struct AssemblyQualifiedTypeName : IEquatable<AssemblyQualifiedTypeName>
 	{
 		public readonly string AssemblyName;
 		public readonly FullTypeName TypeName;
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (string.IsNullOrEmpty(AssemblyName))
 				return TypeName.ToString();
 			else
-				return TypeName.ToString() + ", " + AssemblyName;
+				return TypeName + ", " + AssemblyName;
 		}
 
 		public override bool Equals(object obj)

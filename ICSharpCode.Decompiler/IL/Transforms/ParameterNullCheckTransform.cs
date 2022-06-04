@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Implements transforming &lt;PrivateImplementationDetails&gt;.ThrowIfNull(name, "name"); 
 	/// </summary>
-	class ParameterNullCheckTransform : IILTransform
+	sealed class ParameterNullCheckTransform : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -42,9 +42,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// In order to support both patterns, we scan all instructions,
 			// if the current function is decorated with a state-machine attribute.
 			bool scanFullBlock = function.Method != null
-				&& (function.Method.HasAttribute(KnownAttribute.IteratorStateMachine)
-					|| function.Method.HasAttribute(KnownAttribute.AsyncIteratorStateMachine)
-					|| function.Method.HasAttribute(KnownAttribute.AsyncStateMachine));
+			                     && (function.Method.HasAttribute(KnownAttribute.IteratorStateMachine)
+			                         || function.Method.HasAttribute(KnownAttribute.AsyncIteratorStateMachine)
+			                         || function.Method.HasAttribute(KnownAttribute.AsyncStateMachine));
 			// loop over all instructions
 			while (index < entryPoint.Instructions.Count)
 			{
@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					}
 				}
+
 				// remove the call to ThrowIfNull
 				entryPoint.Instructions.RemoveAt(index);
 				// remember to generate !! when producing the final output.
@@ -71,7 +72,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		// call <PrivateImplementationDetails>.ThrowIfNull(ldloc parameterVariable, ldstr "parameterVariable")
-		private bool MatchThrowIfNullCall(ILInstruction instruction, [NotNullWhen(true)] out ILVariable? parameterVariable)
+		private bool MatchThrowIfNullCall(ILInstruction instruction,
+			[NotNullWhen(true)] out ILVariable? parameterVariable)
 		{
 			parameterVariable = null;
 			if (instruction is not Call call)
@@ -80,7 +82,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!call.Method.IsStatic || !call.Method.FullNameIs("<PrivateImplementationDetails>", "ThrowIfNull"))
 				return false;
-			if (!(call.Arguments[0].MatchLdLoc(out parameterVariable) && parameterVariable.Kind == VariableKind.Parameter))
+			if (!(call.Arguments[0].MatchLdLoc(out parameterVariable) &&
+			      parameterVariable.Kind == VariableKind.Parameter))
 				return false;
 			return true;
 		}

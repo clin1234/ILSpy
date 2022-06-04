@@ -165,16 +165,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (constantValueInSignatureState == ThreeState.Unknown)
 				{
-					if (IsDecimalConstant)
-					{
-						constantValueInSignatureState =
-							ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module));
-					}
-					else
-					{
-						constantValueInSignatureState =
-							ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
-					}
+					constantValueInSignatureState = IsDecimalConstant
+						? ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module))
+						: ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
 				}
 
 				return constantValueInSignatureState == ThreeState.True;

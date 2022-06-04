@@ -49,21 +49,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
-			if (type.OwnerType == SymbolKind.Method && ReplaceMethodTypeParametersWithDummy)
+			switch (type.OwnerType)
 			{
-				return DummyTypeParameter.GetMethodTypeParameter(type.Index);
-			}
-			else if (type.OwnerType == SymbolKind.TypeDefinition && ReplaceClassTypeParametersWithDummy)
-			{
-				return DummyTypeParameter.GetClassTypeParameter(type.Index);
-			}
-			else if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp)
-			{
-				return natp.TypeWithoutAnnotation.AcceptVisitor(this);
-			}
-			else
-			{
-				return base.VisitTypeParameter(type);
+				case SymbolKind.Method when ReplaceMethodTypeParametersWithDummy:
+					return DummyTypeParameter.GetMethodTypeParameter(type.Index);
+				case SymbolKind.TypeDefinition when ReplaceClassTypeParametersWithDummy:
+					return DummyTypeParameter.GetClassTypeParameter(type.Index);
+				default:
+				{
+					if (RemoveNullability && type is NullabilityAnnotatedTypeParameter natp)
+					{
+						return natp.TypeWithoutAnnotation.AcceptVisitor(this);
+					}
+
+					return base.VisitTypeParameter(type);
+				}
 			}
 		}
 

@@ -9,7 +9,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// Represents win32 resources
 	/// </summary>
-	public static class Win32Resources
+	internal static class Win32Resources
 	{
 		/// <summary>
 		/// Reads win32 resource root directory
@@ -69,10 +69,6 @@ namespace ICSharpCode.Decompiler.Util
 		internal unsafe Win32ResourceDirectory(PEReader pe, byte* pRoot, int offset, Win32ResourceName name)
 		{
 			var p = (IMAGE_RESOURCE_DIRECTORY*)(pRoot + offset);
-			Characteristics = p->Characteristics;
-			TimeDateStamp = p->TimeDateStamp;
-			MajorVersion = p->MajorVersion;
-			MinorVersion = p->MinorVersion;
 			NumberOfNamedEntries = p->NumberOfNamedEntries;
 			NumberOfIdEntries = p->NumberOfIdEntries;
 
@@ -97,13 +93,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public IList<Win32ResourceDirectory> Directories { get; }
 
-		public IList<Win32ResourceData> Datas { get; }
-
-		static unsafe string ReadString(byte* pRoot, int offset)
-		{
-			var pString = (IMAGE_RESOURCE_DIRECTORY_STRING*)(pRoot + offset);
-			return new string(pString->NameString, 0, pString->Length);
-		}
+		private IList<Win32ResourceData> Datas { get; }
 
 		public Win32ResourceDirectory? FindDirectory(Win32ResourceName name)
 		{
@@ -139,12 +129,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		#region Structure
 
-		public uint Characteristics { get; }
-		public uint TimeDateStamp { get; }
-		public ushort MajorVersion { get; }
-		public ushort MinorVersion { get; }
-		public ushort NumberOfNamedEntries { get; }
-		public ushort NumberOfIdEntries { get; }
+		private ushort NumberOfNamedEntries { get; }
+		private ushort NumberOfIdEntries { get; }
 
 		#endregion
 	}
@@ -159,8 +145,6 @@ namespace ICSharpCode.Decompiler.Util
 			var p = (IMAGE_RESOURCE_DATA_ENTRY*)(pRoot + offset);
 			OffsetToData = p->OffsetToData;
 			Size = p->Size;
-			CodePage = p->CodePage;
-			Reserved = p->Reserved;
 
 			_pointer = pe.GetSectionData((int)OffsetToData).Pointer;
 			Name = name;
@@ -179,10 +163,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		#region Structure
 
-		public uint OffsetToData { get; }
-		public uint Size { get; }
-		public uint CodePage { get; }
-		public uint Reserved { get; }
+		private uint OffsetToData { get; }
+		private uint Size { get; }
 
 		#endregion
 	}
@@ -191,7 +173,7 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		private readonly object _name;
 
-		public Win32ResourceName(string name)
+		internal Win32ResourceName(string name)
 		{
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 		}
@@ -218,23 +200,23 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		public bool HasName => _name is string;
+		internal bool HasName => _name is string;
 
-		public bool HasId => _name is ushort;
+		private bool HasId => _name is ushort;
 
-		public string Name => (string)_name;
+		internal string Name => (string)_name;
 
-		public ushort Id => (ushort)_name;
+		private ushort Id => (ushort)_name;
 
 		public static bool operator ==(Win32ResourceName x, Win32ResourceName y)
 		{
 			if (x.HasName)
 			{
-				return y.HasName ? string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) == 0 : false;
+				return y.HasName && string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) == 0;
 			}
 			else
 			{
-				return y.HasId ? x.Id == y.Id : false;
+				return y.HasId && x.Id == y.Id;
 			}
 		}
 

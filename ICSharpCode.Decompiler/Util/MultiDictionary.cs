@@ -25,18 +25,13 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// A dictionary that allows multiple pairs with the same key.
 	/// </summary>
-	public class MultiDictionary<TKey, TValue> : ILookup<TKey, TValue> where TKey : notnull
+	internal sealed class MultiDictionary<TKey, TValue> : ILookup<TKey, TValue> where TKey : notnull
 	{
 		readonly Dictionary<TKey, List<TValue>> dict;
 
 		public MultiDictionary()
 		{
 			dict = new Dictionary<TKey, List<TValue>>();
-		}
-
-		public MultiDictionary(IEqualityComparer<TKey>? comparer)
-		{
-			dict = new Dictionary<TKey, List<TValue>>(comparer);
 		}
 
 		public IReadOnlyList<TValue> this[TKey key] {
@@ -46,14 +41,6 @@ namespace ICSharpCode.Decompiler.Util
 				else
 					return EmptyList<TValue>.Instance;
 			}
-		}
-
-		public ICollection<TKey> Keys {
-			get { return dict.Keys; }
-		}
-
-		public IEnumerable<TValue> Values {
-			get { return dict.Values.SelectMany(list => list); }
 		}
 
 		/// <summary>

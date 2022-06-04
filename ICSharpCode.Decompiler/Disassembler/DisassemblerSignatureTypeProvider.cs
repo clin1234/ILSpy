@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public class
+	internal sealed class
 		DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, MetadataGenericContext>
 	{
 		readonly MetadataReader metadata;
@@ -140,10 +140,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			return syntax => {
 				unmodifiedType(syntax);
-				if (isRequired)
-					output.Write(" modreq");
-				else
-					output.Write(" modopt");
+				output.Write(isRequired ? " modreq" : " modopt");
 				output.Write('(');
 				modifier(ILNameSyntax.TypeName);
 				output.Write(')');
@@ -266,10 +263,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			else
 			{
 				var param = metadata.GetGenericParameter(paramRef);
-				if (param.Name.IsNil)
-					output.Write(param.Index.ToString());
-				else
-					output.Write(DisassemblerHelpers.Escape(metadata.GetString(param.Name)));
+				output.Write(param.Name.IsNil
+					? param.Index.ToString()
+					: DisassemblerHelpers.Escape(metadata.GetString(param.Name)));
 			}
 		}
 	}

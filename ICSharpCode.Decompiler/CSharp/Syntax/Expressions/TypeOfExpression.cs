@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// typeof(Type)
 	/// </summary>
-	public class TypeOfExpression : Expression
+	public sealed class TypeOfExpression : Expression
 	{
 		public static readonly TokenRole TypeofKeywordRole = new("typeof");
 

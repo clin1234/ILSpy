@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// This isn't the same as 'assign' even though it has the same syntax.
 	/// This expression is used in object initializers and for named attribute arguments [Attr(FieldName = value)].
 	/// </summary>
-	public class NamedExpression : Expression
+	public sealed class NamedExpression : Expression
 	{
 		public NamedExpression()
 		{
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

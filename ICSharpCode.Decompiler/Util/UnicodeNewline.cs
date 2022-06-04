@@ -121,16 +121,16 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name="nextChar">A callback getting the next character (may be null).</param>
 		public static int GetDelimiterLength(char curChar, Func<char>? nextChar = null)
 		{
-			if (curChar == CR)
+			switch (curChar)
 			{
-				if (nextChar != null && nextChar() == LF)
+				case CR when nextChar != null && nextChar() == LF:
 					return 2;
-				return 1;
+				case CR:
+				case LF or NEL or VT or FF or LS or PS:
+					return 1;
+				default:
+					return 0;
 			}
-
-			if (curChar is LF or NEL or VT or FF or LS or PS)
-				return 1;
-			return 0;
 		}
 
 		/// <summary>
@@ -141,16 +141,16 @@ namespace ICSharpCode.Decompiler.Util
 		/// <param name="nextChar">The next character (if != LF then length will always be 0 or 1).</param>
 		public static int GetDelimiterLength(char curChar, char nextChar)
 		{
-			if (curChar == CR)
+			switch (curChar)
 			{
-				if (nextChar == LF)
+				case CR when nextChar == LF:
 					return 2;
-				return 1;
+				case CR:
+				case LF or NEL or VT or FF or LS or PS:
+					return 1;
+				default:
+					return 0;
 			}
-
-			if (curChar is LF or NEL or VT or FF or LS or PS)
-				return 1;
-			return 0;
 		}
 
 

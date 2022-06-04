@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents an unknown member.
 	/// </summary>
-	public class UnknownMemberResolveResult : ResolveResult
+	internal class UnknownMemberResolveResult : ResolveResult
 	{
 		public UnknownMemberResolveResult(IType targetType, string memberName, IEnumerable<IType> typeArguments)
 			: base(SpecialType.UnknownType)
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents an unknown method.
 	/// </summary>
-	public class UnknownMethodResolveResult : UnknownMemberResolveResult
+	internal sealed class UnknownMethodResolveResult : UnknownMemberResolveResult
 	{
 		public UnknownMethodResolveResult(IType targetType, string methodName, IEnumerable<IType> typeArguments,
 			IEnumerable<IParameter> parameters)
@@ -76,18 +76,15 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents an unknown identifier.
 	/// </summary>
-	public class UnknownIdentifierResolveResult : ResolveResult
+	internal sealed class UnknownIdentifierResolveResult : ResolveResult
 	{
 		public UnknownIdentifierResolveResult(string identifier, int typeArgumentCount = 0)
 			: base(SpecialType.UnknownType)
 		{
 			this.Identifier = identifier;
-			this.TypeArgumentCount = typeArgumentCount;
 		}
 
 		public string Identifier { get; }
-
-		public int TypeArgumentCount { get; }
 
 		public override bool IsError {
 			get { return true; }

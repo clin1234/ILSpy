@@ -48,10 +48,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		static readonly Lazy<(bool longPathsEnabled, int maxPathLength, int maxSegmentLength)> longPathSupport =
 			new(GetLongPathSupport, isThreadSafe: true);
 
-		readonly IProjectFileWriter projectWriter;
-
 		// per-run members
-		HashSet<string> directories = new(Platform.FileNameComparer);
+		readonly HashSet<string> directories = new(Platform.FileNameComparer);
+		readonly IProjectFileWriter projectWriter;
 
 		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
 			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null,
@@ -361,13 +360,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 
-		public IProgress<DecompilationProgress> ProgressIndicator { get; set; }
+		public IProgress<DecompilationProgress> ProgressIndicator { get; init; }
 
 		#endregion
 
 		#region WriteCodeFilesInProject
 
-		protected virtual bool IncludeTypeWhenDecompilingProject(PEFile module, TypeDefinitionHandle type)
+		protected bool IncludeTypeWhenDecompilingProject(PEFile module, TypeDefinitionHandle type)
 		{
 			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
@@ -470,9 +469,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		#region WriteResourceFilesInProject
 
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(PEFile module)
+		protected IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(PEFile module)
 		{
-			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
+			foreach (var r in module.Resources.Where(static r => r.ResourceType == ResourceType.Embedded))
 			{
 				Stream stream = r.TryOpenStream();
 				stream.Position = 0;
@@ -499,7 +498,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
 								individualResources.AddRange(
-									WriteResourceToFile(fileName, name, entryStream));
+									WriteResourceToFile(fileName, entryStream));
 							}
 
 							decodedIntoIndividualFiles = true;
@@ -529,7 +528,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					{
 						stream.Position = 0;
 						string fileName = GetFileNameForResource(r.Name);
-						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream))
+						foreach (var entry in WriteResourceToFile(fileName, stream))
 						{
 							yield return entry;
 						}
@@ -550,8 +549,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName,
-			string resourceName, Stream entryStream)
+		private IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, Stream entryStream)
 		{
 			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
@@ -618,8 +616,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		#region WriteMiscellaneousFilesInProject
 
-		protected virtual IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(
-			PEFile module)
+		protected IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
 		{
 			var resources = module.Reader.ReadWin32Resources();
 			if (resources == null)
@@ -701,9 +698,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		[StructLayout(LayoutKind.Sequential, Pack = 2)]
 		unsafe struct GRPICONDIR
 		{
-			public ushort idReserved;
-			public ushort idType;
-			public ushort idCount;
+			public readonly ushort idReserved;
+			public readonly ushort idType;
+			public readonly ushort idCount;
 			private fixed byte _idEntries[1];
 
 			[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
@@ -719,19 +716,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		[StructLayout(LayoutKind.Sequential, Pack = 2)]
 		struct GRPICONDIRENTRY
 		{
-			public byte bWidth;
-			public byte bHeight;
-			public byte bColorCount;
-			public byte bReserved;
-			public ushort wPlanes;
-			public ushort wBitCount;
-			public uint dwBytesInRes;
-			public short nID;
+			public readonly byte bWidth;
+			public readonly byte bHeight;
+			public readonly byte bColorCount;
+			public readonly byte bReserved;
+			public readonly ushort wPlanes;
+			public readonly ushort wBitCount;
+			public readonly uint dwBytesInRes;
+			public readonly short nID;
 		};
 
 		const int RT_MANIFEST = 24;
 
-		static unsafe byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
+		static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
 		{
 			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
 		}
@@ -755,9 +752,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			           appManifest[2] == 0xBF;
 			string s = Encoding.UTF8.GetString(appManifest, bom ? 3 : 0, appManifest.Length - (bom ? 3 : 0));
 			var sb = new StringBuilder(s.Length);
-			for (int i = 0; i < s.Length; i++)
+			foreach (var c in s)
 			{
-				char c = s[i];
 				switch (c)
 				{
 					case '\t':

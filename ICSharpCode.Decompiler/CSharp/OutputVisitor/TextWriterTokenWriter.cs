@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Writes C# code into a TextWriter.
 	/// </summary>
-	public class TextWriterTokenWriter : TokenWriter, ILocatable
+	public sealed class TextWriterTokenWriter : TokenWriter, ILocatable
 	{
 		readonly TextWriter textWriter;
 		bool isAtStartOfLine = true;
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int Indentation { get; set; }
 
-		public string IndentationString { get; set; }
+		public string IndentationString { get; init; }
 
 		public TextLocation Location {
 			get { return new TextLocation(line, column + (needsIndent ? Indentation * IndentationString.Length : 0)); }
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			textWriter.Write(' ');
 		}
 
-		protected void WriteIndentation()
+		private void WriteIndentation()
 		{
 			if (needsIndent)
 			{
@@ -538,12 +538,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				{
 					if (char.IsSurrogatePair(identifier, i))
 					{
-						sb.AppendFormat("\\U{0:x8}", char.ConvertToUtf32(identifier, i));
+						sb.Append($"\\U{char.ConvertToUtf32(identifier, i):x8}");
 						i++;
 					}
 					else
 					{
-						sb.AppendFormat("\\u{0:x4}", (int)identifier[i]);
+						sb.Append($"\\u{(int)identifier[i]:x4}");
 					}
 				}
 			}

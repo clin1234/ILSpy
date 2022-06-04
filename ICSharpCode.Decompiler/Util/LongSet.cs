@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// An immutable set of longs, that is implemented as a list of intervals.
 	/// </summary>
-	public struct LongSet : IEquatable<LongSet>
+	public readonly struct LongSet : IEquatable<LongSet>
 	{
 		/// <summary>
 		/// The intervals in this set of longs.
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// 
 		/// This invariant ensures every LongSet is always in a normalized representation.
 		/// </remarks>
-		public readonly ImmutableArray<LongInterval> Intervals;
+		internal readonly ImmutableArray<LongInterval> Intervals;
 
 		private LongSet(ImmutableArray<LongInterval> intervals)
 		{
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Create a new LongSet that contains a single value.
 		/// </summary>
-		public LongSet(long value)
+		internal LongSet(long value)
 			: this(ImmutableArray.Create(LongInterval.Inclusive(value, value)))
 		{
 		}
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Create a new LongSet that contains the values from the interval.
 		/// </summary>
-		public LongSet(LongInterval interval)
+		internal LongSet(LongInterval interval)
 			: this(interval.IsEmpty ? Empty.Intervals : ImmutableArray.Create(interval))
 		{
 		}
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Creates a new LongSet the contains the values from the specified intervals.
 		/// </summary>
-		public LongSet(IEnumerable<LongInterval> intervals)
+		internal LongSet(IEnumerable<LongInterval> intervals)
 			: this(MergeOverlapping(intervals.Where(i => !i.IsEmpty).OrderBy(i => i.Start)).ToImmutableArray())
 		{
 		}
@@ -179,15 +179,7 @@ namespace ICSharpCode.Decompiler.Util
 				if (!empty && element.Start <= end)
 				{
 					// element overlaps or touches [start, end), so combine the intervals:
-					if (element.End == long.MinValue)
-					{
-						// special case: element goes all the way up to long.MaxValue inclusive
-						end = long.MinValue;
-					}
-					else
-					{
-						end = Math.Max(end, element.End);
-					}
+					end = element.End == long.MinValue ? long.MinValue : Math.Max(end, element.End);
 				}
 				else
 				{
@@ -382,17 +374,21 @@ namespace ICSharpCode.Decompiler.Util
 			return SetEquals(other);
 		}
 
-		public bool SetEquals(LongSet other)
+		internal bool SetEquals(LongSet other)
 		{
 			if (Intervals.Length != other.Intervals.Length)
 				return false;
-			for (int i = 0; i < Intervals.Length; i++)
-			{
-				if (Intervals[i] != other.Intervals[i])
-					return false;
-			}
+			return !Intervals.Where((t, i) => t != other.Intervals[i]).Any();
+		}
 
-			return true;
+		public static bool operator ==(LongSet left, LongSet right)
+		{
+			return left.SetEquals(right);
+		}
+
+		public static bool operator !=(LongSet left, LongSet right)
+		{
+			return !(left == right);
 		}
 
 		#endregion

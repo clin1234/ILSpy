@@ -24,8 +24,6 @@ using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	using HashtableInitializer =
@@ -35,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Detects switch-on-string patterns employed by the C# compiler and transforms them to an ILAst-switch-instruction.
 	/// </summary>
-	public class SwitchOnStringTransform : IILTransform
+	public sealed class SwitchOnStringTransform : IILTransform
 	{
 		ILTransformContext context;
 
@@ -350,9 +348,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			int offset = firstBlock == null ? 1 : 0;
-			var sections = new List<SwitchSection>(CollectionExtensions.SelectWithIndex(values.Skip(offset),
-				(index, s) => new SwitchSection
-					{ Labels = new LongSet(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
+			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection
+				{ Labels = new LongSet(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
 			sections.Add(new SwitchSection {
 				Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(),
 				Body = currentCaseBlock != null
@@ -479,15 +476,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				values.Add((null, new Branch(defaultOrNullBlock)));
 			}
 
-			var sections = new List<SwitchSection>(CollectionExtensions.SelectWithIndex(values, static (index, b) =>
+			var sections = new List<SwitchSection>(values.SelectWithIndex(static (index, b) =>
 				new SwitchSection { Labels = new LongSet(index), Body = b.Item2 }));
 			sections.Add(new SwitchSection {
 				Labels = new LongSet(new LongInterval(0,
 					sections.Count)).Invert(),
 				Body = new Branch(currentCaseBlock)
 			});
-			var stringToInt = new StringToInt(switchValue,
-				CollectionExtensions.SelectArray(values, static item => item.Item1));
+			var stringToInt = new StringToInt(switchValue, values.SelectArray(static item => item.Item1));
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 
@@ -751,8 +747,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			bool HasLabel(SwitchSection section)
 			{
-				return section.Labels.Values.Any(i =>
-					CollectionExtensions.Any(stringValues, value => i == value.Item2));
+				return section.Labels.Values.Any(i => stringValues.Any(value => i == value.Item2));
 			}
 
 			// Pick the section with the most labels as default section.
@@ -1101,7 +1096,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			var stringValues = new List<(string Value, ILInstruction TargetBlockOrLeave)>();
-			SwitchSection defaultSection = Enumerable.MaxBy(switchInst.Sections, s => s.Labels.Count());
+			SwitchSection defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
 			if (!(defaultSection.Body.MatchBranch(out Block exitOrDefaultBlock) ||
 			      defaultSection.Body.MatchLeave(out _)))
 				return false;
@@ -1145,8 +1140,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// In newer Roslyn versions (>=3.7) the null check appears in the default case, not prior to the switch.
-			if (!CollectionExtensions.Any(stringValues, pair => pair.Value == null) &&
-			    IsNullCheckInDefaultBlock(ref exitOrDefaultBlock, switchValueLoad.Variable, out nullValueCaseBlock))
+			if (!stringValues.Any(pair => pair.Value == null) && IsNullCheckInDefaultBlock(ref exitOrDefaultBlock,
+				    switchValueLoad.Variable, out nullValueCaseBlock))
 			{
 				stringValues.Add((null, nullValueCaseBlock));
 			}
@@ -1229,8 +1224,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var defaultLabel = new LongSet(new LongInterval(0, stringValues.Count)).Invert();
 				var values = new string[stringValues.Count];
 				var sections = new SwitchSection[stringValues.Count];
-				foreach ((int idx, (string value, ILInstruction bodyInstruction)) in CollectionExtensions.WithIndex(
-					         stringValues))
+				foreach ((int idx, (string value, ILInstruction bodyInstruction)) in stringValues.WithIndex())
 				{
 					values[idx] = value;
 					var body = bodyInstruction is Block b ? new Branch(b) : bodyInstruction;

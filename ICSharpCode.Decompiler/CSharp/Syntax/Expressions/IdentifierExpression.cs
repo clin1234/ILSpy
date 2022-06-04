@@ -26,7 +26,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class IdentifierExpression : Expression
+	public sealed class IdentifierExpression : Expression
 	{
 		public IdentifierExpression()
 		{
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			set {
+			init {
 				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
 			}
 		}

@@ -25,13 +25,12 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpyX.Extensions
 {
-	public static class CollectionExtensions
+	internal static class CollectionExtensions
 	{
 		public static void AddRange<T>(this ICollection<T> list, IEnumerable<T> items)
 		{
-			foreach (T item in items)
-				if (!list.Contains(item))
-					list.Add(item);
+			foreach (var item in items.Where(item => !list.Contains(item)))
+				list.Add(item);
 		}
 
 		public static T? PeekOrDefault<T>(this Stack<T> stack)
@@ -41,7 +40,7 @@ namespace ICSharpCode.ILSpyX.Extensions
 			return stack.Peek();
 		}
 
-		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
+		private static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
 		{
 			ArgumentNullException.ThrowIfNull(list);
 			if (start < 0 || start >= list.Count)
@@ -55,12 +54,17 @@ namespace ICSharpCode.ILSpyX.Extensions
 			{
 				int pivot = (start + end) / 2;
 				int result = comparer.Compare(item, list[pivot]);
-				if (result == 0)
-					return pivot;
-				if (result < 0)
-					end = pivot - 1;
-				else
-					start = pivot + 1;
+				switch (result)
+				{
+					case 0:
+						return pivot;
+					case < 0:
+						end = pivot - 1;
+						break;
+					default:
+						start = pivot + 1;
+						break;
+				}
 			}
 
 			return ~start;
@@ -80,12 +84,17 @@ namespace ICSharpCode.ILSpyX.Extensions
 				int m = (start + end) / 2;
 				TKey key = keySelector(instance[m]);
 				int result = key.CompareTo(itemKey);
-				if (result == 0)
-					return m;
-				if (result < 0)
-					start = m + 1;
-				else
-					end = m - 1;
+				switch (result)
+				{
+					case 0:
+						return m;
+					case < 0:
+						start = m + 1;
+						break;
+					default:
+						end = m - 1;
+						break;
+				}
 			}
 
 			return ~start;

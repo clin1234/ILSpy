@@ -58,22 +58,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Parameter class holding various arguments for <see cref="IStatementTransform.Run"/>.
 	/// </summary>
-	public class StatementTransformContext : ILTransformContext
+	public sealed class StatementTransformContext : ILTransformContext
 	{
-		public BlockTransformContext BlockContext { get; }
+		internal bool rerunCurrentPosition;
+		internal int? rerunPosition;
 
 		public StatementTransformContext(BlockTransformContext blockContext) : base(blockContext)
 		{
 			this.BlockContext = blockContext ?? throw new ArgumentNullException(nameof(blockContext));
 		}
 
+		public BlockTransformContext BlockContext { get; }
+
 		/// <summary>
 		/// Gets the block on which the transform is running.
 		/// </summary>
 		public Block Block => BlockContext.Block;
-
-		internal bool rerunCurrentPosition;
-		internal int? rerunPosition;
 
 		/// <summary>
 		/// After the current statement transform has completed,
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Block transform that runs a list of statement transforms.
 	/// </summary>
-	public class StatementTransform : IBlockTransform
+	public sealed class StatementTransform : IBlockTransform
 	{
 		readonly IStatementTransform[] children;
 
@@ -131,6 +131,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(pos == ctx.rerunPosition);
 					ctx.rerunPosition = null;
 				}
+
 				foreach (var transform in children)
 				{
 					transform.Run(block, pos, ctx);
@@ -149,16 +150,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						ctx.rerunCurrentPosition = false;
 						ctx.RequestRerun(pos);
 					}
+
 					if (ctx.rerunPosition != null)
 					{
 						break;
 					}
 				}
+
 				if (ctx.rerunPosition == null)
 				{
 					pos--;
 				}
 			}
+
 			// This invariant can be surprisingly expensive to check if the block has thousands
 			// of instructions and is frequently modified by transforms (invalidating the flags each time)
 			// so we'll check this only once at the end of the block.

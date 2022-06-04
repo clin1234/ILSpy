@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ;
 	/// </summary>
-	public class EmptyStatement : Statement
+	public sealed class EmptyStatement : Statement
 	{
 		public TextLocation Location {
 			get;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is EmptyStatement o;
+			return other is EmptyStatement;
 		}
 	}
 }

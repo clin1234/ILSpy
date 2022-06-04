@@ -27,7 +27,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class VariableDeclarationStatement : Statement
+	public sealed class VariableDeclarationStatement : Statement
 	{
 		public static readonly Role<CSharpModifierToken> ModifierRole = EntityDeclaration.ModifierRole;
 
@@ -43,12 +43,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Modifiers Modifiers {
 			get { return EntityDeclaration.GetModifiers(this); }
-			set { EntityDeclaration.SetModifiers(this, value); }
+			init { EntityDeclaration.SetModifiers(this, value); }
 		}
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public AstNodeCollection<VariableInitializer> Variables {

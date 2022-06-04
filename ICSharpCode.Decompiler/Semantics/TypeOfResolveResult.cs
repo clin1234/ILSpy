@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents the 'typeof'.
 	/// </summary>
-	public class TypeOfResolveResult : ResolveResult
+	public sealed class TypeOfResolveResult : ResolveResult
 	{
 		public TypeOfResolveResult(IType systemType, IType referencedType)
 			: base(systemType)

@@ -27,28 +27,16 @@ namespace ICSharpCode.Decompiler.Metadata
 	/// - the body (method) of a lambda.
 	/// - the MoveNext method of async/yield state machines.
 	/// </summary>
-	public class CodeMappingInfo
+	public sealed class CodeMappingInfo
 	{
-		/// <summary>
-		/// The module containing the code.
-		/// </summary>
-		public PEFile Module { get; }
-
-		/// <summary>
-		/// The (parent) TypeDef containing the code.
-		/// </summary>
-		public TypeDefinitionHandle TypeDefinition { get; }
-
-		readonly Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>> parts;
 		readonly Dictionary<MethodDefinitionHandle, MethodDefinitionHandle> parents;
+		readonly Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>> parts;
 
 		/// <summary>
 		/// Creates a <see cref="CodeMappingInfo"/> instance using the given <paramref name="module"/> and <paramref name="type"/>.
 		/// </summary>
-		public CodeMappingInfo(PEFile module, TypeDefinitionHandle type)
+		internal CodeMappingInfo(PEFile module, TypeDefinitionHandle type)
 		{
-			this.Module = module;
-			this.TypeDefinition = type;
 			this.parts = new Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>>();
 			this.parents = new Dictionary<MethodDefinitionHandle, MethodDefinitionHandle>();
 		}
@@ -58,7 +46,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// A method has at least one part, that is, the method itself.
 		/// If no parts are found, only the method itself is returned.
 		/// </summary>
-		public IEnumerable<MethodDefinitionHandle> GetMethodParts(MethodDefinitionHandle method)
+		internal IEnumerable<MethodDefinitionHandle> GetMethodParts(MethodDefinitionHandle method)
 		{
 			if (parts.TryGetValue(method, out var p))
 				return p;
@@ -81,7 +69,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <summary>
 		/// Adds a bidirectional mapping between <paramref name="parent"/> and <paramref name="part"/>.
 		/// </summary>
-		public void AddMapping(MethodDefinitionHandle parent, MethodDefinitionHandle part)
+		internal void AddMapping(MethodDefinitionHandle parent, MethodDefinitionHandle part)
 		{
 			//Debug.Print("Parent: " + MetadataTokens.GetRowNumber(parent) + " Part: " + MetadataTokens.GetRowNumber(part));
 			if (parents.ContainsKey(part))
@@ -92,6 +80,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				list = new List<MethodDefinitionHandle>();
 				parts.Add(parent, list);
 			}
+
 			list.Add(part);
 		}
 	}

@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider interningProvider)
+				InterningProvider interningProvider = null)
 			{
 				return SpecialType.UnknownType;
 			}
@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider interningProvider)
+				InterningProvider interningProvider = null)
 			{
 				throw new NotSupportedException();
 			}

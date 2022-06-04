@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Instances of this class are not thread-safe. Use separate instances to decompile multiple members in parallel.
 	/// (in particular, the transform instances are not thread-safe)
 	/// </remarks>
-	public class CSharpDecompiler
+	public sealed class CSharpDecompiler
 	{
 		static readonly Syntax.Attribute obsoleteAttributePattern = new() {
 			Type = new TypePattern(typeof(ObsoleteAttribute)),
@@ -64,13 +64,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		};
 
+		readonly List<IAstTransform> astTransforms = GetAstTransforms();
+
+		readonly List<IILTransform> ilTransforms = GetILTransforms();
 		readonly MetadataReader metadata;
 		readonly MetadataModule module;
 		readonly DecompilerSettings settings;
-
-		List<IAstTransform> astTransforms = GetAstTransforms();
-
-		List<IILTransform> ilTransforms = GetILTransforms();
 		SyntaxTree syntaxTree;
 
 		/// <summary>
@@ -444,17 +443,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Decompiles the whole module into a single syntax tree.
 		/// </summary>
-		public SyntaxTree DecompileWholeModuleAsSingleFile()
-		{
-			return DecompileWholeModuleAsSingleFile(false);
-		}
-
-		/// <summary>
-		/// Decompiles the whole module into a single syntax tree.
-		/// </summary>
 		/// <param name="sortTypes">If true, top-level-types are emitted sorted by namespace/name.
 		/// If false, types are emitted in metadata order.</param>
-		public SyntaxTree DecompileWholeModuleAsSingleFile(bool sortTypes)
+		public SyntaxTree DecompileWholeModuleAsSingleFile(bool sortTypes = false)
 		{
 			var decompilationContext = new SimpleTypeResolveContext(TypeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
@@ -512,7 +503,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			foreach (var method in td.GetMethods())
 			{
-				var parent = method;
 				var part = method;
 
 				var connectedMethods = new Queue<MethodDefinitionHandle>();
@@ -527,7 +517,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						continue;
 					try
 					{
-						ReadCodeMappingInfo(module, info, parent, part, connectedMethods, processedNestedTypes);
+						ReadCodeMappingInfo(module, info, method, part, connectedMethods, processedNestedTypes);
 					}
 					catch (BadImageFormatException)
 					{
@@ -615,7 +605,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 						if (token.IsNil)
 							continue;
-						TypeDefinitionHandle closureTypeHandle;
 						switch (token.Kind)
 						{
 							case HandleKind.MethodDefinition:
@@ -630,7 +619,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								var memberRef = module.Metadata.GetMemberReference((MemberReferenceHandle)token);
 								if (memberRef.GetKind() != MemberReferenceKind.Method)
 									continue;
-								closureTypeHandle = ExtractDeclaringType(memberRef);
+								TypeDefinitionHandle closureTypeHandle = ExtractDeclaringType(memberRef);
 								if (!closureTypeHandle.IsNil)
 								{
 									var closureType = module.Metadata.GetTypeDefinition(closureTypeHandle);
@@ -992,7 +981,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var forwardingCall = new InvocationExpression(new MemberReferenceExpression(
 						new ThisReferenceExpression(), memberDecl.Name,
 						methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name))),
-					methodDecl.Parameters.Select(p => ForwardParameter(p))
+					methodDecl.Parameters.Select(ForwardParameter)
 				);
 				if (m.ReturnType.IsKnownType(KnownTypeCode.Void))
 				{
@@ -1057,31 +1046,23 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					else
 					{
-						if (entity.SymbolKind == SymbolKind.Indexer)
+						switch (entity.SymbolKind)
 						{
 							// An indexer introduced in a class or struct hides all base class indexers with the same signature (parameter count and types).
-							if (baseType.GetProperties(p =>
-								    p.SymbolKind == SymbolKind.Indexer && lookup.IsAccessible(p, true))
-							    .Any(p => parameterListComparer.Equals(((IProperty)entity).Parameters, p.Parameters)))
-							{
-								return true;
-							}
-						}
-						else if (entity.SymbolKind == SymbolKind.Method)
-						{
+							case SymbolKind.Indexer when baseType.GetProperties(p =>
+									p.SymbolKind == SymbolKind.Indexer && lookup.IsAccessible(p, true))
+								.Any(p => parameterListComparer.Equals(((IProperty)entity).Parameters, p.Parameters)):
 							// A method introduced in a class or struct hides all non-method base class members with the same name, and all
 							// base class methods with the same signature (method name and parameter count, modifiers, and types).
-							if (baseType.GetMembers(m => m.SymbolKind != SymbolKind.Indexer
-							                             && m.SymbolKind != SymbolKind.Constructor
-							                             && m.SymbolKind != SymbolKind.Destructor
-							                             && m.Name == entity.Name && lookup.IsAccessible(m, true))
-							    .Any(m => m.SymbolKind != SymbolKind.Method ||
-							              (((IMethod)entity).TypeParameters.Count == ((IMethod)m).TypeParameters.Count
-							               && parameterListComparer.Equals(((IMethod)entity).Parameters,
-								               ((IMethod)m).Parameters))))
-							{
+							case SymbolKind.Method when baseType.GetMembers(m => m.SymbolKind != SymbolKind.Indexer
+									&& m.SymbolKind != SymbolKind.Constructor
+									&& m.SymbolKind != SymbolKind.Destructor
+									&& m.Name == entity.Name && lookup.IsAccessible(m, true))
+								.Any(m => m.SymbolKind != SymbolKind.Method ||
+								          (((IMethod)entity).TypeParameters.Count == ((IMethod)m).TypeParameters.Count
+								           && parameterListComparer.Equals(((IMethod)entity).Parameters,
+									           ((IMethod)m).Parameters))):
 								return true;
-							}
 						}
 					}
 				}
@@ -1090,7 +1071,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void FixParameterNames(EntityDeclaration entity)
+		static void FixParameterNames(EntityDeclaration entity)
 		{
 			int i = 0;
 			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter))
@@ -1332,22 +1313,21 @@ namespace ICSharpCode.Decompiler.CSharp
 						entityMap.Add(type, entityDecl);
 						break;
 					default:
-						throw new ArgumentOutOfRangeException("Unexpected member type");
+						throw new ArgumentOutOfRangeException(nameof(entity));
 				}
 
 				foreach (var node in entityDecl.Descendants)
 				{
 					var rr = node.GetResolveResult();
-					if (rr is MemberResolveResult mrr
-					    && mrr.Member.DeclaringTypeDefinition == typeDef
-					    && mrr.Member is not IMethod { IsLocalFunction: true })
+					switch (rr)
 					{
-						workList.Enqueue(mrr.Member);
-					}
-					else if (rr is TypeResolveResult trr
-					         && trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
-					{
-						workList.Enqueue(trr.Type.GetDefinition());
+						case MemberResolveResult mrr when mrr.Member.DeclaringTypeDefinition == typeDef &&
+						                                  mrr.Member is not IMethod { IsLocalFunction: true }:
+							workList.Enqueue(mrr.Member);
+							break;
+						case TypeResolveResult trr when trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef:
+							workList.Enqueue(trr.Type.GetDefinition());
+							break;
 					}
 				}
 			}
@@ -1643,15 +1623,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					body.Add(new YieldBreakStatement());
 				}
 
-				if (function.IsAsync)
-				{
-					RemoveAttribute(entityDecl, KnownAttribute.AsyncIteratorStateMachine);
-				}
-				else
-				{
-					RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
-				}
-
+				RemoveAttribute(entityDecl,
+					function.IsAsync ? KnownAttribute.AsyncIteratorStateMachine : KnownAttribute.IteratorStateMachine);
 				if (function.StateMachineCompiledWithMono)
 				{
 					RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
@@ -2085,7 +2058,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								foreach (var p in properties)
 								{
 									var pd = metadata.GetPropertyDefinition(p);
-									string name = metadata.GetString(pd.Name);
+									metadata.GetString(pd.Name);
 									if (!metadata.StringComparer.Equals(pd.Name, propertyName))
 										continue;
 									PropertyAccessors accessors = pd.GetAccessors();
@@ -2209,19 +2182,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Note! Technically COM interfaces could define property getters and setters out of order or interleaved with other
 				// methods, but C# doesn't support this so we can't define it that way.
 
-				if (member is IMethod)
-					return member.MetadataToken;
-				else if (member is IProperty property)
-					return property.Getter?.MetadataToken ?? property.Setter?.MetadataToken ?? property.MetadataToken;
-				else if (member is IEvent @event)
-					return @event.AddAccessor?.MetadataToken ?? @event.RemoveAccessor?.MetadataToken ??
-						@event.InvokeAccessor?.MetadataToken ?? @event.MetadataToken;
-				else
-					return member.MetadataToken;
+				return member switch {
+					IMethod => member.MetadataToken,
+					IProperty property => property.Getter?.MetadataToken ??
+					                      property.Setter?.MetadataToken ?? property.MetadataToken,
+					IEvent @event => @event.AddAccessor?.MetadataToken ?? @event.RemoveAccessor?.MetadataToken ??
+						@event.InvokeAccessor?.MetadataToken ?? @event.MetadataToken,
+					_ => member.MetadataToken
+				};
 			}
 
 			return typeDef.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
-				.OrderBy((member) => GetOrderingHandle(member), HandleComparer.Default);
+				.OrderBy(GetOrderingHandle, HandleComparer.Default);
 		}
 
 		#endregion

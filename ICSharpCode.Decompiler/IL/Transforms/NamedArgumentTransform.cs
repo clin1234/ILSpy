@@ -5,7 +5,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class NamedArgumentTransform : IStatementTransform
+	public sealed class NamedArgumentTransform : IStatementTransform
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var type = context.TypeSystem.FindType(arg.ResultType);
 			var v = context.Function.RegisterVariable(VariableKind.NamedArgument, type);
 			context.Step($"Introduce named argument '{v.Name}'", arg);
-			if (call.Parent is not Block namedArgBlock || namedArgBlock.Kind != BlockKind.CallWithNamedArgs)
+			if (call.Parent is not Block { Kind: BlockKind.CallWithNamedArgs } namedArgBlock)
 			{
 				// create namedArgBlock:
 				namedArgBlock = new Block(BlockKind.CallWithNamedArgs);

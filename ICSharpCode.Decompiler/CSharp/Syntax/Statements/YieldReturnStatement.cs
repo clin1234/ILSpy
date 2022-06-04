@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// yield return Expression;
 	/// </summary>
-	public class YieldReturnStatement : Statement
+	public sealed class YieldReturnStatement : Statement
 	{
 		public static readonly TokenRole YieldKeywordRole = new("yield");
 		public static readonly TokenRole ReturnKeywordRole = new("return");
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode SemicolonToken {

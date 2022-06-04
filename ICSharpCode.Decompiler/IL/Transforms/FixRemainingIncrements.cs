@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class FixRemainingIncrements : IILTransform
+	public sealed class FixRemainingIncrements : IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{

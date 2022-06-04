@@ -25,8 +25,8 @@ namespace ICSharpCode.ILSpyX.Search
 {
 	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
-		protected readonly ApiVisibility apiVisibility;
-		protected readonly ILanguage language;
+		private readonly ApiVisibility apiVisibility;
+		private readonly ILanguage language;
 
 		protected AbstractEntitySearchStrategy(ILanguage language, ApiVisibility apiVisibility,
 			SearchRequest searchRequest, IProducerConsumerCollection<SearchResult> resultQueue)
@@ -43,21 +43,17 @@ namespace ICSharpCode.ILSpyX.Search
 
 			do
 			{
-				if (apiVisibility == ApiVisibility.PublicOnly)
+				switch (apiVisibility)
 				{
-					if (entity.Accessibility is not (Accessibility.Public or Accessibility.Protected
-					    or Accessibility.ProtectedOrInternal))
-					{
+					case ApiVisibility.PublicOnly when entity.Accessibility is not (Accessibility.Public
+						or Accessibility.Protected
+						or Accessibility.ProtectedOrInternal):
+					case ApiVisibility.PublicAndInternal when !language.ShowMember(entity):
 						return false;
-					}
+					default:
+						entity = entity.DeclaringTypeDefinition;
+						break;
 				}
-				else if (apiVisibility == ApiVisibility.PublicAndInternal)
-				{
-					if (!language.ShowMember(entity))
-						return false;
-				}
-
-				entity = entity.DeclaringTypeDefinition;
 			} while (entity != null);
 
 			return true;

@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// Resolve result for a C# 'is' expression.
 	/// "Input is TargetType".
 	/// </summary>
-	public class TypeIsResolveResult : ResolveResult
+	public sealed class TypeIsResolveResult : ResolveResult
 	{
 		public readonly ResolveResult Input;
 

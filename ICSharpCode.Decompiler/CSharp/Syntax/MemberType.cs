@@ -32,7 +32,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class MemberType : AstType
+	public sealed class MemberType : AstType
 	{
 		public static readonly Role<AstType> TargetRole = new("Target", Null);
 
@@ -124,8 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
 			InterningProvider interningProvider = null)
 		{
-			if (interningProvider == null)
-				interningProvider = InterningProvider.Dummy;
+			interningProvider ??= InterningProvider.Dummy;
 
 			TypeOrNamespaceReference t;
 			if (this.IsDoubleColon)

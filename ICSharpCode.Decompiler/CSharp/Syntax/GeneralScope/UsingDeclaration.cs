@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// using Import;
 	/// </summary>
-	public class UsingDeclaration : AstNode
+	public sealed class UsingDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new("using");
 		public static readonly Role<AstType> ImportRole = new("Import", AstType.Null);
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Import {
 			get { return GetChildByRole(ImportRole); }
-			set { SetChildByRole(ImportRole, value); }
+			init { SetChildByRole(ImportRole, value); }
 		}
 
 		public string Namespace {

@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Represents a modopt or modreq type.
 	/// </summary>
-	public class ModifiedType : TypeWithElementType, IType
+	public sealed class ModifiedType : TypeWithElementType, IType
 	{
 		readonly TypeKind kind;
 
@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Modifier { get; }
 
-		public override string NameSuffix =>
+		protected override string NameSuffix =>
 			(kind == TypeKind.ModReq ? " modreq" : " modopt") + $"({Modifier.FullName})";
 
 		public override TypeKind Kind => kind;

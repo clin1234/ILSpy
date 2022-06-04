@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// out type expression
 	/// </summary>
-	public class OutVarDeclarationExpression : Expression
+	public sealed class OutVarDeclarationExpression : Expression
 	{
 		public static readonly TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 
@@ -41,12 +41,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public VariableInitializer Variable {
 			get { return GetChildByRole(Roles.Variable); }
-			set { SetChildByRole(Roles.Variable, value); }
+			init { SetChildByRole(Roles.Variable, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

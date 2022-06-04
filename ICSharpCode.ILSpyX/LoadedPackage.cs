@@ -36,19 +36,11 @@ namespace ICSharpCode.ILSpyX
 	/// <summary>
 	/// NuGet package or .NET bundle:
 	/// </summary>
-	public class LoadedPackage
+	public sealed class LoadedPackage
 	{
-		public enum PackageKind
+		private LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
-			Zip,
-			Bundle,
-		}
-
-		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
-		{
-			this.Kind = kind;
 			this.Entries = entries.ToArray();
-			var topLevelEntries = new List<PackageEntry>();
 			var folders = new Dictionary<string, PackageFolder>();
 			var rootFolder = new PackageFolder(this, null, "");
 			folders.Add("", rootFolder);
@@ -84,18 +76,16 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal LoadedAssembly? LoadedAssembly { get; set; }
 
-		public PackageKind Kind { get; }
-
-		internal SingleFileBundle.Header BundleHeader { get; set; }
+		private SingleFileBundle.Header BundleHeader { get; init; }
 
 		/// <summary>
 		/// List of all entries, including those in sub-directories within the package.
 		/// </summary>
-		public IReadOnlyList<PackageEntry> Entries { get; }
+		private IReadOnlyList<PackageEntry> Entries { get; }
 
 		internal PackageFolder RootFolder { get; }
 
-		public static LoadedPackage FromZipFile(string file)
+		internal static LoadedPackage FromZipFile(string file)
 		{
 			Debug.WriteLine($"LoadedPackage.FromZipFile({file})");
 			using var archive = ZipFile.OpenRead(file);
@@ -106,7 +96,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Load a .NET single-file bundle.
 		/// </summary>
-		public static LoadedPackage? FromBundle(string fileName)
+		internal static LoadedPackage? FromBundle(string fileName)
 		{
 			using var memoryMappedFile =
 				MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
@@ -129,6 +119,12 @@ namespace ICSharpCode.ILSpyX
 			}
 		}
 
+		private enum PackageKind
+		{
+			Zip,
+			Bundle,
+		}
+
 		/// <summary>
 		/// Entry inside a package folder. Effectively renames the entry.
 		/// </summary>
@@ -145,7 +141,7 @@ namespace ICSharpCode.ILSpyX
 			public override string Name { get; }
 
 			public override ManifestResourceAttributes Attributes => originalEntry.Attributes;
-			public override string FullName => originalEntry.FullName;
+			internal override string FullName => originalEntry.FullName;
 			public override ResourceType ResourceType => originalEntry.ResourceType;
 			public override Stream? TryOpenStream() => originalEntry.TryOpenStream();
 		}
@@ -161,7 +157,7 @@ namespace ICSharpCode.ILSpyX
 			}
 
 			public override string Name { get; }
-			public override string FullName => $"zip://{zipFile};{Name}";
+			internal override string FullName => $"zip://{zipFile};{Name}";
 
 			public override Stream? TryOpenStream()
 			{
@@ -195,7 +191,7 @@ namespace ICSharpCode.ILSpyX
 			}
 
 			public override string Name => entry.RelativePath;
-			public override string FullName => $"bundle://{bundleFile};{Name}";
+			internal override string FullName => $"bundle://{bundleFile};{Name}";
 
 			public override Stream TryOpenStream()
 			{
@@ -225,7 +221,7 @@ namespace ICSharpCode.ILSpyX
 		}
 	}
 
-	public abstract class PackageEntry : Resource
+	internal abstract class PackageEntry : Resource
 	{
 		/// <summary>
 		/// Gets the file name of the entry (may include path components, relative to the package root).
@@ -235,13 +231,12 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Gets the full file name for the entry.
 		/// </summary>
-		public abstract string FullName { get; }
+		internal abstract string FullName { get; }
 	}
 
 	sealed class PackageFolder : IAssemblyResolver
 	{
 		private readonly Dictionary<string, LoadedAssembly?> assemblies = new(StringComparer.OrdinalIgnoreCase);
-
 		readonly LoadedPackage package;
 		readonly PackageFolder? parent;
 
@@ -249,13 +244,7 @@ namespace ICSharpCode.ILSpyX
 		{
 			this.package = package;
 			this.parent = parent;
-			this.Name = name;
 		}
-
-		/// <summary>
-		/// Gets the short name of the folder.
-		/// </summary>
-		public string Name { get; }
 
 		public List<PackageFolder> Folders { get; } = new();
 		public List<PackageEntry> Entries { get; } = new();
@@ -263,12 +252,7 @@ namespace ICSharpCode.ILSpyX
 		public PEFile? Resolve(IAssemblyReference reference)
 		{
 			var asm = ResolveFileName(reference.Name + ".dll");
-			if (asm != null)
-			{
-				return asm.GetPEFileOrNull();
-			}
-
-			return parent?.Resolve(reference);
+			return asm != null ? asm.GetPEFileOrNull() : parent?.Resolve(reference);
 		}
 
 		public Task<PEFile?> ResolveAsync(IAssemblyReference reference)

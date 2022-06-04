@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Nullability = nullability;
 		}
 
-		public IType TypeWithoutAnnotation => baseType;
+		internal IType TypeWithoutAnnotation => baseType;
 
 		public Nullability Nullability { get; }
 
@@ -79,17 +79,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			switch (Nullability)
 			{
 				case Nullability.Nullable:
-					return $"{baseType.ToString()}?";
+					return $"{baseType}?";
 				case Nullability.NotNullable:
-					return $"{baseType.ToString()}!";
+					return $"{baseType}!";
 				default:
 					Debug.Assert(Nullability == Nullability.Oblivious);
-					return $"{baseType.ToString()}~";
+					return $"{baseType}~";
 			}
 		}
 	}
 
-	public sealed class NullabilityAnnotatedTypeParameter : NullabilityAnnotatedType, ITypeParameter
+	internal sealed class NullabilityAnnotatedTypeParameter : NullabilityAnnotatedType, ITypeParameter
 	{
 		internal NullabilityAnnotatedTypeParameter(ITypeParameter type, Nullability nullability)
 			: base(type, nullability)

@@ -11,7 +11,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	class RequiredNamespaceCollector
+	sealed class RequiredNamespaceCollector
 	{
 		static readonly GenericContext genericContext = default;
 
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var collector = new RequiredNamespaceCollector(namespaces);
 			foreach (var type in module.TypeDefinitions)
 			{
-				collector.CollectNamespaces(type, module, (CodeMappingInfo)null);
+				collector.CollectNamespaces(type, module);
 			}
 
 			collector.HandleAttributes(module.GetAssemblyAttributes());
@@ -59,8 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (entity == null || entity.MetadataToken.IsNil)
 				return;
-			if (mappingInfo == null)
-				mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
+			mappingInfo ??= CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 			switch (entity)
 			{
 				case ITypeDefinition td:
@@ -230,13 +229,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		void HandleAttributeValue(IType type, object value)
 		{
 			CollectNamespacesForTypeReference(type);
-			if (value is IType typeofType)
-				CollectNamespacesForTypeReference(typeofType);
-			if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr)
+			switch (value)
 			{
-				foreach (var element in arr)
+				case IType typeofType:
+					CollectNamespacesForTypeReference(typeofType);
+					break;
+				case ImmutableArray<CustomAttributeTypedArgument<IType>> arr:
 				{
-					HandleAttributeValue(element.Type, element.Value);
+					foreach (var element in arr)
+					{
+						HandleAttributeValue(element.Type, element.Value);
+					}
+
+					break;
 				}
 			}
 		}

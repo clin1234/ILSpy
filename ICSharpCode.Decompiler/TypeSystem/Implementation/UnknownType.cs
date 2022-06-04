@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class UnknownType : AbstractType, ITypeReference
 	{
 		readonly FullTypeName fullTypeName;
-		readonly bool? isReferenceType = null;
+		readonly bool? isReferenceType;
 		readonly bool namespaceKnown;
 
 		/// <summary>
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				Debug.Assert(fullTypeName == default(FullTypeName));
 				this.namespaceKnown = false;
-				this.fullTypeName = new TopLevelTypeName(string.Empty, "?", 0);
+				this.fullTypeName = new TopLevelTypeName(string.Empty, "?");
 			}
 			else
 			{

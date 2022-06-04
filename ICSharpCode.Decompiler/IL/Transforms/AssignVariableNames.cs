@@ -31,7 +31,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class AssignVariableNames : IILTransform
+	public sealed class AssignVariableNames : IILTransform
 	{
 		const char maxLoopVariableName = 'n';
 
@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			int count = ++reservedVariableNames[nameWithoutDigits];
-			string nameWithDigits = nameWithoutDigits + count.ToString();
+			string nameWithDigits = nameWithoutDigits + count;
 			if (oldVariableName == nameWithDigits)
 			{
 				return oldVariableName;
@@ -498,7 +498,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(!string.IsNullOrWhiteSpace(proposedName));
 			if (count > 1)
 			{
-				return proposedName + count.ToString();
+				return proposedName + count;
 			}
 			else
 			{
@@ -803,7 +803,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(!string.IsNullOrWhiteSpace(proposedName));
 			if (count > 1)
 			{
-				return proposedName + count.ToString();
+				return proposedName + count;
 			}
 			else
 			{
@@ -858,7 +858,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(!string.IsNullOrWhiteSpace(proposedName));
 			if (count > 1)
 			{
-				return proposedName + count.ToString();
+				return proposedName + count;
 			}
 			else
 			{

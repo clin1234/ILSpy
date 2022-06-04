@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class DotNetCorePathFinderExtensions
 	{
-		static readonly string PathPattern =
+		private const string PathPattern =
 			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<type>.NETFramework)[/\\]v(?<version>[^/\\]+)[/\\])" +
 			@"|((?<type>Microsoft\.NET)[/\\]assembly[/\\]GAC_(MSIL|32|64)[/\\])" +
 			@"|((?<type>Microsoft\.NET)[/\\]Framework(64)?[/\\](?<version>[^/\\]+)[/\\])" +
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			@"|(shared[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\])" +
 			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
 
-		static readonly string RefPathPattern =
+		private const string RefPathPattern =
 			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<type>.NETFramework)[/\\]v(?<version>[^/\\]+)[/\\])" +
 			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
 			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return IsReferenceAssembly(assembly.Reader, assembly.FileName);
 		}
 
-		public static bool IsReferenceAssembly(this PEReader assembly, string assemblyPath)
+		private static bool IsReferenceAssembly(this PEReader assembly, string assemblyPath)
 		{
 			ArgumentNullException.ThrowIfNull(assembly);
 

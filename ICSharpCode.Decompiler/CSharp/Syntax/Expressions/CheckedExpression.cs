@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// checked(Expression)
 	/// </summary>
-	public class CheckedExpression : Expression
+	public sealed class CheckedExpression : Expression
 	{
 		public static readonly TokenRole CheckedKeywordRole = new("checked");
 
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RParToken {

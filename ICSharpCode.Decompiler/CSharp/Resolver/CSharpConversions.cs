@@ -27,8 +27,6 @@ using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
@@ -97,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool ImplicitConstantExpressionConversion(ResolveResult rr, IType toType)
 		{
-			if (rr == null || !rr.IsCompileTimeConstant)
+			if (rr is not { IsCompileTimeConstant: true })
 				return false;
 			// C# 4.0 spec: §6.1.9
 			TypeCode fromTypeCode = rr.Type.GetTypeCode();
@@ -142,7 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region TypePair (for caching)
 
-		struct TypePair : IEquatable<TypePair>
+		readonly struct TypePair : IEquatable<TypePair>
 		{
 			public readonly IType FromType;
 			public readonly IType ToType;
@@ -226,7 +224,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return c;
 			}
 
-			if (resolveResult is InterpolatedStringResolveResult isrr)
+			if (resolveResult is InterpolatedStringResolveResult)
 			{
 				if (toType.IsKnownType(KnownTypeCode.IFormattable) ||
 				    toType.IsKnownType(KnownTypeCode.FormattableString))
@@ -923,7 +921,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return false;
 				}
 
-				foreach ((IType fromPT, IType toPT) in Enumerable.Zip(fromFnPtr.ParameterTypes, toFnPtr.ParameterTypes))
+				foreach ((IType fromPT, IType toPT) in fromFnPtr.ParameterTypes.Zip(toFnPtr.ParameterTypes))
 				{
 					if (!(IdentityConversion(toPT, fromPT)
 					      || ImplicitReferenceConversion(toPT, fromPT, nestingDepth)))
@@ -1048,7 +1046,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			if (operators.Count > 0)
 			{
-				var mostSpecificSource = CollectionExtensions.Any(operators, op => op.SourceType.Equals(fromType))
+				var mostSpecificSource = operators.Any(op => op.SourceType.Equals(fromType))
 					? fromType
 					: FindMostEncompassedType(operators.Select(op => op.SourceType));
 				if (mostSpecificSource == null)
@@ -1056,7 +1054,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						isLifted: operators[0].IsLifted, isAmbiguous: true,
 						conversionBeforeUserDefinedOperator: Conversion.None,
 						conversionAfterUserDefinedOperator: Conversion.None);
-				var mostSpecificTarget = CollectionExtensions.Any(operators, op => op.TargetType.Equals(toType))
+				var mostSpecificTarget = operators.Any(op => op.TargetType.Equals(toType))
 					? toType
 					: FindMostEncompassingType(operators.Select(op => op.TargetType));
 				if (mostSpecificTarget == null)
@@ -1104,7 +1102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (operators.Count > 0)
 			{
 				IType mostSpecificSource;
-				if (CollectionExtensions.Any(operators, op => op.SourceType.Equals(fromType)))
+				if (operators.Any(op => op.SourceType.Equals(fromType)))
 				{
 					mostSpecificSource = fromType;
 				}
@@ -1115,7 +1113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							ImplicitConstantExpressionConversion(fromResult,
 								NullableType.GetUnderlyingType(op.SourceType)))
 						.ToList();
-					mostSpecificSource = CollectionExtensions.Any(operatorsWithSourceEncompassingFromType)
+					mostSpecificSource = operatorsWithSourceEncompassingFromType.Any()
 						? FindMostEncompassedType(operatorsWithSourceEncompassingFromType.Select(op => op.SourceType))
 						: FindMostEncompassingType(operators.Select(static op => op.SourceType));
 				}
@@ -1127,9 +1125,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						conversionAfterUserDefinedOperator: Conversion.None);
 
 				IType mostSpecificTarget;
-				if (CollectionExtensions.Any(operators, op => op.TargetType.Equals(toType)))
+				if (operators.Any(op => op.TargetType.Equals(toType)))
 					mostSpecificTarget = toType;
-				else if (CollectionExtensions.Any(operators, op => IsEncompassedBy(op.TargetType, toType)))
+				else if (operators.Any(op => IsEncompassedBy(op.TargetType, toType)))
 					mostSpecificTarget = FindMostEncompassingType(operators
 						.Where(op => IsEncompassedBy(op.TargetType, toType)).Select(op => op.TargetType));
 				else
@@ -1175,7 +1173,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		class OperatorInfo
+		sealed class OperatorInfo
 		{
 			public readonly bool IsLifted;
 			public readonly IMethod Method;

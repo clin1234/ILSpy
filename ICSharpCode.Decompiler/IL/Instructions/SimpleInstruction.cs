@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A simple instruction that does not have any arguments.
 	/// </summary>
-	public abstract partial class SimpleInstruction : ILInstruction
+	public abstract partial class SimpleInstruction
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -53,6 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write("." + Kind.ToString().ToLowerInvariant());
 			}
+
 			if (!string.IsNullOrEmpty(Comment))
 			{
 				output.Write(" // " + Comment);
@@ -62,8 +63,8 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class InvalidBranch : SimpleInstruction
 	{
-		public string? Message;
 		public StackType ExpectedResultType = StackType.Void;
+		public string? Message;
 
 		public InvalidBranch(string? message) : this()
 		{
@@ -89,9 +90,9 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class InvalidExpression : SimpleInstruction
 	{
-		public string Severity = "Error";
-		public string? Message;
 		public StackType ExpectedResultType = StackType.Unknown;
+		public string? Message;
+		public string Severity = "Error";
 
 		public InvalidExpression(string? message) : this()
 		{

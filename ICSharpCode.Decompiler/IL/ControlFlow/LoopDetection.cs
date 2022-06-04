@@ -24,8 +24,6 @@ using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
 	/// <summary>
@@ -38,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// don't include more instructions than strictly necessary.
 	/// * Loop detection should run after the 'return block' is duplicated (ControlFlowSimplification).
 	/// </remarks>
-	public class LoopDetection : IBlockTransform
+	public sealed class LoopDetection : IBlockTransform
 	{
 		BlockTransformContext context;
 
@@ -425,8 +423,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 
-				Debug.Assert(CollectionExtensions.All(loop,
-					n => n == loopHead || CollectionExtensions.All(n.Predecessors, p => p.Visited)));
+				Debug.Assert(loop.All(n => n == loopHead || n.Predecessors.All(p => p.Visited)));
 			}
 			else
 			{
@@ -465,8 +462,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (exitBranch != null)
 					{
 						// let's see if the target of the exit branch is a suitable exit point
-						var cfgNode = CollectionExtensions.FirstOrDefault(loopHead.Successors,
-							n => n.UserData == exitBranch.TargetBlock);
+						var cfgNode = loopHead.Successors.FirstOrDefault(n => n.UserData == exitBranch.TargetBlock);
 						if (cfgNode != null && loopHead.Dominates(cfgNode) &&
 						    !context.ControlFlowGraph.HasReachableExit(cfgNode))
 						{
@@ -806,8 +802,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// This means Visited now represents the candidate extended loop.
 				// Determine new exit points that are reachable from the additional nodes
 				// (note: some of these might have previously been exit points, too)
-				var newExitPoints = Enumerable.ToHashSet(additionalNodes.SelectMany(static n => n.Successors)
-					.Where(static n => !n.Visited));
+				var newExitPoints = additionalNodes.SelectMany(static n => n.Successors).Where(static n => !n.Visited)
+					.ToHashSet();
 				// Make visited represent the unextended loop, so that we can measure the exit points
 				// in the old state.
 				foreach (var node in additionalNodes)

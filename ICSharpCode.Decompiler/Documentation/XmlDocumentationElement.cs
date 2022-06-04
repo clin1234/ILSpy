@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					try
 					{
 						if (!string.IsNullOrEmpty(cref) && crefResolver != null)
-							referencedEntity = crefResolver(cref!);
+							referencedEntity = crefResolver(cref);
 					}
 					catch
 					{
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					return EmptyList<XmlDocumentationElement>.Instance;
 				return LazyInitializer.EnsureInitialized(
 					ref this.children,
-					() => CreateElements(element.Nodes(), DeclaringEntity, crefResolver, nestingLevel))!;
+					() => CreateElements(element.Nodes(), DeclaringEntity, crefResolver, nestingLevel));
 			}
 		}
 
@@ -170,67 +170,68 @@ namespace ICSharpCode.Decompiler.Documentation
 				{
 					list.Add(new XmlDocumentationElement(childText.Value, declaringEntity));
 				}
-				else if (child is XCData childTag)
-				{
-					list.Add(new XmlDocumentationElement(childTag.Value, declaringEntity));
-				}
-				else if (child is XElement childElement)
-				{
-					if (nestingLevel < 5 && childElement.Name == "inheritdoc")
+				else
+					switch (child)
 					{
-						string? cref = childElement.Attribute("cref")?.Value;
-						IEntity? inheritedFrom = null;
-						string? inheritedDocumentation = null;
-						if (cref != null && crefResolver != null)
+						case XCData childTag:
+							list.Add(new XmlDocumentationElement(childTag.Value, declaringEntity));
+							break;
+						case XElement childElement when nestingLevel < 5 && childElement.Name == "inheritdoc":
 						{
-							inheritedFrom = crefResolver(cref);
-							if (inheritedFrom != null)
-								inheritedDocumentation = "<doc>" + inheritedFrom.GetDocumentation() + "</doc>";
-						}
-						else
-						{
-							foreach (IMember baseMember in InheritanceHelper.GetBaseMembers((IMember?)declaringEntity,
-								         includeImplementedInterfaces: true))
+							string? cref = childElement.Attribute("cref")?.Value;
+							IEntity? inheritedFrom = null;
+							string? inheritedDocumentation = null;
+							if (cref != null && crefResolver != null)
 							{
-								inheritedDocumentation = baseMember.GetDocumentation();
-								if (inheritedDocumentation != null)
+								inheritedFrom = crefResolver(cref);
+								if (inheritedFrom != null)
+									inheritedDocumentation = "<doc>" + inheritedFrom.GetDocumentation() + "</doc>";
+							}
+							else
+							{
+								foreach (IMember baseMember in InheritanceHelper.GetBaseMembers(
+									         (IMember?)declaringEntity, includeImplementedInterfaces: true))
 								{
-									inheritedFrom = baseMember;
-									inheritedDocumentation = "<doc>" + inheritedDocumentation + "</doc>";
-									break;
+									inheritedDocumentation = baseMember.GetDocumentation();
+									if (inheritedDocumentation != null)
+									{
+										inheritedFrom = baseMember;
+										inheritedDocumentation = "<doc>" + inheritedDocumentation + "</doc>";
+										break;
+									}
 								}
 							}
-						}
 
-						if (inheritedDocumentation != null)
-						{
-							var doc = XDocument.Parse(inheritedDocumentation).Element("doc");
-
-							// XPath filter not yet implemented
-							if (doc != null && childElement.Parent?.Parent == null &&
-							    childElement.Attribute("select")?.Value == null)
+							if (inheritedDocumentation != null)
 							{
-								// Inheriting documentation at the root level
-								List<string> doNotInherit = new() { "overloads" };
-								doNotInherit.AddRange(childObjects.OfType<XElement>()
-									.Select(static e => e.Name.LocalName).Intersect(
-										doNotInheritIfAlreadyPresent));
+								var doc = XDocument.Parse(inheritedDocumentation).Element("doc");
 
-								var inheritedChildren = doc.Nodes().Where(
-									inheritedObject => !(inheritedObject is XElement inheritedElement &&
-									                     doNotInherit.Contains(inheritedElement.Name.LocalName)));
+								// XPath filter not yet implemented
+								if (doc != null && childElement.Parent?.Parent == null &&
+								    childElement.Attribute("select")?.Value == null)
+								{
+									// Inheriting documentation at the root level
+									List<string> doNotInherit = new() { "overloads" };
+									doNotInherit.AddRange(childObjects.OfType<XElement>()
+										.Select(static e => e.Name.LocalName).Intersect(
+											doNotInheritIfAlreadyPresent));
 
-								list.AddRange(CreateElements(inheritedChildren, inheritedFrom, crefResolver,
-									nestingLevel + 1));
+									var inheritedChildren = doc.Nodes().Where(
+										inheritedObject => !(inheritedObject is XElement inheritedElement &&
+										                     doNotInherit.Contains(inheritedElement.Name.LocalName)));
+
+									list.AddRange(CreateElements(inheritedChildren, inheritedFrom, crefResolver,
+										nestingLevel + 1));
+								}
 							}
+
+							break;
 						}
+						case XElement childElement:
+							list.Add(new XmlDocumentationElement(childElement, declaringEntity, crefResolver)
+								{ nestingLevel = nestingLevel });
+							break;
 					}
-					else
-					{
-						list.Add(new XmlDocumentationElement(childElement, declaringEntity, crefResolver)
-							{ nestingLevel = nestingLevel });
-					}
-				}
 			}
 
 			if (list.Count > 0 && list[0].IsTextNode)

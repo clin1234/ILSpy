@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// It must also run after ReplaceMethodCallsWithOperators (so that it can work for custom operator, too);
 	/// and after AddCheckedBlocks (because "for (;; x = unchecked(x op y))" cannot be transformed into "x += y").
 	/// </remarks>
-	class PrettifyAssignments : DepthFirstAstVisitor, IAstTransform
+	sealed class PrettifyAssignments : DepthFirstAstVisitor, IAstTransform
 	{
 		TransformContext context;
 
@@ -121,13 +121,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static bool CanConvertToCompoundAssignment(Expression left)
 		{
-			if (left is MemberReferenceExpression mre)
-				return IsWithoutSideEffects(mre.Target);
-			if (left is IndexerExpression ie)
-				return IsWithoutSideEffects(ie.Target) && ie.Arguments.All(IsWithoutSideEffects);
-			if (left is UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } uoe)
-				return IsWithoutSideEffects(uoe.Expression);
-			return IsWithoutSideEffects(left);
+			return left switch {
+				MemberReferenceExpression mre => IsWithoutSideEffects(mre.Target),
+				IndexerExpression ie => IsWithoutSideEffects(ie.Target) && ie.Arguments.All(IsWithoutSideEffects),
+				UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } uoe => IsWithoutSideEffects(
+					uoe.Expression),
+				_ => IsWithoutSideEffects(left)
+			};
 		}
 
 		static bool IsWithoutSideEffects(Expression left)

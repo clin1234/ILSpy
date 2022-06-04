@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Introduces using declarations.
 	/// </summary>
-	public class IntroduceUsingDeclarations : IAstTransform
+	internal sealed class IntroduceUsingDeclarations : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
@@ -276,16 +276,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (entityDeclaration.GetSymbol() is IMethod method)
 				{
 					var previousContext = context.Peek();
-					CSharpTypeResolveContext currentContext;
-					if (CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method))
-					{
-						currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
-					}
-					else
-					{
-						currentContext = previousContext.WithCurrentMember(method);
-					}
-
+					CSharpTypeResolveContext currentContext =
+						CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)
+							? new CSharpTypeResolveContext(previousContext.CurrentModule)
+							: previousContext.WithCurrentMember(method);
 					context.Push(currentContext);
 					try
 					{
@@ -329,14 +323,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 
-				if (simpleType.Parent is Syntax.Attribute)
-				{
-					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));
-				}
-				else
-				{
-					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
-				}
+				simpleType.ReplaceWith(simpleType.Parent is Syntax.Attribute
+					? astBuilder.ConvertAttributeType(rr.Type)
+					: astBuilder.ConvertType(rr.Type));
 			}
 		}
 	}

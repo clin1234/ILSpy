@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// for (Initializers; Condition; Iterators) EmbeddedStatement
 	/// </summary>
-	public class ForStatement : Statement
+	public sealed class ForStatement : Statement
 	{
 		public static readonly TokenRole ForKeywordRole = new("for");
 		public static readonly Role<Statement> InitializerRole = new("Initializer", Null);

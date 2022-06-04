@@ -21,7 +21,7 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public class ReferenceLoadInfo
+	public sealed class ReferenceLoadInfo
 	{
 		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new();
 

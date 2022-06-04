@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
-	public class IntroduceUnsafeModifier : DepthFirstAstVisitor<bool>, IAstTransform
+	internal sealed class IntroduceUnsafeModifier : DepthFirstAstVisitor<bool>, IAstTransform
 	{
 		public void Run(AstNode compilationUnit, TransformContext context)
 		{
@@ -87,32 +87,31 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
-			if (unaryOperatorExpression.Operator == UnaryOperatorType.Dereference)
+			switch (unaryOperatorExpression.Operator)
 			{
-				if (unaryOperatorExpression.Expression is BinaryOperatorExpression {
-					    Operator: BinaryOperatorType.Add
-				    } bop && bop.GetResolveResult() is OperatorResolveResult orr &&
-				    orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
+				case UnaryOperatorType.Dereference:
 				{
-					// transform "*(ptr + int)" to "ptr[int]"
-					IndexerExpression indexer = new() {
-						Target = bop.Left.Detach()
-					};
-					indexer.Arguments.Add(bop.Right.Detach());
-					indexer.CopyAnnotationsFrom(unaryOperatorExpression);
-					indexer.CopyAnnotationsFrom(bop);
-					unaryOperatorExpression.ReplaceWith(indexer);
-				}
+					if (unaryOperatorExpression.Expression is BinaryOperatorExpression {
+						    Operator: BinaryOperatorType.Add
+					    } bop && bop.GetResolveResult() is OperatorResolveResult orr &&
+					    orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
+					{
+						// transform "*(ptr + int)" to "ptr[int]"
+						IndexerExpression indexer = new() {
+							Target = bop.Left.Detach()
+						};
+						indexer.Arguments.Add(bop.Right.Detach());
+						indexer.CopyAnnotationsFrom(unaryOperatorExpression);
+						indexer.CopyAnnotationsFrom(bop);
+						unaryOperatorExpression.ReplaceWith(indexer);
+					}
 
-				return true;
-			}
-			else if (unaryOperatorExpression.Operator == UnaryOperatorType.AddressOf)
-			{
-				return true;
-			}
-			else
-			{
-				return result;
+					return true;
+				}
+				case UnaryOperatorType.AddressOf:
+					return true;
+				default:
+					return result;
 			}
 		}
 

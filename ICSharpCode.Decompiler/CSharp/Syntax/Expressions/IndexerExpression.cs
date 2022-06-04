@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Target[Arguments]
 	/// </summary>
-	public class IndexerExpression : Expression
+	public sealed class IndexerExpression : Expression
 	{
 		public IndexerExpression()
 		{
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
+			init { SetChildByRole(Roles.TargetExpression, value); }
 		}
 
 		public CSharpTokenNode LBracketToken {
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
+			get { return GetChildrenByRole(Roles.Argument); }
 		}
 
 		public CSharpTokenNode RBracketToken {

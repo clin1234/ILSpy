@@ -33,9 +33,9 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class PrimitiveType : AstType
+	public sealed class PrimitiveType : AstType
 	{
-		string keyword = string.Empty;
+		readonly string keyword = string.Empty;
 		TextLocation location;
 
 		public PrimitiveType()
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string Keyword {
 			get { return keyword; }
-			set {
+			init {
 				if (value == null)
 					throw new ArgumentNullException();
 				ThrowIfFrozen();

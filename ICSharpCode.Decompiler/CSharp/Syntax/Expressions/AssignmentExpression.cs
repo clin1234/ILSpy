@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Left Operator= Right
 	/// </summary>
-	public class AssignmentExpression : Expression
+	public sealed class AssignmentExpression : Expression
 	{
 		// reuse roles from BinaryOperatorExpression
 		public static readonly Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Left {
 			get { return GetChildByRole(LeftRole); }
-			set { SetChildByRole(LeftRole, value); }
+			init { SetChildByRole(LeftRole, value); }
 		}
 
 		public CSharpTokenNode OperatorToken {

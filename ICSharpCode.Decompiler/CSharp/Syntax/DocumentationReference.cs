@@ -117,21 +117,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (!(other is DocumentationReference o && this.SymbolKind == o.SymbolKind &&
 			      this.HasParameterList == o.HasParameterList))
 				return false;
-			if (this.SymbolKind == SymbolKind.Operator)
+			switch (this.SymbolKind)
 			{
-				if (this.OperatorType != o.OperatorType)
+				case SymbolKind.Operator when this.OperatorType != o.OperatorType:
 					return false;
-				if (this.OperatorType is OperatorType.Implicit or OperatorType.Explicit)
+				case SymbolKind.Operator:
 				{
-					if (!this.ConversionOperatorReturnType.DoMatch(o.ConversionOperatorReturnType, match))
-						return false;
+					if (this.OperatorType is OperatorType.Implicit or OperatorType.Explicit)
+					{
+						if (!this.ConversionOperatorReturnType.DoMatch(o.ConversionOperatorReturnType, match))
+							return false;
+					}
+
+					break;
 				}
-			}
-			else if (this.SymbolKind == SymbolKind.None)
-			{
-				if (!MatchString(this.MemberName, o.MemberName))
-					return false;
-				if (!this.TypeArguments.DoMatch(o.TypeArguments, match))
+				case SymbolKind.None when !MatchString(this.MemberName, o.MemberName):
+				case SymbolKind.None when !this.TypeArguments.DoMatch(o.TypeArguments, match):
 					return false;
 			}
 

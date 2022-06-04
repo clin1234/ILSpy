@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	public class DefaultTypeParameter : AbstractTypeParameter
+	public sealed class DefaultTypeParameter : AbstractTypeParameter
 	{
 		readonly IReadOnlyList<IAttribute> attributes;
 

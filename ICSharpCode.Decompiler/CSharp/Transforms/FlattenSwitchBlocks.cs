@@ -4,7 +4,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
-	class FlattenSwitchBlocks : IAstTransform
+	sealed class FlattenSwitchBlocks : IAstTransform
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
@@ -23,11 +23,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			bool ContainsLocalDeclaration(AstNode node)
 			{
-				if (node is VariableDeclarationStatement or LocalFunctionDeclarationStatement
-				    or OutVarDeclarationExpression)
-					return true;
-				if (node is BlockStatement)
-					return false;
+				switch (node)
+				{
+					case VariableDeclarationStatement or LocalFunctionDeclarationStatement
+						or OutVarDeclarationExpression:
+						return true;
+					case BlockStatement:
+						return false;
+				}
+
 				foreach (var child in node.Children)
 				{
 					if (ContainsLocalDeclaration(child))

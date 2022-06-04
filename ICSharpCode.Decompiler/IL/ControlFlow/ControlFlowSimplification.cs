@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// * branches that lead to a 'return block' are replaced with a return instruction
 	/// * basic blocks are combined where possible
 	/// </remarks>
-	public class ControlFlowSimplification : IILTransform
+	public sealed class ControlFlowSimplification : IILTransform
 	{
 		internal bool aggressivelyDuplicateReturnBlocks;
 
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var container = branch.TargetContainer;
 			for (ILInstruction inst = branch; inst != container; inst = inst.Parent)
 			{
-				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
+				if (inst.Parent is TryFinally tryFinally && inst.SlotInfo == TryInstruction.TryBlockSlot)
 				{
 					// The branch will trigger the finally block.
 					// Moving the return block into the try is only possible if the finally block doesn't touch the return variable.

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -25,18 +27,14 @@ using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Util;
 
-#nullable enable
-
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
-	class PortableDebugInfoProvider : IDebugInfoProvider
+	sealed class PortableDebugInfoProvider : IDebugInfoProvider
 	{
-		string? pdbFileName;
-		string moduleFileName;
+		readonly string moduleFileName;
+		readonly string? pdbFileName;
 		readonly MetadataReaderProvider provider;
 		bool hasError;
-
-		internal bool IsEmbedded => pdbFileName == null;
 
 		public PortableDebugInfoProvider(string moduleFileName, MetadataReaderProvider provider,
 			string? pdbFileName = null)
@@ -45,6 +43,8 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
 			this.pdbFileName = pdbFileName;
 		}
+
+		internal bool IsEmbedded => pdbFileName == null;
 
 		public string Description {
 			get {
@@ -60,25 +60,6 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 						return $"Error while loading portable PDB: {pdbFileName}";
 					return $"Loaded from portable PDB: {pdbFileName}";
 				}
-			}
-		}
-
-		internal MetadataReader? GetMetadataReader()
-		{
-			try
-			{
-				hasError = false;
-				return provider.GetMetadataReader();
-			}
-			catch (BadImageFormatException)
-			{
-				hasError = true;
-				return null;
-			}
-			catch (IOException)
-			{
-				hasError = true;
-				return null;
 			}
 		}
 
@@ -159,7 +140,27 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					}
 				}
 			}
+
 			return false;
+		}
+
+		private MetadataReader? GetMetadataReader()
+		{
+			try
+			{
+				hasError = false;
+				return provider.GetMetadataReader();
+			}
+			catch (BadImageFormatException)
+			{
+				hasError = true;
+				return null;
+			}
+			catch (IOException)
+			{
+				hasError = true;
+				return null;
+			}
 		}
 	}
 }

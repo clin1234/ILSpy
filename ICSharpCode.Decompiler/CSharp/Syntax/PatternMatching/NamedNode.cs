@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <summary>
 	/// Represents a named node within a pattern.
 	/// </summary>
-	public class NamedNode : Pattern
+	public sealed class NamedNode : Pattern
 	{
 		public NamedNode(string groupName, INode childNode)
 		{

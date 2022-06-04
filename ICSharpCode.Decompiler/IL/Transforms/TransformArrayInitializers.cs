@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Transforms array initialization pattern of System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray.
 	/// For collection and object initializers see <see cref="TransformCollectionAndObjectInitializers"/>
 	/// </summary>
-	public class TransformArrayInitializers : IStatementTransform
+	public sealed class TransformArrayInitializers : IStatementTransform
 	{
 		StatementTransformContext context;
 

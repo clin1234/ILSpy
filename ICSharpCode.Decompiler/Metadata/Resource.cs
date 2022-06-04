@@ -42,34 +42,21 @@ namespace ICSharpCode.Decompiler.Metadata
 		public abstract Stream? TryOpenStream();
 	}
 
-	public class ByteArrayResource : Resource
-	{
-		public override string Name { get; }
-		byte[] data;
-
-		public ByteArrayResource(string name, byte[] data)
-		{
-			this.Name = name ?? throw new ArgumentNullException(nameof(name));
-			this.data = data ?? throw new ArgumentNullException(nameof(data));
-		}
-
-		public override Stream TryOpenStream()
-		{
-			return new MemoryStream(data);
-		}
-	}
-
 	sealed class MetadataResource : Resource
 	{
-		public PEFile Module { get; }
-		public ManifestResourceHandle Handle { get; }
-		public bool IsNil => Handle.IsNil;
-
 		public MetadataResource(PEFile module, ManifestResourceHandle handle)
 		{
 			this.Module = module ?? throw new ArgumentNullException(nameof(module));
 			this.Handle = handle;
 		}
+
+		public PEFile Module { get; }
+		public ManifestResourceHandle Handle { get; }
+
+		public override string Name => Module.Metadata.GetString(This().Name);
+
+		public override ManifestResourceAttributes Attributes => This().Attributes;
+		public override ResourceType ResourceType => GetResourceType();
 
 		ManifestResource This() => Module.Metadata.GetManifestResource(Handle);
 
@@ -90,11 +77,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
 		}
 
-		public override string Name => Module.Metadata.GetString(This().Name);
-
-		public override ManifestResourceAttributes Attributes => This().Attributes;
 		public bool HasFlag(ManifestResourceAttributes flag) => (Attributes & flag) == flag;
-		public override ResourceType ResourceType => GetResourceType();
 
 		ResourceType GetResourceType()
 		{

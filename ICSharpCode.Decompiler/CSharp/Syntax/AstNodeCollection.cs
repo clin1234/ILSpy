@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Represents the children of an AstNode that have a specific role.
 	/// </summary>
-	public class AstNodeCollection<T> : ICollection<T>, IReadOnlyCollection<T>
+	public sealed class AstNodeCollection<T> : ICollection<T>, IReadOnlyCollection<T>
 		where T : AstNode
 	{
 		readonly AstNode node;
@@ -139,8 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			// Evaluate 'nodes' first, since it might change when we call Clear()
 			// Example: collection.ReplaceWith(collection);
-			if (nodes != null)
-				nodes = nodes.ToList();
+			nodes = nodes?.ToList();
 			Clear();
 			if (nodes != null)
 			{

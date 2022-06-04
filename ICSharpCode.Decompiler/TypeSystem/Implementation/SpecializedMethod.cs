@@ -29,10 +29,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Represents a specialized IMethod (e.g. after type substitution).
 	/// </summary>
-	public class SpecializedMethod : SpecializedParameterizedMember, IMethod
+	internal class SpecializedMethod : SpecializedParameterizedMember, IMethod
 	{
-		readonly bool isParameterized;
-
 		readonly IMethod methodDefinition;
 		readonly ITypeParameter[] specializedTypeParameters;
 		readonly TypeParameterSubstitution substitutionWithoutSpecializedTypeParameters;
@@ -42,9 +40,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution substitution)
 			: base(methodDefinition)
 		{
+			bool isParameterized = substitution.MethodTypeArguments != null;
 			ArgumentNullException.ThrowIfNull(substitution);
 			this.methodDefinition = methodDefinition;
-			this.isParameterized = substitution.MethodTypeArguments != null;
 			if (methodDefinition.TypeParameters.Count > 0)
 			{
 				// The method is generic, so we need to specialize the type parameters
@@ -67,19 +65,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			// Add the main substitution after the method type parameter specialization.
 			AddSubstitution(substitution);
-			if (substitutionWithoutSpecializedTypeParameters != null)
-			{
-				// If we already have a substitution without specialized type parameters, update that:
-				substitutionWithoutSpecializedTypeParameters =
-					TypeParameterSubstitution.Compose(substitution, substitutionWithoutSpecializedTypeParameters);
-			}
-			else
-			{
-				// Otherwise just use the whole substitution, as that doesn't contain specialized type parameters
-				// in this case.
-				substitutionWithoutSpecializedTypeParameters = this.Substitution;
-			}
-
+			substitutionWithoutSpecializedTypeParameters = substitutionWithoutSpecializedTypeParameters != null
+				? TypeParameterSubstitution.Compose(substitution, substitutionWithoutSpecializedTypeParameters)
+				: this.Substitution;
 			if (specializedTypeParameters != null)
 			{
 				// Set the substitution on the type parameters to the final composed substitution
@@ -234,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					if (i > 0)
 						b.Append(", ");
-					b.Append(this.TypeArguments[i].ToString());
+					b.Append(this.TypeArguments[i]);
 				}
 
 				b.Append(']');
@@ -250,11 +238,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				if (i > 0)
 					b.Append(", ");
-				b.Append(this.Parameters[i].ToString());
+				b.Append(this.Parameters[i]);
 			}
 
 			b.Append("):");
-			b.Append(this.ReturnType.ToString());
+			b.Append(this.ReturnType);
 			b.Append(']');
 			return b.ToString();
 		}

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// Blocks should be basic blocks prior to this transform.
 	/// After this transform, they will be extended basic blocks.
 	/// </remarks>
-	public class ConditionDetection : IBlockTransform
+	public sealed class ConditionDetection : IBlockTransform
 	{
 		private ControlFlowNode cfgNode;
 

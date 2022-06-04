@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const int RoleIndexBits = 9;
 
 		static readonly Role[] roles = new Role[1 << RoleIndexBits];
-		static int nextRoleIndex = 0;
+		static int nextRoleIndex;
 
 		// don't allow NRefactory consumers to derive from Role
 		internal Role()

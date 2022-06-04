@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <summary>
 	/// Matches the last entry in the specified named group.
 	/// </summary>
-	public class Backreference : Pattern
+	public sealed class Backreference : Pattern
 	{
 		public Backreference(string referencedGroupName)
 		{

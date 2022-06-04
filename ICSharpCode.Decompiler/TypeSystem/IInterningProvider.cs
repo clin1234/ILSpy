@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public abstract class InterningProvider
 	{
-		public static readonly InterningProvider Dummy = new DummyInterningProvider();
+		internal static readonly InterningProvider Dummy = new DummyInterningProvider();
 
 		/// <summary>
 		/// Interns the specified object.
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If the object is freezable, it will be frozen.
 		/// </summary>
 		[return: NotNullIfNotNull("obj")]
-		public abstract ISupportsInterning? Intern(ISupportsInterning? obj);
+		protected abstract ISupportsInterning? Intern(ISupportsInterning? obj);
 
 		/// <summary>
 		/// Interns the specified object.
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If the object is freezable, it will be frozen.
 		/// </summary>
 		[return: NotNullIfNotNull("obj")]
-		public T? Intern<T>(T? obj) where T : class, ISupportsInterning
+		internal T? Intern<T>(T? obj) where T : class, ISupportsInterning
 		{
 			ISupportsInterning? input = obj;
 			return (T?)Intern(input);
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Interns the specified string.
 		/// </summary>
 		[return: NotNullIfNotNull("text")]
-		public abstract string? Intern(string? text);
+		internal abstract string? Intern(string? text);
 
 		/// <summary>
 		/// Inters a boxed value type.
@@ -81,16 +81,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Interns the given list. Uses reference equality to compare the list elements.
 		/// </summary>
 		[return: NotNullIfNotNull("list")]
-		public abstract IList<T>? InternList<T>(IList<T>? list) where T : class;
+		internal abstract IList<T>? InternList<T>(IList<T>? list) where T : class;
 
 		sealed class DummyInterningProvider : InterningProvider
 		{
-			public override ISupportsInterning? Intern(ISupportsInterning? obj)
+			protected override ISupportsInterning? Intern(ISupportsInterning? obj)
 			{
 				return obj;
 			}
 
-			public override string? Intern(string? text)
+			internal override string? Intern(string? text)
 			{
 				return text;
 			}
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return obj;
 			}
 
-			public override IList<T>? InternList<T>(IList<T>? list)
+			internal override IList<T>? InternList<T>(IList<T>? list)
 			{
 				return list;
 			}

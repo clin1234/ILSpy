@@ -53,19 +53,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public int AdditionalTypeParameterCount { get; }
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			return DeclaringTypeReference.GetHashCode() ^ Name.GetHashCode() ^ AdditionalTypeParameterCount;
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is NestedTypeReference o && DeclaringTypeReference == o.DeclaringTypeReference &&
-			       Name == o.Name
-			       && AdditionalTypeParameterCount == o.AdditionalTypeParameterCount
-			       && isReferenceType == o.isReferenceType;
-		}
-
 		public IType Resolve(ITypeResolveContext context)
 		{
 			if (DeclaringTypeReference.Resolve(context) is ITypeDefinition declaringType)
@@ -87,6 +74,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return DeclaringTypeReference + "+" + Name;
 			else
 				return DeclaringTypeReference + "+" + Name + "`" + AdditionalTypeParameterCount;
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			return DeclaringTypeReference.GetHashCode() ^ Name.GetHashCode() ^ AdditionalTypeParameterCount;
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is NestedTypeReference o && DeclaringTypeReference == o.DeclaringTypeReference &&
+			       Name == o.Name
+			       && AdditionalTypeParameterCount == o.AdditionalTypeParameterCount
+			       && isReferenceType == o.isReferenceType;
 		}
 	}
 }

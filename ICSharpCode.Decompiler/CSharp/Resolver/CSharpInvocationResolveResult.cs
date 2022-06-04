@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// Represents the result of a method, constructor or indexer invocation.
 	/// Provides additional C#-specific information for InvocationResolveResult.
 	/// </summary>
-	public class CSharpInvocationResolveResult : InvocationResolveResult
+	public sealed class CSharpInvocationResolveResult : InvocationResolveResult
 	{
 		readonly IReadOnlyList<int> argumentToParameterMap;
 

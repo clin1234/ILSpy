@@ -27,15 +27,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Parameters for IAstTransform.
 	/// </summary>
-	public class TransformContext
+	public sealed class TransformContext
 	{
-		public readonly IDecompilerTypeSystem TypeSystem;
 		public readonly CancellationToken CancellationToken;
-		public readonly TypeSystemAstBuilder TypeSystemAstBuilder;
-		public readonly DecompilerSettings Settings;
-		internal readonly DecompileRun DecompileRun;
 
 		readonly ITypeResolveContext decompilationContext;
+		internal readonly DecompileRun DecompileRun;
+		public readonly DecompilerSettings Settings;
+		public readonly IDecompilerTypeSystem TypeSystem;
+		public readonly TypeSystemAstBuilder TypeSystemAstBuilder;
+
+		internal TransformContext(IDecompilerTypeSystem typeSystem, DecompileRun decompileRun,
+			ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
+		{
+			this.TypeSystem = typeSystem;
+			this.DecompileRun = decompileRun;
+			this.decompilationContext = decompilationContext;
+			this.TypeSystemAstBuilder = typeSystemAstBuilder;
+			this.CancellationToken = decompileRun.CancellationToken;
+			this.Settings = decompileRun.Settings;
+		}
 
 		/// <summary>
 		/// Returns the current member; or null if a whole type or module is being decompiled.
@@ -56,15 +67,5 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Returns the max possible set of namespaces that will be used during decompilation.
 		/// </summary>
 		public IImmutableSet<string> RequiredNamespacesSuperset => DecompileRun.Namespaces.ToImmutableHashSet();
-
-		internal TransformContext(IDecompilerTypeSystem typeSystem, DecompileRun decompileRun, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
-		{
-			this.TypeSystem = typeSystem;
-			this.DecompileRun = decompileRun;
-			this.decompilationContext = decompilationContext;
-			this.TypeSystemAstBuilder = typeSystemAstBuilder;
-			this.CancellationToken = decompileRun.CancellationToken;
-			this.Settings = decompileRun.Settings;
-		}
 	}
 }

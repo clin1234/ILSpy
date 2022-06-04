@@ -15,7 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System;
+
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading;
@@ -27,11 +27,12 @@ namespace ICSharpCode.ILSpyX.Search
 {
 	class ResourceSearchStrategy : AbstractSearchStrategy
 	{
-		protected readonly bool searchInside;
 		protected readonly ApiVisibility apiVisibility;
+		protected readonly bool searchInside;
 		protected readonly ITreeNodeFactory treeNodeFactory;
 
-		public ResourceSearchStrategy(ApiVisibility apiVisibility, SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
+		public ResourceSearchStrategy(ApiVisibility apiVisibility, SearchRequest request,
+			IProducerConsumerCollection<SearchResult> resultQueue)
 			: base(request, resultQueue)
 		{
 			this.treeNodeFactory = request.TreeNodeFactory;
@@ -44,7 +45,8 @@ namespace ICSharpCode.ILSpyX.Search
 			if (apiVisibility == ApiVisibility.All)
 				return true;
 
-			if (apiVisibility == ApiVisibility.PublicOnly && (resource.Attributes & ManifestResourceAttributes.VisibilityMask) == ManifestResourceAttributes.Private)
+			if (apiVisibility == ApiVisibility.PublicOnly &&
+			    (resource.Attributes & ManifestResourceAttributes.VisibilityMask) == ManifestResourceAttributes.Private)
 				return false;
 
 			return true;
@@ -59,7 +61,8 @@ namespace ICSharpCode.ILSpyX.Search
 				Search(module, resource, resourcesNode, treeNodeFactory.Create(resource), cancellationToken);
 		}
 
-		void Search(PEFile module, Resource resource, ITreeNode parent, ITreeNode node, CancellationToken cancellationToken)
+		void Search(PEFile module, Resource resource, ITreeNode parent, ITreeNode node,
+			CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 

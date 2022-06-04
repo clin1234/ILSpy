@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// 
 	/// The ?? operator for nullable value types is handled by NullableLiftingTransform.
 	/// </summary>
-	public class NullCoalescingTransform : IStatementTransform
+	public sealed class NullCoalescingTransform : IStatementTransform
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{

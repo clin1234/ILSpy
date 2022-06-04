@@ -75,27 +75,28 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		}
 
 		public IList<TypeOrNamespaceReference> Usings {
-			get {
-				if (usings == null)
-					usings = new List<TypeOrNamespaceReference>();
-				return usings;
-			}
+			get { return usings ??= new List<TypeOrNamespaceReference>(); }
 		}
 
 		public IList<KeyValuePair<string, TypeOrNamespaceReference>> UsingAliases {
-			get {
-				if (usingAliases == null)
-					usingAliases = new List<KeyValuePair<string, TypeOrNamespaceReference>>();
-				return usingAliases;
-			}
+			get { return usingAliases ??= new List<KeyValuePair<string, TypeOrNamespaceReference>>(); }
 		}
 
 		public IList<string> ExternAliases {
-			get {
-				if (externAliases == null)
-					externAliases = new List<string>();
-				return externAliases;
-			}
+			get { return externAliases ??= new List<string>(); }
+		}
+
+		protected override void FreezeInternal()
+		{
+			usings = FreezableHelper.FreezeList(usings);
+			usingAliases = FreezableHelper.FreezeList(usingAliases);
+			externAliases = FreezableHelper.FreezeList(externAliases);
+
+			// In current model (no child scopes), it makes sense to freeze the parent as well
+			// to ensure the whole lookup chain is immutable.
+			Parent?.Freeze();
+
+			base.FreezeInternal();
 		}
 
 		protected override void FreezeInternal()

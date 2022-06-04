@@ -27,13 +27,8 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents the resolve result of an 'ref x', 'in x' or 'out x' expression.
 	/// </summary>
-	public class ByReferenceResolveResult : ResolveResult
+	public sealed class ByReferenceResolveResult : ResolveResult
 	{
-		public ReferenceKind ReferenceKind { get; }
-		public bool IsOut => ReferenceKind == ReferenceKind.Out;
-		public bool IsRef => ReferenceKind == ReferenceKind.Ref;
-		public bool IsIn => ReferenceKind == ReferenceKind.In;
-
 		public readonly ResolveResult ElementResult;
 
 		public ByReferenceResolveResult(ResolveResult elementResult, ReferenceKind kind)
@@ -51,6 +46,11 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ReferenceKind = kind;
 		}
 
+		public ReferenceKind ReferenceKind { get; }
+		public bool IsOut => ReferenceKind == ReferenceKind.Out;
+		public bool IsRef => ReferenceKind == ReferenceKind.Ref;
+		public bool IsIn => ReferenceKind == ReferenceKind.In;
+
 		public IType ElementType {
 			get { return ((ByReferenceType)this.Type).ElementType; }
 		}
@@ -65,7 +65,8 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} {2}]", GetType().Name, ReferenceKind.ToString().ToLowerInvariant(), ElementType);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} {2}]", GetType().Name,
+				ReferenceKind.ToString().ToLowerInvariant(), ElementType);
 		}
 	}
 }

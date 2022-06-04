@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// unchecked(Expression)
 	/// </summary>
-	public class UncheckedExpression : Expression
+	public sealed class UncheckedExpression : Expression
 	{
 		public static readonly TokenRole UncheckedKeywordRole = new("unchecked");
 
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RParToken {

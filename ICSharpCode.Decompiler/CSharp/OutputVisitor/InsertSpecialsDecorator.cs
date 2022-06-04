@@ -23,10 +23,10 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
-	class InsertSpecialsDecorator : DecoratingTokenWriter
+	sealed class InsertSpecialsDecorator : DecoratingTokenWriter
 	{
 		readonly Stack<AstNode> positionStack = new();
-		int visitorWroteNewLine = 0;
+		int visitorWroteNewLine;
 
 		public InsertSpecialsDecorator(TokenWriter writer) : base(writer)
 		{

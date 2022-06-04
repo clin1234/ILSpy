@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Performs inlining transformations.
 	/// </summary>
-	public class ILInlining : IILTransform, IBlockTransform, IStatementTransform
+	public sealed class ILInlining : IILTransform, IBlockTransform, IStatementTransform
 	{
 		public void Run(Block block, BlockTransformContext context)
 		{

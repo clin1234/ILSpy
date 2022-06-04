@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Represents the intersection of several types.
 	/// </summary>
-	public class IntersectionType : AbstractType
+	internal sealed class IntersectionType : AbstractType
 	{
 		private IntersectionType(IType[] types)
 		{
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.Types = Array.AsReadOnly(types);
 		}
 
-		public ReadOnlyCollection<IType> Types { get; }
+		private ReadOnlyCollection<IType> Types { get; }
 
 		public override TypeKind Kind {
 			get { return TypeKind.Intersection; }
@@ -98,12 +98,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					throw new ArgumentNullException();
 			}
 
-			if (arr.Length == 0)
-				return SpecialType.UnknownType;
-			else if (arr.Length == 1)
-				return arr[0];
-			else
-				return new IntersectionType(arr);
+			return arr.Length switch {
+				0 => SpecialType.UnknownType,
+				1 => arr[0],
+				_ => new IntersectionType(arr)
+			};
 		}
 
 		public override int GetHashCode()
@@ -176,7 +175,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
 		{
 			if (filter == null)
-				return member => !member.IsStatic;
+				return static member => !member.IsStatic;
 			else
 				return member => !member.IsStatic && filter(member);
 		}

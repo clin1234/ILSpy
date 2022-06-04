@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -112,13 +113,10 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			internal bool TryGet(string key, out string value)
 			{
-				foreach (var pair in entries)
+				foreach (var pair in entries.Where(pair => pair.Key == key))
 				{
-					if (pair.Key == key)
-					{
-						value = pair.Value;
-						return true;
-					}
+					value = pair.Value;
+					return true;
 				}
 
 				value = null;
@@ -423,7 +421,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			// correct hash code found.
 			// possibly there are multiple items with the same hash, so go to the first.
 			while (--m >= 0 && index[m].HashCode == hashcode)
-				;
+			{
+			}
 			// m is now 1 before the first item with the correct hash
 
 			XmlDocumentationCache cache = this.cache;

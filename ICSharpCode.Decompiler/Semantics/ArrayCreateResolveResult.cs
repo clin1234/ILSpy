@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Resolve result representing an array creation.
 	/// </summary>
-	public class ArrayCreateResolveResult : ResolveResult
+	public sealed class ArrayCreateResolveResult : ResolveResult
 	{
 		/// <summary>
 		/// Gets the initializer elements.

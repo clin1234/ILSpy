@@ -31,21 +31,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// C# overload resolution (C# 4.0 spec: §7.5).
 	/// </summary>
-	public class OverloadResolution
+	public sealed class OverloadResolution
 	{
 		readonly string[] argumentNames;
 		readonly ResolveResult[] arguments;
 
 		readonly ICompilation compilation;
-
 		readonly CSharpConversions conversions;
+
+		readonly IType[] explicitlyGivenTypeArguments;
 
 		//List<Candidate> candidates = new List<Candidate>();
 		Candidate bestCandidate;
 		Candidate bestCandidateAmbiguousWith;
 		OverloadResolutionErrors bestCandidateValidationResult;
 		bool bestCandidateWasValidated;
-		IType[] explicitlyGivenTypeArguments;
 
 		#region Constructor
 
@@ -264,32 +264,32 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Setting this property to true restricts the possible conversions on the first argument to
 		/// implicit identity, reference, or boxing conversions.
 		/// </remarks>
-		public bool IsExtensionMethodInvocation { get; set; }
+		public bool IsExtensionMethodInvocation { get; init; }
 
 		/// <summary>
 		/// Gets/Sets whether expanding 'params' into individual elements is allowed.
 		/// The default value is true.
 		/// </summary>
-		public bool AllowExpandingParams { get; set; }
+		public bool AllowExpandingParams { get; init; }
 
 		/// <summary>
 		/// Gets/Sets whether optional parameters may be left at their default value.
 		/// The default value is true.
 		/// If this property is set to false, optional parameters will be treated like regular parameters.
 		/// </summary>
-		public bool AllowOptionalParameters { get; set; }
+		public bool AllowOptionalParameters { get; init; }
 
 		/// <summary>
 		/// Gets/Sets whether a value argument can be passed to an `in` reference parameter.
 		/// </summary>
-		public bool AllowImplicitIn { get; set; } = true;
+		public bool AllowImplicitIn { get; init; } = true;
 
 		/// <summary>
 		/// Gets/Sets whether ConversionResolveResults created by this OverloadResolution
 		/// instance apply overflow checking.
 		/// The default value is false.
 		/// </summary>
-		public bool CheckForOverflow { get; set; }
+		public bool CheckForOverflow { get; init; }
 
 		/// <summary>
 		/// Gets the arguments for which this OverloadResolution instance was created.
@@ -1015,10 +1015,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IReadOnlyList<int> GetArgumentToParameterMap()
 		{
-			if (bestCandidate != null)
-				return bestCandidate.ArgumentToParameterMap;
-			else
-				return null;
+			return bestCandidate?.ArgumentToParameterMap;
 		}
 
 		/// <summary>

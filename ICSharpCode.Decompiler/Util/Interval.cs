@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// Start == End: empty interval
 	/// Special case: Start == End == int.MinValue: interval containing all integers, not an empty interval!
 	/// </remarks>
-	public struct Interval : IEquatable<Interval>
+	public readonly struct Interval : IEquatable<Interval>
 	{
 		/// <summary>
 		/// Gets the inclusive start of the interval.
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// Start == End: empty interval
 	/// Special case: Start == End == long.MinValue: interval containing all integers, not an empty interval!
 	/// </remarks>
-	public struct LongInterval : IEquatable<LongInterval>
+	public readonly struct LongInterval : IEquatable<LongInterval>
 	{
 		/// <summary>
 		/// Gets the inclusive start of the interval.

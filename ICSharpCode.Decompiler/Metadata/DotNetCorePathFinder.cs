@@ -30,13 +30,13 @@ using LightJson.Serialization;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public class DotNetCorePathFinder
+	public sealed class DotNetCorePathFinder
 	{
-		static readonly string[] LookupPaths = new string[] {
+		static readonly string[] LookupPaths = {
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
-		static readonly string[] RuntimePacks = new[] {
+		static readonly string[] RuntimePacks = {
 			"Microsoft.NETCore.App",
 			"Microsoft.WindowsDesktop.App",
 			"Microsoft.AspNetCore.App",
@@ -45,9 +45,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 		readonly List<string> packageBasePaths = new();
-
-		readonly DotNetCorePackageInfo[] packages;
 		readonly string preferredRuntimePack;
+
 		readonly List<string> searchPaths = new();
 		readonly Version targetFrameworkVersion;
 
@@ -81,7 +80,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
 			if (File.Exists(depsJsonFileName))
 			{
-				packages = LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
+				DotNetCorePackageInfo[] packages =
+					LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
 
 				foreach (var path in LookupPaths)
 				{
@@ -320,7 +320,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		[DllImport("libc", EntryPoint = "free")]
 		static extern unsafe void Free(void* ptr);
 
-		class DotNetCorePackageInfo
+		sealed class DotNetCorePackageInfo
 		{
 			public readonly string Name;
 			public readonly string Path;
@@ -332,14 +332,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				var parts = fullName.Split('/');
 				this.Name = parts[0];
-				if (parts.Length > 1)
-				{
-					this.Version = parts[1];
-				}
-				else
-				{
-					this.Version = "<UNKNOWN>";
-				}
+				this.Version = parts.Length > 1 ? parts[1] : "<UNKNOWN>";
 
 				this.Type = type;
 				this.Path = path;

@@ -30,7 +30,7 @@ using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpyX
 {
-	class AssemblyListSnapshot
+	sealed class AssemblyListSnapshot
 	{
 		readonly ImmutableArray<LoadedAssembly> assemblies;
 		Dictionary<string, PEFile>? asmLookupByFullName;
@@ -87,10 +87,8 @@ namespace ICSharpCode.ILSpyX
 				try
 				{
 					var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
-					if (module == null)
-						continue;
-					var reader = module.Metadata;
-					if (reader == null || !reader.IsAssembly)
+					var reader = module?.Metadata;
+					if (reader is not { IsAssembly: true })
 						continue;
 					string tfm = await loaded.GetTargetFrameworkIdAsync().ConfigureAwait(false);
 					if (tfm.StartsWith(".NETFramework,Version=v4.", StringComparison.Ordinal))
@@ -125,7 +123,7 @@ namespace ICSharpCode.ILSpyX
 				{
 					var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
 					var reader = module?.Metadata;
-					if (reader == null || !reader.IsAssembly)
+					if (reader is not { IsAssembly: true })
 						continue;
 					var asmDef = reader.GetAssemblyDefinition();
 					var asmDefName = reader.GetString(asmDef.Name);
@@ -140,7 +138,7 @@ namespace ICSharpCode.ILSpyX
 						continue;
 					}
 
-					int index = existing.BinarySearch(line.version, l => l.version);
+					int index = existing.BinarySearch(line.version, static l => l.version);
 					index = index < 0 ? ~index : index + 1;
 					existing.Insert(index, line);
 				}

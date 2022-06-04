@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Metadata
@@ -42,7 +43,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		ShortVariable
 	}
 
-	public static partial class ILOpCodeExtensions
+	internal static partial class ILOpCodeExtensions
 	{
 		public static readonly HashSet<string> ILKeywords;
 
@@ -107,10 +108,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		static HashSet<string> BuildKeywordList(params string[] keywords)
 		{
 			HashSet<string> s = new(keywords);
-			foreach (var inst in operandNames)
+			foreach (var inst in operandNames.Where(static inst => !string.IsNullOrEmpty(inst)))
 			{
-				if (string.IsNullOrEmpty(inst))
-					continue;
 				s.Add(inst);
 			}
 

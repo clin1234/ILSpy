@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <remarks>
 	/// This class is thread-safe.
 	/// </remarks>
-	public class CSharpResolver : ICodeContext
+	public sealed class CSharpResolver : ICodeContext
 	{
 		static readonly ResolveResult ErrorResult = ErrorResolveResult.UnknownError;
 		internal readonly CSharpConversions conversions;
@@ -2195,8 +2195,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// for accessibility purposes.
 				// This avoids a stack overflow when referencing a protected class nested inside the base class
 				// of a parent class. (NameLookupTests.InnerClassInheritingFromProtectedBaseInnerClassShouldNotCauseStackOverflow)
-				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainModule,
-					false);
+				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition,
+					this.Compilation.MainModule);
 			}
 			else
 			{
@@ -2712,7 +2712,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						string newName;
 						do
 						{
-							newName = newArgumentName + num.ToString();
+							newName = newArgumentName + num;
 							num++;
 						} while (argumentNames.Contains(newName));
 
@@ -2829,7 +2829,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (arguments.Any(a => a.Type.Kind == TypeKind.Dynamic))
 			{
 				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable indexer.
-				var or2 = CreateOverloadResolution(arguments, argumentNames, null);
+				var or2 = CreateOverloadResolution(arguments, argumentNames);
 				var applicableIndexers = indexers.SelectMany(x => x)
 					.Where(m => OverloadResolution.IsApplicable(or2.AddCandidate(m))).ToList();
 

@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Add checked/unchecked blocks.
 	/// </summary>
-	public class AddCheckedBlocks : IAstTransform
+	sealed internal class AddCheckedBlocks : IAstTransform
 	{
 		public void Run(AstNode node, TransformContext context)
 		{
@@ -40,8 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			else
 			{
 				Result r = GetResultFromBlock(block);
-				if (r.NodesToInsertInUncheckedContext != null)
-					r.NodesToInsertInUncheckedContext.Insert();
+				r.NodesToInsertInUncheckedContext?.Insert();
 			}
 		}
 
@@ -222,13 +221,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region struct Cost
 
-		struct Cost
+		readonly struct Cost
 		{
 			// highest possible cost so that the Blocks+Expressions addition doesn't overflow
 			public static readonly Cost Infinite = new(0x3fffffff, 0x3fffffff);
 
-			public readonly int Blocks;
-			public readonly int Expressions;
+			private readonly int Blocks;
+			private readonly int Expressions;
 
 			public Cost(int blocks, int expressions)
 			{
@@ -296,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Holds the result of an insertion operation.
 		/// </summary>
-		class Result
+		sealed class Result
 		{
 			public Cost CostInCheckedContext;
 			public Cost CostInUncheckedContext;
@@ -348,7 +347,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public abstract void Insert();
 		}
 
-		class InsertedNodeList : InsertedNode
+		sealed class InsertedNodeList : InsertedNode
 		{
 			readonly InsertedNode child1, child2;
 
@@ -365,7 +364,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		class InsertedExpression : InsertedNode
+		sealed class InsertedExpression : InsertedNode
 		{
 			readonly Expression expression;
 			readonly bool isChecked;
@@ -385,7 +384,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		class InsertedBlock : InsertedNode
+		sealed class InsertedBlock : InsertedNode
 		{
 			readonly Statement firstStatement; // inclusive
 			readonly bool isChecked;

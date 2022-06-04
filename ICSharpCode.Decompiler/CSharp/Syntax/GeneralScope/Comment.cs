@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		MultiLineDocumentation
 	}
 
-	public class Comment : AstNode
+	public sealed class Comment : AstNode
 	{
 		CommentType commentType;
 
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CommentType CommentType {
 			get { return commentType; }
-			set {
+			init {
 				ThrowIfFrozen();
 				commentType = value;
 			}
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string Content {
 			get { return content; }
-			set {
+			init {
 				ThrowIfFrozen();
 				content = value;
 			}

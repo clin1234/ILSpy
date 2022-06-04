@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class DestructorDeclaration : EntityDeclaration
+	public sealed class DestructorDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole TildeRole = new("~");
 

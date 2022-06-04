@@ -2,14 +2,10 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class InterpolatedStringExpression : Expression
+	public sealed class InterpolatedStringExpression : Expression
 	{
 		public static readonly TokenRole OpenQuote = new("$\"");
 		public static readonly TokenRole CloseQuote = new("\"");
-
-		public InterpolatedStringExpression()
-		{
-		}
 
 		public AstNodeCollection<InterpolatedStringContent> Content {
 			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
@@ -80,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// { Expression }
 	/// </summary>
-	public class Interpolation : InterpolatedStringContent
+	public sealed class Interpolation : InterpolatedStringContent
 	{
 		public static readonly TokenRole LBrace = new("{");
 		public static readonly TokenRole RBrace = new("}");
@@ -101,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public string Suffix { get; }
@@ -131,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
-	public class InterpolatedStringText : InterpolatedStringContent
+	public sealed class InterpolatedStringText : InterpolatedStringContent
 	{
 		public InterpolatedStringText()
 		{

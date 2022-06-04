@@ -26,8 +26,6 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	public enum TypeInferenceAlgorithm
@@ -186,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (U is FunctionPointerType fnPtrU && V is FunctionPointerType fnPtrV)
 			{
 				MakeUpperBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-				foreach ((IType ptU, IType ptV) in Enumerable.Zip(fnPtrU.ParameterTypes, fnPtrV.ParameterTypes))
+				foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
 				{
 					MakeLowerBoundInference(ptU, ptV);
 				}
@@ -349,7 +347,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets/Sets the type inference algorithm used.
 		/// </summary>
-		public TypeInferenceAlgorithm Algorithm { get; set; } = TypeInferenceAlgorithm.CSharp4;
+		public TypeInferenceAlgorithm Algorithm { get; init; } = TypeInferenceAlgorithm.CSharp4;
 
 		TypeInference CreateNestedInstance()
 		{
@@ -535,7 +533,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				if (Xi.IsFixed == false)
 				{
-					if (!CollectionExtensions.Any(typeParameters, Xj => !Xj.IsFixed && DependsOn(Xi, Xj)))
+					if (!typeParameters.Any(Xj => !Xj.IsFixed && DependsOn(Xi, Xj)))
 					{
 						typeParametersToFix.Add(Xi);
 					}
@@ -553,7 +551,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (!Xi.IsFixed && Xi.HasBounds)
 					{
 						// There is at least one type variable Xj that depends on Xi
-						if (CollectionExtensions.Any(typeParameters, Xj => DependsOn(Xj, Xi)))
+						if (typeParameters.Any(Xj => DependsOn(Xj, Xi)))
 						{
 							typeParametersToFix.Add(Xi);
 						}
@@ -571,7 +569,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			if (errorDuringFix)
 				return false;
-			bool unfixedTypeVariablesExist = CollectionExtensions.Any(typeParameters, X => X.IsFixed == false);
+			bool unfixedTypeVariablesExist = typeParameters.Any(X => X.IsFixed == false);
 			if (typeParametersToFix.Count == 0 && unfixedTypeVariablesExist)
 			{
 				// If no such type variables exist and there are still unfixed type variables, type inference fails.
@@ -633,7 +631,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		IType[] OutputTypes(ResolveResult e, IType t)
 		{
 			// C# 4.0 spec: §7.5.2.4 Output types
-			if (e is LambdaResolveResult lrr || e is MethodGroupResolveResult)
+			if (e is LambdaResolveResult || e is MethodGroupResolveResult)
 			{
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null)
@@ -908,7 +906,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (U is FunctionPointerType fnPtrU && V is FunctionPointerType fnPtrV)
 			{
 				MakeExactInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-				foreach ((IType ptU, IType ptV) in Enumerable.Zip(fnPtrU.ParameterTypes, fnPtrV.ParameterTypes))
+				foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
 				{
 					MakeExactInference(ptU, ptV);
 				}
@@ -1049,7 +1047,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (U is FunctionPointerType fnPtrU && V is FunctionPointerType fnPtrV)
 			{
 				MakeLowerBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-				foreach ((IType ptU, IType ptV) in Enumerable.Zip(fnPtrU.ParameterTypes, fnPtrV.ParameterTypes))
+				foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
 				{
 					MakeUpperBoundInference(ptU, ptV);
 				}
@@ -1058,7 +1056,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		static bool IsGenericInterfaceImplementedByArray(ParameterizedType rt)
 		{
-			if (rt == null || rt.TypeParameterCount != 1)
+			if (rt is not { TypeParameterCount: 1 })
 				return false;
 			switch (rt.GetDefinition()?.KnownTypeCode)
 			{
@@ -1131,7 +1129,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// of the candidate types. (the type which has conversions to all others)
 			// However, csc actually seems to choose the least specific.
 			candidateTypes = candidateTypes.Where(
-				c => CollectionExtensions.All(candidateTypes, o => conversions.ImplicitConversion(o, c).IsValid)
+				c => candidateTypes.All(o => conversions.ImplicitConversion(o, c).IsValid)
 			).ToList();
 
 			// If the specified algorithm produces a single candidate, we return
@@ -1207,7 +1205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// if there were only lower bounds, we aim for the most specific candidate:
 
 					// if this candidate isn't made redundant by an existing, more specific candidate:
-					if (!CollectionExtensions.Any(candidateTypes, c => c.GetDefinition().IsDerivedFrom(candidateDef)))
+					if (!candidateTypes.Any(c => c.GetDefinition().IsDerivedFrom(candidateDef)))
 					{
 						// remove all existing candidates made redundant by this candidate:
 						candidateTypes.RemoveAll(c => candidateDef.IsDerivedFrom(c.GetDefinition()));
@@ -1220,7 +1218,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// if there were upper bounds, we aim for the least specific candidate:
 
 					// if this candidate isn't made redundant by an existing, less specific candidate:
-					if (!CollectionExtensions.Any(candidateTypes, c => candidateDef.IsDerivedFrom(c.GetDefinition())))
+					if (!candidateTypes.Any(c => candidateDef.IsDerivedFrom(c.GetDefinition())))
 					{
 						// remove all existing candidates made redundant by this candidate:
 						candidateTypes.RemoveAll(c => c.GetDefinition().IsDerivedFrom(candidateDef));

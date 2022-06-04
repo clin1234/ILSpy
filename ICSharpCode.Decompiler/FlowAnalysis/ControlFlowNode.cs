@@ -20,16 +20,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Util;
-
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
 	/// <summary>
 	/// Represents a block in the control flow graph.
 	/// </summary>
 	[DebuggerDisplay("CFG UserIndex={UserIndex}, UserData={UserData}")]
-	public class ControlFlowNode
+	public sealed class ControlFlowNode
 	{
 		/// <summary>
 		/// List of incoming control flow edges.
@@ -128,7 +125,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 #if DEBUG
 		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes,
-			Func<ControlFlowNode, string> labelFunc = null)
+			Func<ControlFlowNode, string> labelFunc
+				= null)
 		{
 			labelFunc ??= static node => node.UserData is Block block ? block.Label : node.UserData?.ToString();
 			GraphVizGraph g = new();

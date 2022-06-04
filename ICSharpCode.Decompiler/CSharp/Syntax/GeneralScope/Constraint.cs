@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <remarks>
 	/// new(), struct and class constraints are represented using a PrimitiveType "new", "struct" or "class"
 	/// </remarks>
-	public class Constraint : AstNode
+	public sealed class Constraint : AstNode
 	{
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.ConstraintTypeParameter);
 			}
-			set {
+			init {
 				SetChildByRole(Roles.ConstraintTypeParameter, value);
 			}
 		}

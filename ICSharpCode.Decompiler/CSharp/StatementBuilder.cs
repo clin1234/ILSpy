@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
 		readonly Dictionary<BlockContainer, string> endContainerLabels = new();
 
-		internal readonly ExpressionBuilder exprBuilder;
+		private readonly ExpressionBuilder exprBuilder;
 
 		readonly Dictionary<Block, string> labels = new();
 		readonly DecompilerSettings settings;
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.cancellationToken = cancellationToken;
 		}
 
-		public Statement Convert(ILInstruction inst)
+		private Statement Convert(ILInstruction inst)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			return inst.AcceptVisitor(this);
@@ -184,26 +184,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var enumType = type.GetDefinition().EnumUnderlyingType;
 				TypeCode typeCode = enumType.GetTypeCode();
-				if (typeCode != TypeCode.Empty)
-				{
-					value = CSharpPrimitiveCast.Cast(typeCode, i, false);
-				}
-				else
-				{
-					value = i;
-				}
+				value = typeCode != TypeCode.Empty ? CSharpPrimitiveCast.Cast(typeCode, i, false) : i;
 			}
 			else
 			{
 				TypeCode typeCode = type.GetTypeCode();
-				if (typeCode != TypeCode.Empty)
-				{
-					value = CSharpPrimitiveCast.Cast(typeCode, i, false);
-				}
-				else
-				{
-					value = i;
-				}
+				value = typeCode != TypeCode.Empty ? CSharpPrimitiveCast.Cast(typeCode, i, false) : i;
 			}
 
 			yield return new ConstantResolveResult(type, value);
@@ -285,8 +271,6 @@ namespace ICSharpCode.Decompiler.CSharp
 							    .Where(b => b.TargetBlock == br.TargetBlock).All(b =>
 								    BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
 							caseLabelMapping.Add(br.TargetBlock, firstValueResolveResult);
-						break;
-					default:
 						break;
 				}
 
@@ -448,8 +432,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitYieldReturn(YieldReturn inst)
 		{
-			var elementType =
-				currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
+			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out bool? _);
 			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
 				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
@@ -1443,7 +1426,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			singleGetter = null;
 			foreachVariable = null;
-			var loads = enumerator.LoadInstructions.OfType<ILInstruction>()
+			var loads = enumerator.LoadInstructions
 				.Concat(enumerator.AddressInstructions.OfType<ILInstruction>())
 				.Where(ld => !ld.IsDescendantOf(moveNextUsage))
 				.ToArray();
@@ -1590,7 +1573,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!targetMethod.IsAccessor || targetMethod.IsStatic)
 						return false;
 					return targetMethod.AccessorOwner switch {
-						IProperty p => targetMethod.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter,
+						IProperty => targetMethod.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter,
 						_ => true
 					};
 				default:

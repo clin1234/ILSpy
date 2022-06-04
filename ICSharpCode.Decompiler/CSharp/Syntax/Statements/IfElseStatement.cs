@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// if (Condition) TrueStatement else FalseStatement
 	/// </summary>
-	public class IfElseStatement : Statement
+	public sealed class IfElseStatement : Statement
 	{
 		public static readonly TokenRole IfKeywordRole = new("if");
 		public static readonly Role<Expression> ConditionRole = Roles.Condition;
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }
-			set { SetChildByRole(ConditionRole, value); }
+			init { SetChildByRole(ConditionRole, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement TrueStatement {
 			get { return GetChildByRole(TrueRole); }
-			set { SetChildByRole(TrueRole, value); }
+			init { SetChildByRole(TrueRole, value); }
 		}
 
 		public CSharpTokenNode ElseToken {

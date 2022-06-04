@@ -31,7 +31,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class CSharpModifierToken : CSharpTokenNode
+	public sealed class CSharpModifierToken : CSharpTokenNode
 	{
 		Modifiers modifier;
 
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Modifiers Modifier {
 			get { return modifier; }
-			set {
+			init {
 				ThrowIfFrozen();
 				this.modifier = value;
 			}

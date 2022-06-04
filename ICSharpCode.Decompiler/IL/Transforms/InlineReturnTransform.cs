@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// This transform duplicates return blocks if they return a local variable that was assigned right before the return.
 	/// </summary>
-	class InlineReturnTransform : IILTransform
+	sealed class InlineReturnTransform : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

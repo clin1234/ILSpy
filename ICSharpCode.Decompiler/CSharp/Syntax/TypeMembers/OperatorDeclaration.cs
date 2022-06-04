@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Explicit
 	}
 
-	public class OperatorDeclaration : EntityDeclaration
+	public sealed class OperatorDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole OperatorKeywordRole = new("operator");
 
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public OperatorType OperatorType {
 			get { return operatorType; }
-			set {
+			init {
 				ThrowIfFrozen();
 				operatorType = value;
 			}

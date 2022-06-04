@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Detects switch-on-nullable patterns employed by the C# compiler and transforms them to an ILAst-switch-instruction.
 	/// </summary>
-	public class SwitchOnNullableTransform : IILTransform
+	public sealed class SwitchOnNullableTransform : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

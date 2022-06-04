@@ -52,9 +52,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		ShortTypeName
 	}
 
-	public static class DisassemblerHelpers
+	internal static class DisassemblerHelpers
 	{
-		static readonly char[] _validNonLetterIdentifierCharacter = new char[] { '_', '$', '@', '?', '`', '.' };
+		static readonly char[] _validNonLetterIdentifierCharacter = { '_', '$', '@', '?', '`', '.' };
 
 		public static string OffsetToString(int offset)
 		{
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 			var signature = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default);
-			var parameters = methodDefinition.GetParameters().Select(p => metadata.GetParameter(p)).ToArray();
+			var parameters = methodDefinition.GetParameters().Select(metadata.GetParameter).ToArray();
 			var signatureHeader = signature.Header;
 			int index = sequence;
 			if (signatureHeader.IsInstance && signature.ParameterTypes.Length == parameters.Length)
@@ -166,14 +166,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			else
 			{
 				var param = parameters[index];
-				if (param.Name.IsNil)
-				{
-					writer.WriteLocalReference(sequence.ToString(), "param_" + index);
-				}
-				else
-				{
-					writer.WriteLocalReference(Escape(metadata.GetString(param.Name)), "param_" + index);
-				}
+				writer.WriteLocalReference(
+					param.Name.IsNil ? sequence.ToString() : Escape(metadata.GetString(param.Name)), "param_" + index);
 			}
 		}
 
@@ -191,27 +185,26 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				WriteOperand(writer, s);
 			}
-			else if (operand is char c)
-			{
-				writer.Write(((int)c).ToString());
-			}
-			else if (operand is float f)
-			{
-				WriteOperand(writer, f);
-			}
-			else if (operand is double d)
-			{
-				WriteOperand(writer, d);
-			}
-			else if (operand is bool b)
-			{
-				writer.Write(b ? "true" : "false");
-			}
 			else
-			{
-				s = ToInvariantCultureString(operand);
-				writer.Write(s);
-			}
+				switch (operand)
+				{
+					case char c:
+						writer.Write(((int)c).ToString());
+						break;
+					case float f:
+						WriteOperand(writer, f);
+						break;
+					case double d:
+						WriteOperand(writer, d);
+						break;
+					case bool b:
+						writer.Write(b ? "true" : "false");
+						break;
+					default:
+						s = ToInvariantCultureString(operand);
+						writer.Write(s);
+						break;
+				}
 		}
 
 		public static void WriteOperand(ITextOutput writer, long val)
@@ -223,7 +216,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (val == 0)
 			{
-				if (1 / val == float.NegativeInfinity)
+				if (float.IsNegativeInfinity(1 / val))
 				{
 					// negative zero is a special case
 					writer.Write('-');
@@ -254,7 +247,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (val == 0)
 			{
-				if (1 / val == double.NegativeInfinity)
+				if (double.IsNegativeInfinity(1 / val))
 				{
 					// negative zero is a special case
 					writer.Write('-');
@@ -329,7 +322,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						// print control characters and uncommon white spaces as numbers
 						if (char.IsControl(ch) || char.IsSurrogate(ch) || (char.IsWhiteSpace(ch) && ch != ' '))
 						{
-							sb.AppendFormat("\\u{0:x4}", (int)ch);
+							sb.Append($"\\u{(int)ch:x4}");
 						}
 						else
 						{

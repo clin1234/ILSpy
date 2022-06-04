@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// This exception is thrown when we find something else than we expect from the C# compiler.
 	/// This aborts the analysis and makes the whole transform fail.
 	/// </summary>
-	class SymbolicAnalysisFailedException : Exception
+	sealed class SymbolicAnalysisFailedException : Exception
 	{
 		public SymbolicAnalysisFailedException() { }
 		public SymbolicAnalysisFailedException(string message) : base(message) { }
@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 	}
 
-	class SymbolicEvaluationContext
+	sealed class SymbolicEvaluationContext
 	{
 		static readonly SymbolicValue Failed = new SymbolicValue(SymbolicValueType.Unknown);
 		readonly IField stateField;

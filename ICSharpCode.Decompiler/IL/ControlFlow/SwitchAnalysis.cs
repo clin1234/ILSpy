@@ -17,7 +17,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// <remarks>
 	/// This analysis expects to be run on basic blocks (not extended basic blocks).
 	/// </remarks>
-	class SwitchAnalysis
+	sealed class SwitchAnalysis
 	{
 		/// <summary>
 		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.

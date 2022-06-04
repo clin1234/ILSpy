@@ -11,7 +11,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
 {
-	internal class DecompileRun
+	internal sealed class DecompileRun
 	{
 		public DecompileRun(DecompilerSettings settings)
 		{
@@ -20,9 +20,9 @@ namespace ICSharpCode.Decompiler
 
 		public HashSet<string> DefinedSymbols { get; } = new();
 		public HashSet<string> Namespaces { get; } = new();
-		public CancellationToken CancellationToken { get; set; }
+		public CancellationToken CancellationToken { get; init; }
 		public DecompilerSettings Settings { get; }
-		public IDocumentationProvider DocumentationProvider { get; set; }
+		public IDocumentationProvider DocumentationProvider { get; init; }
 		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new();
 
 		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
@@ -33,9 +33,9 @@ namespace ICSharpCode.Decompiler
 
 		public EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
 
-		private UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
+		private static UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
 		{
-			UsingScope usingScope = new UsingScope();
+			UsingScope localUsingScope = new UsingScope();
 			foreach (var ns in requiredNamespacesSuperset)
 			{
 				string[] parts = ns.Split('.');
@@ -47,11 +47,11 @@ namespace ICSharpCode.Decompiler
 
 				if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
 				{
-					usingScope.Usings.Add(reference);
+					localUsingScope.Usings.Add(reference);
 				}
 			}
 
-			return usingScope;
+			return localUsingScope;
 		}
 	}
 

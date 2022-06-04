@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	public class FunctionPointerType : AbstractType
+	public sealed class FunctionPointerType : AbstractType
 	{
 		public readonly SignatureCallingConvention CallingConvention;
 		public readonly ImmutableArray<IType> CustomCallingConventions;

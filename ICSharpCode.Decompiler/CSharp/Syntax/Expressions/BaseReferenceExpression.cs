@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// base
 	/// </summary>
-	public class BaseReferenceExpression : Expression
+	public sealed class BaseReferenceExpression : Expression
 	{
 		public TextLocation Location {
 			get;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			return other is BaseReferenceExpression o;
+			return other is BaseReferenceExpression;
 		}
 	}
 }

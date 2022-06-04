@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// namespace Name { Members }
 	/// </summary>
-	public class NamespaceDeclaration : AstNode
+	public sealed class NamespaceDeclaration : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
 		public static readonly Role<AstType> NamespaceNameRole = new("NamespaceName", AstType.Null);
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return UsingDeclaration.ConstructNamespace(NamespaceName);
 			}
-			set {
+			init {
 				var arr = value.Split('.');
 				NamespaceName = ConstructType(arr, arr.Length - 1);
 			}

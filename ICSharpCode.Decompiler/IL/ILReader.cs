@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <remarks>
 	/// Instances of this class are not thread-safe. Use separate instances to decompile multiple members in parallel.
 	/// </remarks>
-	public class ILReader
+	public sealed class ILReader
 	{
 		readonly ICompilation compilation;
 		readonly MetadataReader metadata;
@@ -81,8 +81,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.SequencePointCandidates = new List<int>();
 		}
 
-		public bool UseDebugSymbols { get; set; }
-		public DebugInfo.IDebugInfoProvider DebugInfo { get; set; }
+		public bool UseDebugSymbols { get; init; }
+		public DebugInfo.IDebugInfoProvider DebugInfo { get; init; }
 		public List<string> Warnings { get; } = new();
 
 		// List of candidate locations for sequence points. Includes empty il stack locations, any nop instructions, and the instruction following
@@ -588,7 +588,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 
-			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
+			new MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
 				.WriteExceptionHandlers(module.PEFile, method, body);
 		}
 
@@ -945,7 +945,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Localloc:
 					return Push(new LocAlloc(Pop()));
 				case ILOpCode.Mul:
-					return BinaryNumeric(BinaryNumericOperator.Mul, false, Sign.None);
+					return BinaryNumeric(BinaryNumericOperator.Mul);
 				case ILOpCode.Mul_ovf:
 					return BinaryNumeric(BinaryNumericOperator.Mul, true, Sign.Signed);
 				case ILOpCode.Mul_ovf_un:
@@ -970,7 +970,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ret:
 					return Return();
 				case ILOpCode.Shl:
-					return BinaryNumeric(BinaryNumericOperator.ShiftLeft, false, Sign.None);
+					return BinaryNumeric(BinaryNumericOperator.ShiftLeft);
 				case ILOpCode.Shr:
 					return BinaryNumeric(BinaryNumericOperator.ShiftRight, false, Sign.Signed);
 				case ILOpCode.Shr_un:
@@ -1014,7 +1014,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stloc_3:
 					return Stloc(3);
 				case ILOpCode.Sub:
-					return BinaryNumeric(BinaryNumericOperator.Sub, false, Sign.None);
+					return BinaryNumeric(BinaryNumericOperator.Sub);
 				case ILOpCode.Sub_ovf:
 					return BinaryNumeric(BinaryNumericOperator.Sub, true, Sign.Signed);
 				case ILOpCode.Sub_ovf_un:
@@ -1273,10 +1273,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			void Warn(string message)
 			{
-				if (warnings != null)
-				{
-					warnings.Add($"IL_{ilOffset:x4}: {message}");
-				}
+				warnings?.Add($"IL_{ilOffset:x4}: {message}");
 			}
 		}
 
@@ -1343,9 +1340,9 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Return()
 		{
 			if (methodReturnStackType == StackType.Void)
-				return new IL.Leave(mainContainer);
+				return new Leave(mainContainer);
 			else
-				return new IL.Leave(mainContainer, Pop(methodReturnStackType));
+				return new Leave(mainContainer, Pop(methodReturnStackType));
 		}
 
 		private ILInstruction DecodeLdstr()
@@ -1923,7 +1920,7 @@ namespace ICSharpCode.Decompiler.IL
 			throw new BadImageFormatException("Invalid metadata token for ldtoken instruction.");
 		}
 
-		class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
+		sealed class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
 		{
 			readonly UnionFind<ILVariable> unionFind;
 			internal readonly HashSet<ILVariable> variables = new();

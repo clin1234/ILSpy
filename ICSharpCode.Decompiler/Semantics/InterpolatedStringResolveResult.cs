@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
 {
-	public class InterpolatedStringResolveResult : ResolveResult
+	public sealed class InterpolatedStringResolveResult : ResolveResult
 	{
 		public readonly ResolveResult[] Arguments;
 		public readonly string FormatString;

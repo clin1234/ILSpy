@@ -34,7 +34,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class ComposedType : AstType
+	public sealed class ComposedType : AstType
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefRole = new("ref");
@@ -77,14 +77,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType BaseType {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public bool HasNullableSpecifier {
 			get {
 				return !GetChildByRole(NullableRole).IsNull;
 			}
-			set {
+			init {
 				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
 			}
 		}
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				b.Append("ref ");
 			if (this.HasReadOnlySpecifier)
 				b.Append("readonly ");
-			b.Append(this.BaseType.ToString());
+			b.Append(this.BaseType);
 			if (this.HasNullableSpecifier)
 				b.Append('?');
 			b.Append('*', this.PointerRank);
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override AstType MakeArrayType(int dimensions)
+		public override AstType MakeArrayType(int dimensions = 1)
 		{
 			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions),
 				ArraySpecifierRole);
@@ -209,8 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
 			InterningProvider interningProvider = null)
 		{
-			if (interningProvider == null)
-				interningProvider = InterningProvider.Dummy;
+			interningProvider ??= InterningProvider.Dummy;
 			ITypeReference t = this.BaseType.ToTypeReference(lookupMode, interningProvider);
 			if (this.HasNullableSpecifier)
 			{
@@ -240,7 +239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [,,,]
 	/// </summary>
-	public class ArraySpecifier : AstNode
+	public sealed class ArraySpecifier : AstNode
 	{
 		public ArraySpecifier()
 		{
@@ -263,7 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public int Dimensions {
 			get { return 1 + GetChildrenByRole(Roles.Comma).Count; }
-			set {
+			init {
 				int d = this.Dimensions;
 				while (d > value)
 				{

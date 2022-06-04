@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// class Name&lt;TypeParameters&gt; : BaseTypes where Constraints;
 	/// </summary>
-	public class TypeDeclaration : EntityDeclaration
+	public sealed class TypeDeclaration : EntityDeclaration
 	{
 		ClassType classType;
 
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ClassType ClassType {
 			get { return classType; }
-			set {
+			init {
 				ThrowIfFrozen();
 				classType = value;
 			}

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// [ await ] using (ResourceAcquisition) EmbeddedStatement
 	/// </summary>
-	public class UsingStatement : Statement
+	public sealed class UsingStatement : Statement
 	{
 		public static readonly TokenRole UsingKeywordRole = new("using");
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync {
 			get { return !GetChildByRole(AwaitRole).IsNull; }
-			set { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
+			init { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
 		}
 
 		public CSharpTokenNode LParToken {
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public AstNode ResourceAcquisition {
 			get { return GetChildByRole(ResourceAcquisitionRole); }
-			set { SetChildByRole(ResourceAcquisitionRole, value); }
+			init { SetChildByRole(ResourceAcquisitionRole, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
+			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

@@ -35,17 +35,15 @@ namespace ICSharpCode.Decompiler
 		readonly Stack<AstNode> nodeStack = new();
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
-		readonly IDecompilerTypeSystem typeSystem;
 		int braceLevelWithinType = -1;
 		bool firstUsingDeclaration;
-		bool inDocumentationComment = false;
+		bool inDocumentationComment;
 		bool lastUsingDeclaration;
 
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
 			this.output = output ?? throw new ArgumentNullException(nameof(output));
 			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 		}
 
 		public override void WriteIdentifier(Identifier identifier)
@@ -71,10 +69,10 @@ namespace ICSharpCode.Decompiler
 			switch (member)
 			{
 				case IType t:
-					output.WriteReference(t, name, false);
+					output.WriteReference(t, name);
 					return;
 				case IMember m:
-					output.WriteReference(m, name, false);
+					output.WriteReference(m, name);
 					return;
 			}
 
@@ -177,23 +175,24 @@ namespace ICSharpCode.Decompiler
 					return variable;
 			}
 
-			if (node is QueryLetClause)
+			switch (node)
 			{
-				var variable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
-				if (variable != null)
-					return variable;
-			}
-
-			if (node is LabelStatement label)
-			{
-				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
-				if (method != null)
-					return method + label.Label;
-			}
-
-			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement)
-			{
-				if (node.Parent.GetResolveResult() is MemberResolveResult localFunction)
+				case QueryLetClause:
+				{
+					var variable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
+					if (variable != null)
+						return variable;
+					break;
+				}
+				case LabelStatement label:
+				{
+					var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
+					if (method != null)
+						return method + label.Label;
+					break;
+				}
+				case MethodDeclaration when node.Parent is LocalFunctionDeclarationStatement &&
+				                            node.Parent.GetResolveResult() is MemberResolveResult localFunction:
 					return localFunction.Member;
 			}
 
@@ -269,10 +268,10 @@ namespace ICSharpCode.Decompiler
 						switch (member)
 						{
 							case IType t:
-								output.WriteReference(t, token, false);
+								output.WriteReference(t, token);
 								return;
 							case IMember m:
-								output.WriteReference(m, token, false);
+								output.WriteReference(m, token);
 								return;
 						}
 					}
@@ -409,10 +408,10 @@ namespace ICSharpCode.Decompiler
 					switch (symbol)
 					{
 						case IType t:
-							output.WriteReference(t, type, false);
+							output.WriteReference(t, type);
 							return;
 						case IMember m:
-							output.WriteReference(m, type, false);
+							output.WriteReference(m, type);
 							return;
 					}
 
@@ -455,21 +454,19 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsDefinition(ref AstNode node)
 		{
-			if (node is EntityDeclaration && node.Parent is not LocalFunctionDeclarationStatement)
-				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration)
+			switch (node)
 			{
-				node = node.Parent;
-				return true;
+				case EntityDeclaration when node.Parent is not LocalFunctionDeclarationStatement:
+					return true;
+				case VariableInitializer when node.Parent is FieldDeclaration:
+					node = node.Parent;
+					return true;
+				case FixedVariableInitializer when node.Parent is FixedFieldDeclaration:
+					node = node.Parent;
+					return true;
+				default:
+					return false;
 			}
-
-			if (node is FixedVariableInitializer && node.Parent is FixedFieldDeclaration)
-			{
-				node = node.Parent;
-				return true;
-			}
-
-			return false;
 		}
 	}
 }

@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <summary>
 	/// Represents an optional node.
 	/// </summary>
-	public class Repeat : Pattern
+	public sealed class Repeat : Pattern
 	{
 		public Repeat(INode childNode)
 		{
@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			this.MaxCount = int.MaxValue;
 		}
 
-		public int MinCount { get; set; }
+		public int MinCount { get; init; }
 		public int MaxCount { get; set; }
 
 		public INode ChildNode { get; }

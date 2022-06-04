@@ -66,13 +66,13 @@ namespace ICSharpCode.ILSpyX
 		public bool ApplyWinRTProjections { get; set; }
 		public bool UseDebugSymbols { get; set; }
 
-		public ObservableCollection<string> AssemblyLists { get; } = new();
+		public ObservableCollection<string?> AssemblyLists { get; } = new();
 
 		/// <summary>
 		/// Loads an assembly list from the ILSpySettings.
 		/// If no list with the specified name is found, the default list is loaded instead.
 		/// </summary>
-		public AssemblyList LoadList(string listName)
+		public AssemblyList LoadList(string? listName)
 		{
 			this.settingsProvider = this.settingsProvider.Load();
 			AssemblyList list = DoLoadList(listName);
@@ -81,7 +81,7 @@ namespace ICSharpCode.ILSpyX
 			return list;
 		}
 
-		AssemblyList DoLoadList(string listName)
+		AssemblyList DoLoadList(string? listName)
 		{
 			XElement doc = this.settingsProvider["AssemblyLists"];
 			if (listName != null)
@@ -98,14 +98,14 @@ namespace ICSharpCode.ILSpyX
 			return new AssemblyList(this, listName ?? DefaultListName);
 		}
 
-		public bool CloneList(string selectedAssemblyList, string newListName)
+		public bool CloneList(string? selectedAssemblyList, string newListName)
 		{
 			var list = DoLoadList(selectedAssemblyList);
 			var newList = new AssemblyList(list, newListName);
 			return AddListIfNotExists(newList);
 		}
 
-		public bool RenameList(string selectedAssemblyList, string newListName)
+		public bool RenameList(string? selectedAssemblyList, string newListName)
 		{
 			var list = DoLoadList(selectedAssemblyList);
 			var newList = new AssemblyList(list, newListName);
@@ -147,7 +147,7 @@ namespace ICSharpCode.ILSpyX
 			return false;
 		}
 
-		public bool DeleteList(string Name)
+		public bool DeleteList(string? Name)
 		{
 			if (AssemblyLists.Remove(Name))
 			{
@@ -161,8 +161,7 @@ namespace ICSharpCode.ILSpyX
 
 						XElement? listElement = doc.Elements("List")
 							.FirstOrDefault(e => (string?)e.Attribute("name") == Name);
-						if (listElement != null)
-							listElement.Remove();
+						listElement?.Remove();
 					});
 				return true;
 			}
@@ -307,7 +306,7 @@ namespace ICSharpCode.ILSpyX
 					AddToListFromGAC(
 						"Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 					break;
-				case object _ when path != null:
+				case not null when path != null:
 					foreach (var file in Directory.GetFiles(path, "*.dll"))
 					{
 						var dllname = Path.GetFileName(file);

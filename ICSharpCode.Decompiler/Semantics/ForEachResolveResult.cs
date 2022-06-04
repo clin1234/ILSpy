@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Resolve result representing a 'foreach' loop.
 	/// </summary>
-	public class ForEachResolveResult : ResolveResult
+	public sealed class ForEachResolveResult : ResolveResult
 	{
 		/// <summary>
 		/// Gets the collection type.

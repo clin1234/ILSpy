@@ -56,15 +56,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		ITypeDefinition IEntity.DeclaringTypeDefinition => DeclaringType?.GetDefinition();
 
-		public IType DeclaringType { get; set; }
+		public IType DeclaringType { get; init; }
 
 		IModule IEntity.ParentModule => DeclaringType?.GetDefinition()?.ParentModule;
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
 
-		public Accessibility Accessibility { get; set; } = Accessibility.Public;
+		public Accessibility Accessibility { get; protected init; } = Accessibility.Public;
 
-		public bool IsStatic { get; set; }
+		public bool IsStatic { get; init; }
 		bool IEntity.IsAbstract => false;
 		bool IEntity.IsSealed => false;
 
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract IMember Specialize(TypeParameterSubstitution substitution);
 	}
 
-	class FakeField : FakeMember, IField
+	sealed class FakeField : FakeMember, IField
 	{
 		public FakeField(ICompilation compilation) : base(compilation)
 		{
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	class FakeMethod : FakeMember, IMethod
+	sealed class FakeMethod : FakeMember, IMethod
 	{
 		readonly SymbolKind symbolKind;
 
@@ -166,7 +166,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return SpecializedMethod.Create(this, substitution);
 		}
 
-		internal static IMethod CreateDummyConstructor(ICompilation compilation, IType declaringType, Accessibility accessibility = Accessibility.Public)
+		internal static IMethod CreateDummyConstructor(ICompilation compilation, IType declaringType,
+			Accessibility accessibility = Accessibility.Public)
 		{
 			return new FakeMethod(compilation, SymbolKind.Constructor) {
 				DeclaringType = declaringType,
@@ -203,7 +204,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		public FakeEvent(ICompilation compilation)
 			: base(compilation)
-		{ }
+		{
+		}
 
 		public override SymbolKind SymbolKind => SymbolKind.Event;
 

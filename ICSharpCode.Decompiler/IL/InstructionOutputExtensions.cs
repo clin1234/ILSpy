@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output,
-			Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
+			MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
 		{
 			if (entity.IsNil)
 			{
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)entity);
 					signature = fd.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
-						new Metadata.MetadataGenericContext(fd.GetDeclaringType(), module));
+						new MetadataGenericContext(fd.GetDeclaringType(), module));
 					signature(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
 					((EntityHandle)fd.GetDeclaringType()).WriteTo(module, output, default, ILNameSyntax.TypeName);
@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)entity);
 					methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
-						new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module));
+						new MetadataGenericContext((MethodDefinitionHandle)entity, module));
 					methodSignature.Header.WriteTo(output);
 					methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.IL
 										output.Write(", ");
 									var constraint = metadata.GetGenericParameterConstraint(constraints[j]);
 									constraint.Type.WriteTo(module, output,
-										new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module),
+										new MetadataGenericContext((MethodDefinitionHandle)entity, module),
 										ILNameSyntax.TypeName);
 								}
 
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		static void WriteParent(ITextOutput output, PEFile module, MetadataReader metadata, EntityHandle parentHandle,
-			Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax)
+			MetadataGenericContext genericContext, ILNameSyntax syntax)
 		{
 			switch (parentHandle.Kind)
 			{

@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	/// </summary>
 	[DebuggerDisplay(
 		"SequencePoint IL_{Offset,h}-IL_{EndOffset,h}, {StartLine}:{StartColumn}-{EndLine}:{EndColumn}, IsHidden={IsHidden}")]
-	public class SequencePoint
+	public sealed class SequencePoint
 	{
 		/// <summary>
 		/// IL start offset.
@@ -43,15 +43,15 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		public int EndOffset { get; set; }
 
 		public int StartLine { get; set; }
-		public int StartColumn { get; set; }
+		public int StartColumn { get; init; }
 		public int EndLine { get; set; }
-		public int EndColumn { get; set; }
+		public int EndColumn { get; init; }
 
 		public bool IsHidden {
 			get { return StartLine == 0xfeefee && StartLine == EndLine; }
 		}
 
-		public string DocumentUrl { get; set; }
+		public string DocumentUrl { get; init; }
 
 		internal void SetHidden()
 		{

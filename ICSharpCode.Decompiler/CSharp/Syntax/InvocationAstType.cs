@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// BaseType "(" Argument { "," Argument } ")"
 	/// </summary>
-	public class InvocationAstType : AstType
+	public sealed class InvocationAstType : AstType
 	{
 		public AstNodeCollection<Expression> Arguments {
 			get { return GetChildrenByRole(Roles.Expression); }

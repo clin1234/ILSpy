@@ -47,26 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public NameLookupMode LookupMode { get; }
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			int hashCode = 0;
-			unchecked
-			{
-				hashCode += 1000000021 * Identifier.GetHashCode();
-				hashCode += 1000000033 * TypeArguments.GetHashCode();
-				hashCode += 1000000087 * (int)LookupMode;
-			}
-
-			return hashCode;
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is SimpleTypeOrNamespaceReference o && this.Identifier == o.Identifier
-			                                                 && this.TypeArguments == o.TypeArguments &&
-			                                                 this.LookupMode == o.LookupMode;
-		}
-
 		/// <summary>
 		/// Adds a suffix to the identifier.
 		/// Does not modify the existing type reference, but returns a new one.
@@ -95,6 +75,26 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				return Identifier;
 			else
 				return Identifier + "<" + string.Join(",", TypeArguments) + ">";
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			int hashCode = 0;
+			unchecked
+			{
+				hashCode += 1000000021 * Identifier.GetHashCode();
+				hashCode += 1000000033 * TypeArguments.GetHashCode();
+				hashCode += 1000000087 * (int)LookupMode;
+			}
+
+			return hashCode;
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is SimpleTypeOrNamespaceReference o && this.Identifier == o.Identifier
+			                                                 && this.TypeArguments == o.TypeArguments &&
+			                                                 this.LookupMode == o.LookupMode;
 		}
 	}
 }

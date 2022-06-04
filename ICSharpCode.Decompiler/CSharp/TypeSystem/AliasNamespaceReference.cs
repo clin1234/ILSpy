@@ -41,16 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public string Identifier { get; }
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			return Identifier.GetHashCode();
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is AliasNamespaceReference anr && this.Identifier == anr.Identifier;
-		}
-
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
 			return resolver.ResolveAlias(Identifier);
@@ -65,6 +55,16 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public override string ToString()
 		{
 			return Identifier + "::";
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			return Identifier.GetHashCode();
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is AliasNamespaceReference anr && this.Identifier == anr.Identifier;
 		}
 	}
 }

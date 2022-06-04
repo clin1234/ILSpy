@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	}
 
 	[TypeConverter(typeof(ExpandableObjectConverter))]
-	public class CSharpFormattingOptions
+	public sealed class CSharpFormattingOptions
 	{
 		internal CSharpFormattingOptions()
 		{
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool IndentCaseBody {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool IndentBreakStatements {
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-		public bool AllowOneLinedArrayInitialziers { get; set; } = true;
+		public bool AllowOneLinedArrayInitialziers { get; init; } = true;
 
 		#endregion
 
@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpaceBeforeMethodDeclarationParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBetweenEmptyMethodDeclarationParentheses {
@@ -432,14 +432,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpaceWithinMethodDeclarationParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		// Method calls
 		public bool SpaceBeforeMethodCallParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBetweenEmptyMethodCallParentheses {
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpaceWithinMethodCallParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		// fields
@@ -499,7 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpaceBeforeConstructorDeclarationParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBetweenEmptyConstructorDeclarationParentheses {
@@ -563,7 +563,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public bool SpaceBeforeDelegateDeclarationParentheses {
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBetweenEmptyDelegateDeclarationParentheses {
@@ -595,97 +595,97 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpaceBeforeIfParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeWhileParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeForParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeForeachParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeCatchParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeSwitchParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeLockParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeUsingParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundAssignment {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundLogicalOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundEqualityOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundRelationalOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundBitwiseOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundAdditiveOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundMultiplicativeOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundShiftOperator {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAroundNullCoalescingOperator {
@@ -715,67 +715,67 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpacesWithinParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinIfParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinWhileParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinForParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinForeachParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinCatchParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinSwitchParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinLockParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinUsingParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinCastParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinSizeOfParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeSizeOfParentheses {
@@ -787,7 +787,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpacesWithinTypeOfParentheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesWithinNewParentheses {
@@ -823,7 +823,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpacesWithinCheckedExpressionParantheses {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeConditionalOperatorCondition {
@@ -864,7 +864,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpacesWithinBrackets {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpacesBeforeBrackets {
@@ -876,31 +876,31 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public bool SpaceBeforeBracketComma {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAfterBracketComma {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeForSemicolon {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAfterForSemicolon {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceAfterTypecast {
 			// tested
 			get;
-			set;
+			init;
 		}
 
 		public bool SpaceBeforeArrayDeclarationBrackets {
@@ -935,7 +935,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int MinimumBlankLinesAfterUsings {
 			get;
-			set;
+			init;
 		}
 
 		public int MinimumBlankLinesBeforeFirstDeclaration {
@@ -960,7 +960,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int MinimumBlankLinesBetweenMembers {
 			get;
-			set;
+			init;
 		}
 
 		public int MinimumBlankLinesAroundRegion {

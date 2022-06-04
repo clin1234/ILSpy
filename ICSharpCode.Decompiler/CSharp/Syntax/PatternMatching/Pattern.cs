@@ -88,8 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 						patternStack.Push(cur1.NextSibling);
 
 					cur1 = cur1.NextSibling;
-					if (cur2 != null)
-						cur2 = cur2.NextSibling;
+					cur2 = cur2?.NextSibling;
 				}
 
 				while (cur2 != null && cur2.Role != role)

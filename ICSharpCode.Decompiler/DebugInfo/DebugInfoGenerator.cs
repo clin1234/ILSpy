@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -38,17 +37,17 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	/// This can happen concurrently for multiple source files.
 	/// Then the main thread calls Generate() to write out the results into the PDB.
 	/// </summary>
-	class DebugInfoGenerator : DepthFirstAstVisitor
+	sealed class DebugInfoGenerator : DepthFirstAstVisitor
 	{
 		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer =
-			new(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
+			new(static l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
 
+		readonly List<ILFunction> functions = new();
 		readonly ImportScopeInfo globalImportScope = new();
-		ImportScopeInfo currentImportScope;
-		List<ILFunction> functions = new();
-		List<ImportScopeInfo> importScopes = new();
+		readonly List<ImportScopeInfo> importScopes = new();
 
-		IDecompilerTypeSystem typeSystem;
+		readonly IDecompilerTypeSystem typeSystem;
+		ImportScopeInfo currentImportScope;
 
 		public DebugInfoGenerator(IDecompilerTypeSystem typeSystem)
 		{
@@ -205,7 +204,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			// Look into method body, e.g. in order to find lambdas
 			VisitChildren(node);
 
-			if (function == null || function.Method == null || function.Method.MetadataToken.IsNil)
+			if (function?.Method == null || function.Method.MetadataToken.IsNil)
 				return;
 			this.functions.Add(function);
 			var method = function.MoveNextMethod ?? function.Method;
@@ -227,7 +226,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			{
 #if DEBUG
 				var types = typeSystem.MainModule.DecodeLocalSignature(methodBody.LocalSignature,
-					new TypeSystem.GenericContext(method));
+					new GenericContext(method));
 #endif
 
 				foreach (var v in function.Variables)

@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Note that 2) and 3) apply because declarations and uses of lambdas and local functions
 	/// are already transformed by the time this transform is applied.
 	/// </summary>
-	public class TransformDisplayClassUsage : ILVisitor, IILTransform
+	public sealed class TransformDisplayClassUsage : ILVisitor, IILTransform
 	{
 		readonly Stack<ILFunction> currentFunctions = new();
 		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new();
@@ -433,7 +433,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
 				if (baseCtorHandle.IsNil)
 					return false;
-				var objectCtor = module.ResolveMethod(baseCtorHandle, new TypeSystem.GenericContext());
+				var objectCtor = module.ResolveMethod(baseCtorHandle, new GenericContext());
 				if (!objectCtor.DeclaringType.IsKnownType(KnownTypeCode.Object))
 					return false;
 				if (!objectCtor.IsConstructor || objectCtor.Parameters.Count != 0)
@@ -880,7 +880,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		class VariableToDeclare
+		sealed class VariableToDeclare
 		{
 			private readonly DisplayClass container;
 			private readonly IField field;
@@ -922,7 +922,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		[DebuggerDisplay("[DisplayClass {Variable} : {Type}]")]
-		class DisplayClass
+		sealed class DisplayClass
 		{
 			public readonly ITypeDefinition Type;
 			public readonly ILVariable Variable;

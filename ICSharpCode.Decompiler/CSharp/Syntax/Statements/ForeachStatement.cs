@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// foreach (Type VariableName in InExpression) EmbeddedStatement
 	/// </summary>
-	public class ForeachStatement : Statement
+	public sealed class ForeachStatement : Statement
 	{
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
 		public static readonly TokenRole ForeachKeywordRole = new("foreach");
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync {
 			get { return !GetChildByRole(AwaitRole).IsNull; }
-			set { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
+			init { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
 		}
 
 		public CSharpTokenNode ForeachToken {
@@ -55,12 +55,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType VariableType {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public VariableDesignation VariableDesignation {
 			get { return GetChildByRole(Roles.VariableDesignationRole); }
-			set { SetChildByRole(Roles.VariableDesignationRole, value); }
+			init { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
 
 		public CSharpTokenNode InToken {
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression InExpression {
 			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			init { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
+			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

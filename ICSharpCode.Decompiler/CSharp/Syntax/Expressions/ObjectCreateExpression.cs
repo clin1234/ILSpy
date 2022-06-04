@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new Type(Arguments) { Initializer }
 	/// </summary>
-	public class ObjectCreateExpression : Expression
+	public sealed class ObjectCreateExpression : Expression
 	{
 		public static readonly TokenRole NewKeywordRole = new("new");
 		public static readonly Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;

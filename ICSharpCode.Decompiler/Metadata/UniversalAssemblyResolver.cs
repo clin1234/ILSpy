@@ -348,8 +348,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
@@ -565,7 +564,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
 					"Microsoft.NET");
-				string[] frameworkPaths = new[] {
+				string[] frameworkPaths = {
 					Path.Combine(rootPath, "Framework"),
 					Path.Combine(rootPath, "Framework64")
 				};
@@ -591,19 +590,23 @@ namespace ICSharpCode.Decompiler.Metadata
 		string? GetMonoMscorlibBasePath(Version version)
 		{
 			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName)!.Parent!.FullName;
-			if (version.Major == 1)
-				path = Path.Combine(path, "1.0");
-			else if (version.Major == 2)
+			switch (version.Major)
 			{
-				path = Path.Combine(path, version.MajorRevision == 5 ? "2.1" : "2.0");
-			}
-			else if (version.Major == 4)
-				path = Path.Combine(path, "4.0");
-			else
-			{
-				if (throwOnError)
-					throw new NotSupportedException("Version not supported: " + version);
-				return null;
+				case 1:
+					path = Path.Combine(path, "1.0");
+					break;
+				case 2:
+					path = Path.Combine(path, version.MajorRevision == 5 ? "2.1" : "2.0");
+					break;
+				case 4:
+					path = Path.Combine(path, "4.0");
+					break;
+				default:
+				{
+					if (throwOnError)
+						throw new NotSupportedException("Version not supported: " + version);
+					return null;
+				}
 			}
 
 			return path;

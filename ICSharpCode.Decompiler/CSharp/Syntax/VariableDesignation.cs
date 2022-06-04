@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// Identifier
 	/// </summary>
-	public class SingleVariableDesignation : VariableDesignation
+	public sealed class SingleVariableDesignation : VariableDesignation
 	{
 		public string Identifier {
 			get { return GetChildByRole(Roles.Identifier).Name; }
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// ( VariableDesignation (, VariableDesignation)* )
 	/// </summary>
-	public class ParenthesizedVariableDesignation : VariableDesignation
+	public sealed class ParenthesizedVariableDesignation : VariableDesignation
 	{
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }

@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// <summary>
 	/// Represents a unary/binary/ternary operator invocation.
 	/// </summary>
-	public class OperatorResolveResult : ResolveResult
+	public sealed class OperatorResolveResult : ResolveResult
 	{
 		public OperatorResolveResult(IType resultType, ExpressionType operatorType, params ResolveResult[] operands)
 			: base(resultType)

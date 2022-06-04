@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// The collection of variables in a <c>ILFunction</c>.
 	/// </summary>
-	public class ILVariableCollection : ICollection<ILVariable>, IReadOnlyList<ILVariable>
+	public sealed class ILVariableCollection : ICollection<ILVariable>, IReadOnlyList<ILVariable>
 	{
 		readonly List<ILVariable> list = new();
 		readonly ILFunction scope;

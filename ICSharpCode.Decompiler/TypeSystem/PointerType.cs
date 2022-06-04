@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return TypeKind.Pointer; }
 		}
 
-		public override string NameSuffix {
+		protected override string NameSuffix {
 			get {
 				return "*";
 			}
@@ -77,16 +77,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ITypeReference ElementType { get; }
 
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			return ElementType.GetHashCode() ^ 91725812;
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			return other is PointerTypeReference o && this.ElementType == o.ElementType;
-		}
-
 		public IType Resolve(ITypeResolveContext context)
 		{
 			return new PointerType(ElementType.Resolve(context));
@@ -94,7 +84,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			return ElementType.ToString() + "*";
+			return ElementType + "*";
+		}
+
+		public int GetHashCodeForInterning()
+		{
+			return ElementType.GetHashCode() ^ 91725812;
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is PointerTypeReference o && this.ElementType == o.ElementType;
 		}
 	}
 }

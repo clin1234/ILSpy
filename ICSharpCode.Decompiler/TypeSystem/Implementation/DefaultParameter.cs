@@ -27,19 +27,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Default implementation of <see cref="IParameter"/>.
 	/// </summary>
-	public sealed class DefaultParameter : IParameter
+	internal sealed class DefaultParameter : IParameter
 	{
 		readonly IReadOnlyList<IAttribute> attributes;
 		readonly object defaultValue;
 
-		public DefaultParameter(IType type, string name)
+		internal DefaultParameter(IType type, string name)
 		{
 			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 			this.Name = name ?? throw new ArgumentNullException(nameof(name));
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 
-		public DefaultParameter(IType type, string name, IParameterizedMember owner = null,
+		internal DefaultParameter(IType type, string name, IParameterizedMember owner = null,
 			IReadOnlyList<IAttribute> attributes = null,
 			ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false,
 			object defaultValue = null)
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return ToString(this);
 		}
 
-		public static string ToString(IParameter parameter)
+		internal static string ToString(IParameter parameter)
 		{
 			StringBuilder b = new();
 			if (parameter.IsRef)
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append(" = ");
 				object val = parameter.GetConstantValue(throwOnInvalidMetadata: false);
 				if (val != null)
-					b.Append(val.ToString());
+					b.Append(val);
 				else
 					b.Append("null");
 			}

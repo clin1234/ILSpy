@@ -45,11 +45,11 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Currently unused; we'll probably use the LdToken ILInstruction as annotation instead when LdToken
 	/// support gets reimplemented.
 	/// </summary>
-	public class LdTokenAnnotation
+	internal abstract class LdTokenAnnotation
 	{
 	}
 
-	public static class AnnotationExtensions
+	internal static class AnnotationExtensions
 	{
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression,
 			ILInstruction instruction)
@@ -146,13 +146,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (newObj != null)
 				{
 					var funcptr = newObj.Arguments.ElementAtOrDefault(1);
-					if (funcptr is LdFtn ldftn)
+					switch (funcptr)
 					{
-						return ldftn.Method;
-					}
-					else if (funcptr is LdVirtFtn ldVirtFtn)
-					{
-						return ldVirtFtn.Method;
+						case LdFtn ldftn:
+							return ldftn.Method;
+						case LdVirtFtn ldVirtFtn:
+							return ldVirtFtn.Method;
 					}
 				}
 
@@ -248,7 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
 		{
-			foreach (object annotation in other.Annotations.OfType<ILInstruction>())
+			foreach (ILInstruction annotation in other.Annotations.OfType<ILInstruction>())
 			{
 				node.AddAnnotation(annotation);
 			}
@@ -260,7 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Represents a reference to a local variable.
 	/// </summary>
-	public class ILVariableResolveResult : ResolveResult
+	internal sealed class ILVariableResolveResult : ResolveResult
 	{
 		public readonly ILVariable Variable;
 
@@ -279,7 +278,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Annotates a <see cref="ForeachStatement"/> with the instructions for the GetEnumerator, MoveNext
 	/// and get_Current calls.
 	/// </summary>
-	public class ForeachAnnotation
+	internal sealed class ForeachAnnotation
 	{
 		public readonly ILInstruction GetCurrentCall;
 		public readonly ILInstruction GetEnumeratorCall;
@@ -298,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Annotates the top-level block statement of a function
 	/// with the implicitly executed return/yield break.
 	/// </summary>
-	public class ImplicitReturnAnnotation
+	internal sealed class ImplicitReturnAnnotation
 	{
 		public readonly Leave Leave;
 
@@ -311,7 +310,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Annotates an expression when an implicit user-defined conversion was omitted.
 	/// </summary>
-	public class ImplicitConversionAnnotation
+	internal sealed class ImplicitConversionAnnotation
 	{
 		public readonly ConversionResolveResult ConversionResolveResult;
 
@@ -326,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Annotates a QueryGroupClause with the ILFunctions of each (implicit lambda) expression.
 	/// </summary>
-	public class QueryGroupClauseAnnotation
+	internal sealed class QueryGroupClauseAnnotation
 	{
 		public readonly ILFunction KeyLambda;
 		public readonly ILFunction ProjectionLambda;
@@ -341,7 +340,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Annotates a QueryJoinClause with the ILFunctions of each (implicit lambda) expression.
 	/// </summary>
-	public class QueryJoinClauseAnnotation
+	internal sealed class QueryJoinClauseAnnotation
 	{
 		public readonly ILFunction EqualsLambda;
 		public readonly ILFunction OnLambda;
@@ -356,7 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Annotates an out DirectionExpression if the out variable can be declared implicitly typed.
 	/// </summary>
-	public class UseImplicitlyTypedOutAnnotation
+	public sealed class UseImplicitlyTypedOutAnnotation
 	{
 		public static readonly UseImplicitlyTypedOutAnnotation Instance = new();
 	}

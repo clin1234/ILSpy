@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Helper struct so that the compiler can ensure we don't forget both the ILInstruction annotation and the ResolveResult annotation.
 	/// Use '.WithILInstruction(...)' or '.WithoutILInstruction()' to create an instance of this struct.
 	/// </summary>
-	struct ExpressionWithILInstruction
+	readonly struct ExpressionWithILInstruction
 	{
 		public readonly Expression Expression;
 
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Helper struct so that the compiler can ensure we don't forget both the ILInstruction annotation and the ResolveResult annotation.
 	/// Use '.WithRR(...)'.
 	/// </summary>
-	struct ExpressionWithResolveResult
+	readonly struct ExpressionWithResolveResult
 	{
 		public readonly Expression Expression;
 
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// forgets to add the annotation.
 	/// </remarks>
 	[DebuggerDisplay("{Expression} : {ResolveResult}")]
-	struct TranslatedExpression
+	readonly struct TranslatedExpression
 	{
 		public readonly Expression Expression;
 
@@ -203,28 +203,28 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						case ConversionResolveResult conversion:
 						{
-							if (Expression is CastExpression cast && CastCanBeMadeImplicit(
-								    Resolver.CSharpConversions.Get(expressionBuilder.compilation),
-								    conversion.Conversion,
-								    conversion.Input.Type,
-								    type, targetType
-							    ))
+							switch (Expression)
 							{
-								var result = this.UnwrapChild(cast.Expression);
-								if (conversion.Conversion.IsUserDefined)
+								case CastExpression cast when CastCanBeMadeImplicit(
+									Resolver.CSharpConversions.Get(expressionBuilder.compilation),
+									conversion.Conversion,
+									conversion.Input.Type,
+									type, targetType
+								):
 								{
-									result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
-								}
+									var result = this.UnwrapChild(cast.Expression);
+									if (conversion.Conversion.IsUserDefined)
+									{
+										result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
+									}
 
-								return result;
-							}
-							else if (Expression is ObjectCreateExpression oce && conversion.Conversion
-								                                                  .IsMethodGroupConversion
-							                                                  && oce.Arguments.Count == 1 &&
-							                                                  expressionBuilder.settings
-								                                                  .UseImplicitMethodGroupConversion)
-							{
-								return this.UnwrapChild(oce.Arguments.Single());
+									return result;
+								}
+								case ObjectCreateExpression oce when conversion.Conversion.IsMethodGroupConversion &&
+								                                     oce.Arguments.Count == 1 &&
+								                                     expressionBuilder.settings
+									                                     .UseImplicitMethodGroupConversion:
+									return this.UnwrapChild(oce.Arguments.Single());
 							}
 
 							break;
@@ -246,18 +246,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 
-			if (targetType.Kind is TypeKind.Void or TypeKind.None)
+			switch (targetType.Kind)
 			{
-				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
-			}
-			else if (targetType.Kind == TypeKind.Unknown)
-			{
+				case TypeKind.Void or TypeKind.None:
+					return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
 				// don't attempt cast to '?', or casts between an unknown type and a known type with same name
-				if (targetType.Name == "?" || targetType.ReflectionName == type.ReflectionName)
-				{
-					return this;
-				}
 				// However we still want explicit casts to types that are merely unresolved
+				case TypeKind.Unknown when targetType.Name == "?" || targetType.ReflectionName == type.ReflectionName:
+					return this;
 			}
 
 			var convAnnotation = this.Expression.Annotation<ImplicitConversionAnnotation>();
@@ -274,32 +270,31 @@ namespace ICSharpCode.Decompiler.CSharp
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
 
-			if (Expression is ThrowExpression && allowImplicitConversion)
+			switch (Expression)
 			{
-				return this; // Throw expressions have no type and are implicitly convertible to any type
-			}
-
-			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
-			                                            && tupleExpr.Elements.Count ==
-			                                            targetTupleType.ElementTypes.Length)
-			{
-				// Conversion of a tuple literal: convert element-wise
-				var newTupleExpr = new TupleExpression();
-				var newElementRRs = new List<ResolveResult>();
-				foreach ((Expression elementExpr, IType elementTargetType) in tupleExpr.Elements.Zip(targetTupleType
-					         .ElementTypes))
+				case ThrowExpression when allowImplicitConversion:
+					return this; // Throw expressions have no type and are implicitly convertible to any type
+				case TupleExpression tupleExpr when targetType is TupleType targetTupleType &&
+				                                    tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length:
 				{
-					var newElementExpr = new TranslatedExpression(elementExpr.Detach())
-						.ConvertTo(elementTargetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
-					newTupleExpr.Elements.Add(newElementExpr.Expression);
-					newElementRRs.Add(newElementExpr.ResolveResult);
-				}
+					// Conversion of a tuple literal: convert element-wise
+					var newTupleExpr = new TupleExpression();
+					var newElementRRs = new List<ResolveResult>();
+					foreach ((Expression elementExpr, IType elementTargetType) in tupleExpr.Elements.Zip(targetTupleType
+						         .ElementTypes))
+					{
+						var newElementExpr = new TranslatedExpression(elementExpr.Detach())
+							.ConvertTo(elementTargetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+						newTupleExpr.Elements.Add(newElementExpr.Expression);
+						newElementRRs.Add(newElementExpr.ResolveResult);
+					}
 
-				return newTupleExpr.WithILInstruction(this.ILInstructions)
-					.WithRR(new TupleResolveResult(
-						expressionBuilder.compilation, newElementRRs.ToImmutableArray(),
-						valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
-					));
+					return newTupleExpr.WithILInstruction(this.ILInstructions)
+						.WithRR(new TupleResolveResult(
+							expressionBuilder.compilation, newElementRRs.ToImmutableArray(),
+							valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
+						));
+				}
 			}
 
 			var compilation = expressionBuilder.compilation;
@@ -755,43 +750,50 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Debug.Assert(Type.GetStackType().IsIntegerType());
 			IType boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
-			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int value)
+			switch (ResolveResult.IsCompileTimeConstant)
 			{
-				bool val = value != 0;
-				val ^= negate;
-				return new PrimitiveExpression(val)
-					.WithILInstruction(this.ILInstructions)
-					.WithRR(new ConstantResolveResult(boolType, val));
-			}
-			else if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is byte constantValue)
-			{
-				bool val = constantValue != 0;
-				val ^= negate;
-				return new PrimitiveExpression(val)
-					.WithILInstruction(this.ILInstructions)
-					.WithRR(new ConstantResolveResult(boolType, val));
-			}
-			else if (Type.Kind == TypeKind.Pointer)
-			{
-				var nullRef = new NullReferenceExpression()
-					.WithoutILInstruction()
-					.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
-				var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
-				return new BinaryOperatorExpression(Expression, op, nullRef.Expression)
-					.WithoutILInstruction()
-					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
-						this.ResolveResult, nullRef.ResolveResult));
-			}
-			else
-			{
-				var zero = new PrimitiveExpression(0)
-					.WithoutILInstruction()
-					.WithRR(new ConstantResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.Int32), 0));
-				var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
-				return new BinaryOperatorExpression(Expression, op, zero.Expression)
-					.WithoutILInstruction()
-					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
-						this.ResolveResult, zero.ResolveResult));
+				case true when ResolveResult.ConstantValue is int value:
+				{
+					bool val = value != 0;
+					val ^= negate;
+					return new PrimitiveExpression(val)
+						.WithILInstruction(this.ILInstructions)
+						.WithRR(new ConstantResolveResult(boolType, val));
+				}
+				case true when ResolveResult.ConstantValue is byte constantValue:
+				{
+					bool val = constantValue != 0;
+					val ^= negate;
+					return new PrimitiveExpression(val)
+						.WithILInstruction(this.ILInstructions)
+						.WithRR(new ConstantResolveResult(boolType, val));
+				}
+				default:
+				{
+					if (Type.Kind == TypeKind.Pointer)
+					{
+						var nullRef = new NullReferenceExpression()
+							.WithoutILInstruction()
+							.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
+						var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
+						return new BinaryOperatorExpression(Expression, op, nullRef.Expression)
+							.WithoutILInstruction()
+							.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
+								this.ResolveResult, nullRef.ResolveResult));
+					}
+					else
+					{
+						var zero = new PrimitiveExpression(0)
+							.WithoutILInstruction()
+							.WithRR(new ConstantResolveResult(
+								expressionBuilder.compilation.FindType(KnownTypeCode.Int32), 0));
+						var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
+						return new BinaryOperatorExpression(Expression, op, zero.Expression)
+							.WithoutILInstruction()
+							.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
+								this.ResolveResult, zero.ResolveResult));
+					}
+				}
 			}
 		}
 	}

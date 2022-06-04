@@ -41,18 +41,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class ILTransformContext
 	{
-		public ILFunction Function { get; }
-		public IDecompilerTypeSystem TypeSystem { get; }
-		public IDebugInfoProvider? DebugInfo { get; }
-		public DecompilerSettings Settings { get; }
-		public CancellationToken CancellationToken { get; set; }
-		public Stepper Stepper { get; set; }
-		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
-
-		internal DecompileRun? DecompileRun { get; set; }
-		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
-
-		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider? debugInfo, DecompilerSettings? settings = null)
+		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider? debugInfo,
+			DecompilerSettings? settings = null)
 		{
 			this.Function = function ?? throw new ArgumentNullException(nameof(function));
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
@@ -71,6 +61,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.CancellationToken = context.CancellationToken;
 			this.Stepper = context.Stepper;
 		}
+
+		public ILFunction Function { get; }
+		public IDecompilerTypeSystem TypeSystem { get; }
+		public IDebugInfoProvider? DebugInfo { get; }
+		public DecompilerSettings Settings { get; }
+		public CancellationToken CancellationToken { get; init; }
+		public Stepper Stepper { get; set; }
+		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
+
+		internal DecompileRun? DecompileRun { get; init; }
+		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
 
 		/// <summary>
 		/// Creates a new ILReader instance for decompiling another method in the same assembly.

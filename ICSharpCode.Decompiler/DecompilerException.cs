@@ -22,7 +22,6 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 
@@ -34,15 +33,13 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// Description of DecompilerException.
 	/// </summary>
-	public class DecompilerException : Exception, ISerializable
+	internal sealed class DecompilerException : Exception
 	{
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
 			Exception innerException, string message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
 			this.File = module.PEFile;
-			this.Module = module;
-			this.DecompiledEntity = decompiledEntity;
 		}
 
 		public DecompilerException(PEFile file, string message, Exception innerException)
@@ -51,18 +48,9 @@ namespace ICSharpCode.Decompiler
 			this.File = file;
 		}
 
-		// This constructor is needed for serialization.
-		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+		private string FileName => File.FileName;
 
-		public string AssemblyName => File.Name;
-
-		public string FileName => File.FileName;
-
-		public IEntity DecompiledEntity { get; }
-		public IModule Module { get; }
-		public PEFile File { get; }
+		private PEFile File { get; }
 
 		public override string StackTrace => GetStackTrace(this);
 

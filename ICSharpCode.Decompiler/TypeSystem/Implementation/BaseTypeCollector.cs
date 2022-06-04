@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				foreach (IType baseType in type.DirectBaseTypes)
 				{
-					if (SkipImplementedInterfaces && def != null && def.Kind != TypeKind.Interface &&
+					if (SkipImplementedInterfaces && def.Kind != TypeKind.Interface &&
 					    def.Kind != TypeKind.TypeParameter)
 					{
 						if (baseType.Kind == TypeKind.Interface)

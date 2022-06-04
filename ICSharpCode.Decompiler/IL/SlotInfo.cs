@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Holds information about the role of an instruction within its parent instruction.
 	/// </summary>
-	public class SlotInfo
+	public sealed class SlotInfo
 	{
 		public static SlotInfo None = new("<no slot>");
 

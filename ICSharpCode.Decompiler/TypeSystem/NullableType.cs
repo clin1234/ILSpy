@@ -23,19 +23,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Static helper methods for working with nullable types.
 	/// </summary>
-	public static class NullableType
+	internal static class NullableType
 	{
 		/// <summary>
 		/// Gets whether the specified type is a nullable type.
 		/// </summary>
-		public static bool IsNullable(IType type)
+		internal static bool IsNullable(IType type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			return type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
 			       pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
 
-		public static bool IsNonNullableValueType(IType type)
+		internal static bool IsNonNullableValueType(IType type)
 		{
 			return type.IsReferenceType == false && !IsNullable(type);
 		}
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Returns the element type, if <paramref name="type"/> is a nullable type.
 		/// Otherwise, returns the type itself.
 		/// </summary>
-		public static IType GetUnderlyingType(IType type)
+		internal static IType GetUnderlyingType(IType type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			if (type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Creates a nullable type.
 		/// </summary>
-		public static IType Create(ICompilation compilation, IType elementType)
+		internal static IType Create(ICompilation compilation, IType elementType)
 		{
 			ArgumentNullException.ThrowIfNull(compilation);
 			ArgumentNullException.ThrowIfNull(elementType);
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Creates a nullable type reference.
 		/// </summary>
-		public static ParameterizedTypeReference Create(ITypeReference elementType)
+		internal static ParameterizedTypeReference Create(ITypeReference elementType)
 		{
 			ArgumentNullException.ThrowIfNull(elementType);
 			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT),

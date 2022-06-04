@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
-	class InsertMissingTokensDecorator : DecoratingTokenWriter
+	sealed class InsertMissingTokensDecorator : DecoratingTokenWriter
 	{
 		readonly ILocatable locationProvider;
 		readonly Stack<List<AstNode>> nodes = new();

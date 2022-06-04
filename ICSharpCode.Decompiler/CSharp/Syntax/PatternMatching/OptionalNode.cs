@@ -20,7 +20,7 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
-	public class OptionalNode : Pattern
+	public sealed class OptionalNode : Pattern
 	{
 		public OptionalNode(INode childNode)
 		{

@@ -31,7 +31,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public class IndexerDeclaration : EntityDeclaration
+	public sealed class IndexerDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole ThisKeywordRole = new("this");
 		public static readonly Role<Accessor> GetterRole = PropertyDeclaration.GetterRole;

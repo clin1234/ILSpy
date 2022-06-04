@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// A merged namespace.
 	/// </summary>
-	public sealed class MergedNamespace : INamespace
+	internal sealed class MergedNamespace : INamespace
 	{
 		readonly INamespace[] namespaces;
 		Dictionary<string, INamespace> childNamespaces;
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		/// <param name="parentNamespace">The parent merged namespace.</param>
 		/// <param name="namespaces">The individual namespaces being merged.</param>
-		public MergedNamespace(INamespace parentNamespace, INamespace[] namespaces)
+		private MergedNamespace(INamespace parentNamespace, INamespace[] namespaces)
 		{
 			this.ParentNamespace = parentNamespace ?? throw new ArgumentNullException(nameof(parentNamespace));
 			this.namespaces = namespaces ?? throw new ArgumentNullException(nameof(namespaces));
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<ITypeDefinition> Types {
 			get {
-				return namespaces.SelectMany(ns => ns.Types);
+				return namespaces.SelectMany(static ns => ns.Types);
 			}
 		}
 
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ICompilation Compilation { get; }
 
 		public IEnumerable<IModule> ContributingModules {
-			get { return namespaces.SelectMany(ns => ns.ContributingModules); }
+			get { return namespaces.SelectMany(static ns => ns.ContributingModules); }
 		}
 
 		public IEnumerable<INamespace> ChildNamespaces {
@@ -134,8 +134,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 			{
 				result = new Dictionary<string, INamespace>(Compilation.NameComparer);
-				foreach (var g in namespaces.SelectMany(ns => ns.ChildNamespaces)
-					         .GroupBy(ns => ns.Name, Compilation.NameComparer))
+				foreach (var g in namespaces.SelectMany(static ns => ns.ChildNamespaces)
+					         .GroupBy(static ns => ns.Name, Compilation.NameComparer))
 				{
 					result.Add(g.Key, new MergedNamespace(this, g.ToArray()));
 				}

@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <summary>
 	/// Matches one of several alternatives.
 	/// </summary>
-	public class Choice : Pattern, IEnumerable<INode>
+	public sealed class Choice : Pattern, IEnumerable<INode>
 	{
 		readonly List<INode> alternatives = new();
 

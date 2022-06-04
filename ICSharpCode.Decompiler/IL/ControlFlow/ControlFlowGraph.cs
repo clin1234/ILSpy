@@ -12,7 +12,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// A separate graph is computed for each BlockContainer at the start of the block transforms
 	/// (before loop detection).
 	/// </summary>
-	public class ControlFlowGraph
+	public sealed class ControlFlowGraph
 	{
 		/// <summary>
 		/// Nodes array, indexed by original block index.

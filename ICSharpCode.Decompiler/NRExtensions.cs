@@ -79,12 +79,10 @@ namespace ICSharpCode.Decompiler
 		internal static string GetDocumentation(this IEntity entity)
 		{
 			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
-			if (docProvider == null)
-				return null;
-			return docProvider.GetDocumentation(entity);
+			return docProvider?.GetDocumentation(entity);
 		}
 
-		class ContainsAnonTypeVisitor : TypeVisitor
+		sealed class ContainsAnonTypeVisitor : TypeVisitor
 		{
 			public bool ContainsAnonType;
 

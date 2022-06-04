@@ -29,14 +29,13 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public sealed class ResolutionException : Exception
+	internal sealed class ResolutionException : Exception
 	{
 		public ResolutionException(IAssemblyReference reference, string? resolvedPath, Exception? innerException)
 			: base($"Failed to resolve assembly: '{reference}'{Environment.NewLine}" +
 			       $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
 		{
 			this.Reference = reference ?? throw new ArgumentNullException(nameof(reference));
-			this.ResolvedFullPath = resolvedPath;
 		}
 
 		public ResolutionException(string mainModule, string moduleName, string? resolvedPath,
@@ -46,7 +45,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			this.MainModuleFullPath = mainModule ?? throw new ArgumentNullException(nameof(mainModule));
 			this.ModuleName = moduleName ?? throw new ArgumentNullException(nameof(moduleName));
-			this.ResolvedFullPath = resolvedPath;
 		}
 
 		public IAssemblyReference? Reference { get; }
@@ -54,8 +52,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		public string? ModuleName { get; }
 
 		public string? MainModuleFullPath { get; }
-
-		public string? ResolvedFullPath { get; }
 	}
 
 	public interface IAssemblyResolver
@@ -102,7 +98,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		bool IsRetargetable { get; }
 	}
 
-	public class AssemblyNameReference : IAssemblyReference
+	public sealed class AssemblyNameReference : IAssemblyReference
 	{
 		string? fullName;
 
@@ -129,9 +125,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				var pk_token = PublicKeyToken;
 				if (pk_token is { Length: > 0 })
 				{
-					for (int i = 0; i < pk_token.Length; i++)
+					foreach (var t in pk_token)
 					{
-						builder.Append(pk_token[i].ToString("x2"));
+						builder.Append(t.ToString("x2"));
 					}
 				}
 				else
@@ -211,7 +207,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	}
 
 #if !VSADDIN
-	public class AssemblyReference : IAssemblyReference
+	public sealed class AssemblyReference : IAssemblyReference
 	{
 		static readonly SHA1 sha1 = SHA1.Create();
 
@@ -281,7 +277,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public Version? Version => entry.Version;
+		public Version Version => entry.Version;
 		public string Culture => Metadata.GetString(entry.Culture);
 		byte[]? IAssemblyReference.PublicKeyToken => GetPublicKeyToken();
 

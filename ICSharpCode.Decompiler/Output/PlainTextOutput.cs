@@ -152,10 +152,10 @@ namespace ICSharpCode.Decompiler
 		}
 	}
 
-	internal class TextOutputWithRollback : ITextOutput
+	internal sealed class TextOutputWithRollback : ITextOutput
 	{
-		List<Action<ITextOutput>> actions;
-		ITextOutput target;
+		readonly List<Action<ITextOutput>> actions;
+		readonly ITextOutput target;
 
 		public TextOutputWithRollback(ITextOutput target)
 		{

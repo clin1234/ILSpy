@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// new { [ExpressionList] }
 	/// </summary>
-	public class AnonymousTypeCreateExpression : Expression
+	public sealed class AnonymousTypeCreateExpression : Expression
 	{
 		public static readonly TokenRole NewKeywordRole = new("new");
 

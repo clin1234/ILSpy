@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// "while (Condition) EmbeddedStatement"
 	/// </summary>
-	public class WhileStatement : Statement
+	public sealed class WhileStatement : Statement
 	{
 		public static readonly TokenRole WhileKeywordRole = new("while");
 
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression Condition {
 			get { return GetChildByRole(Roles.Condition); }
-			set { SetChildByRole(Roles.Condition, value); }
+			init { SetChildByRole(Roles.Condition, value); }
 		}
 
 		public CSharpTokenNode RParToken {
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
+			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

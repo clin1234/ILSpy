@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents an AstType as an expression.
 	/// This is used when calling a method on a primitive type: "int.Parse()"
 	/// </summary>
-	public class TypeReferenceExpression : Expression
+	public sealed class TypeReferenceExpression : Expression
 	{
 		public TypeReferenceExpression()
 		{
@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			init { SetChildByRole(Roles.Type, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

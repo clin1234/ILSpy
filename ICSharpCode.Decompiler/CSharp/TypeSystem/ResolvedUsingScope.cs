@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	/// <summary>
 	/// Resolved version of using scope.
 	/// </summary>
-	public class ResolvedUsingScope
+	public sealed class ResolvedUsingScope
 	{
 		readonly CSharpTypeResolveContext parentContext;
 
@@ -76,10 +76,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 					if (parentContext.CurrentUsingScope != null)
 					{
 						result = parentContext.CurrentUsingScope.Namespace.GetChildNamespace(UnresolvedUsingScope
-							.ShortNamespaceName);
-						if (result == null)
-							result = new DummyNamespace(parentContext.CurrentUsingScope.Namespace,
-								UnresolvedUsingScope.ShortNamespaceName);
+							         .ShortNamespaceName) ??
+						         new DummyNamespace(parentContext.CurrentUsingScope.Namespace,
+							         UnresolvedUsingScope.ShortNamespaceName);
 					}
 					else
 					{
@@ -133,14 +132,16 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 					for (int i = 0; i < result.Count; i++)
 					{
 						var rr = UnresolvedUsingScope.UsingAliases[i].Value.Resolve(resolver);
-						if (rr is TypeResolveResult resolveResult)
+						switch (rr)
 						{
-							rr = new AliasTypeResolveResult(UnresolvedUsingScope.UsingAliases[i].Key, resolveResult);
-						}
-						else if (rr is NamespaceResolveResult namespaceResolveResult)
-						{
-							rr = new AliasNamespaceResolveResult(UnresolvedUsingScope.UsingAliases[i].Key,
-								namespaceResolveResult);
+							case TypeResolveResult resolveResult:
+								rr = new AliasTypeResolveResult(UnresolvedUsingScope.UsingAliases[i].Key,
+									resolveResult);
+								break;
+							case NamespaceResolveResult namespaceResolveResult:
+								rr = new AliasNamespaceResolveResult(UnresolvedUsingScope.UsingAliases[i].Key,
+									namespaceResolveResult);
+								break;
 						}
 
 						result[i] = new KeyValuePair<string, ResolveResult>(

@@ -116,6 +116,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			string? runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default,
 			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
+			string? baseDirectory = null;
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.throwOnError = throwOnError;
 			this.streamOptions = streamOptions;
@@ -333,9 +334,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
-			foreach (var folder in new DirectoryInfo(basePath).GetDirectories()
-				         .Select(d => DotNetCorePathFinder.ConvertToVersion(d.Name))
-				         .Where(v => v.Item1 != null).OrderByDescending(v => v.Item1))
+			foreach ((Version version, string directoryName) folder in new DirectoryInfo(basePath).GetDirectories()
+				         .Select(static d => DotNetCorePathFinder.ConvertToVersion(d.Name))
+				         .Where(static v => v.Item1 != null)
+				         .OrderByDescending(static v => v.Item1))
 			{
 				if (path == null || version == null || folder.Item1 >= version)
 					path = folder.Item2;
@@ -346,7 +348,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			ArgumentNullException.ThrowIfNull(name);
+			if (name == null)
+				throw new ArgumentNullException(nameof(name));
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
@@ -494,7 +497,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			           version.Revision == 65535);
 		}
 
-		internal static Version ZeroVersion = new(0, 0, 0, 0);
+		internal static readonly Version ZeroVersion = new(0, 0, 0, 0);
 
 		string? GetCorlib(IAssemblyReference reference)
 		{
@@ -625,8 +628,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			var paths = new List<string>(1);
 			var gac = GetCurrentMonoGac();
-			if (gac != null)
-				paths.Add(gac);
+			paths.Add(gac);
 
 			var gac_paths_env = Environment.GetEnvironmentVariable("MONO_GAC_PREFIX");
 			if (string.IsNullOrEmpty(gac_paths_env))
@@ -723,8 +725,12 @@ namespace ICSharpCode.Decompiler.Metadata
 					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll",
 						         SearchOption.AllDirectories))
 					{
-						string[]? name = Path.GetDirectoryName(item.FullName)?[(rootPath.Length + 1)..]
-							.Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+						string[]? name = Path.GetDirectoryName(item.FullName)
+							?.Substring(rootPath.Length + 1)
+							.Split(new[] {
+									"\\"
+								},
+								StringSplitOptions.RemoveEmptyEntries);
 						if (name?.Length != 2)
 							continue;
 						var match = Regex.Match(name[1],

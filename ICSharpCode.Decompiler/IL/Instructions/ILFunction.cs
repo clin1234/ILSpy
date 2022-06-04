@@ -22,8 +22,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -57,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly ILVariableCollection Variables;
 
-		public DebugInfo.AsyncDebugInfo AsyncDebugInfo;
+		public AsyncDebugInfo AsyncDebugInfo;
 
 		/// <summary>
 		/// Return element type -- if the async method returns Task{T}, this field stores T.
@@ -115,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// If this function is a local function, this field stores the reduced version of the function.
 		/// </summary>
-		internal TypeSystem.Implementation.LocalFunctionMethod? ReducedMethod;
+		internal LocalFunctionMethod? ReducedMethod;
 
 		/// <summary>
 		/// Gets whether the YieldReturnDecompiler determined that the Mono C# compiler was used to compile this function.
@@ -197,7 +200,7 @@ namespace ICSharpCode.Decompiler.IL
 						ctorCallStart = this.Descendants.FirstOrDefault(static d =>
 								                d is CallInstruction call and not NewObj &&
 								                call.Method.IsConstructor &&
-								                call.Method.DeclaringType.IsReferenceType == true &&
+								                call.Method.DeclaringType?.IsReferenceType == true &&
 								                call.Parent is Block)
 							                ?.StartILOffset ??
 						                -1;
@@ -257,7 +260,7 @@ namespace ICSharpCode.Decompiler.IL
 						{ FullName: "System.Linq.Expressions.Expression", TypeParameterCount: 1 });
 					break;
 				case ILFunctionKind.LocalFunction:
-					Debug.Assert(Parent is ILFunction && SlotInfo == ILFunction.LocalFunctionsSlot);
+					Debug.Assert(Parent is ILFunction && SlotInfo == LocalFunctionsSlot);
 					Debug.Assert(DeclarationScope != null);
 					Debug.Assert(DelegateType == null);
 					Debug.Assert(Method != null);
@@ -375,7 +378,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			void MarkUsedILRanges(ILInstruction inst)
 			{
-				if (CSharp.SequencePointBuilder.HasUsableILRange(inst))
+				if (SequencePointBuilder.HasUsableILRange(inst))
 				{
 					usedILRanges.Add(new LongInterval(inst.StartILOffset, inst.EndILOffset));
 				}

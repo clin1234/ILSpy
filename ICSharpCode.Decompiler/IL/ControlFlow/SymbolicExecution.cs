@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		StateInSet,
 	}
 
-	struct SymbolicValue
+	internal readonly struct SymbolicValue
 	{
 		public readonly int Constant;
 		public readonly SymbolicValueType Type;
@@ -83,14 +83,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public SymbolicValue AsBool()
 		{
-			if (Type == SymbolicValueType.State)
-			{
-				// convert state integer to bool:
-				// if (state + c) = if (state + c != 0) = if (state != -c)
-				return new SymbolicValue(SymbolicValueType.StateInSet, new LongSet(unchecked(-Constant)).Invert());
-			}
-
-			return this;
+			return Type == SymbolicValueType.State
+				? new SymbolicValue(SymbolicValueType.StateInSet,
+					new LongSet(unchecked(-Constant)).Invert())
+				: this;
 		}
 
 		public override string ToString()
@@ -128,7 +124,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return Failed;
 				return right.Type != SymbolicValueType.IntegerConstant
 					? Failed
-					: new SymbolicValue(left.Type, unchecked(left.Constant - right.Constant));
+					: new SymbolicValue(left.Type,
+						unchecked(left.Constant - right.Constant));
 			}
 
 			if (inst.MatchLdFld(out var target, out var field))

@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			switch (field.DeclaringType.IsReferenceType)
+			switch (field.DeclaringType?.IsReferenceType)
 			{
 				case true:
 					Debug.Assert(target.ResultType == StackType.O,
@@ -39,7 +39,8 @@ namespace ICSharpCode.Decompiler.IL
 				case null:
 					// field of unresolved type
 					Debug.Assert(target.ResultType == StackType.O || target.ResultType == StackType.I
-						|| target.ResultType == StackType.Ref || target.ResultType == StackType.Unknown,
+					                                              || target.ResultType == StackType.Ref ||
+					                                              target.ResultType == StackType.Unknown,
 						"Field of unresolved type with invalid target");
 					break;
 			}
@@ -85,6 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						Debug.Assert(SemanticHelper.IsPure(this.Value.Flags));
 					}
+
 					break;
 			}
 		}

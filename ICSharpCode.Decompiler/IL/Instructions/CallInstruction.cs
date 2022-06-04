@@ -20,6 +20,8 @@
 using System;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -109,8 +111,10 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
 			if (firstArgument == 1)
 			{
-				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType)))
+				if (Arguments[0].ResultType != ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType))
+				{
 					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
+				}
 			}
 
 			for (int i = 0; i < Method.Parameters.Count; ++i)
@@ -146,12 +150,12 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
+		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Match match)
 		{
 			return other is CallInstruction o && this.OpCode == o.OpCode && this.Method.Equals(o.Method) &&
 			       this.IsTail == o.IsTail
 			       && Equals(this.ConstrainedTo, o.ConstrainedTo)
-			       && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			       && ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 
@@ -162,11 +166,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// Note that the semantics of such a lifted call depend on the type of operator:
 		/// we follow C# semantics here.
 		/// </summary>
-		public bool IsLifted => Method is CSharp.Resolver.ILiftedOperator;
+		public bool IsLifted => Method is ILiftedOperator;
 
 		public StackType UnderlyingResultType {
 			get {
-				if (Method is CSharp.Resolver.ILiftedOperator liftedOp)
+				if (Method is ILiftedOperator liftedOp)
 					return liftedOp.NonLiftedReturnType.GetStackType();
 				else
 					return Method.ReturnType.GetStackType();

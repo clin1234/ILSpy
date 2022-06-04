@@ -12,7 +12,7 @@ using IAssemblyResolver = ICSharpCode.Decompiler.Metadata.IAssemblyResolver;
 
 namespace ICSharpCode.ILSpyX
 {
-	public static class LoadedAssemblyExtensions
+	internal static class LoadedAssemblyExtensions
 	{
 		/// <summary>
 		/// This method creates a Cecil object model from a PEFile. It is intended as helper method for plugins.
@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpyX
 			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settings));
 		}
 
-		public static LoadedAssembly GetLoadedAssembly(this PEFile file)
+		private static LoadedAssembly GetLoadedAssembly(this PEFile file)
 		{
 			if (file == null) throw new ArgumentNullException(nameof(file));
 			LoadedAssembly? loadedAssembly;

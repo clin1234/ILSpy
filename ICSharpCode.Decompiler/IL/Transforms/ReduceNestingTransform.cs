@@ -25,8 +25,6 @@ using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
 
-using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
-
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>

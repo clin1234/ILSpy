@@ -14,7 +14,7 @@ namespace ICSharpCode.Decompiler.Util
 			value = pair.Value;
 		}
 
-#if !NETCORE
+#if !NET40_OR_GREATER && !NETSTANDARD && !NET
 		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
 			return input1.Zip(input2, static (a, b) => (a, b));
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-#if !NETCORE
+#if !NET6_0_OR_GREATER
 		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
 		{
 			return new HashSet<T>(input);
@@ -309,6 +309,7 @@ namespace ICSharpCode.Decompiler.Util
 			return minElement;
 		}
 
+#if !NET6_0_OR_GREATER
 		/// <summary>
 		/// Returns the maximum element.
 		/// </summary>
@@ -317,7 +318,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return source.MaxBy(keySelector, Comparer<K>.Default);
 		}
-
+#endif
 		/// <summary>
 		/// Returns the maximum element.
 		/// </summary>

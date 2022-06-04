@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public readonly SymbolicValueType Type;
 		public readonly LongSet ValueSet;
 
-		public SymbolicValue(SymbolicValueType type, int constant = 0)
+		public SymbolicValue(SymbolicValueType type, int constant = 0) : this()
 		{
 			this.Type = type;
 			this.Constant = constant;

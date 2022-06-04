@@ -17,13 +17,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+// Check for System.Linq.Enumerable.Zip
+
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+#if NETSTANDARD || NET || NET40_OR_GREATER
+using System.Linq;
+#endif
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -156,11 +160,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			argument.WriteTo(output, options);
 			output.Write(')');
-		}
-
-		protected internal override bool PerformMatch(ref ListMatch listMatch, ref Match match)
-		{
-			return base.PerformMatch(ref listMatch, ref match);
 		}
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)

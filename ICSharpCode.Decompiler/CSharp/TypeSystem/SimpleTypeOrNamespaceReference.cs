@@ -95,5 +95,25 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			                                                 && this.TypeArguments == o.TypeArguments &&
 			                                                 this.LookupMode == o.LookupMode;
 		}
+
+		public int GetHashCodeForInterning()
+		{
+			int hashCode = 0;
+			unchecked
+			{
+				hashCode += 1000000021 * Identifier.GetHashCode();
+				hashCode += 1000000033 * TypeArguments.GetHashCode();
+				hashCode += 1000000087 * (int)LookupMode;
+			}
+
+			return hashCode;
+		}
+
+		public bool EqualsForInterning(ISupportsInterning other)
+		{
+			return other is SimpleTypeOrNamespaceReference o && this.Identifier == o.Identifier
+			                                                 && this.TypeArguments == o.TypeArguments &&
+			                                                 this.LookupMode == o.LookupMode;
+		}
 	}
 }

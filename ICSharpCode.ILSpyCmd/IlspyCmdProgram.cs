@@ -47,13 +47,13 @@ Examples:
 	[ProjectOptionRequiresOutputDirectoryValidation]
 	[VersionOptionFromMember("-v|--version", Description = "Show version of ICSharpCode.Decompiler used.",
 		MemberName = nameof(DecompilerVersion))]
-	class ILSpyCmdProgram
+	sealed class ILSpyCmdProgram
 	{
 		[FilesExist]
 		[Required]
 		[Argument(0, "Assembly file name(s)",
 			"The list of assemblies that is being decompiled. This argument is mandatory.")]
-		public string[] InputAssemblyNames { get; }
+		private string[] InputAssemblyNames { get; }
 
 		[Option("-o|--outputdir <directory>",
 			"The output directory, if omitted decompiler output is written to standard out.",
@@ -66,25 +66,25 @@ Examples:
 
 		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.",
 			CommandOptionType.SingleValue)]
-		public string TypeName { get; }
+		private string TypeName { get; }
 
 		[Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue)]
-		public bool ShowILCodeFlag { get; }
+		private bool ShowILCodeFlag { get; }
 
 		[Option("--il-sequence-points", "Show IL with sequence points. Implies -il.", CommandOptionType.NoValue)]
-		public bool ShowILSequencePointsFlag { get; }
+		private bool ShowILSequencePointsFlag { get; }
 
 		[Option("-genpdb|--generate-pdb", "Generate PDB.", CommandOptionType.NoValue)]
-		public bool CreateDebugInfoFlag { get; }
+		private bool CreateDebugInfoFlag { get; }
 
 		[FileExistsOrNull]
 		[Option("-usepdb|--use-varnames-from-pdb", "Use variable names from PDB.", CommandOptionType.SingleOrNoValue)]
-		public (bool IsSet, string Value) InputPDBFile { get; }
+		private (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>",
 			"Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)",
 			CommandOptionType.MultipleValue)]
-		public IEnumerable<string> EntityTypes { get; } = Array.Empty<string>();
+		private IEnumerable<string> EntityTypes { get; } = Array.Empty<string>();
 
 		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version +
 		                                   Environment.NewLine
@@ -95,26 +95,29 @@ Examples:
 			"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
 			"CSharp10_0, Preview or Latest", CommandOptionType.SingleValue)]
 		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
+		                                           "CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
+		                                           "CSharp_10_0 or Latest", CommandOptionType.SingleValue)]
+		private LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>",
 			"Path to a directory containing dependencies of the assembly that is being decompiled.",
 			CommandOptionType.MultipleValue)]
-		public IEnumerable<string> ReferencePaths { get; } = Array.Empty<string>();
+		private IEnumerable<string> ReferencePaths { get; } = Array.Empty<string>();
 
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
-		public bool RemoveDeadCode { get; }
+		private bool RemoveDeadCode { get; }
 
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
-		public bool RemoveDeadStores { get; }
+		private bool RemoveDeadStores { get; }
 
 		[Option("-d|--dump-package",
 			"Dump package assembiles into a folder. This requires the output directory option.",
 			CommandOptionType.NoValue)]
-		public bool DumpPackageFlag { get; }
+		private bool DumpPackageFlag { get; }
 
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
-		public bool NestedDirectories { get; }
+		private bool NestedDirectories { get; }
 
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 

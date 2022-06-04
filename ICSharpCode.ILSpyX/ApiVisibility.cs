@@ -18,7 +18,7 @@
 
 namespace ICSharpCode.ILSpyX
 {
-	public enum ApiVisibility
+	internal enum ApiVisibility
 	{
 		PublicOnly,
 		PublicAndInternal,

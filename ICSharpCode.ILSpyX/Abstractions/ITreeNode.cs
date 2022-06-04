@@ -25,7 +25,6 @@ namespace ICSharpCode.ILSpyX.Abstractions
 	public interface ITreeNode
 	{
 		object Text { get; }
-		object Icon { get; }
 		IEnumerable<ITreeNode> Children { get; }
 
 		void EnsureLazyChildren();

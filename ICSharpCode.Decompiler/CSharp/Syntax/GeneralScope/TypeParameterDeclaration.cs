@@ -30,8 +30,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class TypeParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
-		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
-		public static readonly TokenRole InVarianceKeywordRole = new TokenRole("in");
+		public static readonly TokenRole OutVarianceKeywordRole = new("out");
+		public static readonly TokenRole InVarianceKeywordRole = new("in");
+
+		VarianceModifier variance;
+
+		public TypeParameterDeclaration()
+		{
+		}
+
+		public TypeParameterDeclaration(string name)
+		{
+			Name = name;
+		}
 
 		public override NodeType NodeType {
 			get { return NodeType.Unknown; }
@@ -41,24 +52,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(AttributeRole); }
 		}
 
-		VarianceModifier variance;
-
 		public VarianceModifier Variance {
 			get { return variance; }
-			set { ThrowIfFrozen(); variance = value; }
+			set {
+				ThrowIfFrozen();
+				variance = value;
+			}
 		}
 
 		public CSharpTokenNode VarianceToken {
 			get {
-				switch (Variance)
-				{
-					case VarianceModifier.Covariant:
-						return GetChildByRole(OutVarianceKeywordRole);
-					case VarianceModifier.Contravariant:
-						return GetChildByRole(InVarianceKeywordRole);
-					default:
-						return CSharpTokenNode.Null;
-				}
+				return Variance switch {
+					VarianceModifier.Covariant => GetChildByRole(OutVarianceKeywordRole),
+					VarianceModifier.Contravariant => GetChildByRole(InVarianceKeywordRole),
+					_ => CSharpTokenNode.Null
+				};
 			}
 		}
 
@@ -80,15 +88,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public TypeParameterDeclaration()
-		{
-		}
-
-		public TypeParameterDeclaration(string name)
-		{
-			Name = name;
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitTypeParameterDeclaration(this);
@@ -106,8 +105,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeParameterDeclaration o = other as TypeParameterDeclaration;
-			return o != null && this.Variance == o.Variance && MatchString(this.Name, o.Name) && this.Attributes.DoMatch(o.Attributes, match);
+			return other is TypeParameterDeclaration o && this.Variance == o.Variance &&
+			       MatchString(this.Name, o.Name) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 	}
 }

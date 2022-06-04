@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ContinueStatement : Statement
 	{
-		public static readonly TokenRole ContinueKeywordRole = new TokenRole("continue");
+		public static readonly TokenRole ContinueKeywordRole = new("continue");
 
 		public CSharpTokenNode ContinueToken {
 			get { return GetChildByRole(ContinueKeywordRole); }
@@ -59,8 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ContinueStatement o = other as ContinueStatement;
-			return o != null;
+			return other is ContinueStatement o;
 		}
 	}
 }

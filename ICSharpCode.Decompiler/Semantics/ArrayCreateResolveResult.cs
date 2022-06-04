@@ -30,22 +30,21 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class ArrayCreateResolveResult : ResolveResult
 	{
 		/// <summary>
-		/// Gets the size arguments.
-		/// </summary>
-		public readonly IReadOnlyList<ResolveResult> SizeArguments;
-
-		/// <summary>
 		/// Gets the initializer elements.
 		/// This field may be null if no initializer was specified.
 		/// </summary>
 		public readonly IReadOnlyList<ResolveResult> InitializerElements;
 
-		public ArrayCreateResolveResult(IType arrayType, IReadOnlyList<ResolveResult> sizeArguments, IReadOnlyList<ResolveResult> initializerElements)
+		/// <summary>
+		/// Gets the size arguments.
+		/// </summary>
+		public readonly IReadOnlyList<ResolveResult> SizeArguments;
+
+		public ArrayCreateResolveResult(IType arrayType, IReadOnlyList<ResolveResult> sizeArguments,
+			IReadOnlyList<ResolveResult> initializerElements)
 			: base(arrayType)
 		{
-			if (sizeArguments == null)
-				throw new ArgumentNullException(nameof(sizeArguments));
-			this.SizeArguments = sizeArguments;
+			this.SizeArguments = sizeArguments ?? throw new ArgumentNullException(nameof(sizeArguments));
 			this.InitializerElements = initializerElements;
 		}
 

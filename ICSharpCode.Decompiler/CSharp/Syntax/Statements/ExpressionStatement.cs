@@ -32,6 +32,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ExpressionStatement : Statement
 	{
+		public ExpressionStatement()
+		{
+		}
+
+		public ExpressionStatement(Expression expression)
+		{
+			this.Expression = expression;
+		}
+
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
@@ -56,19 +65,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitExpressionStatement(this, data);
 		}
 
-		public ExpressionStatement()
-		{
-		}
-
-		public ExpressionStatement(Expression expression)
-		{
-			this.Expression = expression;
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ExpressionStatement o = other as ExpressionStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is ExpressionStatement o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

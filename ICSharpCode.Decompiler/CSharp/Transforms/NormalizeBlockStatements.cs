@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
@@ -10,9 +7,44 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	class NormalizeBlockStatements : DepthFirstAstVisitor, IAstTransform
 	{
+		/// <summary>
+		/// Modifiers that are emitted on accessors, but can be moved to the property declaration.
+		/// </summary>
+		const Modifiers movableModifiers = Modifiers.Readonly;
+
+		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new() {
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			Name = Pattern.AnyString,
+			PrivateImplementationType = new AnyNodeOrNull(),
+			ReturnType = new AnyNode(),
+			Getter = new Accessor() {
+				Modifiers = Modifiers.Any,
+				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
+			}
+		};
+
+		static readonly IndexerDeclaration CalculatedGetterOnlyIndexerPattern = new() {
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			PrivateImplementationType = new AnyNodeOrNull(),
+			Parameters = { new Repeat(new AnyNode()) },
+			ReturnType = new AnyNode(),
+			Getter = new Accessor() {
+				Modifiers = Modifiers.Any,
+				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
+			}
+		};
+
 		TransformContext context;
 		bool hasNamespace;
 		NamespaceDeclaration singleNamespaceDeclaration;
+
+		void IAstTransform.Run(AstNode rootNode, TransformContext context)
+		{
+			this.context = context;
+			rootNode.AcceptVisitor(this);
+		}
 
 		public override void VisitSyntaxTree(SyntaxTree syntaxTree)
 		{
@@ -33,8 +65,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				hasNamespace = true;
 				singleNamespaceDeclaration = namespaceDeclaration;
 			}
-			base.VisitNamespaceDeclaration(namespaceDeclaration);
 
+			base.VisitNamespaceDeclaration(namespaceDeclaration);
 		}
 
 		public override void VisitIfElseStatement(IfElseStatement ifElseStatement)
@@ -99,7 +131,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			else
 			{
-				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowedAsEmbeddedStatement(b.Statements.First(), parent))
+				if (statement is BlockStatement b && b.Statements.Count == 1 &&
+				    IsAllowedAsEmbeddedStatement(b.Statements.First(), parent))
 				{
 					statement.ReplaceWith(b.Statements.First().Detach());
 				}
@@ -119,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (statement.IsNull)
 				return;
-			if (!(statement is BlockStatement))
+			if (statement is not BlockStatement)
 			{
 				var b = new BlockStatement();
 				statement.ReplaceWith(b);
@@ -152,14 +185,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case UsingStatement us:
 					return parent is UsingStatement;
 				default:
-					return !(parent?.Parent is IfElseStatement);
+					return parent?.Parent is not IfElseStatement;
 			}
-		}
-
-		void IAstTransform.Run(AstNode rootNode, TransformContext context)
-		{
-			this.context = context;
-			rootNode.AcceptVisitor(this);
 		}
 
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
@@ -168,6 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				SimplifyPropertyDeclaration(propertyDeclaration);
 			}
+
 			base.VisitPropertyDeclaration(propertyDeclaration);
 		}
 
@@ -177,37 +205,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				SimplifyIndexerDeclaration(indexerDeclaration);
 			}
+
 			base.VisitIndexerDeclaration(indexerDeclaration);
 		}
-
-		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new PropertyDeclaration() {
-			Attributes = { new Repeat(new AnyNode()) },
-			Modifiers = Modifiers.Any,
-			Name = Pattern.AnyString,
-			PrivateImplementationType = new AnyNodeOrNull(),
-			ReturnType = new AnyNode(),
-			Getter = new Accessor() {
-				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
-			}
-		};
-
-		static readonly IndexerDeclaration CalculatedGetterOnlyIndexerPattern = new IndexerDeclaration() {
-			Attributes = { new Repeat(new AnyNode()) },
-			Modifiers = Modifiers.Any,
-			PrivateImplementationType = new AnyNodeOrNull(),
-			Parameters = { new Repeat(new AnyNode()) },
-			ReturnType = new AnyNode(),
-			Getter = new Accessor() {
-				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
-			}
-		};
-
-		/// <summary>
-		/// Modifiers that are emitted on accessors, but can be moved to the property declaration.
-		/// </summary>
-		const Modifiers movableModifiers = Modifiers.Readonly;
 
 		void SimplifyPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{

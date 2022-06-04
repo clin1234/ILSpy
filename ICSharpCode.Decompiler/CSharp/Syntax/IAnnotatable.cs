@@ -91,63 +91,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		object annotations;
 
-		/// <summary>
-		/// Clones all annotations.
-		/// This method is intended to be called by Clone() implementations in derived classes.
-		/// <code>
-		/// AstNode copy = (AstNode)MemberwiseClone();
-		/// copy.CloneAnnotations();
-		/// </code>
-		/// </summary>
-		protected void CloneAnnotations()
-		{
-			ICloneable cloneable = annotations as ICloneable;
-			if (cloneable != null)
-				annotations = cloneable.Clone();
-		}
-
-		sealed class AnnotationList : List<object>, ICloneable
-		{
-			// There are two uses for this custom list type:
-			// 1) it's private, and thus (unlike List<object>) cannot be confused with real annotations
-			// 2) It allows us to simplify the cloning logic by making the list behave the same as a clonable annotation.
-			public AnnotationList(int initialCapacity) : base(initialCapacity)
-			{
-			}
-
-			public object Clone()
-			{
-				lock (this)
-				{
-					AnnotationList copy = new AnnotationList(this.Count);
-					for (int i = 0; i < this.Count; i++)
-					{
-						object obj = this[i];
-						ICloneable c = obj as ICloneable;
-						copy.Add(c != null ? c.Clone() : obj);
-					}
-					return copy;
-				}
-			}
-		}
-
 		public virtual void AddAnnotation(object annotation)
 		{
-			if (annotation == null)
-				throw new ArgumentNullException(nameof(annotation));
+			ArgumentNullException.ThrowIfNull(annotation);
 			retry: // Retry until successful
 			object oldAnnotation = Interlocked.CompareExchange(ref this.annotations, annotation, null);
 			if (oldAnnotation == null)
 			{
 				return; // we successfully added a single annotation
 			}
-			AnnotationList list = oldAnnotation as AnnotationList;
-			if (list == null)
+
+			if (oldAnnotation is not AnnotationList list)
 			{
 				// we need to transform the old annotation into a list
-				list = new AnnotationList(4);
-				list.Add(oldAnnotation);
-				list.Add(annotation);
+				list = new AnnotationList(4) {
+					oldAnnotation,
+					annotation
+				};
 				if (Interlocked.CompareExchange(ref this.annotations, list, oldAnnotation) != oldAnnotation)
 				{
 					// the transformation failed (some other thread wrote to this.annotations first)
@@ -168,8 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			retry: // Retry until successful
 			object oldAnnotations = this.annotations;
-			AnnotationList list = oldAnnotations as AnnotationList;
-			if (list != null)
+			if (oldAnnotations is AnnotationList list)
 			{
 				lock (list)
 					list.RemoveAll(obj => obj is T);
@@ -186,12 +145,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public virtual void RemoveAnnotations(Type type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 			retry: // Retry until successful
 			object oldAnnotations = this.annotations;
-			AnnotationList list = oldAnnotations as AnnotationList;
-			if (list != null)
+			if (oldAnnotations is AnnotationList list)
 			{
 				lock (list)
 					list.RemoveAll(type.IsInstanceOfType);
@@ -209,17 +166,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public T Annotation<T>() where T : class
 		{
 			object annotations = this.annotations;
-			AnnotationList list = annotations as AnnotationList;
-			if (list != null)
+			if (annotations is AnnotationList list)
 			{
 				lock (list)
 				{
 					foreach (object obj in list)
 					{
-						T t = obj as T;
-						if (t != null)
+						if (obj is T t)
 							return t;
 					}
+
 					return null;
 				}
 			}
@@ -231,11 +187,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public object Annotation(Type type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 			object annotations = this.annotations;
-			AnnotationList list = annotations as AnnotationList;
-			if (list != null)
+			if (annotations is AnnotationList list)
 			{
 				lock (list)
 				{
@@ -251,6 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (type.IsInstanceOfType(annotations))
 					return annotations;
 			}
+
 			return null;
 		}
 
@@ -260,8 +215,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IEnumerable<object> Annotations {
 			get {
 				object annotations = this.annotations;
-				AnnotationList list = annotations as AnnotationList;
-				if (list != null)
+				if (annotations is AnnotationList list)
 				{
 					lock (list)
 					{
@@ -271,12 +225,50 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				else
 				{
 					if (annotations != null)
-						return new object[] { annotations };
+						return new[] { annotations };
 					else
 						return Enumerable.Empty<object>();
 				}
 			}
 		}
+
+		/// <summary>
+		/// Clones all annotations.
+		/// This method is intended to be called by Clone() implementations in derived classes.
+		/// <code>
+		/// AstNode copy = (AstNode)MemberwiseClone();
+		/// copy.CloneAnnotations();
+		/// </code>
+		/// </summary>
+		protected void CloneAnnotations()
+		{
+			if (annotations is ICloneable cloneable)
+				annotations = cloneable.Clone();
+		}
+
+		sealed class AnnotationList : List<object>, ICloneable
+		{
+			// There are two uses for this custom list type:
+			// 1) it's private, and thus (unlike List<object>) cannot be confused with real annotations
+			// 2) It allows us to simplify the cloning logic by making the list behave the same as a clonable annotation.
+			public AnnotationList(int initialCapacity) : base(initialCapacity)
+			{
+			}
+
+			public object Clone()
+			{
+				lock (this)
+				{
+					AnnotationList copy = new(this.Count);
+					for (int i = 0; i < this.Count; i++)
+					{
+						object obj = this[i];
+						copy.Add(obj is ICloneable c ? c.Clone() : obj);
+					}
+
+					return copy;
+				}
+			}
+		}
 	}
 }
-

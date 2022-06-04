@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class EventDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
+		public static readonly TokenRole EventKeywordRole = new("event");
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }
@@ -78,20 +78,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			EventDeclaration o = other as EventDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
+			return other is EventDeclaration o && this.MatchAttributesAndModifiers(o, match)
+			                                   && this.ReturnType.DoMatch(o.ReturnType, match) &&
+			                                   this.Variables.DoMatch(o.Variables, match);
 		}
 	}
 
 	public class CustomEventDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
-		public static readonly TokenRole AddKeywordRole = new TokenRole("add");
-		public static readonly TokenRole RemoveKeywordRole = new TokenRole("remove");
+		public static readonly TokenRole EventKeywordRole = new("event");
+		public static readonly TokenRole AddKeywordRole = new("add");
+		public static readonly TokenRole RemoveKeywordRole = new("remove");
 
-		public static readonly Role<Accessor> AddAccessorRole = new Role<Accessor>("AddAccessor", Accessor.Null);
-		public static readonly Role<Accessor> RemoveAccessorRole = new Role<Accessor>("RemoveAccessor", Accessor.Null);
+		public static readonly Role<Accessor> AddAccessorRole = new("AddAccessor", Accessor.Null);
+		public static readonly Role<Accessor> RemoveAccessorRole = new("RemoveAccessor", Accessor.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }
@@ -141,11 +141,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CustomEventDeclaration o = other as CustomEventDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.AddAccessor.DoMatch(o.AddAccessor, match) && this.RemoveAccessor.DoMatch(o.RemoveAccessor, match);
+			return other is CustomEventDeclaration o && MatchString(this.Name, o.Name)
+			                                         && this.MatchAttributesAndModifiers(o, match) &&
+			                                         this.ReturnType.DoMatch(o.ReturnType, match)
+			                                         && this.PrivateImplementationType.DoMatch(
+				                                         o.PrivateImplementationType, match)
+			                                         && this.AddAccessor.DoMatch(o.AddAccessor, match) &&
+			                                         this.RemoveAccessor.DoMatch(o.RemoveAccessor, match);
 		}
 	}
 }

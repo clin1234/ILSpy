@@ -16,11 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
@@ -45,6 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (trr != null && trr.Type.FullName == "System.CLSCompliantAttribute")
 						attribute.Remove();
 				}
+
 				if (section.Attributes.Count == 0)
 					section.Remove();
 			}

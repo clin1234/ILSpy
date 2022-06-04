@@ -45,24 +45,36 @@ namespace ICSharpCode.Decompiler.Metadata
 	/// system from multiple PEFiles. This allows the caches to be shared across multiple
 	/// decompiled type systems.
 	/// </remarks>
-	[DebuggerDisplay("{FileName}")]
-	public class PEFile : IDisposable, TypeSystem.IModuleReference
+	[DebuggerDisplay("{" + nameof(FileName) + "}")]
+	public class PEFile : IDisposable, IModuleReference
 	{
-		public string FileName { get; }
-		public PEReader Reader { get; }
-		public MetadataReader Metadata { get; }
+		ImmutableArray<AssemblyReference> assemblyReferences;
 
-		public PEFile(string fileName, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
-			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), streamOptions), metadataOptions)
+		string? fullName;
+
+		MethodSemanticsLookup? methodSemanticsLookup;
+
+		string? name;
+
+		Dictionary<FullTypeName, ExportedTypeHandle>? typeForwarderLookup;
+
+		Dictionary<TopLevelTypeName, TypeDefinitionHandle>? typeLookup;
+
+		public PEFile(string fileName, PEStreamOptions streamOptions = PEStreamOptions.Default,
+			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), streamOptions),
+				metadataOptions)
 		{
 		}
 
-		public PEFile(string fileName, Stream stream, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+		public PEFile(string fileName, Stream stream, PEStreamOptions streamOptions = PEStreamOptions.Default,
+			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 			: this(fileName, new PEReader(stream, streamOptions), metadataOptions)
 		{
 		}
 
-		public PEFile(string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+		public PEFile(string fileName, PEReader reader,
+			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
 			this.FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			this.Reader = reader ?? throw new ArgumentNullException(nameof(reader));
@@ -71,9 +83,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.Metadata = reader.GetMetadataReader(metadataOptions);
 		}
 
-		public bool IsAssembly => Metadata.IsAssembly;
+		public string FileName { get; }
+		public PEReader Reader { get; }
+		public MetadataReader Metadata { get; }
 
-		string? name;
+		public bool IsAssembly => Metadata.IsAssembly;
 
 		public string Name {
 			get {
@@ -86,11 +100,10 @@ namespace ICSharpCode.Decompiler.Metadata
 						: metadata.GetString(metadata.GetModuleDefinition().Name);
 					value = LazyInit.GetOrSet(ref name, value);
 				}
+
 				return value;
 			}
 		}
-
-		string? fullName;
 
 		public string FullName {
 			get {
@@ -101,8 +114,44 @@ namespace ICSharpCode.Decompiler.Metadata
 					value = metadata.IsAssembly ? metadata.GetFullAssemblyName() : Name;
 					value = LazyInit.GetOrSet(ref fullName, value);
 				}
+
 				return value;
 			}
+		}
+
+		public ImmutableArray<AssemblyReference> AssemblyReferences {
+			get {
+				var value = assemblyReferences;
+				if (value.IsDefault)
+				{
+					value = Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
+					assemblyReferences = value;
+				}
+
+				return value;
+			}
+		}
+
+		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
+
+		internal MethodSemanticsLookup MethodSemanticsLookup {
+			get {
+				var r = LazyInit.VolatileRead(ref methodSemanticsLookup);
+				if (r != null)
+					return r;
+				else
+					return LazyInit.GetOrSet(ref methodSemanticsLookup, new MethodSemanticsLookup(Metadata));
+			}
+		}
+
+		public void Dispose()
+		{
+			Reader.Dispose();
+		}
+
+		IModule IModuleReference.Resolve(ITypeResolveContext context)
+		{
+			return new MetadataModule(context.Compilation, this, TypeSystemOptions.Default);
 		}
 
 		public TargetRuntime GetRuntime()
@@ -128,22 +177,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		ImmutableArray<AssemblyReference> assemblyReferences;
-
-		public ImmutableArray<AssemblyReference> AssemblyReferences {
-			get {
-				var value = assemblyReferences;
-				if (value.IsDefault)
-				{
-					value = Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
-					assemblyReferences = value;
-				}
-				return value;
-			}
-		}
-
-		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
-
 		IEnumerable<Resource> GetResources()
 		{
 			var metadata = Metadata;
@@ -152,13 +185,6 @@ namespace ICSharpCode.Decompiler.Metadata
 				yield return new MetadataResource(this, h);
 			}
 		}
-
-		public void Dispose()
-		{
-			Reader.Dispose();
-		}
-
-		Dictionary<TopLevelTypeName, TypeDefinitionHandle>? typeLookup;
 
 		/// <summary>
 		/// Finds the top-level-type with the specified name.
@@ -176,20 +202,23 @@ namespace ICSharpCode.Decompiler.Metadata
 					{
 						continue; // nested type
 					}
+
 					var nsHandle = td.Namespace;
 					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
-					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name), out int typeParameterCount);
+					string name =
+						ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name),
+							out int typeParameterCount);
 					lookup[new TopLevelTypeName(ns, name, typeParameterCount)] = handle;
 				}
+
 				lookup = LazyInit.GetOrSet(ref typeLookup, lookup);
 			}
+
 			if (lookup.TryGetValue(typeName, out var resultHandle))
 				return resultHandle;
 			else
 				return default;
 		}
-
-		Dictionary<FullTypeName, ExportedTypeHandle>? typeForwarderLookup;
 
 		/// <summary>
 		/// Finds the type forwarder with the specified name.
@@ -205,40 +234,25 @@ namespace ICSharpCode.Decompiler.Metadata
 					var td = Metadata.GetExportedType(handle);
 					lookup[td.GetFullTypeName(Metadata)] = handle;
 				}
+
 				lookup = LazyInit.GetOrSet(ref typeForwarderLookup, lookup);
 			}
+
 			if (lookup.TryGetValue(typeName, out var resultHandle))
 				return resultHandle;
 			else
 				return default;
 		}
 
-		MethodSemanticsLookup? methodSemanticsLookup;
-
-		internal MethodSemanticsLookup MethodSemanticsLookup {
-			get {
-				var r = LazyInit.VolatileRead(ref methodSemanticsLookup);
-				if (r != null)
-					return r;
-				else
-					return LazyInit.GetOrSet(ref methodSemanticsLookup, new MethodSemanticsLookup(Metadata));
-			}
-		}
-
-		public TypeSystem.IModuleReference WithOptions(TypeSystemOptions options)
+		public IModuleReference WithOptions(TypeSystemOptions options)
 		{
 			return new PEFileWithOptions(this, options);
 		}
 
-		IModule TypeSystem.IModuleReference.Resolve(ITypeResolveContext context)
+		private class PEFileWithOptions : IModuleReference
 		{
-			return new MetadataModule(context.Compilation, this, TypeSystemOptions.Default);
-		}
-
-		private class PEFileWithOptions : TypeSystem.IModuleReference
-		{
-			readonly PEFile peFile;
 			readonly TypeSystemOptions options;
+			readonly PEFile peFile;
 
 			public PEFileWithOptions(PEFile peFile, TypeSystemOptions options)
 			{
@@ -246,7 +260,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				this.options = options;
 			}
 
-			IModule TypeSystem.IModuleReference.Resolve(ITypeResolveContext context)
+			IModule IModuleReference.Resolve(ITypeResolveContext context)
 			{
 				return new MetadataModule(context.Compilation, peFile, options);
 			}

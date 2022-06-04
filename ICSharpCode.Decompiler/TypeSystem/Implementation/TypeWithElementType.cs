@@ -26,9 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected TypeWithElementType(IType elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			this.elementType = elementType;
+			this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
 		public override string Name {
@@ -47,15 +45,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return elementType.ReflectionName + NameSuffix; }
 		}
 
-		public override string ToString()
-		{
-			return elementType.ToString() + NameSuffix;
-		}
-
 		public abstract string NameSuffix { get; }
 
 		public IType ElementType {
 			get { return elementType; }
+		}
+
+		public override string ToString()
+		{
+			return elementType.ToString() + NameSuffix;
 		}
 
 		// Force concrete implementations to override VisitChildren - the base implementation

@@ -25,10 +25,11 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
-	public class DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, MetadataGenericContext>
+	public class
+		DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, MetadataGenericContext>
 	{
-		readonly PEFile module;
 		readonly MetadataReader metadata;
+		readonly PEFile module;
 		readonly ITextOutput output;
 
 		public DisassemblerSignatureTypeProvider(PEFile module, ITextOutput output)
@@ -41,7 +42,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public Action<ILNameSyntax> GetArrayType(Action<ILNameSyntax> elementType, ArrayShape shape)
 		{
 			return syntax => {
-				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters
+					? syntax
+					: ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write('[');
 				for (int i = 0; i < shape.Rank; i++)
@@ -56,11 +59,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 							lower = shape.LowerBounds[i];
 							output.Write(lower.ToString());
 						}
+
 						output.Write("...");
 						if (i < shape.Sizes.Length)
 							output.Write((lower + shape.Sizes[i] - 1).ToString());
 					}
 				}
+
 				output.Write(']');
 			};
 		}
@@ -68,7 +73,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public Action<ILNameSyntax> GetByReferenceType(Action<ILNameSyntax> elementType)
 		{
 			return syntax => {
-				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters
+					? syntax
+					: ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write('&');
 			};
@@ -87,14 +94,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(", ");
 					signature.ParameterTypes[i](syntax);
 				}
+
 				output.Write(')');
 			};
 		}
 
-		public Action<ILNameSyntax> GetGenericInstantiation(Action<ILNameSyntax> genericType, ImmutableArray<Action<ILNameSyntax>> typeArguments)
+		public Action<ILNameSyntax> GetGenericInstantiation(Action<ILNameSyntax> genericType,
+			ImmutableArray<Action<ILNameSyntax>> typeArguments)
 		{
 			return syntax => {
-				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters
+					? syntax
+					: ILNameSyntax.Signature;
 				genericType(syntaxForElementTypes);
 				output.Write('<');
 				for (int i = 0; i < typeArguments.Length; i++)
@@ -103,6 +114,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(", ");
 					typeArguments[i](syntaxForElementTypes);
 				}
+
 				output.Write('>');
 			};
 		}
@@ -123,21 +135,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			};
 		}
 
-		void WriteTypeParameter(GenericParameterHandle paramRef, int index, ILNameSyntax syntax)
-		{
-			if (paramRef.IsNil || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
-				output.Write(index.ToString());
-			else
-			{
-				var param = metadata.GetGenericParameter(paramRef);
-				if (param.Name.IsNil)
-					output.Write(param.Index.ToString());
-				else
-					output.Write(DisassemblerHelpers.Escape(metadata.GetString(param.Name)));
-			}
-		}
-
-		public Action<ILNameSyntax> GetModifiedType(Action<ILNameSyntax> modifier, Action<ILNameSyntax> unmodifiedType, bool isRequired)
+		public Action<ILNameSyntax> GetModifiedType(Action<ILNameSyntax> modifier, Action<ILNameSyntax> unmodifiedType,
+			bool isRequired)
 		{
 			return syntax => {
 				unmodifiedType(syntax);
@@ -154,7 +153,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public Action<ILNameSyntax> GetPinnedType(Action<ILNameSyntax> elementType)
 		{
 			return syntax => {
-				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters
+					? syntax
+					: ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write(" pinned");
 			};
@@ -163,7 +164,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public Action<ILNameSyntax> GetPointerType(Action<ILNameSyntax> elementType)
 		{
 			return syntax => {
-				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters
+					? syntax
+					: ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write('*');
 			};
@@ -171,60 +174,43 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public Action<ILNameSyntax> GetPrimitiveType(PrimitiveTypeCode typeCode)
 		{
-			switch (typeCode)
-			{
-				case PrimitiveTypeCode.SByte:
-					return syntax => output.Write("int8");
-				case PrimitiveTypeCode.Int16:
-					return syntax => output.Write("int16");
-				case PrimitiveTypeCode.Int32:
-					return syntax => output.Write("int32");
-				case PrimitiveTypeCode.Int64:
-					return syntax => output.Write("int64");
-				case PrimitiveTypeCode.Byte:
-					return syntax => output.Write("uint8");
-				case PrimitiveTypeCode.UInt16:
-					return syntax => output.Write("uint16");
-				case PrimitiveTypeCode.UInt32:
-					return syntax => output.Write("uint32");
-				case PrimitiveTypeCode.UInt64:
-					return syntax => output.Write("uint64");
-				case PrimitiveTypeCode.Single:
-					return syntax => output.Write("float32");
-				case PrimitiveTypeCode.Double:
-					return syntax => output.Write("float64");
-				case PrimitiveTypeCode.Void:
-					return syntax => output.Write("void");
-				case PrimitiveTypeCode.Boolean:
-					return syntax => output.Write("bool");
-				case PrimitiveTypeCode.String:
-					return syntax => output.Write("string");
-				case PrimitiveTypeCode.Char:
-					return syntax => output.Write("char");
-				case PrimitiveTypeCode.Object:
-					return syntax => output.Write("object");
-				case PrimitiveTypeCode.IntPtr:
-					return syntax => output.Write("native int");
-				case PrimitiveTypeCode.UIntPtr:
-					return syntax => output.Write("native uint");
-				case PrimitiveTypeCode.TypedReference:
-					return syntax => output.Write("typedref");
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return typeCode switch {
+				PrimitiveTypeCode.SByte => syntax => output.Write("int8"),
+				PrimitiveTypeCode.Int16 => syntax => output.Write("int16"),
+				PrimitiveTypeCode.Int32 => syntax => output.Write("int32"),
+				PrimitiveTypeCode.Int64 => syntax => output.Write("int64"),
+				PrimitiveTypeCode.Byte => syntax => output.Write("uint8"),
+				PrimitiveTypeCode.UInt16 => syntax => output.Write("uint16"),
+				PrimitiveTypeCode.UInt32 => syntax => output.Write("uint32"),
+				PrimitiveTypeCode.UInt64 => syntax => output.Write("uint64"),
+				PrimitiveTypeCode.Single => syntax => output.Write("float32"),
+				PrimitiveTypeCode.Double => syntax => output.Write("float64"),
+				PrimitiveTypeCode.Void => syntax => output.Write("void"),
+				PrimitiveTypeCode.Boolean => syntax => output.Write("bool"),
+				PrimitiveTypeCode.String => syntax => output.Write("string"),
+				PrimitiveTypeCode.Char => syntax => output.Write("char"),
+				PrimitiveTypeCode.Object => syntax => output.Write("object"),
+				PrimitiveTypeCode.IntPtr => syntax => output.Write("native int"),
+				PrimitiveTypeCode.UIntPtr => syntax => output.Write("native uint"),
+				PrimitiveTypeCode.TypedReference => syntax => output.Write("typedref"),
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public Action<ILNameSyntax> GetSZArrayType(Action<ILNameSyntax> elementType)
 		{
 			return syntax => {
-				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+				var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters
+					? syntax
+					: ILNameSyntax.Signature;
 				elementType(syntaxForElementTypes);
 				output.Write('[');
 				output.Write(']');
 			};
 		}
 
-		public Action<ILNameSyntax> GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+		public Action<ILNameSyntax> GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle,
+			byte rawTypeKind)
 		{
 			return syntax => {
 				switch (rawTypeKind)
@@ -240,11 +226,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					default:
 						throw new BadImageFormatException($"Unexpected rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
+
 				((EntityHandle)handle).WriteTo(module, output, default);
 			};
 		}
 
-		public Action<ILNameSyntax> GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+		public Action<ILNameSyntax> GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle,
+			byte rawTypeKind)
 		{
 			return syntax => {
 				switch (rawTypeKind)
@@ -260,13 +248,29 @@ namespace ICSharpCode.Decompiler.Disassembler
 					default:
 						throw new BadImageFormatException($"Unexpected rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
+
 				((EntityHandle)handle).WriteTo(module, output, default);
 			};
 		}
 
-		public Action<ILNameSyntax> GetTypeFromSpecification(MetadataReader reader, MetadataGenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+		public Action<ILNameSyntax> GetTypeFromSpecification(MetadataReader reader,
+			MetadataGenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
+		}
+
+		void WriteTypeParameter(GenericParameterHandle paramRef, int index, ILNameSyntax syntax)
+		{
+			if (paramRef.IsNil || syntax == ILNameSyntax.SignatureNoNamedTypeParameters)
+				output.Write(index.ToString());
+			else
+			{
+				var param = metadata.GetGenericParameter(paramRef);
+				if (param.Name.IsNil)
+					output.Write(param.Index.ToString());
+				else
+					output.Write(DisassemblerHelpers.Escape(metadata.GetString(param.Name)));
+			}
 		}
 	}
 }

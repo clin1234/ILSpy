@@ -25,9 +25,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class EntityDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
-		public static readonly Role<CSharpModifierToken> ModifierRole = new Role<CSharpModifierToken>("Modifier", null);
-		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
+		public static readonly Role<AttributeSection> AttributeRole = new("Attribute", null);
+		public static readonly Role<CSharpModifierToken> ModifierRole = new("Modifier", null);
+
+		public static readonly Role<AstType> PrivateImplementationTypeRole =
+			new("PrivateImplementationType", AstType.Null);
 
 		public override NodeType NodeType {
 			get { return NodeType.Member; }
@@ -42,11 +44,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Modifiers Modifiers {
 			get { return GetModifiers(this); }
 			set { SetModifiers(this, value); }
-		}
-
-		public bool HasModifier(Modifiers mod)
-		{
-			return (Modifiers & mod) == mod;
 		}
 
 		public IEnumerable<CSharpModifierToken> ModifierTokens {
@@ -76,6 +73,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
+		public bool HasModifier(Modifiers mod)
+		{
+			return (Modifiers & mod) == mod;
+		}
+
 		internal static Modifiers GetModifiers(AstNode node)
 		{
 			Modifiers m = 0;
@@ -83,6 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				m |= t.Modifier;
 			}
+
 			return m;
 		}
 
@@ -120,7 +123,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected bool MatchAttributesAndModifiers(EntityDeclaration o, PatternMatching.Match match)
 		{
-			return (this.Modifiers == Modifiers.Any || this.Modifiers == o.Modifiers) && this.Attributes.DoMatch(o.Attributes, match);
+			return (this.Modifiers == Modifiers.Any || this.Modifiers == o.Modifiers) &&
+			       this.Attributes.DoMatch(o.Attributes, match);
 		}
 	}
 }

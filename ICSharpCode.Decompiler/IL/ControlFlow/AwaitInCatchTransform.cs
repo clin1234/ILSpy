@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -28,41 +27,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
 	class AwaitInCatchTransform
 	{
-		readonly struct CatchBlockInfo
-		{
-			public readonly int Id;
-			public readonly TryCatchHandler Handler;
-			public readonly Block RealCatchBlockEntryPoint;
-			public readonly ILInstruction NextBlockOrExitContainer;
-			public readonly ILInstruction JumpTableEntry;
-			public readonly ILVariable ObjectVariable;
-
-			public CatchBlockInfo(int id, TryCatchHandler handler, Block realCatchBlockEntryPoint,
-				ILInstruction nextBlockOrExitContainer, ILInstruction jumpTableEntry, ILVariable objectVariable)
-			{
-				Id = id;
-				Handler = handler;
-				RealCatchBlockEntryPoint = realCatchBlockEntryPoint;
-				NextBlockOrExitContainer = nextBlockOrExitContainer;
-				JumpTableEntry = jumpTableEntry;
-				ObjectVariable = objectVariable;
-			}
-		}
-
 		public static void Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AwaitInCatchFinally)
 				return;
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
-			HashSet<Block> removedBlocks = new HashSet<Block>();
+			HashSet<BlockContainer> changedContainers = new();
+			HashSet<Block> removedBlocks = new();
 
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
 			{
-				if (!(tryCatch.Parent?.Parent is BlockContainer container))
+				if (tryCatch.Parent?.Parent is not BlockContainer container)
 					continue;
 				// Detect all handlers that contain an await expression
-				AnalyzeHandlers(tryCatch.Handlers, out var catchHandlerIdentifier, out var transformableCatchBlocks);
+				AnalyzeHandlers(tryCatch.Handlers, out ILVariable _, out var transformableCatchBlocks);
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
 				if (transformableCatchBlocks.Count > 0)
 					changedContainers.Add(container);
@@ -72,7 +50,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					removedBlocks.Clear();
 					var node = cfg.GetNode(result.RealCatchBlockEntryPoint);
 
-					context.StepStartGroup($"Inline catch block with await (at {result.Handler.Variable.Name})", result.Handler);
+					context.StepStartGroup($"Inline catch block with await (at {result.Handler.Variable.Name})",
+						result.Handler);
 
 					// Remove the IfInstruction from the jump table and eliminate all branches to the block.
 					switch (result.JumpTableEntry)
@@ -98,6 +77,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 									}
 								}
 							}
+
 							break;
 						case SwitchSection jumpTableEntry:
 							Debug.Assert(switchInstructionOpt == null || jumpTableEntry.Parent == switchInstructionOpt);
@@ -138,9 +118,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 					// Remove unreachable pattern blocks
 					// TODO : sanity check
-					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0)
+					if (result.NextBlockOrExitContainer is Block { IncomingEdgeCount: 0 } nextBlock)
 					{
-						List<Block> dependentBlocks = new List<Block>();
+						List<Block> dependentBlocks = new();
 						Block current = nextBlock;
 
 						do
@@ -178,7 +158,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.StepEndGroup(keepIfEmpty: true);
 				}
 
-				if (switchInstructionOpt != null && switchInstructionOpt.Parent is Block b && b.IncomingEdgeCount > 0)
+				if (switchInstructionOpt is { Parent: Block { IncomingEdgeCount: > 0 } b })
 				{
 					var defaultSection = switchInstructionOpt.GetDefaultSection();
 
@@ -196,12 +176,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		private static void TransformAsyncThrowToThrow(ILTransformContext context, HashSet<Block> removedBlocks, Block block)
+		private static void TransformAsyncThrowToThrow(ILTransformContext context, HashSet<Block> removedBlocks,
+			Block block)
 		{
 			ILVariable v = null;
 			if (MatchExceptionCaptureBlock(context, block,
-				ref v, out StLoc typedExceptionVariableStore,
-				out Block captureBlock, out Block throwBlock))
+				    ref v, out StLoc typedExceptionVariableStore,
+				    out Block captureBlock, out Block throwBlock))
 			{
 				context.Step($"ExceptionDispatchInfo.Capture({v.Name}).Throw() => throw;", typedExceptionVariableStore);
 				block.Instructions.RemoveRange(typedExceptionVariableStore.ChildIndex + 1, 2);
@@ -222,7 +203,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Analyzes all catch handlers and returns every handler that follows the await catch handler pattern.
 		/// </summary>
-		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable catchHandlerIdentifier,
+		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers,
+			out ILVariable catchHandlerIdentifier,
 			out List<CatchBlockInfo> transformableCatchBlocks)
 		{
 			transformableCatchBlocks = new List<CatchBlockInfo>();
@@ -230,8 +212,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var handler in handlers)
 			{
 				if (!MatchAwaitCatchHandler(handler, out int id, out var identifierVariable,
-					out var realEntryPoint, out var nextBlockOrExitContainer, out var jumpTableEntry,
-					out var objectVariable))
+					    out var realEntryPoint, out var nextBlockOrExitContainer, out var jumpTableEntry,
+					    out var objectVariable))
 				{
 					continue;
 				}
@@ -242,8 +224,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 
 				catchHandlerIdentifier = identifierVariable;
-				transformableCatchBlocks.Add(new(id, handler, realEntryPoint, nextBlockOrExitContainer, jumpTableEntry, objectVariable ?? handler.Variable));
+				transformableCatchBlocks.Add(new(id, handler, realEntryPoint, nextBlockOrExitContainer, jumpTableEntry,
+					objectVariable ?? handler.Variable));
 			}
+
 			return transformableCatchBlocks.Count > 0;
 		}
 
@@ -291,12 +275,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// This can happen in optimized code.
 					break;
 			}
+
 			if (!catchBlock.Instructions.Last().MatchBranch(out var jumpTableStartBlock))
 				return false;
 			var identifierVariableAssignment = catchBlock.Instructions.SecondToLastOrDefault();
 			if (identifierVariableAssignment == null)
 				return false;
-			if (!identifierVariableAssignment.MatchStLoc(out identifierVariable, out value) || !value.MatchLdcI4(out id))
+			if (!identifierVariableAssignment.MatchStLoc(out identifierVariable, out value) ||
+			    !value.MatchLdcI4(out id))
 				return false;
 			// analyze jump table:
 			switch (jumpTableStartBlock.Instructions.Count)
@@ -305,28 +291,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// stloc identifierVariableCopy(identifierVariable)
 					// if (comp(identifierVariable == id)) br realEntryPoint
 					// br jumpTableEntryBlock
-					if (!jumpTableStartBlock.Instructions[0].MatchStLoc(out var identifierVariableCopy, out var identifierVariableLoad)
-						|| !identifierVariableLoad.MatchLdLoc(identifierVariable))
+					if (!jumpTableStartBlock.Instructions[0]
+						    .MatchStLoc(out var identifierVariableCopy, out var identifierVariableLoad)
+					    || !identifierVariableLoad.MatchLdLoc(identifierVariable))
 					{
 						return false;
 					}
-					return ParseIfJumpTable(id, jumpTableStartBlock, identifierVariableCopy, out realEntryPoint, out nextBlockOrExitContainer, out jumpTableEntry);
+
+					return ParseIfJumpTable(id, jumpTableStartBlock, identifierVariableCopy, out realEntryPoint,
+						out nextBlockOrExitContainer, out jumpTableEntry);
 				case 2:
 					// if (comp(identifierVariable == id)) br realEntryPoint
 					// br jumpTableEntryBlock
-					return ParseIfJumpTable(id, jumpTableStartBlock, identifierVariable, out realEntryPoint, out nextBlockOrExitContainer, out jumpTableEntry);
+					return ParseIfJumpTable(id, jumpTableStartBlock, identifierVariable, out realEntryPoint,
+						out nextBlockOrExitContainer, out jumpTableEntry);
 				case 1:
 					if (jumpTableStartBlock.Instructions[0] is not SwitchInstruction switchInst)
 					{
 						return false;
 					}
 
-					return ParseSwitchJumpTable(id, switchInst, identifierVariable, out realEntryPoint, out nextBlockOrExitContainer, out jumpTableEntry);
+					return ParseSwitchJumpTable(id, switchInst, identifierVariable, out realEntryPoint,
+						out nextBlockOrExitContainer, out jumpTableEntry);
 				default:
 					return false;
 			}
 
-			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable, out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
+			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable,
+				out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
 			{
 				realEntryPoint = null;
 				nextBlockOrExitContainer = null;
@@ -354,14 +346,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable, out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
+			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable,
+				out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
 			{
 				realEntryPoint = null;
 				nextBlockOrExitContainer = null;
 				jumpTableEntry = null;
 				do
 				{
-					if (!(jumpTableEntryBlock.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
+					if (jumpTableEntryBlock.Instructions.SecondToLastOrDefault() is not IfInstruction ifInst)
 						return false;
 					ILInstruction lastInst = jumpTableEntryBlock.Instructions.Last();
 					if (ifInst.Condition.MatchCompEquals(out var left, out var right))
@@ -388,6 +381,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					{
 						return false;
 					}
+
 					if (!left.MatchLdLoc(identifierVariable))
 						return false;
 					if (right.MatchLdcI4(id))
@@ -397,6 +391,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return true;
 					}
 				} while (jumpTableEntryBlock?.Instructions.Count == 2);
+
 				return false;
 			}
 		}
@@ -419,20 +414,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// =>
 		// throw(ldloc result.Handler.Variable)
 		internal static bool MatchExceptionCaptureBlock(ILTransformContext context, Block block,
-			ref ILVariable objectVariable, out StLoc typedExceptionVariableStore, out Block captureBlock, out Block throwBlock)
+			ref ILVariable objectVariable, out StLoc typedExceptionVariableStore, out Block captureBlock,
+			out Block throwBlock)
 		{
-			bool DerivesFromException(IType t) => t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
+			bool DerivesFromException(IType t) =>
+				t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
 
 			captureBlock = null;
 			throwBlock = null;
 			typedExceptionVariableStore = null;
 
-			var typedExceptionVariableStLoc = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
-
-			if (typedExceptionVariableStLoc == null
-				|| !typedExceptionVariableStLoc.Value.MatchIsInst(out var arg, out var type)
-				|| !DerivesFromException(type)
-				|| !arg.MatchLdLoc(out var v))
+			if (block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) is not StLoc
+				    typedExceptionVariableStLoc
+			    || !typedExceptionVariableStLoc.Value.MatchIsInst(out var arg, out var type)
+			    || !DerivesFromException(type)
+			    || !arg.MatchLdLoc(out var v))
 			{
 				return false;
 			}
@@ -448,7 +444,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			typedExceptionVariableStore = typedExceptionVariableStLoc;
 
-			if (!block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst))
+			if (!block.Instructions[^2].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 
 			ILInstruction lastInstr = block.Instructions.Last();
@@ -456,7 +452,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 
 			if (condition.MatchCompNotEqualsNull(out arg)
-				&& trueInst is Branch branchToCapture)
+			    && trueInst is Branch branchToCapture)
 			{
 				if (!arg.MatchLdLoc(typedExceptionVariableStore.Variable))
 					return false;
@@ -468,15 +464,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			if (throwBlock.IncomingEdgeCount != 1
-				|| throwBlock.Instructions.Count != 1
-				|| !(throwBlock.Instructions[0].MatchThrow(out var ov) && ov.MatchLdLoc(objectVariable)))
+			    || throwBlock.Instructions.Count != 1
+			    || !(throwBlock.Instructions[0].MatchThrow(out var ov) && ov.MatchLdLoc(objectVariable)))
 			{
 				return false;
 			}
 
 			if (captureBlock.IncomingEdgeCount != 1
-				|| captureBlock.Instructions.Count != 2
-				|| !MatchCaptureThrowCalls(captureBlock.Instructions[0]))
+			    || captureBlock.Instructions.Count != 2
+			    || !MatchCaptureThrowCalls(captureBlock.Instructions[0]))
 			{
 				return false;
 			}
@@ -485,20 +481,43 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			bool MatchCaptureThrowCalls(ILInstruction inst)
 			{
-				var exceptionDispatchInfoType = context.TypeSystem.FindType(typeof(System.Runtime.ExceptionServices.ExceptionDispatchInfo));
+				var exceptionDispatchInfoType =
+					context.TypeSystem.FindType(typeof(System.Runtime.ExceptionServices.ExceptionDispatchInfo));
 				if (inst is not CallVirt callVirt || callVirt.Arguments.Count != 1)
 					return false;
 
 				if (callVirt.Arguments[0] is not Call call || call.Arguments.Count != 1
-					|| !call.Arguments[0].MatchLdLoc(typedExceptionVariableStLoc.Variable))
+				                                           || !call.Arguments[0]
+					                                           .MatchLdLoc(typedExceptionVariableStLoc.Variable))
 				{
 					return false;
 				}
 
 				return callVirt.Method.Name == "Throw"
-					&& callVirt.Method.DeclaringType.Equals(exceptionDispatchInfoType)
-					&& call.Method.Name == "Capture"
-					&& call.Method.DeclaringType.Equals(exceptionDispatchInfoType);
+				       && callVirt.Method.DeclaringType.Equals(exceptionDispatchInfoType)
+				       && call.Method.Name == "Capture"
+				       && call.Method.DeclaringType.Equals(exceptionDispatchInfoType);
+			}
+		}
+
+		readonly struct CatchBlockInfo
+		{
+			public readonly int Id;
+			public readonly TryCatchHandler Handler;
+			public readonly Block RealCatchBlockEntryPoint;
+			public readonly ILInstruction NextBlockOrExitContainer;
+			public readonly ILInstruction JumpTableEntry;
+			public readonly ILVariable ObjectVariable;
+
+			public CatchBlockInfo(int id, TryCatchHandler handler, Block realCatchBlockEntryPoint,
+				ILInstruction nextBlockOrExitContainer, ILInstruction jumpTableEntry, ILVariable objectVariable)
+			{
+				Id = id;
+				Handler = handler;
+				RealCatchBlockEntryPoint = realCatchBlockEntryPoint;
+				NextBlockOrExitContainer = nextBlockOrExitContainer;
+				JumpTableEntry = jumpTableEntry;
+				ObjectVariable = objectVariable;
 			}
 		}
 	}

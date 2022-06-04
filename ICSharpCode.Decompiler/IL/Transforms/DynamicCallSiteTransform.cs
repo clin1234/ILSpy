@@ -32,10 +32,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class DynamicCallSiteTransform : IILTransform
 	{
-		ILTransformContext context;
-
 		const string CallSiteTypeName = "System.Runtime.CompilerServices.CallSite";
 		const string CSharpBinderTypeName = "Microsoft.CSharp.RuntimeBinder.Binder";
+		ILTransformContext context;
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -44,8 +43,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			this.context = context;
 
-			Dictionary<IField, CallSiteInfo> callsites = new Dictionary<IField, CallSiteInfo>();
-			HashSet<BlockContainer> modifiedContainers = new HashSet<BlockContainer>();
+			Dictionary<IField, CallSiteInfo> callsites = new();
+			HashSet<BlockContainer> modifiedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
@@ -54,11 +53,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Check if, we deal with a callsite cache field null check:
 				// if (comp(ldsfld <>p__3 == ldnull)) br IL_000c
 				// br IL_002b
-				if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
+				if (block.Instructions.SecondToLastOrDefault() is not IfInstruction ifInst)
 					continue;
-				if (!(block.Instructions.LastOrDefault() is Branch branchAfterInit))
+				if (block.Instructions.LastOrDefault() is not Branch branchAfterInit)
 					continue;
-				if (!MatchCallSiteCacheNullCheck(ifInst.Condition, out var callSiteCacheField, out var callSiteDelegate, out bool invertBranches))
+				if (!MatchCallSiteCacheNullCheck(ifInst.Condition, out var callSiteCacheField, out var callSiteDelegate,
+					    out bool invertBranches))
 					continue;
 				if (!ifInst.TrueInst.MatchBranch(out var trueBlock))
 					continue;
@@ -73,7 +73,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					callSiteInitBlock = trueBlock;
 					targetBlockAfterInit = branchAfterInit.TargetBlock;
 				}
-				if (!ScanCallSiteInitBlock(callSiteInitBlock, callSiteCacheField, callSiteDelegate, out var callSiteInfo, out var blockAfterInit))
+
+				if (!ScanCallSiteInitBlock(callSiteInitBlock, callSiteCacheField, callSiteDelegate,
+					    out var callSiteInfo, out var blockAfterInit))
 					continue;
 				if (targetBlockAfterInit != blockAfterInit)
 					continue;
@@ -88,13 +90,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var invokeCall in function.Descendants.OfType<CallVirt>())
 			{
-				if (invokeCall.Method.DeclaringType.Kind != TypeKind.Delegate || invokeCall.Method.Name != "Invoke" || invokeCall.Arguments.Count == 0)
+				if (invokeCall.Method.DeclaringType.Kind != TypeKind.Delegate || invokeCall.Method.Name != "Invoke" ||
+				    invokeCall.Arguments.Count == 0)
 					continue;
 				var firstArgument = invokeCall.Arguments[0];
-				if (firstArgument.MatchLdLoc(out var stackSlot) && stackSlot.Kind == VariableKind.StackSlot && stackSlot.IsSingleDefinition)
+				if (firstArgument.MatchLdLoc(out var stackSlot) && stackSlot.Kind == VariableKind.StackSlot &&
+				    stackSlot.IsSingleDefinition)
 				{
 					firstArgument = ((StLoc)stackSlot.StoreInstructions[0]).Value;
 				}
+
 				if (!firstArgument.MatchLdFld(out var cacheFieldLoad, out var targetField))
 					continue;
 				if (!cacheFieldLoad.MatchLdsFld(out var cacheField))
@@ -118,21 +123,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					block.Instructions.Remove(callsite.ConditionalJumpToInit);
 				}
+
 				foreach (var arg in deadArguments)
 				{
-					if (arg.MatchLdLoc(out var temporary) && temporary.Kind == VariableKind.StackSlot && temporary.IsSingleDefinition && temporary.LoadCount == 0)
+					if (arg.MatchLdLoc(out var temporary) && temporary.Kind == VariableKind.StackSlot &&
+					    temporary.IsSingleDefinition && temporary.LoadCount == 0)
 					{
 						StLoc stLoc = (StLoc)temporary.StoreInstructions[0];
-						if (stLoc.Parent is Block storeParentBlock)
+						if (stLoc.Parent is Block)
 						{
 							var value = stLoc.Value;
 							if (value.MatchLdsFld(out var cacheFieldCopy) && cacheFieldCopy.Equals(cacheField))
 								storesToRemove.Add(stLoc);
-							if (value.MatchLdFld(out cacheFieldLoad, out var targetFieldCopy) && cacheFieldLoad.MatchLdsFld(out cacheFieldCopy) && cacheField.Equals(cacheFieldCopy) && targetField.Equals(targetFieldCopy))
+							if (value.MatchLdFld(out cacheFieldLoad, out var targetFieldCopy) &&
+							    cacheFieldLoad.MatchLdsFld(out cacheFieldCopy) && cacheField.Equals(cacheFieldCopy) &&
+							    targetField.Equals(targetFieldCopy))
 								storesToRemove.Add(stLoc);
 						}
 					}
 				}
+
 				modifiedContainers.Add((BlockContainer)block.Parent);
 			}
 
@@ -146,7 +156,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
+		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall,
+			List<ILInstruction> deadArguments)
 		{
 			switch (callsite.Kind)
 			{
@@ -173,8 +184,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						// if references are missing, we need to coerce the primitive type to None.
 						// Otherwise we will get loads of assertions.
-						result = new Conv(result, PrimitiveType.None, ((DynamicConvertInstruction)result).IsChecked, Sign.None);
+						result = new Conv(result, PrimitiveType.None, ((DynamicConvertInstruction)result).IsChecked,
+							Sign.None);
 					}
+
 					return result;
 				case BinderMethodKind.GetIndex:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
@@ -208,11 +221,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// a reference to a variable that is initialized with a type.
 					if (!TransformExpressionTrees.MatchGetTypeFromHandle(arguments[0], out var type))
 					{
-						if (!(arguments[0].MatchLdLoc(out var temp) && temp.IsSingleDefinition && temp.StoreInstructions.FirstOrDefault() is StLoc initStore))
+						if (!(arguments[0].MatchLdLoc(out var temp) && temp.IsSingleDefinition &&
+						      temp.StoreInstructions.FirstOrDefault() is StLoc initStore))
 							return null;
 						if (!TransformExpressionTrees.MatchGetTypeFromHandle(initStore.Value, out type))
 							return null;
 					}
+
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
 					return new DynamicInvokeConstructorInstruction(
 						binderFlags: callsite.Flags,
@@ -272,7 +287,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
+		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType,
+			out CallSiteInfo callSiteInfo, out Block blockAfterInit)
 		{
 			callSiteInfo = default(CallSiteInfo);
 			blockAfterInit = null;
@@ -281,11 +297,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!callSiteInitBlock.Instructions[instCount - 1].MatchBranch(out blockAfterInit))
 				return false;
-			if (!callSiteInitBlock.Instructions[instCount - 2].MatchStsFld(out var field, out var value) || !field.Equals(callSiteCacheField))
+			if (!callSiteInitBlock.Instructions[instCount - 2].MatchStsFld(out var field, out var value) ||
+			    !field.Equals(callSiteCacheField))
 				return false;
-			if (!(value is Call createBinderCall) || createBinderCall.Method.TypeArguments.Count != 0 || createBinderCall.Arguments.Count != 1 || createBinderCall.Method.Name != "Create" || createBinderCall.Method.DeclaringType.FullName != CallSiteTypeName || createBinderCall.Method.DeclaringType.TypeArguments.Count != 1)
+			if (value is not Call createBinderCall || createBinderCall.Method.TypeArguments.Count != 0 ||
+			    createBinderCall.Arguments.Count != 1 || createBinderCall.Method.Name != "Create" ||
+			    createBinderCall.Method.DeclaringType.FullName != CallSiteTypeName ||
+			    createBinderCall.Method.DeclaringType.TypeArguments.Count != 1)
 				return false;
-			if (!(createBinderCall.Arguments[0] is Call binderCall) || binderCall.Method.DeclaringType.FullName != CSharpBinderTypeName || binderCall.Method.DeclaringType.TypeParameterCount != 0)
+			if (createBinderCall.Arguments[0] is not Call binderCall ||
+			    binderCall.Method.DeclaringType.FullName != CSharpBinderTypeName ||
+			    binderCall.Method.DeclaringType.TypeParameterCount != 0)
 				return false;
 			callSiteInfo.DelegateType = callSiteDelegateType;
 			callSiteInfo.InitBlock = callSiteInitBlock;
@@ -354,13 +376,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					int numberOfTypeArguments = 0;
 					if (!value.MatchLdNull())
 					{
-						if (value is NewArr typeArgsNewArr && typeArgsNewArr.Type.IsKnownType(KnownTypeCode.Type) && typeArgsNewArr.Indices.Count == 1 && typeArgsNewArr.Indices[0].MatchLdcI4(out numberOfTypeArguments))
+						if (value is NewArr typeArgsNewArr && typeArgsNewArr.Type.IsKnownType(KnownTypeCode.Type) &&
+						    typeArgsNewArr.Indices.Count == 1 &&
+						    typeArgsNewArr.Indices[0].MatchLdcI4(out numberOfTypeArguments))
 						{
-							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInitBlock, 3, variableOrTemporary, new[] { numberOfTypeArguments }, out var typeArguments, out _))
+							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function,
+								    callSiteInitBlock, 3, variableOrTemporary, new[] { numberOfTypeArguments },
+								    out var typeArguments, out _))
 								return false;
 							int i = 0;
 							callSiteInfo.TypeArguments = new IType[numberOfTypeArguments];
-							foreach (var (_, typeArg) in typeArguments)
+							foreach ((var _, ILInstruction typeArg) in typeArguments)
 							{
 								if (!TransformExpressionTrees.MatchGetTypeFromHandle(typeArg, out var type))
 									return false;
@@ -373,6 +399,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						}
 					}
+
 					int typeArgumentsOffset = numberOfTypeArguments;
 					// Special case for csc array initializers:
 					if (variableOrTemporary != variable)
@@ -384,6 +411,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						typeArgumentsOffset++;
 					}
+
 					// Fourth argument: context type
 					if (!binderCall.Arguments[3].MatchLdLoc(out variable))
 						return false;
@@ -402,7 +430,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case "GetMember":
 				case "SetMember":
-					callSiteInfo.Kind = binderCall.Method.Name == "GetMember" ? BinderMethodKind.GetMember : BinderMethodKind.SetMember;
+					callSiteInfo.Kind = binderCall.Method.Name == "GetMember"
+						? BinderMethodKind.GetMember
+						: BinderMethodKind.SetMember;
 					if (binderCall.Arguments.Count != 4)
 						return false;
 					// First argument: binder flags
@@ -443,23 +473,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case "SetIndex":
 				case "InvokeConstructor":
 				case "Invoke":
-					switch (binderCall.Method.Name)
-					{
-						case "GetIndex":
-							callSiteInfo.Kind = BinderMethodKind.GetIndex;
-							break;
-						case "SetIndex":
-							callSiteInfo.Kind = BinderMethodKind.SetIndex;
-							break;
-						case "InvokeConstructor":
-							callSiteInfo.Kind = BinderMethodKind.InvokeConstructor;
-							break;
-						case "Invoke":
-							callSiteInfo.Kind = BinderMethodKind.Invoke;
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
-					}
+					callSiteInfo.Kind = binderCall.Method.Name switch {
+						"GetIndex" => BinderMethodKind.GetIndex,
+						"SetIndex" => BinderMethodKind.SetIndex,
+						"InvokeConstructor" => BinderMethodKind.InvokeConstructor,
+						"Invoke" => BinderMethodKind.Invoke,
+						_ => throw new ArgumentOutOfRangeException()
+					};
 					if (binderCall.Arguments.Count != 3)
 						return false;
 					// First argument: binder flags
@@ -489,7 +509,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case "UnaryOperation":
 				case "BinaryOperation":
-					callSiteInfo.Kind = binderCall.Method.Name == "BinaryOperation" ? BinderMethodKind.BinaryOperation : BinderMethodKind.UnaryOperation;
+					callSiteInfo.Kind = binderCall.Method.Name == "BinaryOperation"
+						? BinderMethodKind.BinaryOperation
+						: BinderMethodKind.UnaryOperation;
 					if (binderCall.Arguments.Count != 4)
 						return false;
 					// First argument: binder flags
@@ -531,11 +553,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ExtractArgumentInfo(ILInstruction value, ref CallSiteInfo callSiteInfo, int instructionOffset, ILVariable variable)
+		bool ExtractArgumentInfo(ILInstruction value, ref CallSiteInfo callSiteInfo, int instructionOffset,
+			ILVariable variable)
 		{
-			if (!(value is NewArr newArr2 && newArr2.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr2.Indices.Count == 1 && newArr2.Indices[0].MatchLdcI4(out var numberOfArguments)))
+			if (!(value is NewArr newArr2 &&
+			      newArr2.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" &&
+			      newArr2.Indices.Count == 1 && newArr2.Indices[0].MatchLdcI4(out var numberOfArguments)))
 				return false;
-			if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInfo.InitBlock, instructionOffset, variable, new[] { numberOfArguments }, out var arguments, out _))
+			if (!TransformArrayInitializers.HandleSimpleArrayInitializer(context.Function, callSiteInfo.InitBlock,
+				    instructionOffset, variable, new[] { numberOfArguments }, out var arguments, out _))
 				return false;
 			int i = 0;
 			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
@@ -543,24 +569,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invokeMethod == null)
 				return false;
 			var compileTimeTypes = invokeMethod.Parameters.SelectReadOnlyArray(p => p.Type);
-			foreach (var (_, arg) in arguments)
+			foreach ((var _, ILInstruction arg) in arguments)
 			{
-				if (!(arg is Call createCall))
+				if (arg is not Call createCall)
 					return false;
-				if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
+				if (!(createCall.Method.Name == "Create" &&
+				      createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" &&
+				      createCall.Arguments.Count == 2))
 					return false;
 				if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
 					return false;
 				if (!createCall.Arguments[1].MatchLdStr(out string argumentName))
 					if (!createCall.Arguments[1].MatchLdNull())
 						return false;
-				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = compileTimeTypes[i + 1] };
+				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo {
+					Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName,
+					CompileTimeType = compileTimeTypes[i + 1]
+				};
 				i++;
 			}
+
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
+		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField,
+			out IType callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;
 			callSiteDelegate = null;
@@ -571,7 +604,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				invertBranches = true;
 			}
-			if (!argument.MatchLdsFld(out callSiteCacheField) || callSiteCacheField.ReturnType.TypeArguments.Count != 1 || callSiteCacheField.ReturnType.FullName != CallSiteTypeName)
+
+			if (!argument.MatchLdsFld(out callSiteCacheField) ||
+			    callSiteCacheField.ReturnType.TypeArguments.Count != 1 ||
+			    callSiteCacheField.ReturnType.FullName != CallSiteTypeName)
 				return false;
 			callSiteDelegate = callSiteCacheField.ReturnType.TypeArguments[0];
 			if (callSiteDelegate.Kind != TypeKind.Delegate)

@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 #nullable enable
 
 using System;
@@ -26,9 +27,30 @@ namespace ICSharpCode.Decompiler.Util
 	[Serializable]
 	public sealed class EmptyList<T> : IList<T>, IEnumerator<T>, IReadOnlyList<T>
 	{
-		public static readonly EmptyList<T> Instance = new EmptyList<T>();
+		public static readonly EmptyList<T> Instance = new();
 
 		private EmptyList() { }
+
+		T IEnumerator<T>.Current {
+			get { throw new NotSupportedException(); }
+		}
+
+		object IEnumerator.Current {
+			get { throw new NotSupportedException(); }
+		}
+
+		void IDisposable.Dispose()
+		{
+		}
+
+		bool IEnumerator.MoveNext()
+		{
+			return false;
+		}
+
+		void IEnumerator.Reset()
+		{
+		}
 
 		public T this[int index] {
 			get { throw new ArgumentOutOfRangeException(nameof(index)); }
@@ -86,30 +108,9 @@ namespace ICSharpCode.Decompiler.Util
 			return this;
 		}
 
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return this;
-		}
-
-		T IEnumerator<T>.Current {
-			get { throw new NotSupportedException(); }
-		}
-
-		object IEnumerator.Current {
-			get { throw new NotSupportedException(); }
-		}
-
-		void IDisposable.Dispose()
-		{
-		}
-
-		bool IEnumerator.MoveNext()
-		{
-			return false;
-		}
-
-		void IEnumerator.Reset()
-		{
 		}
 	}
 
@@ -118,5 +119,7 @@ namespace ICSharpCode.Decompiler.Util
 		public static readonly T[] Array = System.Array.Empty<T>();
 	}
 
-	public struct Unit { }
+	public struct Unit
+	{
+	}
 }

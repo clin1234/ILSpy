@@ -31,19 +31,15 @@ namespace ICSharpCode.Decompiler
 	public sealed class PlainTextOutput : ITextOutput
 	{
 		readonly TextWriter writer;
+		int column = 1;
 		int indent;
-		bool needsIndent;
 
 		int line = 1;
-		int column = 1;
-
-		public string IndentationString { get; set; } = "\t";
+		bool needsIndent;
 
 		public PlainTextOutput(TextWriter writer)
 		{
-			if (writer == null)
-				throw new ArgumentNullException(nameof(writer));
-			this.writer = writer;
+			this.writer = writer ?? throw new ArgumentNullException(nameof(writer));
 		}
 
 		public PlainTextOutput()
@@ -57,10 +53,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public override string ToString()
-		{
-			return writer.ToString();
-		}
+		public string IndentationString { get; set; } = "\t";
 
 		public void Indent()
 		{
@@ -70,19 +63,6 @@ namespace ICSharpCode.Decompiler
 		public void Unindent()
 		{
 			indent--;
-		}
-
-		void WriteIndent()
-		{
-			if (needsIndent)
-			{
-				needsIndent = false;
-				for (int i = 0; i < indent; i++)
-				{
-					writer.Write(IndentationString);
-				}
-				column += indent;
-			}
 		}
 
 		public void Write(char ch)
@@ -107,7 +87,7 @@ namespace ICSharpCode.Decompiler
 			column = 1;
 		}
 
-		public void WriteReference(Disassembler.OpCodeInfo opCode, bool omitSuffix = false)
+		public void WriteReference(OpCodeInfo opCode, bool omitSuffix = false)
 		{
 			if (omitSuffix)
 			{
@@ -123,7 +103,8 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
+		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile",
+			bool isDefinition = false)
 		{
 			Write(text);
 		}
@@ -150,6 +131,25 @@ namespace ICSharpCode.Decompiler
 		void ITextOutput.MarkFoldEnd()
 		{
 		}
+
+		public override string ToString()
+		{
+			return writer.ToString();
+		}
+
+		void WriteIndent()
+		{
+			if (needsIndent)
+			{
+				needsIndent = false;
+				for (int i = 0; i < indent; i++)
+				{
+					writer.Write(IndentationString);
+				}
+
+				column += indent;
+			}
+		}
 	}
 
 	internal class TextOutputWithRollback : ITextOutput
@@ -172,14 +172,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public void Commit()
-		{
-			foreach (var action in actions)
-			{
-				action(target);
-			}
-		}
-
 		public void Indent()
 		{
 			actions.Add(target => target.Indent());
@@ -190,7 +182,8 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.MarkFoldEnd());
 		}
 
-		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
+		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false,
+			bool isDefinition = false)
 		{
 			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed));
 		}
@@ -225,7 +218,8 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.WriteReference(opCode));
 		}
 
-		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
+		public void WriteReference(PEFile module, Handle handle, string text, string protocol = "decompile",
+			bool isDefinition = false)
 		{
 			actions.Add(target => target.WriteReference(module, handle, text, protocol, isDefinition));
 		}
@@ -238,6 +232,14 @@ namespace ICSharpCode.Decompiler
 		public void WriteReference(IMember member, string text, bool isDefinition = false)
 		{
 			actions.Add(target => target.WriteReference(member, text, isDefinition));
+		}
+
+		public void Commit()
+		{
+			foreach (var action in actions)
+			{
+				action(target);
+			}
 		}
 	}
 }

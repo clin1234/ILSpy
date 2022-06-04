@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
@@ -32,14 +31,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class CustomAttribute : IAttribute
 	{
-		readonly MetadataModule module;
 		readonly CustomAttributeHandle handle;
-		public IMethod Constructor { get; }
+		readonly MetadataModule module;
+		bool hasDecodeErrors;
 
 		// lazy-loaded:
 		CustomAttributeValue<IType> value;
 		bool valueDecoded;
-		bool hasDecodeErrors;
 
 		internal CustomAttribute(MetadataModule module, IMethod attrCtor, CustomAttributeHandle handle)
 		{
@@ -50,6 +48,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Constructor = attrCtor;
 			this.handle = handle;
 		}
+
+		public IMethod Constructor { get; }
 
 		public IType AttributeType => Constructor.DeclaringType;
 
@@ -109,17 +109,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		internal static IMember MemberForNamedArgument(IType attributeType, CustomAttributeNamedArgument<IType> namedArgument)
+		internal static IMember MemberForNamedArgument(IType attributeType,
+			CustomAttributeNamedArgument<IType> namedArgument)
 		{
-			switch (namedArgument.Kind)
-			{
-				case CustomAttributeNamedArgumentKind.Field:
-					return attributeType.GetFields(f => f.Name == namedArgument.Name).LastOrDefault();
-				case CustomAttributeNamedArgumentKind.Property:
-					return attributeType.GetProperties(p => p.Name == namedArgument.Name).LastOrDefault();
-				default:
-					return null;
-			}
+			return namedArgument.Kind switch {
+				CustomAttributeNamedArgumentKind.Field => attributeType.GetFields(f => f.Name == namedArgument.Name)
+					.LastOrDefault(),
+				CustomAttributeNamedArgumentKind.Property => attributeType
+					.GetProperties(p => p.Name == namedArgument.Name)
+					.LastOrDefault(),
+				_ => null
+			};
 		}
 	}
 }

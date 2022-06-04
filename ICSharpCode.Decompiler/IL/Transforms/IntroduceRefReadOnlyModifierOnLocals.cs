@@ -16,10 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -38,7 +35,6 @@ namespace ICSharpCode.Decompiler.IL
 				if (IsUsedAsRefReadonly(variable))
 				{
 					variable.IsRefReadOnly = true;
-					continue;
 				}
 			}
 		}
@@ -55,6 +51,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (ILInlining.IsReadonlyReference(store.Value))
 					return true;
 			}
+
 			return false;
 		}
 	}

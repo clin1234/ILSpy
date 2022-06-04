@@ -31,6 +31,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </remarks>
 	public class EscapeInvalidIdentifiers : IAstTransform
 	{
+		public void Run(AstNode rootNode, TransformContext context)
+		{
+			foreach (var ident in rootNode.DescendantsAndSelf.OfType<Identifier>())
+			{
+				ident.Name = ReplaceInvalid(ident.Name);
+			}
+		}
+
 		bool IsValid(char ch)
 		{
 			if (char.IsLetterOrDigit(ch))
@@ -42,18 +50,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		string ReplaceInvalid(string s)
 		{
-			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:X4}", (int)ch)));
+			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : $"_{(int)ch:X4}"));
 			if (name.Length >= 1 && !(char.IsLetter(name[0]) || name[0] == '_'))
 				name = "_" + name;
 			return name;
-		}
-
-		public void Run(AstNode rootNode, TransformContext context)
-		{
-			foreach (var ident in rootNode.DescendantsAndSelf.OfType<Identifier>())
-			{
-				ident.Name = ReplaceInvalid(ident.Name);
-			}
 		}
 	}
 
@@ -87,7 +87,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							}
 							case "System.Runtime.CompilerServices.CompilationRelaxationsAttribute":
 							{
-								if (arguments.Count == 1 && arguments.First() is PrimitiveExpression expr && expr.Value is int value && value == 8)
+								if (arguments.Count == 1 && arguments.First() is PrimitiveExpression {
+									    Value: int and 8
+								    })
 									attribute.Remove();
 								break;
 							}
@@ -95,9 +97,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (arguments.Count != 1)
 									break;
-								if (!(arguments.First() is NamedExpression expr1) || expr1.Name != "WrapNonExceptionThrows")
+								if (arguments.First() is not NamedExpression expr1 ||
+								    expr1.Name != "WrapNonExceptionThrows")
 									break;
-								if (!(expr1.Expression is PrimitiveExpression expr2) || !(expr2.Value is bool value) || value != true)
+								if (expr1.Expression is not PrimitiveExpression expr2 ||
+								    expr2.Value is not (bool and true))
 									break;
 								attribute.Remove();
 								break;
@@ -111,11 +115,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (arguments.Count != 2)
 									break;
-								if (!(arguments.First() is MemberReferenceExpression expr1) || expr1.MemberName != "RequestMinimum")
+								if (arguments.First() is not MemberReferenceExpression expr1 ||
+								    expr1.MemberName != "RequestMinimum")
 									break;
-								if (!(expr1.NextSibling is NamedExpression expr2) || expr2.Name != "SkipVerification")
+								if (expr1.NextSibling is not NamedExpression expr2 || expr2.Name != "SkipVerification")
 									break;
-								if (!(expr2.Expression is PrimitiveExpression expr3) || !(expr3.Value is bool value2) || value2 != true)
+								if (expr2.Expression is not PrimitiveExpression expr3 ||
+								    expr3.Value is not (bool and true))
 									break;
 								attribute.Remove();
 								break;

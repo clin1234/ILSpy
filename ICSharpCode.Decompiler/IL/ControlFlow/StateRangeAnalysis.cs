@@ -18,14 +18,10 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -55,14 +51,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </remarks>
 	class StateRangeAnalysis
 	{
-		public CancellationToken CancellationToken;
-		readonly StateRangeAnalysisMode mode;
-		readonly IField? stateField;
 		readonly SymbolicEvaluationContext evalContext;
+		internal readonly Dictionary<IMethod, LongSet>? finallyMethodToStateRange; // used only for IteratorDispose
+		readonly StateRangeAnalysisMode mode;
 
-		readonly Dictionary<Block, LongSet> ranges = new Dictionary<Block, LongSet>();
+		readonly Dictionary<Block, LongSet> ranges = new();
 		readonly Dictionary<BlockContainer, LongSet>? rangesForLeave; // used only for AwaitInFinally
-		readonly internal Dictionary<IMethod, LongSet>? finallyMethodToStateRange; // used only for IteratorDispose
+		readonly IField? stateField;
+		public CancellationToken CancellationToken;
 
 		internal ILVariable? doFinallyBodies;
 		internal ILVariable? skipFinallyBodies;
@@ -75,6 +71,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				finallyMethodToStateRange = new Dictionary<IMethod, LongSet>();
 			}
+
 			if (mode == StateRangeAnalysisMode.AwaitInFinally)
 			{
 				rangesForLeave = new Dictionary<BlockContainer, LongSet>();
@@ -94,13 +91,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal StateRangeAnalysis CreateNestedAnalysis()
 		{
-			var sra = new StateRangeAnalysis(mode, stateField);
-			sra.doFinallyBodies = this.doFinallyBodies;
-			sra.skipFinallyBodies = this.skipFinallyBodies;
+			var sra = new StateRangeAnalysis(mode, stateField) {
+				doFinallyBodies = this.doFinallyBodies,
+				skipFinallyBodies = this.skipFinallyBodies
+			};
 			foreach (var v in this.evalContext.StateVariables)
 			{
 				sra.evalContext.AddStateVariable(v);
 			}
+
 			return sra;
 		}
 
@@ -129,6 +128,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							AssignStateRanges(block, stateRange);
 						}
 					}
+
 					// Since we don't track 'leave' edges, we can only conservatively
 					// return LongSet.Empty.
 					return LongSet.Empty;
@@ -144,6 +144,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// If the end-point is unreachable, it must be reachable in no states.
 						Debug.Assert(stateRange.IsEmpty || !instInBlock.HasFlag(InstructionFlags.EndPointUnreachable));
 					}
+
 					return stateRange;
 				case TryFinally tryFinally when mode == StateRangeAnalysisMode.IteratorDispose:
 					var afterTry = AssignStateRanges(tryFinally.TryBlock, stateRange);
@@ -156,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					SymbolicValue val = evalContext.Eval(switchInst.Value);
 					if (val.Type != SymbolicValueType.State)
 						goto default;
-					List<LongInterval> exitIntervals = new List<LongInterval>();
+					List<LongInterval> exitIntervals = new();
 					foreach (var section in switchInst.Sections)
 					{
 						// switch (state + Constant)
@@ -167,6 +168,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						var result = AssignStateRanges(section.Body, stateRange.IntersectWith(effectiveLabels));
 						exitIntervals.AddRange(result.Intervals);
 					}
+
 					// exitIntervals = union of exits of all sections
 					return new LongSet(exitIntervals);
 				case IfInstruction ifInst:
@@ -175,6 +177,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					{
 						goto default;
 					}
+
 					LongSet trueRanges = val.ValueSet;
 					var afterTrue = AssignStateRanges(ifInst.TrueInst, stateRange.IntersectWith(trueRanges));
 					var afterFalse = AssignStateRanges(ifInst.FalseInst, stateRange.ExceptWith(trueRanges));
@@ -185,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				case Leave leave when mode == StateRangeAnalysisMode.AwaitInFinally:
 					AddStateRangeForLeave(leave.TargetContainer, stateRange);
 					return LongSet.Empty;
-				case Nop nop:
+				case Nop:
 					return stateRange;
 				case StLoc stloc when stloc.Variable == doFinallyBodies || stloc.Variable == skipFinallyBodies:
 					// pre-roslyn async/await uses a generated 'bool doFinallyBodies';
@@ -199,10 +202,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						evalContext.AddStateVariable(stloc.Variable);
 						return stateRange;
 					}
-					else
-					{
-						goto default; // user code
-					}
+
+					goto default; // user code
 				case Call call when mode == StateRangeAnalysisMode.IteratorDispose:
 					// Call to finally method.
 					// Usually these are in finally blocks, but sometimes (e.g. foreach over array),
@@ -212,23 +213,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				case StObj stobj when mode == StateRangeAnalysisMode.IteratorMoveNext:
 				{
 					if (stobj.MatchStFld(out var target, out var field, out var value)
-						&& target.MatchLdThis() && field.MemberDefinition == stateField && value.MatchLdcI4(-1))
+					    && target.MatchLdThis() && field.MemberDefinition == stateField && value.MatchLdcI4(-1))
 					{
 						// Mono resets the state field during MoveNext();
 						// don't consider this user code.
 						return stateRange;
 					}
-					else
-					{
-						goto default;
-					}
+
+					goto default;
 				}
 				default:
 					// User code - abort analysis
-					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave l && l.IsLeavingFunction))
+					if (mode == StateRangeAnalysisMode.IteratorDispose && inst is not Leave { IsLeavingFunction: true })
 					{
 						throw new SymbolicAnalysisFailedException("Unexpected instruction in Iterator.Dispose()");
 					}
+
 					return LongSet.Empty;
 			}
 		}
@@ -264,11 +264,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			IEnumerable<(LongSet, Block)> GetMapping()
 			{
 				// First, consider container exits:
-				foreach (var (block, states) in ranges)
+				foreach ((Block? block, LongSet states) in ranges)
 				{
 					if (block.Parent != container)
 						yield return (states, block);
 				}
+
 				// Then blocks within the container:
 				foreach (var block in container.Blocks.Reverse())
 				{

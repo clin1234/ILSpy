@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	sealed class GraphVizGraph
 	{
-		List<GraphVizNode> nodes = new List<GraphVizNode>();
-		List<GraphVizEdge> edges = new List<GraphVizEdge>();
+		List<GraphVizEdge> edges = new();
+		List<GraphVizNode> nodes = new();
 
 		public string? rankdir;
 		public string? Title;
@@ -51,8 +51,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(string fileName)
 		{
-			using (StreamWriter writer = new StreamWriter(fileName))
-				Save(writer);
+			using StreamWriter writer = new(fileName);
+			Save(writer);
 		}
 
 		public void Show()
@@ -81,7 +81,8 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			else
 			{
-				return "\"" + text.Replace("\\", "\\\\").Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"") + "\"";
+				return "\"" + text.Replace("\\", "\\\\").Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"") +
+				       "\"";
 			}
 		}
 
@@ -121,8 +122,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(TextWriter writer)
 		{
-			if (writer == null)
-				throw new ArgumentNullException(nameof(writer));
+			ArgumentNullException.ThrowIfNull(writer);
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);
@@ -130,10 +130,12 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				node.Save(writer);
 			}
+
 			foreach (GraphVizEdge edge in edges)
 			{
 				edge.Save(writer);
 			}
+
 			writer.WriteLine("}");
 		}
 	}
@@ -144,24 +146,21 @@ namespace ICSharpCode.Decompiler.Util
 
 		/// <summary>edge stroke color</summary>
 		public string? color;
+
 		/// <summary>use edge to affect node ranking</summary>
 		public bool? constraint;
+
+		/// <summary>point size of label</summary>
+		public int? fontsize;
 
 		public string? label;
 
 		public string? style;
 
-		/// <summary>point size of label</summary>
-		public int? fontsize;
-
 		public GraphVizEdge(string source, string target)
 		{
-			if (source == null)
-				throw new ArgumentNullException(nameof(source));
-			if (target == null)
-				throw new ArgumentNullException(nameof(target));
-			this.Source = source;
-			this.Target = target;
+			this.Source = source ?? throw new ArgumentNullException(nameof(source));
+			this.Target = target ?? throw new ArgumentNullException(nameof(target));
 		}
 
 		public GraphVizEdge(int source, int target)
@@ -186,15 +185,16 @@ namespace ICSharpCode.Decompiler.Util
 	sealed class GraphVizNode
 	{
 		public readonly string ID;
-		public string? label;
-
-		public string? labelloc;
 
 		/// <summary>point size of label</summary>
 		public int? fontsize;
 
 		/// <summary>minimum height in inches</summary>
 		public double? height;
+
+		public string? label;
+
+		public string? labelloc;
 
 		/// <summary>space around label</summary>
 		public string? margin;
@@ -204,9 +204,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public GraphVizNode(string id)
 		{
-			if (id == null)
-				throw new ArgumentNullException(nameof(id));
-			this.ID = id;
+			this.ID = id ?? throw new ArgumentNullException(nameof(id));
 		}
 
 		public GraphVizNode(int id)

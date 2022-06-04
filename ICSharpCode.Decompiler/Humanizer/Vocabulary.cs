@@ -10,13 +10,13 @@ namespace Humanizer.Inflections
 	/// </summary>
 	internal class Vocabulary
 	{
+		private readonly List<Rule> _plurals = new();
+		private readonly List<Rule> _singulars = new();
+		private readonly List<string> _uncountables = new();
+
 		internal Vocabulary()
 		{
 		}
-
-		private readonly List<Rule> _plurals = new List<Rule>();
-		private readonly List<Rule> _singulars = new List<Rule>();
-		private readonly List<string> _uncountables = new List<string>();
 
 		/// <summary>
 		/// Adds a word to the vocabulary which cannot easily be pluralized/singularized by RegEx, e.g. "person" and "people".
@@ -28,8 +28,8 @@ namespace Humanizer.Inflections
 		{
 			if (matchEnding)
 			{
-				AddPlural("(" + singular[0] + ")" + singular.Substring(1) + "$", "$1" + plural.Substring(1));
-				AddSingular("(" + plural[0] + ")" + plural.Substring(1) + "$", "$1" + singular.Substring(1));
+				AddPlural("(" + singular[0] + ")" + singular[1..] + "$", "$1" + plural[1..]);
+				AddSingular("(" + plural[0] + ")" + plural[1..] + "$", "$1" + singular[1..]);
 			}
 			else
 			{
@@ -84,7 +84,8 @@ namespace Humanizer.Inflections
 
 			var asSingular = ApplyRules(_singulars, word, false);
 			var asSingularAsPlural = ApplyRules(_plurals, asSingular, false);
-			if (asSingular != null && asSingular != word && asSingular + "s" != word && asSingularAsPlural == word && result != word)
+			if (asSingular != null && asSingular != word && asSingular + "s" != word && asSingularAsPlural == word &&
+			    result != word)
 			{
 				return word;
 			}
@@ -145,6 +146,7 @@ namespace Humanizer.Inflections
 					break;
 				}
 			}
+
 			return result;
 		}
 

@@ -32,35 +32,8 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public class DotNetCorePathFinder
 	{
-		class DotNetCorePackageInfo
-		{
-			public readonly string Name;
-			public readonly string Version;
-			public readonly string Type;
-			public readonly string Path;
-			public readonly string[] RuntimeComponents;
-
-			public DotNetCorePackageInfo(string fullName, string type, string path, string[] runtimeComponents)
-			{
-				var parts = fullName.Split('/');
-				this.Name = parts[0];
-				if (parts.Length > 1)
-				{
-					this.Version = parts[1];
-				}
-				else
-				{
-					this.Version = "<UNKNOWN>";
-				}
-
-				this.Type = type;
-				this.Path = path;
-				this.RuntimeComponents = runtimeComponents ?? Empty<string>.Array;
-			}
-		}
-
 		static readonly string[] LookupPaths = new string[] {
-			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
 		static readonly string[] RuntimePacks = new[] {
@@ -70,12 +43,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			"Microsoft.AspNetCore.All"
 		};
 
-		readonly DotNetCorePackageInfo[] packages;
-		readonly List<string> searchPaths = new List<string>();
-		readonly List<string> packageBasePaths = new List<string>();
-		readonly Version targetFrameworkVersion;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
+		readonly List<string> packageBasePaths = new();
+
+		readonly DotNetCorePackageInfo[] packages;
 		readonly string preferredRuntimePack;
+		readonly List<string> searchPaths = new();
+		readonly Version targetFrameworkVersion;
 
 		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
 			string preferredRuntimePack)
@@ -93,8 +67,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, string preferredRuntimePack,
-			TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString,
+			string preferredRuntimePack,
+			TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
+			ReferenceLoadInfo loadInfo = null)
 			: this(targetFramework, targetFrameworkVersion, preferredRuntimePack)
 		{
 			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
@@ -123,7 +99,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 			else
 			{
-				loadInfo?.AddMessage(assemblyName, MessageKind.Warning, $"{assemblyName}.deps.json could not be found!");
+				loadInfo?.AddMessage(assemblyName, MessageKind.Warning,
+					$"{assemblyName}.deps.json could not be found!");
 			}
 		}
 
@@ -156,7 +133,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		internal string GetReferenceAssemblyPath(string targetFramework)
 		{
-			var (tfi, version) = UniversalAssemblyResolver.ParseTargetFramework(targetFramework);
+			(TargetFrameworkIdentifier tfi, Version version) =
+				UniversalAssemblyResolver.ParseTargetFramework(targetFramework);
 			string identifier, identifierExt;
 			switch (tfi)
 			{
@@ -175,6 +153,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				default:
 					throw new NotSupportedException();
 			}
+
 			string basePath = Path.Combine(dotnetBasePath, "packs", identifier + ".Ref");
 			string versionFolder = GetClosestVersionFolder(basePath, version);
 			return Path.Combine(basePath, versionFolder, "ref", identifierExt);
@@ -202,6 +181,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						i++;
 					}
 				}
+
 				yield return new DotNetCorePackageInfo(library.Key, type, path, components);
 			}
 		}
@@ -237,6 +217,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
 				}
 			}
+
 			runtimePack = null;
 			return null;
 		}
@@ -251,6 +232,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (folder.version >= version)
 					return folder.directoryName;
 			}
+
 			return version.ToString();
 		}
 
@@ -264,6 +246,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					shortName = shortName.Remove(dashIndex);
 				}
+
 				return shortName;
 			}
 
@@ -290,17 +273,20 @@ namespace ICSharpCode.Decompiler.Metadata
 						continue;
 					if (Environment.OSVersion.Platform == PlatformID.Unix)
 					{
-						if ((new FileInfo(fileName).Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+						if ((new FileInfo(fileName).Attributes & FileAttributes.ReparsePoint) ==
+						    FileAttributes.ReparsePoint)
 						{
 							fileName = GetRealPath(fileName, Encoding.Default);
 							if (!File.Exists(fileName))
 								continue;
 						}
 					}
+
 					return Path.GetDirectoryName(fileName);
 				}
 				catch (ArgumentException) { }
 			}
+
 			return null;
 		}
 
@@ -309,17 +295,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			var bytes = encoding.GetBytes(path);
 			fixed (byte* input = bytes)
 			{
-
 				byte* output = GetRealPath(input, null);
 				if (output == null)
 				{
 					return null;
 				}
+
 				int len = 0;
 				for (byte* c = output; *c != 0; c++)
 				{
 					len++;
 				}
+
 				byte[] result = new byte[len];
 				Marshal.Copy((IntPtr)output, result, 0, result.Length);
 				Free(output);
@@ -332,5 +319,32 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		[DllImport("libc", EntryPoint = "free")]
 		static extern unsafe void Free(void* ptr);
+
+		class DotNetCorePackageInfo
+		{
+			public readonly string Name;
+			public readonly string Path;
+			public readonly string[] RuntimeComponents;
+			public readonly string Type;
+			public readonly string Version;
+
+			public DotNetCorePackageInfo(string fullName, string type, string path, string[] runtimeComponents)
+			{
+				var parts = fullName.Split('/');
+				this.Name = parts[0];
+				if (parts.Length > 1)
+				{
+					this.Version = parts[1];
+				}
+				else
+				{
+					this.Version = "<UNKNOWN>";
+				}
+
+				this.Type = type;
+				this.Path = path;
+				this.RuntimeComponents = runtimeComponents ?? Empty<string>.Array;
+			}
+		}
 	}
 }

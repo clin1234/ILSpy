@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UsingStatement : Statement
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
+		public static readonly TokenRole UsingKeywordRole = new("using");
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
-		public static readonly Role<AstNode> ResourceAcquisitionRole = new Role<AstNode>("ResourceAcquisition", AstNode.Null);
+		public static readonly Role<AstNode> ResourceAcquisitionRole = new("ResourceAcquisition", AstNode.Null);
 
 		public CSharpTokenNode UsingToken {
 			get { return GetChildByRole(UsingKeywordRole); }
@@ -89,8 +89,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingStatement o = other as UsingStatement;
-			return o != null && this.IsAsync == o.IsAsync && this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is UsingStatement o && this.IsAsync == o.IsAsync &&
+			       this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) &&
+			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

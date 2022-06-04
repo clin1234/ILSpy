@@ -29,122 +29,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	class IndexRangeTransform : IStatementTransform
 	{
-		/// <summary>
-		/// Called by expression transforms.
-		/// Handles the `array[System.Index]` cases.
-		/// </summary>
-		public static bool HandleLdElema(LdElema ldelema, ILTransformContext context)
-		{
-			if (!context.Settings.Ranges)
-				return false;
-			if (!ldelema.Array.MatchLdLoc(out ILVariable array))
-				return false;
-			if (ldelema.Indices.Count != 1)
-				return false; // the index/range feature doesn't support multi-dimensional arrays
-			var index = ldelema.Indices[0];
-			if (index is CallInstruction call && call.Method.Name == "GetOffset" && call.Method.DeclaringType.IsKnownType(KnownTypeCode.Index))
-			{
-				// ldelema T(ldloc array, call GetOffset(..., ldlen.i4(ldloc array)))
-				// -> withsystemindex.ldelema T(ldloc array, ...)
-				if (call.Arguments.Count != 2)
-					return false;
-				if (!(call.Arguments[1].MatchLdLen(StackType.I4, out var arrayLoad) && arrayLoad.MatchLdLoc(array)))
-					return false;
-				context.Step("ldelema with System.Index", ldelema);
-				foreach (var node in call.Arguments[1].Descendants)
-					ldelema.AddILRange(node);
-				ldelema.AddILRange(call);
-				ldelema.WithSystemIndex = true;
-				// The method call had a `ref System.Index` argument for the this pointer, but we want a `System.Index` by-value.
-				ldelema.Indices[0] = new LdObj(call.Arguments[0], call.Method.DeclaringType);
-				return true;
-			}
-			else if (index is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.IsLifted && !bni.CheckForOverflow)
-			{
-				// ldelema T(ldloc array, binary.sub.i4(ldlen.i4(ldloc array), ...))
-				// -> withsystemindex.ldelema T(ldloc array, newobj System.Index(..., fromEnd: true))
-				if (!(bni.Left.MatchLdLen(StackType.I4, out var arrayLoad) && arrayLoad.MatchLdLoc(array)))
-					return false;
-				var indexMethods = new IndexMethods(context.TypeSystem);
-				if (!indexMethods.IsValid)
-					return false; // don't use System.Index if not supported by the target framework
-				context.Step("ldelema indexed from end", ldelema);
-				foreach (var node in bni.Left.Descendants)
-					ldelema.AddILRange(node);
-				ldelema.AddILRange(bni);
-				ldelema.WithSystemIndex = true;
-				ldelema.Indices[0] = MakeIndex(IndexKind.FromEnd, bni.Right, indexMethods);
-				return true;
-			}
-
-			return false;
-		}
-
-		class IndexMethods
-		{
-			public readonly IMethod IndexCtor;
-			public readonly IMethod IndexImplicitConv;
-			public readonly IMethod RangeCtor;
-			public IType IndexType => IndexCtor?.DeclaringType;
-			public IType RangeType => RangeCtor?.DeclaringType;
-			public bool IsValid => IndexCtor != null && IndexImplicitConv != null && RangeCtor != null;
-
-			public readonly IMethod RangeStartAt;
-			public readonly IMethod RangeEndAt;
-			public readonly IMethod RangeGetAll;
-
-			public IndexMethods(ICompilation compilation)
-			{
-				var indexType = compilation.FindType(KnownTypeCode.Index);
-				foreach (var ctor in indexType.GetConstructors(m => m.Parameters.Count == 2))
-				{
-					if (ctor.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32)
-						&& ctor.Parameters[1].Type.IsKnownType(KnownTypeCode.Boolean))
-					{
-						this.IndexCtor = ctor;
-					}
-				}
-				foreach (var op in indexType.GetMethods(m => m.IsOperator && m.Name == "op_Implicit"))
-				{
-					if (op.Parameters.Count == 1 && op.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32))
-					{
-						this.IndexImplicitConv = op;
-					}
-				}
-				var rangeType = compilation.FindType(KnownTypeCode.Range);
-				foreach (var ctor in rangeType.GetConstructors(m => m.Parameters.Count == 2))
-				{
-					if (ctor.Parameters[0].Type.IsKnownType(KnownTypeCode.Index)
-						&& ctor.Parameters[1].Type.IsKnownType(KnownTypeCode.Index))
-					{
-						this.RangeCtor = ctor;
-					}
-				}
-				foreach (var m in rangeType.GetMethods(m => m.Parameters.Count == 1))
-				{
-					if (m.Parameters.Count == 1 && m.Parameters[0].Type.IsKnownType(KnownTypeCode.Index))
-					{
-						if (m.Name == "StartAt")
-							this.RangeStartAt = m;
-						else if (m.Name == "EndAt")
-							this.RangeEndAt = m;
-					}
-				}
-				foreach (var p in rangeType.GetProperties(p => p.IsStatic && p.Name == "All"))
-				{
-					this.RangeGetAll = p.Getter;
-				}
-			}
-
-			public static bool IsRangeCtor(IMethod method)
-			{
-				return method.SymbolKind == SymbolKind.Constructor
-					&& method.Parameters.Count == 2
-					&& method.DeclaringType.IsKnownType(KnownTypeCode.Range)
-					&& method.Parameters.All(p => p.Type.IsKnownType(KnownTypeCode.Index));
-			}
-		}
-
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (!context.Settings.Ranges)
@@ -163,7 +47,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				containerLengthVar = null;
 				containerVar = null;
 			}
-			if (block.Instructions[pos].MatchStLoc(out var rangeVar, out var rangeVarInit) && rangeVar.Type.IsKnownType(KnownTypeCode.Range))
+
+			if (block.Instructions[pos].MatchStLoc(out var rangeVar, out var rangeVarInit) &&
+			    rangeVar.Type.IsKnownType(KnownTypeCode.Range))
 			{
 				// stloc rangeVar(rangeVarInit)
 				pos++;
@@ -175,15 +61,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// stloc startOffsetVar(call GetOffset(startIndexLoad, ldloc length))
-			if (!(block.Instructions[pos].MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit)
-				&& startOffsetVar.IsSingleDefinition && startOffsetVar.StackType == StackType.I4))
+			if (!(block.Instructions[pos]
+				      .MatchStLoc(out ILVariable startOffsetVar, out ILInstruction startOffsetVarInit)
+			      && startOffsetVar.IsSingleDefinition && startOffsetVar.StackType == StackType.I4))
 			{
 				// Not our primary indexing/slicing pattern.
 				// However, we might be dealing with a partially-transformed pattern that needs to be extended.
 				ExtendSlicing();
 				return;
 			}
-			var startIndexKind = MatchGetOffset(startOffsetVarInit, out ILInstruction startIndexLoad, containerLengthVar, ref containerVar);
+
+			var startIndexKind = MatchGetOffset(startOffsetVarInit, out ILInstruction startIndexLoad,
+				containerLengthVar, ref containerVar);
 			pos++;
 			if (startOffsetVar.LoadCount == 1)
 			{
@@ -201,16 +90,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (rangeVar != null)
 					return;
-				if (!(startOffsetVar.LoadInstructions.Single().Parent is CallInstruction call))
+				if (startOffsetVar.LoadInstructions.Single().Parent is not CallInstruction call)
 					return;
-				if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter && call.Arguments.Count == 2)
+				if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter &&
+				    call.Arguments.Count == 2)
 				{
 					if (call.Method.AccessorOwner?.SymbolKind != SymbolKind.Indexer)
 						return;
 					if (call.Method.Parameters.Count != 1)
 						return;
 				}
-				else if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter && call.Arguments.Count == 3)
+				else if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter &&
+				         call.Arguments.Count == 3)
 				{
 					if (call.Method.AccessorOwner?.SymbolKind != SymbolKind.Indexer)
 						return;
@@ -226,15 +117,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return;
 				}
+
 				if (startIndexKind == IndexKind.FromStart)
 				{
 					// FromStart is only relevant for slicing; indexing from the start does not involve System.Index at all.
 					return;
 				}
+
 				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind))
 				{
 					return;
 				}
+
 				if (!call.IsDescendantOf(block.Instructions[pos]))
 					return;
 				// startOffsetVar might be used deep inside a complex statement, ensure we can inline up to that point:
@@ -243,6 +137,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!ILInlining.CanInlineInto(block.Instructions[pos], startOffsetVar, block.Instructions[i]))
 						return;
 				}
+
 				if (!call.Method.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32))
 					return;
 				if (!MatchContainerVar(call.Arguments[0], ref containerVar))
@@ -268,6 +163,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					newCall.AddILRange(block.Instructions[i]);
 				}
+
 				call.ReplaceWith(newCall);
 				block.Instructions.RemoveRange(startPos, pos - startPos);
 			}
@@ -302,17 +198,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (!(sliceLengthVar.IsSingleDefinition && sliceLengthVar.LoadCount == 1))
 					return;
-				if (!MatchSliceLength(sliceLengthVarInit, out IndexKind endIndexKind, out ILInstruction endIndexLoad, containerLengthVar, ref containerVar, startOffsetVar))
+				if (!MatchSliceLength(sliceLengthVarInit, out IndexKind endIndexKind, out ILInstruction endIndexLoad,
+					    containerLengthVar, ref containerVar, startOffsetVar))
 					return;
 				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind, endIndexKind))
 				{
 					return;
 				}
+
 				if (rangeVar != null)
 				{
 					return; // this should only ever happen in the second step (ExtendSlicing)
 				}
-				if (!(sliceLengthVar.LoadInstructions.Single().Parent is CallInstruction call))
+
+				if (sliceLengthVar.LoadInstructions.Single().Parent is not CallInstruction call)
 					return;
 				if (!call.IsDescendantOf(block.Instructions[pos]))
 					return;
@@ -335,6 +234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!ILInlining.CanMoveInto(startOffsetVarInit, block.Instructions[pos], call.Arguments[1]))
 						return;
 				}
+
 				if (!call.Arguments[2].MatchLdLoc(sliceLengthVar))
 					return;
 				if (!ILInlining.CanMoveInto(sliceLengthVarInit, block.Instructions[pos], call.Arguments[2]))
@@ -351,23 +251,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				newCall.ConstrainedTo = call.ConstrainedTo;
 				newCall.ILStackWasEmpty = call.ILStackWasEmpty;
 				newCall.Arguments.Add(call.Arguments[0]);
-				newCall.Arguments.Add(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad, specialMethods));
+				newCall.Arguments.Add(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad,
+					specialMethods));
 				newCall.AddILRange(call);
 				for (int i = startPos; i < pos; i++)
 				{
 					newCall.AddILRange(block.Instructions[i]);
 				}
+
 				call.ReplaceWith(newCall);
 				block.Instructions.RemoveRange(startPos, pos - startPos);
 			}
 
-			ILInstruction MakeRange(IndexKind startIndexKind, ILInstruction startIndexLoad, IndexKind endIndexKind, ILInstruction endIndexLoad, IndexMethods specialMethods)
+			ILInstruction MakeRange(IndexKind startIndexKind, ILInstruction startIndexLoad, IndexKind endIndexKind,
+				ILInstruction endIndexLoad, IndexMethods specialMethods)
 			{
 				if (rangeVar != null)
 				{
 					return rangeVarInit;
 				}
-				else if (startIndexKind == IndexKind.TheStart && endIndexKind == IndexKind.TheEnd && specialMethods.RangeGetAll != null)
+				else if (startIndexKind == IndexKind.TheStart && endIndexKind == IndexKind.TheEnd &&
+				         specialMethods.RangeGetAll != null)
 				{
 					return new Call(specialMethods.RangeGetAll);
 				}
@@ -408,8 +312,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return; // need a container length to extend with
 				}
+
 				Debug.Assert(containerLengthVar.IsSingleDefinition);
-				Debug.Assert(containerLengthVar.LoadCount == 1 || containerLengthVar.LoadCount == 2);
+				Debug.Assert(containerLengthVar.LoadCount is 1 or 2);
 				NewObj rangeCtorCall = null;
 				foreach (var inst in containerLengthVar.LoadInstructions[0].Ancestors)
 				{
@@ -418,14 +323,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						rangeCtorCall = newobj;
 						break;
 					}
+
 					if (inst == block)
 						break;
 				}
-				if (rangeCtorCall == null)
+
+				if (rangeCtorCall is not
+				    { Parent: CallInstruction { Method: SyntheticRangeIndexAccessor _ } slicingCall })
 					return;
 				// Now match the pattern that TransformSlicing() generated in the IndexKind.FromStart case
-				if (!(rangeCtorCall.Parent is CallInstruction { Method: SyntheticRangeIndexAccessor _ } slicingCall))
-					return;
 				if (!MatchContainerVar(slicingCall.Arguments[0], ref containerVar))
 					return;
 				if (!slicingCall.IsDescendantOf(block.Instructions[pos]))
@@ -435,12 +341,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (!MatchIndexImplicitConv(rangeCtorCall.Arguments[1], out var endOffsetInst))
 					return;
-				var startIndexKind = MatchGetOffset(startOffsetInst, out var startIndexLoad, containerLengthVar, ref containerVar);
-				var endIndexKind = MatchGetOffset(endOffsetInst, out var endIndexLoad, containerLengthVar, ref containerVar);
+				var startIndexKind = MatchGetOffset(startOffsetInst, out var startIndexLoad, containerLengthVar,
+					ref containerVar);
+				var endIndexKind = MatchGetOffset(endOffsetInst, out var endIndexLoad, containerLengthVar,
+					ref containerVar);
 				if (!CheckContainerLengthVariableUseCount(containerLengthVar, startIndexKind, endIndexKind))
 				{
 					return;
 				}
+
 				// holds because we've used containerLengthVar at least once
 				Debug.Assert(startIndexKind != IndexKind.FromStart || endIndexKind != IndexKind.FromStart);
 				if (rangeVar != null)
@@ -452,23 +361,80 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!MatchIndexFromRange(endIndexKind, endIndexLoad, rangeVar, "get_End"))
 						return;
 				}
+
 				var specialMethods = new IndexMethods(context.TypeSystem);
 				if (!specialMethods.IsValid)
 					return;
 				context.Step("Merge containerLengthVar into slicing", slicingCall);
-				rangeCtorCall.ReplaceWith(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad, specialMethods));
+				rangeCtorCall.ReplaceWith(MakeRange(startIndexKind, startIndexLoad, endIndexKind, endIndexLoad,
+					specialMethods));
 				for (int i = startPos; i < pos; i++)
 				{
 					slicingCall.AddILRange(block.Instructions[i]);
 				}
+
 				block.Instructions.RemoveRange(startPos, pos - startPos);
 			}
+		}
+
+		/// <summary>
+		/// Called by expression transforms.
+		/// Handles the `array[System.Index]` cases.
+		/// </summary>
+		public static bool HandleLdElema(LdElema ldelema, ILTransformContext context)
+		{
+			if (!context.Settings.Ranges)
+				return false;
+			if (!ldelema.Array.MatchLdLoc(out ILVariable array))
+				return false;
+			if (ldelema.Indices.Count != 1)
+				return false; // the index/range feature doesn't support multi-dimensional arrays
+			var index = ldelema.Indices[0];
+			if (index is CallInstruction call && call.Method.Name == "GetOffset" &&
+			    call.Method.DeclaringType.IsKnownType(KnownTypeCode.Index))
+			{
+				// ldelema T(ldloc array, call GetOffset(..., ldlen.i4(ldloc array)))
+				// -> withsystemindex.ldelema T(ldloc array, ...)
+				if (call.Arguments.Count != 2)
+					return false;
+				if (!(call.Arguments[1].MatchLdLen(StackType.I4, out var arrayLoad) && arrayLoad.MatchLdLoc(array)))
+					return false;
+				context.Step("ldelema with System.Index", ldelema);
+				foreach (var node in call.Arguments[1].Descendants)
+					ldelema.AddILRange(node);
+				ldelema.AddILRange(call);
+				ldelema.WithSystemIndex = true;
+				// The method call had a `ref System.Index` argument for the this pointer, but we want a `System.Index` by-value.
+				ldelema.Indices[0] = new LdObj(call.Arguments[0], call.Method.DeclaringType);
+				return true;
+			}
+			else if (index is BinaryNumericInstruction {
+				         Operator: BinaryNumericOperator.Sub, IsLifted: false, CheckForOverflow: false
+			         } bni)
+			{
+				// ldelema T(ldloc array, binary.sub.i4(ldlen.i4(ldloc array), ...))
+				// -> withsystemindex.ldelema T(ldloc array, newobj System.Index(..., fromEnd: true))
+				if (!(bni.Left.MatchLdLen(StackType.I4, out var arrayLoad) && arrayLoad.MatchLdLoc(array)))
+					return false;
+				var indexMethods = new IndexMethods(context.TypeSystem);
+				if (!indexMethods.IsValid)
+					return false; // don't use System.Index if not supported by the target framework
+				context.Step("ldelema indexed from end", ldelema);
+				foreach (var node in bni.Left.Descendants)
+					ldelema.AddILRange(node);
+				ldelema.AddILRange(bni);
+				ldelema.WithSystemIndex = true;
+				ldelema.Indices[0] = MakeIndex(IndexKind.FromEnd, bni.Right, indexMethods);
+				return true;
+			}
+
+			return false;
 		}
 
 		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
 		{
 			offsetInst = null;
-			if (!(inst is CallInstruction call))
+			if (inst is not CallInstruction call)
 				return false;
 			if (!(call.Method.IsOperator && call.Method.Name == "op_Implicit"))
 				return false;
@@ -490,13 +456,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!method.Parameters.All(p => p.Type.IsKnownType(KnownTypeCode.Int32)))
 				return false;
 			return method.Name == "Slice"
-				|| (method.Name == "Substring" && method.DeclaringType.IsKnownType(KnownTypeCode.String));
+			       || (method.Name == "Substring" && method.DeclaringType.IsKnownType(KnownTypeCode.String));
 		}
 
 		/// <summary>
 		/// Check that the number of uses of the containerLengthVar variable matches those expected in the pattern.
 		/// </summary>
-		private bool CheckContainerLengthVariableUseCount(ILVariable containerLengthVar, IndexKind startIndexKind, IndexKind endIndexKind = IndexKind.FromStart)
+		private bool CheckContainerLengthVariableUseCount(ILVariable containerLengthVar, IndexKind startIndexKind,
+			IndexKind endIndexKind = IndexKind.FromStart)
 		{
 			int expectedUses = 0;
 			if (startIndexKind != IndexKind.FromStart && startIndexKind != IndexKind.TheStart)
@@ -516,15 +483,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'addressof System.Index(call get_Start/get_End(ldloca rangeVar))'
 		/// </summary>
-		static bool MatchIndexFromRange(IndexKind indexKind, ILInstruction indexLoad, ILVariable rangeVar, string accessorName)
+		static bool MatchIndexFromRange(IndexKind indexKind, ILInstruction indexLoad, ILVariable rangeVar,
+			string accessorName)
 		{
 			if (indexKind != IndexKind.RefSystemIndex)
 				return false;
-			if (!(indexLoad is AddressOf addressOf))
+			if (indexLoad is not AddressOf addressOf)
 				return false;
 			if (!addressOf.Type.IsKnownType(KnownTypeCode.Index))
 				return false;
-			if (!(addressOf.Value is Call call))
+			if (addressOf.Value is not Call call)
 				return false;
 			if (call.Method.Name != accessorName)
 				return false;
@@ -546,7 +514,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//  complex_expr(call get_Item(ldloc container, ldobj startIndexLoad))
 				return new LdObj(indexLoad, specialMethods.IndexType);
 			}
-			else if (indexKind == IndexKind.FromEnd || indexKind == IndexKind.TheEnd)
+			else if (indexKind is IndexKind.FromEnd or IndexKind.TheEnd)
 			{
 				//  stloc offsetVar(binary.sub.i4(call get_Length/get_Count(ldloc container), startIndexLoad))
 				//  complex_expr(call get_Item(ldloc container, ldloc startOffsetVar))
@@ -556,7 +524,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else
 			{
-				Debug.Assert(indexKind == IndexKind.FromStart || indexKind == IndexKind.TheStart);
+				Debug.Assert(indexKind is IndexKind.FromStart or IndexKind.TheStart);
 				return new Call(specialMethods.IndexImplicitConv) { Arguments = { indexLoad } };
 			}
 		}
@@ -570,7 +538,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool foundIndexOverload = false;
 			bool foundRangeOverload = false;
 			bool foundCountProperty = false;
-			foreach (var prop in declaringType.GetProperties(p => p.IsIndexer || (p.Name == "Length" || p.Name == "Count")))
+			foreach (var prop in declaringType.GetProperties(p => p.IsIndexer || p.Name is "Length" or "Count"))
 			{
 				if (prop.IsIndexer && prop.Parameters.Count == 1)
 				{
@@ -588,11 +556,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						foundRangeOverload = true;
 					}
 				}
-				else if (prop.Name == "Length" || prop.Name == "Count")
+				else if (prop.Name is "Length" or "Count")
 				{
 					foundCountProperty = true;
 				}
 			}
+
 			if (slicing)
 			{
 				return /* foundSlicingMethod && */ foundCountProperty && !foundRangeOverload;
@@ -613,7 +582,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(lengthVar.IsSingleDefinition && lengthVar.StackType == StackType.I4))
 				return false;
-			if (lengthVar.LoadCount == 0 || lengthVar.LoadCount > 2)
+			if (lengthVar.LoadCount is 0 or > 2)
 				return false;
 			return MatchContainerLength(init, null, ref containerVar);
 		}
@@ -631,13 +600,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(containerVar != null);
 				return init.MatchLdLoc(lengthVar);
 			}
-			if (!(init is CallInstruction call))
+
+			if (init is not CallInstruction { ResultType: StackType.I4 } call)
 				return false;
-			if (call.ResultType != StackType.I4)
+			if (!(call.Method.IsAccessor &&
+			      call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter))
 				return false;
-			if (!(call.Method.IsAccessor && call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter))
-				return false;
-			if (!(call.Method.AccessorOwner is IProperty lengthProp))
+			if (call.Method.AccessorOwner is not IProperty lengthProp)
 				return false;
 			if (lengthProp.Name == "Length")
 			{
@@ -649,6 +618,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (lengthProp.DeclaringType.GetProperties(p => p.Name == "Length").Any())
 					return false;
 			}
+
 			if (!lengthProp.ReturnType.IsKnownType(KnownTypeCode.Int32))
 				return false;
 			if (lengthProp.IsVirtual && call.OpCode != OpCode.CallVirt)
@@ -668,30 +638,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return inst.MatchLdLoc(out containerVar) || inst.MatchLdLoca(out containerVar);
 			}
-		}
-
-		enum IndexKind
-		{
-			/// <summary>
-			/// indexLoad is an integer, from the start of the container
-			/// </summary>
-			FromStart,
-			/// <summary>
-			/// indexLoad is loading the address of a System.Index struct
-			/// </summary>
-			RefSystemIndex,
-			/// <summary>
-			/// indexLoad is an integer, from the end of the container
-			/// </summary>
-			FromEnd,
-			/// <summary>
-			/// Always equivalent to `0`, used for the start-index when slicing without a startpoint `a[..end]`
-			/// </summary>
-			TheStart,
-			/// <summary>
-			/// Always equivalent to `^0`, used for the end-index when slicing without an endpoint `a[start..]`
-			/// </summary>
-			TheEnd,
 		}
 
 		/// <summary>
@@ -725,7 +671,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				indexLoad = call.Arguments[0];
 				return IndexKind.RefSystemIndex;
 			}
-			else if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub)
+			else if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } bni)
 			{
 				if (bni.CheckForOverflow || bni.ResultType != StackType.I4 || bni.IsLifted)
 					return IndexKind.FromStart;
@@ -745,11 +691,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches an instruction computing a slice length:
 		///    binary.sub.i4(call GetOffset(endIndexLoad, ldloc length), ldloc startOffset))
 		/// </summary>
-		static bool MatchSliceLength(ILInstruction inst, out IndexKind endIndexKind, out ILInstruction endIndexLoad, ILVariable containerLengthVar, ref ILVariable containerVar, ILVariable startOffsetVar)
+		static bool MatchSliceLength(ILInstruction inst, out IndexKind endIndexKind, out ILInstruction endIndexLoad,
+			ILVariable containerLengthVar, ref ILVariable containerVar, ILVariable startOffsetVar)
 		{
 			endIndexKind = default;
 			endIndexLoad = default;
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub)
+			if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } bni)
 			{
 				if (bni.CheckForOverflow || bni.ResultType != StackType.I4 || bni.IsLifted)
 					return false;
@@ -764,6 +711,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!bni.Right.MatchLdLoc(startOffsetVar))
 						return false;
 				}
+
 				endIndexKind = MatchGetOffset(bni.Left, out endIndexLoad, containerLengthVar, ref containerVar);
 				return true;
 			}
@@ -777,6 +725,104 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+		}
+
+		class IndexMethods
+		{
+			public readonly IMethod IndexCtor;
+			public readonly IMethod IndexImplicitConv;
+			public readonly IMethod RangeCtor;
+			public readonly IMethod RangeEndAt;
+			public readonly IMethod RangeGetAll;
+
+			public readonly IMethod RangeStartAt;
+
+			public IndexMethods(ICompilation compilation)
+			{
+				var indexType = compilation.FindType(KnownTypeCode.Index);
+				foreach (var ctor in indexType.GetConstructors(m => m.Parameters.Count == 2))
+				{
+					if (ctor.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32)
+					    && ctor.Parameters[1].Type.IsKnownType(KnownTypeCode.Boolean))
+					{
+						this.IndexCtor = ctor;
+					}
+				}
+
+				foreach (var op in indexType.GetMethods(m => m.IsOperator && m.Name == "op_Implicit"))
+				{
+					if (op.Parameters.Count == 1 && op.Parameters[0].Type.IsKnownType(KnownTypeCode.Int32))
+					{
+						this.IndexImplicitConv = op;
+					}
+				}
+
+				var rangeType = compilation.FindType(KnownTypeCode.Range);
+				foreach (var ctor in rangeType.GetConstructors(m => m.Parameters.Count == 2))
+				{
+					if (ctor.Parameters[0].Type.IsKnownType(KnownTypeCode.Index)
+					    && ctor.Parameters[1].Type.IsKnownType(KnownTypeCode.Index))
+					{
+						this.RangeCtor = ctor;
+					}
+				}
+
+				foreach (var m in rangeType.GetMethods(m => m.Parameters.Count == 1))
+				{
+					if (m.Parameters.Count == 1 && m.Parameters[0].Type.IsKnownType(KnownTypeCode.Index))
+					{
+						if (m.Name == "StartAt")
+							this.RangeStartAt = m;
+						else if (m.Name == "EndAt")
+							this.RangeEndAt = m;
+					}
+				}
+
+				foreach (var p in rangeType.GetProperties(p => p.IsStatic && p.Name == "All"))
+				{
+					this.RangeGetAll = p.Getter;
+				}
+			}
+
+			public IType IndexType => IndexCtor?.DeclaringType;
+			public IType RangeType => RangeCtor?.DeclaringType;
+			public bool IsValid => IndexCtor != null && IndexImplicitConv != null && RangeCtor != null;
+
+			public static bool IsRangeCtor(IMethod method)
+			{
+				return method.SymbolKind == SymbolKind.Constructor
+				       && method.Parameters.Count == 2
+				       && method.DeclaringType.IsKnownType(KnownTypeCode.Range)
+				       && method.Parameters.All(p => p.Type.IsKnownType(KnownTypeCode.Index));
+			}
+		}
+
+		enum IndexKind
+		{
+			/// <summary>
+			/// indexLoad is an integer, from the start of the container
+			/// </summary>
+			FromStart,
+
+			/// <summary>
+			/// indexLoad is loading the address of a System.Index struct
+			/// </summary>
+			RefSystemIndex,
+
+			/// <summary>
+			/// indexLoad is an integer, from the end of the container
+			/// </summary>
+			FromEnd,
+
+			/// <summary>
+			/// Always equivalent to `0`, used for the start-index when slicing without a startpoint `a[..end]`
+			/// </summary>
+			TheStart,
+
+			/// <summary>
+			/// Always equivalent to `^0`, used for the end-index when slicing without an endpoint `a[start..]`
+			/// </summary>
+			TheEnd,
 		}
 	}
 }

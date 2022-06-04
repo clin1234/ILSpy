@@ -27,36 +27,39 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class DecimalConstantTransform : DepthFirstAstVisitor, IAstTransform
 	{
-		static readonly PrimitiveType decimalType = new PrimitiveType("decimal");
-
-		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
-		{
-			const Modifiers staticReadOnly = Modifiers.Static | Modifiers.Readonly;
-			if ((fieldDeclaration.Modifiers & staticReadOnly) == staticReadOnly && decimalType.IsMatch(fieldDeclaration.ReturnType))
-			{
-				foreach (var attributeSection in fieldDeclaration.Attributes)
-				{
-					foreach (var attribute in attributeSection.Attributes)
-					{
-						var t = attribute.Type.GetSymbol() as IType;
-						if (t != null && t.Name == "DecimalConstantAttribute" && t.Namespace == "System.Runtime.CompilerServices")
-						{
-							attribute.Remove();
-							if (attributeSection.Attributes.Count == 0)
-								attributeSection.Remove();
-							fieldDeclaration.Modifiers = (fieldDeclaration.Modifiers & ~staticReadOnly) | Modifiers.Const;
-							return;
-						}
-					}
-				}
-			}
-		}
+		static readonly PrimitiveType decimalType = new("decimal");
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			if (!context.Settings.DecimalConstants)
 				return;
 			rootNode.AcceptVisitor(this);
+		}
+
+		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
+		{
+			const Modifiers staticReadOnly = Modifiers.Static | Modifiers.Readonly;
+			if ((fieldDeclaration.Modifiers & staticReadOnly) == staticReadOnly &&
+			    decimalType.IsMatch(fieldDeclaration.ReturnType))
+			{
+				foreach (var attributeSection in fieldDeclaration.Attributes)
+				{
+					foreach (var attribute in attributeSection.Attributes)
+					{
+						if (attribute.Type.GetSymbol() is IType {
+							    Name: "DecimalConstantAttribute", Namespace: "System.Runtime.CompilerServices"
+						    })
+						{
+							attribute.Remove();
+							if (attributeSection.Attributes.Count == 0)
+								attributeSection.Remove();
+							fieldDeclaration.Modifiers =
+								(fieldDeclaration.Modifiers & ~staticReadOnly) | Modifiers.Const;
+							return;
+						}
+					}
+				}
+			}
 		}
 	}
 }

@@ -21,7 +21,9 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.IL.Patterns
 {
-	public class CaptureGroup { }
+	public class CaptureGroup
+	{
+	}
 
 	/// <summary>
 	/// Data holder for the overall pattern matching operation.
@@ -32,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 	/// </remarks>
 	public struct Match
 	{
-		static readonly List<KeyValuePair<CaptureGroup, ILInstruction>> emptyResults = new List<KeyValuePair<CaptureGroup, ILInstruction>>();
+		static readonly List<KeyValuePair<CaptureGroup, ILInstruction>> emptyResults = new();
 
 		List<KeyValuePair<CaptureGroup, ILInstruction>>? results;
 
@@ -81,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 
 		internal int CheckPoint()
 		{
-			return results != null ? results.Count : 0;
+			return results?.Count ?? 0;
 		}
 
 		internal void RestoreCheckPoint(int checkPoint)

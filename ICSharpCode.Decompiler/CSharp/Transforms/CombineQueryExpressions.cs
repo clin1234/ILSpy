@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -30,20 +29,39 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class CombineQueryExpressions : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
-		{
-			if (!context.Settings.QueryExpressions)
-				return;
-			CombineQueries(rootNode, new Dictionary<string, object>());
-		}
-
-		static readonly InvocationExpression castPattern = new InvocationExpression {
+		static readonly InvocationExpression castPattern = new() {
 			Target = new MemberReferenceExpression {
 				Target = new AnyNode("inExpr"),
 				MemberName = "Cast",
 				TypeArguments = { new AnyNode("targetType") }
 			}
 		};
+
+		static readonly QuerySelectClause selectTransparentIdentifierPattern = new() {
+			Expression = new AnonymousTypeCreateExpression {
+				Initializers = {
+					new Repeat(
+						new Choice {
+							new IdentifierExpression(Pattern.AnyString)
+								.WithName("expr"), // name is equivalent to name = name
+							new MemberReferenceExpression(new AnyNode(), Pattern.AnyString)
+								.WithName("expr"), // expr.name is equivalent to name = expr.name
+							new NamedExpression {
+								Name = Pattern.AnyString,
+								Expression = new AnyNode()
+							}.WithName("expr")
+						}
+					) { MinCount = 1 }
+				}
+			}
+		};
+
+		public void Run(AstNode rootNode, TransformContext context)
+		{
+			if (!context.Settings.QueryExpressions)
+				return;
+			CombineQueries(rootNode, new Dictionary<string, object>());
+		}
 
 		void CombineQueries(AstNode node, Dictionary<string, object> fromOrLetIdentifiers)
 		{
@@ -54,12 +72,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				CombineQueries(child, fromOrLetIdentifiers);
 			}
-			QueryExpression query = node as QueryExpression;
-			if (query != null)
+
+			if (node is QueryExpression query)
 			{
 				QueryFromClause fromClause = (QueryFromClause)query.Clauses.First();
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
-				if (innerQuery != null)
+				if (fromClause.Expression is QueryExpression innerQuery)
 				{
 					if (TryRemoveTransparentIdentifier(query, fromClause, innerQuery, fromOrLetIdentifiers))
 					{
@@ -67,9 +84,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					else
 					{
-						QueryContinuationClause continuation = new QueryContinuationClause();
-						continuation.PrecedingQuery = innerQuery.Detach();
-						continuation.Identifier = fromClause.Identifier;
+						QueryContinuationClause continuation = new() {
+							PrecedingQuery = innerQuery.Detach(),
+							Identifier = fromClause.Identifier
+						};
 						continuation.CopyAnnotationsFrom(fromClause);
 						fromClause.ReplaceWith(continuation);
 					}
@@ -86,24 +104,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static readonly QuerySelectClause selectTransparentIdentifierPattern = new QuerySelectClause {
-			Expression = new AnonymousTypeCreateExpression {
-				Initializers = {
-					new Repeat(
-						new Choice {
-							new IdentifierExpression(Pattern.AnyString).WithName("expr"), // name is equivalent to name = name
-							new MemberReferenceExpression(new AnyNode(), Pattern.AnyString).WithName("expr"), // expr.name is equivalent to name = expr.name
-							new NamedExpression {
-								Name = Pattern.AnyString,
-								Expression = new AnyNode()
-							}.WithName("expr")
-						}
-					) { MinCount = 1 }
-				}
-			}
-		};
-
-		bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause, QueryExpression innerQuery, Dictionary<string, object> letClauses)
+		bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause,
+			QueryExpression innerQuery, Dictionary<string, object> letClauses)
 		{
 			if (!CSharpDecompiler.IsTransparentIdentifier(fromClause.Identifier))
 				return false;
@@ -135,20 +137,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						AddQueryLetClause(member.MemberName, member);
 						break;
 					case NamedExpression namedExpression:
-						if (namedExpression.Expression is IdentifierExpression identifierExpression && namedExpression.Name == identifierExpression.Identifier)
+						if (namedExpression.Expression is IdentifierExpression identifierExpression &&
+						    namedExpression.Name == identifierExpression.Identifier)
 						{
-							letClauses[namedExpression.Name] = identifierExpression.Annotation<ILVariableResolveResult>();
+							letClauses[namedExpression.Name] =
+								identifierExpression.Annotation<ILVariableResolveResult>();
 							continue;
 						}
+
 						AddQueryLetClause(namedExpression.Name, namedExpression.Expression);
 						break;
 				}
 			}
+
 			return true;
 
 			void AddQueryLetClause(string name, Expression expression)
 			{
-				QueryLetClause letClause = new QueryLetClause { Identifier = name, Expression = expression.Detach() };
+				QueryLetClause letClause = new() { Identifier = name, Expression = expression.Detach() };
 				var annotation = new LetIdentifierAnnotation();
 				letClause.AddAnnotation(annotation);
 				letClauses[name] = annotation;
@@ -165,20 +171,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				RemoveTransparentIdentifierReferences(child, fromOrLetIdentifiers);
 			}
-			MemberReferenceExpression mre = node as MemberReferenceExpression;
-			if (mre != null)
+
+			if (node is MemberReferenceExpression mre)
 			{
-				IdentifierExpression ident = mre.Target as IdentifierExpression;
-				if (ident != null && CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
+				if (mre.Target is IdentifierExpression ident &&
+				    CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
 				{
-					IdentifierExpression newIdent = new IdentifierExpression(mre.MemberName);
+					IdentifierExpression newIdent = new(mre.MemberName);
 					mre.TypeArguments.MoveTo(newIdent.TypeArguments);
 					newIdent.CopyAnnotationsFrom(mre);
-					newIdent.RemoveAnnotations<Semantics.MemberResolveResult>(); // remove the reference to the property of the anonymous type
+					newIdent
+						.RemoveAnnotations<
+							Semantics.MemberResolveResult>(); // remove the reference to the property of the anonymous type
 					if (fromOrLetIdentifiers.TryGetValue(mre.MemberName, out var annotation))
 						newIdent.AddAnnotation(annotation);
 					mre.ReplaceWith(newIdent);
-					return;
 				}
 			}
 		}

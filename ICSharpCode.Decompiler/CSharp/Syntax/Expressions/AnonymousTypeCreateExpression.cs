@@ -23,6 +23,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -32,7 +33,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AnonymousTypeCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
+		public static readonly TokenRole NewKeywordRole = new("new");
+
+		public AnonymousTypeCreateExpression()
+		{
+		}
+
+		public AnonymousTypeCreateExpression(IEnumerable<Expression> initializers)
+		{
+			foreach (var ini in initializers)
+			{
+				AddChild(ini, Roles.Expression);
+			}
+		}
+
+		public AnonymousTypeCreateExpression(params Expression[] initializer) : this(
+			(IEnumerable<Expression>)initializer)
+		{
+		}
 
 		public CSharpTokenNode NewToken {
 			get { return GetChildByRole(NewKeywordRole); }
@@ -48,22 +66,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public AnonymousTypeCreateExpression()
-		{
-		}
-
-		public AnonymousTypeCreateExpression(IEnumerable<Expression> initializers)
-		{
-			foreach (var ini in initializers)
-			{
-				AddChild(ini, Roles.Expression);
-			}
-		}
-
-		public AnonymousTypeCreateExpression(params Expression[] initializer) : this((IEnumerable<Expression>)initializer)
-		{
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -83,9 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as AnonymousTypeCreateExpression;
-			return o != null && this.Initializers.DoMatch(o.Initializers, match);
+			return other is AnonymousTypeCreateExpression o && this.Initializers.DoMatch(o.Initializers, match);
 		}
 	}
 }
-

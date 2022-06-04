@@ -16,10 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -30,18 +28,73 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataTypeParameter : AbstractTypeParameter
 	{
-		readonly MetadataModule module;
-		readonly GenericParameterHandle handle;
+		const byte nullabilityNotYetLoaded = 255;
 
 		readonly GenericParameterAttributes attr;
+		readonly GenericParameterHandle handle;
+		readonly MetadataModule module;
 
 		// lazy-loaded:
 		IReadOnlyList<TypeConstraint> constraints;
-		byte unmanagedConstraint = ThreeState.Unknown;
-		const byte nullabilityNotYetLoaded = 255;
 		byte nullabilityConstraint = nullabilityNotYetLoaded;
+		byte unmanagedConstraint = ThreeState.Unknown;
 
-		public static ITypeParameter[] Create(MetadataModule module, ITypeDefinition copyFromOuter, IEntity owner, GenericParameterHandleCollection handles)
+		private MetadataTypeParameter(MetadataModule module, IEntity owner, int index, string name,
+			GenericParameterHandle handle, GenericParameterAttributes attr)
+			: base(owner, index, name, GetVariance(attr))
+		{
+			this.module = module;
+			this.handle = handle;
+			this.attr = attr;
+		}
+
+		public GenericParameterHandle MetadataToken => handle;
+
+		public override bool HasDefaultConstructorConstraint =>
+			(attr & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
+
+		public override bool HasReferenceTypeConstraint =>
+			(attr & GenericParameterAttributes.ReferenceTypeConstraint) != 0;
+
+		public override bool HasValueTypeConstraint =>
+			(attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
+
+		public override bool HasUnmanagedConstraint {
+			get {
+				if (unmanagedConstraint == ThreeState.Unknown)
+				{
+					unmanagedConstraint = ThreeState.From(LoadUnmanagedConstraint());
+				}
+
+				return unmanagedConstraint == ThreeState.True;
+			}
+		}
+
+		public override Nullability NullabilityConstraint {
+			get {
+				if (nullabilityConstraint == nullabilityNotYetLoaded)
+				{
+					nullabilityConstraint = (byte)LoadNullabilityConstraint();
+				}
+
+				return (Nullability)nullabilityConstraint;
+			}
+		}
+
+		public override IReadOnlyList<TypeConstraint> TypeConstraints {
+			get {
+				var constraints = LazyInit.VolatileRead(ref this.constraints);
+				if (constraints == null)
+				{
+					constraints = LazyInit.GetOrSet(ref this.constraints, DecodeConstraints());
+				}
+
+				return constraints;
+			}
+		}
+
+		public static ITypeParameter[] Create(MetadataModule module, ITypeDefinition copyFromOuter, IEntity owner,
+			GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
 				return Empty<ITypeParameter>.Array;
@@ -56,10 +109,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					tps[i] = Create(module, owner, i, handle);
 				i++;
 			}
+
 			return tps;
 		}
 
-		public static ITypeParameter[] Create(MetadataModule module, IEntity owner, GenericParameterHandleCollection handles)
+		public static ITypeParameter[] Create(MetadataModule module, IEntity owner,
+			GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
 				return Empty<ITypeParameter>.Array;
@@ -70,10 +125,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				tps[i] = Create(module, owner, i, handle);
 				i++;
 			}
+
 			return tps;
 		}
 
-		public static MetadataTypeParameter Create(MetadataModule module, IEntity owner, int index, GenericParameterHandle handle)
+		public static MetadataTypeParameter Create(MetadataModule module, IEntity owner, int index,
+			GenericParameterHandle handle)
 		{
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
@@ -81,29 +138,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new MetadataTypeParameter(module, owner, index, module.GetString(gp.Name), handle, gp.Attributes);
 		}
 
-		private MetadataTypeParameter(MetadataModule module, IEntity owner, int index, string name,
-			GenericParameterHandle handle, GenericParameterAttributes attr)
-			: base(owner, index, name, GetVariance(attr))
-		{
-			this.module = module;
-			this.handle = handle;
-			this.attr = attr;
-		}
-
 		private static VarianceModifier GetVariance(GenericParameterAttributes attr)
 		{
-			switch (attr & GenericParameterAttributes.VarianceMask)
-			{
-				case GenericParameterAttributes.Contravariant:
-					return VarianceModifier.Contravariant;
-				case GenericParameterAttributes.Covariant:
-					return VarianceModifier.Covariant;
-				default:
-					return VarianceModifier.Invariant;
-			}
+			return (attr & GenericParameterAttributes.VarianceMask) switch {
+				GenericParameterAttributes.Contravariant => VarianceModifier.Contravariant,
+				GenericParameterAttributes.Covariant => VarianceModifier.Covariant,
+				_ => VarianceModifier.Invariant
+			};
 		}
-
-		public GenericParameterHandle MetadataToken => handle;
 
 		public override IEnumerable<IAttribute> GetAttributes()
 		{
@@ -116,20 +158,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
-		public override bool HasDefaultConstructorConstraint => (attr & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
-		public override bool HasReferenceTypeConstraint => (attr & GenericParameterAttributes.ReferenceTypeConstraint) != 0;
-		public override bool HasValueTypeConstraint => (attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
-
-		public override bool HasUnmanagedConstraint {
-			get {
-				if (unmanagedConstraint == ThreeState.Unknown)
-				{
-					unmanagedConstraint = ThreeState.From(LoadUnmanagedConstraint());
-				}
-				return unmanagedConstraint == ThreeState.True;
-			}
-		}
-
 		private bool LoadUnmanagedConstraint()
 		{
 			if ((module.TypeSystemOptions & TypeSystemOptions.UnmanagedConstraints) == 0)
@@ -137,16 +165,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
 			return gp.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsUnmanaged);
-		}
-
-		public override Nullability NullabilityConstraint {
-			get {
-				if (nullabilityConstraint == nullabilityNotYetLoaded)
-				{
-					nullabilityConstraint = (byte)LoadNullabilityConstraint();
-				}
-				return (Nullability)nullabilityConstraint;
-			}
 		}
 
 		Nullability LoadNullabilityConstraint()
@@ -165,13 +183,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					var attrVal = customAttribute.DecodeValue(module.TypeProvider);
 					if (attrVal.FixedArguments.Length == 1)
 					{
-						if (attrVal.FixedArguments[0].Value is byte b && b <= 2)
+						if (attrVal.FixedArguments[0].Value is byte b and <= 2)
 						{
 							return (Nullability)b;
 						}
 					}
 				}
 			}
+
 			if (Owner is MetadataMethod method)
 			{
 				return method.NullableContext;
@@ -183,17 +202,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 			{
 				return Nullability.Oblivious;
-			}
-		}
-
-		public override IReadOnlyList<TypeConstraint> TypeConstraints {
-			get {
-				var constraints = LazyInit.VolatileRead(ref this.constraints);
-				if (constraints == null)
-				{
-					constraints = LazyInit.GetOrSet(ref this.constraints, DecodeConstraints());
-				}
-				return constraints;
 			}
 		}
 
@@ -229,12 +237,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				else
 				{
-					AttributeListBuilder b = new AttributeListBuilder(module);
+					AttributeListBuilder b = new(module);
 					b.Add(attrs, SymbolKind.Constraint);
 					result.Add(new TypeConstraint(ty, b.Build()));
 				}
+
 				hasNonInterfaceConstraint |= (ty.Kind != TypeKind.Interface);
 			}
+
 			if (this.HasValueTypeConstraint)
 			{
 				result.Add(new TypeConstraint(Compilation.FindType(KnownTypeCode.ValueType)));
@@ -243,6 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				result.Add(new TypeConstraint(Compilation.FindType(KnownTypeCode.Object)));
 			}
+
 			return result;
 		}
 

@@ -35,7 +35,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			foreach (var lambda in function.Descendants.OfType<ILFunction>())
 			{
-				if (lambda.Body is BlockContainer c && ((lambda.AsyncReturnType ?? lambda.ReturnType).Kind == TypeSystem.TypeKind.Void || lambda.IsIterator))
+				if (lambda.Body is BlockContainer c &&
+				    ((lambda.AsyncReturnType ?? lambda.ReturnType).Kind == TypeSystem.TypeKind.Void ||
+				     lambda.IsIterator))
 				{
 					Block lastBlock = c.Blocks.Last();
 					if (lastBlock.Instructions.Last() is Leave { IsLeavingFunction: true })
@@ -58,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			bool result = false;
 			switch (inst)
 			{
-				case BlockContainer c when c.Kind == ContainerKind.Normal:
+				case BlockContainer { Kind: ContainerKind.Normal } c:
 					// body of try block, or similar: recurse into last instruction in container
 					// Note: no need to handle loops/switches here; those already were handled by DetectExitPoints
 					Block lastBlock = c.Blocks.Last();
@@ -72,6 +74,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						lastBlock.Instructions.Add(new Leave(c));
 						result = true;
 					}
+
 					break;
 				case TryCatch tryCatch:
 					result |= ConvertReturnToFallthrough(tryCatch.TryBlock);
@@ -79,6 +82,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					{
 						result |= ConvertReturnToFallthrough(h.Body);
 					}
+
 					break;
 				case TryFinally tryFinally:
 					result |= ConvertReturnToFallthrough(tryFinally.TryBlock);
@@ -96,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					result |= ConvertReturnToFallthrough(ifInstruction.TrueInst);
 					result |= ConvertReturnToFallthrough(ifInstruction.FalseInst);
 					break;
-				case Block block when block.Kind == BlockKind.ControlFlow:
+				case Block { Kind: BlockKind.ControlFlow } block:
 				{
 					var lastInst = block.Instructions.LastOrDefault();
 					if (lastInst is Leave { IsLeavingFunction: true, Value: Nop })
@@ -105,10 +109,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						result = true;
 						lastInst = block.Instructions.LastOrDefault();
 					}
+
 					result |= ConvertReturnToFallthrough(lastInst);
 					break;
 				}
 			}
+
 			return result;
 		}
 	}

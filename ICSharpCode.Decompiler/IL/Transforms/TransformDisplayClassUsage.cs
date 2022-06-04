@@ -26,7 +26,6 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -47,67 +46,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class TransformDisplayClassUsage : ILVisitor, IILTransform
 	{
-		class VariableToDeclare
-		{
-			private readonly DisplayClass container;
-			private readonly IField field;
-			private ILVariable declaredVariable;
-
-			public string Name => field.Name;
-
-			public bool CanPropagate { get; private set; }
-			public bool UsesInitialValue { get; set; }
-
-			public HashSet<ILInstruction> Initializers { get; } = new HashSet<ILInstruction>();
-
-			public VariableToDeclare(DisplayClass container, IField field, ILVariable declaredVariable = null)
-			{
-				this.container = container;
-				this.field = field;
-				this.declaredVariable = declaredVariable;
-
-				Debug.Assert(declaredVariable == null || declaredVariable.StateMachineField == field);
-			}
-
-			public void Propagate(ILVariable variable)
-			{
-				this.declaredVariable = variable;
-				this.CanPropagate = variable != null;
-			}
-
-			public ILVariable GetOrDeclare()
-			{
-				if (declaredVariable != null)
-					return declaredVariable;
-				declaredVariable = container.Variable.Function.RegisterVariable(VariableKind.Local, field.Type, field.Name);
-				declaredVariable.InitialValueIsInitialized = true;
-				declaredVariable.UsesInitialValue = UsesInitialValue;
-				declaredVariable.CaptureScope = container.CaptureScope;
-				return declaredVariable;
-			}
-		}
-
-		[DebuggerDisplay("[DisplayClass {Variable} : {Type}]")]
-		class DisplayClass
-		{
-			public readonly ILVariable Variable;
-			public readonly ITypeDefinition Type;
-			public readonly Dictionary<IField, VariableToDeclare> VariablesToDeclare;
-			public BlockContainer CaptureScope;
-			public ILInstruction Initializer;
-
-			public DisplayClass(ILVariable variable, ITypeDefinition type)
-			{
-				Variable = variable;
-				Type = type;
-				VariablesToDeclare = new Dictionary<IField, VariableToDeclare>();
-			}
-		}
+		readonly Stack<ILFunction> currentFunctions = new();
+		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new();
+		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new();
 
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
-		readonly Dictionary<ILVariable, DisplayClass> displayClasses = new Dictionary<ILVariable, DisplayClass>();
-		readonly Dictionary<ILVariable, ILVariable> displayClassCopyMap = new Dictionary<ILVariable, ILVariable>();
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -172,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			Visit(function);
 
-			foreach (var (v, displayClass) in displayClasses.ToArray())
+			foreach ((ILVariable v, DisplayClass displayClass) in displayClasses.ToArray())
 			{
 				if (!ValidateDisplayClassUses(v, displayClass))
 					displayClasses.Remove(v);
@@ -195,7 +139,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (v.CanPropagate)
 					{
 						var variableToPropagate = v.GetOrDeclare();
-						if (variableToPropagate.Kind != VariableKind.Parameter && !displayClasses.ContainsKey(variableToPropagate))
+						if (variableToPropagate.Kind != VariableKind.Parameter &&
+						    !displayClasses.ContainsKey(variableToPropagate))
 							v.Propagate(null);
 					}
 				}
@@ -209,11 +154,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!ValidateUse(displayClass, ldloc))
 					return false;
 			}
+
 			foreach (var ldloca in v.AddressInstructions)
 			{
 				if (!ValidateUse(displayClass, ldloca))
 					return false;
 			}
+
 			return true;
 
 			bool ValidateUse(DisplayClass container, ILInstruction use)
@@ -223,18 +170,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					case LdFlda ldflda when ldflda.MatchLdFlda(out var target, out field) && target == use:
 						var keyField = (IField)field.MemberDefinition;
-						if (!container.VariablesToDeclare.TryGetValue(keyField, out VariableToDeclare variable) || variable == null)
+						if (!container.VariablesToDeclare.TryGetValue(keyField, out VariableToDeclare variable) ||
+						    variable == null)
 						{
 							variable = AddVariable(container, null, field);
 						}
+
 						container.VariablesToDeclare[keyField] = variable;
 						return true;
-					case StObj stobj when stobj.MatchStObj(out var target, out ILInstruction value, out _) && value == use:
-						if (target.MatchLdFlda(out var load, out field) && load.MatchLdLocRef(out var otherVariable) && displayClasses.TryGetValue(otherVariable, out var otherDisplayClass))
+					case StObj stobj when stobj.MatchStObj(out var target, out ILInstruction value, out _) &&
+					                      value == use:
+						if (target.MatchLdFlda(out var load, out field) && load.MatchLdLocRef(out var otherVariable) &&
+						    displayClasses.TryGetValue(otherVariable, out var otherDisplayClass))
 						{
-							if (otherDisplayClass.VariablesToDeclare.TryGetValue((IField)field.MemberDefinition, out var declaredVar))
+							if (otherDisplayClass.VariablesToDeclare.TryGetValue((IField)field.MemberDefinition,
+								    out var declaredVar))
 								return declaredVar.CanPropagate;
 						}
+
 						return false;
 					case StLoc stloc when stloc.Variable.IsSingleDefinition && stloc.Value == use:
 						displayClassCopyMap[stloc.Variable] = v;
@@ -279,6 +232,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				definition = null;
 			}
+
 			if (!ValidateDisplayClassDefinition(definition))
 				return null;
 			DisplayClass result;
@@ -287,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeKind.Class:
 					if (!v.IsSingleDefinition)
 						return null;
-					if (!(v.StoreInstructions.SingleOrDefault() is StLoc stloc))
+					if (v.StoreInstructions.SingleOrDefault() is not StLoc stloc)
 						return null;
 					if (stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method))
 					{
@@ -318,6 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				result.CaptureScope = null;
 			}
+
 			return result;
 		}
 
@@ -347,17 +302,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Try to find a common ancestor of all uses of the variable v.
 			ILInstruction Visit(ILInstruction inst)
 			{
-				switch (inst)
-				{
-					case LdLoc l when l.Variable == v:
-						return l;
-					case StLoc s when s.Variable == v:
-						return s;
-					case LdLoca la when la.Variable == v:
-						return la;
-					default:
-						return VisitChildren(inst);
-				}
+				return inst switch {
+					LdLoc l when l.Variable == v => l,
+					StLoc s when s.Variable == v => s,
+					LdLoca la when la.Variable == v => la,
+					_ => VisitChildren(inst)
+				};
 			}
 
 			ILInstruction VisitChildren(ILInstruction inst)
@@ -378,6 +328,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return inst;
 					}
 				}
+
 				// returns null, if v is not used in this sub-tree;
 				// returns a descendant of inst, if it is the only use of v in this sub-tree.
 				return result;
@@ -386,9 +337,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		DisplayClass DetectDisplayClassInitializer(ILVariable v)
 		{
-			if (v.StoreInstructions.Count != 1 || !(v.StoreInstructions[0] is StLoc store && store.Parent is Block initializerBlock && initializerBlock.Kind == BlockKind.ObjectInitializer))
+			if (v.StoreInstructions.Count != 1 || v.StoreInstructions[0] is not StLoc {
+				    Parent: Block { Kind: BlockKind.ObjectInitializer } initializerBlock
+			    } store)
 				return null;
-			if (!(store.Value is NewObj newObj))
+			if (store.Value is not NewObj newObj)
 				return null;
 			var definition = newObj.Method.DeclaringType.GetDefinition();
 			if (!ValidateDisplayClassDefinition(definition))
@@ -399,7 +352,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!referenceVariable.IsSingleDefinition)
 				return null;
-			if (!(referenceVariable.StoreInstructions.SingleOrDefault() is StLoc))
+			if (referenceVariable.StoreInstructions.SingleOrDefault() is not StLoc)
 				return null;
 			var result = new DisplayClass(referenceVariable, definition) {
 				CaptureScope = referenceVariable.CaptureScope,
@@ -429,6 +382,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!IsPotentialClosure(context, definition))
 					return false;
 			}
+
 			return true;
 		}
 
@@ -473,6 +427,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return false;
 				}
+
 				if (DecodeOpCodeSkipNop(ref reader) != ILOpCode.Call)
 					return false;
 				var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
@@ -498,17 +453,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				code = reader.DecodeOpCode();
 			} while (code == ILOpCode.Nop);
+
 			return code;
 		}
 
 		VariableToDeclare AddVariable(DisplayClass result, StObj statement, IField field)
 		{
-			VariableToDeclare variable = new VariableToDeclare(result, field);
+			VariableToDeclare variable = new(result, field);
 			if (statement != null)
 			{
 				variable.Propagate(ResolveVariableToPropagate(statement.Value, field.Type));
 				variable.Initializers.Add(statement);
 			}
+
 			variable.UsesInitialValue =
 				result.Type.IsReferenceType != false || result.Variable.UsesInitialValue;
 			return variable;
@@ -544,11 +501,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return null;
 						}
 					}
+
 					if (!v.IsSingleDefinition)
 					{
 						// "dc.field = v; v = 42; use(dc.field)" cannot turn to "v = 42; use(v);"
 						return null;
 					}
+
 					if (!(expectedType == null || v.Kind == VariableKind.StackSlot || v.Type.Equals(expectedType)))
 						return null;
 					return v;
@@ -561,9 +520,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							if (!displayClasses.TryGetValue(v, out currentDisplayClass))
 								return null;
 						}
+
 						if (currentDisplayClass == null)
 							return null;
-						if (item is LdFlda ldf && currentDisplayClass.VariablesToDeclare.TryGetValue((IField)ldf.Field.MemberDefinition, out var vd))
+						if (item is LdFlda ldf &&
+						    currentDisplayClass.VariablesToDeclare.TryGetValue((IField)ldf.Field.MemberDefinition,
+							    out var vd))
 						{
 							if (!vd.CanPropagate)
 								return null;
@@ -571,6 +533,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								return null;
 						}
 					}
+
 					return currentDisplayClass.Variable;
 				default:
 					return null;
@@ -588,7 +551,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition closureType, out ILInstruction initializer)
+		internal static bool IsClosure(ILTransformContext context, ILVariable variable, out ITypeDefinition closureType,
+			out ILInstruction initializer)
 		{
 			closureType = null;
 			initializer = null;
@@ -600,13 +564,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 			}
+
 			closureType = variable.Type.GetDefinition();
 			if (context.Settings.LocalFunctions && closureType?.Kind == TypeKind.Struct
-				&& variable.UsesInitialValue && IsPotentialClosure(context, closureType))
+			                                    && variable.UsesInitialValue &&
+			                                    IsPotentialClosure(context, closureType))
 			{
-				initializer = LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
+				initializer =
+					LocalFunctionDecompiler.GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset)
+						.First());
 				return true;
 			}
+
 			return false;
 		}
 
@@ -617,6 +586,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				closureType = newObj.Method.DeclaringTypeDefinition;
 				return closureType != null && IsPotentialClosure(context, newObj);
 			}
+
 			closureType = null;
 			return false;
 		}
@@ -626,7 +596,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!closureType.Name.Contains("AnonStorey"))
 				return false;
 			var decompilationContext = new SimpleTypeResolveContext(context.Function.Method);
-			return closureType.Fields.Any(f => IsPotentialClosure(decompilationContext.CurrentTypeDefinition, f.ReturnType.GetDefinition()));
+			return closureType.Fields.Any(f =>
+				IsPotentialClosure(decompilationContext.CurrentTypeDefinition, f.ReturnType.GetDefinition()));
 		}
 
 		/// <summary>
@@ -640,22 +611,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Special case for Mono-compiled yield state machines
 			ITypeDefinition closureType = thisVariable.Type.GetDefinition();
 			if (!(closureType != decompilationContext.CurrentTypeDefinition
-				&& IsPotentialClosure(decompilationContext.CurrentTypeDefinition, closureType, allowTypeImplementingInterfaces: true)))
+			      && IsPotentialClosure(decompilationContext.CurrentTypeDefinition, closureType,
+				      allowTypeImplementingInterfaces: true)))
 				return null;
 
-			var displayClass = new DisplayClass(thisVariable, thisVariable.Type.GetDefinition());
-			displayClass.CaptureScope = (BlockContainer)function.Body;
+			var displayClass = new DisplayClass(thisVariable, thisVariable.Type.GetDefinition()) {
+				CaptureScope = (BlockContainer)function.Body
+			};
 			foreach (var stateMachineVariable in function.Variables)
 			{
-				if (stateMachineVariable.StateMachineField == null || displayClass.VariablesToDeclare.ContainsKey(stateMachineVariable.StateMachineField))
+				if (stateMachineVariable.StateMachineField == null ||
+				    displayClass.VariablesToDeclare.ContainsKey(stateMachineVariable.StateMachineField))
 					continue;
-				VariableToDeclare variableToDeclare = new VariableToDeclare(displayClass, stateMachineVariable.StateMachineField, stateMachineVariable);
+				VariableToDeclare variableToDeclare = new(displayClass, stateMachineVariable.StateMachineField,
+					stateMachineVariable);
 				displayClass.VariablesToDeclare.Add(stateMachineVariable.StateMachineField, variableToDeclare);
 			}
+
 			if (!function.Method.IsStatic && FindThisField(out var thisField))
 			{
 				var thisVar = function.Variables
-					.FirstOrDefault(t => t.IsThis() && t.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition);
+					.FirstOrDefault(t =>
+						t.IsThis() && t.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition);
 				if (thisVar == null)
 				{
 					thisVar = new ILVariable(VariableKind.Parameter, decompilationContext.CurrentTypeDefinition, -1) {
@@ -663,43 +640,53 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					};
 					function.Variables.Add(thisVar);
 				}
-				else if (thisVar.StateMachineField != null && displayClass.VariablesToDeclare.ContainsKey(thisVar.StateMachineField))
+				else if (thisVar.StateMachineField != null &&
+				         displayClass.VariablesToDeclare.ContainsKey(thisVar.StateMachineField))
 				{
 					// "this" was already added previously, no need to add it twice.
 					return displayClass;
 				}
-				VariableToDeclare variableToDeclare = new VariableToDeclare(displayClass, thisField, thisVar);
+
+				VariableToDeclare variableToDeclare = new(displayClass, thisField, thisVar);
 				displayClass.VariablesToDeclare.Add(thisField, variableToDeclare);
 			}
+
 			return displayClass;
 
 			bool FindThisField(out IField foundField)
 			{
 				foundField = null;
-				foreach (var field in closureType.GetFields(f2 => !f2.IsStatic && !displayClass.VariablesToDeclare.ContainsKey(f2) && f2.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition))
+				foreach (var field in closureType.GetFields(f2 =>
+					         !f2.IsStatic && !displayClass.VariablesToDeclare.ContainsKey(f2) &&
+					         f2.Type.GetDefinition() == decompilationContext.CurrentTypeDefinition))
 				{
 					thisField = field;
 					return true;
 				}
+
 				return false;
 			}
 		}
 
 		internal static bool IsPotentialClosure(ILTransformContext context, NewObj inst)
 		{
-			var decompilationContext = new SimpleTypeResolveContext(context.Function.Ancestors.OfType<ILFunction>().Last().Method);
+			var decompilationContext =
+				new SimpleTypeResolveContext(context.Function.Ancestors.OfType<ILFunction>().Last().Method);
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
 		}
 
 		internal static bool IsPotentialClosure(ILTransformContext context, ITypeDefinition potentialDisplayClass)
 		{
-			var decompilationContext = new SimpleTypeResolveContext(context.Function.Ancestors.OfType<ILFunction>().Last().Method);
+			var decompilationContext =
+				new SimpleTypeResolveContext(context.Function.Ancestors.OfType<ILFunction>().Last().Method);
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, potentialDisplayClass);
 		}
 
-		internal static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass, bool allowTypeImplementingInterfaces = false)
+		internal static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition,
+			ITypeDefinition potentialDisplayClass, bool allowTypeImplementingInterfaces = false)
 		{
-			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+			if (potentialDisplayClass == null ||
+			    !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			switch (potentialDisplayClass.Kind)
 			{
@@ -711,6 +698,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (!potentialDisplayClass.DirectBaseTypes.All(t => t.IsKnownType(KnownTypeCode.Object)))
 							return false;
 					}
+
 					break;
 				default:
 					return false;
@@ -722,10 +710,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (potentialDisplayClass == null)
 					return false;
 			}
+
 			return true;
 		}
-
-		readonly Stack<ILFunction> currentFunctions = new Stack<ILFunction>();
 
 		protected internal override void VisitILFunction(ILFunction function)
 		{
@@ -757,35 +744,41 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			DisplayClass displayClass;
 			if (inst.Parent is Block parentBlock && inst.Variable.IsSingleDefinition)
 			{
-				if ((inst.Variable.Kind == VariableKind.Local || inst.Variable.Kind == VariableKind.StackSlot) && inst.Variable.LoadCount == 0)
+				if (inst.Variable.Kind is VariableKind.Local or VariableKind.StackSlot && inst.Variable.LoadCount == 0)
 				{
 					// traverse pre-order, so that we do not have to deal with more special cases afterwards
 					base.VisitStLoc(inst);
-					if (inst.Value is StLoc || inst.Value is CompoundAssignmentInstruction)
+					if (inst.Value is StLoc or CompoundAssignmentInstruction)
 					{
 						context.Step($"Remove unused variable assignment {inst.Variable.Name}", inst);
 						inst.ReplaceWith(inst.Value);
 					}
+
 					return;
 				}
+
 				if (displayClasses.TryGetValue(inst.Variable, out displayClass) && displayClass.Initializer == inst)
 				{
 					// inline contents of object initializer block
-					if (inst.Value is Block initBlock && initBlock.Kind == BlockKind.ObjectInitializer)
+					if (inst.Value is Block { Kind: BlockKind.ObjectInitializer } initBlock)
 					{
 						context.Step($"Remove initializer of {inst.Variable.Name}", inst);
 						for (int i = 1; i < initBlock.Instructions.Count; i++)
 						{
 							var stobj = (StObj)initBlock.Instructions[i];
-							var variable = displayClass.VariablesToDeclare[(IField)((LdFlda)stobj.Target).Field.MemberDefinition];
-							parentBlock.Instructions.Insert(inst.ChildIndex + i, new StLoc(variable.GetOrDeclare(), stobj.Value).WithILRange(stobj));
+							var variable =
+								displayClass.VariablesToDeclare[(IField)((LdFlda)stobj.Target).Field.MemberDefinition];
+							parentBlock.Instructions.Insert(inst.ChildIndex + i,
+								new StLoc(variable.GetOrDeclare(), stobj.Value).WithILRange(stobj));
 						}
 					}
+
 					context.Step($"Remove initializer of {inst.Variable.Name}", inst);
 					parentBlock.Instructions.Remove(inst);
 					return;
 				}
-				if (inst.Value is LdLoc || inst.Value is LdObj)
+
+				if (inst.Value is LdLoc or LdObj)
 				{
 					// in some cases (e.g. if inlining fails), there can be a reference to a display class in a stack slot,
 					// in that case it is necessary to resolve the reference and iff it can be propagated, replace all loads
@@ -794,6 +787,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						referencedDisplayClass = ResolveVariableToPropagate(inst.Value);
 					}
+
 					if (referencedDisplayClass != null && displayClasses.TryGetValue(referencedDisplayClass, out _))
 					{
 						context.Step($"Propagate reference to {referencedDisplayClass.Name} in {inst.Variable}", inst);
@@ -801,11 +795,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							ld.ReplaceWith(new LdLoc(referencedDisplayClass).WithILRange(ld));
 						}
+
 						parentBlock.Instructions.Remove(inst);
 						return;
 					}
 				}
 			}
+
 			base.VisitStLoc(inst);
 		}
 
@@ -823,13 +819,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return;
 					}
 				}
-				if (inst.Value is LdLoc ldLoc && ldLoc.Variable is { IsSingleDefinition: true, CaptureScope: null }
-					&& ldLoc.Variable.StoreInstructions.FirstOrDefault() is StLoc stloc
-					&& stloc.Parent is Block block)
+
+				if (inst.Value is LdLoc { Variable: { IsSingleDefinition: true, CaptureScope: null } } ldLoc &&
+				    ldLoc.Variable.StoreInstructions.FirstOrDefault() is StLoc { Parent: Block block } stloc)
 				{
 					ILInlining.InlineOneIfPossible(block, stloc.ChildIndex, InliningOptions.None, context);
 				}
 			}
+
 			base.VisitStObj(inst);
 			EarlyExpressionTransforms.StObjToStLoc(inst, context);
 		}
@@ -860,7 +857,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			field = ldflda.Field;
 			return IsDisplayClassLoad(ldflda.Target, out displayClassVar)
-				&& displayClasses.TryGetValue(displayClassVar, out displayClass);
+			       && displayClasses.TryGetValue(displayClassVar, out displayClass);
 		}
 
 		protected internal override void VisitLdFlda(LdFlda inst)
@@ -880,6 +877,64 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (f == variable.Function)
 					break;
 				f.CapturedVariables.Add(variable);
+			}
+		}
+
+		class VariableToDeclare
+		{
+			private readonly DisplayClass container;
+			private readonly IField field;
+			private ILVariable declaredVariable;
+
+			public VariableToDeclare(DisplayClass container, IField field, ILVariable declaredVariable = null)
+			{
+				this.container = container;
+				this.field = field;
+				this.declaredVariable = declaredVariable;
+
+				Debug.Assert(declaredVariable == null || declaredVariable.StateMachineField == field);
+			}
+
+			public string Name => field.Name;
+
+			public bool CanPropagate { get; private set; }
+			public bool UsesInitialValue { get; set; }
+
+			public HashSet<ILInstruction> Initializers { get; } = new();
+
+			public void Propagate(ILVariable variable)
+			{
+				this.declaredVariable = variable;
+				this.CanPropagate = variable != null;
+			}
+
+			public ILVariable GetOrDeclare()
+			{
+				if (declaredVariable != null)
+					return declaredVariable;
+				declaredVariable =
+					container.Variable.Function.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+				declaredVariable.InitialValueIsInitialized = true;
+				declaredVariable.UsesInitialValue = UsesInitialValue;
+				declaredVariable.CaptureScope = container.CaptureScope;
+				return declaredVariable;
+			}
+		}
+
+		[DebuggerDisplay("[DisplayClass {Variable} : {Type}]")]
+		class DisplayClass
+		{
+			public readonly ITypeDefinition Type;
+			public readonly ILVariable Variable;
+			public readonly Dictionary<IField, VariableToDeclare> VariablesToDeclare;
+			public BlockContainer CaptureScope;
+			public ILInstruction Initializer;
+
+			public DisplayClass(ILVariable variable, ITypeDefinition type)
+			{
+				Variable = variable;
+				Type = type;
+				VariablesToDeclare = new Dictionary<IField, VariableToDeclare>();
 			}
 		}
 	}

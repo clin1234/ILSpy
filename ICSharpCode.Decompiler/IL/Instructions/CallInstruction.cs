@@ -24,29 +24,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public abstract partial class CallInstruction : ILInstruction
+	public abstract partial class CallInstruction
 	{
-		public static CallInstruction Create(OpCode opCode, IMethod method)
-		{
-			switch (opCode)
-			{
-				case OpCode.Call:
-					return new Call(method);
-				case OpCode.CallVirt:
-					return new CallVirt(method);
-				case OpCode.NewObj:
-					return new NewObj(method);
-				default:
-					throw new ArgumentException("Not a valid call opcode");
-			}
-		}
-
 		public readonly IMethod Method;
-
-		/// <summary>
-		/// Gets/Sets whether the call has the 'tail.' prefix.
-		/// </summary>
-		public bool IsTail;
 
 		/// <summary>
 		/// Gets/Sets the type specified in the 'constrained.' prefix.
@@ -59,6 +39,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// (not counting the arguments/return value of the call itself)
 		/// </summary>
 		public bool ILStackWasEmpty;
+
+		/// <summary>
+		/// Gets/Sets whether the call has the 'tail.' prefix.
+		/// </summary>
+		public bool IsTail;
 
 		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
@@ -73,6 +58,22 @@ namespace ICSharpCode.Decompiler.IL
 			get { return !(Method.IsStatic || OpCode == OpCode.NewObj); }
 		}
 
+		public override StackType ResultType {
+			get {
+				return OpCode == OpCode.NewObj ? Method.DeclaringType.GetStackType() : Method.ReturnType.GetStackType();
+			}
+		}
+
+		public static CallInstruction Create(OpCode opCode, IMethod method)
+		{
+			return opCode switch {
+				OpCode.Call => new Call(method),
+				OpCode.CallVirt => new CallVirt(method),
+				OpCode.NewObj => new NewObj(method),
+				_ => throw new ArgumentException("Not a valid call opcode")
+			};
+		}
+
 		/// <summary>
 		/// Gets the parameter for the argument with the specified index.
 		/// Returns null for the <c>this</c> parameter.
@@ -80,20 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 		public IParameter? GetParameter(int argumentIndex)
 		{
 			int firstParamIndex = (Method.IsStatic || OpCode == OpCode.NewObj) ? 0 : 1;
-			if (argumentIndex < firstParamIndex)
-			{
-				return null; // asking for 'this' parameter
-			}
-			return Method.Parameters[argumentIndex - firstParamIndex];
-		}
-
-		public override StackType ResultType {
-			get {
-				if (OpCode == OpCode.NewObj)
-					return Method.DeclaringType.GetStackType();
-				else
-					return Method.ReturnType.GetStackType();
-			}
+			return argumentIndex < firstParamIndex ? null : Method.Parameters[argumentIndex - firstParamIndex];
 		}
 
 		/// <summary>
@@ -107,15 +95,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (type.Kind == TypeKind.TypeParameter)
 				return StackType.Ref;
-			switch (type.IsReferenceType)
-			{
-				case true:
-					return StackType.O;
-				case false:
-					return StackType.Ref;
-				default:
-					return StackType.Unknown;
-			}
+			return type.IsReferenceType switch {
+				true => StackType.O,
+				false => StackType.Ref,
+				_ => StackType.Unknown
+			};
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
@@ -128,9 +112,10 @@ namespace ICSharpCode.Decompiler.IL
 				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType)))
 					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
+
 			for (int i = 0; i < Method.Parameters.Count; ++i)
 			{
-				if (!(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType()))
+				if (Arguments[firstArgument + i].ResultType != Method.Parameters[i].Type.GetStackType())
 					Debug.Fail($"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
 		}
@@ -144,6 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 				ConstrainedTo.WriteTo(output);
 				output.Write("].");
 			}
+
 			if (IsTail)
 				output.Write("tail.");
 			output.Write(OpCode);
@@ -156,15 +142,16 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(", ");
 				Arguments[i].WriteTo(output, options);
 			}
+
 			output.Write(')');
 		}
 
 		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			CallInstruction? o = other as CallInstruction;
-			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
-				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
-				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			return other is CallInstruction o && this.OpCode == o.OpCode && this.Method.Equals(o.Method) &&
+			       this.IsTail == o.IsTail
+			       && Equals(this.ConstrainedTo, o.ConstrainedTo)
+			       && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 

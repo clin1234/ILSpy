@@ -16,12 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -47,13 +41,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool TransformRefTypes(Block block, int pos, StatementTransformContext context)
 		{
-			if (!(block.Instructions[pos] is StLoc stloc))
+			if (block.Instructions[pos] is not StLoc stloc)
 				return false;
 			if (stloc.Variable.Kind != VariableKind.StackSlot)
 				return false;
 			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
-			if (!(condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()))
+			if (!(condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) &&
+			      right.MatchLdNull()))
 				return false;
 			trueInst = Block.Unwrap(trueInst);
 			// stloc s(valueInst)
@@ -70,6 +65,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
 			}
+
 			// sometimes the compiler generates:
 			// stloc s(valueInst)
 			// if (comp(ldloc s == ldnull)) {
@@ -78,10 +74,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// }
 			// v must be single-assign and single-use.
 			if (trueInst is Block trueBlock && trueBlock.Instructions.Count == 2
-				&& trueBlock.Instructions[0].MatchStLoc(out var temporary, out fallbackValue)
-				&& temporary.IsSingleDefinition && temporary.LoadCount == 1
-				&& trueBlock.Instructions[1].MatchStLoc(stloc.Variable, out var useOfTemporary)
-				&& useOfTemporary.MatchLdLoc(temporary))
+			                                && trueBlock.Instructions[0]
+				                                .MatchStLoc(out var temporary, out fallbackValue)
+			                                && temporary.IsSingleDefinition && temporary.LoadCount == 1
+			                                && trueBlock.Instructions[1]
+				                                .MatchStLoc(stloc.Variable, out var useOfTemporary)
+			                                && useOfTemporary.MatchLdLoc(temporary))
 			{
 				context.Step("NullCoalescingTransform: with temporary variable (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
@@ -89,6 +87,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
 			}
+
 			// stloc obj(valueInst)
 			// if (comp(ldloc obj == ldnull)) {
 			//		throw(...)
@@ -104,6 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -118,14 +118,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos + 2 >= block.Instructions.Count)
 				return false;
-			if (!(block.Instructions[pos] is StLoc stloc))
+			if (block.Instructions[pos] is not StLoc stloc)
 				return false;
 			ILVariable v = stloc.Variable;
 			if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
 				return false;
 			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
-			if (!(Block.Unwrap(trueInst) is Throw throwInst))
+			if (Block.Unwrap(trueInst) is not Throw throwInst)
 				return false;
 			if (!condition.MatchLogicNot(out var arg))
 				return false;
@@ -139,9 +139,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				throwInst);
 			var resultType = NullableType.GetUnderlyingType(call.Method.DeclaringType).GetStackType();
 			nullCoalescingWithThrow.UnderlyingResultType = resultType;
-			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullCoalescingWithThrow, InliningOptions.None);
+			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullCoalescingWithThrow,
+				InliningOptions.None);
 			if (result.Type == ILInlining.FindResultType.Found
-				&& NullableLiftingTransform.MatchGetValueOrDefault(result.LoadInst.Parent, v))
+			    && NullableLiftingTransform.MatchGetValueOrDefault(result.LoadInst.Parent, v))
 			{
 				context.Step("NullCoalescingTransform (value types + throw expression)", stloc);
 				throwInst.resultType = resultType;

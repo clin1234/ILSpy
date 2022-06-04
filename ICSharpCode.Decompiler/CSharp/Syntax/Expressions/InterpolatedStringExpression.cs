@@ -1,23 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+﻿using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class InterpolatedStringExpression : Expression
 	{
-		public static readonly TokenRole OpenQuote = new TokenRole("$\"");
-		public static readonly TokenRole CloseQuote = new TokenRole("\"");
-
-		public AstNodeCollection<InterpolatedStringContent> Content {
-			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
-		}
+		public static readonly TokenRole OpenQuote = new("$\"");
+		public static readonly TokenRole CloseQuote = new("\"");
 
 		public InterpolatedStringExpression()
 		{
+		}
 
+		public AstNodeCollection<InterpolatedStringContent> Content {
+			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -37,15 +32,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			InterpolatedStringExpression o = other as InterpolatedStringExpression;
-			return o != null && !o.IsNull && this.Content.DoMatch(o.Content, match);
+			return other is InterpolatedStringExpression { IsNull: false } o && this.Content.DoMatch(o.Content, match);
 		}
 	}
 
 	public abstract class InterpolatedStringContent : AstNode
 	{
-		#region Null
 		public new static readonly InterpolatedStringContent Null = new NullInterpolatedStringContent();
+		public new static readonly Role<InterpolatedStringContent> Role = new("InterpolatedStringContent", Null);
+
+		public override NodeType NodeType => NodeType.Unknown;
+
+		#region Null
 
 		sealed class NullInterpolatedStringContent : InterpolatedStringContent
 		{
@@ -70,16 +68,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
 		}
+
 		#endregion
-
-		public new static readonly Role<InterpolatedStringContent> Role = new Role<InterpolatedStringContent>("InterpolatedStringContent", Syntax.InterpolatedStringContent.Null);
-
-		public override NodeType NodeType => NodeType.Unknown;
 	}
 
 	/// <summary>
@@ -87,8 +82,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class Interpolation : InterpolatedStringContent
 	{
-		public static readonly TokenRole LBrace = new TokenRole("{");
-		public static readonly TokenRole RBrace = new TokenRole("}");
+		public static readonly TokenRole LBrace = new("{");
+		public static readonly TokenRole RBrace = new("}");
+
+		public Interpolation()
+		{
+		}
+
+		public Interpolation(Expression expression, string suffix = null)
+		{
+			Expression = expression;
+			Suffix = suffix;
+		}
 
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(LBrace); }
@@ -103,17 +108,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(RBrace); }
-		}
-
-		public Interpolation()
-		{
-
-		}
-
-		public Interpolation(Expression expression, string suffix = null)
-		{
-			Expression = expression;
-			Suffix = suffix;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -133,24 +127,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			Interpolation o = other as Interpolation;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is Interpolation o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 
 	public class InterpolatedStringText : InterpolatedStringContent
 	{
-		public string Text { get; set; }
-
 		public InterpolatedStringText()
 		{
-
 		}
 
 		public InterpolatedStringText(string text)
 		{
 			Text = text;
 		}
+
+		public string Text { get; set; }
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -169,8 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			InterpolatedStringText o = other as InterpolatedStringText;
-			return o != null && o.Text == this.Text;
+			return other is InterpolatedStringText o && o.Text == this.Text;
 		}
 	}
 }

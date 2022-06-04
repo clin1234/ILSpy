@@ -44,26 +44,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public static partial class ILOpCodeExtensions
 	{
-		public static OperandType GetOperandType(this ILOpCode opCode)
-		{
-			ushort index = (ushort)((((int)opCode & 0x200) >> 1) | ((int)opCode & 0xff));
-			if (index >= operandTypes.Length)
-				return (OperandType)255;
-			return (OperandType)operandTypes[index];
-		}
-
-		public static string GetDisplayName(this ILOpCode opCode)
-		{
-			ushort index = (ushort)((((int)opCode & 0x200) >> 1) | ((int)opCode & 0xff));
-			if (index >= operandNames.Length)
-				return "";
-			return operandNames[index];
-		}
-
-		public static bool IsDefined(this ILOpCode opCode)
-		{
-			return !string.IsNullOrEmpty(GetDisplayName(opCode));
-		}
+		public static readonly HashSet<string> ILKeywords;
 
 		static ILOpCodeExtensions()
 		{
@@ -85,9 +66,11 @@ namespace ICSharpCode.Decompiler.Metadata
 				"noncasinheritance", "noncaslinkdemand", "noprocess", "not", "not_in_gc_heap", "notremotable",
 				"notserialized", "null", "nullref", "object", "objectref", "opt", "optil", "out",
 				"permitonly", "pinned", "pinvokeimpl", "prefix1", "prefix2", "prefix3", "prefix4", "prefix5", "prefix6",
-				"prefix7", "prefixref", "prejitdeny", "prejitgrant", "preservesig", "private", "privatescope", "protected",
+				"prefix7", "prefixref", "prejitdeny", "prejitgrant", "preservesig", "private", "privatescope",
+				"protected",
 				"public", "record", "refany", "reqmin", "reqopt", "reqrefuse", "reqsecobj", "request", "retval",
-				"rtspecialname", "runtime", "safearray", "sealed", "sequential", "serializable", "special", "specialname",
+				"rtspecialname", "runtime", "safearray", "sealed", "sequential", "serializable", "special",
+				"specialname",
 				"static", "stdcall", "storage", "stored_object", "stream", "streamed_object", "string", "struct",
 				"synchronized", "syschar", "sysstring", "tbstr", "thiscall", "tls", "to", "true", "typedref",
 				"unicode", "unmanaged", "unmanagedexp", "unsigned", "unused", "userdefined", "value", "valuetype",
@@ -100,17 +83,37 @@ namespace ICSharpCode.Decompiler.Metadata
 			);
 		}
 
-		public static readonly HashSet<string> ILKeywords;
+		public static OperandType GetOperandType(this ILOpCode opCode)
+		{
+			ushort index = (ushort)((((int)opCode & 0x200) >> 1) | ((int)opCode & 0xff));
+			if (index >= operandTypes.Length)
+				return (OperandType)255;
+			return (OperandType)operandTypes[index];
+		}
+
+		public static string GetDisplayName(this ILOpCode opCode)
+		{
+			ushort index = (ushort)((((int)opCode & 0x200) >> 1) | ((int)opCode & 0xff));
+			if (index >= operandNames.Length)
+				return "";
+			return operandNames[index];
+		}
+
+		public static bool IsDefined(this ILOpCode opCode)
+		{
+			return !string.IsNullOrEmpty(GetDisplayName(opCode));
+		}
 
 		static HashSet<string> BuildKeywordList(params string[] keywords)
 		{
-			HashSet<string> s = new HashSet<string>(keywords);
+			HashSet<string> s = new(keywords);
 			foreach (var inst in operandNames)
 			{
 				if (string.IsNullOrEmpty(inst))
 					continue;
 				s.Add(inst);
 			}
+
 			return s;
 		}
 	}

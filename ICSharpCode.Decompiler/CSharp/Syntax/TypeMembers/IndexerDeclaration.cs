@@ -33,10 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class IndexerDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
+		public static readonly TokenRole ThisKeywordRole = new("this");
 		public static readonly Role<Accessor> GetterRole = PropertyDeclaration.GetterRole;
 		public static readonly Role<Accessor> SetterRole = PropertyDeclaration.SetterRole;
-		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", Expression.Null);
+		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Indexer; }
@@ -118,13 +118,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IndexerDeclaration o = other as IndexerDeclaration;
-			return o != null
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.Parameters.DoMatch(o.Parameters, match)
-				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
-				&& this.ExpressionBody.DoMatch(o.ExpressionBody, match);
+			return other is IndexerDeclaration o
+			       && this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
+			       && this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
+			       && this.Parameters.DoMatch(o.Parameters, match)
+			       && this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
+			       && this.ExpressionBody.DoMatch(o.ExpressionBody, match);
 		}
 	}
 }

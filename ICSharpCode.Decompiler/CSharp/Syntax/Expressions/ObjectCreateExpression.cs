@@ -33,8 +33,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ObjectCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
+		public static readonly TokenRole NewKeywordRole = new("new");
+		public static readonly Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
+
+		public ObjectCreateExpression()
+		{
+		}
+
+		public ObjectCreateExpression(AstType type, IEnumerable<Expression> arguments = null)
+		{
+			AddChild(type, Roles.Type);
+			if (arguments != null)
+			{
+				foreach (var arg in arguments)
+				{
+					AddChild(arg, Roles.Argument);
+				}
+			}
+		}
+
+		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type,
+			(IEnumerable<Expression>)arguments)
+		{
+		}
 
 		public CSharpTokenNode NewToken {
 			get { return GetChildByRole(NewKeywordRole); }
@@ -62,26 +83,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(InitializerRole, value); }
 		}
 
-		public ObjectCreateExpression()
-		{
-		}
-
-		public ObjectCreateExpression(AstType type, IEnumerable<Expression> arguments = null)
-		{
-			AddChild(type, Roles.Type);
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, Roles.Argument);
-				}
-			}
-		}
-
-		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type, (IEnumerable<Expression>)arguments)
-		{
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitObjectCreateExpression(this);
@@ -99,8 +100,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ObjectCreateExpression o = other as ObjectCreateExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Arguments.DoMatch(o.Arguments, match) && this.Initializer.DoMatch(o.Initializer, match);
+			return other is ObjectCreateExpression o && this.Type.DoMatch(o.Type, match) &&
+			       this.Arguments.DoMatch(o.Arguments, match) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

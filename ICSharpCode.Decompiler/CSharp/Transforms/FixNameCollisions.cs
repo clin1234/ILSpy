@@ -21,7 +21,6 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -39,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var renamedSymbols = new Dictionary<ISymbol, string>();
 			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>())
 			{
-				var memberNames = typeDecl.Members.Select(m => {
+				var memberNames = typeDecl.Members.Select(static m => {
 					var type = m.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole);
 					return type.IsNull ? m.Name : type + "." + m.Name;
 				}).ToHashSet();
@@ -65,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			foreach (var node in rootNode.DescendantsAndSelf)
 			{
-				if (node is IdentifierExpression || node is MemberReferenceExpression)
+				if (node is IdentifierExpression or MemberReferenceExpression)
 				{
 					ISymbol symbol = node.GetSymbol();
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string newName))
@@ -80,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!memberNames.Contains("m_" + name))
 				return "m_" + name;
-			for (int num = 2; ; num++)
+			for (int num = 2;; num++)
 			{
 				string newName = name + num;
 				if (!memberNames.Contains(newName))

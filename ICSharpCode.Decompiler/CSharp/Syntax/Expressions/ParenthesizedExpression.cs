@@ -32,6 +32,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ParenthesizedExpression : Expression
 	{
+		public ParenthesizedExpression()
+		{
+		}
+
+		public ParenthesizedExpression(Expression expr)
+		{
+			Expression = expr;
+		}
+
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
@@ -43,15 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public ParenthesizedExpression()
-		{
-		}
-
-		public ParenthesizedExpression(Expression expr)
-		{
-			Expression = expr;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -71,8 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ParenthesizedExpression o = other as ParenthesizedExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is ParenthesizedExpression o && this.Expression.DoMatch(o.Expression, match);
 		}
 
 		/// <summary>
@@ -83,7 +82,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <returns>Returns true for ParenthesizedExpression, CheckedExpression or UncheckedExpression; false otherwise.</returns>
 		public static bool ActsAsParenthesizedExpression(AstNode expression)
 		{
-			return expression is ParenthesizedExpression || expression is CheckedExpression || expression is UncheckedExpression;
+			return expression is ParenthesizedExpression or CheckedExpression or UncheckedExpression;
 		}
 
 		/// <summary>

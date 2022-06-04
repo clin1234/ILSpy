@@ -33,6 +33,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class MemberReferenceExpression : Expression
 	{
+		public MemberReferenceExpression()
+		{
+		}
+
+		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
+		{
+			AddChild(target, Roles.TargetExpression);
+			MemberName = memberName;
+			if (arguments != null)
+			{
+				foreach (var arg in arguments)
+				{
+					AddChild(arg, Roles.TypeArgument);
+				}
+			}
+		}
+
+		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(
+			target, memberName, (IEnumerable<AstType>)arguments)
+		{
+		}
+
 		public Expression Target {
 			get {
 				return GetChildByRole(Roles.TargetExpression);
@@ -76,27 +98,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RChevron); }
 		}
 
-		public MemberReferenceExpression()
-		{
-		}
-
-		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
-		{
-			AddChild(target, Roles.TargetExpression);
-			MemberName = memberName;
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, Roles.TypeArgument);
-				}
-			}
-		}
-
-		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(target, memberName, (IEnumerable<AstType>)arguments)
-		{
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitMemberReferenceExpression(this);
@@ -114,8 +115,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MemberReferenceExpression o = other as MemberReferenceExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is MemberReferenceExpression o && this.Target.DoMatch(o.Target, match) &&
+			       MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}
 }

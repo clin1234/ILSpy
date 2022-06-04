@@ -27,7 +27,6 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -163,6 +162,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (parent == Expression)
 					return new TranslatedExpression(descendant.Detach());
 			}
+
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
 
@@ -190,7 +190,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		///      when evaluated in a context where it will be implicitly converted to targetType,
 		///      evaluates to the "expected evaluation result".
 		/// </remarks>
-		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
+		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder,
+			bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
 			var type = this.Type;
 			if (NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(type, targetType))
@@ -203,40 +204,49 @@ namespace ICSharpCode.Decompiler.CSharp
 						case ConversionResolveResult conversion:
 						{
 							if (Expression is CastExpression cast && CastCanBeMadeImplicit(
-									Resolver.CSharpConversions.Get(expressionBuilder.compilation),
-									conversion.Conversion,
-									conversion.Input.Type,
-									type, targetType
-								))
+								    Resolver.CSharpConversions.Get(expressionBuilder.compilation),
+								    conversion.Conversion,
+								    conversion.Input.Type,
+								    type, targetType
+							    ))
 							{
 								var result = this.UnwrapChild(cast.Expression);
 								if (conversion.Conversion.IsUserDefined)
 								{
 									result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
 								}
+
 								return result;
 							}
-							else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
-								  && oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion)
+							else if (Expression is ObjectCreateExpression oce && conversion.Conversion
+								                                                  .IsMethodGroupConversion
+							                                                  && oce.Arguments.Count == 1 &&
+							                                                  expressionBuilder.settings
+								                                                  .UseImplicitMethodGroupConversion)
 							{
 								return this.UnwrapChild(oce.Arguments.Single());
 							}
+
 							break;
 						}
 						case InvocationResolveResult invocation:
 						{
 							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1
-								&& invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
+							                                             && invocation.Type.IsKnownType(KnownTypeCode
+								                                             .NullableOfT))
 							{
 								return this.UnwrapChild(oce.Arguments.Single());
 							}
+
 							break;
 						}
 					}
 				}
+
 				return this;
 			}
-			if (targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None)
+
+			if (targetType.Kind is TypeKind.Void or TypeKind.None)
 			{
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
 			}
@@ -249,6 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				// However we still want explicit casts to types that are merely unresolved
 			}
+
 			var convAnnotation = this.Expression.Annotation<ImplicitConversionAnnotation>();
 			if (convAnnotation != null)
 			{
@@ -262,52 +273,63 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(convAnnotation.ConversionResolveResult)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
+
 			if (Expression is ThrowExpression && allowImplicitConversion)
 			{
 				return this; // Throw expressions have no type and are implicitly convertible to any type
 			}
+
 			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
-				&& tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length)
+			                                            && tupleExpr.Elements.Count ==
+			                                            targetTupleType.ElementTypes.Length)
 			{
 				// Conversion of a tuple literal: convert element-wise
 				var newTupleExpr = new TupleExpression();
 				var newElementRRs = new List<ResolveResult>();
-				foreach (var (elementExpr, elementTargetType) in tupleExpr.Elements.Zip(targetTupleType.ElementTypes))
+				foreach ((Expression elementExpr, IType elementTargetType) in tupleExpr.Elements.Zip(targetTupleType
+					         .ElementTypes))
 				{
 					var newElementExpr = new TranslatedExpression(elementExpr.Detach())
 						.ConvertTo(elementTargetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 					newTupleExpr.Elements.Add(newElementExpr.Expression);
 					newElementRRs.Add(newElementExpr.ResolveResult);
 				}
+
 				return newTupleExpr.WithILInstruction(this.ILInstructions)
 					.WithRR(new TupleResolveResult(
 						expressionBuilder.compilation, newElementRRs.ToImmutableArray(),
 						valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
 					));
 			}
+
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
 			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2
-				&& !conv.Conversion.IsUserDefined
-				&& CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
+			                                                  && !conv.Conversion.IsUserDefined
+			                                                  && CastCanBeMadeImplicit(conversions, conv.Conversion,
+				                                                  conv.Input.Type, type, targetType))
 			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)
 					return unwrapped;
 				return unwrapped.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
-			if (Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional && targetType.IsReferenceType == true)
+
+			if (Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional } uoe &&
+			    targetType.IsReferenceType == true)
 			{
 				// "(T)(x?).AccessChain" is invalid, but "((T)x)?.AccessChain" is valid and equivalent
 				return new UnaryOperatorExpression(
 					UnaryOperatorType.NullConditional,
-					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion)
+					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow,
+						allowImplicitConversion)
 				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
 			}
+
 			IType utype = NullableType.GetUnderlyingType(type);
 			IType targetUType = NullableType.GetUnderlyingType(targetType);
 			if (type.IsKnownType(KnownTypeCode.Boolean) && !targetUType.IsKnownType(KnownTypeCode.Boolean)
-				&& targetUType.GetStackType().IsIntegerType())
+			                                            && targetUType.GetStackType().IsIntegerType())
 			{
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
@@ -316,6 +338,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					LdcI4(compilation, 0).ConvertTo(targetType, expressionBuilder, checkForOverflow)
 				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
 			}
+
 			if (targetType.IsKnownType(KnownTypeCode.Boolean))
 			{
 				// convert to boolean through byte, to simulate the truncation to 8 bits
@@ -325,35 +348,47 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			// Special-case IntPtr and UIntPtr: they behave extremely weird, see IntPtr.txt for details.
 			if (type.IsKnownType(KnownTypeCode.IntPtr))
-			{ // Conversion from IntPtr
-			  // Direct cast only works correctly for IntPtr -> long.
-			  // IntPtr -> int works correctly only in checked context.
-			  // Everything else can be worked around by casting via long.
+			{
+				// Conversion from IntPtr
+				// Direct cast only works correctly for IntPtr -> long.
+				// IntPtr -> int works correctly only in checked context.
+				// Everything else can be worked around by casting via long.
 				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt
-					|| (checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32))
-					|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
+				                                                  || (checkForOverflow &&
+				                                                      targetType.IsKnownType(KnownTypeCode.Int32))
+				                                                  || targetType.Kind.IsAnyPointer() ||
+				                                                  targetType.Kind == TypeKind.ByReference))
 				{
-					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NInt : compilation.FindType(KnownTypeCode.Int64);
+					var convertVia = expressionBuilder.settings.NativeIntegers
+						? SpecialType.NInt
+						: compilation.FindType(KnownTypeCode.Int64);
 					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			}
 			else if (type.IsKnownType(KnownTypeCode.UIntPtr))
-			{ // Conversion from UIntPtr
-			  // Direct cast only works correctly for UIntPtr -> ulong.
-			  // UIntPtr -> uint works correctly only in checked context.
-			  // Everything else can be worked around by casting via ulong.
+			{
+				// Conversion from UIntPtr
+				// Direct cast only works correctly for UIntPtr -> ulong.
+				// UIntPtr -> uint works correctly only in checked context.
+				// Everything else can be worked around by casting via ulong.
 				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt
-					|| (checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))
-					|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
+				                                                   || (checkForOverflow &&
+				                                                       targetType.IsKnownType(KnownTypeCode.UInt32))
+				                                                   || targetType.Kind.IsAnyPointer() ||
+				                                                   targetType.Kind == TypeKind.ByReference))
 				{
-					var convertVia = expressionBuilder.settings.NativeIntegers ? SpecialType.NUInt : compilation.FindType(KnownTypeCode.UInt64);
+					var convertVia = expressionBuilder.settings.NativeIntegers
+						? SpecialType.NUInt
+						: compilation.FindType(KnownTypeCode.UInt64);
 					return this.ConvertTo(convertVia, expressionBuilder, checkForOverflow)
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			}
+
 			if (targetUType.IsKnownType(KnownTypeCode.IntPtr) && utype.GetStackType().IsIntegerType())
-			{ // Conversion to IntPtr
+			{
+				// Conversion to IntPtr
 				if (type.IsKnownType(KnownTypeCode.Int32) || type.Kind == TypeKind.NInt)
 				{
 					// normal casts work for int/nint (both in checked and unchecked context)
@@ -371,7 +406,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// (and long itself works directly in checked context)
 					if (!type.IsKnownType(KnownTypeCode.Int64))
 					{
-						return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
+						return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder,
+								checkForOverflow)
 							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 					}
 				}
@@ -379,12 +415,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					// If overflow-checking is disabled, the only way to truncate to native size
 					// without throwing an exception in 32-bit mode is to use a pointer type.
-					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
+					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder,
+							checkForOverflow)
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 				}
 			}
 			else if (targetUType.IsKnownType(KnownTypeCode.UIntPtr) && utype.GetStackType().IsIntegerType())
-			{ // Conversion to UIntPtr
+			{
+				// Conversion to UIntPtr
 				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind.IsAnyPointer() || type.Kind == TypeKind.NUInt)
 				{
 					// normal casts work for uint/nuint and pointers (both in checked and unchecked context)
@@ -401,7 +439,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// (and ulong itself works directly in checked context)
 					if (!type.IsKnownType(KnownTypeCode.UInt64))
 					{
-						return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder, checkForOverflow)
+						return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder,
+								checkForOverflow)
 							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 					}
 				}
@@ -409,7 +448,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					// If overflow-checking is disabled, the only way to truncate to native size
 					// without throwing an exception in 32-bit mode is to use a pointer type.
-					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
+					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder,
+							checkForOverflow)
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 				}
 			}
@@ -428,31 +468,36 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this.ConvertTo(targetUType.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
+
 			if (targetType.Kind.IsAnyPointer() && type.IsKnownType(KnownTypeCode.Char)
-			   || targetUType.IsKnownType(KnownTypeCode.Char) && type.Kind.IsAnyPointer())
+			    || targetUType.IsKnownType(KnownTypeCode.Char) && type.Kind.IsAnyPointer())
 			{
 				// char <-> pointer: C# doesn't allow such casts
 				// -> convert via ushort
 				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt16), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
-			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.ByReference && Expression is DirectionExpression)
+
+			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.ByReference &&
+			    Expression is DirectionExpression expression)
 			{
 				// convert from reference to pointer
-				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
+				Expression arg = expression.Expression.Detach();
 				var pointerType = new PointerType(((ByReferenceType)type).ElementType);
-				if (arg is UnaryOperatorExpression argUOE && argUOE.Operator == UnaryOperatorType.Dereference)
+				if (arg is UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } argUOE)
 				{
 					// &*ptr -> ptr
 					return new TranslatedExpression(argUOE).UnwrapChild(argUOE.Expression)
 						.ConvertTo(targetType, expressionBuilder);
 				}
+
 				var pointerExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, arg)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ResolveResult(pointerType));
 				// perform remaining pointer cast, if necessary
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
+
 			Expression expr;
 			if (targetType.Kind == TypeKind.ByReference)
 			{
@@ -460,31 +505,37 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return this;
 				}
+
 				var elementType = ((ByReferenceType)targetType).ElementType;
-				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(i => i.OpCode == OpCode.AddressOf)
-					&& thisDir.Expression.GetResolveResult()?.Type.GetStackType() == elementType.GetStackType())
+				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(static i =>
+					                                                   i.OpCode == OpCode.AddressOf)
+				                                                   && thisDir.Expression.GetResolveResult()?.Type
+					                                                   .GetStackType() == elementType.GetStackType())
 				{
 					// When converting a reference to a temporary to a different type,
 					// apply the cast to the temporary instead.
-					var convertedTemp = this.UnwrapChild(thisDir.Expression).ConvertTo(elementType, expressionBuilder, checkForOverflow);
+					var convertedTemp = this.UnwrapChild(thisDir.Expression)
+						.ConvertTo(elementType, expressionBuilder, checkForOverflow);
 					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
 						.WithILInstruction(this.ILInstructions)
 						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, ReferenceKind.Ref));
 				}
+
 				if (this.Type.Kind == TypeKind.ByReference && !IsFixedVariable())
 				{
 					// Convert between managed reference types.
 					// We can't do this by going through a pointer type because that would temporarily stop GC tracking.
 					// Instead, emit `ref Unsafe.As<T>(ref expr)`
 					return expressionBuilder.CallUnsafeIntrinsic("As", new[] { this.Expression },
-						typeArguments: new IType[] { ((ByReferenceType)this.Type).ElementType, elementType },
+						typeArguments: new[] { ((ByReferenceType)this.Type).ElementType, elementType },
 						returnType: targetType);
 				}
+
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
 				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
 				ResolveResult elementRR;
-				if (arg.Expression is UnaryOperatorExpression unary && unary.Operator == UnaryOperatorType.AddressOf)
+				if (arg.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } unary)
 				{
 					// If we already have an address -> unwrap
 					expr = arg.UnwrapChild(unary.Expression);
@@ -497,14 +548,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					elementRR = new ResolveResult(elementType);
 					expr.AddAnnotation(elementRR);
 				}
+
 				// And then take a reference:
 				return new DirectionExpression(FieldDirection.Ref, expr)
 					.WithoutILInstruction()
 					.WithRR(new ByReferenceResolveResult(elementRR, ReferenceKind.Ref));
 			}
+
 			if (this.ResolveResult.IsCompileTimeConstant && this.ResolveResult.ConstantValue != null
-				&& NullableType.IsNullable(targetType) && !utype.Equals(targetUType)
-				&& targetUType.GetStackType().IsIntegerType())
+			                                             && NullableType.IsNullable(targetType) &&
+			                                             !utype.Equals(targetUType)
+			                                             && targetUType.GetStackType().IsIntegerType())
 			{
 				// Casts like `(uint?)-1` are only valid in an explicitly unchecked context, but we
 				// don't have logic to ensure such a context (usually we emit into an implicitly unchecked context).
@@ -514,15 +568,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				return ConvertTo(targetUType, expressionBuilder, checkForOverflow, allowImplicitConversion: false)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
-			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
+
+			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow)
+				.ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError)
 			{
 				var convertedResult = expressionBuilder.ConvertConstantValue(rr, allowImplicitConversion)
 					.WithILInstruction(this.ILInstructions);
-				if (convertedResult.Expression is PrimitiveExpression outputLiteral && this.Expression is PrimitiveExpression inputLiteral)
+				if (convertedResult.Expression is PrimitiveExpression outputLiteral &&
+				    this.Expression is PrimitiveExpression inputLiteral)
 				{
 					outputLiteral.Format = inputLiteral.Format;
 				}
+
 				return convertedResult;
 			}
 			else if (rr.IsError && targetType.IsReferenceType == true && type.IsReferenceType == true)
@@ -535,7 +593,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 				}
 			}
-			if (targetType.Kind.IsAnyPointer() && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue)))
+
+			if (targetType.Kind.IsAnyPointer() &&
+			    (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue)))
 			{
 				if (allowImplicitConversion)
 				{
@@ -543,10 +603,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(this.ILInstructions)
 						.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 				}
+
 				return new CastExpression(expressionBuilder.ConvertType(targetType), new NullReferenceExpression())
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}
+
 			if (allowImplicitConversion)
 			{
 				if (conversions.ImplicitConversion(ResolveResult, targetType).IsValid)
@@ -562,6 +624,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return this;
 				}
 			}
+
 			// BaseReferenceExpression must not be used with CastExpressions
 			expr = Expression is BaseReferenceExpression
 				? new ThisReferenceExpression().WithILInstruction(this.ILInstructions)
@@ -587,6 +650,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					castExpr.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 				}
 			}
+
 			return castExpr.WithoutILInstruction().WithRR(rr);
 		}
 
@@ -608,28 +672,33 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
 		/// The existing cast is classified in 'conversion'.
 		/// </summary>
-		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
+		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType,
+			IType oldTargetType, IType newTargetType)
 		{
 			if (!conversion.IsImplicit)
 			{
 				// If the cast was required for the old conversion, avoid making it implicit.
 				return false;
 			}
-			if (oldTargetType.Kind == TypeKind.NInt || oldTargetType.Kind == TypeKind.NUInt
-				|| newTargetType.Kind == TypeKind.NInt || newTargetType.Kind == TypeKind.NUInt)
+
+			if (oldTargetType.Kind is TypeKind.NInt or TypeKind.NUInt ||
+			    newTargetType.Kind is TypeKind.NInt or TypeKind.NUInt)
 			{
 				// nint has identity conversion with IntPtr, but the two have different implicit conversions
 				return false;
 			}
+
 			if (conversion.IsBoxingConversion)
 			{
 				return conversions.IsBoxingConversionOrInvolvingTypeParameter(inputType, newTargetType);
 			}
+
 			if (conversion.IsInterpolatedStringConversion)
 			{
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
-					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
+				       || newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
+
 			return conversions.IdentityConversion(oldTargetType, newTargetType);
 		}
 
@@ -648,7 +717,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!this.Type.IsKnownType(KnownTypeCode.Boolean))
 				return this;
-			if (!(this.ResolveResult is ConversionResolveResult rr))
+			if (this.ResolveResult is not ConversionResolveResult rr)
 				return this;
 			if (!(rr.Conversion.IsUserDefined && rr.Conversion.IsImplicit))
 				return this;
@@ -658,6 +727,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return this.UnwrapChild(cast.Expression);
 			}
+
 			return this;
 		}
 
@@ -682,19 +752,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					return this;
 				}
 			}
+
 			Debug.Assert(Type.GetStackType().IsIntegerType());
 			IType boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
-			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int)
+			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int value)
 			{
-				bool val = (int)ResolveResult.ConstantValue != 0;
+				bool val = value != 0;
 				val ^= negate;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(boolType, val));
 			}
-			else if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is byte)
+			else if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is byte constantValue)
 			{
-				bool val = (byte)ResolveResult.ConstantValue != 0;
+				bool val = constantValue != 0;
 				val ^= negate;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)
@@ -709,7 +780,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new BinaryOperatorExpression(Expression, op, nullRef.Expression)
 					.WithoutILInstruction()
 					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
-													  this.ResolveResult, nullRef.ResolveResult));
+						this.ResolveResult, nullRef.ResolveResult));
 			}
 			else
 			{
@@ -720,7 +791,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new BinaryOperatorExpression(Expression, op, zero.Expression)
 					.WithoutILInstruction()
 					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
-													  this.ResolveResult, zero.ResolveResult));
+						this.ResolveResult, zero.ResolveResult));
 			}
 		}
 	}

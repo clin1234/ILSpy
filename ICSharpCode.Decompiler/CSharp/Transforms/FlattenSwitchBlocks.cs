@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
@@ -16,8 +13,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (switchSection.Statements.Count != 1)
 					continue;
 
-				var blockStatement = switchSection.Statements.First() as BlockStatement;
-				if (blockStatement == null || blockStatement.Statements.Any(ContainsLocalDeclaration))
+				if (switchSection.Statements.First() is not BlockStatement blockStatement ||
+				    blockStatement.Statements.Any(ContainsLocalDeclaration))
 					continue;
 
 				blockStatement.Remove();
@@ -26,7 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			bool ContainsLocalDeclaration(AstNode node)
 			{
-				if (node is VariableDeclarationStatement || node is LocalFunctionDeclarationStatement || node is OutVarDeclarationExpression)
+				if (node is VariableDeclarationStatement or LocalFunctionDeclarationStatement
+				    or OutVarDeclarationExpression)
 					return true;
 				if (node is BlockStatement)
 					return false;
@@ -35,6 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (ContainsLocalDeclaration(child))
 						return true;
 				}
+
 				return false;
 			}
 		}

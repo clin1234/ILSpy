@@ -16,14 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -44,7 +40,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//   leave IL_0000(ldloc lhsVar)
 			// ->
 			//   user.logic op_BitwiseAnd(ldloc lhsVar, rhsInst)
-			if (!block.Instructions[pos].MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
+			if (!block.Instructions[pos]
+				    .MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return false;
 			if (trueInst.OpCode == OpCode.Nop)
 			{
@@ -58,6 +55,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+
 			if (trueInst.MatchReturn(out var trueValue) && falseInst.MatchReturn(out var falseValue))
 			{
 				var transformed = Transform(condition, trueValue, falseValue);
@@ -65,6 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					transformed = TransformDynamic(condition, trueValue, falseValue);
 				}
+
 				if (transformed != null)
 				{
 					context.Step("User-defined short-circuiting logic operator (optimized return)", condition);
@@ -73,6 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 			}
+
 			return false;
 		}
 
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(s.Kind == VariableKind.StackSlot))
 				return false;
-			if (!(block.Instructions[pos + 1] is IfInstruction ifInst))
+			if (block.Instructions[pos + 1] is not IfInstruction ifInst)
 				return false;
 			if (!ifInst.Condition.MatchLogicNot(out var condition))
 				return false;
@@ -107,12 +107,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (s.IsUsedWithin(call.Arguments[1]))
 					return false;
 				context.Step("User-defined short-circuiting logic operator (legacy pattern)", condition);
-				((StLoc)block.Instructions[pos]).Value = new UserDefinedLogicOperator(call.Method, lhsInst, call.Arguments[1])
-					.WithILRange(call);
+				((StLoc)block.Instructions[pos]).Value =
+					new UserDefinedLogicOperator(call.Method, lhsInst, call.Arguments[1])
+						.WithILRange(call);
 				block.Instructions.RemoveAt(pos + 1);
 				context.RequestRerun(); // the 'stloc s' may now be eligible for inlining
 				return true;
 			}
+
 			return false;
 		}
 
@@ -123,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(condition is Call call && call.Method.IsOperator && call.Arguments.Count == 1 && !call.IsLifted))
 				return false;
 			name = call.Method.Name;
-			if (!(name == "op_True" || name == "op_False"))
+			if (name is not ("op_True" or "op_False"))
 				return false;
 			return call.Arguments[0].MatchLdLoc(out v);
 		}
@@ -136,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 
 			return conditionMethodName == "op_False" && call.Method.Name == "op_BitwiseAnd"
-				|| conditionMethodName == "op_True" && call.Method.Name == "op_BitwiseOr";
+			       || conditionMethodName == "op_True" && call.Method.Name == "op_BitwiseOr";
 		}
 
 		/// <summary>
@@ -163,7 +165,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return result;
 		}
 
-		public static ILInstruction TransformDynamic(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		public static ILInstruction TransformDynamic(ILInstruction condition, ILInstruction trueInst,
+			ILInstruction falseInst)
 		{
 			// Check condition:
 			System.Linq.Expressions.ExpressionType unaryOp;
@@ -208,11 +211,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(operatorMethodName == "op_False");
 					unaryOp = System.Linq.Expressions.ExpressionType.IsFalse;
 				}
+
 				var callParamType = ((Call)condition).Method.Parameters.Single().Type.SkipModifiers();
 				if (callParamType.IsReferenceType == false)
 				{
 					// If lhs is a value type, eliminate the boxing instruction.
-					if (trueInst is Box box && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(box.Type, callParamType))
+					if (trueInst is Box box &&
+					    NormalizeTypeVisitor.TypeErasure.EquivalentTypes(box.Type, callParamType))
 					{
 						trueInst = box.Argument;
 					}
@@ -277,14 +282,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// Check falseInst:
-			if (!(falseInst is DynamicBinaryOperatorInstruction binary))
+			if (falseInst is not DynamicBinaryOperatorInstruction binary)
 				return null;
 			if (binary.Operation != expectedBitop)
 				return null;
 			if (!binary.Left.MatchLdLoc(lhsVar))
 				return null;
 			var logicInst = new DynamicLogicOperatorInstruction(binary.BinderFlags, logicOp, binary.CallingContext,
-				binary.LeftArgumentInfo, binary.Left, binary.RightArgumentInfo, binary.Right)
+					binary.LeftArgumentInfo, binary.Left, binary.RightArgumentInfo, binary.Right)
 				.WithILRange(binary);
 			if (rhsUnary != null)
 			{

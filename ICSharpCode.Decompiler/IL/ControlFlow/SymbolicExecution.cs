@@ -18,9 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -43,18 +40,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Unknown value
 		/// </summary>
 		Unknown,
+
 		/// <summary>
 		/// int: Constant (result of ldc.i4)
 		/// </summary>
 		IntegerConstant,
+
 		/// <summary>
 		/// int: State + Constant
 		/// </summary>
 		State,
+
 		/// <summary>
 		/// This pointer (result of ldarg.0)
 		/// </summary>
 		This,
+
 		/// <summary>
 		/// bool: ValueSet.Contains(State)
 		/// </summary>
@@ -88,16 +89,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// if (state + c) = if (state + c != 0) = if (state != -c)
 				return new SymbolicValue(SymbolicValueType.StateInSet, new LongSet(unchecked(-Constant)).Invert());
 			}
+
 			return this;
 		}
+
 		public override string ToString()
 		{
-			return string.Format("[SymbolicValue {0}: {1}]", this.Type, this.Constant);
+			return $"[SymbolicValue {this.Type}: {this.Constant}]";
 		}
 	}
 
 	class SymbolicEvaluationContext
 	{
+		static readonly SymbolicValue Failed = new SymbolicValue(SymbolicValueType.Unknown);
 		readonly IField stateField;
 		readonly List<ILVariable> stateVariables = new List<ILVariable>();
 
@@ -106,88 +110,84 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.stateField = stateField;
 		}
 
+		public IEnumerable<ILVariable> StateVariables { get => stateVariables; }
+
 		public void AddStateVariable(ILVariable v)
 		{
 			if (!stateVariables.Contains(v))
 				stateVariables.Add(v);
 		}
 
-		public IEnumerable<ILVariable> StateVariables { get => stateVariables; }
-
-		static readonly SymbolicValue Failed = new SymbolicValue(SymbolicValueType.Unknown);
-
 		public SymbolicValue Eval(ILInstruction inst)
 		{
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.CheckForOverflow)
+			if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub, CheckForOverflow: false } bni)
 			{
 				var left = Eval(bni.Left);
 				var right = Eval(bni.Right);
 				if (left.Type != SymbolicValueType.State && left.Type != SymbolicValueType.IntegerConstant)
 					return Failed;
-				if (right.Type != SymbolicValueType.IntegerConstant)
-					return Failed;
-				return new SymbolicValue(left.Type, unchecked(left.Constant - right.Constant));
+				return right.Type != SymbolicValueType.IntegerConstant
+					? Failed
+					: new SymbolicValue(left.Type, unchecked(left.Constant - right.Constant));
 			}
-			else if (inst.MatchLdFld(out var target, out var field))
+
+			if (inst.MatchLdFld(out var target, out var field))
 			{
 				if (Eval(target).Type != SymbolicValueType.This)
 					return Failed;
-				if (field.MemberDefinition != stateField)
-					return Failed;
-				return new SymbolicValue(SymbolicValueType.State);
+				return field.MemberDefinition != stateField ? Failed : new SymbolicValue(SymbolicValueType.State);
 			}
-			else if (inst.MatchLdLoc(out var loadedVariable))
+
+			if (inst.MatchLdLoc(out var loadedVariable))
 			{
 				if (stateVariables.Contains(loadedVariable))
 					return new SymbolicValue(SymbolicValueType.State);
-				else if (loadedVariable.Kind == VariableKind.Parameter && loadedVariable.Index < 0)
+				if (loadedVariable.Kind == VariableKind.Parameter && loadedVariable.Index < 0)
 					return new SymbolicValue(SymbolicValueType.This);
-				else
-					return Failed;
+				return Failed;
 			}
-			else if (inst.MatchLdcI4(out var value))
+
+			if (inst.MatchLdcI4(out var value))
 			{
 				return new SymbolicValue(SymbolicValueType.IntegerConstant, value);
 			}
-			else if (inst is Comp comp)
+
+			if (inst is Comp comp)
 			{
 				var left = Eval(comp.Left);
 				var right = Eval(comp.Right);
 				if (left.Type == SymbolicValueType.State && right.Type == SymbolicValueType.IntegerConstant)
 				{
 					// bool: (state + left.Constant == right.Constant)
-					LongSet trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
+					LongSet trueSums =
+						SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
 					// symbolic value is true iff trueSums.Contains(state + left.Constant)
 					LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
 					// symbolic value is true iff trueStates.Contains(state)
 					return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
 				}
-				else if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant)
+
+				if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant)
 				{
 					if (comp.Kind == ComparisonKind.Equality && right.Constant == 0)
 					{
 						// comp((x in set) == 0) ==> x not in set
 						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet.Invert());
 					}
-					else if (comp.Kind == ComparisonKind.Inequality && right.Constant != 0)
+
+					if (comp.Kind == ComparisonKind.Inequality && right.Constant != 0)
 					{
 						// comp((x in set) != 0) => x in set
 						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet);
 					}
-					else
-					{
-						return Failed;
-					}
-				}
-				else
-				{
+
 					return Failed;
 				}
-			}
-			else
-			{
+
 				return Failed;
 			}
+
+			return Failed;
 		}
 	}
 }

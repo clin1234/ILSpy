@@ -34,22 +34,51 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AnonymousMethodExpression : Expression
 	{
-		public readonly static TokenRole DelegateKeywordRole = new TokenRole("delegate");
-		public readonly static TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;
-
-		bool isAsync;
-
-		public bool IsAsync {
-			get { return isAsync; }
-			set { ThrowIfFrozen(); isAsync = value; }
-		}
+		public static readonly TokenRole DelegateKeywordRole = new("delegate");
+		public static readonly TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;
 
 		// used to tell the difference between delegate {} and delegate () {}
 		bool hasParameterList;
 
+		bool isAsync;
+
+		public AnonymousMethodExpression()
+		{
+		}
+
+		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
+		{
+			if (parameters != null)
+			{
+				hasParameterList = true;
+				foreach (var parameter in parameters)
+				{
+					AddChild(parameter, Roles.Parameter);
+				}
+			}
+
+			AddChild(body, Roles.Body);
+		}
+
+		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body,
+			(IEnumerable<ParameterDeclaration>)parameters)
+		{
+		}
+
+		public bool IsAsync {
+			get { return isAsync; }
+			set {
+				ThrowIfFrozen();
+				isAsync = value;
+			}
+		}
+
 		public bool HasParameterList {
 			get { return hasParameterList || Parameters.Any(); }
-			set { ThrowIfFrozen(); hasParameterList = value; }
+			set {
+				ThrowIfFrozen();
+				hasParameterList = value;
+			}
 		}
 
 		public CSharpTokenNode DelegateToken {
@@ -73,27 +102,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Body, value); }
 		}
 
-		public AnonymousMethodExpression()
-		{
-		}
-
-		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
-		{
-			if (parameters != null)
-			{
-				hasParameterList = true;
-				foreach (var parameter in parameters)
-				{
-					AddChild(parameter, Roles.Parameter);
-				}
-			}
-			AddChild(body, Roles.Body);
-		}
-
-		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body, (IEnumerable<ParameterDeclaration>)parameters)
-		{
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitAnonymousMethodExpression(this);
@@ -111,9 +119,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AnonymousMethodExpression o = other as AnonymousMethodExpression;
-			return o != null && this.IsAsync == o.IsAsync && this.HasParameterList == o.HasParameterList
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
+			return other is AnonymousMethodExpression o && this.IsAsync == o.IsAsync &&
+			       this.HasParameterList == o.HasParameterList
+			       && this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

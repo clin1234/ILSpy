@@ -33,23 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class IndexerExpression : Expression
 	{
-		public Expression Target {
-			get { return GetChildByRole(Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
-		}
-
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
-
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
-		}
-
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
-
 		public IndexerExpression()
 		{
 		}
@@ -66,8 +49,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IndexerExpression(Expression target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
+		public IndexerExpression(Expression target, params Expression[] arguments) : this(target,
+			(IEnumerable<Expression>)arguments)
 		{
+		}
+
+		public Expression Target {
+			get { return GetChildByRole(Roles.TargetExpression); }
+			set { SetChildByRole(Roles.TargetExpression, value); }
+		}
+
+		public CSharpTokenNode LBracketToken {
+			get { return GetChildByRole(Roles.LBracket); }
+		}
+
+		public AstNodeCollection<Expression> Arguments {
+			get { return GetChildrenByRole<Expression>(Roles.Argument); }
+		}
+
+		public CSharpTokenNode RBracketToken {
+			get { return GetChildByRole(Roles.RBracket); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -87,8 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IndexerExpression o = other as IndexerExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
+			return other is IndexerExpression o && this.Target.DoMatch(o.Target, match) &&
+			       this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }

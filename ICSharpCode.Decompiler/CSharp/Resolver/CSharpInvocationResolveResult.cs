@@ -31,12 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public class CSharpInvocationResolveResult : InvocationResolveResult
 	{
-		public readonly OverloadResolutionErrors OverloadResolutionErrors;
-
-		/// <summary>
-		/// Gets whether this invocation is calling an extension method using extension method syntax.
-		/// </summary>
-		public readonly bool IsExtensionMethodInvocation;
+		readonly IReadOnlyList<int> argumentToParameterMap;
 
 		/// <summary>
 		/// Gets whether this invocation is calling a delegate (without explicitly calling ".Invoke()").
@@ -48,7 +43,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly bool IsExpandedForm;
 
-		readonly IReadOnlyList<int> argumentToParameterMap;
+		/// <summary>
+		/// Gets whether this invocation is calling an extension method using extension method syntax.
+		/// </summary>
+		public readonly bool IsExtensionMethodInvocation;
+
+		public readonly OverloadResolutionErrors OverloadResolutionErrors;
 
 		public CSharpInvocationResolveResult(
 			ResolveResult targetResult, IParameterizedMember member,
@@ -106,20 +106,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 					else
 					{
-						var narr = Arguments[i] as NamedArgumentResolveResult;
-						if (narr != null)
+						if (Arguments[i] is NamedArgumentResolveResult narr)
 							results[mappedTo] = narr.Argument;
 						else
 							results[mappedTo] = Arguments[i];
 					}
 				}
 			}
+
 			if (IsExpandedForm)
 			{
 				IType arrayType = Member.Parameters.Last().Type;
 				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
 				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
-				results[results.Length - 1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
+				results[^1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
 			}
 
 			for (int i = 0; i < results.Length; i++)
@@ -128,7 +128,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					if (Member.Parameters[i].IsOptional)
 					{
-						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].GetConstantValue());
+						results[i] = new ConstantResolveResult(Member.Parameters[i].Type,
+							Member.Parameters[i].GetConstantValue());
 					}
 					else
 					{

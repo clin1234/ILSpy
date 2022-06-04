@@ -1,19 +1,15 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
 
 using McMaster.Extensions.CommandLineUtils.Abstractions;
-using McMaster.Extensions.CommandLineUtils.Validation;
 
 namespace ICSharpCode.ILSpyCmd
 {
 	[AttributeUsage(AttributeTargets.Class)]
 	public sealed class ProjectOptionRequiresOutputDirectoryValidationAttribute : ValidationAttribute
 	{
-		public ProjectOptionRequiresOutputDirectoryValidationAttribute()
-		{
-		}
-
 		protected override ValidationResult IsValid(object value, ValidationContext context)
 		{
 			if (value is ILSpyCmdProgram obj)
@@ -23,6 +19,7 @@ namespace ICSharpCode.ILSpyCmd
 					return new ValidationResult("--project cannot be used unless --outputdir is also specified");
 				}
 			}
+
 			return ValidationResult.Success;
 		}
 	}
@@ -38,7 +35,8 @@ namespace ICSharpCode.ILSpyCmd
 				return ValidationResult.Success;
 			}
 
-			if (!Path.IsPathRooted(path) && validationContext.GetService(typeof(CommandLineContext)) is CommandLineContext context)
+			if (!Path.IsPathRooted(path) &&
+			    validationContext.GetService(typeof(CommandLineContext)) is CommandLineContext context)
 			{
 				path = Path.Combine(context.WorkingDirectory, path);
 			}
@@ -63,12 +61,12 @@ namespace ICSharpCode.ILSpyCmd
 					return ValidatePath(path);
 				case string[] paths:
 				{
-					foreach (string path in paths)
+					foreach (ValidationResult result in paths.Select(ValidatePath)
+						         .Where(static result => result != ValidationResult.Success))
 					{
-						ValidationResult result = ValidatePath(path);
-						if (result != ValidationResult.Success)
-							return result;
+						return result;
 					}
+
 					return ValidationResult.Success;
 				}
 				default:
@@ -79,7 +77,8 @@ namespace ICSharpCode.ILSpyCmd
 			{
 				if (!string.IsNullOrWhiteSpace(path))
 				{
-					if (!Path.IsPathRooted(path) && validationContext.GetService(typeof(CommandLineContext)) is CommandLineContext context)
+					if (!Path.IsPathRooted(path) &&
+					    validationContext.GetService(typeof(CommandLineContext)) is CommandLineContext context)
 					{
 						path = Path.Combine(context.WorkingDirectory, path);
 					}

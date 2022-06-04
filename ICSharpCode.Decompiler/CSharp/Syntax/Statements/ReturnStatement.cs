@@ -32,7 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ReturnStatement : Statement
 	{
-		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
+		public static readonly TokenRole ReturnKeywordRole = new("return");
+
+		public ReturnStatement()
+		{
+		}
+
+		public ReturnStatement(Expression returnExpression)
+		{
+			AddChild(returnExpression, Roles.Expression);
+		}
 
 		public CSharpTokenNode ReturnToken {
 			get { return GetChildByRole(ReturnKeywordRole); }
@@ -45,15 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
-		public ReturnStatement()
-		{
-		}
-
-		public ReturnStatement(Expression returnExpression)
-		{
-			AddChild(returnExpression, Roles.Expression);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -73,8 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ReturnStatement o = other as ReturnStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is ReturnStatement o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

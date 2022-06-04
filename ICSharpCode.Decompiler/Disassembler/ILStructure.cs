@@ -35,18 +35,22 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// The root block of the method
 		/// </summary>
 		Root,
+
 		/// <summary>
 		/// A nested control structure representing a loop.
 		/// </summary>
 		Loop,
+
 		/// <summary>
 		/// A nested control structure representing a try block.
 		/// </summary>
 		Try,
+
 		/// <summary>
 		/// A nested control structure representing a catch, finally, or fault block.
 		/// </summary>
 		Handler,
+
 		/// <summary>
 		/// A nested control structure representing an exception filter block.
 		/// </summary>
@@ -58,15 +62,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// </summary>
 	public class ILStructure
 	{
-		public readonly PEFile Module;
-		public readonly MethodDefinitionHandle MethodHandle;
-		public readonly MetadataGenericContext GenericContext;
-		public readonly ILStructureType Type;
-
 		/// <summary>
-		/// Start position of the structure.
+		/// The list of child structures.
 		/// </summary>
-		public readonly int StartOffset;
+		public readonly List<ILStructure> Children = new();
 
 		/// <summary>
 		/// End position of the structure. (exclusive)
@@ -78,31 +77,44 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public readonly ExceptionRegion ExceptionHandler;
 
+		public readonly MetadataGenericContext GenericContext;
+
 		/// <summary>
 		/// The loop's entry point.
 		/// </summary>
 		public readonly int LoopEntryPointOffset;
 
-		/// <summary>
-		/// The list of child structures.
-		/// </summary>
-		public readonly List<ILStructure> Children = new List<ILStructure>();
+		public readonly MethodDefinitionHandle MethodHandle;
+		public readonly PEFile Module;
 
-		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext, MethodBodyBlock body)
+		/// <summary>
+		/// Start position of the structure.
+		/// </summary>
+		public readonly int StartOffset;
+
+		public readonly ILStructureType Type;
+
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
+			MethodBodyBlock body)
 			: this(module, handle, genericContext, ILStructureType.Root, 0, body.GetILReader().Length)
 		{
 			// Build the tree of exception structures:
 			for (int i = 0; i < body.ExceptionRegions.Length; i++)
 			{
 				ExceptionRegion eh = body.ExceptionRegions[i];
-				if (!body.ExceptionRegions.Take(i).Any(oldEh => oldEh.TryOffset == eh.TryOffset && oldEh.TryLength == eh.TryLength))
-					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
+				if (!body.ExceptionRegions.Take(i)
+					    .Any(oldEh => oldEh.TryOffset == eh.TryOffset && oldEh.TryLength == eh.TryLength))
+					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Try,
+						eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
 				if (eh.Kind == ExceptionRegionKind.Filter)
-					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Filter, eh.FilterOffset, eh.HandlerOffset, eh));
-				AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
+					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Filter,
+						eh.FilterOffset, eh.HandlerOffset, eh));
+				AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Handler,
+					eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
 			}
+
 			// Very simple loop detection: look for backward branches
-			(var allBranches, var isAfterUnconditionalBranch) = FindAllBranches(body.GetILReader());
+			(List<Branch> allBranches, BitSet isAfterUnconditionalBranch) = FindAllBranches(body.GetILReader());
 			// We go through the branches in reverse so that we find the biggest possible loop boundary first (think loops with "continue;")
 			for (int i = allBranches.Count - 1; i >= 0; i--)
 			{
@@ -133,16 +145,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 							}
 						}
 					}
+
 					if (!multipleEntryPoints)
 					{
-						AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
+						AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Loop,
+							loopStart, loopEnd, entryPoint));
 					}
 				}
 			}
+
 			SortChildren();
 		}
 
-		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
+			ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
 		{
 			Debug.Assert(startOffset < endOffset);
 			this.Module = module;
@@ -154,7 +170,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.ExceptionHandler = handler;
 		}
 
-		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext, ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
+			ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
 		{
 			Debug.Assert(startOffset < endOffset);
 			this.Module = module;
@@ -169,7 +186,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		bool AddNestedStructure(ILStructure newStructure)
 		{
 			// special case: don't consider the loop-like structure of "continue;" statements to be nested loops
-			if (this.Type == ILStructureType.Loop && newStructure.Type == ILStructureType.Loop && newStructure.StartOffset == this.StartOffset)
+			if (this.Type == ILStructureType.Loop && newStructure.Type == ILStructureType.Loop &&
+			    newStructure.StartOffset == this.StartOffset)
 				return false;
 
 			// use <= for end-offset comparisons because both end and EndOffset are exclusive
@@ -190,6 +208,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 				}
 			}
+
 			// Move existing structures into the new structure:
 			for (int i = 0; i < this.Children.Count; i++)
 			{
@@ -200,26 +219,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					newStructure.Children.Add(child);
 				}
 			}
+
 			// Add the structure here:
 			this.Children.Add(newStructure);
 			return true;
-		}
-
-		struct Branch
-		{
-			public Interval Source;
-			public int Target;
-
-			public Branch(int start, int end, int target)
-			{
-				this.Source = new Interval(start, end);
-				this.Target = target;
-			}
-
-			public override string ToString()
-			{
-				return $"[Branch Source={Source}, Target={Target}]";
-			}
 		}
 
 		/// <summary>
@@ -242,22 +245,23 @@ namespace ICSharpCode.Decompiler.Disassembler
 				{
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
-						target = ILParser.DecodeBranchTarget(ref body, thisOpCode);
+						target = body.DecodeBranchTarget(thisOpCode);
 						endOffset = body.Offset;
 						result.Add(new Branch(offset, endOffset, target));
 						bitset[endOffset] = IsUnconditionalBranch(thisOpCode);
 						break;
 					case OperandType.Switch:
-						var targets = ILParser.DecodeSwitchTargets(ref body);
+						int[] targets = body.DecodeSwitchTargets();
 						foreach (int t in targets)
 							result.Add(new Branch(offset, body.Offset, t));
 						break;
 					default:
-						ILParser.SkipOperand(ref body, thisOpCode);
+						body.SkipOperand(thisOpCode);
 						bitset[body.Offset] = IsUnconditionalBranch(thisOpCode);
 						break;
 				}
 			}
+
 			return (result, bitset);
 		}
 
@@ -298,7 +302,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (child.StartOffset <= offset && offset < child.EndOffset)
 					return child.GetInnermost(offset);
 			}
+
 			return this;
+		}
+
+		struct Branch
+		{
+			public Interval Source;
+			public int Target;
+
+			public Branch(int start, int end, int target)
+			{
+				this.Source = new Interval(start, end);
+				this.Target = target;
+			}
+
+			public override string ToString()
+			{
+				return $"[Branch Source={Source}, Target={Target}]";
+			}
 		}
 	}
 }

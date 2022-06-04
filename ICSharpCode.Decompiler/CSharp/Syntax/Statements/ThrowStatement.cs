@@ -32,7 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ThrowStatement : Statement
 	{
-		public static readonly TokenRole ThrowKeywordRole = new TokenRole("throw");
+		public static readonly TokenRole ThrowKeywordRole = new("throw");
+
+		public ThrowStatement()
+		{
+		}
+
+		public ThrowStatement(Expression expression)
+		{
+			AddChild(expression, Roles.Expression);
+		}
 
 		public CSharpTokenNode ThrowToken {
 			get { return GetChildByRole(ThrowKeywordRole); }
@@ -45,15 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
-		public ThrowStatement()
-		{
-		}
-
-		public ThrowStatement(Expression expression)
-		{
-			AddChild(expression, Roles.Expression);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -73,8 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ThrowStatement o = other as ThrowStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is ThrowStatement o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

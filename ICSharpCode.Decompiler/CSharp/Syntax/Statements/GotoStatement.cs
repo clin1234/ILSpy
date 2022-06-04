@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class GotoStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
+		public static readonly TokenRole GotoKeywordRole = new("goto");
 
 		public GotoStatement()
 		{
@@ -80,8 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			GotoStatement o = other as GotoStatement;
-			return o != null && MatchString(this.Label, o.Label);
+			return other is GotoStatement o && MatchString(this.Label, o.Label);
 		}
 	}
 
@@ -90,8 +89,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class GotoCaseStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
-		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
+		public static readonly TokenRole GotoKeywordRole = new("goto");
+		public static readonly TokenRole CaseKeywordRole = new("case");
 
 		public CSharpTokenNode GotoToken {
 			get { return GetChildByRole(GotoKeywordRole); }
@@ -130,8 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			GotoCaseStatement o = other as GotoCaseStatement;
-			return o != null && this.LabelExpression.DoMatch(o.LabelExpression, match);
+			return other is GotoCaseStatement o && this.LabelExpression.DoMatch(o.LabelExpression, match);
 		}
 	}
 
@@ -140,8 +138,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class GotoDefaultStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
-		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
+		public static readonly TokenRole GotoKeywordRole = new("goto");
+		public static readonly TokenRole DefaultKeywordRole = new("default");
 
 		public CSharpTokenNode GotoToken {
 			get { return GetChildByRole(GotoKeywordRole); }
@@ -172,8 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			GotoDefaultStatement o = other as GotoDefaultStatement;
-			return o != null;
+			return other is GotoDefaultStatement o;
 		}
 	}
 }

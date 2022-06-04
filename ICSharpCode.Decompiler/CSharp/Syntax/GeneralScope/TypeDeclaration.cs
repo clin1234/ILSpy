@@ -34,10 +34,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Struct,
 		Interface,
 		Enum,
+
 		/// <summary>
 		/// C# 9 'record class'
 		/// </summary>
 		RecordClass,
+
 		/// <summary>
 		/// C# 10 'record struct'
 		/// </summary>
@@ -49,6 +51,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeDeclaration : EntityDeclaration
 	{
+		ClassType classType;
+
 		public override NodeType NodeType {
 			get { return NodeType.TypeDeclaration; }
 		}
@@ -56,8 +60,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.TypeDefinition; }
 		}
-
-		ClassType classType;
 
 		public CSharpTokenNode TypeKeyword {
 			get {
@@ -99,7 +101,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CSharpTokenNode RChevronToken {
 			get { return GetChildByRole(Roles.RChevron); }
 		}
-
 
 
 		public CSharpTokenNode ColonToken {
@@ -149,12 +150,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeDeclaration o = other as TypeDeclaration;
-			return o != null && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)
-				&& this.BaseTypes.DoMatch(o.BaseTypes, match) && this.Constraints.DoMatch(o.Constraints, match)
-				&& this.PrimaryConstructorParameters.DoMatch(o.PrimaryConstructorParameters, match)
-				&& this.Members.DoMatch(o.Members, match);
+			return other is TypeDeclaration o && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
+			       && this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)
+			       && this.BaseTypes.DoMatch(o.BaseTypes, match) && this.Constraints.DoMatch(o.Constraints, match)
+			       && this.PrimaryConstructorParameters.DoMatch(o.PrimaryConstructorParameters, match)
+			       && this.Members.DoMatch(o.Members, match);
 		}
 	}
 }

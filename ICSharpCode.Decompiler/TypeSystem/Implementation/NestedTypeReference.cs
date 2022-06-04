@@ -26,9 +26,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class NestedTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference declaringTypeRef;
-		readonly string name;
-		readonly int additionalTypeParameterCount;
 		readonly bool? isReferenceType;
 
 		/// <summary>
@@ -41,64 +38,55 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <paramref name="declaringTypeRef"/> must be exactly the (unbound) declaring type, not a derived type, not a parameterized type.
 		/// NestedTypeReference thus always resolves to a type definition, never to (partially) parameterized types.
 		/// </remarks>
-		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount, bool? isReferenceType = null)
+		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount,
+			bool? isReferenceType = null)
 		{
-			if (declaringTypeRef == null)
-				throw new ArgumentNullException(nameof(declaringTypeRef));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.declaringTypeRef = declaringTypeRef;
-			this.name = name;
-			this.additionalTypeParameterCount = additionalTypeParameterCount;
+			this.DeclaringTypeReference = declaringTypeRef ?? throw new ArgumentNullException(nameof(declaringTypeRef));
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.AdditionalTypeParameterCount = additionalTypeParameterCount;
 			this.isReferenceType = isReferenceType;
 		}
 
-		public ITypeReference DeclaringTypeReference {
-			get { return declaringTypeRef; }
-		}
+		public ITypeReference DeclaringTypeReference { get; }
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name { get; }
 
-		public int AdditionalTypeParameterCount {
-			get { return additionalTypeParameterCount; }
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			ITypeDefinition declaringType = declaringTypeRef.Resolve(context) as ITypeDefinition;
-			if (declaringType != null)
-			{
-				int tpc = declaringType.TypeParameterCount;
-				foreach (IType type in declaringType.NestedTypes)
-				{
-					if (type.Name == name && type.TypeParameterCount == tpc + additionalTypeParameterCount)
-						return type;
-				}
-			}
-			return new UnknownType(null, name, additionalTypeParameterCount);
-		}
-
-		public override string ToString()
-		{
-			if (additionalTypeParameterCount == 0)
-				return declaringTypeRef + "+" + name;
-			else
-				return declaringTypeRef + "+" + name + "`" + additionalTypeParameterCount;
-		}
+		public int AdditionalTypeParameterCount { get; }
 
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return declaringTypeRef.GetHashCode() ^ name.GetHashCode() ^ additionalTypeParameterCount;
+			return DeclaringTypeReference.GetHashCode() ^ Name.GetHashCode() ^ AdditionalTypeParameterCount;
 		}
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			NestedTypeReference o = other as NestedTypeReference;
-			return o != null && declaringTypeRef == o.declaringTypeRef && name == o.name
-				&& additionalTypeParameterCount == o.additionalTypeParameterCount
-				&& isReferenceType == o.isReferenceType;
+			return other is NestedTypeReference o && DeclaringTypeReference == o.DeclaringTypeReference &&
+			       Name == o.Name
+			       && AdditionalTypeParameterCount == o.AdditionalTypeParameterCount
+			       && isReferenceType == o.isReferenceType;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			if (DeclaringTypeReference.Resolve(context) is ITypeDefinition declaringType)
+			{
+				int tpc = declaringType.TypeParameterCount;
+				foreach (IType type in declaringType.NestedTypes)
+				{
+					if (type.Name == Name && type.TypeParameterCount == tpc + AdditionalTypeParameterCount)
+						return type;
+				}
+			}
+
+			return new UnknownType(null, Name, AdditionalTypeParameterCount);
+		}
+
+		public override string ToString()
+		{
+			if (AdditionalTypeParameterCount == 0)
+				return DeclaringTypeReference + "+" + Name;
+			else
+				return DeclaringTypeReference + "+" + Name + "`" + AdditionalTypeParameterCount;
 		}
 	}
 }

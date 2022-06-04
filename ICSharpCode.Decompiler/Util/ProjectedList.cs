@@ -25,17 +25,13 @@ namespace ICSharpCode.Decompiler.Util
 	public sealed class ProjectedList<TInput, TOutput> : IReadOnlyList<TOutput> where TOutput : class
 	{
 		readonly IList<TInput> input;
-		readonly Func<TInput, TOutput> projection;
 		readonly TOutput?[] items;
+		readonly Func<TInput, TOutput> projection;
 
 		public ProjectedList(IList<TInput> input, Func<TInput, TOutput> projection)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			if (projection == null)
-				throw new ArgumentNullException(nameof(projection));
-			this.input = input;
-			this.projection = projection;
+			this.input = input ?? throw new ArgumentNullException(nameof(input));
+			this.projection = projection ?? throw new ArgumentNullException(nameof(projection));
 			this.items = new TOutput?[input.Count];
 		}
 
@@ -46,6 +42,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					return output;
 				}
+
 				return LazyInit.GetOrSet(ref items[index], projection(input[index]));
 			}
 		}
@@ -70,20 +67,16 @@ namespace ICSharpCode.Decompiler.Util
 
 	public sealed class ProjectedList<TContext, TInput, TOutput> : IReadOnlyList<TOutput> where TOutput : class
 	{
-		readonly IList<TInput> input;
 		readonly TContext context;
-		readonly Func<TContext, TInput, TOutput> projection;
+		readonly IList<TInput> input;
 		readonly TOutput?[] items;
+		readonly Func<TContext, TInput, TOutput> projection;
 
 		public ProjectedList(TContext context, IList<TInput> input, Func<TContext, TInput, TOutput> projection)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			if (projection == null)
-				throw new ArgumentNullException(nameof(projection));
-			this.input = input;
+			this.input = input ?? throw new ArgumentNullException(nameof(input));
 			this.context = context;
-			this.projection = projection;
+			this.projection = projection ?? throw new ArgumentNullException(nameof(projection));
 			this.items = new TOutput?[input.Count];
 		}
 
@@ -94,6 +87,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					return output;
 				}
+
 				return LazyInit.GetOrSet(ref items[index], projection(context, input[index]));
 			}
 		}

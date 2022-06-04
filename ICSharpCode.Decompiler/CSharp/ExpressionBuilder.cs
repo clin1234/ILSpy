@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection.Metadata;
 using System.Threading;
 
@@ -34,8 +35,13 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
-using ExpressionType = System.Linq.Expressions.ExpressionType;
+using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
+using ConditionalExpression = ICSharpCode.Decompiler.CSharp.Syntax.ConditionalExpression;
+using Expression = ICSharpCode.Decompiler.CSharp.Syntax.Expression;
+using InvocationExpression = ICSharpCode.Decompiler.CSharp.Syntax.InvocationExpression;
+using LambdaExpression = ICSharpCode.Decompiler.CSharp.Syntax.LambdaExpression;
 using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
+using SwitchExpression = ICSharpCode.Decompiler.CSharp.Syntax.SwitchExpression;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -71,18 +77,22 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </remarks>
 	sealed class ExpressionBuilder : ILVisitor<TranslationContext, TranslatedExpression>
 	{
-		internal readonly StatementBuilder statementBuilder;
-		readonly IDecompilerTypeSystem typeSystem;
-		internal readonly ITypeResolveContext decompilationContext;
-		internal readonly ILFunction currentFunction;
-		internal readonly ICompilation compilation;
-		internal readonly CSharpResolver resolver;
 		internal readonly TypeSystemAstBuilder astBuilder;
-		internal readonly TypeInference typeInference;
-		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
+		internal readonly ICompilation compilation;
+		internal readonly ILFunction currentFunction;
+		internal readonly ITypeResolveContext decompilationContext;
 
-		public ExpressionBuilder(StatementBuilder statementBuilder, IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
+		readonly HashSet<ILVariable> loadedVariablesSet = new();
+		internal readonly CSharpResolver resolver;
+		internal readonly DecompilerSettings settings;
+		internal readonly StatementBuilder statementBuilder;
+		internal readonly TypeInference typeInference;
+		readonly IDecompilerTypeSystem typeSystem;
+
+		public ExpressionBuilder(StatementBuilder statementBuilder, IDecompilerTypeSystem typeSystem,
+			ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings,
+			CancellationToken cancellationToken)
 		{
 			Debug.Assert(decompilationContext != null);
 			this.statementBuilder = statementBuilder;
@@ -92,12 +102,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
-			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainModule, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
-			this.astBuilder = new TypeSystemAstBuilder(resolver);
-			this.astBuilder.AlwaysUseShortTypeNames = true;
-			this.astBuilder.AddResolveResultAnnotations = true;
-			this.astBuilder.ShowAttributes = true;
-			this.astBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
+			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainModule, null,
+				decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
+			this.astBuilder = new TypeSystemAstBuilder(resolver) {
+				AlwaysUseShortTypeNames = true,
+				AddResolveResultAnnotations = true,
+				ShowAttributes = true,
+				UseNullableSpecifierForValueTypes = settings.LiftNullables
+			};
 			this.typeInference = new TypeInference(compilation) { Algorithm = TypeInferenceAlgorithm.Improved };
 		}
 
@@ -119,7 +131,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (rr.Type.IsCSharpSmallIntegerType())
 				{
-					expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
+					expr = new CastExpression(
+						new PrimitiveType(
+							KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
 					// Note: no unchecked annotation necessary, because the constant was folded to be in-range
 				}
 				else if (rr.Type.IsCSharpNativeIntegerType())
@@ -128,12 +142,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					// Note: no unchecked annotation necessary, because the rr wouldn't be a constant if the value wasn't in-range on 32bit
 				}
 			}
+
 			var exprRR = expr.Annotation<ResolveResult>();
 			if (exprRR == null)
 			{
 				exprRR = rr;
 				expr.AddAnnotation(rr);
 			}
+
 			return new ExpressionWithResolveResult(expr, exprRR);
 		}
 
@@ -155,20 +171,23 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(inst != null);
 			cancellationToken.ThrowIfCancellationRequested();
-			TranslationContext context = new TranslationContext {
+			TranslationContext context = new() {
 				TypeHint = typeHint ?? SpecialType.UnknownType
 			};
 			var cexpr = inst.AcceptVisitor(this, context);
 #if DEBUG
-			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown && inst.ResultType != StackType.Unknown && cexpr.Type.Kind != TypeKind.None)
+			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown &&
+			    inst.ResultType != StackType.Unknown && cexpr.Type.Kind != TypeKind.None)
 			{
 				// Validate the Translate post-condition (documented at beginning of this file):
 				if (inst.ResultType.IsIntegerType())
 				{
-					Debug.Assert(cexpr.Type.GetStackType().IsIntegerType(), "IL instructions of integer type must convert into C# expressions of integer type");
-					Debug.Assert(cexpr.Type.GetSign() != Sign.None, "Must have a sign specified for zero/sign-extension");
+					Debug.Assert(cexpr.Type.GetStackType().IsIntegerType(),
+						"IL instructions of integer type must convert into C# expressions of integer type");
+					Debug.Assert(cexpr.Type.GetSign() != Sign.None,
+						"Must have a sign specified for zero/sign-extension");
 				}
-				else if (inst is ILiftableInstruction liftable && liftable.IsLifted)
+				else if (inst is ILiftableInstruction { IsLifted: true } liftable)
 				{
 					if (liftable.UnderlyingResultType != StackType.Unknown)
 					{
@@ -176,8 +195,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						IType underlying = NullableType.GetUnderlyingType(cexpr.Type);
 						if (liftable.UnderlyingResultType.IsIntegerType())
 						{
-							Debug.Assert(underlying.GetStackType().IsIntegerType(), "IL instructions of integer type must convert into C# expressions of integer type");
-							Debug.Assert(underlying.GetSign() != Sign.None, "Must have a sign specified for zero/sign-extension");
+							Debug.Assert(underlying.GetStackType().IsIntegerType(),
+								"IL instructions of integer type must convert into C# expressions of integer type");
+							Debug.Assert(underlying.GetSign() != Sign.None,
+								"Must have a sign specified for zero/sign-extension");
 						}
 						else
 						{
@@ -187,7 +208,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (inst.ResultType == StackType.Ref)
 				{
-					Debug.Assert(cexpr.Type.GetStackType() == StackType.Ref || cexpr.Type.GetStackType().IsIntegerType());
+					Debug.Assert(
+						cexpr.Type.GetStackType() == StackType.Ref || cexpr.Type.GetStackType().IsIntegerType());
 				}
 				else
 				{
@@ -206,6 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				expr = expr.ConvertTo(FindType(StackType.I4, expr.Type.GetSign()), this);
 			}
+
 			return expr.ConvertToBoolean(this, negate);
 		}
 
@@ -275,6 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return definition;
 				}
 			}
+
 			return null;
 		}
 
@@ -284,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			if (member.IsStatic)
 				return !IsCurrentOrContainingType(member.DeclaringTypeDefinition);
-			return !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression);
+			return target.Expression is not (ThisReferenceExpression or BaseReferenceExpression);
 		}
 
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction targetInstruction = null)
@@ -299,9 +323,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			// It is easier to solve this special case here than in PatternStatementTransform, because here we perform all resolver checks.
 			// It feels a bit hacky, though.
 			if (settings.AutomaticProperties
-				&& PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)
-				&& decompilationContext.CurrentMember != property
-				&& (property.CanSet || settings.GetterOnlyAutomaticProperties))
+			    && PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)
+			    && decompilationContext.CurrentMember != property
+			    && (property.CanSet || settings.GetterOnlyAutomaticProperties))
 			{
 				requireTarget = RequiresQualifier(property, target);
 			}
@@ -309,6 +333,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				requireTarget = RequiresQualifier(field, target);
 			}
+
 			bool targetCasted = false;
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
@@ -316,14 +341,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (targetResolveResult == null)
 				{
-					result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
+					result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance,
+						isInvocationTarget: false) as MemberResolveResult;
 				}
 				else
 				{
-					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-					result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
+					var lookup = new MemberLookup(resolver.CurrentTypeDefinition,
+						resolver.CurrentTypeDefinition.ParentModule);
+					result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance,
+						isInvocation: false) as MemberResolveResult;
 				}
-				return result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure);
+
+				return result == null || result.IsError ||
+				       !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure);
 			}
 
 			MemberResolveResult mrr;
@@ -350,10 +380,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			if (mrr == null)
-			{
-				mrr = new MemberResolveResult(target.ResolveResult, field);
-			}
+			mrr ??= new MemberResolveResult(target.ResolveResult, field);
 
 			if (requireTarget)
 			{
@@ -403,6 +430,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return ErrorExpression("isinst with value type is only supported in some contexts");
 				}
 			}
+
 			arg = UnwrapBoxingConversion(arg);
 			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
@@ -412,9 +440,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static TranslatedExpression UnwrapBoxingConversion(TranslatedExpression arg)
 		{
 			if (arg.Expression is CastExpression cast
-					&& arg.Type.IsKnownType(KnownTypeCode.Object)
-					&& arg.ResolveResult is ConversionResolveResult crr
-					&& crr.Conversion.IsBoxingConversion)
+			    && arg.Type.IsKnownType(KnownTypeCode.Object)
+			    && arg.ResolveResult is ConversionResolveResult crr
+			    && crr.Conversion.IsBoxingConversion)
 			{
 				// When 'is' or 'as' is used with a value type or type parameter,
 				// the C# compiler implicitly boxes the input.
@@ -429,15 +457,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			var type = inst.Method.DeclaringType;
 			if (type.IsKnownType(KnownTypeCode.SpanOfT) || type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
 			{
-				if (inst.Arguments.Count == 2 && inst.Arguments[0] is Block b && b.Kind == BlockKind.StackAllocInitializer)
+				if (inst.Arguments.Count == 2 && inst.Arguments[0] is Block { Kind: BlockKind.StackAllocInitializer } b)
 				{
 					return TranslateStackAllocInitializer(b, type.TypeArguments[0]);
 				}
 			}
+
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
 
-		protected internal override TranslatedExpression VisitLdVirtDelegate(LdVirtDelegate inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitLdVirtDelegate(LdVirtDelegate inst,
+			TranslationContext context)
 		{
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
@@ -445,16 +475,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitNewArr(NewArr inst, TranslationContext context)
 		{
 			var dimensions = inst.Indices.Count;
-			var args = inst.Indices.Select(arg => TranslateArrayIndex(arg)).ToArray();
+			var args = inst.Indices.Select(TranslateArrayIndex).ToArray();
 			var expr = new ArrayCreateExpression { Type = ConvertType(inst.Type) };
 			if (expr.Type is ComposedType ct)
 			{
 				// change "new (int[,])[10] to new int[10][,]"
 				ct.ArraySpecifiers.MoveTo(expr.AdditionalArraySpecifiers);
 			}
+
 			expr.Arguments.AddRange(args.Select(arg => arg.Expression));
 			return expr.WithILInstruction(inst)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), Empty<ResolveResult>.Array));
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions),
+					args.Select(a => a.ResolveResult).ToList(), Empty<ResolveResult>.Array));
 		}
 
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst, TranslationContext context)
@@ -463,7 +495,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst).WithRR(new ResolveResult(new PointerType(elementType)));
 		}
 
-		protected internal override TranslatedExpression VisitLocAllocSpan(LocAllocSpan inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitLocAllocSpan(LocAllocSpan inst,
+			TranslationContext context)
 		{
 			return TranslateLocAllocSpan(inst, context.TypeHint, out _)
 				.WithILInstruction(inst).WithRR(new ResolveResult(inst.Type));
@@ -485,7 +518,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression countExpression;
 			PointerType pointerType;
 			if (inst.Argument.MatchBinaryNumericInstruction(BinaryNumericOperator.Mul, out var left, out var right)
-				&& right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend).MatchSizeOf(out elementType))
+			    && right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend)
+				    .MatchSizeOf(out elementType))
 			{
 				// Determine the element type from the sizeof
 				countExpression = Translate(left.UnwrapConv(ConversionKind.ZeroExtend));
@@ -496,10 +530,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Determine the element type from the expected pointer type in this context
 				pointerType = typeHint as PointerType;
 				if (pointerType != null && GetPointerArithmeticOffset(
-						inst.Argument, Translate(inst.Argument),
-						pointerType.ElementType, checkForOverflow: true,
-						unwrapZeroExtension: true
-					) is TranslatedExpression offset)
+					    inst.Argument, Translate(inst.Argument),
+					    pointerType.ElementType, checkForOverflow: true,
+					    unwrapZeroExtension: true
+				    ) is TranslatedExpression offset)
 				{
 					countExpression = offset;
 					elementType = pointerType.ElementType;
@@ -511,6 +545,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					countExpression = Translate(inst.Argument);
 				}
 			}
+
 			countExpression = countExpression.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
 			return new StackAllocExpression {
 				Type = ConvertType(elementType),
@@ -535,6 +570,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst.Value
 				);
 			}
+
 			rr = AdjustConstantToType(rr, context.TypeHint);
 			return ConvertConstantValue(
 				rr,
@@ -560,6 +596,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst.Value
 				);
 			}
+
 			rr = AdjustConstantToType(rr, context.TypeHint);
 			return ConvertConstantValue(
 				rr,
@@ -572,19 +609,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (parent is Conv conv)
 				parent = conv.Parent;
-			if (value >= 0 && value <= 9)
+			if (value is >= 0 and <= 9)
 				return false;
 			if (value < 0 && type.GetSign() == Sign.Signed)
 				return false;
 			switch (parent)
 			{
 				case BinaryNumericInstruction bni:
-					if (bni.Operator == BinaryNumericOperator.BitAnd
-						|| bni.Operator == BinaryNumericOperator.BitOr
-						|| bni.Operator == BinaryNumericOperator.BitXor)
+					if (bni.Operator is BinaryNumericOperator.BitAnd or BinaryNumericOperator.BitOr
+					    or BinaryNumericOperator.BitXor)
 						return true;
 					break;
 			}
+
 			return false;
 		}
 
@@ -618,7 +655,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			return GetDefaultValueExpression(SpecialType.NullType).WithILInstruction(inst);
 		}
 
-		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst,
+			TranslationContext context)
 		{
 			return GetDefaultValueExpression(inst.Type).WithILInstruction(inst);
 		}
@@ -640,6 +678,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				constantType = type;
 				constantValue = CSharpResolver.GetDefaultValue(type);
 			}
+
 			return expr.WithRR(new ConstantResolveResult(constantType, constantValue));
 		}
 
@@ -656,7 +695,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type));
 			return new MemberReferenceExpression(typeofExpr, "TypeHandle")
 				.WithILInstruction(inst)
-				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
+				.WithRR(new TypeOfResolveResult(
+					compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
 		}
 
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
@@ -665,10 +705,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			var argUType = NullableType.GetUnderlyingType(argument.Type);
 
 			if (argUType.GetStackType().GetSize() < inst.UnderlyingResultType.GetSize()
-				|| argUType.Kind == TypeKind.Enum && argUType.IsSmallIntegerType()
-				|| (argUType.GetStackType() == StackType.I && !argUType.IsCSharpNativeIntegerType())
-				|| argUType.IsKnownType(KnownTypeCode.Boolean)
-				|| argUType.IsKnownType(KnownTypeCode.Char))
+			    || argUType.Kind == TypeKind.Enum && argUType.IsSmallIntegerType()
+			    || (argUType.GetStackType() == StackType.I && !argUType.IsCSharpNativeIntegerType())
+			    || argUType.IsKnownType(KnownTypeCode.Boolean)
+			    || argUType.IsKnownType(KnownTypeCode.Char))
 			{
 				// Argument is undersized (even after implicit integral promotion to I4)
 				// -> we need to perform sign/zero-extension before the BitNot.
@@ -680,11 +720,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					sign = argUType.GetSign();
 				}
+
 				IType targetType = FindArithmeticType(inst.UnderlyingResultType, sign);
 				if (inst.IsLifted)
 				{
 					targetType = NullableType.Create(compilation, targetType);
 				}
+
 				argument = argument.ConvertTo(targetType, this);
 			}
 
@@ -697,12 +739,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			// "!expr" implicitly converts to bool so we can remove the cast;
 			// but only if doing so wouldn't cause us to call a user-defined "operator !"
-			expr = expr.UnwrapImplicitBoolConversion(type => !type.GetMethods(m => m.IsOperator && m.Name == "op_LogicalNot").Any());
+			expr = expr.UnwrapImplicitBoolConversion(type =>
+				!type.GetMethods(m => m.IsOperator && m.Name == "op_LogicalNot").Any());
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
-				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not, expr.ResolveResult));
+				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not,
+					expr.ResolveResult));
 		}
-
-		readonly HashSet<ILVariable> loadedVariablesSet = new HashSet<ILVariable>();
 
 		protected internal override TranslatedExpression VisitLdLoc(LdLoc inst, TranslationContext context)
 		{
@@ -710,6 +752,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				loadedVariablesSet.Add(inst.Variable);
 			}
+
 			return ConvertVariable(inst.Variable).WithILInstruction(inst);
 		}
 
@@ -731,8 +774,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Stack slots in the ILAst have inaccurate types (e.g. System.Object for StackType.O)
 				// so we should replace them with more accurate types where possible:
 				if (CanUseTypeForStackSlot(inst.Variable, translatedValue.Type)
-						&& inst.Variable.StackType == translatedValue.Type.GetStackType()
-						&& translatedValue.Type.Kind != TypeKind.Null)
+				    && inst.Variable.StackType == translatedValue.Type.GetStackType()
+				    && translatedValue.Type.Kind != TypeKind.Null)
 				{
 					inst.Variable.Type = translatedValue.Type;
 				}
@@ -741,6 +784,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst.Variable.Type = type;
 				}
 			}
+
 			var lhs = ConvertVariable(inst.Variable).WithoutILInstruction();
 			if (lhs.Expression is DirectionExpression dirExpr && lhs.ResolveResult is ByReferenceResolveResult lhsRefRR)
 			{
@@ -748,7 +792,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				lhs = lhs.UnwrapChild(dirExpr.Expression);
 				translatedValue = translatedValue.ConvertTo(lhsRefRR.Type, this, allowImplicitConversion: true);
 				var assign = new AssignmentExpression(lhs.Expression, translatedValue.Expression)
-					.WithRR(new OperatorResolveResult(lhs.Type, ExpressionType.Assign, lhsRefRR, translatedValue.ResolveResult));
+					.WithRR(new OperatorResolveResult(lhs.Type, ExpressionType.Assign, lhsRefRR,
+						translatedValue.ResolveResult));
 				return new DirectionExpression(FieldDirection.Ref, assign)
 					.WithoutILInstruction().WithRR(lhsRefRR);
 			}
@@ -760,9 +805,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool CanUseTypeForStackSlot(ILVariable v, IType type)
 			{
 				return v.IsSingleDefinition
-					|| IsOtherValueType(type)
-					|| v.StackType == StackType.Ref
-					|| AllStoresUseConsistentType(v.StoreInstructions, type);
+				       || IsOtherValueType(type)
+				       || v.StackType == StackType.Ref
+				       || AllStoresUseConsistentType(v.StoreInstructions, type);
 			}
 
 			bool IsOtherValueType(IType type)
@@ -775,12 +820,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				expectedType = expectedType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
 				foreach (var store in storeInstructions)
 				{
-					if (!(store is StLoc stloc))
+					if (store is not StLoc stloc)
 						return false;
 					IType type = stloc.Value.InferType(compilation).AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
 					if (!type.Equals(expectedType))
 						return false;
 				}
+
 				return true;
 			}
 		}
@@ -798,8 +844,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new OperatorResolveResult(targetType, ExpressionType.Not, arg.ResolveResult))
 						.WithILInstruction(inst);
 				}
+
 				return ErrorExpression("Nullable comparisons with three-valued-logic not supported in C#");
 			}
+
 			if (inst.InputType == StackType.Ref)
 			{
 				// Reference comparison using Unsafe intrinsics
@@ -815,12 +863,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 				var left = Translate(inst.Left);
 				var right = Translate(inst.Right);
-				if (left.Type.Kind != TypeKind.ByReference || !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(left.Type, right.Type))
+				if (left.Type.Kind != TypeKind.ByReference ||
+				    !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(left.Type, right.Type))
 				{
 					IType commonRefType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
 					left = left.ConvertTo(commonRefType, this);
 					right = right.ConvertTo(commonRefType, this);
 				}
+
 				IType boolType = compilation.FindType(KnownTypeCode.Boolean);
 				TranslatedExpression expr = CallUnsafeIntrinsic(
 					name: methodName,
@@ -833,8 +883,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					expr = new UnaryOperatorExpression(UnaryOperatorType.Not, expr)
 						.WithoutILInstruction().WithRR(new ResolveResult(boolType));
 				}
+
 				return expr;
 			}
+
 			if (inst.Kind.IsEqualityOrInequality())
 			{
 				var result = TranslateCeq(inst, out bool negateOutput);
@@ -881,6 +933,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					negateOutput = inst.Kind == ComparisonKind.Equality;
 					return left;
 				}
+
 				if (inst.Right.MatchLdcI4(1))
 				{
 					// 'b == 1' => 'b'
@@ -898,6 +951,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					negateOutput = inst.Kind == ComparisonKind.Equality;
 					return right;
 				}
+
 				if (inst.Left.MatchLdcI4(1))
 				{
 					// '1 == b' => 'b'
@@ -906,6 +960,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return right;
 				}
 			}
+
 			// Handle comparisons between unsafe pointers and null:
 			if (left.Type.Kind == TypeKind.Pointer && inst.Right.MatchLdcI(0))
 			{
@@ -936,10 +991,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 			}
 
-			OperatorResolveResult rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult) as OperatorResolveResult;
-			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
-				|| NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType
-				|| !rr.Type.IsKnownType(KnownTypeCode.Boolean))
+			if (resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult,
+				    right.ResolveResult) is not OperatorResolveResult rr || rr.IsError ||
+			    rr.UserDefinedOperatorMethod != null
+			    || NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType
+			    || !rr.Type.IsKnownType(KnownTypeCode.Boolean))
 			{
 				IType targetType;
 				if (inst.InputType == StackType.O)
@@ -963,10 +1019,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						targetType = FindType(inst.InputType, leftUType.GetSign());
 					}
 				}
+
 				if (inst.IsLifted)
 				{
 					targetType = NullableType.Create(compilation, targetType);
 				}
+
 				if (targetType.Equals(left.Type))
 				{
 					right = right.ConvertTo(targetType, this);
@@ -975,11 +1033,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					left = left.ConvertTo(targetType, this);
 				}
+
 				rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(),
 					left.ResolveResult, right.ResolveResult) as OperatorResolveResult;
 				if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
-					|| NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType
-					|| !rr.Type.IsKnownType(KnownTypeCode.Boolean))
+				    || NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType
+				    || !rr.Type.IsKnownType(KnownTypeCode.Boolean))
 				{
 					// If converting one input wasn't sufficient, convert both:
 					left = left.ConvertTo(targetType, this);
@@ -990,6 +1049,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						left.ResolveResult, right.ResolveResult);
 				}
 			}
+
 			negateOutput = false;
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
@@ -1001,11 +1061,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
 			// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
 			if (left.ResolveResult.IsCompileTimeConstant &&
-				left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
-				(left.ResolveResult.ConstantValue as int?) == 0 &&
-				NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
-				right.Expression is BinaryOperatorExpression binaryExpr &&
-				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
+			    left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
+			    (left.ResolveResult.ConstantValue as int?) == 0 &&
+			    NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
+			    right.Expression is BinaryOperatorExpression { Operator: BinaryOperatorType.BitwiseAnd })
 			{
 				return AdjustConstantExpressionToType(left, compilation.FindType(KnownTypeCode.Int32));
 			}
@@ -1018,8 +1077,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (lhs.Type.Kind == TypeKind.Null)
 				ExtensionMethods.Swap(ref lhs, ref rhs);
 			return rhs.Type.Kind == TypeKind.Null
-				&& (lhs.Type.Kind == TypeKind.Delegate || lhs.Type.IsKnownType(KnownTypeCode.String))
-				&& lhs.Type.GetDefinition() != decompilationContext.CurrentTypeDefinition;
+			       && (lhs.Type.Kind == TypeKind.Delegate || lhs.Type.IsKnownType(KnownTypeCode.String))
+			       && lhs.Type.GetDefinition() != decompilationContext.CurrentTypeDefinition;
 		}
 
 		ExpressionWithResolveResult CreateBuiltinBinaryOperator(
@@ -1027,10 +1086,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool checkForOverflow = false)
 		{
 			return new BinaryOperatorExpression(left.Expression, type, right.Expression)
-			.WithRR(new OperatorResolveResult(
-				compilation.FindType(KnownTypeCode.Boolean),
-				BinaryOperatorExpression.GetLinqNodeType(type, checkForOverflow),
-				left.ResolveResult, right.ResolveResult));
+				.WithRR(new OperatorResolveResult(
+					compilation.FindType(KnownTypeCode.Boolean),
+					BinaryOperatorExpression.GetLinqNodeType(type, checkForOverflow),
+					left.ResolveResult, right.ResolveResult));
 		}
 
 		/// <summary>
@@ -1056,9 +1115,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			right = AdjustConstantExpressionToType(right, left.Type);
 
 			// attempt comparison without any additional casts
-			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
-				as OperatorResolveResult;
-			if (rr != null && !rr.IsError)
+			if (resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult,
+				    right.ResolveResult) is OperatorResolveResult { IsError: false } rr)
 			{
 				IType compUType = NullableType.GetUnderlyingType(rr.Operands[0].Type);
 				if (compUType.GetSign() == inst.Sign && compUType.GetStackType() == inst.InputType)
@@ -1077,22 +1135,26 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					inputType = NullableType.Create(compilation, inputType);
 				}
+
 				left = left.ConvertTo(inputType, this);
 				right = right.ConvertTo(inputType, this);
 			}
+
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(compilation.FindType(TypeCode.Boolean),
-												  BinaryOperatorExpression.GetLinqNodeType(op, false),
-												  left.ResolveResult, right.ResolveResult));
+					BinaryOperatorExpression.GetLinqNodeType(op, false),
+					left.ResolveResult, right.ResolveResult));
 		}
 
-		protected internal override TranslatedExpression VisitThreeValuedBoolAnd(ThreeValuedBoolAnd inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitThreeValuedBoolAnd(ThreeValuedBoolAnd inst,
+			TranslationContext context)
 		{
 			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseAnd, ExpressionType.And);
 		}
 
-		protected internal override TranslatedExpression VisitThreeValuedBoolOr(ThreeValuedBoolOr inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitThreeValuedBoolOr(ThreeValuedBoolOr inst,
+			TranslationContext context)
 		{
 			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseOr, ExpressionType.Or);
 		}
@@ -1106,22 +1168,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (NullableType.IsNullable(left.Type))
 			{
 				left = left.ConvertTo(nullableBoolType, this);
-				if (NullableType.IsNullable(right.Type))
-				{
-					right = right.ConvertTo(nullableBoolType, this);
-				}
-				else
-				{
-					right = right.ConvertTo(boolType, this);
-				}
+				right = right.ConvertTo(NullableType.IsNullable(right.Type) ? nullableBoolType : boolType, this);
 			}
 			else
 			{
 				left = left.ConvertTo(boolType, this);
 				right = right.ConvertTo(nullableBoolType, this);
 			}
+
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
-				.WithRR(new OperatorResolveResult(nullableBoolType, eop, null, true, new[] { left.ResolveResult, right.ResolveResult }))
+				.WithRR(new OperatorResolveResult(nullableBoolType, eop, null, true,
+					new[] { left.ResolveResult, right.ResolveResult }))
 				.WithILInstruction(inst);
 		}
 
@@ -1132,10 +1189,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ThrowResolveResult());
 		}
 
-		protected internal override TranslatedExpression VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst,
+			TranslationContext context)
 		{
-			var left = Translate(inst.Left, inst.Method.Parameters[0].Type).ConvertTo(inst.Method.Parameters[0].Type, this);
-			var right = Translate(inst.Right, inst.Method.Parameters[1].Type).ConvertTo(inst.Method.Parameters[1].Type, this);
+			var left = Translate(inst.Left, inst.Method.Parameters[0].Type)
+				.ConvertTo(inst.Method.Parameters[0].Type, this);
+			var right = Translate(inst.Right, inst.Method.Parameters[1].Type)
+				.ConvertTo(inst.Method.Parameters[1].Type, this);
 			BinaryOperatorType op;
 			if (inst.Method.Name == "op_BitwiseAnd")
 			{
@@ -1149,8 +1209,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				throw new InvalidOperationException("Invalid method name");
 			}
+
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
-				.WithRR(new InvocationResolveResult(null, inst.Method, new ResolveResult[] { left.ResolveResult, right.ResolveResult }))
+				.WithRR(new InvocationResolveResult(null, inst.Method,
+					new[] { left.ResolveResult, right.ResolveResult }))
 				.WithILInstruction(inst);
 		}
 
@@ -1158,37 +1220,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			right = right.ConvertTo(left.Type, this, allowImplicitConversion: true);
 			return new AssignmentExpression(left.Expression, right.Expression)
-				.WithRR(new OperatorResolveResult(left.Type, ExpressionType.Assign, left.ResolveResult, right.ResolveResult));
+				.WithRR(new OperatorResolveResult(left.Type, ExpressionType.Assign, left.ResolveResult,
+					right.ResolveResult));
 		}
 
-		protected internal override TranslatedExpression VisitBinaryNumericInstruction(BinaryNumericInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitBinaryNumericInstruction(BinaryNumericInstruction inst,
+			TranslationContext context)
 		{
-			switch (inst.Operator)
-			{
-				case BinaryNumericOperator.Add:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.Add, context);
-				case BinaryNumericOperator.Sub:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.Subtract, context);
-				case BinaryNumericOperator.Mul:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply, context);
-				case BinaryNumericOperator.Div:
-					return HandlePointerSubtraction(inst)
-						?? HandleBinaryNumeric(inst, BinaryOperatorType.Divide, context);
-				case BinaryNumericOperator.Rem:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus, context);
-				case BinaryNumericOperator.BitAnd:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseAnd, context);
-				case BinaryNumericOperator.BitOr:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr, context);
-				case BinaryNumericOperator.BitXor:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr, context);
-				case BinaryNumericOperator.ShiftLeft:
-					return HandleShift(inst, BinaryOperatorType.ShiftLeft);
-				case BinaryNumericOperator.ShiftRight:
-					return HandleShift(inst, BinaryOperatorType.ShiftRight);
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return inst.Operator switch {
+				BinaryNumericOperator.Add => HandleBinaryNumeric(inst, BinaryOperatorType.Add, context),
+				BinaryNumericOperator.Sub => HandleBinaryNumeric(inst, BinaryOperatorType.Subtract, context),
+				BinaryNumericOperator.Mul => HandleBinaryNumeric(inst, BinaryOperatorType.Multiply, context),
+				BinaryNumericOperator.Div => HandlePointerSubtraction(inst) ??
+				                             HandleBinaryNumeric(inst, BinaryOperatorType.Divide, context),
+				BinaryNumericOperator.Rem => HandleBinaryNumeric(inst, BinaryOperatorType.Modulus, context),
+				BinaryNumericOperator.BitAnd => HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseAnd, context),
+				BinaryNumericOperator.BitOr => HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr, context),
+				BinaryNumericOperator.BitXor => HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr, context),
+				BinaryNumericOperator.ShiftLeft => HandleShift(inst, BinaryOperatorType.ShiftLeft),
+				BinaryNumericOperator.ShiftRight => HandleShift(inst, BinaryOperatorType.ShiftRight),
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		/// <summary>
@@ -1199,9 +1251,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Returns null if 'inst' is not performing pointer arithmetic.
 		/// 'ptr - ptr' is not handled here, but in HandlePointerSubtraction()!
 		/// </summary>
-		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
+		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left,
+			TranslatedExpression right)
 		{
-			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
+			if (inst.Operator is not (BinaryNumericOperator.Add or BinaryNumericOperator.Sub))
 				return null;
 			if (inst.CheckForOverflow || inst.IsLifted)
 				return null;
@@ -1228,12 +1281,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return null;
 			}
-			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType, inst.CheckForOverflow)
+
+			TranslatedExpression offsetExpr =
+				GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType.ElementType,
+					inst.CheckForOverflow)
 				?? FallBackToBytePointer();
 
 			if (left.Type.Kind == TypeKind.Pointer)
 			{
-				Debug.Assert(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub);
+				Debug.Assert(inst.Operator is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
 				left = left.ConvertTo(pointerType, this);
 				right = offsetExpr;
 			}
@@ -1244,7 +1300,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				left = offsetExpr;
 				right = right.ConvertTo(pointerType, this);
 			}
-			var operatorType = inst.Operator == BinaryNumericOperator.Add ? BinaryOperatorType.Add : BinaryOperatorType.Subtract;
+
+			var operatorType = inst.Operator == BinaryNumericOperator.Add
+				? BinaryOperatorType.Add
+				: BinaryOperatorType.Subtract;
 			return new BinaryOperatorExpression(left, operatorType, right)
 				.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(
@@ -1265,49 +1324,57 @@ namespace ICSharpCode.Decompiler.CSharp
 		///   ref - int
 		///   ref - ref
 		/// </summary>
-		TranslatedExpression? HandleManagedPointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
+		TranslatedExpression? HandleManagedPointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left,
+			TranslatedExpression right)
 		{
-			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
+			if (inst.Operator is not (BinaryNumericOperator.Add or BinaryNumericOperator.Sub))
 				return null;
 			if (inst.CheckForOverflow || inst.IsLifted)
 				return null;
-			if (inst.Operator == BinaryNumericOperator.Sub && inst.LeftInputType == StackType.Ref && inst.RightInputType == StackType.Ref)
+			if (inst.Operator == BinaryNumericOperator.Sub && inst.LeftInputType == StackType.Ref &&
+			    inst.RightInputType == StackType.Ref)
 			{
 				// ref - ref => i
-				return CallUnsafeIntrinsic("ByteOffset", new[] { 
+				return CallUnsafeIntrinsic("ByteOffset", new Expression[] {
 					// ByteOffset() expects the parameters the wrong way around, so order using named arguments
 					new NamedArgumentExpression("target", left.Expression),
 					new NamedArgumentExpression("origin", right.Expression)
 				}, compilation.FindType(KnownTypeCode.IntPtr), inst);
 			}
+
 			if (inst.LeftInputType == StackType.Ref && inst.RightInputType.IsIntegerType())
 			{
 				// ref [+-] int
-				var brt = left.Type as ByReferenceType;
-				if (brt == null)
+				if (left.Type is not ByReferenceType brt)
 				{
 					brt = GetReferenceType(left.Type);
 					left = left.ConvertTo(brt, this);
 				}
+
 				string name = (inst.Operator == BinaryNumericOperator.Sub ? "Subtract" : "Add");
-				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Right, brt?.ElementType, inst.CheckForOverflow);
+				ILInstruction offsetInst =
+					PointerArithmeticOffset.Detect(inst.Right, brt?.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
-					if (settings.FixedBuffers && inst.Operator == BinaryNumericOperator.Add && inst.Left is LdFlda ldFlda
-						&& ldFlda.Target is LdFlda nestedLdFlda && CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
+					if (settings.FixedBuffers && inst.Operator == BinaryNumericOperator.Add &&
+					    inst.Left is LdFlda { Target: LdFlda nestedLdFlda } &&
+					    CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
 					{
 						Expression fieldAccess = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
 						var mrr = (MemberResolveResult)fieldAccess.GetResolveResult();
 						fieldAccess.RemoveAnnotations<ResolveResult>();
-						var result = fieldAccess.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
+						var result = fieldAccess
+							.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
 							.WithILInstruction(inst);
 						right = TranslateArrayIndex(offsetInst);
 						TranslatedExpression expr = new IndexerExpression(result.Expression, right.Expression)
 							.WithILInstruction(inst)
 							.WithRR(new ResolveResult(elementType));
 						return new DirectionExpression(FieldDirection.Ref, expr)
-							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
+							.WithoutILInstruction()
+							.WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 					}
+
 					right = Translate(offsetInst);
 					right = ConvertArrayIndex(right, inst.RightInputType, allowIntPtr: true);
 					return CallUnsafeIntrinsic(name, new[] { left.Expression, right.Expression }, brt, inst);
@@ -1315,26 +1382,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 				{
 					right = ConvertArrayIndex(right, inst.RightInputType, allowIntPtr: true);
-					return CallUnsafeIntrinsic(name + "ByteOffset", new[] { left.Expression, right.Expression }, brt, inst);
+					return CallUnsafeIntrinsic(name + "ByteOffset", new[] { left.Expression, right.Expression }, brt,
+						inst);
 				}
 			}
 
 			if (inst.LeftInputType == StackType.I && inst.RightInputType == StackType.Ref
-				&& inst.Operator == BinaryNumericOperator.Add)
+			                                      && inst.Operator == BinaryNumericOperator.Add)
 			{
 				// int + ref
-				var brt = right.Type as ByReferenceType;
-				if (brt == null)
+				if (right.Type is not ByReferenceType brt)
 				{
 					brt = GetReferenceType(right.Type);
 					right = right.ConvertTo(brt, this);
 				}
-				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Left, brt.ElementType, inst.CheckForOverflow);
+
+				ILInstruction offsetInst =
+					PointerArithmeticOffset.Detect(inst.Left, brt.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
 					left = Translate(offsetInst);
 					left = ConvertArrayIndex(left, inst.LeftInputType, allowIntPtr: true);
-					return CallUnsafeIntrinsic("Add", new[] {
+					return CallUnsafeIntrinsic("Add", new Expression[] {
 						new NamedArgumentExpression("elementOffset", left),
 						new NamedArgumentExpression("source", right)
 					}, brt, inst);
@@ -1342,12 +1411,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 				{
 					left = ConvertArrayIndex(left, inst.LeftInputType, allowIntPtr: true);
-					return CallUnsafeIntrinsic("AddByteOffset", new[] {
+					return CallUnsafeIntrinsic("AddByteOffset", new Expression[] {
 						new NamedArgumentExpression("byteOffset", left.Expression),
 						new NamedArgumentExpression("source", right)
 					}, brt, inst);
 				}
 			}
+
 			return null;
 
 			ByReferenceType GetReferenceType(IType type)
@@ -1363,18 +1433,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
+		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType,
+			ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
 		{
 			var target = new MemberReferenceExpression {
-				Target = new TypeReferenceExpression(astBuilder.ConvertType(compilation.FindType(KnownTypeCode.Unsafe))),
+				Target =
+					new TypeReferenceExpression(astBuilder.ConvertType(compilation.FindType(KnownTypeCode.Unsafe))),
 				MemberName = name
 			};
 			if (typeArguments != null)
 			{
 				target.TypeArguments.AddRange(typeArguments.Select(astBuilder.ConvertType));
 			}
+
 			var invocationExpr = new InvocationExpression(target, arguments);
-			var invocation = inst != null ? invocationExpr.WithILInstruction(inst) : invocationExpr.WithoutILInstruction();
+			var invocation = inst != null
+				? invocationExpr.WithILInstruction(inst)
+				: invocationExpr.WithoutILInstruction();
 			if (returnType is ByReferenceType brt)
 			{
 				return WrapInRef(invocation.WithRR(new ResolveResult(brt.ElementType)), brt);
@@ -1392,10 +1467,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				// pointer arithmetic accepts all primitive integer types, but no enums etc.
 				expr = expr.ConvertTo(FindArithmeticType(expr.Type.GetStackType(), expr.Type.GetSign()), this);
 			}
+
 			return expr;
 		}
 
-		TranslatedExpression? GetPointerArithmeticOffset(ILInstruction byteOffsetInst, TranslatedExpression byteOffsetExpr,
+		TranslatedExpression? GetPointerArithmeticOffset(ILInstruction byteOffsetInst,
+			TranslatedExpression byteOffsetExpr,
 			IType pointerElementType, bool checkForOverflow, bool unwrapZeroExtension = false)
 		{
 			var countOffsetInst = PointerArithmeticOffset.Detect(byteOffsetInst, pointerElementType,
@@ -1405,6 +1482,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return null;
 			}
+
 			if (countOffsetInst == byteOffsetInst)
 			{
 				return EnsureIntegerType(byteOffsetExpr);
@@ -1429,7 +1507,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(inst.Operator == BinaryNumericOperator.Div);
 			if (inst.CheckForOverflow || inst.LeftInputType != StackType.I)
 				return null;
-			if (!(inst.Left is BinaryNumericInstruction sub && sub.Operator == BinaryNumericOperator.Sub))
+			if (inst.Left is not BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } sub)
 				return null;
 			if (sub.CheckForOverflow)
 				return null;
@@ -1448,6 +1526,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return null;
 			}
+
 			var left = Translate(sub.Left);
 			var right = Translate(sub.Right);
 			IType pointerType;
@@ -1471,6 +1550,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// -> not a pointer subtraction after all
 				return null;
 			}
+
 			// We got a pointer subtraction.
 			left = left.ConvertTo(pointerType, this);
 			right = right.ConvertTo(pointerType, this);
@@ -1480,9 +1560,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				left.ResolveResult, right.ResolveResult
 			);
 			var result = new BinaryOperatorExpression(
-				left.Expression, BinaryOperatorType.Subtract, right.Expression
-			).WithILInstruction(new[] { inst, sub })
-			 .WithRR(rr);
+					left.Expression, BinaryOperatorType.Subtract, right.Expression
+				).WithILInstruction(new[] { inst, sub })
+				.WithRR(rr);
 			return result;
 
 			bool IsMatchingPointerType(IType type)
@@ -1494,11 +1574,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					else if (elementSize > 0)
 						return PointerArithmeticOffset.ComputeSizeOf(pt.ElementType) == elementSize;
 				}
+
 				return false;
 			}
 		}
 
-		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op, TranslationContext context)
+		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op,
+			TranslationContext context)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var left = Translate(inst.Left, op.IsBitwise() ? context.TypeHint : null);
@@ -1510,6 +1592,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (ptrResult != null)
 					return ptrResult.Value;
 			}
+
 			if (left.Type.Kind == TypeKind.Pointer || right.Type.Kind == TypeKind.Pointer)
 			{
 				var ptrResult = HandlePointerArithmetic(inst, left, right);
@@ -1524,11 +1607,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				IType rightUType = NullableType.GetUnderlyingType(right.Type);
 				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64)
-					|| rightUType.IsCSharpSmallIntegerType() || rightUType.Kind == TypeKind.NInt)
+				                                                || rightUType.IsCSharpSmallIntegerType() ||
+				                                                rightUType.Kind == TypeKind.NInt)
 				{
 					// unary minus is supported on signed int, nint and long, and on the small integer types (since they promote to int)
 					var uoe = new UnaryOperatorExpression(UnaryOperatorType.Minus, right.Expression);
-					uoe.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+					uoe.AddAnnotation(inst.CheckForOverflow
+						? AddCheckedBlocks.CheckedAnnotation
+						: AddCheckedBlocks.UncheckedAnnotation);
 					var resultType = FindArithmeticType(inst.RightInputType, Sign.Signed);
 					if (inst.IsLifted)
 						resultType = NullableType.Create(compilation, resultType);
@@ -1538,10 +1624,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						right.ResolveResult));
 				}
 			}
+
 			if (op.IsBitwise()
-				&& left.Type.IsKnownType(KnownTypeCode.Boolean)
-				&& right.Type.IsKnownType(KnownTypeCode.Boolean)
-				&& SemanticHelper.IsPure(inst.Right.Flags))
+			    && left.Type.IsKnownType(KnownTypeCode.Boolean)
+			    && right.Type.IsKnownType(KnownTypeCode.Boolean)
+			    && SemanticHelper.IsPure(inst.Right.Flags))
 			{
 				// Undo the C# compiler's optimization of "a && b" to "a & b".
 				if (op == BinaryOperatorType.BitwiseAnd)
@@ -1562,7 +1649,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
-				|| !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
+			               || !IsCompatibleWithSign(left.Type, inst.Sign) ||
+			               !IsCompatibleWithSign(right.Type, inst.Sign))
 			{
 				// Left and right operands are incompatible, so convert them to a common type
 				Sign sign = inst.Sign;
@@ -1575,16 +1663,23 @@ namespace ICSharpCode.Decompiler.CSharp
 						sign = op.IsBitwise() ? Sign.Unsigned : Sign.Signed;
 					}
 				}
+
 				IType targetType = FindArithmeticType(inst.UnderlyingResultType, sign);
-				left = left.ConvertTo(NullableType.IsNullable(left.Type) ? NullableType.Create(compilation, targetType) : targetType, this);
-				right = right.ConvertTo(NullableType.IsNullable(right.Type) ? NullableType.Create(compilation, targetType) : targetType, this);
+				left = left.ConvertTo(
+					NullableType.IsNullable(left.Type) ? NullableType.Create(compilation, targetType) : targetType,
+					this);
+				right = right.ConvertTo(
+					NullableType.IsNullable(right.Type) ? NullableType.Create(compilation, targetType) : targetType,
+					this);
 				rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			}
+
 			if (op.IsBitwise())
 			{
 				if (left.ResolveResult.ConstantValue != null)
 				{
-					long value = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, left.ResolveResult.ConstantValue, checkForOverflow: false);
+					long value = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, left.ResolveResult.ConstantValue,
+						checkForOverflow: false);
 
 					left = ConvertConstantValue(
 						left.ResolveResult,
@@ -1592,9 +1687,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						ShouldDisplayAsHex(value, left.Type, inst)
 					).WithILInstruction(left.ILInstructions);
 				}
+
 				if (right.ResolveResult.ConstantValue != null)
 				{
-					long value = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, right.ResolveResult.ConstantValue, checkForOverflow: false);
+					long value = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, right.ResolveResult.ConstantValue,
+						checkForOverflow: false);
 
 					right = ConvertConstantValue(
 						right.ResolveResult,
@@ -1603,13 +1700,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					).WithILInstruction(right.ILInstructions);
 				}
 			}
+
 			var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
 			if (BinaryOperatorMightCheckForOverflow(op) && !inst.UnderlyingResultType.IsFloatType())
 			{
-				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow
+					? AddCheckedBlocks.CheckedAnnotation
+					: AddCheckedBlocks.UncheckedAnnotation);
 			}
+
 			return resultExpr;
 		}
 
@@ -1650,18 +1751,21 @@ namespace ICSharpCode.Decompiler.CSharp
 					stackType = StackType.I8;
 				}
 			}
+
 			return compilation.FindType(stackType, sign);
 		}
 
 		/// <summary>
 		/// Handle oversized arguments needing truncation; and avoid IntPtr/pointers in arguments.
 		/// </summary>
-		TranslatedExpression PrepareArithmeticArgument(TranslatedExpression arg, StackType argStackType, Sign sign, bool isLifted)
+		TranslatedExpression PrepareArithmeticArgument(TranslatedExpression arg, StackType argStackType, Sign sign,
+			bool isLifted)
 		{
 			if (isLifted && !NullableType.IsNullable(arg.Type))
 			{
 				isLifted = false; // don't cast to nullable if this input wasn't already nullable
 			}
+
 			IType argUType = isLifted ? NullableType.GetUnderlyingType(arg.Type) : arg.Type;
 			if (argStackType.IsIntegerType() && argStackType.GetSize() < argUType.GetSize())
 			{
@@ -1673,6 +1777,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetType = NullableType.Create(compilation, targetType);
 				arg = arg.ConvertTo(targetType, this);
 			}
+
 			if (argUType.IsKnownType(KnownTypeCode.IntPtr) || argUType.IsKnownType(KnownTypeCode.UIntPtr))
 			{
 				// None of the operators we might want to apply are supported by IntPtr/UIntPtr.
@@ -1683,6 +1788,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetType = NullableType.Create(compilation, targetType);
 				arg = arg.ConvertTo(targetType, this);
 			}
+
 			return arg;
 		}
 
@@ -1719,7 +1825,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Sign sign = inst.Sign;
 			var leftUType = NullableType.GetUnderlyingType(left.Type);
-			if (leftUType.IsCSharpSmallIntegerType() && sign != Sign.Unsigned && inst.UnderlyingResultType == StackType.I4)
+			if (leftUType.IsCSharpSmallIntegerType() && sign != Sign.Unsigned &&
+			    inst.UnderlyingResultType == StackType.I4)
 			{
 				// With small integer types, C# will promote to int and perform signed shifts.
 				// We thus don't need any casts in this case.
@@ -1732,49 +1839,45 @@ namespace ICSharpCode.Decompiler.CSharp
 					// if we don't need a specific sign, prefer keeping that of the input:
 					sign = leftUType.GetSign();
 				}
+
 				IType targetType = FindArithmeticType(inst.UnderlyingResultType, sign);
 				if (NullableType.IsNullable(left.Type))
 				{
 					targetType = NullableType.Create(compilation, targetType);
 				}
+
 				left = left.ConvertTo(targetType, this);
 			}
 
 			// Shift operators in C# always expect type 'int' on the right-hand-side
-			if (NullableType.IsNullable(right.Type))
-			{
-				right = right.ConvertTo(NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Int32)), this);
-			}
-			else
-			{
-				right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
-			}
+			right = right.ConvertTo(
+				NullableType.IsNullable(right.Type)
+					? NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Int32))
+					: compilation.FindType(KnownTypeCode.Int32), this);
 
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
 		}
 
-		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst,
+			TranslationContext context)
 		{
 			IType loadType = inst.Method.Parameters[0].Type;
-			ExpressionWithResolveResult target;
-			if (inst.TargetKind == CompoundTargetKind.Address)
-			{
-				target = LdObj(inst.Target, loadType);
-			}
-			else
-			{
-				target = Translate(inst.Target, loadType);
-			}
+			ExpressionWithResolveResult target = inst.TargetKind == CompoundTargetKind.Address
+				? LdObj(inst.Target, loadType)
+				: Translate(inst.Target, loadType);
 			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method))
 			{
 				Debug.Assert(inst.Method.Parameters.Count == 2);
-				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
-				var valueExpr = ReplaceMethodCallsWithOperators.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
+				var value = Translate(inst.Value)
+					.ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
+				var valueExpr = ReplaceMethodCallsWithOperators
+					.RemoveRedundantToStringInConcat(value, inst.Method, isLastArgument: true).Detach();
 				return new AssignmentExpression(target, AssignmentOperatorType.Add, valueExpr)
 					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method,
+						inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
 			}
 			else if (inst.Method.Parameters.Count == 2)
 			{
@@ -1784,106 +1887,78 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				return new AssignmentExpression(target, op.Value, value)
 					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, AssignmentExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType,
+						AssignmentExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted,
+						new[] { target.ResolveResult, value.ResolveResult }));
 			}
 			else
 			{
-				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name, inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue);
+				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name,
+					inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue);
 				Debug.Assert(op != null);
 
 				return new UnaryOperatorExpression(op.Value, target)
 					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, UnaryOperatorExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult }));
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType,
+						UnaryOperatorExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted,
+						new[] { target.ResolveResult }));
 			}
 		}
 
 		internal static AssignmentOperatorType? GetAssignmentOperatorTypeFromMetadataName(string name)
 		{
-			switch (name)
-			{
-				case "op_Addition":
-					return AssignmentOperatorType.Add;
-				case "op_Subtraction":
-					return AssignmentOperatorType.Subtract;
-				case "op_Multiply":
-					return AssignmentOperatorType.Multiply;
-				case "op_Division":
-					return AssignmentOperatorType.Divide;
-				case "op_Modulus":
-					return AssignmentOperatorType.Modulus;
-				case "op_BitwiseAnd":
-					return AssignmentOperatorType.BitwiseAnd;
-				case "op_BitwiseOr":
-					return AssignmentOperatorType.BitwiseOr;
-				case "op_ExclusiveOr":
-					return AssignmentOperatorType.ExclusiveOr;
-				case "op_LeftShift":
-					return AssignmentOperatorType.ShiftLeft;
-				case "op_RightShift":
-					return AssignmentOperatorType.ShiftRight;
-				default:
-					return null;
-			}
+			return name switch {
+				"op_Addition" => AssignmentOperatorType.Add,
+				"op_Subtraction" => AssignmentOperatorType.Subtract,
+				"op_Multiply" => AssignmentOperatorType.Multiply,
+				"op_Division" => AssignmentOperatorType.Divide,
+				"op_Modulus" => AssignmentOperatorType.Modulus,
+				"op_BitwiseAnd" => AssignmentOperatorType.BitwiseAnd,
+				"op_BitwiseOr" => AssignmentOperatorType.BitwiseOr,
+				"op_ExclusiveOr" => AssignmentOperatorType.ExclusiveOr,
+				"op_LeftShift" => AssignmentOperatorType.ShiftLeft,
+				"op_RightShift" => AssignmentOperatorType.ShiftRight,
+				_ => null
+			};
 		}
 
 		internal static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name, bool isPostfix)
 		{
-			switch (name)
-			{
-				case "op_Increment":
-					return isPostfix ? UnaryOperatorType.PostIncrement : UnaryOperatorType.Increment;
-				case "op_Decrement":
-					return isPostfix ? UnaryOperatorType.PostDecrement : UnaryOperatorType.Decrement;
-				default:
-					return null;
-			}
+			return name switch {
+				"op_Increment" => isPostfix ? UnaryOperatorType.PostIncrement : UnaryOperatorType.Increment,
+				"op_Decrement" => isPostfix ? UnaryOperatorType.PostDecrement : UnaryOperatorType.Decrement,
+				_ => null
+			};
 		}
 
-		protected internal override TranslatedExpression VisitNumericCompoundAssign(NumericCompoundAssign inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitNumericCompoundAssign(NumericCompoundAssign inst,
+			TranslationContext context)
 		{
-			switch (inst.Operator)
-			{
-				case BinaryNumericOperator.Add:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.Add);
-				case BinaryNumericOperator.Sub:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.Subtract);
-				case BinaryNumericOperator.Mul:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.Multiply);
-				case BinaryNumericOperator.Div:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.Divide);
-				case BinaryNumericOperator.Rem:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.Modulus);
-				case BinaryNumericOperator.BitAnd:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.BitwiseAnd);
-				case BinaryNumericOperator.BitOr:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.BitwiseOr);
-				case BinaryNumericOperator.BitXor:
-					return HandleCompoundAssignment(inst, AssignmentOperatorType.ExclusiveOr);
-				case BinaryNumericOperator.ShiftLeft:
-					return HandleCompoundShift(inst, AssignmentOperatorType.ShiftLeft);
-				case BinaryNumericOperator.ShiftRight:
-					return HandleCompoundShift(inst, AssignmentOperatorType.ShiftRight);
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return inst.Operator switch {
+				BinaryNumericOperator.Add => HandleCompoundAssignment(inst, AssignmentOperatorType.Add),
+				BinaryNumericOperator.Sub => HandleCompoundAssignment(inst, AssignmentOperatorType.Subtract),
+				BinaryNumericOperator.Mul => HandleCompoundAssignment(inst, AssignmentOperatorType.Multiply),
+				BinaryNumericOperator.Div => HandleCompoundAssignment(inst, AssignmentOperatorType.Divide),
+				BinaryNumericOperator.Rem => HandleCompoundAssignment(inst, AssignmentOperatorType.Modulus),
+				BinaryNumericOperator.BitAnd => HandleCompoundAssignment(inst, AssignmentOperatorType.BitwiseAnd),
+				BinaryNumericOperator.BitOr => HandleCompoundAssignment(inst, AssignmentOperatorType.BitwiseOr),
+				BinaryNumericOperator.BitXor => HandleCompoundAssignment(inst, AssignmentOperatorType.ExclusiveOr),
+				BinaryNumericOperator.ShiftLeft => HandleCompoundShift(inst, AssignmentOperatorType.ShiftLeft),
+				BinaryNumericOperator.ShiftRight => HandleCompoundShift(inst, AssignmentOperatorType.ShiftRight),
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		TranslatedExpression HandleCompoundAssignment(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
-			ExpressionWithResolveResult target;
-			if (inst.TargetKind == CompoundTargetKind.Address)
-			{
-				target = LdObj(inst.Target, inst.Type);
-			}
-			else
-			{
-				target = Translate(inst.Target, inst.Type);
-			}
+			ExpressionWithResolveResult target = inst.TargetKind == CompoundTargetKind.Address
+				? LdObj(inst.Target, inst.Type)
+				: Translate(inst.Target, inst.Type);
 
 			TranslatedExpression resultExpr;
 			if (inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue)
 			{
-				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
+				Debug.Assert(op is AssignmentOperatorType.Add or AssignmentOperatorType.Subtract);
 				Debug.Assert(inst.Value.MatchLdcI(1) || inst.Value.MatchLdcF4(1) || inst.Value.MatchLdcF8(1));
 				UnaryOperatorType unary;
 				ExpressionType exprType;
@@ -1897,6 +1972,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					unary = UnaryOperatorType.PostDecrement;
 					exprType = ExpressionType.PostDecrementAssign;
 				}
+
 				resultExpr = new UnaryOperatorExpression(unary, target)
 					.WithILInstruction(inst)
 					.WithRR(new OperatorResolveResult(target.Type, exprType, target.ResolveResult));
@@ -1911,14 +1987,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					case AssignmentOperatorType.Subtract:
 						if (target.Type.Kind == TypeKind.Pointer)
 						{
-							var pao = GetPointerArithmeticOffset(inst.Value, value, ((PointerType)target.Type).ElementType, inst.CheckForOverflow);
+							var pao = GetPointerArithmeticOffset(inst.Value, value,
+								((PointerType)target.Type).ElementType, inst.CheckForOverflow);
 							if (pao != null)
 							{
 								value = pao.Value;
 							}
 							else
 							{
-								value.Expression.AddChild(new Comment("ILSpy Error: GetPointerArithmeticOffset() failed", CommentType.MultiLine), Roles.Comment);
+								value.Expression.AddChild(
+									new Comment("ILSpy Error: GetPointerArithmeticOffset() failed",
+										CommentType.MultiLine), Roles.Comment);
 							}
 						}
 						else
@@ -1926,6 +2005,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							IType targetType = NullableType.GetUnderlyingType(target.Type).GetEnumUnderlyingType();
 							value = ConvertValue(value, targetType);
 						}
+
 						break;
 					case AssignmentOperatorType.Multiply:
 					case AssignmentOperatorType.Divide:
@@ -1939,14 +2019,21 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					}
 				}
+
 				resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
 					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(target.Type, AssignmentExpression.GetLinqNodeType(op, inst.CheckForOverflow), target.ResolveResult, value.ResolveResult));
+					.WithRR(new OperatorResolveResult(target.Type,
+						AssignmentExpression.GetLinqNodeType(op, inst.CheckForOverflow), target.ResolveResult,
+						value.ResolveResult));
 			}
+
 			if (AssignmentOperatorMightCheckForOverflow(op) && !inst.UnderlyingResultType.IsFloatType())
 			{
-				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow
+					? AddCheckedBlocks.CheckedAnnotation
+					: AddCheckedBlocks.UncheckedAnnotation);
 			}
+
 			return resultExpr;
 
 			TranslatedExpression ConvertValue(TranslatedExpression value, IType targetType)
@@ -1958,10 +2045,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					allowImplicitConversion = targetType.IsCSharpNativeIntegerType();
 					targetType = targetType.GetSign() == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
 				}
+
 				if (NullableType.IsNullable(value.Type))
 				{
 					targetType = NullableType.Create(compilation, targetType);
 				}
+
 				return value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion);
 			}
 		}
@@ -1969,26 +2058,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression HandleCompoundShift(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
 			Debug.Assert(inst.EvalMode == CompoundEvalMode.EvaluatesToNewValue);
-			ExpressionWithResolveResult target;
-			if (inst.TargetKind == CompoundTargetKind.Address)
-			{
-				target = LdObj(inst.Target, inst.Type);
-			}
-			else
-			{
-				target = Translate(inst.Target, inst.Type);
-			}
+			ExpressionWithResolveResult target = inst.TargetKind == CompoundTargetKind.Address
+				? LdObj(inst.Target, inst.Type)
+				: Translate(inst.Target, inst.Type);
 			var value = Translate(inst.Value);
 
 			// Shift operators in C# always expect type 'int' on the right-hand-side
-			if (NullableType.IsNullable(value.Type))
-			{
-				value = value.ConvertTo(NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Int32)), this);
-			}
-			else
-			{
-				value = value.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
-			}
+			value = value.ConvertTo(
+				NullableType.IsNullable(value.Type)
+					? NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Int32))
+					: compilation.FindType(KnownTypeCode.Int32), this);
 
 			return new AssignmentExpression(target.Expression, op, value.Expression)
 				.WithILInstruction(inst)
@@ -2017,6 +2096,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				hintSign = context.TypeHint.GetSign();
 			}
+
 			var arg = Translate(inst.Argument, typeHint: FindArithmeticType(inst.InputType, hintSign));
 			IType inputType = NullableType.GetUnderlyingType(arg.Type);
 			StackType inputStackType = inst.InputType;
@@ -2045,10 +2125,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					type = SpecialType.NUInt;
 				}
+
 				if (inst.IsLifted)
 				{
 					type = NullableType.Create(compilation, type);
 				}
+
 				return type;
 			}
 
@@ -2061,6 +2143,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					arg = arg.ConvertTo(GetType(inputStackType.ToKnownTypeCode(inst.InputSign)), this);
 				}
+
 				// Because casts with overflow check match C# semantics (zero/sign-extension depends on source type),
 				// we can just directly cast to the target type.
 				return arg.ConvertTo(GetType(inst.TargetType.ToKnownTypeCode()), this, inst.CheckForOverflow)
@@ -2113,6 +2196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// and it is signed we just combine the two sign-extensions into a single sign-extending conversion.
 						arg = arg.ConvertTo(GetType(inputStackType.ToKnownTypeCode(Sign.Signed)), this);
 					}
+
 					// Then, we can just return the argument as-is: the ExpressionBuilder post-condition allows us
 					// to force our parent instruction to handle the actual sign-extension conversion.
 					// (our caller may have more information to pick a better fitting target type)
@@ -2123,6 +2207,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						arg = arg.ConvertTo(GetType(inputStackType.ToKnownTypeCode(Sign.Unsigned)), this);
 					}
+
 					return arg.WithILInstruction(inst);
 				case ConversionKind.Nop:
 					// no need to generate any C# code for a nop conversion
@@ -2148,7 +2233,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Note that we must handle truncation to small integer types ourselves:
 						// our caller only sees the StackType.I4 and doesn't know to truncate to the small type.
 
-						if (inputType.GetSize() <= inst.TargetType.GetSize() && inputType.GetSign() == inst.TargetType.GetSign())
+						if (inputType.GetSize() <= inst.TargetType.GetSize() &&
+						    inputType.GetSign() == inst.TargetType.GetSign())
 						{
 							// There's no actual truncation involved, and the result of the Conv instruction is extended
 							// the same way as the original instruction
@@ -2171,7 +2257,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return arg.WithILInstruction(inst);
 					}
 				case ConversionKind.Invalid:
-					if (inst.InputType == StackType.Unknown && inst.TargetType == IL.PrimitiveType.None && arg.Type.Kind == TypeKind.Unknown)
+					if (inst.InputType == StackType.Unknown && inst.TargetType == IL.PrimitiveType.None &&
+					    arg.Type.Kind == TypeKind.Unknown)
 					{
 						// Unknown -> O conversion.
 						// Our post-condition allows us to also use expressions with unknown type where O is expected,
@@ -2179,13 +2266,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						// just in a signature context where we know that it's a class type.
 						return arg.WithILInstruction(inst);
 					}
+
 					goto default;
 				default:
 				{
 					// We need to convert to inst.TargetType, or to an equivalent type.
 					IType targetType;
 					if (inst.TargetType == NullableType.GetUnderlyingType(context.TypeHint).ToPrimitiveType()
-						&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
+					    && NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
 					{
 						targetType = context.TypeHint;
 					}
@@ -2204,6 +2292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						targetType = GetType(inst.TargetType.ToKnownTypeCode());
 					}
+
 					return arg.ConvertTo(targetType, this, inst.CheckForOverflow)
 						.WithILInstruction(inst);
 				}
@@ -2222,18 +2311,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				// it can't be an oversized value.
 				return false;
 			}
+
 			if (rr is OperatorResolveResult orr)
 			{
 				if (stackType == StackType.I && orr.OperatorType == ExpressionType.Subtract
-					&& orr.Operands.Count == 2
-					&& orr.Operands[0].Type.Kind == TypeKind.Pointer
-					&& orr.Operands[1].Type.Kind == TypeKind.Pointer)
+				                             && orr.Operands.Count == 2
+				                             && orr.Operands[0].Type.Kind == TypeKind.Pointer
+				                             && orr.Operands[1].Type.Kind == TypeKind.Pointer)
 				{
 					// Even though a pointer subtraction produces a value of type long in C#,
 					// the value will always fit in a native int.
 					return false;
 				}
 			}
+
 			// We don't have any information about the value, so it might be oversized.
 			return true;
 		}
@@ -2256,6 +2347,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithoutILInstruction()
 					.WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 			}
+
 			return expr;
 		}
 
@@ -2268,6 +2360,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return true;
 				currentTypeDefinition = currentTypeDefinition.DeclaringTypeDefinition;
 			}
+
 			return false;
 		}
 
@@ -2276,8 +2369,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var method = function.Method?.MemberDefinition as IMethod;
 
 			// Create AnonymousMethodExpression and prepare parameters
-			AnonymousMethodExpression ame = new AnonymousMethodExpression();
-			ame.IsAsync = function.IsAsync;
+			AnonymousMethodExpression ame = new() {
+				IsAsync = function.IsAsync
+			};
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
 			ame.HasParameterList = ame.Parameters.Count > 0;
 			var builder = new StatementBuilder(
@@ -2307,6 +2401,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// otherwise use lambda only if an expression lambda is possible
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
 			}
+
 			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
 			var parameterReferencingIdentifiers =
 				from ident in body.Descendants.OfType<IdentifierExpression>()
@@ -2323,8 +2418,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType inferredReturnType;
 			if (isLambda)
 			{
-				LambdaExpression lambda = new LambdaExpression();
-				lambda.IsAsync = ame.IsAsync;
+				LambdaExpression lambda = new() {
+					IsAsync = ame.IsAsync
+				};
 				lambda.CopyAnnotationsFrom(ame);
 				ame.Parameters.MoveTo(lambda.Parameters);
 				if (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement returnStmt)
@@ -2337,6 +2433,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					lambda.Body = body;
 					inferredReturnType = InferReturnType(body);
 				}
+
 				replacement = lambda;
 			}
 			else
@@ -2345,6 +2442,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				inferredReturnType = InferReturnType(body);
 				replacement = ame;
 			}
+
 			if (ame.IsAsync)
 			{
 				inferredReturnType = GetTaskType(inferredReturnType);
@@ -2361,7 +2459,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
 
-		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)
+		protected internal override TranslatedExpression VisitILFunction(ILFunction function,
+			TranslationContext context)
 		{
 			return TranslateFunction(function.DelegateType, function)
 				.WithILInstruction(function);
@@ -2385,11 +2484,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						returnExpressions.Add(ret.Expression.GetResolveResult());
 					}
 				}
-				else if (node is LambdaExpression || node is AnonymousMethodExpression)
+				else if (node is LambdaExpression or AnonymousMethodExpression)
 				{
 					// do not recurse into nested lambdas
 					return;
 				}
+
 				foreach (var child in node.Children)
 				{
 					CollectReturnExpressions(child);
@@ -2423,6 +2523,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
 					pd.Name = "P_" + i;
 				}
+
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;
 				if (variables.TryGetValue(i, out var v))
@@ -2432,7 +2533,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitBlockContainer(BlockContainer container, TranslationContext context)
+		protected internal override TranslatedExpression VisitBlockContainer(BlockContainer container,
+			TranslationContext context)
 		{
 			var oldReturnContainer = statementBuilder.currentReturnContainer;
 			var oldResultType = statementBuilder.currentResultType;
@@ -2469,6 +2571,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						invokeMethod,
 						EmptyList<ResolveResult>.Instance);
 				}
+
 				return new InvocationExpression(new MemberReferenceExpression(invocationTarget, "Invoke"))
 					.WithILInstruction(container)
 					.WithRR(rr);
@@ -2510,33 +2613,41 @@ namespace ICSharpCode.Decompiler.CSharp
 							targetTypeHint = new PointerType(targetTypeHint);
 						}
 					}
+
 					var translatedTarget = Translate(target, targetTypeHint);
 					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref)
 					{
 						// When accessing members on value types, ensure we use a reference of the correct type,
 						// and not a pointer or a reference to a different type (issue #1333)
-						if (!(translatedTarget.Type is ByReferenceType brt && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, memberDeclaringType)))
+						if (!(translatedTarget.Type is ByReferenceType brt &&
+						      NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, memberDeclaringType)))
 						{
-							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
+							translatedTarget =
+								translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
 						}
 					}
+
 					if (translatedTarget.Expression is DirectionExpression)
 					{
 						// (ref x).member => x.member
-						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
+						translatedTarget =
+							translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}
-					else if (translatedTarget.Expression is UnaryOperatorExpression uoe
-					  && uoe.Operator == UnaryOperatorType.NullConditional
-					  && uoe.Expression is DirectionExpression)
+					else if (translatedTarget.Expression is UnaryOperatorExpression {
+						         Operator: UnaryOperatorType.NullConditional,
+						         Expression: DirectionExpression expression
+					         })
 					{
 						// (ref x)?.member => x?.member
-						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)uoe.Expression).Expression);
+						translatedTarget = translatedTarget.UnwrapChild(expression.Expression);
 						// note: we need to create a new ResolveResult for the null-conditional operator,
 						// using the underlying type of the input expression without the DirectionExpression
-						translatedTarget = new UnaryOperatorExpression(UnaryOperatorType.NullConditional, translatedTarget)
-							.WithRR(new ResolveResult(NullableType.GetUnderlyingType(translatedTarget.Type)))
-							.WithoutILInstruction();
+						translatedTarget =
+							new UnaryOperatorExpression(UnaryOperatorType.NullConditional, translatedTarget)
+								.WithRR(new ResolveResult(NullableType.GetUnderlyingType(translatedTarget.Type)))
+								.WithoutILInstruction();
 					}
+
 					translatedTarget = EnsureTargetNotNullable(translatedTarget, target);
 					return translatedTarget;
 				}
@@ -2575,6 +2686,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					return arg2.MatchLdThis();
 				}
+
 				return false;
 			}
 		}
@@ -2609,32 +2721,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType loadType = inst.Type;
 			bool loadTypeUsedInGeneric = inst.UnalignedPrefix != 0 || inst.Target.ResultType == StackType.Ref;
 			if (context.TypeHint.Kind != TypeKind.Unknown
-				&& TypeUtils.IsCompatibleTypeForMemoryAccess(context.TypeHint, loadType)
-				&& !(loadTypeUsedInGeneric && context.TypeHint.Kind.IsAnyPointer()))
+			    && TypeUtils.IsCompatibleTypeForMemoryAccess(context.TypeHint, loadType)
+			    && !(loadTypeUsedInGeneric && context.TypeHint.Kind.IsAnyPointer()))
 			{
 				loadType = context.TypeHint;
 			}
+
 			if (inst.UnalignedPrefix != 0)
 			{
 				// Use one of: Unsafe.ReadUnaligned<T>(void*)
 				//         or: Unsafe.ReadUnaligned<T>(ref byte)
 				var pointer = Translate(inst.Target);
-				if (pointer.Expression is DirectionExpression)
-				{
-					pointer = pointer.ConvertTo(new ByReferenceType(compilation.FindType(KnownTypeCode.Byte)), this);
-				}
-				else
-				{
-					pointer = pointer.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), this, allowImplicitConversion: true);
-				}
+				pointer = pointer.Expression is DirectionExpression
+					? pointer.ConvertTo(new ByReferenceType(compilation.FindType(KnownTypeCode.Byte)), this)
+					: pointer.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), this,
+						allowImplicitConversion: true);
 				return CallUnsafeIntrinsic(
 					name: "ReadUnaligned",
 					arguments: new Expression[] { pointer },
 					returnType: loadType,
 					inst: inst,
-					typeArguments: new IType[] { loadType }
+					typeArguments: new[] { loadType }
 				);
 			}
+
 			var result = LdObj(inst.Target, loadType);
 			//if (target.Type.IsSmallIntegerType() && loadType.IsSmallIntegerType() && target.Type.GetSign() != loadType.GetSign())
 			//	return result.ConvertTo(loadType, this);
@@ -2643,7 +2753,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult LdObj(ILInstruction address, IType loadType)
 		{
-			IType addressTypeHint = address.ResultType == StackType.Ref ? new ByReferenceType(loadType) : (IType)new PointerType(loadType);
+			IType addressTypeHint = address.ResultType == StackType.Ref
+				? new ByReferenceType(loadType)
+				: new PointerType(loadType);
 			var target = Translate(address, typeHint: addressTypeHint);
 			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.Type, loadType))
 			{
@@ -2655,7 +2767,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (target.Type is PointerType pointerType)
 				{
-					if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf)
+					if (target.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } uoe)
 					{
 						// We can dereference the pointer by stripping away the '&'
 						result = target.UnwrapChild(uoe.Expression);
@@ -2676,6 +2788,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
 						.WithRR(new ResolveResult(loadType));
 				}
+
 				// we don't convert result to inst.Type, because the LdObj type
 				// might be inaccurate (it's often System.Object for all reference types),
 				// and our parent node should already insert casts where necessary
@@ -2684,14 +2797,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				// We need to cast the pointer type:
-				if (target.Expression is DirectionExpression)
-				{
-					target = target.ConvertTo(new ByReferenceType(loadType), this);
-				}
-				else
-				{
-					target = target.ConvertTo(new PointerType(loadType), this);
-				}
+				target = target.Expression is DirectionExpression
+					? target.ConvertTo(new ByReferenceType(loadType), this)
+					: target.ConvertTo(new PointerType(loadType), this);
 				if (target.Expression is DirectionExpression dirExpr)
 				{
 					return target.UnwrapChild(dirExpr.Expression);
@@ -2711,9 +2819,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return UnalignedStObj(inst);
 			}
 
-			IType pointerTypeHint = inst.Target.ResultType == StackType.Ref ? new ByReferenceType(inst.Type) : (IType)new PointerType(inst.Type);
+			IType pointerTypeHint = inst.Target.ResultType == StackType.Ref
+				? new ByReferenceType(inst.Type)
+				: new PointerType(inst.Type);
 			var pointer = Translate(inst.Target, typeHint: pointerTypeHint);
-			TranslatedExpression target;
 			TranslatedExpression value = default;
 			IType memoryType;
 			// Check if we need to cast to pointer type:
@@ -2726,47 +2835,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// We need to introduce a pointer cast
 				value = Translate(inst.Value, typeHint: inst.Type);
-				if (TypeUtils.IsCompatibleTypeForMemoryAccess(value.Type, inst.Type))
-				{
-					memoryType = value.Type;
-				}
-				else
-				{
-					memoryType = inst.Type;
-				}
-				if (pointer.Expression is DirectionExpression)
-				{
-					pointer = pointer.ConvertTo(new ByReferenceType(memoryType), this);
-				}
-				else
-				{
-					pointer = pointer.ConvertTo(new PointerType(memoryType), this);
-				}
+				memoryType = TypeUtils.IsCompatibleTypeForMemoryAccess(value.Type, inst.Type) ? value.Type : inst.Type;
+				pointer = pointer.Expression is DirectionExpression
+					? pointer.ConvertTo(new ByReferenceType(memoryType), this)
+					: pointer.ConvertTo(new PointerType(memoryType), this);
 			}
 
-			if (pointer.Expression is DirectionExpression)
-			{
-				// we can deference the managed reference by stripping away the 'ref'
-				target = pointer.UnwrapChild(((DirectionExpression)pointer.Expression).Expression);
-			}
-			else
-			{
-				if (pointer.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf)
-				{
-					// *&ptr -> ptr
-					target = pointer.UnwrapChild(uoe.Expression);
-				}
-				else
-				{
-					target = new UnaryOperatorExpression(UnaryOperatorType.Dereference, pointer.Expression)
-						.WithoutILInstruction()
-						.WithRR(new ResolveResult(memoryType));
-				}
-			}
+			TranslatedExpression target = pointer.Expression switch {
+				DirectionExpression => pointer.UnwrapChild(((DirectionExpression)pointer.Expression).Expression),
+				UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } uoe => pointer.UnwrapChild(
+					uoe.Expression),
+				_ => new UnaryOperatorExpression(UnaryOperatorType.Dereference, pointer.Expression)
+					.WithoutILInstruction()
+					.WithRR(new ResolveResult(memoryType))
+			};
 			if (value.Expression == null)
 			{
 				value = Translate(inst.Value, typeHint: target.Type);
 			}
+
 			return Assignment(target, value).WithILInstruction(inst);
 		}
 
@@ -2777,18 +2864,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			// or Unsafe.WriteUnaligned<T>(ref byte, T)
 			var pointer = Translate(inst.Target);
 			var value = Translate(inst.Value, typeHint: inst.Type);
-			if (pointer.Expression is DirectionExpression)
-			{
-				pointer = pointer.ConvertTo(new ByReferenceType(compilation.FindType(KnownTypeCode.Byte)), this);
-			}
-			else
-			{
-				pointer = pointer.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), this, allowImplicitConversion: true);
-			}
+			pointer = pointer.Expression is DirectionExpression
+				? pointer.ConvertTo(new ByReferenceType(compilation.FindType(KnownTypeCode.Byte)), this)
+				: pointer.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), this,
+					allowImplicitConversion: true);
 			if (!TypeUtils.IsCompatibleTypeForMemoryAccess(value.Type, inst.Type))
 			{
 				value = value.ConvertTo(inst.Type, this);
 			}
+
 			return CallUnsafeIntrinsic(
 				name: "WriteUnaligned",
 				arguments: new Expression[] { pointer, value },
@@ -2805,6 +2889,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
+
 			arrayExpr = EnsureTargetNotNullable(arrayExpr, inst.Array);
 			string memberName;
 			KnownTypeCode code;
@@ -2818,6 +2903,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				memberName = "LongLength";
 				code = KnownTypeCode.Int64;
 			}
+
 			IProperty member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
 			ResolveResult rr = member == null
 				? new ResolveResult(compilation.FindType(code))
@@ -2830,18 +2916,20 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst, TranslationContext context)
 		{
 			if (settings.FixedBuffers && inst.Field.Name == "FixedElementField"
-				&& inst.Target is LdFlda nestedLdFlda
-				&& CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
+			                          && inst.Target is LdFlda nestedLdFlda
+			                          && CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
 			{
 				Expression fieldAccess = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
 				var mrr = (MemberResolveResult)fieldAccess.GetResolveResult();
 				fieldAccess.RemoveAnnotations<ResolveResult>();
-				var result = fieldAccess.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
+				var result = fieldAccess
+					.WithRR(new MemberResolveResult(mrr.TargetResult, mrr.Member, new PointerType(elementType)))
 					.WithILInstruction(inst);
 				if (inst.ResultType == StackType.Ref)
 				{
 					// `target.field` has pointer-type.
-					if (inst.SlotInfo == PinnedRegion.InitSlot || inst.Parent is Conv { TargetType: IL.PrimitiveType.U })
+					if (inst.SlotInfo == PinnedRegion.InitSlot ||
+					    inst.Parent is Conv { TargetType: IL.PrimitiveType.U })
 					{
 						// Convert pointer to ref if we're in a context where we're going to convert
 						// the ref back to a pointer.
@@ -2854,7 +2942,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						var arrayAccess = new IndexerExpression(result, new PrimitiveExpression(0))
 							.WithRR(new ResolveResult(elementType));
 						return new DirectionExpression(FieldDirection.Ref, arrayAccess)
-							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(arrayAccess.ResolveResult, ReferenceKind.Ref));
+							.WithoutILInstruction()
+							.WithRR(new ByReferenceResolveResult(arrayAccess.ResolveResult, ReferenceKind.Ref));
 					}
 				}
 				else
@@ -2862,20 +2951,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					return result;
 				}
 			}
+
 			TranslatedExpression expr;
-			if (TupleTransform.MatchTupleFieldAccess(inst, out IType underlyingTupleType, out var target, out int position))
+			if (TupleTransform.MatchTupleFieldAccess(inst, out IType underlyingTupleType, out var target,
+				    out int position))
 			{
 				var translatedTarget = TranslateTarget(target,
 					nonVirtualInvocation: true,
 					memberStatic: false,
 					memberDeclaringType: underlyingTupleType);
-				if (translatedTarget.Type is TupleType tupleType && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(tupleType, underlyingTupleType) && position <= tupleType.ElementNames.Length)
+				if (translatedTarget.Type is TupleType tupleType &&
+				    NormalizeTypeVisitor.TypeErasure.EquivalentTypes(tupleType, underlyingTupleType) &&
+				    position <= tupleType.ElementNames.Length)
 				{
-					string elementName = tupleType.ElementNames[position - 1];
-					if (elementName == null)
-					{
-						elementName = "Item" + position;
-					}
+					string elementName = tupleType.ElementNames[position - 1] ?? "Item" + position;
 					// tupleType.ElementTypes are more accurate w.r.t. nullability/dynamic than inst.Field.Type
 					var rr = new MemberResolveResult(translatedTarget.ResolveResult, inst.Field,
 						returnTypeOverride: tupleType.ElementTypes[position - 1]);
@@ -2891,6 +2980,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
 			}
+
 			if (inst.ResultType == StackType.I)
 			{
 				// ldflda producing native pointer
@@ -2915,18 +3005,21 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdElema(LdElema inst, TranslationContext context)
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
-			var arrayType = arrayExpr.Type as ArrayType;
-			if (arrayType == null || !TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, inst.Type))
+			if (arrayExpr.Type is not ArrayType arrayType ||
+			    !TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, inst.Type))
 			{
 				arrayType = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
+
 			IndexerExpression indexerExpr;
 			if (inst.WithSystemIndex)
 			{
 				var systemIndex = compilation.FindType(KnownTypeCode.Index);
 				indexerExpr = new IndexerExpression(
-					arrayExpr, inst.Indices.Select(i => Translate(i, typeHint: systemIndex).ConvertTo(systemIndex, this).Expression)
+					arrayExpr,
+					inst.Indices.Select(
+						i => Translate(i, typeHint: systemIndex).ConvertTo(systemIndex, this).Expression)
 				);
 			}
 			else
@@ -2935,7 +3028,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
 				);
 			}
-			TranslatedExpression expr = indexerExpr.WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
+
+			TranslatedExpression expr = indexerExpr.WithILInstruction(inst)
+				.WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 		}
@@ -2953,20 +3048,25 @@ namespace ICSharpCode.Decompiler.CSharp
 				// truncate oversized result
 				return input.ConvertTo(FindType(stackType, input.Type.GetSign()), this);
 			}
+
 			if (input.Type.IsCSharpPrimitiveIntegerType() || input.Type.IsCSharpNativeIntegerType())
 			{
 				// can be used as array index as-is
 				return input;
 			}
-			if (allowIntPtr && (input.Type.IsKnownType(KnownTypeCode.IntPtr) || input.Type.IsKnownType(KnownTypeCode.UIntPtr)))
+
+			if (allowIntPtr && (input.Type.IsKnownType(KnownTypeCode.IntPtr) ||
+			                    input.Type.IsKnownType(KnownTypeCode.UIntPtr)))
 			{
 				return input;
 			}
+
 			if (stackType != StackType.I4 && input.Type.GetStackType() == StackType.I4)
 			{
 				// prefer casting to int if that's big enough
 				stackType = StackType.I4;
 			}
+
 			IType targetType = FindArithmeticType(stackType, input.Type.GetSign());
 			return input.ConvertTo(targetType, this);
 		}
@@ -2974,7 +3074,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static bool IsUnboxAnyWithIsInst(UnboxAny unboxAny, IsInst isInst)
 		{
 			return unboxAny.Type.Equals(isInst.Type)
-				&& (unboxAny.Type.IsKnownType(KnownTypeCode.NullableOfT) || isInst.Type.IsReferenceType == true);
+			       && (unboxAny.Type.IsKnownType(KnownTypeCode.NullableOfT) || isInst.Type.IsReferenceType == true);
 		}
 
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst, TranslationContext context)
@@ -3039,6 +3139,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetType = SpecialType.NUInt;
 				}
 			}
+
 			arg = arg.ConvertTo(targetType, this);
 			var obj = compilation.FindType(KnownTypeCode.Object);
 			return new CastExpression(ConvertType(obj), arg.Expression)
@@ -3051,7 +3152,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			return Translate(inst.Argument).ConvertTo(inst.Type, this);
 		}
 
-		protected internal override TranslatedExpression VisitExpressionTreeCast(ExpressionTreeCast inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitExpressionTreeCast(ExpressionTreeCast inst,
+			TranslationContext context)
 		{
 			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked);
 		}
@@ -3059,33 +3161,36 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitArglist(Arglist inst, TranslationContext context)
 		{
 			return new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.ArgListAccess }
-			.WithILInstruction(inst)
-				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeArgumentHandle"))));
+				.WithILInstruction(inst)
+				.WithRR(new TypeResolveResult(
+					compilation.FindType(new TopLevelTypeName("System", "RuntimeArgumentHandle"))));
 		}
 
 		protected internal override TranslatedExpression VisitMakeRefAny(MakeRefAny inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument).Expression;
-			if (arg is DirectionExpression)
+			if (arg is DirectionExpression expression)
 			{
-				arg = ((DirectionExpression)arg).Expression;
+				arg = expression.Expression;
 			}
+
 			return new UndocumentedExpression {
-				UndocumentedExpressionType = UndocumentedExpressionType.MakeRef,
-				Arguments = { arg.Detach() }
-			}
-			.WithILInstruction(inst)
+					UndocumentedExpressionType = UndocumentedExpressionType.MakeRef,
+					Arguments = { arg.Detach() }
+				}
+				.WithILInstruction(inst)
 				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "TypedReference"))));
 		}
 
 		protected internal override TranslatedExpression VisitRefAnyType(RefAnyType inst, TranslationContext context)
 		{
 			return new MemberReferenceExpression(new UndocumentedExpression {
-				UndocumentedExpressionType = UndocumentedExpressionType.RefType,
-				Arguments = { Translate(inst.Argument).Expression.Detach() }
-			}, "TypeHandle")
+					UndocumentedExpressionType = UndocumentedExpressionType.RefType,
+					Arguments = { Translate(inst.Argument).Expression.Detach() }
+				}, "TypeHandle")
 				.WithILInstruction(inst)
-				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
+				.WithRR(
+					new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
 		}
 
 		protected internal override TranslatedExpression VisitRefAnyValue(RefAnyValue inst, TranslationContext context)
@@ -3134,8 +3239,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				// should never happen unless the ILAst is invalid
 				return ErrorExpression("Error: MatchInlineAssignBlock() returned false");
 			}
+
 			var arguments = call.Arguments.ToList();
-			arguments[arguments.Count - 1] = value;
+			arguments[^1] = value;
 			return new CallBuilder(this, typeSystem, settings)
 				.Build(call.OpCode, call.Method, arguments)
 				.WithILInstruction(call);
@@ -3143,11 +3249,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression TranslateObjectAndCollectionInitializer(Block block)
 		{
-			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
 			// Check basic structure of block
-			if (stloc == null || final == null || stloc.Variable != final.Variable
-				|| stloc.Variable.Kind != VariableKind.InitializerTarget)
+			if (block.Instructions.FirstOrDefault() is not StLoc stloc || block.FinalInstruction is not LdLoc final ||
+			    stloc.Variable != final.Variable
+			    || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 			InitializedObjectResolveResult initObjRR;
 			TranslatedExpression expr;
@@ -3164,11 +3269,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(defaultVal)
 						.WithRR(new TypeResolveResult(defaultVal.Type));
 					break;
-				case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
+				case Block { Kind: BlockKind.CallWithNamedArgs } callWithNamedArgs:
 					expr = TranslateCallWithNamedArgs(callWithNamedArgs);
 					initObjRR = new InitializedObjectResolveResult(expr.Type);
 					break;
-				case Call c when c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1:
+				case Call c when c.Method.FullNameIs("System.Activator", "CreateInstance") &&
+				                 c.Method.TypeArguments.Count == 1:
 					IType type = c.Method.TypeArguments[0];
 					initObjRR = new InitializedObjectResolveResult(type);
 					expr = new ObjectCreateExpression(ConvertType(type))
@@ -3178,12 +3284,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					throw new ArgumentException("given Block is invalid!");
 			}
+
 			var oce = (ObjectCreateExpression)expr.Expression;
 			oce.Initializer = BuildArrayInitializerExpression(block, initObjRR);
 			return expr.WithILInstruction(block);
 		}
 
-		private ArrayInitializerExpression BuildArrayInitializerExpression(Block block, InitializedObjectResolveResult initObjRR)
+		private ArrayInitializerExpression BuildArrayInitializerExpression(Block block,
+			InitializedObjectResolveResult initObjRR)
 		{
 			var elementsStack = new Stack<List<TranslatedExpression>>();
 			var elements = new List<TranslatedExpression>(block.Instructions.Count);
@@ -3198,6 +3306,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					indexVariables.Add(indexStore.Variable, indexStore.Value);
 					continue;
 				}
+
 				// Get current path
 				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, settings: settings);
 				// This should not happen, because the IL transform should not create invalid access paths,
@@ -3213,21 +3322,25 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					int minLen = Math.Min(currentPath.Count, info.Path.Count);
 					int firstDifferenceIndex = 0;
-					while (firstDifferenceIndex < minLen && info.Path[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
+					while (firstDifferenceIndex < minLen &&
+					       info.Path[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
 						firstDifferenceIndex++;
 					while (elementsStack.Count - 1 > firstDifferenceIndex)
 					{
 						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];
 						var values = elementsStack.Pop();
-						elementsStack.Peek().Add(MakeInitializerAssignment(initObjRR, methodElement, pathElement, values, indexVariables));
+						elementsStack.Peek().Add(MakeInitializerAssignment(initObjRR, methodElement, pathElement,
+							values, indexVariables));
 					}
+
 					currentPath = info.Path;
 				}
+
 				// Fill the stack with empty expression lists
 				while (elementsStack.Count < currentPath.Count)
 					elementsStack.Push(new List<TranslatedExpression>());
-				var lastElement = currentPath.Last();
+				var lastElement = CollectionExtensions.Last(currentPath);
 				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
 				switch (info.Kind)
 				{
@@ -3235,19 +3348,22 @@ namespace ICSharpCode.Decompiler.CSharp
 						Debug.Assert(lastElement.Member is IMethod);
 						elementsStack.Peek().Add(
 							new CallBuilder(this, typeSystem, settings)
-								.BuildCollectionInitializerExpression(lastElement.OpCode, (IMethod)lastElement.Member, initObjRR, info.Values)
+								.BuildCollectionInitializerExpression(lastElement.OpCode, (IMethod)lastElement.Member,
+									initObjRR, info.Values)
 								.WithILInstruction(inst)
 						);
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
-						Debug.Assert(lastElement.Member is IProperty || lastElement.Member is IField);
+						Debug.Assert(lastElement.Member is IProperty or IField);
 						if (lastElement.Indices?.Length > 0)
 						{
 							var property = (IProperty)lastElement.Member;
 							Debug.Assert(property.IsIndexer);
 							elementsStack.Peek().Add(
 								new CallBuilder(this, typeSystem, settings)
-									.BuildDictionaryInitializerExpression(lastElement.OpCode, property.Setter, initObjRR, GetIndices(lastElement.Indices, indexVariables).ToList(), info.Values.Single())
+									.BuildDictionaryInitializerExpression(lastElement.OpCode, property.Setter,
+										initObjRR, GetIndices(lastElement.Indices, indexVariables).ToList(),
+										info.Values.Single())
 									.WithILInstruction(inst)
 							);
 						}
@@ -3259,9 +3375,11 @@ namespace ICSharpCode.Decompiler.CSharp
 								.WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(assignment);
 						}
+
 						break;
 				}
 			}
+
 			while (elementsStack.Count > 1)
 			{
 				var methodElement = currentPath[elementsStack.Count - 1];
@@ -3271,10 +3389,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					MakeInitializerAssignment(initObjRR, methodElement, pathElement, values, indexVariables)
 				);
 			}
-			return new ArrayInitializerExpression(elements.SelectArray(e => e.Expression));
+
+			return new ArrayInitializerExpression(CollectionExtensions.SelectArray(elements, e => e.Expression));
 		}
 
-		IEnumerable<ILInstruction> GetIndices(IEnumerable<ILInstruction> indices, Dictionary<ILVariable, ILInstruction> indexVariables)
+		IEnumerable<ILInstruction> GetIndices(IEnumerable<ILInstruction> indices,
+			Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
 			foreach (var inst in indices)
 			{
@@ -3285,18 +3405,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		TranslatedExpression MakeInitializerAssignment(InitializedObjectResolveResult rr, IL.Transforms.AccessPathElement memberPath,
+		TranslatedExpression MakeInitializerAssignment(InitializedObjectResolveResult rr,
+			IL.Transforms.AccessPathElement memberPath,
 			IL.Transforms.AccessPathElement valuePath, List<TranslatedExpression> values,
 			Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
 			TranslatedExpression value;
-			if (memberPath.Member is IMethod method && method.Name == "Add")
+			if (memberPath.Member is IMethod { Name: "Add" })
 			{
 				value = new ArrayInitializerExpression(values.Select(v => v.Expression))
 					.WithRR(new ResolveResult(SpecialType.UnknownType))
 					.WithoutILInstruction();
 			}
-			else if (values.Count == 1 && !(values[0].Expression is AssignmentExpression || values[0].Expression is NamedExpression))
+			else if (values.Count == 1 && values[0].Expression is not (AssignmentExpression or NamedExpression))
 			{
 				value = values[0];
 			}
@@ -3306,9 +3427,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(SpecialType.UnknownType))
 					.WithoutILInstruction();
 			}
+
 			if (valuePath.Indices?.Length > 0)
 			{
-				Expression index = new IndexerExpression(null, GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
+				Expression index = new IndexerExpression(null,
+					GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
 				return new AssignmentExpression(index, value)
 					.WithRR(new MemberResolveResult(rr, valuePath.Member))
 					.WithoutILInstruction();
@@ -3321,35 +3444,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		class ArrayInitializer
-		{
-			public ArrayInitializer(ArrayInitializerExpression expression)
-			{
-				this.Expression = expression;
-				this.CurrentElementCount = 0;
-			}
-
-			public ArrayInitializerExpression Expression;
-			// HACK: avoid using Expression.Elements.Count: https://github.com/icsharpcode/ILSpy/issues/1202
-			public int CurrentElementCount;
-		}
-
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
-			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out IType type))
+			if (block.Instructions.FirstOrDefault() is not StLoc stloc || block.FinalInstruction is not LdLoc final ||
+			    !stloc.Value.MatchNewArr(out IType type))
 				throw new ArgumentException("given Block is invalid!");
 			if (stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 			var newArr = (NewArr)stloc.Value;
 
-			var translatedDimensions = newArr.Indices.SelectArray(i => Translate(i));
+			var translatedDimensions = CollectionExtensions.SelectArray(newArr.Indices, i => Translate(i));
 
-			if (!translatedDimensions.All(dim => dim.ResolveResult.IsCompileTimeConstant))
+			if (!CollectionExtensions.All(translatedDimensions, dim => dim.ResolveResult.IsCompileTimeConstant))
 				throw new ArgumentException("given Block is invalid!");
 			int dimensions = newArr.Indices.Count;
-			int[] dimensionSizes = translatedDimensions.SelectArray(dim => (int)dim.ResolveResult.ConstantValue);
+			int[] dimensionSizes =
+				CollectionExtensions.SelectArray(translatedDimensions, dim => (int)dim.ResolveResult.ConstantValue);
 			var container = new Stack<ArrayInitializer>();
 			var root = new ArrayInitializer(new ArrayInitializerExpression());
 			container.Push(root);
@@ -3357,7 +3467,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			for (int i = 1; i < block.Instructions.Count; i++)
 			{
-				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType t) || !type.Equals(t))
+				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType t) ||
+				    !type.Equals(t))
 					throw new ArgumentException("given Block is invalid!");
 				if (!target.MatchLdElema(out t, out ILInstruction array) || !type.Equals(t))
 					throw new ArgumentException("given Block is invalid!");
@@ -3368,33 +3479,40 @@ namespace ICSharpCode.Decompiler.CSharp
 					var aie = new ArrayInitializerExpression();
 					var parentInitializer = container.Peek();
 					if (parentInitializer.CurrentElementCount > 0)
-						parentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+						parentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma),
+							Roles.Comma);
 					parentInitializer.Expression.Elements.Add(aie);
 					parentInitializer.CurrentElementCount++;
 					container.Push(new ArrayInitializer(aie));
 				}
+
 				TranslatedExpression val;
 				var old = astBuilder.UseSpecialConstants;
 				try
 				{
-					astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType() && !type.IsKnownType(KnownTypeCode.Decimal);
+					astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType() &&
+					                                 !type.IsKnownType(KnownTypeCode.Decimal);
 					val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
 				}
 				finally
 				{
 					astBuilder.UseSpecialConstants = old;
 				}
+
 				var currentInitializer = container.Peek();
 				if (currentInitializer.CurrentElementCount > 0)
-					currentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+					currentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma),
+						Roles.Comma);
 				currentInitializer.Expression.Elements.Add(val);
 				currentInitializer.CurrentElementCount++;
 				elementResolveResults.Add(val.ResolveResult);
-				while (container.Count > 0 && container.Peek().CurrentElementCount == dimensionSizes[container.Count - 1])
+				while (container.Count > 0 &&
+				       container.Peek().CurrentElementCount == dimensionSizes[container.Count - 1])
 				{
 					container.Pop();
 				}
 			}
+
 			ArraySpecifier[] additionalSpecifiers;
 			AstType typeExpression;
 			if (settings.AnonymousTypes && type.ContainsAnonymousType())
@@ -3415,6 +3533,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					additionalSpecifiers = Empty<ArraySpecifier>.Array;
 				}
 			}
+
 			var expr = new ArrayCreateExpression {
 				Type = typeExpression,
 				Initializer = root.Expression
@@ -3423,16 +3542,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!type.ContainsAnonymousType())
 				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			return expr.WithILInstruction(block)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions),
+					newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
 		}
 
 		TranslatedExpression TranslateStackAllocInitializer(Block block, IType typeHint)
 		{
-			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
+			if (block.Instructions.FirstOrDefault() is not StLoc stloc || block.FinalInstruction is not LdLoc final ||
+			    stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
-			StackAllocExpression stackAllocExpression;
 			IType elementType;
 			if (block.Instructions.Count < 2 || !block.Instructions[1].MatchStObj(out _, out _, out var t))
 				throw new ArgumentException("given Block is invalid!");
@@ -3440,17 +3558,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				typeHint = new PointerType(t);
 			}
-			switch (stloc.Value)
-			{
-				case LocAlloc locAlloc:
-					stackAllocExpression = TranslateLocAlloc(locAlloc, typeHint, out elementType);
-					break;
-				case LocAllocSpan locAllocSpan:
-					stackAllocExpression = TranslateLocAllocSpan(locAllocSpan, typeHint, out elementType);
-					break;
-				default:
-					throw new ArgumentException("given Block is invalid!");
-			}
+
+			StackAllocExpression stackAllocExpression = stloc.Value switch {
+				LocAlloc locAlloc => TranslateLocAlloc(locAlloc, typeHint, out elementType),
+				LocAllocSpan locAllocSpan => TranslateLocAllocSpan(locAllocSpan, typeHint, out elementType),
+				_ => throw new ArgumentException("given Block is invalid!")
+			};
 			var initializer = stackAllocExpression.Initializer = new ArrayInitializerExpression();
 			var pointerType = new PointerType(elementType);
 			long expectedOffset = 0;
@@ -3458,7 +3571,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			for (int i = 1; i < block.Instructions.Count; i++)
 			{
 				// stobj type(binary.add.i(ldloc I_0, conv i4->i <sign extend> (ldc.i4 offset)), value)
-				if (!block.Instructions[i].MatchStObj(out var target, out var value, out t) || !TypeUtils.IsCompatibleTypeForMemoryAccess(elementType, t))
+				if (!block.Instructions[i].MatchStObj(out var target, out var value, out t) ||
+				    !TypeUtils.IsCompatibleTypeForMemoryAccess(elementType, t))
 					throw new ArgumentException("given Block is invalid!");
 				long offset = 0;
 				target = target.UnwrapConv(ConversionKind.StopGCTracking);
@@ -3469,35 +3583,43 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new ArgumentException("given Block is invalid!");
 					var binary = (BinaryNumericInstruction)target;
 					left = left.UnwrapConv(ConversionKind.StopGCTracking);
-					var offsetInst = PointerArithmeticOffset.Detect(right, pointerType.ElementType, binary.CheckForOverflow);
+					var offsetInst =
+						PointerArithmeticOffset.Detect(right, pointerType.ElementType, binary.CheckForOverflow);
 					if (!left.MatchLdLoc(final.Variable) || offsetInst == null)
 						throw new ArgumentException("given Block is invalid!");
 					if (!offsetInst.MatchLdcI(out offset))
 						throw new ArgumentException("given Block is invalid!");
 				}
+
 				while (expectedOffset < offset)
 				{
-					initializer.Elements.Add(Translate(IL.Transforms.TransformArrayInitializers.GetNullExpression(elementType), typeHint: elementType));
+					initializer.Elements.Add(Translate(
+						IL.Transforms.TransformArrayInitializers.GetNullExpression(elementType),
+						typeHint: elementType));
 					expectedOffset++;
 				}
-				var val = Translate(value, typeHint: elementType).ConvertTo(elementType, this, allowImplicitConversion: true);
+
+				var val = Translate(value, typeHint: elementType)
+					.ConvertTo(elementType, this, allowImplicitConversion: true);
 				initializer.Elements.Add(val);
 				expectedOffset++;
 			}
+
 			return stackAllocExpression.WithILInstruction(block)
 				.WithRR(new ResolveResult(stloc.Variable.Type));
 		}
 
 		TranslatedExpression TranslateWithInitializer(Block block)
 		{
-			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
+			if (block.Instructions.FirstOrDefault() is not StLoc stloc || block.FinalInstruction is not LdLoc final ||
+			    stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 
-			WithInitializerExpression withInitializerExpression = new WithInitializerExpression();
-			withInitializerExpression.Expression = Translate(stloc.Value, stloc.Variable.Type);
-			withInitializerExpression.Initializer = BuildArrayInitializerExpression(block, new InitializedObjectResolveResult(stloc.Variable.Type));
+			WithInitializerExpression withInitializerExpression = new() {
+				Expression = Translate(stloc.Value, stloc.Variable.Type),
+				Initializer =
+					BuildArrayInitializerExpression(block, new InitializedObjectResolveResult(stloc.Variable.Type))
+			};
 
 			return withInitializerExpression.WithILInstruction(block)
 				.WithRR(new ResolveResult(stloc.Variable.Type));
@@ -3517,7 +3639,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				return ConvertConstantValue(newRR, allowImplicitConversion: true).WithILInstruction(expr.ILInstructions);
+				return ConvertConstantValue(newRR, allowImplicitConversion: true)
+					.WithILInstruction(expr.ILInstructions);
 			}
 		}
 
@@ -3527,24 +3650,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return rr;
 			}
+
 			typeHint = NullableType.GetUnderlyingType(typeHint);
 			if (rr.Type.Equals(typeHint))
 			{
 				return rr;
 			}
+
 			// Convert to type hint, if this is possible without loss of accuracy
 			if (typeHint.IsKnownType(KnownTypeCode.Boolean))
 			{
-				if (object.Equals(rr.ConstantValue, 0) || object.Equals(rr.ConstantValue, 0u))
+				if (Equals(rr.ConstantValue, 0) || Equals(rr.ConstantValue, 0u))
 				{
 					rr = new ConstantResolveResult(typeHint, false);
 				}
-				else if (object.Equals(rr.ConstantValue, 1) || object.Equals(rr.ConstantValue, 1u))
+				else if (Equals(rr.ConstantValue, 1) || Equals(rr.ConstantValue, 1u))
 				{
 					rr = new ConstantResolveResult(typeHint, true);
 				}
 			}
-			else if (typeHint.Kind == TypeKind.Enum || typeHint.IsKnownType(KnownTypeCode.Char) || typeHint.IsCSharpSmallIntegerType())
+			else if (typeHint.Kind == TypeKind.Enum || typeHint.IsKnownType(KnownTypeCode.Char) ||
+			         typeHint.IsCSharpSmallIntegerType())
 			{
 				var castRR = resolver.WithCheckForOverflow(true).ResolveCast(typeHint, rr);
 				if (castRR.IsCompileTimeConstant && !castRR.IsError)
@@ -3552,19 +3678,22 @@ namespace ICSharpCode.Decompiler.CSharp
 					rr = castRR;
 				}
 			}
-			else if (typeHint.Kind.IsAnyPointer() && (object.Equals(rr.ConstantValue, 0) || object.Equals(rr.ConstantValue, 0u)))
+			else if (typeHint.Kind.IsAnyPointer() && (Equals(rr.ConstantValue, 0) || Equals(rr.ConstantValue, 0u)))
 			{
 				rr = new ConstantResolveResult(typeHint, null);
 			}
+
 			return rr;
 		}
 
-		protected internal override TranslatedExpression VisitNullCoalescingInstruction(NullCoalescingInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitNullCoalescingInstruction(NullCoalescingInstruction inst,
+			TranslationContext context)
 		{
 			var value = Translate(inst.ValueInst);
 			var fallback = Translate(inst.FallbackInst);
 			fallback = AdjustConstantExpressionToType(fallback, value.Type);
-			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.NullCoalescing, value.ResolveResult, fallback.ResolveResult);
+			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.NullCoalescing, value.ResolveResult,
+				fallback.ResolveResult);
 			if (rr.IsError)
 			{
 				IType targetType;
@@ -3572,7 +3701,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					targetType = NullableType.GetUnderlyingType(value.Type);
 				}
-				else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type))
+				else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) &&
+				         !value.Type.Equals(fallback.Type))
 				{
 					targetType = compilation.FindType(inst.UnderlyingResultType);
 				}
@@ -3580,14 +3710,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					targetType = value.Type.Equals(SpecialType.NullType) ? fallback.Type : value.Type;
 				}
-				if (inst.Kind != NullCoalescingKind.Ref)
-				{
-					value = value.ConvertTo(NullableType.Create(compilation, targetType), this);
-				}
-				else
-				{
-					value = value.ConvertTo(targetType, this);
-				}
+
+				value = value.ConvertTo(
+					inst.Kind != NullCoalescingKind.Ref ? NullableType.Create(compilation, targetType) : targetType,
+					this);
 				if (inst.Kind == NullCoalescingKind.Nullable)
 				{
 					value = value.ConvertTo(NullableType.Create(compilation, targetType), this);
@@ -3596,14 +3722,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					fallback = fallback.ConvertTo(targetType, this);
 				}
+
 				rr = new ResolveResult(targetType);
 			}
+
 			return new BinaryOperatorExpression(value, BinaryOperatorType.NullCoalescing, fallback)
 				.WithILInstruction(inst)
 				.WithRR(rr);
 		}
 
-		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst,
+			TranslationContext context)
 		{
 			var condition = TranslateCondition(inst.Condition);
 			var trueBranch = Translate(inst.TrueInst, typeHint: context.TypeHint);
@@ -3623,15 +3752,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				Debug.Assert(rhsInst == inst.FalseInst);
 				rhs = falseBranch;
 			}
+
 			// ILAst LogicAnd/LogicOr can return a different value than 0 or 1
 			// if the rhs is evaluated.
 			// We can only correctly translate it to C# if the rhs is of type boolean:
-			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst)))
+			if (op != BinaryOperatorType.Any &&
+			    (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst)))
 			{
 				if (rhs.Type.GetStackType().GetSize() > 4)
 				{
 					rhs = rhs.ConvertTo(FindType(StackType.I4, rhs.Type.GetSign()), this);
 				}
+
 				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)
@@ -3642,17 +3774,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			trueBranch = AdjustConstantExpressionToType(trueBranch, falseBranch.Type);
 			falseBranch = AdjustConstantExpressionToType(falseBranch, trueBranch.Type);
 
-			var rr = resolver.ResolveConditional(condition.ResolveResult, trueBranch.ResolveResult, falseBranch.ResolveResult);
+			var rr = resolver.ResolveConditional(condition.ResolveResult, trueBranch.ResolveResult,
+				falseBranch.ResolveResult);
 			if (rr.IsError)
 			{
 				IType targetType;
-				if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type))
+				if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) &&
+				    !trueBranch.Type.Equals(falseBranch.Type))
 				{
-					targetType = typeInference.GetBestCommonType(new[] { trueBranch.ResolveResult, falseBranch.ResolveResult }, out bool success);
+					targetType =
+						typeInference.GetBestCommonType(new[] { trueBranch.ResolveResult, falseBranch.ResolveResult },
+							out bool success);
 					if (!success || targetType.GetStackType() != inst.ResultType)
 					{
 						// Figure out the target type based on inst.ResultType.
-						if (context.TypeHint.Kind != TypeKind.Unknown && context.TypeHint.GetStackType() == inst.ResultType)
+						if (context.TypeHint.Kind != TypeKind.Unknown &&
+						    context.TypeHint.GetStackType() == inst.ResultType)
 						{
 							targetType = context.TypeHint;
 						}
@@ -3683,20 +3820,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
 				}
+
 				trueBranch = trueBranch.ConvertTo(targetType, this);
 				falseBranch = falseBranch.ConvertTo(targetType, this);
 				rr = new ResolveResult(targetType);
 			}
+
 			if (rr.Type.Kind == TypeKind.ByReference)
 			{
 				// C# conditional ref looks like this:
 				// ref (arr != null ? ref trueBranch : ref falseBranch);
 				var conditionalResolveResult = new ResolveResult(((ByReferenceType)rr.Type).ElementType);
 				return new DirectionExpression(FieldDirection.Ref,
-					new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
-						.WithILInstruction(inst)
-						.WithRR(conditionalResolveResult)
-				).WithoutILInstruction().WithRR(new ByReferenceResolveResult(conditionalResolveResult, ReferenceKind.Ref));
+						new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
+							.WithILInstruction(inst)
+							.WithRR(conditionalResolveResult)
+					).WithoutILInstruction()
+					.WithRR(new ByReferenceResolveResult(conditionalResolveResult, ReferenceKind.Ref));
 			}
 			else
 			{
@@ -3706,7 +3846,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitSwitchInstruction(SwitchInstruction inst,
+			TranslationContext context)
 		{
 			TranslatedExpression value;
 			IType type;
@@ -3728,8 +3869,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			IL.SwitchSection defaultSection = inst.GetDefaultSection();
-			SwitchExpression switchExpr = new SwitchExpression();
-			switchExpr.Expression = value;
+			SwitchExpression switchExpr = new() {
+				Expression = value
+			};
 			IType resultType;
 			if (context.TypeHint.Kind != TypeKind.Unknown && context.TypeHint.GetStackType() == inst.ResultType)
 			{
@@ -3756,13 +3898,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					var rr = statementBuilder.CreateTypedCaseLabel(val, type, strToInt?.Map).Single();
 					ses.Pattern = astBuilder.ConvertConstantValue(rr);
 				}
+
 				ses.Body = TranslateSectionBody(section);
 				switchExpr.SwitchSections.Add(ses);
 			}
 
-			var defaultSES = new SwitchExpressionSection();
-			defaultSES.Pattern = new IdentifierExpression("_");
-			defaultSES.Body = TranslateSectionBody(defaultSection);
+			var defaultSES = new SwitchExpressionSection {
+				Pattern = new IdentifierExpression("_"),
+				Body = TranslateSectionBody(defaultSection)
+			};
 			switchExpr.SwitchSections.Add(defaultSES);
 
 			return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(resultType));
@@ -3789,14 +3933,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType expectedType = null;
 			if (inst.GetAwaiterMethod != null)
 			{
-				if (inst.GetAwaiterMethod.IsStatic)
-				{
-					expectedType = inst.GetAwaiterMethod.Parameters.FirstOrDefault()?.Type;
-				}
-				else
-				{
-					expectedType = inst.GetAwaiterMethod.DeclaringType;
-				}
+				expectedType = inst.GetAwaiterMethod.IsStatic
+					? inst.GetAwaiterMethod.Parameters.FirstOrDefault()?.Type
+					: inst.GetAwaiterMethod.DeclaringType;
 			}
 
 			var value = Translate(inst.Value, typeHint: expectedType);
@@ -3805,16 +3944,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				// we can deference the managed reference by stripping away the 'ref'
 				value = value.UnwrapChild(((DirectionExpression)value.Expression).Expression);
 			}
+
 			if (expectedType != null)
 			{
 				value = value.ConvertTo(expectedType, this, allowImplicitConversion: true);
 			}
+
 			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(inst.GetResultMethod?.ReturnType ?? SpecialType.UnknownType));
 		}
 
-		protected internal override TranslatedExpression VisitNullableRewrap(NullableRewrap inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitNullableRewrap(NullableRewrap inst,
+			TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
 			IType type = arg.Type;
@@ -3822,24 +3964,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				type = NullableType.Create(compilation, type);
 			}
+
 			return new UnaryOperatorExpression(UnaryOperatorType.NullConditionalRewrap, arg)
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(type));
 		}
 
-		protected internal override TranslatedExpression VisitNullableUnwrap(NullableUnwrap inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitNullableUnwrap(NullableUnwrap inst,
+			TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
 			if (inst.RefInput && !inst.RefOutput && arg.Expression is DirectionExpression dir)
 			{
 				arg = arg.UnwrapChild(dir.Expression);
 			}
+
 			return new UnaryOperatorExpression(UnaryOperatorType.NullConditional, arg)
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(NullableType.GetUnderlyingType(arg.Type)));
 		}
 
-		protected internal override TranslatedExpression VisitDynamicConvertInstruction(DynamicConvertInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicConvertInstruction(DynamicConvertInstruction inst,
+			TranslationContext context)
 		{
 			var operand = Translate(inst.Argument).ConvertTo(SpecialType.Dynamic, this);
 			var result = new CastExpression(ConvertType(inst.Type), operand)
@@ -3848,20 +3994,25 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst.Type, operand.ResolveResult,
 					inst.IsExplicit ? Conversion.ExplicitDynamicConversion : Conversion.ImplicitDynamicConversion
 				));
-			result.Expression.AddAnnotation(inst.IsChecked ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			result.Expression.AddAnnotation(inst.IsChecked
+				? AddCheckedBlocks.CheckedAnnotation
+				: AddCheckedBlocks.UncheckedAnnotation);
 			return result;
 		}
 
-		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(
+			DynamicGetIndexInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new IndexerExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing,
+					arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
-		protected internal override TranslatedExpression VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicGetMemberInstruction(
+			DynamicGetMemberInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Target, inst.TargetArgumentInfo);
 			return new MemberReferenceExpression(target, inst.Name)
@@ -3869,9 +4020,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
 		}
 
-		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(
+			DynamicInvokeConstructorInstruction inst, TranslationContext context)
 		{
-			if (!(inst.ArgumentInfo[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
+			if (!(inst.ArgumentInfo[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType) &&
+			      IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0],
+				      out var constructorType)))
 				return ErrorExpression("Could not detect static type for DynamicInvokeConstructorInstruction");
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			//var names = inst.ArgumentInfo.Skip(1).Select(a => a.Name).ToArray();
@@ -3879,11 +4033,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
 		}
 
-		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(
+			DynamicInvokeMemberInstruction inst, TranslationContext context)
 		{
 			Expression targetExpr;
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
-			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSimpleName) && target.Expression is ThisReferenceExpression)
+			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSimpleName) &&
+			    target.Expression is ThisReferenceExpression)
 			{
 				targetExpr = new IdentifierExpression(inst.Name);
 				((IdentifierExpression)targetExpr).TypeArguments.AddRange(inst.TypeArguments.Select(ConvertType));
@@ -3892,19 +4048,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				targetExpr = new MemberReferenceExpression(target, inst.Name, inst.TypeArguments.Select(ConvertType));
 			}
+
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(targetExpr, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation,
+					arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
-		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst,
+			TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation,
+					arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
 		TranslatedExpression TranslateDynamicTarget(ILInstruction inst, CSharpArgumentInfo argumentInfo)
@@ -3912,7 +4072,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.NamedArgument));
 			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsOut));
 
-			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType))
+			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsStaticType) &&
+			    IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType))
 			{
 				return new TypeReferenceExpression(ConvertType(callTargetType))
 					.WithoutILInstruction()
@@ -3927,7 +4088,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var translatedTarget = Translate(inst, targetType).ConvertTo(targetType, this);
 
-			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsRef) && translatedTarget.Expression is DirectionExpression)
+			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsRef) &&
+			    translatedTarget.Expression is DirectionExpression)
 			{
 				// (ref x).member => x.member
 				translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
@@ -3936,9 +4098,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return translatedTarget;
 		}
 
-		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments,
+			IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-			foreach (var (argument, info) in arguments.Zip(argumentInfo))
+			foreach ((ILInstruction argument, CSharpArgumentInfo info) in Enumerable.Zip(arguments, argumentInfo))
 			{
 				yield return TranslateDynamicArgument(argument, info);
 			}
@@ -3953,18 +4116,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				typeHint = info.CompileTimeType;
 			}
+
 			var translatedExpression = Translate(argument, typeHint);
 			if (!(typeHint.Equals(SpecialType.Dynamic) && translatedExpression.Type.Equals(SpecialType.NullType)))
 			{
 				translatedExpression = translatedExpression.ConvertTo(typeHint, this);
 			}
+
 			if (info.HasFlag(CSharpArgumentInfoFlags.IsOut))
 			{
 				translatedExpression = ChangeDirectionExpressionTo(translatedExpression, ReferenceKind.Out);
 			}
+
 			if (info.HasFlag(CSharpArgumentInfoFlags.NamedArgument) && !string.IsNullOrWhiteSpace(info.Name))
 			{
-				translatedExpression = new TranslatedExpression(new NamedArgumentExpression(info.Name, translatedExpression.Expression));
+				translatedExpression =
+					new TranslatedExpression(new NamedArgumentExpression(info.Name, translatedExpression.Expression));
 			}
 
 			return translatedExpression;
@@ -3972,31 +4139,35 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal static TranslatedExpression ChangeDirectionExpressionTo(TranslatedExpression input, ReferenceKind kind)
 		{
-			if (!(input.Expression is DirectionExpression dirExpr && input.ResolveResult is ByReferenceResolveResult brrr))
+			if (!(input.Expression is DirectionExpression dirExpr &&
+			      input.ResolveResult is ByReferenceResolveResult brrr))
 				return input;
 			dirExpr.FieldDirection = (FieldDirection)kind;
 			dirExpr.RemoveAnnotations<ByReferenceResolveResult>();
-			if (brrr.ElementResult == null)
-				brrr = new ByReferenceResolveResult(brrr.ElementType, kind);
-			else
-				brrr = new ByReferenceResolveResult(brrr.ElementResult, kind);
+			brrr = brrr.ElementResult == null
+				? new ByReferenceResolveResult(brrr.ElementType, kind)
+				: new ByReferenceResolveResult(brrr.ElementResult, kind);
 			dirExpr.AddAnnotation(brrr);
 			return new TranslatedExpression(dirExpr);
 		}
 
-		protected internal override TranslatedExpression VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicSetIndexInstruction(
+			DynamicSetIndexInstruction inst, TranslationContext context)
 		{
 			Debug.Assert(inst.Arguments.Count >= 3);
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
-			var value = new TranslatedExpression(arguments.Last());
-			var indexer = new IndexerExpression(target, arguments.SkipLast(1).Select(a => a.Expression))
+			var value = new TranslatedExpression(CollectionExtensions.Last(arguments));
+			var indexer = new IndexerExpression(target,
+					CollectionExtensions.SkipLast(arguments, 1).Select(a => a.Expression))
 				.WithoutILInstruction()
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.SkipLast(1).Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing,
+					CollectionExtensions.SkipLast(arguments, 1).Select(a => a.ResolveResult).ToArray()));
 			return Assignment(indexer, value).WithILInstruction(inst);
 		}
 
-		protected internal override TranslatedExpression VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicSetMemberInstruction(
+			DynamicSetMemberInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Target, inst.TargetArgumentInfo);
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
@@ -4006,25 +4177,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			return Assignment(member, value).WithILInstruction(inst);
 		}
 
-		protected internal override TranslatedExpression VisitDynamicBinaryOperatorInstruction(DynamicBinaryOperatorInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicBinaryOperatorInstruction(
+			DynamicBinaryOperatorInstruction inst, TranslationContext context)
 		{
 			switch (inst.Operation)
 			{
 				case ExpressionType.Add:
 				case ExpressionType.AddAssign:
-					return CreateBinaryOperator(BinaryOperatorType.Add, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateBinaryOperator(BinaryOperatorType.Add,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.AddChecked:
 				case ExpressionType.AddAssignChecked:
 					return CreateBinaryOperator(BinaryOperatorType.Add, isChecked: true);
 				case ExpressionType.Subtract:
 				case ExpressionType.SubtractAssign:
-					return CreateBinaryOperator(BinaryOperatorType.Subtract, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateBinaryOperator(BinaryOperatorType.Subtract,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.SubtractChecked:
 				case ExpressionType.SubtractAssignChecked:
 					return CreateBinaryOperator(BinaryOperatorType.Subtract, isChecked: true);
 				case ExpressionType.Multiply:
 				case ExpressionType.MultiplyAssign:
-					return CreateBinaryOperator(BinaryOperatorType.Multiply, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateBinaryOperator(BinaryOperatorType.Multiply,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.MultiplyChecked:
 				case ExpressionType.MultiplyAssignChecked:
 					return CreateBinaryOperator(BinaryOperatorType.Multiply, isChecked: true);
@@ -4078,7 +4253,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicLogicOperatorInstruction(
+			DynamicLogicOperatorInstruction inst, TranslationContext context)
 		{
 			BinaryOperatorType operatorType;
 			if (inst.Operation == ExpressionType.AndAlso)
@@ -4094,28 +4270,34 @@ namespace ICSharpCode.Decompiler.CSharp
 				Debug.Fail("Unknown operation for DynamicLogicOperatorInstruction");
 				return base.VisitDynamicLogicOperatorInstruction(inst, context);
 			}
+
 			var left = TranslateDynamicArgument(inst.Left, inst.LeftArgumentInfo);
 			var right = TranslateDynamicArgument(inst.Right, inst.RightArgumentInfo);
 			var boe = new BinaryOperatorExpression(left.Expression, operatorType, right.Expression);
 			return boe.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
 		}
 
-		protected internal override TranslatedExpression VisitDynamicUnaryOperatorInstruction(DynamicUnaryOperatorInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicUnaryOperatorInstruction(
+			DynamicUnaryOperatorInstruction inst, TranslationContext context)
 		{
 			switch (inst.Operation)
 			{
 				case ExpressionType.Not:
 					return CreateUnaryOperator(UnaryOperatorType.Not);
 				case ExpressionType.Decrement:
-					return CreateUnaryOperator(UnaryOperatorType.Decrement, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateUnaryOperator(UnaryOperatorType.Decrement,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.Increment:
-					return CreateUnaryOperator(UnaryOperatorType.Increment, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateUnaryOperator(UnaryOperatorType.Increment,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.Negate:
-					return CreateUnaryOperator(UnaryOperatorType.Minus, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateUnaryOperator(UnaryOperatorType.Minus,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.NegateChecked:
 					return CreateUnaryOperator(UnaryOperatorType.Minus, isChecked: true);
 				case ExpressionType.UnaryPlus:
-					return CreateUnaryOperator(UnaryOperatorType.Plus, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+					return CreateUnaryOperator(UnaryOperatorType.Plus,
+						isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.IsTrue:
 					var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
 					Expression expr;
@@ -4127,14 +4309,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					else
 					{
 						// Create a dummy conditional to ensure "operator true" will be invoked.
-						expr = new ConditionalExpression(operand, new PrimitiveExpression(true), new PrimitiveExpression(false));
+						expr = new ConditionalExpression(operand, new PrimitiveExpression(true),
+							new PrimitiveExpression(false));
 					}
+
 					return expr.WithILInstruction(inst)
 						.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 				case ExpressionType.IsFalse:
 					operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
 					// Create a dummy conditional to ensure "operator false" will be invoked.
-					expr = new ConditionalExpression(operand, new PrimitiveExpression(false), new PrimitiveExpression(true));
+					expr = new ConditionalExpression(operand, new PrimitiveExpression(false),
+						new PrimitiveExpression(true));
 					return expr.WithILInstruction(inst)
 						.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 				default:
@@ -4153,31 +4338,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitDynamicCompoundAssign(DynamicCompoundAssign inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDynamicCompoundAssign(DynamicCompoundAssign inst,
+			TranslationContext context)
 		{
-			ExpressionWithResolveResult target;
-			if (inst.TargetKind == CompoundTargetKind.Address)
-			{
-				target = LdObj(inst.Target, SpecialType.Dynamic);
-			}
-			else
-			{
-				target = TranslateDynamicArgument(inst.Target, inst.TargetArgumentInfo);
-			}
+			ExpressionWithResolveResult target = inst.TargetKind == CompoundTargetKind.Address
+				? LdObj(inst.Target, SpecialType.Dynamic)
+				: TranslateDynamicArgument(inst.Target, inst.TargetArgumentInfo);
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 
-			var ae = new AssignmentExpression(target, AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation).Value, value);
-			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext))
-				ae.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
-			else
-				ae.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+			var ae = new AssignmentExpression(target,
+				AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation).Value, value);
+			ae.AddAnnotation(inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext)
+				? AddCheckedBlocks.CheckedAnnotation
+				: AddCheckedBlocks.UncheckedAnnotation);
 			return ae.WithILInstruction(inst)
-				.WithRR(new OperatorResolveResult(SpecialType.Dynamic, inst.Operation, new[] { target.ResolveResult, value.ResolveResult }));
+				.WithRR(new OperatorResolveResult(SpecialType.Dynamic, inst.Operation,
+					new[] { target.ResolveResult, value.ResolveResult }));
 		}
 
 		protected internal override TranslatedExpression VisitLdFtn(LdFtn inst, TranslationContext context)
 		{
-			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: false);
+			ExpressionWithResolveResult delegateRef =
+				new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: false);
 			if (!inst.Method.IsStatic)
 			{
 				// C# 9 function pointers don't support instance methods
@@ -4185,14 +4367,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(new PointerType(compilation.FindType(KnownTypeCode.Void))))
 					.WithILInstruction(inst);
 			}
+
 			// C# 9 function pointer
 			var ftp = new FunctionPointerType(
 				typeSystem.MainModule,
 				// TODO: calling convention
 				SignatureCallingConvention.Default, ImmutableArray.Create<IType>(),
 				inst.Method.ReturnType, inst.Method.ReturnTypeIsRefReadOnly,
-				inst.Method.Parameters.SelectImmutableArray(p => p.Type),
-				inst.Method.Parameters.SelectImmutableArray(p => p.ReferenceKind)
+				CollectionExtensions.SelectImmutableArray(inst.Method.Parameters, p => p.Type),
+				CollectionExtensions.SelectImmutableArray(inst.Method.Parameters, p => p.ReferenceKind)
 			);
 			ExpressionWithResolveResult addressOf = new UnaryOperatorExpression(
 				UnaryOperatorType.AddressOf,
@@ -4208,13 +4391,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdVirtFtn(LdVirtFtn inst, TranslationContext context)
 		{
 			// C# 9 function pointers don't support instance methods
-			ExpressionWithResolveResult delegateRef = new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: true);
+			ExpressionWithResolveResult delegateRef =
+				new CallBuilder(this, typeSystem, settings).BuildMethodReference(inst.Method, isVirtual: true);
 			return new InvocationExpression(new IdentifierExpression("__ldvirtftn"), delegateRef)
 				.WithRR(new ResolveResult(new PointerType(compilation.FindType(KnownTypeCode.Void))))
 				.WithILInstruction(inst);
 		}
 
-		protected internal override TranslatedExpression VisitCallIndirect(CallIndirect inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitCallIndirect(CallIndirect inst,
+			TranslationContext context)
 		{
 			if (inst.IsInstance)
 			{
@@ -4226,18 +4411,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				functionPointer = functionPointer.ConvertTo(inst.FunctionPointerType, this);
 			}
+
 			var fpt = (FunctionPointerType)functionPointer.Type.SkipModifiers();
-			var invocation = new InvocationExpression();
-			invocation.Target = functionPointer;
-			foreach (var (argInst, (paramType, paramRefKind)) in inst.Arguments.Zip(fpt.ParameterTypes.Zip(fpt.ParameterReferenceKinds)))
+			var invocation = new InvocationExpression {
+				Target = functionPointer
+			};
+			foreach ((ILInstruction argInst, (IType paramType, ReferenceKind paramRefKind)) in Enumerable.Zip(
+				         inst.Arguments, Enumerable.Zip(fpt.ParameterTypes, fpt.ParameterReferenceKinds)))
 			{
-				var arg = Translate(argInst, typeHint: paramType).ConvertTo(paramType, this, allowImplicitConversion: true);
+				var arg = Translate(argInst, typeHint: paramType)
+					.ConvertTo(paramType, this, allowImplicitConversion: true);
 				if (paramRefKind != ReferenceKind.None)
 				{
 					arg = ChangeDirectionExpressionTo(arg, paramRefKind);
 				}
+
 				invocation.Arguments.Add(arg);
 			}
+
 			if (fpt.ReturnType.SkipModifiers() is ByReferenceType brt)
 			{
 				var rr = new ResolveResult(brt.ElementType);
@@ -4252,7 +4443,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitDeconstructInstruction(DeconstructInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitDeconstructInstruction(DeconstructInstruction inst,
+			TranslationContext context)
 		{
 			IType rhsType = inst.Pattern.Variable.Type;
 			var rhs = Translate(inst.Pattern.TestedOperand, rhsType);
@@ -4262,7 +4454,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var inits = inst.Init;
 			int initPos = 0;
 
-			Dictionary<ILVariable, ILVariable> conversionMapping = new Dictionary<ILVariable, ILVariable>();
+			Dictionary<ILVariable, ILVariable> conversionMapping = new();
 
 			foreach (var conv in inst.Conversions.Instructions)
 			{
@@ -4290,6 +4482,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							{
 								value = subPattern.Variable;
 							}
+
 							expr.Elements.Add(ConstructAssignmentTarget(assignments[assignmentPos], value));
 							assignmentPos++;
 						}
@@ -4301,6 +4494,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						expr.Elements.Add(ConstructTuple(subPattern));
 					}
 				}
+
 				return expr;
 			}
 
@@ -4316,6 +4510,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							ReplaceAssignmentTarget(call.Arguments[i]);
 						}
+
 						Debug.Assert(call.Arguments.Last().MatchLdLoc(value));
 						break;
 					case StObj stobj:
@@ -4328,6 +4523,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					default:
 						throw new NotSupportedException();
 				}
+
 				var expr = Translate(assignment);
 				return expr.UnwrapChild(((AssignmentExpression)expr).Left);
 			}
@@ -4335,7 +4531,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			void ReplaceAssignmentTarget(ILInstruction target)
 			{
 				if (target.MatchLdLoc(out var v)
-					&& v.Kind == VariableKind.DeconstructionInitTemporary)
+				    && v.Kind == VariableKind.DeconstructionInitTemporary)
 				{
 					Debug.Assert(inits[initPos].Variable == v);
 					target.ReplaceWith(inits[initPos].Value);
@@ -4344,7 +4540,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitMatchInstruction(MatchInstruction inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitMatchInstruction(MatchInstruction inst,
+			TranslationContext context)
 		{
 			var left = Translate(inst.TestedOperand);
 			var right = TranslatePattern(inst);
@@ -4365,11 +4562,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new NotImplementedException();
 					if (matchInstruction.IsDeconstructTuple)
 						throw new NotImplementedException();
-					if (matchInstruction.SubPatterns.Any())
+					if (CollectionExtensions.Any(matchInstruction.SubPatterns))
 						throw new NotImplementedException();
 					if (matchInstruction.HasDesignator)
 					{
-						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
+						SingleVariableDesignation designator = new() { Identifier = matchInstruction.Variable.Name };
 						designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
 						return new DeclarationExpression {
 							Type = ConvertType(matchInstruction.Variable.Type),
@@ -4386,31 +4583,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst,
+			TranslationContext context)
 		{
 			string message = "Error";
 			if (inst.StartILOffset != 0)
 			{
 				message += $" near IL_{inst.StartILOffset:x4}";
 			}
+
 			if (!string.IsNullOrEmpty(inst.Message))
 			{
 				message += ": " + inst.Message;
 			}
+
 			return ErrorExpression(message);
 		}
 
-		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst,
+			TranslationContext context)
 		{
 			string message = inst.Severity;
 			if (inst.StartILOffset != 0)
 			{
 				message += $" near IL_{inst.StartILOffset:x4}";
 			}
+
 			if (!string.IsNullOrEmpty(inst.Message))
 			{
 				message += ": " + inst.Message;
 			}
+
 			return ErrorExpression(message);
 		}
 
@@ -4424,6 +4627,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			var e = new ErrorExpression();
 			e.AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
 			return e.WithoutILInstruction().WithRR(ErrorResolveResult.UnknownError);
+		}
+
+		class ArrayInitializer
+		{
+			// HACK: avoid using Expression.Elements.Count: https://github.com/icsharpcode/ILSpy/issues/1202
+			public int CurrentElementCount;
+
+			public ArrayInitializerExpression Expression;
+
+			public ArrayInitializer(ArrayInitializerExpression expression)
+			{
+				this.Expression = expression;
+				this.CurrentElementCount = 0;
+			}
 		}
 	}
 }

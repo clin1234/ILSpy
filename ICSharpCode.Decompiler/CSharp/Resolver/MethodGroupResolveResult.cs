@@ -32,7 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public class MethodListWithDeclaringType : List<IParameterizedMember>
 	{
-		readonly IType declaringType;
+		public MethodListWithDeclaringType(IType declaringType)
+		{
+			this.DeclaringType = declaringType;
+		}
+
+		public MethodListWithDeclaringType(IType declaringType, IEnumerable<IParameterizedMember> methods)
+			: base(methods)
+		{
+			this.DeclaringType = declaringType;
+		}
 
 		/// <summary>
 		/// The declaring type.
@@ -53,20 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		///  <c>new MethodListWithDeclaringType(Base) { Derived.M() }</c>,
 		///  <c>new MethodListWithDeclaringType(Derived) { Derived.M(int) }</c>
 		/// </remarks>
-		public IType DeclaringType {
-			get { return declaringType; }
-		}
-
-		public MethodListWithDeclaringType(IType declaringType)
-		{
-			this.declaringType = declaringType;
-		}
-
-		public MethodListWithDeclaringType(IType declaringType, IEnumerable<IParameterizedMember> methods)
-			: base(methods)
-		{
-			this.declaringType = declaringType;
-		}
+		public IType DeclaringType { get; }
 	}
 
 	/// <summary>
@@ -78,42 +74,42 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	public class MethodGroupResolveResult : ResolveResult
 	{
 		readonly IReadOnlyList<MethodListWithDeclaringType> methodLists;
-		readonly IReadOnlyList<IType> typeArguments;
-		readonly ResolveResult targetResult;
-		readonly string methodName;
+
+		/// <summary>
+		/// List of extension methods, used to avoid re-calculating it in ResolveInvocation() when it was already
+		/// calculated by ResolveMemberAccess().
+		/// </summary>
+		internal List<List<IMethod>> extensionMethods;
+
+		// the resolver is used to fetch extension methods on demand
+		internal CSharpResolver resolver;
 
 		public MethodGroupResolveResult(ResolveResult targetResult, string methodName,
 			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType> typeArguments)
 			: base(SpecialType.NoType)
 		{
-			if (methods == null)
-				throw new ArgumentNullException(nameof(methods));
-			this.targetResult = targetResult;
-			this.methodName = methodName;
-			this.methodLists = methods;
-			this.typeArguments = typeArguments ?? EmptyList<IType>.Instance;
+			this.TargetResult = targetResult;
+			this.MethodName = methodName;
+			this.methodLists = methods ?? throw new ArgumentNullException(nameof(methods));
+			this.TypeArguments = typeArguments ?? EmptyList<IType>.Instance;
 		}
 
 		/// <summary>
 		/// Gets the resolve result for the target object.
 		/// </summary>
-		public ResolveResult TargetResult {
-			get { return targetResult; }
-		}
+		public ResolveResult TargetResult { get; }
 
 		/// <summary>
 		/// Gets the type of the reference to the target object.
 		/// </summary>
 		public IType TargetType {
-			get { return targetResult != null ? targetResult.Type : SpecialType.UnknownType; }
+			get { return TargetResult != null ? TargetResult.Type : SpecialType.UnknownType; }
 		}
 
 		/// <summary>
 		/// Gets the name of the methods in this group.
 		/// </summary>
-		public string MethodName {
-			get { return methodName; }
-		}
+		public string MethodName { get; }
 
 		/// <summary>
 		/// Gets the methods that were found.
@@ -135,18 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the type arguments that were explicitly provided.
 		/// </summary>
-		public IReadOnlyList<IType> TypeArguments {
-			get { return typeArguments; }
-		}
-
-		/// <summary>
-		/// List of extension methods, used to avoid re-calculating it in ResolveInvocation() when it was already
-		/// calculated by ResolveMemberAccess().
-		/// </summary>
-		internal List<List<IMethod>> extensionMethods;
-
-		// the resolver is used to fetch extension methods on demand
-		internal CSharpResolver resolver;
+		public IReadOnlyList<IType> TypeArguments { get; }
 
 		/// <summary>
 		/// Gets all candidate extension methods.
@@ -170,13 +155,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				Debug.Assert(extensionMethods == null);
 				try
 				{
-					extensionMethods = resolver.GetExtensionMethods(methodName, typeArguments);
+					extensionMethods = resolver.GetExtensionMethods(MethodName, TypeArguments);
 				}
 				finally
 				{
 					resolver = null;
 				}
 			}
+
 			return extensionMethods ?? Enumerable.Empty<IEnumerable<IMethod>>();
 		}
 
@@ -206,7 +192,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var outputGroup = new List<IMethod>();
 				foreach (var method in methodGroup)
 				{
-					if (CSharpResolver.IsEligibleExtensionMethod(this.TargetType, method, true, out IType[] inferredTypes))
+					if (CSharpResolver.IsEligibleExtensionMethod(this.TargetType, method, true,
+						    out IType[] inferredTypes))
 					{
 						if (substituteInferredTypes && inferredTypes != null)
 						{
@@ -218,33 +205,37 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 					}
 				}
+
 				if (outputGroup.Count > 0)
 					result.Add(outputGroup);
 			}
+
 			return result;
 		}
 
 		public override string ToString()
 		{
-			return string.Format("[{0} with {1} method(s)]", GetType().Name, this.Methods.Count());
+			return $"[{GetType().Name} with {this.Methods.Count()} method(s)]";
 		}
 
-		public OverloadResolution PerformOverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null,
-															bool allowExtensionMethods = true,
-															bool allowExpandingParams = true,
-															bool allowOptionalParameters = true,
-															bool allowImplicitIn = true,
-															bool checkForOverflow = false, CSharpConversions conversions = null)
+		public OverloadResolution PerformOverloadResolution(ICompilation compilation, ResolveResult[] arguments,
+			string[] argumentNames = null,
+			bool allowExtensionMethods = true,
+			bool allowExpandingParams = true,
+			bool allowOptionalParameters = true,
+			bool allowImplicitIn = true,
+			bool checkForOverflow = false, CSharpConversions conversions = null)
 		{
 			Log.WriteLine("Performing overload resolution for " + this);
 			Log.WriteCollection("  Arguments: ", arguments);
 
 			var typeArgumentArray = this.TypeArguments.ToArray();
-			OverloadResolution or = new OverloadResolution(compilation, arguments, argumentNames, typeArgumentArray, conversions);
-			or.AllowExpandingParams = allowExpandingParams;
-			or.AllowOptionalParameters = allowOptionalParameters;
-			or.CheckForOverflow = checkForOverflow;
-			or.AllowImplicitIn = allowImplicitIn;
+			OverloadResolution or = new(compilation, arguments, argumentNames, typeArgumentArray, conversions) {
+				AllowExpandingParams = allowExpandingParams,
+				AllowOptionalParameters = allowOptionalParameters,
+				CheckForOverflow = checkForOverflow,
+				AllowImplicitIn = allowImplicitIn
+			};
 
 			or.AddMethodLists(methodLists);
 
@@ -256,7 +247,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 				if (extensionMethods.Any())
 				{
-					Log.WriteLine("No candidate is applicable, trying {0} extension methods groups...", extensionMethods.Count());
+					Log.WriteLine("No candidate is applicable, trying {0} extension methods groups...",
+						extensionMethods.Count());
 					ResolveResult[] extArguments = new ResolveResult[arguments.Length + 1];
 					extArguments[0] = new ResolveResult(this.TargetType);
 					arguments.CopyTo(extArguments, 1);
@@ -266,12 +258,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						extArgumentNames = new string[argumentNames.Length + 1];
 						argumentNames.CopyTo(extArgumentNames, 1);
 					}
-					var extOr = new OverloadResolution(compilation, extArguments, extArgumentNames, typeArgumentArray, conversions);
-					extOr.AllowExpandingParams = allowExpandingParams;
-					extOr.AllowOptionalParameters = allowOptionalParameters;
-					extOr.IsExtensionMethodInvocation = true;
-					extOr.CheckForOverflow = checkForOverflow;
-					extOr.AllowImplicitIn = allowImplicitIn;
+
+					var extOr = new OverloadResolution(compilation, extArguments, extArgumentNames, typeArgumentArray,
+						conversions) {
+						AllowExpandingParams = allowExpandingParams,
+						AllowOptionalParameters = allowOptionalParameters,
+						IsExtensionMethodInvocation = true,
+						CheckForOverflow = checkForOverflow,
+						AllowImplicitIn = allowImplicitIn
+					};
 
 					foreach (var g in extensionMethods)
 					{
@@ -282,9 +277,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							Log.Unindent();
 							or.LogCandidateAddingResult("  Extension", method, errors);
 						}
+
 						if (extOr.FoundApplicableCandidate)
 							break;
 					}
+
 					// For the lack of a better comparison function (the one within OverloadResolution
 					// cannot be used as it depends on the argument set):
 					if (extOr.FoundApplicableCandidate || or.BestCandidate == null)
@@ -295,14 +292,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
-			Log.WriteLine("Overload resolution finished, best candidate is {0}.", or.GetBestCandidateWithSubstitutedTypeArguments());
+
+			Log.WriteLine("Overload resolution finished, best candidate is {0}.",
+				or.GetBestCandidateWithSubstitutedTypeArguments());
 			return or;
 		}
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			if (targetResult != null)
-				return new[] { targetResult };
+			if (TargetResult != null)
+				return new[] { TargetResult };
 			else
 				return Enumerable.Empty<ResolveResult>();
 		}

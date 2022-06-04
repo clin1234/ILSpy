@@ -27,14 +27,15 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class TryInstruction : ILInstruction
 	{
-		public static readonly SlotInfo TryBlockSlot = new SlotInfo("TryBlock");
+		public static readonly SlotInfo TryBlockSlot = new("TryBlock");
+
+		ILInstruction tryBlock = null!;
 
 		protected TryInstruction(OpCode opCode, ILInstruction tryBlock) : base(opCode)
 		{
 			this.TryBlock = tryBlock;
 		}
 
-		ILInstruction tryBlock = null!;
 		public ILInstruction TryBlock {
 			get { return this.tryBlock; }
 			set {
@@ -52,12 +53,22 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class TryCatch : TryInstruction
 	{
-		public static readonly SlotInfo HandlerSlot = new SlotInfo("Handler", isCollection: true);
+		public static readonly SlotInfo HandlerSlot = new("Handler", isCollection: true);
 		public readonly InstructionCollection<TryCatchHandler> Handlers;
 
 		public TryCatch(ILInstruction tryBlock) : base(OpCode.TryCatch, tryBlock)
 		{
 			this.Handlers = new InstructionCollection<TryCatchHandler>(this, 1);
+		}
+
+		public override StackType ResultType {
+			get { return StackType.Void; }
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
 		}
 
 		public override ILInstruction Clone()
@@ -80,22 +91,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override StackType ResultType {
-			get { return StackType.Void; }
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = TryBlock.Flags;
 			foreach (var handler in Handlers)
 				flags = SemanticHelper.CombineBranches(flags, handler.Flags);
 			return flags | InstructionFlags.ControlFlow;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
 		}
 
 		protected override int GetChildCount()
@@ -140,6 +141,24 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class TryCatchHandler
 	{
+		public override StackType ResultType {
+			get { return StackType.Void; }
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				// the body is not evaluated if the filter returns 0
+				return InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
+			}
+		}
+
+		/// <summary>
+		/// Gets the ILRange of the instructions at the start of the catch-block,
+		/// that take the exception object and store it in the exception variable slot.
+		/// Note: This range is empty, if Filter is not empty, i.e., ldloc 1.
+		/// </summary>
+		public Interval ExceptionSpecifierILRange { get; private set; }
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
@@ -148,20 +167,9 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(this.IsDescendantOf(variable.Function!));
 		}
 
-		public override StackType ResultType {
-			get { return StackType.Void; }
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			return filter.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				// the body is not evaluated if the filter returns 0
-				return InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
-			}
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -174,19 +182,13 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" : ");
 				Disassembler.DisassemblerHelpers.WriteOperand(output, variable.Type);
 			}
+
 			output.Write(" when (");
 			filter.WriteTo(output, options);
 			output.Write(')');
 			output.Write(' ');
 			body.WriteTo(output, options);
 		}
-
-		/// <summary>
-		/// Gets the ILRange of the instructions at the start of the catch-block,
-		/// that take the exception object and store it in the exception variable slot.
-		/// Note: This range is empty, if Filter is not empty, i.e., ldloc 1.
-		/// </summary>
-		public Interval ExceptionSpecifierILRange { get; private set; }
 
 		public void AddExceptionSpecifierILRange(Interval newRange)
 		{
@@ -196,19 +198,32 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class TryFinally
 	{
-		public static readonly SlotInfo FinallyBlockSlot = new SlotInfo("FinallyBlock");
+		public static readonly SlotInfo FinallyBlockSlot = new("FinallyBlock");
+
+		ILInstruction finallyBlock = null!;
 
 		public TryFinally(ILInstruction tryBlock, ILInstruction finallyBlock) : base(OpCode.TryFinally, tryBlock)
 		{
 			this.FinallyBlock = finallyBlock;
 		}
 
-		ILInstruction finallyBlock = null!;
 		public ILInstruction FinallyBlock {
 			get { return this.finallyBlock; }
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref this.finallyBlock, value, 1);
+			}
+		}
+
+		public override StackType ResultType {
+			get {
+				return TryBlock.ResultType;
+			}
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
 			}
 		}
 
@@ -226,22 +241,10 @@ namespace ICSharpCode.Decompiler.IL
 			finallyBlock.WriteTo(output, options);
 		}
 
-		public override StackType ResultType {
-			get {
-				return TryBlock.ResultType;
-			}
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			// if the endpoint of either the try or the finally is unreachable, the endpoint of the try-finally will be unreachable
 			return TryBlock.Flags | finallyBlock.Flags | InstructionFlags.ControlFlow;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
 		}
 
 		protected override int GetChildCount()
@@ -251,15 +254,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlock;
-				case 1:
-					return finallyBlock;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlock,
+				1 => finallyBlock,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 
 		protected override void SetChild(int index, ILInstruction value)
@@ -279,33 +278,40 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlockSlot;
-				case 1:
-					return FinallyBlockSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlockSlot,
+				1 => FinallyBlockSlot,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 	}
 
 	partial class TryFault
 	{
-		public static readonly SlotInfo FaultBlockSlot = new SlotInfo("FaultBlock");
+		public static readonly SlotInfo FaultBlockSlot = new("FaultBlock");
+
+		ILInstruction faultBlock = null!;
 
 		public TryFault(ILInstruction tryBlock, ILInstruction faultBlock) : base(OpCode.TryFinally, tryBlock)
 		{
 			this.FaultBlock = faultBlock;
 		}
 
-		ILInstruction faultBlock = null!;
 		public ILInstruction FaultBlock {
 			get { return this.faultBlock; }
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref this.faultBlock, value, 1);
+			}
+		}
+
+		public override StackType ResultType {
+			get { return TryBlock.ResultType; }
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
 			}
 		}
 
@@ -323,20 +329,11 @@ namespace ICSharpCode.Decompiler.IL
 			faultBlock.WriteTo(output, options);
 		}
 
-		public override StackType ResultType {
-			get { return TryBlock.ResultType; }
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			// The endpoint of the try-fault is unreachable iff the try endpoint is unreachable
-			return TryBlock.Flags | (faultBlock.Flags & ~InstructionFlags.EndPointUnreachable) | InstructionFlags.ControlFlow;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
+			return TryBlock.Flags | (faultBlock.Flags & ~InstructionFlags.EndPointUnreachable) |
+			       InstructionFlags.ControlFlow;
 		}
 
 		protected override int GetChildCount()
@@ -346,15 +343,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlock;
-				case 1:
-					return faultBlock;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlock,
+				1 => faultBlock,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 
 		protected override void SetChild(int index, ILInstruction value)
@@ -374,15 +367,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TryBlockSlot;
-				case 1:
-					return FaultBlockSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TryBlockSlot,
+				1 => FaultBlockSlot,
+				_ => throw new IndexOutOfRangeException()
+			};
 		}
 	}
 

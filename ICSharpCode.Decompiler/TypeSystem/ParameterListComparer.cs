@@ -19,8 +19,6 @@
 using System;
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
-
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -34,9 +32,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public sealed class ParameterListComparer : IEqualityComparer<IReadOnlyList<IParameter>>
 	{
-		public static readonly ParameterListComparer Instance = new ParameterListComparer();
+		public static readonly ParameterListComparer Instance = new();
 
-		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor {
+		static readonly NormalizeTypeVisitor normalizationVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = true,
 			DynamicAndObject = true,
@@ -44,13 +42,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		};
 
 		bool includeModifiers;
-
-		public static ParameterListComparer WithOptions(bool includeModifiers = false)
-		{
-			return new ParameterListComparer() {
-				includeModifiers = includeModifiers
-			};
-		}
 
 		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
 		{
@@ -84,6 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (!aType.Equals(bType))
 					return false;
 			}
+
 			return true;
 		}
 
@@ -99,7 +91,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					hashCode += type.GetHashCode();
 				}
 			}
+
 			return hashCode;
+		}
+
+		public static ParameterListComparer WithOptions(bool includeModifiers = false)
+		{
+			return new ParameterListComparer() {
+				includeModifiers = includeModifiers
+			};
 		}
 	}
 
@@ -111,19 +111,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public sealed class SignatureComparer : IEqualityComparer<IMember>
 	{
+		/// <summary>
+		/// Gets a signature comparer that uses an ordinal comparison for the member name.
+		/// </summary>
+		public static readonly SignatureComparer Ordinal = new(StringComparer.Ordinal);
+
 		StringComparer nameComparer;
 
 		public SignatureComparer(StringComparer nameComparer)
 		{
-			if (nameComparer == null)
-				throw new ArgumentNullException(nameof(nameComparer));
-			this.nameComparer = nameComparer;
+			this.nameComparer = nameComparer ?? throw new ArgumentNullException(nameof(nameComparer));
 		}
-
-		/// <summary>
-		/// Gets a signature comparer that uses an ordinal comparison for the member name.
-		/// </summary>
-		public static readonly SignatureComparer Ordinal = new SignatureComparer(StringComparer.Ordinal);
 
 		public bool Equals(IMember x, IMember y)
 		{
@@ -131,13 +129,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return true;
 			if (x == null || y == null || x.SymbolKind != y.SymbolKind || !nameComparer.Equals(x.Name, y.Name))
 				return false;
-			IParameterizedMember px = x as IParameterizedMember;
-			IParameterizedMember py = y as IParameterizedMember;
-			if (px != null && py != null)
+			if (x is IParameterizedMember px && y is IParameterizedMember py)
 			{
-				IMethod mx = x as IMethod;
-				IMethod my = y as IMethod;
-				if (mx != null && my != null && mx.TypeParameters.Count != my.TypeParameters.Count)
+				if (x is IMethod mx && y is IMethod my && mx.TypeParameters.Count != my.TypeParameters.Count)
 					return false;
 				return ParameterListComparer.Instance.Equals(px.Parameters, py.Parameters);
 			}
@@ -152,15 +146,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			unchecked
 			{
 				int hash = (int)obj.SymbolKind * 33 + nameComparer.GetHashCode(obj.Name);
-				IParameterizedMember pm = obj as IParameterizedMember;
-				if (pm != null)
+				if (obj is IParameterizedMember pm)
 				{
 					hash *= 27;
 					hash += ParameterListComparer.Instance.GetHashCode(pm.Parameters);
-					IMethod m = pm as IMethod;
-					if (m != null)
+					if (pm is IMethod m)
 						hash += m.TypeParameters.Count;
 				}
+
 				return hash;
 			}
 		}

@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -46,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is TupleExpression tuple
-				&& Elements.DoMatch(tuple.Elements, match);
+			       && Elements.DoMatch(tuple.Elements, match);
 		}
 	}
 }

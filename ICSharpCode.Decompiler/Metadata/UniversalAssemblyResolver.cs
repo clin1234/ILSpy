@@ -61,6 +61,22 @@ namespace ICSharpCode.Decompiler.Metadata
 	/// </summary>
 	public class UniversalAssemblyResolver : AssemblyReferenceClassifier, IAssemblyResolver
 	{
+		static readonly List<string> gac_paths = GetGacPaths();
+		static readonly DecompilerRuntime decompilerRuntime;
+		readonly string? baseDirectory;
+		readonly List<string?> directories = new();
+
+		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
+		readonly string? mainAssemblyFileName;
+		readonly MetadataReaderOptions metadataOptions;
+		readonly string runtimePack;
+		readonly PEStreamOptions streamOptions;
+
+		readonly string targetFramework;
+		readonly TargetFrameworkIdentifier targetFrameworkIdentifier;
+		readonly Version targetFrameworkVersion;
+		readonly bool throwOnError;
+
 		static UniversalAssemblyResolver()
 		{
 			// TODO : test whether this works with Mono on *Windows*, not sure if we'll
@@ -72,44 +88,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			else if (Environment.OSVersion.Platform == PlatformID.Unix)
 				decompilerRuntime = DecompilerRuntime.Mono;
 		}
-
-		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
-		readonly bool throwOnError;
-		readonly PEStreamOptions streamOptions;
-		readonly MetadataReaderOptions metadataOptions;
-		readonly string? mainAssemblyFileName;
-		readonly string? baseDirectory;
-		readonly List<string?> directories = new List<string?>();
-		static readonly List<string> gac_paths = GetGacPaths();
-		static readonly DecompilerRuntime decompilerRuntime;
-
-		public void AddSearchDirectory(string? directory)
-		{
-			directories.Add(directory);
-			if (dotNetCorePathFinder.IsValueCreated)
-			{
-				dotNetCorePathFinder.Value.AddSearchDirectory(directory);
-			}
-		}
-
-		public void RemoveSearchDirectory(string? directory)
-		{
-			directories.Remove(directory);
-			if (dotNetCorePathFinder.IsValueCreated)
-			{
-				dotNetCorePathFinder.Value.RemoveSearchDirectory(directory);
-			}
-		}
-
-		public string?[] GetSearchDirectories()
-		{
-			return directories.ToArray();
-		}
-
-		readonly string targetFramework;
-		readonly string runtimePack;
-		readonly TargetFrameworkIdentifier targetFrameworkIdentifier;
-		readonly Version targetFrameworkVersion;
 
 		/// <summary>
 		/// Creates a new instance of the <see cref="UniversalAssemblyResolver"/>.
@@ -135,7 +113,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <param name="streamOptions">Options used for the <see cref="PEReader"/>.</param>
 		/// <param name="metadataOptions">Options used for the <see cref="MetadataReader"/>.</param>
 		public UniversalAssemblyResolver(string? mainAssemblyFileName, bool throwOnError, string? targetFramework,
-			string? runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+			string? runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default,
+			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.throwOnError = throwOnError;
@@ -154,28 +133,41 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		public void AddSearchDirectory(string? directory)
+		{
+			directories.Add(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.AddSearchDirectory(directory);
+			}
+		}
+
+		public void RemoveSearchDirectory(string? directory)
+		{
+			directories.Remove(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.RemoveSearchDirectory(directory);
+			}
+		}
+
+		public string?[] GetSearchDirectories()
+		{
+			return directories.ToArray();
+		}
+
 		internal static (TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
 		{
 			if (string.IsNullOrEmpty(targetFramework))
 				return (TargetFrameworkIdentifier.NETFramework, ZeroVersion);
 			string[] tokens = targetFramework.Split(',');
-			TargetFrameworkIdentifier identifier;
 
-			switch (tokens[0].Trim().ToUpperInvariant())
-			{
-				case ".NETCOREAPP":
-					identifier = TargetFrameworkIdentifier.NETCoreApp;
-					break;
-				case ".NETSTANDARD":
-					identifier = TargetFrameworkIdentifier.NETStandard;
-					break;
-				case "SILVERLIGHT":
-					identifier = TargetFrameworkIdentifier.Silverlight;
-					break;
-				default:
-					identifier = TargetFrameworkIdentifier.NETFramework;
-					break;
-			}
+			TargetFrameworkIdentifier identifier = tokens[0].Trim().ToUpperInvariant() switch {
+				".NETCOREAPP" => TargetFrameworkIdentifier.NETCoreApp,
+				".NETSTANDARD" => TargetFrameworkIdentifier.NETStandard,
+				"SILVERLIGHT" => TargetFrameworkIdentifier.Silverlight,
+				_ => TargetFrameworkIdentifier.NETFramework
+			};
 
 			Version? version = null;
 
@@ -190,12 +182,12 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					case "VERSION":
 						var versionString = pair[1].TrimStart('v', ' ', '\t');
-						if (identifier == TargetFrameworkIdentifier.NETCoreApp ||
-							identifier == TargetFrameworkIdentifier.NETStandard)
+						if (identifier is TargetFrameworkIdentifier.NETCoreApp or TargetFrameworkIdentifier.NETStandard)
 						{
 							if (versionString.Length == 3)
 								versionString += ".0";
 						}
+
 						if (!Version.TryParse(versionString, out version))
 							version = null;
 						// .NET 5 or greater still use ".NETCOREAPP" as TargetFrameworkAttribute value...
@@ -207,60 +199,6 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			return (identifier, version ?? ZeroVersion);
 		}
-
-#if !VSADDIN
-		public PEFile? Resolve(IAssemblyReference name)
-		{
-			var file = FindAssemblyFile(name);
-			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
-		}
-
-		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
-		{
-			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
-			if (baseDirectory == null)
-				return null;
-			string moduleFileName = Path.Combine(baseDirectory, moduleName);
-			return CreatePEFileFromFileName(moduleFileName, ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
-		}
-
-		private PEFile? CreatePEFileFromFileName(string? fileName, Func<Exception?, Exception> makeException)
-		{
-			if (fileName == null)
-			{
-				if (throwOnError)
-					throw makeException(null);
-				return null;
-			}
-
-			try
-			{
-				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-				return new PEFile(fileName, stream, streamOptions, metadataOptions);
-			}
-			catch (BadImageFormatException ex)
-			{
-				if (throwOnError)
-					throw makeException(ex);
-			}
-			catch (IOException ex)
-			{
-				if (throwOnError)
-					throw makeException(ex);
-			}
-			return null;
-		}
-
-		public Task<PEFile?> ResolveAsync(IAssemblyReference name)
-		{
-			return Task.Run(() => Resolve(name));
-		}
-
-		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
-		{
-			return Task.Run(() => ResolveModule(mainModule, moduleName));
-		}
-#endif
 
 		public override bool IsSharedAssembly(IAssemblyReference reference, [NotNullWhen(true)] out string? runtimePack)
 		{
@@ -300,15 +238,20 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		DotNetCorePathFinder InitDotNetCorePathFinder()
 		{
-			DotNetCorePathFinder dotNetCorePathFinder;
-			if (mainAssemblyFileName == null)
-				dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
-			else
-				dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
+			DotNetCorePathFinder dotNetCorePathFinder = mainAssemblyFileName == null
+				? new DotNetCorePathFinder(targetFrameworkIdentifier,
+					targetFrameworkVersion,
+					runtimePack)
+				: new DotNetCorePathFinder(mainAssemblyFileName,
+					targetFramework,
+					runtimePack,
+					targetFrameworkIdentifier,
+					targetFrameworkVersion);
 			foreach (var directory in directories)
 			{
 				dotNetCorePathFinder.AddSearchDirectory(directory);
 			}
+
 			return dotNetCorePathFinder;
 		}
 
@@ -319,7 +262,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				return null;
 
 			// TODO : Find a way to detect the base directory for the required Windows SDK.
-			string? basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Windows Kits", "10", "References");
+			string? basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+				"Windows Kits", "10", "References");
 
 			if (!Directory.Exists(basePath))
 				return FindWindowsMetadataInSystemDirectory(name);
@@ -367,8 +311,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		string? ResolveSilverlight(IAssemblyReference name, Version? version)
 		{
 			string[] targetFrameworkSearchPaths = {
-				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Silverlight"),
-				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Silverlight")
+				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+					"Microsoft Silverlight"),
+				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+					"Microsoft Silverlight")
 			};
 
 			foreach (var baseDirectory in targetFrameworkSearchPaths)
@@ -380,25 +326,27 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (file != null)
 					return file;
 			}
+
 			return null;
 		}
 
 		string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
-			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(d => DotNetCorePathFinder.ConvertToVersion(d.Name))
-				.Where(v => v.Item1 != null).OrderByDescending(v => v.Item1))
+			foreach (var folder in new DirectoryInfo(basePath).GetDirectories()
+				         .Select(d => DotNetCorePathFinder.ConvertToVersion(d.Name))
+				         .Where(v => v.Item1 != null).OrderByDescending(v => v.Item1))
 			{
 				if (path == null || version == null || folder.Item1 >= version)
 					path = folder.Item2;
 			}
+
 			return path ?? version?.ToString() ?? ".";
 		}
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
@@ -441,7 +389,64 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
+#if !VSADDIN
+		public PEFile? Resolve(IAssemblyReference name)
+		{
+			var file = FindAssemblyFile(name);
+			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
+		}
+
+		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
+		{
+			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
+			if (baseDirectory == null)
+				return null;
+			string moduleFileName = Path.Combine(baseDirectory, moduleName);
+			return CreatePEFileFromFileName(moduleFileName,
+				ex => new ResolutionException(mainModule.FileName, moduleName, moduleFileName, ex));
+		}
+
+		private PEFile? CreatePEFileFromFileName(string? fileName, Func<Exception?, Exception> makeException)
+		{
+			if (fileName == null)
+			{
+				if (throwOnError)
+					throw makeException(null);
+				return null;
+			}
+
+			try
+			{
+				FileStream stream = new(fileName, FileMode.Open, FileAccess.Read);
+				return new PEFile(fileName, stream, streamOptions, metadataOptions);
+			}
+			catch (BadImageFormatException ex)
+			{
+				if (throwOnError)
+					throw makeException(ex);
+			}
+			catch (IOException ex)
+			{
+				if (throwOnError)
+					throw makeException(ex);
+			}
+
+			return null;
+		}
+
+		public Task<PEFile?> ResolveAsync(IAssemblyReference name)
+		{
+			return Task.Run(() => Resolve(name));
+		}
+
+		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		{
+			return Task.Run(() => ResolveModule(mainModule, moduleName));
+		}
+#endif
+
 		#region .NET / mono GAC handling
+
 		string? SearchDirectory(IAssemblyReference name, IEnumerable<string?> directories)
 		{
 			foreach (var directory in directories)
@@ -475,20 +480,21 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 				catch (BadImageFormatException)
 				{
-					continue;
 				}
 			}
+
 			return null;
 		}
 
 		static bool IsZeroOrAllOnes(Version? version)
 		{
 			return version == null
-				|| (version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0)
-				|| (version.Major == 65535 && version.Minor == 65535 && version.Build == 65535 && version.Revision == 65535);
+			       || (version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0)
+			       || (version.Major == 65535 && version.Minor == 65535 && version.Build == 65535 &&
+			           version.Revision == 65535);
 		}
 
-		internal static Version ZeroVersion = new Version(0, 0, 0, 0);
+		internal static Version ZeroVersion = new(0, 0, 0, 0);
 
 		string? GetCorlib(IAssemblyReference reference)
 		{
@@ -506,15 +512,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (version == null)
 				return null;
 
-			string? path;
-			if (decompilerRuntime == DecompilerRuntime.Mono)
-			{
-				path = GetMonoMscorlibBasePath(version);
-			}
-			else
-			{
-				path = GetMscorlibBasePath(version, reference.PublicKeyToken.ToHexString(8));
-			}
+			string? path = decompilerRuntime == DecompilerRuntime.Mono
+				? GetMonoMscorlibBasePath(version)
+				: GetMscorlibBasePath(version,
+					reference.PublicKeyToken.ToHexString(8));
 
 			if (path == null)
 				return null;
@@ -549,9 +550,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (publicKeyToken == "969db8053d3322ac")
 			{
-				string programFiles = Environment.Is64BitOperatingSystem ?
-					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) :
-					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+				string programFiles = Environment.Is64BitOperatingSystem
+					? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+					: Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 				string cfPath = $@"Microsoft.NET\SDK\CompactFramework\v{version.Major}.{version.Minor}\WindowsCE\";
 				string cfBasePath = Path.Combine(programFiles, cfPath);
 				if (Directory.Exists(cfBasePath))
@@ -559,7 +560,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 			else
 			{
-				string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
+				string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+					"Microsoft.NET");
 				string[] frameworkPaths = new[] {
 					Path.Combine(rootPath, "Framework"),
 					Path.Combine(rootPath, "Framework64")
@@ -590,10 +592,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				path = Path.Combine(path, "1.0");
 			else if (version.Major == 2)
 			{
-				if (version.MajorRevision == 5)
-					path = Path.Combine(path, "2.1");
-				else
-					path = Path.Combine(path, "2.0");
+				path = Path.Combine(path, version.MajorRevision == 5 ? "2.1" : "2.0");
 			}
 			else if (version.Major == 4)
 				path = Path.Combine(path, "4.0");
@@ -603,6 +602,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new NotSupportedException("Version not supported: " + version);
 				return null;
 			}
+
 			return path;
 		}
 
@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			var paths = new List<string>(2);
 			var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-			if (windir == null)
+			if (windir == "")
 				return paths;
 
 			paths.Add(Path.Combine(windir, "assembly"));
@@ -667,9 +667,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static string? GetAssemblyInMonoGac(IAssemblyReference reference)
 		{
-			for (int i = 0; i < gac_paths.Count; i++)
+			foreach (var gac_path in gac_paths)
 			{
-				var gac_path = gac_paths[i];
 				var file = GetAssemblyFile(reference, string.Empty, gac_path);
 				if (File.Exists(file))
 					return file;
@@ -685,9 +684,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			for (int i = 0; i < gac_paths.Count; i++)
 			{
-				for (int j = 0; j < gacs.Length; j++)
+				foreach (var t in gacs)
 				{
-					var gac = Path.Combine(gac_paths[i], gacs[j]);
+					var gac = Path.Combine(gac_paths[i], t);
 					var file = GetAssemblyFile(reference, prefixes[i], gac);
 					if (File.Exists(file))
 						return file;
@@ -721,18 +720,24 @@ namespace ICSharpCode.Decompiler.Metadata
 					string rootPath = Path.Combine(path, gac);
 					if (!Directory.Exists(rootPath))
 						continue;
-					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll", SearchOption.AllDirectories))
+					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll",
+						         SearchOption.AllDirectories))
 					{
-						string[]? name = Path.GetDirectoryName(item.FullName)?.Substring(rootPath.Length + 1).Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+						string[]? name = Path.GetDirectoryName(item.FullName)?[(rootPath.Length + 1)..]
+							.Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
 						if (name?.Length != 2)
 							continue;
-						var match = Regex.Match(name[1], $"(v4.0_)?(?<version>[^_]+)_(?<culture>[^_]+)?_(?<publicKey>[^_]+)");
+						var match = Regex.Match(name[1],
+							$"(v4.0_)?(?<version>[^_]+)_(?<culture>[^_]+)?_(?<publicKey>[^_]+)");
 						if (!match.Success)
 							continue;
 						string culture = match.Groups["culture"].Value;
 						if (string.IsNullOrEmpty(culture))
 							culture = "neutral";
-						yield return AssemblyNameReference.Parse(name[0] + ", Version=" + match.Groups["version"].Value + ", Culture=" + culture + ", PublicKeyToken=" + match.Groups["publicKey"].Value);
+						yield return AssemblyNameReference.Parse(name[0] + ", Version=" +
+						                                         match.Groups["version"].Value + ", Culture=" +
+						                                         culture + ", PublicKeyToken=" +
+						                                         match.Groups["publicKey"].Value);
 					}
 				}
 			}

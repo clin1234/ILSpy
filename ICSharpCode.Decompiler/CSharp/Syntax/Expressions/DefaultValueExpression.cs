@@ -32,7 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DefaultValueExpression : Expression
 	{
-		public readonly static TokenRole DefaultKeywordRole = new TokenRole("default");
+		public static readonly TokenRole DefaultKeywordRole = new("default");
+
+		public DefaultValueExpression()
+		{
+		}
+
+		public DefaultValueExpression(AstType type)
+		{
+			AddChild(type, Roles.Type);
+		}
 
 		public CSharpTokenNode DefaultToken {
 			get { return GetChildByRole(DefaultKeywordRole); }
@@ -49,15 +58,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public DefaultValueExpression()
-		{
-		}
-
-		public DefaultValueExpression(AstType type)
-		{
-			AddChild(type, Roles.Type);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -77,9 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DefaultValueExpression o = other as DefaultValueExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is DefaultValueExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }
-

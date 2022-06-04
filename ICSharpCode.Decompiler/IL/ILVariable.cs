@@ -31,55 +31,68 @@ namespace ICSharpCode.Decompiler.IL
 		/// A local variable.
 		/// </summary>
 		Local,
+
 		/// <summary>
 		/// A pinned local variable (not associated with a pinned region)
 		/// </summary>
 		PinnedLocal,
+
 		/// <summary>
 		/// A pinned local variable (associated with a pinned region)
 		/// </summary>
 		PinnedRegionLocal,
+
 		/// <summary>
 		/// A local variable used as using-resource variable.
 		/// </summary>
 		UsingLocal,
+
 		/// <summary>
 		/// A local variable used as foreach variable.
 		/// </summary>
 		ForeachLocal,
+
 		/// <summary>
 		/// A local variable used inside an array, collection or
 		/// object initializer block to denote the object being initialized.
 		/// </summary>
 		InitializerTarget,
+
 		/// <summary>
 		/// A parameter.
 		/// </summary>
 		Parameter,
+
 		/// <summary>
 		/// Variable created for exception handler.
 		/// </summary>
 		ExceptionStackSlot,
+
 		/// <summary>
 		/// Local variable used in a catch block.
 		/// </summary>
 		ExceptionLocal,
+
 		/// <summary>
 		/// Variable created from stack slot.
 		/// </summary>
 		StackSlot,
+
 		/// <summary>
 		/// Variable in BlockKind.CallWithNamedArgs
 		/// </summary>
 		NamedArgument,
+
 		/// <summary>
 		/// Local variable that holds the display class used for lambdas within this function.
 		/// </summary>
 		DisplayClassLocal,
+
 		/// <summary>
 		/// Local variable declared within a pattern match.
 		/// </summary>
 		PatternLocal,
+
 		/// <summary>
 		/// Temporary variable declared in a deconstruction init section.
 		/// </summary>
@@ -115,7 +128,63 @@ namespace ICSharpCode.Decompiler.IL
 	[DebuggerDisplay("{Name} : {Type}")]
 	public class ILVariable
 	{
+		readonly List<LdLoca> addressInstructions = new();
+
+		readonly List<LdLoc> loadInstructions = new();
+
+		public readonly StackType StackType;
+
+		readonly List<IStoreInstruction> storeInstructions = new();
+
+		private bool hasNullCheck;
+
+		bool initialValueIsInitialized;
 		VariableKind kind;
+
+		/// <summary>
+		/// If enabled, remove dead stores to this variable as if the "Remove dead code" option is enabled.
+		/// </summary>
+		internal bool RemoveIfRedundant;
+
+		/// <summary>
+		/// The field which was converted to a local variable.
+		/// Set when the variable is from a 'yield return' or 'async' state machine.
+		/// </summary>
+		public IField? StateMachineField;
+
+		IType type;
+
+		bool usesInitialValue;
+
+		public ILVariable(VariableKind kind, IType type, int? index = null)
+		{
+			this.Kind = kind;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
+			this.StackType = type.GetStackType();
+			this.Index = index;
+			if (kind == VariableKind.Parameter)
+			{
+				this.InitialValueIsInitialized = true;
+				this.UsesInitialValue = true;
+			}
+
+			CheckInvariant();
+		}
+
+		public ILVariable(VariableKind kind, IType type, StackType stackType, int? index = null)
+		{
+			this.Kind = kind;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
+			this.StackType = stackType;
+			this.Index = index;
+			if (kind == VariableKind.Parameter)
+			{
+				this.InitialValueIsInitialized = true;
+				this.UsesInitialValue = true;
+			}
+
+			CheckInvariant();
+		}
 
 		public VariableKind Kind {
 			get {
@@ -131,20 +200,19 @@ namespace ICSharpCode.Decompiler.IL
 					// StackSlot -> ForeachLocal can happen sometimes (e.g. PST.TransformForeachOnArray)
 					Index = null;
 				}
+
 				kind = value;
 			}
 		}
 
-		public readonly StackType StackType;
-
-		IType type;
 		public IType Type {
 			get {
 				return type;
 			}
 			internal set {
 				if (value.GetStackType() != StackType)
-					throw new ArgumentException($"Expected stack-type: {StackType} may not be changed. Found: {value.GetStackType()}");
+					throw new ArgumentException(
+						$"Expected stack-type: {StackType} may not be changed. Found: {value.GetStackType()}");
 				type = value;
 			}
 		}
@@ -166,33 +234,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// For other kinds, the index has no meaning, and is usually null.
 		/// </summary>
 		public int? Index { get; private set; }
-
-		[Conditional("DEBUG")]
-		internal void CheckInvariant()
-		{
-			switch (kind)
-			{
-				case VariableKind.Local:
-				case VariableKind.ForeachLocal:
-				case VariableKind.PatternLocal:
-				case VariableKind.PinnedLocal:
-				case VariableKind.PinnedRegionLocal:
-				case VariableKind.UsingLocal:
-				case VariableKind.ExceptionLocal:
-				case VariableKind.DisplayClassLocal:
-					// in range of LocalVariableSignature
-					Debug.Assert(Index == null || Index >= 0);
-					break;
-				case VariableKind.Parameter:
-					// -1 for the "this" parameter
-					Debug.Assert(Index >= -1);
-					Debug.Assert(Function == null || Index < Function.Parameters.Count);
-					break;
-				case VariableKind.ExceptionStackSlot:
-					Debug.Assert(Index >= 0);
-					break;
-			}
-		}
 
 		public string? Name { get; set; }
 
@@ -233,8 +274,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int LoadCount => LoadInstructions.Count;
 
-		readonly List<LdLoc> loadInstructions = new List<LdLoc>();
-
 		/// <summary>
 		/// List of ldloc instructions referencing this variable.
 		/// </summary>
@@ -259,8 +298,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// This variable is automatically updated when adding/removing stores instructions from the ILAst.
 		/// </remarks>
 		public int StoreCount => (usesInitialValue ? 1 : 0) + StoreInstructions.Count;
-
-		readonly List<IStoreInstruction> storeInstructions = new List<IStoreInstruction>();
 
 		/// <summary>
 		/// List of store instructions referencing this variable.
@@ -287,8 +324,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int AddressCount => AddressInstructions.Count;
 
-		readonly List<LdLoca> addressInstructions = new List<LdLoca>();
-
 		/// <summary>
 		/// List of ldloca instructions referencing this variable.
 		/// </summary>
@@ -296,31 +331,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// This list is automatically updated when adding/removing ldloca instructions from the ILAst.
 		/// </remarks>
 		public IReadOnlyList<LdLoca> AddressInstructions => addressInstructions;
-
-		internal void AddLoadInstruction(LdLoc inst) => inst.IndexInLoadInstructionList = AddInstruction(loadInstructions, inst);
-		internal void AddStoreInstruction(IStoreInstruction inst) => inst.IndexInStoreInstructionList = AddInstruction(storeInstructions, inst);
-		internal void AddAddressInstruction(LdLoca inst) => inst.IndexInAddressInstructionList = AddInstruction(addressInstructions, inst);
-
-		internal void RemoveLoadInstruction(LdLoc inst) => RemoveInstruction(loadInstructions, inst.IndexInLoadInstructionList, inst);
-		internal void RemoveStoreInstruction(IStoreInstruction inst) => RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList, inst);
-		internal void RemoveAddressInstruction(LdLoca inst) => RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList, inst);
-
-		int AddInstruction<T>(List<T> list, T inst) where T : class, IInstructionWithVariableOperand
-		{
-			list.Add(inst);
-			return list.Count - 1;
-		}
-
-		void RemoveInstruction<T>(List<T> list, int index, T? inst) where T : class, IInstructionWithVariableOperand
-		{
-			Debug.Assert(list[index] == inst);
-			int indexToMove = list.Count - 1;
-			list[index] = list[indexToMove];
-			list[index].IndexInVariableInstructionMapping = index;
-			list.RemoveAt(indexToMove);
-		}
-
-		bool initialValueIsInitialized;
 
 		/// <summary>
 		/// Gets/Sets whether the variable's initial value is initialized.
@@ -336,8 +346,6 @@ namespace ICSharpCode.Decompiler.IL
 				initialValueIsInitialized = value;
 			}
 		}
-
-		bool usesInitialValue;
 
 		/// <summary>
 		/// Gets/Sets whether the initial value of the variable is used.
@@ -422,23 +430,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsDead {
 			get {
 				return StoreInstructions.Count == 0
-					&& LoadCount == 0
-					&& AddressCount == 0;
+				       && LoadCount == 0
+				       && AddressCount == 0;
 			}
 		}
-
-		/// <summary>
-		/// The field which was converted to a local variable.
-		/// Set when the variable is from a 'yield return' or 'async' state machine.
-		/// </summary>
-		public IField? StateMachineField;
-
-		/// <summary>
-		/// If enabled, remove dead stores to this variable as if the "Remove dead code" option is enabled.
-		/// </summary>
-		internal bool RemoveIfRedundant;
-
-		private bool hasNullCheck;
 
 		/// <summary>
 		/// Gets/sets whether a parameter has an auto-generated null check, i.e., the !! modifier.
@@ -453,36 +448,64 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public ILVariable(VariableKind kind, IType type, int? index = null)
+		[Conditional("DEBUG")]
+		internal void CheckInvariant()
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.Kind = kind;
-			this.type = type;
-			this.StackType = type.GetStackType();
-			this.Index = index;
-			if (kind == VariableKind.Parameter)
+			switch (kind)
 			{
-				this.InitialValueIsInitialized = true;
-				this.UsesInitialValue = true;
+				case VariableKind.Local:
+				case VariableKind.ForeachLocal:
+				case VariableKind.PatternLocal:
+				case VariableKind.PinnedLocal:
+				case VariableKind.PinnedRegionLocal:
+				case VariableKind.UsingLocal:
+				case VariableKind.ExceptionLocal:
+				case VariableKind.DisplayClassLocal:
+					// in range of LocalVariableSignature
+					Debug.Assert(Index is null or >= 0);
+					break;
+				case VariableKind.Parameter:
+					// -1 for the "this" parameter
+					Debug.Assert(Index >= -1);
+					Debug.Assert(Function == null || Index < Function.Parameters.Count);
+					break;
+				case VariableKind.ExceptionStackSlot:
+					Debug.Assert(Index >= 0);
+					break;
 			}
-			CheckInvariant();
 		}
 
-		public ILVariable(VariableKind kind, IType type, StackType stackType, int? index = null)
+		internal void AddLoadInstruction(LdLoc inst) =>
+			inst.IndexInLoadInstructionList = AddInstruction(loadInstructions, inst);
+
+		internal void AddStoreInstruction(IStoreInstruction inst) =>
+			inst.IndexInStoreInstructionList = AddInstruction(storeInstructions, inst);
+
+		internal void AddAddressInstruction(LdLoca inst) =>
+			inst.IndexInAddressInstructionList = AddInstruction(addressInstructions, inst);
+
+		internal void RemoveLoadInstruction(LdLoc inst) =>
+			RemoveInstruction(loadInstructions, inst.IndexInLoadInstructionList, inst);
+
+		internal void RemoveStoreInstruction(IStoreInstruction inst) =>
+			RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList, inst);
+
+		internal void RemoveAddressInstruction(LdLoca inst) =>
+			RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList, inst);
+
+		int AddInstruction<T>(List<T> list, T inst) where T : class, IInstructionWithVariableOperand
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.Kind = kind;
-			this.type = type;
-			this.StackType = stackType;
-			this.Index = index;
-			if (kind == VariableKind.Parameter)
-			{
-				this.InitialValueIsInitialized = true;
-				this.UsesInitialValue = true;
-			}
-			CheckInvariant();
+			list.Add(inst);
+			return list.Count - 1;
+		}
+
+		void RemoveInstruction<T>(List<T> list, int index, T? inst) where T : class, IInstructionWithVariableOperand
+		{
+			Debug.Assert(list[index] == inst);
+			int indexToMove = list.Count - 1;
+			list[index] = list[indexToMove];
+			list[index].IndexInVariableInstructionMapping = index;
+			list.RemoveAt(indexToMove);
 		}
 
 		public override string? ToString()
@@ -496,6 +519,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write("readonly ");
 			}
+
 			switch (Kind)
 			{
 				case VariableKind.Local:
@@ -543,14 +567,17 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
+
 			output.WriteLocalReference(this.Name, this, isDefinition: true);
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write('(');
-			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal)
+			if (Kind is VariableKind.Parameter or VariableKind.Local or VariableKind.PinnedLocal
+			    or VariableKind.PinnedRegionLocal)
 			{
 				output.Write("Index={0}, ", Index);
 			}
+
 			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);
 			if (Kind != VariableKind.Parameter)
 			{
@@ -562,6 +589,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					output.Write(" uninit");
 				}
+
 				if (usesInitialValue)
 				{
 					output.Write(" used");
@@ -571,11 +599,13 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(" unused");
 				}
 			}
+
 			if (CaptureScope != null)
 			{
 				output.Write(" captured in ");
 				output.WriteLocalReference(CaptureScope.EntryPoint?.Label, CaptureScope);
 			}
+
 			if (StateMachineField != null)
 			{
 				output.Write(" from state-machine");
@@ -596,11 +626,13 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return true;
 			}
+
 			foreach (var child in inst.Children)
 			{
 				if (IsUsedWithin(child))
 					return true;
 			}
+
 			return false;
 		}
 	}
@@ -628,7 +660,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	public class ILVariableEqualityComparer : IEqualityComparer<ILVariable>
 	{
-		public static readonly ILVariableEqualityComparer Instance = new ILVariableEqualityComparer();
+		public static readonly ILVariableEqualityComparer Instance = new();
 
 		public bool Equals(ILVariable? x, ILVariable? y)
 		{

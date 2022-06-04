@@ -27,24 +27,19 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class SizeOfResolveResult : ResolveResult
 	{
-		readonly IType referencedType;
 		readonly int? constantValue;
 
 		public SizeOfResolveResult(IType int32, IType referencedType, int? constantValue)
 			: base(int32)
 		{
-			if (referencedType == null)
-				throw new ArgumentNullException(nameof(referencedType));
-			this.referencedType = referencedType;
+			this.ReferencedType = referencedType ?? throw new ArgumentNullException(nameof(referencedType));
 			this.constantValue = constantValue;
 		}
 
 		/// <summary>
 		/// The type referenced by the 'sizeof'.
 		/// </summary>
-		public IType ReferencedType {
-			get { return referencedType; }
-		}
+		public IType ReferencedType { get; }
 
 		public override bool IsCompileTimeConstant {
 			get {
@@ -60,7 +55,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override bool IsError {
 			get {
-				return referencedType.IsReferenceType != false;
+				return ReferencedType.IsReferenceType != false;
 			}
 		}
 	}

@@ -31,26 +31,23 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class ConversionResolveResult : ResolveResult
 	{
-		public readonly ResolveResult Input;
-		public readonly Conversion Conversion;
-
 		/// <summary>
 		/// For numeric conversions, specifies whether overflow checking is enabled.
 		/// </summary>
 		public readonly bool CheckForOverflow;
 
+		public readonly Conversion Conversion;
+		public readonly ResolveResult Input;
+
 		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion)
 			: base(targetType)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			if (conversion == null)
-				throw new ArgumentNullException(nameof(conversion));
-			this.Input = input;
-			this.Conversion = conversion;
+			this.Input = input ?? throw new ArgumentNullException(nameof(input));
+			this.Conversion = conversion ?? throw new ArgumentNullException(nameof(conversion));
 		}
 
-		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion, bool checkForOverflow)
+		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion,
+			bool checkForOverflow)
 			: this(targetType, input, conversion)
 		{
 			this.CheckForOverflow = checkForOverflow;
@@ -64,6 +61,5 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			return new[] { Input };
 		}
-
 	}
 }

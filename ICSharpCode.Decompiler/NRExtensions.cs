@@ -15,8 +15,8 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 using System;
-using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -31,6 +31,7 @@ namespace ICSharpCode.Decompiler
 			{
 				return entity.HasAttribute(KnownAttribute.CompilerGenerated);
 			}
+
 			return false;
 		}
 
@@ -58,11 +59,13 @@ namespace ICSharpCode.Decompiler
 			if (type == null)
 				return false;
 			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
-				&& (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType")))
+			                                         && (type.Name.Contains("AnonType") ||
+			                                             type.Name.Contains("AnonymousType")))
 			{
 				ITypeDefinition td = type.GetDefinition();
 				return td != null && td.IsCompilerGenerated();
 			}
+
 			return false;
 		}
 
@@ -71,6 +74,14 @@ namespace ICSharpCode.Decompiler
 			var visitor = new ContainsAnonTypeVisitor();
 			type.AcceptVisitor(visitor);
 			return visitor.ContainsAnonType;
+		}
+
+		internal static string GetDocumentation(this IEntity entity)
+		{
+			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
+			if (docProvider == null)
+				return null;
+			return docProvider.GetDocumentation(entity);
 		}
 
 		class ContainsAnonTypeVisitor : TypeVisitor
@@ -90,14 +101,6 @@ namespace ICSharpCode.Decompiler
 					ContainsAnonType = true;
 				return base.VisitTypeDefinition(type);
 			}
-		}
-
-		internal static string GetDocumentation(this IEntity entity)
-		{
-			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
-			if (docProvider == null)
-				return null;
-			return docProvider.GetDocumentation(entity);
 		}
 	}
 }

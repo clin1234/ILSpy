@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SwitchStatement : Statement
 	{
-		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
-		public static readonly Role<SwitchSection> SwitchSectionRole = new Role<SwitchSection>("SwitchSection", null);
+		public static readonly TokenRole SwitchKeywordRole = new("switch");
+		public static readonly Role<SwitchSection> SwitchSectionRole = new("SwitchSection", null);
 
 		public CSharpTokenNode SwitchToken {
 			get { return GetChildByRole(SwitchKeywordRole); }
@@ -81,60 +81,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchStatement o = other as SwitchStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
+			return other is SwitchStatement o && this.Expression.DoMatch(o.Expression, match) &&
+			       this.SwitchSections.DoMatch(o.SwitchSections, match);
 		}
 	}
 
 	public class SwitchSection : AstNode
 	{
-		#region PatternPlaceholder
-		public static implicit operator SwitchSection(PatternMatching.Pattern pattern)
-		{
-			return pattern != null ? new PatternPlaceholder(pattern) : null;
-		}
-
-		sealed class PatternPlaceholder : SwitchSection, PatternMatching.INode
-		{
-			readonly PatternMatching.Pattern child;
-
-			public PatternPlaceholder(PatternMatching.Pattern child)
-			{
-				this.child = child;
-			}
-
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitPatternPlaceholder(this, child, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return child.DoMatch(other, match);
-			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
-		}
-		#endregion
-
-		public static readonly Role<CaseLabel> CaseLabelRole = new Role<CaseLabel>("CaseLabel", null);
+		public static readonly Role<CaseLabel> CaseLabelRole = new("CaseLabel", null);
 
 		public override NodeType NodeType {
 			get {
@@ -167,15 +121,73 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchSection o = other as SwitchSection;
-			return o != null && this.CaseLabels.DoMatch(o.CaseLabels, match) && this.Statements.DoMatch(o.Statements, match);
+			return other is SwitchSection o && this.CaseLabels.DoMatch(o.CaseLabels, match) &&
+			       this.Statements.DoMatch(o.Statements, match);
 		}
+
+		#region PatternPlaceholder
+
+		public static implicit operator SwitchSection(PatternMatching.Pattern pattern)
+		{
+			return pattern != null ? new PatternPlaceholder(pattern) : null;
+		}
+
+		sealed class PatternPlaceholder : SwitchSection, PatternMatching.INode
+		{
+			readonly PatternMatching.Pattern child;
+
+			public PatternPlaceholder(PatternMatching.Pattern child)
+			{
+				this.child = child;
+			}
+
+			public override NodeType NodeType {
+				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitPatternPlaceholder(this, child, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return child.DoMatch(other, match);
+			}
+		}
+
+		#endregion
 	}
 
 	public class CaseLabel : AstNode
 	{
-		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
-		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
+		public static readonly TokenRole CaseKeywordRole = new("case");
+		public static readonly TokenRole DefaultKeywordRole = new("default");
+
+		public CaseLabel()
+		{
+		}
+
+		public CaseLabel(Expression expression)
+		{
+			this.Expression = expression;
+		}
 
 		public override NodeType NodeType {
 			get {
@@ -195,15 +207,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Colon); }
 		}
 
-		public CaseLabel()
-		{
-		}
-
-		public CaseLabel(Expression expression)
-		{
-			this.Expression = expression;
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitCaseLabel(this);
@@ -221,8 +224,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CaseLabel o = other as CaseLabel;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is CaseLabel o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

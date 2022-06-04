@@ -16,10 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -35,17 +32,20 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var variable in function.Variables)
 			{
 				if (variable.Kind != VariableKind.Local &&
-					variable.Kind != VariableKind.StackSlot &&
-					variable.Kind != VariableKind.PatternLocal &&
-					variable.Kind != VariableKind.ForeachLocal &&
-					variable.Kind != VariableKind.UsingLocal)
+				    variable.Kind != VariableKind.StackSlot &&
+				    variable.Kind != VariableKind.PatternLocal &&
+				    variable.Kind != VariableKind.ForeachLocal &&
+				    variable.Kind != VariableKind.UsingLocal)
 				{
 					continue;
 				}
-				if (!(variable.Type.IsKnownType(KnownTypeCode.IntPtr) || variable.Type.IsKnownType(KnownTypeCode.UIntPtr)))
+
+				if (!(variable.Type.IsKnownType(KnownTypeCode.IntPtr) ||
+				      variable.Type.IsKnownType(KnownTypeCode.UIntPtr)))
 					continue;
 				bool isUsedAsNativeInt = variable.LoadInstructions.Any(IsUsedAsNativeInt);
-				bool isAssignedNativeInt = variable.StoreInstructions.Any(store => IsNativeIntStore(store, context.TypeSystem));
+				bool isAssignedNativeInt =
+					variable.StoreInstructions.Any(store => IsNativeIntStore(store, context.TypeSystem));
 				if (isUsedAsNativeInt || isAssignedNativeInt)
 				{
 					variable.Type = variable.Type.GetSign() == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
@@ -78,6 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 						return inferredType.IsCSharpNativeIntegerType();
 				}
 			}
+
 			return false;
 		}
 	}

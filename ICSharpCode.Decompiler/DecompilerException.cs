@@ -36,14 +36,6 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerException : Exception, ISerializable
 	{
-		public string AssemblyName => File.Name;
-
-		public string FileName => File.FileName;
-
-		public IEntity DecompiledEntity { get; }
-		public IModule Module { get; }
-		public PEFile File { get; }
-
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
 			Exception innerException, string message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
@@ -59,6 +51,21 @@ namespace ICSharpCode.Decompiler
 			this.File = file;
 		}
 
+		// This constructor is needed for serialization.
+		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+
+		public string AssemblyName => File.Name;
+
+		public string FileName => File.FileName;
+
+		public IEntity DecompiledEntity { get; }
+		public IModule Module { get; }
+		public PEFile File { get; }
+
+		public override string StackTrace => GetStackTrace(this);
+
 		static string GetDefaultMessage(IEntity entity)
 		{
 			if (entity == null)
@@ -66,19 +73,11 @@ namespace ICSharpCode.Decompiler
 			return $"Error decompiling @{MetadataTokens.GetToken(entity.MetadataToken):X8} {entity.FullName}";
 		}
 
-		// This constructor is needed for serialization.
-		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
-
-		public override string StackTrace => GetStackTrace(this);
-
 		public override string ToString() => ToString(this);
 
 		string ToString(Exception exception)
 		{
-			if (exception == null)
-				throw new ArgumentNullException(nameof(exception));
+			ArgumentNullException.ThrowIfNull(exception);
 			string exceptionType = GetTypeName(exception);
 			string stacktrace = GetStackTrace(exception);
 			while (exception.InnerException != null)
@@ -86,23 +85,29 @@ namespace ICSharpCode.Decompiler
 				exception = exception.InnerException;
 
 				stacktrace = GetStackTrace(exception) + Environment.NewLine
-					+ "-- continuing with outer exception (" + exceptionType + ") --" + Environment.NewLine
-					+ stacktrace;
+				                                      + "-- continuing with outer exception (" + exceptionType +
+				                                      ") --" + Environment.NewLine
+				                                      + stacktrace;
 				exceptionType = GetTypeName(exception);
 			}
+
 			return this.Message + Environment.NewLine
-				+ $"in assembly \"{this.FileName}\"" + Environment.NewLine
-				+ " ---> " + exceptionType + ": " + exception.Message + Environment.NewLine
-				+ stacktrace;
+			                    + $"in assembly \"{this.FileName}\"" + Environment.NewLine
+			                    + " ---> " + exceptionType + ": " + exception.Message + Environment.NewLine
+			                    + stacktrace;
 		}
 
 		static string GetTypeName(Exception exception)
 		{
 			string type = exception.GetType().FullName;
-			if (exception is ExternalException || exception is IOException)
+			if (exception is ExternalException or IOException)
+			{
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";
+			}
 			else
+			{
 				return type;
+			}
 		}
 
 		static string GetStackTrace(Exception exception)
@@ -110,8 +115,8 @@ namespace ICSharpCode.Decompiler
 			// Output stacktrace in custom format (very similar to Exception.StackTrace
 			// property on English systems).
 			// Include filenames where available, but no paths.
-			StackTrace stackTrace = new StackTrace(exception, true);
-			StringBuilder b = new StringBuilder();
+			StackTrace stackTrace = new(exception, true);
+			StringBuilder b = new();
 			for (int i = 0; i < stackTrace.FrameCount; i++)
 			{
 				StackFrame frame = stackTrace.GetFrame(i);
@@ -129,11 +134,12 @@ namespace ICSharpCode.Decompiler
 					b.Append(declaringType.FullName.Replace('+', '.'));
 					b.Append('.');
 				}
+
 				b.Append(method.Name);
 				// output type parameters, if any
-				if ((method is MethodInfo) && ((MethodInfo)method).IsGenericMethod)
+				if (method is MethodInfo { IsGenericMethod: true } info)
 				{
-					Type[] genericArguments = ((MethodInfo)method).GetGenericArguments();
+					Type[] genericArguments = info.GetGenericArguments();
 					b.Append('[');
 					for (int j = 0; j < genericArguments.Length; j++)
 					{
@@ -141,6 +147,7 @@ namespace ICSharpCode.Decompiler
 							b.Append(',');
 						b.Append(genericArguments[j].Name);
 					}
+
 					b.Append(']');
 				}
 
@@ -159,12 +166,14 @@ namespace ICSharpCode.Decompiler
 					{
 						b.Append('?');
 					}
+
 					if (!string.IsNullOrEmpty(parameters[j].Name))
 					{
 						b.Append(' ');
 						b.Append(parameters[j].Name);
 					}
 				}
+
 				b.Append(')');
 
 				// source location
@@ -185,6 +194,7 @@ namespace ICSharpCode.Decompiler
 					{
 						// Path.GetFileName might throw on paths with invalid chars
 					}
+
 					b.Append(" in ");
 					if (filename != null)
 					{

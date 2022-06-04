@@ -46,7 +46,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			if (context.Settings.UsingDeclarations)
 			{
-				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
+				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective {
+					Type: PreProcessorDirectiveType.Define
+				});
 
 				// Now add using declarations for those namespaces:
 				IOrderedEnumerable<string> sortedImports = requiredImports.ImportedNamespaces
@@ -54,7 +56,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					.ThenByDescending(n => n);
 				foreach (string ns in sortedImports)
 				{
-					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
+					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns),
+						$"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
 					// (always inserting at the start of the list)
 					string[] parts = ns.Split('.');
@@ -63,9 +66,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 					}
-					if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
+
+					if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference
+					    reference)
 						usingScope.Usings.Add(reference);
-					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
+					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType },
+						SyntaxTree.MemberRole);
 				}
 			}
 
@@ -75,10 +81,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		sealed class FindRequiredImports : DepthFirstAstVisitor
 		{
+			public readonly HashSet<string> DeclaredNamespaces = new() { string.Empty };
+			public readonly HashSet<string> ImportedNamespaces = new();
 			string currentNamespace;
-
-			public readonly HashSet<string> DeclaredNamespaces = new HashSet<string>() { string.Empty };
-			public readonly HashSet<string> ImportedNamespaces = new HashSet<string>();
 
 			public FindRequiredImports(TransformContext context)
 			{
@@ -96,6 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (currentNamespace[ns.Length] == '.')
 						return true;
 				}
+
 				return false;
 			}
 
@@ -106,6 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					ImportedNamespaces.Add(trr.Type.Namespace);
 				}
+
 				base.VisitSimpleType(simpleType); // also visit type arguments
 			}
 
@@ -117,6 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					currentNamespace = NamespaceDeclaration.BuildQualifiedName(currentNamespace, ident);
 					DeclaredNamespaces.Add(currentNamespace);
 				}
+
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
 				currentNamespace = oldNamespace;
 			}
@@ -150,15 +158,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							usingScope = new UsingScope(usingScope, ns);
 						}
 					}
-					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
+
+					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule,
+						usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
 					this.context.Push(currentContext);
 				}
+
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}
 
 			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
 			{
-				CSharpResolver resolver = new CSharpResolver(context);
+				CSharpResolver resolver = new(context);
 				if (function != null)
 				{
 					foreach (var v in function.Variables)
@@ -182,13 +193,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitNamespaceDeclaration(namespaceDeclaration);
 					return;
 				}
+
 				var previousContext = context.Peek();
 				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
 				foreach (string ident in namespaceDeclaration.Identifiers)
 				{
 					usingScope = new UsingScope(usingScope, ident);
 				}
-				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
+
+				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule,
+					usingScope.Resolve(previousContext.Compilation));
 				context.Push(currentContext);
 				try
 				{
@@ -209,8 +223,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitTypeDeclaration(typeDeclaration);
 					return;
 				}
+
 				var previousContext = context.Peek();
-				var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+				var currentContext =
+					previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 				context.Push(currentContext);
 				try
 				{
@@ -256,6 +272,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					baseCall(entityDeclaration);
 					return;
 				}
+
 				if (entityDeclaration.GetSymbol() is IMethod method)
 				{
 					var previousContext = context.Peek();
@@ -268,6 +285,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						currentContext = previousContext.WithCurrentMember(method);
 					}
+
 					context.Push(currentContext);
 					try
 					{
@@ -295,12 +313,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitSimpleType(simpleType);
 					return;
 				}
+
 				astBuilder.NameLookupMode = simpleType.GetNameLookupMode();
 				if (astBuilder.NameLookupMode == NameLookupMode.Type)
 				{
 					AstType outermostType = simpleType;
-					while (outermostType.Parent is AstType)
-						outermostType = (AstType)outermostType.Parent;
+					while (outermostType.Parent is AstType type)
+						outermostType = type;
 					if (outermostType.Parent is TypeReferenceExpression)
 					{
 						// ILSpy uses TypeReferenceExpression in expression context even when the C# parser
@@ -309,6 +328,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						astBuilder.NameLookupMode = NameLookupMode.Expression;
 					}
 				}
+
 				if (simpleType.Parent is Syntax.Attribute)
 				{
 					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));

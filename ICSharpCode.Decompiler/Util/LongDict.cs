@@ -24,12 +24,13 @@ namespace ICSharpCode.Decompiler.Util
 {
 	static class LongDict
 	{
+		internal static readonly KeyComparer<LongInterval, long> StartComparer =
+			KeyComparer.Create((LongInterval i) => i.Start);
+
 		public static LongDict<T> Create<T>(IEnumerable<(LongSet, T)> entries)
 		{
 			return new LongDict<T>(entries);
 		}
-
-		internal static readonly KeyComparer<LongInterval, long> StartComparer = KeyComparer.Create((LongInterval i) => i.Start);
 	}
 
 	/// <summary>
@@ -50,15 +51,17 @@ namespace ICSharpCode.Decompiler.Util
 			LongSet available = LongSet.Universe;
 			var keys = new List<LongInterval>();
 			var values = new List<T>();
-			foreach (var (key, val) in entries)
+			foreach ((LongSet key, T val) in entries)
 			{
 				foreach (var interval in key.IntersectWith(available).Intervals)
 				{
 					keys.Add(interval);
 					values.Add(val);
 				}
+
 				available = available.ExceptWith(key);
 			}
+
 			this.keys = keys.ToArray();
 			this.values = values.ToArray();
 			Array.Sort(this.keys, this.values, LongDict.StartComparer);
@@ -76,6 +79,7 @@ namespace ICSharpCode.Decompiler.Util
 				value = this.values[pos];
 				return true;
 			}
+
 			value = default(T);
 			return false;
 		}

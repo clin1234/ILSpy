@@ -43,12 +43,13 @@ namespace ICSharpCode.ILSpyX.Extensions
 
 		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
 		{
-			if (list == null)
-				throw new ArgumentNullException(nameof(list));
+			ArgumentNullException.ThrowIfNull(list);
 			if (start < 0 || start >= list.Count)
-				throw new ArgumentOutOfRangeException(nameof(start), start, "Value must be between 0 and " + (list.Count - 1));
+				throw new ArgumentOutOfRangeException(nameof(start), start,
+					"Value must be between 0 and " + (list.Count - 1));
 			if (count < 0 || count > list.Count - start)
-				throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be between 0 and " + (list.Count - start));
+				throw new ArgumentOutOfRangeException(nameof(count), count,
+					"Value must be between 0 and " + (list.Count - start));
 			int end = start + count - 1;
 			while (start <= end)
 			{
@@ -61,16 +62,15 @@ namespace ICSharpCode.ILSpyX.Extensions
 				else
 					start = pivot + 1;
 			}
+
 			return ~start;
 		}
 
 		public static int BinarySearch<T, TKey>(this IList<T> instance, TKey itemKey, Func<T, TKey> keySelector)
 			where TKey : IComparable<TKey>, IComparable
 		{
-			if (instance == null)
-				throw new ArgumentNullException(nameof(instance));
-			if (keySelector == null)
-				throw new ArgumentNullException(nameof(keySelector));
+			ArgumentNullException.ThrowIfNull(instance);
+			ArgumentNullException.ThrowIfNull(keySelector);
 
 			int start = 0;
 			int end = instance.Count - 1;
@@ -87,15 +87,14 @@ namespace ICSharpCode.ILSpyX.Extensions
 				else
 					end = m - 1;
 			}
+
 			return ~start;
 		}
 
 		public static void InsertSorted<T>(this IList<T> list, T item, IComparer<T> comparer)
 		{
-			if (list == null)
-				throw new ArgumentNullException(nameof(list));
-			if (comparer == null)
-				throw new ArgumentNullException(nameof(comparer));
+			ArgumentNullException.ThrowIfNull(list);
+			ArgumentNullException.ThrowIfNull(comparer);
 
 			if (list.Count == 0)
 			{
@@ -108,7 +107,8 @@ namespace ICSharpCode.ILSpyX.Extensions
 			}
 		}
 
-		internal static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> pair, out TKey key, out TValue value)
+		internal static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> pair, out TKey key,
+			out TValue value)
 		{
 			key = pair.Key;
 			value = pair.Value;

@@ -33,14 +33,20 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class SwitchInstruction
 	{
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		public static readonly SlotInfo SectionSlot = new SlotInfo("Section", isCollection: true);
+		public static readonly SlotInfo ValueSlot = new("Value", canInlineInto: true);
+		public static readonly SlotInfo SectionSlot = new("Section", isCollection: true);
+
+		public readonly InstructionCollection<SwitchSection> Sections;
 
 		/// <summary>
 		/// If the switch instruction is lifted, the value instruction produces a value of type <c>Nullable{T}</c> for some
 		/// integral type T. The section with <c>SwitchSection.HasNullLabel</c> is called if the value is null.
 		/// </summary>
 		public bool IsLifted;
+
+		StackType resultType = StackType.Void;
+
+		ILInstruction value = null!;
 
 		public SwitchInstruction(ILInstruction value)
 			: base(OpCode.SwitchInstruction)
@@ -49,7 +55,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Sections = new InstructionCollection<SwitchSection>(this, 1);
 		}
 
-		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {
@@ -58,7 +63,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public readonly InstructionCollection<SwitchSection> Sections;
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
+		}
+
+		public override StackType ResultType => resultType;
 
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -67,13 +78,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				sectionFlags = SemanticHelper.CombineBranches(sectionFlags, section.Flags);
 			}
-			return value.Flags | InstructionFlags.ControlFlow | sectionFlags;
-		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
+			return value.Flags | InstructionFlags.ControlFlow | sectionFlags;
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -93,6 +99,7 @@ namespace ICSharpCode.Decompiler.IL
 				section.WriteTo(output, options);
 				output.WriteLine();
 			}
+
 			output.Unindent();
 			output.Write('}');
 			output.MarkFoldEnd();
@@ -134,10 +141,6 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 
-		StackType resultType = StackType.Void;
-
-		public override StackType ResultType => resultType;
-
 		public void SetResultType(StackType resultType)
 		{
 			this.resultType = resultType;
@@ -155,14 +158,18 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(expectNullSection, "Duplicate 'case null' or 'case null' in non-lifted switch.");
 					expectNullSection = false;
 				}
+
 				Debug.Assert(!section.Labels.IsEmpty || section.HasNullLabel);
 				Debug.Assert(!section.Labels.Overlaps(sets));
 				Debug.Assert(section.Body.ResultType == this.ResultType);
 				sets = sets.UnionWith(section.Labels);
 			}
+
 			Debug.Assert(sets.SetEquals(LongSet.Universe), "switch does not handle all possible cases");
 			Debug.Assert(!expectNullSection, "Lifted switch is missing 'case null'");
-			Debug.Assert(this.IsLifted ? (value.ResultType == StackType.O) : (value.ResultType == StackType.I4 || value.ResultType == StackType.I8));
+			Debug.Assert(this.IsLifted
+				? (value.ResultType == StackType.O)
+				: value.ResultType is StackType.I4 or StackType.I8);
 		}
 
 		public SwitchSection GetDefaultSection()
@@ -176,6 +183,7 @@ namespace ICSharpCode.Decompiler.IL
 					defaultSection = section;
 				}
 			}
+
 			return defaultSection;
 		}
 	}
@@ -198,15 +206,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public LongSet Labels { get; set; }
 
-		protected override InstructionFlags ComputeFlags()
-		{
-			return body.Flags;
-		}
-
 		public override InstructionFlags DirectFlags {
 			get {
 				return InstructionFlags.None;
 			}
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return body.Flags;
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -227,6 +235,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(Labels.ToString());
 			}
+
 			output.Write(": ");
 
 			body.WriteTo(output, options);

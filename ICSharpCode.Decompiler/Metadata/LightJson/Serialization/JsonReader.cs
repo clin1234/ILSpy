@@ -1,15 +1,13 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
+using System.Globalization;
+using System.IO;
+using System.Text;
+
 namespace LightJson.Serialization
 {
-	using System;
-	using System.Globalization;
-	using System.IO;
-	using System.Text;
-
-	using ErrorType = JsonParseException.ErrorType;
-
 	/// <summary>
 	/// Represents a reader that can read JsonValues.
 	/// </summary>
@@ -29,10 +27,7 @@ namespace LightJson.Serialization
 		/// <returns>The parsed <see cref="JsonValue"/>.</returns>
 		public static JsonValue Parse(TextReader reader)
 		{
-			if (reader == null)
-			{
-				throw new ArgumentNullException(nameof(reader));
-			}
+			ArgumentNullException.ThrowIfNull(reader);
 
 			return new JsonReader(reader).Parse();
 		}
@@ -44,15 +39,10 @@ namespace LightJson.Serialization
 		/// <returns>The parsed <see cref="JsonValue"/>.</returns>
 		public static JsonValue Parse(string source)
 		{
-			if (source == null)
-			{
-				throw new ArgumentNullException(nameof(source));
-			}
+			ArgumentNullException.ThrowIfNull(source);
 
-			using (var reader = new StringReader(source))
-			{
-				return Parse(reader);
-			}
+			using var reader = new StringReader(source);
+			return Parse(reader);
 		}
 
 		private string ReadJsonKey()
@@ -94,7 +84,7 @@ namespace LightJson.Serialization
 
 				default:
 					throw new JsonParseException(
-						ErrorType.InvalidOrUnexpectedCharacter,
+						JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 						this.scanner.Position);
 			}
 		}
@@ -222,7 +212,7 @@ namespace LightJson.Serialization
 							break;
 						default:
 							throw new JsonParseException(
-								ErrorType.InvalidOrUnexpectedCharacter,
+								JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 								errorPosition);
 					}
 				}
@@ -235,7 +225,7 @@ namespace LightJson.Serialization
 					if (char.IsControl(c))
 					{
 						throw new JsonParseException(
-							ErrorType.InvalidOrUnexpectedCharacter,
+							JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 							errorPosition);
 					}
 					else
@@ -251,61 +241,26 @@ namespace LightJson.Serialization
 		private int ReadHexDigit()
 		{
 			var errorPosition = this.scanner.Position;
-			switch (char.ToUpper(this.scanner.Read()))
-			{
-				case '0':
-					return 0;
-
-				case '1':
-					return 1;
-
-				case '2':
-					return 2;
-
-				case '3':
-					return 3;
-
-				case '4':
-					return 4;
-
-				case '5':
-					return 5;
-
-				case '6':
-					return 6;
-
-				case '7':
-					return 7;
-
-				case '8':
-					return 8;
-
-				case '9':
-					return 9;
-
-				case 'A':
-					return 10;
-
-				case 'B':
-					return 11;
-
-				case 'C':
-					return 12;
-
-				case 'D':
-					return 13;
-
-				case 'E':
-					return 14;
-
-				case 'F':
-					return 15;
-
-				default:
-					throw new JsonParseException(
-						ErrorType.InvalidOrUnexpectedCharacter,
-						errorPosition);
-			}
+			return char.ToUpper(this.scanner.Read()) switch {
+				'0' => 0,
+				'1' => 1,
+				'2' => 2,
+				'3' => 3,
+				'4' => 4,
+				'5' => 5,
+				'6' => 6,
+				'7' => 7,
+				'8' => 8,
+				'9' => 9,
+				'A' => 10,
+				'B' => 11,
+				'C' => 12,
+				'D' => 13,
+				'E' => 14,
+				'F' => 15,
+				_ => throw new JsonParseException(JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
+					errorPosition)
+			};
 		}
 
 		private char ReadUnicodeLiteral()
@@ -313,9 +268,9 @@ namespace LightJson.Serialization
 			int value = 0;
 
 			value += this.ReadHexDigit() * 4096; // 16^3
-			value += this.ReadHexDigit() * 256;  // 16^2
-			value += this.ReadHexDigit() * 16;   // 16^1
-			value += this.ReadHexDigit();        // 16^0
+			value += this.ReadHexDigit() * 256; // 16^2
+			value += this.ReadHexDigit() * 16; // 16^1
+			value += this.ReadHexDigit(); // 16^0
 
 			return (char)value;
 		}
@@ -347,7 +302,7 @@ namespace LightJson.Serialization
 					if (jsonObject.ContainsKey(key))
 					{
 						throw new JsonParseException(
-							ErrorType.DuplicateObjectKeys,
+							JsonParseException.ErrorType.DuplicateObjectKeys,
 							errorPosition);
 					}
 
@@ -381,12 +336,11 @@ namespace LightJson.Serialization
 					}
 					else if (next == ',')
 					{
-						continue;
 					}
 					else
 					{
 						throw new JsonParseException(
-							ErrorType.InvalidOrUnexpectedCharacter,
+							JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 							errorPosition);
 					}
 				}
@@ -440,12 +394,11 @@ namespace LightJson.Serialization
 					}
 					else if (next == ',')
 					{
-						continue;
 					}
 					else
 					{
 						throw new JsonParseException(
-							ErrorType.InvalidOrUnexpectedCharacter,
+							JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 							errorPosition);
 					}
 				}

@@ -81,6 +81,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (char)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.SByte:
 						switch (sourceType)
@@ -110,6 +111,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (sbyte)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Byte:
 						switch (sourceType)
@@ -139,6 +141,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (byte)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Int16:
 						switch (sourceType)
@@ -168,6 +171,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (short)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.UInt16:
 						switch (sourceType)
@@ -197,6 +201,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (ushort)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Int32:
 						switch (sourceType)
@@ -224,8 +229,9 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Decimal:
 								return (int)(decimal)input;
 							case TypeCode.Boolean:
-								return (int)((bool)input ? 1 : 0);
+								return (bool)input ? 1 : 0;
 						}
+
 						break;
 					case TypeCode.UInt32:
 						switch (sourceType)
@@ -255,6 +261,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (uint)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Int64:
 						switch (sourceType)
@@ -284,6 +291,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (long)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.UInt64:
 						switch (sourceType)
@@ -313,6 +321,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (ulong)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Single:
 						switch (sourceType)
@@ -342,6 +351,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (float)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Double:
 						switch (sourceType)
@@ -371,6 +381,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (double)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Decimal:
 						switch (sourceType)
@@ -400,8 +411,10 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (decimal)((bool)input ? 1 : 0);
 						}
+
 						break;
 				}
+
 				throw new InvalidCastException("Cast from " + sourceType + " to " + targetType + "not supported.");
 			}
 		}
@@ -443,6 +456,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (char)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.SByte:
 						switch (sourceType)
@@ -472,6 +486,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (sbyte)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Byte:
 						switch (sourceType)
@@ -501,6 +516,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (byte)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Int16:
 						switch (sourceType)
@@ -530,6 +546,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (short)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.UInt16:
 						switch (sourceType)
@@ -559,6 +576,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (ushort)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Int32:
 						switch (sourceType)
@@ -586,8 +604,9 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Decimal:
 								return (int)(decimal)input;
 							case TypeCode.Boolean:
-								return (int)((bool)input ? 1 : 0);
+								return (bool)input ? 1 : 0;
 						}
+
 						break;
 					case TypeCode.UInt32:
 						switch (sourceType)
@@ -617,6 +636,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (uint)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Int64:
 						switch (sourceType)
@@ -646,6 +666,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (long)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.UInt64:
 						switch (sourceType)
@@ -675,6 +696,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (ulong)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Single:
 						switch (sourceType)
@@ -704,6 +726,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (float)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Double:
 						switch (sourceType)
@@ -733,6 +756,7 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (double)((bool)input ? 1 : 0);
 						}
+
 						break;
 					case TypeCode.Decimal:
 						switch (sourceType)
@@ -762,8 +786,10 @@ namespace ICSharpCode.Decompiler.Util
 							case TypeCode.Boolean:
 								return (decimal)((bool)input ? 1 : 0);
 						}
+
 						break;
 				}
+
 				throw new InvalidCastException("Cast from " + sourceType + " to " + targetType + " not supported.");
 			}
 		}

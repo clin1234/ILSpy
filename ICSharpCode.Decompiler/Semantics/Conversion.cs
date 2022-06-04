@@ -29,423 +29,6 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public abstract class Conversion : IEquatable<Conversion>
 	{
-		#region Conversion factory methods
-		/// <summary>
-		/// Not a valid conversion.
-		/// </summary>
-		public static readonly Conversion None = new InvalidConversion();
-
-		/// <summary>
-		/// Identity conversion.
-		/// </summary>
-		public static readonly Conversion IdentityConversion = new BuiltinConversion(true, 0);
-
-		public static readonly Conversion ImplicitNumericConversion = new NumericOrEnumerationConversion(true, false);
-		public static readonly Conversion ExplicitNumericConversion = new NumericOrEnumerationConversion(false, false);
-		public static readonly Conversion ImplicitLiftedNumericConversion = new NumericOrEnumerationConversion(true, true);
-		public static readonly Conversion ExplicitLiftedNumericConversion = new NumericOrEnumerationConversion(false, true);
-
-		public static Conversion EnumerationConversion(bool isImplicit, bool isLifted)
-		{
-			return new NumericOrEnumerationConversion(isImplicit, isLifted, true);
-		}
-
-		public static readonly Conversion NullLiteralConversion = new BuiltinConversion(true, 1);
-
-		/// <summary>
-		/// The numeric conversion of a constant expression.
-		/// </summary>
-		public static readonly Conversion ImplicitConstantExpressionConversion = new BuiltinConversion(true, 2);
-
-		public static readonly Conversion ImplicitReferenceConversion = new BuiltinConversion(true, 3);
-		public static readonly Conversion ExplicitReferenceConversion = new BuiltinConversion(false, 3);
-
-		public static readonly Conversion ImplicitDynamicConversion = new BuiltinConversion(true, 4);
-		public static readonly Conversion ExplicitDynamicConversion = new BuiltinConversion(false, 4);
-
-		public static readonly Conversion ImplicitNullableConversion = new BuiltinConversion(true, 5);
-		public static readonly Conversion ExplicitNullableConversion = new BuiltinConversion(false, 5);
-
-		public static readonly Conversion ImplicitPointerConversion = new BuiltinConversion(true, 6);
-		public static readonly Conversion ExplicitPointerConversion = new BuiltinConversion(false, 6);
-
-		public static readonly Conversion BoxingConversion = new BuiltinConversion(true, 7);
-		public static readonly Conversion UnboxingConversion = new BuiltinConversion(false, 8);
-
-		/// <summary>
-		/// C# 'as' cast.
-		/// </summary>
-		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
-
-		/// <summary>
-		/// C# 6 string interpolation expression implicitly being converted to <see cref="System.IFormattable"/> or <see cref="System.FormattableString"/>.
-		/// </summary>
-		public static readonly Conversion ImplicitInterpolatedStringConversion = new BuiltinConversion(true, 10);
-
-		/// <summary>
-		/// C# 7 throw expression being converted to an arbitrary type.
-		/// </summary>
-		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 11);
-
-		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
-		{
-			if (operatorMethod == null)
-				throw new ArgumentNullException(nameof(operatorMethod));
-			return new UserDefinedConv(isImplicit, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, isAmbiguous);
-		}
-
-		public static Conversion MethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument)
-		{
-			if (chosenMethod == null)
-				throw new ArgumentNullException(nameof(chosenMethod));
-			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument, isValid: true);
-		}
-
-		public static Conversion InvalidMethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument)
-		{
-			if (chosenMethod == null)
-				throw new ArgumentNullException(nameof(chosenMethod));
-			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument, isValid: false);
-		}
-
-		public static Conversion TupleConversion(ImmutableArray<Conversion> conversions)
-		{
-			return new TupleConv(conversions);
-		}
-		#endregion
-
-		#region Inner classes
-		sealed class InvalidConversion : Conversion
-		{
-			public override bool IsValid {
-				get { return false; }
-			}
-
-			public override string ToString()
-			{
-				return "None";
-			}
-		}
-
-		sealed class NumericOrEnumerationConversion : Conversion
-		{
-			readonly bool isImplicit;
-			readonly bool isLifted;
-			readonly bool isEnumeration;
-
-			public NumericOrEnumerationConversion(bool isImplicit, bool isLifted, bool isEnumeration = false)
-			{
-				this.isImplicit = isImplicit;
-				this.isLifted = isLifted;
-				this.isEnumeration = isEnumeration;
-			}
-
-			public override bool IsImplicit {
-				get { return isImplicit; }
-			}
-
-			public override bool IsExplicit {
-				get { return !isImplicit; }
-			}
-
-			public override bool IsNumericConversion {
-				get { return !isEnumeration; }
-			}
-
-			public override bool IsEnumerationConversion {
-				get { return isEnumeration; }
-			}
-
-			public override bool IsLifted {
-				get { return isLifted; }
-			}
-
-			public override string ToString()
-			{
-				return (isImplicit ? "implicit" : "explicit")
-					+ (isLifted ? " lifted" : "")
-					+ (isEnumeration ? " enumeration" : " numeric")
-					+ " conversion";
-			}
-
-			public override bool Equals(Conversion other)
-			{
-				NumericOrEnumerationConversion o = other as NumericOrEnumerationConversion;
-				return o != null && isImplicit == o.isImplicit && isLifted == o.isLifted && isEnumeration == o.isEnumeration;
-			}
-
-			public override int GetHashCode()
-			{
-				return (isImplicit ? 1 : 0) + (isLifted ? 2 : 0) + (isEnumeration ? 4 : 0);
-			}
-		}
-
-		sealed class BuiltinConversion : Conversion
-		{
-			readonly bool isImplicit;
-			readonly byte type;
-
-			public BuiltinConversion(bool isImplicit, byte type)
-			{
-				this.isImplicit = isImplicit;
-				this.type = type;
-			}
-
-			public override bool IsImplicit {
-				get { return isImplicit; }
-			}
-
-			public override bool IsExplicit {
-				get { return !isImplicit; }
-			}
-
-			public override bool IsIdentityConversion {
-				get { return type == 0; }
-			}
-
-			public override bool IsNullLiteralConversion {
-				get { return type == 1; }
-			}
-
-			public override bool IsConstantExpressionConversion {
-				get { return type == 2; }
-			}
-
-			public override bool IsReferenceConversion {
-				get { return type == 3; }
-			}
-
-			public override bool IsDynamicConversion {
-				get { return type == 4; }
-			}
-
-			public override bool IsNullableConversion {
-				get { return type == 5; }
-			}
-
-			public override bool IsPointerConversion {
-				get { return type == 6; }
-			}
-
-			public override bool IsBoxingConversion {
-				get { return type == 7; }
-			}
-
-			public override bool IsUnboxingConversion {
-				get { return type == 8; }
-			}
-
-			public override bool IsTryCast {
-				get { return type == 9; }
-			}
-
-			public override bool IsInterpolatedStringConversion => type == 10;
-
-			public override bool IsThrowExpressionConversion {
-				get { return type == 11; }
-			}
-
-			public override string ToString()
-			{
-				string name = null;
-				switch (type)
-				{
-					case 0:
-						return "identity conversion";
-					case 1:
-						return "null-literal conversion";
-					case 2:
-						name = "constant-expression";
-						break;
-					case 3:
-						name = "reference";
-						break;
-					case 4:
-						name = "dynamic";
-						break;
-					case 5:
-						name = "nullable";
-						break;
-					case 6:
-						name = "pointer";
-						break;
-					case 7:
-						return "boxing conversion";
-					case 8:
-						return "unboxing conversion";
-					case 9:
-						return "try cast";
-					case 10:
-						return "interpolated string";
-					case 11:
-						return "throw-expression conversion";
-				}
-				return (isImplicit ? "implicit " : "explicit ") + name + " conversion";
-			}
-		}
-
-		sealed class UserDefinedConv : Conversion
-		{
-			readonly IMethod method;
-			readonly bool isLifted;
-			readonly Conversion conversionBeforeUserDefinedOperator;
-			readonly Conversion conversionAfterUserDefinedOperator;
-			readonly bool isImplicit;
-			readonly bool isValid;
-
-			public UserDefinedConv(bool isImplicit, IMethod method, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted, bool isAmbiguous)
-			{
-				this.method = method;
-				this.isLifted = isLifted;
-				this.conversionBeforeUserDefinedOperator = conversionBeforeUserDefinedOperator;
-				this.conversionAfterUserDefinedOperator = conversionAfterUserDefinedOperator;
-				this.isImplicit = isImplicit;
-				this.isValid = !isAmbiguous;
-			}
-
-			public override bool IsValid {
-				get { return isValid; }
-			}
-
-			public override bool IsImplicit {
-				get { return isImplicit; }
-			}
-
-			public override bool IsExplicit {
-				get { return !isImplicit; }
-			}
-
-			public override bool IsLifted {
-				get { return isLifted; }
-			}
-
-			public override bool IsUserDefined {
-				get { return true; }
-			}
-
-			public override Conversion ConversionBeforeUserDefinedOperator {
-				get { return conversionBeforeUserDefinedOperator; }
-			}
-
-			public override Conversion ConversionAfterUserDefinedOperator {
-				get { return conversionAfterUserDefinedOperator; }
-			}
-
-			public override IMethod Method {
-				get { return method; }
-			}
-
-			public override bool Equals(Conversion other)
-			{
-				UserDefinedConv o = other as UserDefinedConv;
-				return o != null && isLifted == o.isLifted && isImplicit == o.isImplicit && isValid == o.isValid && method.Equals(o.method);
-			}
-
-			public override int GetHashCode()
-			{
-				return unchecked(method.GetHashCode() + (isLifted ? 31 : 27) + (isImplicit ? 71 : 61) + (isValid ? 107 : 109));
-			}
-
-			public override string ToString()
-			{
-				return (isImplicit ? "implicit" : "explicit")
-					+ (isLifted ? " lifted" : "")
-					+ (isValid ? "" : " ambiguous")
-					+ "user-defined conversion (" + method + ")";
-			}
-		}
-
-		sealed class MethodGroupConv : Conversion
-		{
-			readonly IMethod method;
-			readonly bool isVirtualMethodLookup;
-			readonly bool delegateCapturesFirstArgument;
-			readonly bool isValid;
-
-			public MethodGroupConv(IMethod method, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument, bool isValid)
-			{
-				this.method = method;
-				this.isVirtualMethodLookup = isVirtualMethodLookup;
-				this.delegateCapturesFirstArgument = delegateCapturesFirstArgument;
-				this.isValid = isValid;
-			}
-
-			public override bool IsValid {
-				get { return isValid; }
-			}
-
-			public override bool IsImplicit {
-				get { return true; }
-			}
-
-			public override bool IsMethodGroupConversion {
-				get { return true; }
-			}
-
-			public override bool IsVirtualMethodLookup {
-				get { return isVirtualMethodLookup; }
-			}
-
-			public override bool DelegateCapturesFirstArgument {
-				get { return delegateCapturesFirstArgument; }
-			}
-
-			public override IMethod Method {
-				get { return method; }
-			}
-
-			public override bool Equals(Conversion other)
-			{
-				MethodGroupConv o = other as MethodGroupConv;
-				return o != null && method.Equals(o.method);
-			}
-
-			public override int GetHashCode()
-			{
-				return method.GetHashCode();
-			}
-		}
-
-		sealed class TupleConv : Conversion
-		{
-			public override bool IsImplicit { get; }
-			public override bool IsExplicit => !IsImplicit;
-			public override ImmutableArray<Conversion> ElementConversions { get; }
-			public override bool IsTupleConversion => true;
-
-			public TupleConv(ImmutableArray<Conversion> elementConversions)
-			{
-				this.ElementConversions = elementConversions;
-				this.IsImplicit = elementConversions.All(c => c.IsImplicit);
-			}
-
-			public override bool Equals(Conversion other)
-			{
-				return other is TupleConv o
-					&& ElementConversions.SequenceEqual(o.ElementConversions);
-			}
-
-			public override int GetHashCode()
-			{
-				unchecked
-				{
-					int hash = 0;
-					foreach (var conv in ElementConversions)
-					{
-						hash *= 31;
-						hash += conv.GetHashCode();
-					}
-					return hash;
-				}
-			}
-
-			public override string ToString()
-			{
-				return (IsImplicit ? "implicit " : "explicit ") + " tuple conversion";
-			}
-		}
-		#endregion
-
 		/// <summary>
 		/// Gets whether the conversion is valid.
 		/// </summary>
@@ -621,7 +204,12 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public virtual ImmutableArray<Conversion> ElementConversions => default(ImmutableArray<Conversion>);
 
-		public override sealed bool Equals(object obj)
+		public virtual bool Equals(Conversion other)
+		{
+			return this == other;
+		}
+
+		public sealed override bool Equals(object obj)
 		{
 			return Equals(obj as Conversion);
 		}
@@ -631,9 +219,392 @@ namespace ICSharpCode.Decompiler.Semantics
 			return base.GetHashCode();
 		}
 
-		public virtual bool Equals(Conversion other)
+		#region Conversion factory methods
+
+		/// <summary>
+		/// Not a valid conversion.
+		/// </summary>
+		public static readonly Conversion None = new InvalidConversion();
+
+		/// <summary>
+		/// Identity conversion.
+		/// </summary>
+		public static readonly Conversion IdentityConversion = new BuiltinConversion(true, 0);
+
+		public static readonly Conversion ImplicitNumericConversion = new NumericOrEnumerationConversion(true, false);
+		public static readonly Conversion ExplicitNumericConversion = new NumericOrEnumerationConversion(false, false);
+
+		public static readonly Conversion ImplicitLiftedNumericConversion =
+			new NumericOrEnumerationConversion(true, true);
+
+		public static readonly Conversion ExplicitLiftedNumericConversion =
+			new NumericOrEnumerationConversion(false, true);
+
+		public static Conversion EnumerationConversion(bool isImplicit, bool isLifted)
 		{
-			return this == other;
+			return new NumericOrEnumerationConversion(isImplicit, isLifted, true);
 		}
+
+		public static readonly Conversion NullLiteralConversion = new BuiltinConversion(true, 1);
+
+		/// <summary>
+		/// The numeric conversion of a constant expression.
+		/// </summary>
+		public static readonly Conversion ImplicitConstantExpressionConversion = new BuiltinConversion(true, 2);
+
+		public static readonly Conversion ImplicitReferenceConversion = new BuiltinConversion(true, 3);
+		public static readonly Conversion ExplicitReferenceConversion = new BuiltinConversion(false, 3);
+
+		public static readonly Conversion ImplicitDynamicConversion = new BuiltinConversion(true, 4);
+		public static readonly Conversion ExplicitDynamicConversion = new BuiltinConversion(false, 4);
+
+		public static readonly Conversion ImplicitNullableConversion = new BuiltinConversion(true, 5);
+		public static readonly Conversion ExplicitNullableConversion = new BuiltinConversion(false, 5);
+
+		public static readonly Conversion ImplicitPointerConversion = new BuiltinConversion(true, 6);
+		public static readonly Conversion ExplicitPointerConversion = new BuiltinConversion(false, 6);
+
+		public static readonly Conversion BoxingConversion = new BuiltinConversion(true, 7);
+		public static readonly Conversion UnboxingConversion = new BuiltinConversion(false, 8);
+
+		/// <summary>
+		/// C# 'as' cast.
+		/// </summary>
+		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
+
+		/// <summary>
+		/// C# 6 string interpolation expression implicitly being converted to <see cref="System.IFormattable"/> or <see cref="System.FormattableString"/>.
+		/// </summary>
+		public static readonly Conversion ImplicitInterpolatedStringConversion = new BuiltinConversion(true, 10);
+
+		/// <summary>
+		/// C# 7 throw expression being converted to an arbitrary type.
+		/// </summary>
+		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 11);
+
+		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit,
+			Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator,
+			bool isLifted = false, bool isAmbiguous = false)
+		{
+			ArgumentNullException.ThrowIfNull(operatorMethod);
+			return new UserDefinedConv(isImplicit, operatorMethod, conversionBeforeUserDefinedOperator,
+				conversionAfterUserDefinedOperator, isLifted, isAmbiguous);
+		}
+
+		public static Conversion MethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup,
+			bool delegateCapturesFirstArgument)
+		{
+			ArgumentNullException.ThrowIfNull(chosenMethod);
+			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument,
+				isValid: true);
+		}
+
+		public static Conversion InvalidMethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup,
+			bool delegateCapturesFirstArgument)
+		{
+			ArgumentNullException.ThrowIfNull(chosenMethod);
+			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument,
+				isValid: false);
+		}
+
+		public static Conversion TupleConversion(ImmutableArray<Conversion> conversions)
+		{
+			return new TupleConv(conversions);
+		}
+
+		#endregion
+
+		#region Inner classes
+
+		sealed class InvalidConversion : Conversion
+		{
+			public override bool IsValid {
+				get { return false; }
+			}
+
+			public override string ToString()
+			{
+				return "None";
+			}
+		}
+
+		sealed class NumericOrEnumerationConversion : Conversion
+		{
+			public NumericOrEnumerationConversion(bool isImplicit, bool isLifted, bool isEnumeration = false)
+			{
+				this.IsImplicit = isImplicit;
+				this.IsLifted = isLifted;
+				this.IsEnumerationConversion = isEnumeration;
+			}
+
+			public override bool IsImplicit { get; }
+
+			public override bool IsExplicit {
+				get { return !IsImplicit; }
+			}
+
+			public override bool IsNumericConversion {
+				get { return !IsEnumerationConversion; }
+			}
+
+			public override bool IsEnumerationConversion { get; }
+
+			public override bool IsLifted { get; }
+
+			public override string ToString()
+			{
+				return (IsImplicit ? "implicit" : "explicit")
+				       + (IsLifted ? " lifted" : "")
+				       + (IsEnumerationConversion ? " enumeration" : " numeric")
+				       + " conversion";
+			}
+
+			public override bool Equals(Conversion other)
+			{
+				return other is NumericOrEnumerationConversion o && IsImplicit == o.IsImplicit &&
+				       IsLifted == o.IsLifted && IsEnumerationConversion == o.IsEnumerationConversion;
+			}
+
+			public override int GetHashCode()
+			{
+				return (IsImplicit ? 1 : 0) + (IsLifted ? 2 : 0) + (IsEnumerationConversion ? 4 : 0);
+			}
+		}
+
+		sealed class BuiltinConversion : Conversion
+		{
+			readonly byte type;
+
+			public BuiltinConversion(bool isImplicit, byte type)
+			{
+				this.IsImplicit = isImplicit;
+				this.type = type;
+			}
+
+			public override bool IsImplicit { get; }
+
+			public override bool IsExplicit {
+				get { return !IsImplicit; }
+			}
+
+			public override bool IsIdentityConversion {
+				get { return type == 0; }
+			}
+
+			public override bool IsNullLiteralConversion {
+				get { return type == 1; }
+			}
+
+			public override bool IsConstantExpressionConversion {
+				get { return type == 2; }
+			}
+
+			public override bool IsReferenceConversion {
+				get { return type == 3; }
+			}
+
+			public override bool IsDynamicConversion {
+				get { return type == 4; }
+			}
+
+			public override bool IsNullableConversion {
+				get { return type == 5; }
+			}
+
+			public override bool IsPointerConversion {
+				get { return type == 6; }
+			}
+
+			public override bool IsBoxingConversion {
+				get { return type == 7; }
+			}
+
+			public override bool IsUnboxingConversion {
+				get { return type == 8; }
+			}
+
+			public override bool IsTryCast {
+				get { return type == 9; }
+			}
+
+			public override bool IsInterpolatedStringConversion => type == 10;
+
+			public override bool IsThrowExpressionConversion {
+				get { return type == 11; }
+			}
+
+			public override string ToString()
+			{
+				string name = null;
+				switch (type)
+				{
+					case 0:
+						return "identity conversion";
+					case 1:
+						return "null-literal conversion";
+					case 2:
+						name = "constant-expression";
+						break;
+					case 3:
+						name = "reference";
+						break;
+					case 4:
+						name = "dynamic";
+						break;
+					case 5:
+						name = "nullable";
+						break;
+					case 6:
+						name = "pointer";
+						break;
+					case 7:
+						return "boxing conversion";
+					case 8:
+						return "unboxing conversion";
+					case 9:
+						return "try cast";
+					case 10:
+						return "interpolated string";
+					case 11:
+						return "throw-expression conversion";
+				}
+
+				return (IsImplicit ? "implicit " : "explicit ") + name + " conversion";
+			}
+		}
+
+		sealed class UserDefinedConv : Conversion
+		{
+			public UserDefinedConv(bool isImplicit, IMethod method, Conversion conversionBeforeUserDefinedOperator,
+				Conversion conversionAfterUserDefinedOperator, bool isLifted, bool isAmbiguous)
+			{
+				this.Method = method;
+				this.IsLifted = isLifted;
+				this.ConversionBeforeUserDefinedOperator = conversionBeforeUserDefinedOperator;
+				this.ConversionAfterUserDefinedOperator = conversionAfterUserDefinedOperator;
+				this.IsImplicit = isImplicit;
+				this.IsValid = !isAmbiguous;
+			}
+
+			public override bool IsValid { get; }
+
+			public override bool IsImplicit { get; }
+
+			public override bool IsExplicit {
+				get { return !IsImplicit; }
+			}
+
+			public override bool IsLifted { get; }
+
+			public override bool IsUserDefined {
+				get { return true; }
+			}
+
+			public override Conversion ConversionBeforeUserDefinedOperator { get; }
+
+			public override Conversion ConversionAfterUserDefinedOperator { get; }
+
+			public override IMethod Method { get; }
+
+			public override bool Equals(Conversion other)
+			{
+				return other is UserDefinedConv o && IsLifted == o.IsLifted && IsImplicit == o.IsImplicit &&
+				       IsValid == o.IsValid && Method.Equals(o.Method);
+			}
+
+			public override int GetHashCode()
+			{
+				return unchecked(Method.GetHashCode() + (IsLifted ? 31 : 27) + (IsImplicit ? 71 : 61) +
+				                 (IsValid ? 107 : 109));
+			}
+
+			public override string ToString()
+			{
+				return (IsImplicit ? "implicit" : "explicit")
+				       + (IsLifted ? " lifted" : "")
+				       + (IsValid ? "" : " ambiguous")
+				       + "user-defined conversion (" + Method + ")";
+			}
+		}
+
+		sealed class MethodGroupConv : Conversion
+		{
+			public MethodGroupConv(IMethod method, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument,
+				bool isValid)
+			{
+				this.Method = method;
+				this.IsVirtualMethodLookup = isVirtualMethodLookup;
+				this.DelegateCapturesFirstArgument = delegateCapturesFirstArgument;
+				this.IsValid = isValid;
+			}
+
+			public override bool IsValid { get; }
+
+			public override bool IsImplicit {
+				get { return true; }
+			}
+
+			public override bool IsMethodGroupConversion {
+				get { return true; }
+			}
+
+			public override bool IsVirtualMethodLookup { get; }
+
+			public override bool DelegateCapturesFirstArgument { get; }
+
+			public override IMethod Method { get; }
+
+			public override bool Equals(Conversion other)
+			{
+				return other is MethodGroupConv o && Method.Equals(o.Method);
+			}
+
+			public override int GetHashCode()
+			{
+				return Method.GetHashCode();
+			}
+		}
+
+		sealed class TupleConv : Conversion
+		{
+			public TupleConv(ImmutableArray<Conversion> elementConversions)
+			{
+				this.ElementConversions = elementConversions;
+				this.IsImplicit = elementConversions.All(c => c.IsImplicit);
+			}
+
+			public override bool IsImplicit { get; }
+			public override bool IsExplicit => !IsImplicit;
+			public override ImmutableArray<Conversion> ElementConversions { get; }
+			public override bool IsTupleConversion => true;
+
+			public override bool Equals(Conversion other)
+			{
+				return other is TupleConv o
+				       && ElementConversions.SequenceEqual(o.ElementConversions);
+			}
+
+			public override int GetHashCode()
+			{
+				unchecked
+				{
+					int hash = 0;
+					foreach (var conv in ElementConversions)
+					{
+						hash *= 31;
+						hash += conv.GetHashCode();
+					}
+
+					return hash;
+				}
+			}
+
+			public override string ToString()
+			{
+				return (IsImplicit ? "implicit " : "explicit ") + " tuple conversion";
+			}
+		}
+
+		#endregion
 	}
 }

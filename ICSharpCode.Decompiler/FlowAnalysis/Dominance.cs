@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler.Util;
@@ -41,13 +40,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// Postcondition: a dominator tree is constructed for all nodes reachable from entryPoint,
 		/// and the visited flag remains false.
 		/// </remarks>
-		public static void ComputeDominance(ControlFlowNode entryPoint, CancellationToken cancellationToken = default(CancellationToken))
+		public static void ComputeDominance(ControlFlowNode entryPoint,
+			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			// A Simple, Fast Dominance Algorithm
 			// Keith D. Cooper, Timothy J. Harvey and Ken Kennedy
 
 			var nodes = new List<ControlFlowNode>();
-			entryPoint.TraversePostOrder(n => n.Successors, nodes.Add);
+			entryPoint.TraversePostOrder(static n => n.Successors, nodes.Add);
 			Debug.Assert(nodes.Last() == entryPoint);
 			for (int i = 0; i < nodes.Count; i++)
 			{
@@ -75,12 +75,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 						// Ignore predecessors that were not processed yet
 						if (p.ImmediateDominator != null)
 						{
-							if (newIdom == null)
-								newIdom = p;
-							else
-								newIdom = FindCommonDominator(p, newIdom);
+							newIdom = newIdom == null ? p : FindCommonDominator(p, newIdom);
 						}
 					}
+
 					// The reverse post-order ensures at least one of our predecessors was processed.
 					Debug.Assert(newIdom != null);
 					if (newIdom != b.ImmediateDominator)
@@ -90,12 +88,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					}
 				}
 			} while (changed);
+
 			// Create dominator tree for all reachable nodes:
 			foreach (ControlFlowNode node in nodes)
 			{
 				if (node.ImmediateDominator != null)
 					node.DominatorTreeChildren = new List<ControlFlowNode>();
 			}
+
 			entryPoint.ImmediateDominator = null;
 			foreach (ControlFlowNode node in nodes)
 			{
@@ -121,6 +121,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				while (b.PostOrderNumber < a.PostOrderNumber)
 					b = b.ImmediateDominator;
 			}
+
 			return a;
 		}
 
@@ -144,23 +145,27 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				Debug.Assert(cfg[i].UserIndex == i);
 			}
 #endif
-			BitSet nonEmpty = new BitSet(cfg.Length);
+			BitSet nonEmpty = new(cfg.Length);
 			foreach (var j in cfg)
 			{
 				// If j is a join-point (more than one incoming edge):
 				// `j.IsReachable && j.ImmediateDominator == null` is the root node, which counts as an extra incoming edge
-				if (j.IsReachable && (j.Predecessors.Count >= 2 || (j.Predecessors.Count >= 1 && j.ImmediateDominator == null)))
+				if (j.IsReachable && (j.Predecessors.Count >= 2 ||
+				                      (j.Predecessors.Count >= 1 && j.ImmediateDominator == null)))
 				{
 					// Add j to frontier of all predecessors and their dominators up to j's immediate dominator.
 					foreach (var p in j.Predecessors)
 					{
-						for (var runner = p; runner != j.ImmediateDominator && runner != j && runner != null; runner = runner.ImmediateDominator)
+						for (var runner = p;
+						     runner != j.ImmediateDominator && runner != j && runner != null;
+						     runner = runner.ImmediateDominator)
 						{
 							nonEmpty.Set(runner.UserIndex);
 						}
 					}
 				}
 			}
+
 			return nonEmpty;
 		}
 	}

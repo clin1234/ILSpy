@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
@@ -58,11 +56,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is InvocationAstType o
-				&& this.BaseType.DoMatch(o.BaseType, match)
-				&& this.Arguments.DoMatch(o.Arguments, match);
+			       && this.BaseType.DoMatch(o.BaseType, match)
+			       && this.Arguments.DoMatch(o.Arguments, match);
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
+			InterningProvider interningProvider = null)
 		{
 			throw new NotImplementedException();
 		}

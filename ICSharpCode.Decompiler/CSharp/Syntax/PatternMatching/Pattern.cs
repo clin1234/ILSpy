@@ -31,23 +31,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// </summary>
 		public static readonly string AnyString = "$any$";
 
-		public static bool MatchString(string pattern, string text)
-		{
-			return pattern == AnyString || pattern == text;
-		}
-
-		internal struct PossibleMatch
-		{
-			public readonly INode NextOther; // next node after the last matched node
-			public readonly int Checkpoint; // checkpoint
-
-			public PossibleMatch(INode nextOther, int checkpoint)
-			{
-				this.NextOther = nextOther;
-				this.Checkpoint = checkpoint;
-			}
-		}
-
 		bool INode.IsNull {
 			get { return false; }
 		}
@@ -71,10 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return DoMatch(pos, match);
 		}
 
+		public static bool MatchString(string pattern, string text)
+		{
+			return pattern == AnyString || pattern == text;
+		}
+
 		public static bool DoMatchCollection(Role role, INode firstPatternChild, INode firstOtherChild, Match match)
 		{
-			BacktrackingInfo backtrackingInfo = new BacktrackingInfo();
-			Stack<INode> patternStack = new Stack<INode>();
+			BacktrackingInfo backtrackingInfo = new();
+			Stack<INode> patternStack = new();
 			Stack<PossibleMatch> stack = backtrackingInfo.backtrackingStack;
 			patternStack.Push(firstPatternChild);
 			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
@@ -103,12 +91,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 					if (cur2 != null)
 						cur2 = cur2.NextSibling;
 				}
+
 				while (cur2 != null && cur2.Role != role)
 					cur2 = cur2.NextSibling;
 				if (success && cur2 == null)
 					return true;
 			}
+
 			return false;
+		}
+
+		internal struct PossibleMatch
+		{
+			public readonly INode NextOther; // next node after the last matched node
+			public readonly int Checkpoint; // checkpoint
+
+			public PossibleMatch(INode nextOther, int checkpoint)
+			{
+				this.NextOther = nextOther;
+				this.Checkpoint = checkpoint;
+			}
 		}
 	}
 }

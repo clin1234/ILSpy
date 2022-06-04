@@ -30,95 +30,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public abstract class AstType : AstNode
 	{
-		#region Null
-		public new static readonly AstType Null = new NullAstType();
-
-		sealed class NullAstType : AstType
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
-			{
-				return SpecialType.UnknownType;
-			}
-		}
-		#endregion
-
-		#region PatternPlaceholder
-		public static implicit operator AstType(PatternMatching.Pattern pattern)
-		{
-			return pattern != null ? new PatternPlaceholder(pattern) : null;
-		}
-
-		sealed class PatternPlaceholder : AstType, INode
-		{
-			readonly PatternMatching.Pattern child;
-
-			public PatternPlaceholder(PatternMatching.Pattern child)
-			{
-				this.child = child;
-			}
-
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitPatternPlaceholder(this, child, data);
-			}
-
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
-			{
-				throw new NotSupportedException();
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return child.DoMatch(other, match);
-			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
-		}
-		#endregion
-
 		public override NodeType NodeType {
 			get { return NodeType.TypeReference; }
 		}
@@ -133,8 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsVar()
 		{
-			SimpleType st = this as SimpleType;
-			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
+			return this is SimpleType { Identifier: "var" } st && st.TypeArguments.Count == 0;
 		}
 
 		/// <summary>
@@ -163,7 +73,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
-		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null);
+		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode,
+			InterningProvider interningProvider = null);
 
 		/// <summary>
 		/// Gets the name lookup mode from the context (looking at the ancestors of this <see cref="AstType"/>).
@@ -171,10 +82,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public NameLookupMode GetNameLookupMode()
 		{
 			AstType outermostType = this;
-			while (outermostType.Parent is AstType)
-				outermostType = (AstType)outermostType.Parent;
+			while (outermostType.Parent is AstType type)
+				outermostType = type;
 
-			if (outermostType.Parent is UsingDeclaration || outermostType.Parent is UsingAliasDeclaration)
+			if (outermostType.Parent is UsingDeclaration or UsingAliasDeclaration)
 			{
 				return NameLookupMode.TypeInUsingDeclaration;
 			}
@@ -182,9 +93,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				// Use BaseTypeReference for a type's base type, and for a constraint on a type.
 				// Do not use it for a constraint on a method.
-				if (outermostType.Parent is TypeDeclaration || (outermostType.Parent is Constraint && outermostType.Parent.Parent is TypeDeclaration))
+				if (outermostType.Parent is TypeDeclaration || (outermostType.Parent is Constraint &&
+				                                                outermostType.Parent.Parent is TypeDeclaration))
 					return NameLookupMode.BaseTypeReference;
 			}
+
 			return NameLookupMode.Type;
 		}
 
@@ -256,7 +169,103 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				type = new MemberType(type, parts[i]);
 			}
+
 			return type;
 		}
+
+		#region Null
+
+		public new static readonly AstType Null = new NullAstType();
+
+		sealed class NullAstType : AstType
+		{
+			public override bool IsNull {
+				get {
+					return true;
+				}
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitNullNode(this);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitNullNode(this);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitNullNode(this, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, Match match)
+			{
+				return other == null || other.IsNull;
+			}
+
+			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
+				InterningProvider interningProvider)
+			{
+				return SpecialType.UnknownType;
+			}
+		}
+
+		#endregion
+
+		#region PatternPlaceholder
+
+		public static implicit operator AstType(Pattern pattern)
+		{
+			return pattern != null ? new PatternPlaceholder(pattern) : null;
+		}
+
+		sealed class PatternPlaceholder : AstType, INode
+		{
+			readonly Pattern child;
+
+			public PatternPlaceholder(Pattern child)
+			{
+				this.child = child;
+			}
+
+			public override NodeType NodeType {
+				get { return NodeType.Pattern; }
+			}
+
+			bool INode.DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitPatternPlaceholder(this, child, data);
+			}
+
+			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
+				InterningProvider interningProvider)
+			{
+				throw new NotSupportedException();
+			}
+
+			protected internal override bool DoMatch(AstNode other, Match match)
+			{
+				return child.DoMatch(other, match);
+			}
+		}
+
+		#endregion
 	}
 }

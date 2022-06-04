@@ -25,6 +25,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public static class TaskType
 	{
+		const string ns = "System.Runtime.CompilerServices";
+
 		/// <summary>
 		/// Gets the T in Task&lt;T&gt;.
 		/// Returns void for non-generic Task.
@@ -53,6 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (def.KnownTypeCode == KnownTypeCode.TaskOfT)
 					return type is ParameterizedType;
 			}
+
 			return false;
 		}
 
@@ -76,10 +79,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				builderType = (IType)arg.Value;
 				return true;
 			}
+
 			return false;
 		}
-
-		const string ns = "System.Runtime.CompilerServices";
 
 		/// <summary>
 		/// Gets whether the specified type is a non-generic Task-like type.
@@ -92,11 +94,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				builderTypeName = new TopLevelTypeName(ns, "AsyncTaskMethodBuilder");
 				return true;
 			}
+
 			if (IsCustomTask(task, out var builderType))
 			{
 				builderTypeName = new FullTypeName(builderType.ReflectionName);
 				return builderTypeName.TypeParameterCount == 0;
 			}
+
 			builderTypeName = default;
 			return false;
 		}
@@ -112,11 +116,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				builderTypeName = new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1);
 				return true;
 			}
+
 			if (IsCustomTask(task, out var builderType))
 			{
 				builderTypeName = new FullTypeName(builderType.ReflectionName);
 				return builderTypeName.TypeParameterCount == 1;
 			}
+
 			builderTypeName = default;
 			return false;
 		}
@@ -126,10 +132,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IType Create(ICompilation compilation, IType elementType)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
+			ArgumentNullException.ThrowIfNull(compilation);
+			ArgumentNullException.ThrowIfNull(elementType);
 
 			if (elementType.Kind == TypeKind.Void)
 				return compilation.FindType(KnownTypeCode.Task);

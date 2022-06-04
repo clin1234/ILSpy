@@ -35,24 +35,61 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		SRM.ICustomAttributeTypeProvider<IType>
 	{
 		readonly MetadataModule module;
-		readonly ICompilation compilation;
 
 		public TypeProvider(MetadataModule module)
 		{
 			this.module = module;
-			this.compilation = module.Compilation;
+			this.Compilation = module.Compilation;
 		}
 
 		public TypeProvider(ICompilation compilation)
 		{
-			this.compilation = compilation;
+			this.Compilation = compilation;
 		}
 
-		public ICompilation Compilation => compilation;
+		public ICompilation Compilation { get; }
+
+		public IType GetSystemType()
+		{
+			return Compilation.FindType(KnownTypeCode.Type);
+		}
+
+		public IType GetTypeFromSerializedName(string name)
+		{
+			if (name == null)
+			{
+				return null;
+			}
+
+			try
+			{
+				return ReflectionHelper.ParseReflectionName(name)
+					.Resolve(module != null
+						? new SimpleTypeResolveContext(module)
+						: new SimpleTypeResolveContext(Compilation));
+			}
+			catch (ReflectionNameParseException ex)
+			{
+				throw new BadImageFormatException($"Invalid type name: \"{name}\": {ex.Message}");
+			}
+		}
+
+		public SRM.PrimitiveTypeCode GetUnderlyingEnumType(IType type)
+		{
+			var def = type.GetEnumUnderlyingType().GetDefinition();
+			if (def == null)
+				throw new EnumUnderlyingTypeResolveException();
+			return def.KnownTypeCode.ToPrimitiveTypeCode();
+		}
+
+		public bool IsSystemType(IType type)
+		{
+			return type.IsKnownType(KnownTypeCode.Type);
+		}
 
 		public IType GetArrayType(IType elementType, SRM.ArrayShape shape)
 		{
-			return new ArrayType(compilation, elementType, shape.Rank);
+			return new ArrayType(Compilation, elementType, shape.Rank);
 		}
 
 		public IType GetByReferenceType(IType elementType)
@@ -65,8 +102,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (signature.Header.IsInstance)
 			{
 				// pointers to member functions are not supported even in C# 9
-				return compilation.FindType(KnownTypeCode.IntPtr);
+				return Compilation.FindType(KnownTypeCode.IntPtr);
 			}
+
 			return FunctionPointerType.FromSignature(signature, module);
 		}
 
@@ -102,30 +140,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
 		{
-			return compilation.FindType(typeCode.ToKnownTypeCode());
-		}
-
-		public IType GetSystemType()
-		{
-			return compilation.FindType(KnownTypeCode.Type);
+			return Compilation.FindType(typeCode.ToKnownTypeCode());
 		}
 
 		public IType GetSZArrayType(IType elementType)
 		{
-			return new ArrayType(compilation, elementType);
-		}
-
-		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
-		{
-			switch (reader.ResolveSignatureTypeKind(handle, rawTypeKind))
-			{
-				case SRM.SignatureTypeKind.ValueType:
-					return false;
-				case SRM.SignatureTypeKind.Class:
-					return true;
-				default:
-					return null;
-			}
+			return new ArrayType(Compilation, elementType);
 		}
 
 		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
@@ -148,44 +168,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			else
 			{
-				type = GetClassTypeReference.ResolveInAllAssemblies(compilation, in fullTypeName);
+				type = GetClassTypeReference.ResolveInAllAssemblies(Compilation, in fullTypeName);
 			}
+
 			return type ?? new UnknownType(fullTypeName, IsReferenceType(reader, handle, rawTypeKind));
 		}
 
-		public IType GetTypeFromSerializedName(string name)
-		{
-			if (name == null)
-			{
-				return null;
-			}
-			try
-			{
-				return ReflectionHelper.ParseReflectionName(name)
-					.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
-			}
-			catch (ReflectionNameParseException ex)
-			{
-				throw new BadImageFormatException($"Invalid type name: \"{name}\": {ex.Message}");
-			}
-		}
-
-		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
+		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext,
+			SRM.TypeSpecificationHandle handle, byte rawTypeKind)
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature<IType, GenericContext>(this, genericContext);
 		}
 
-		public SRM.PrimitiveTypeCode GetUnderlyingEnumType(IType type)
+		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
 		{
-			var def = type.GetEnumUnderlyingType().GetDefinition();
-			if (def == null)
-				throw new EnumUnderlyingTypeResolveException();
-			return def.KnownTypeCode.ToPrimitiveTypeCode();
-		}
-
-		public bool IsSystemType(IType type)
-		{
-			return type.IsKnownType(KnownTypeCode.Type);
+			return reader.ResolveSignatureTypeKind(handle, rawTypeKind) switch {
+				SRM.SignatureTypeKind.ValueType => false,
+				SRM.SignatureTypeKind.Class => true,
+				_ => null
+			};
 		}
 	}
 }

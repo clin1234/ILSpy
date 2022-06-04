@@ -29,20 +29,15 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class ResolveResult
 	{
-		readonly IType type;
-
 		public ResolveResult(IType type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.type = type;
+			this.Type = type ?? throw new ArgumentNullException(nameof(type));
 		}
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods",
-														 Justification = "Unrelated to object.GetType()")]
-		public IType Type {
-			get { return type; }
-		}
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming",
+			"CA1721:PropertyNamesShouldNotMatchGetMethods",
+			Justification = "Unrelated to object.GetType()")]
+		public IType Type { get; }
 
 		public virtual bool IsCompileTimeConstant {
 			get { return false; }
@@ -58,7 +53,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override string ToString()
 		{
-			return "[" + GetType().Name + " " + type + "]";
+			return "[" + GetType().Name + " " + Type + "]";
 		}
 
 		public virtual IEnumerable<ResolveResult> GetChildResults()

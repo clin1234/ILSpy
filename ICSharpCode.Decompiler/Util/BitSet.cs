@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 #nullable enable
 
 using System;
@@ -34,12 +35,6 @@ namespace ICSharpCode.Decompiler.Util
 
 		readonly ulong[] words;
 
-		static int WordIndex(int bitIndex)
-		{
-			Debug.Assert(bitIndex >= 0);
-			return bitIndex >> Log2BitsPerWord;
-		}
-
 		/// <summary>
 		/// Creates a new bitset, where initially all bits are zero.
 		/// </summary>
@@ -51,11 +46,6 @@ namespace ICSharpCode.Decompiler.Util
 		private BitSet(ulong[] bits)
 		{
 			this.words = bits;
-		}
-
-		public BitSet Clone()
-		{
-			return new BitSet((ulong[])words.Clone());
 		}
 
 		public bool this[int index] {
@@ -70,6 +60,17 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
+		static int WordIndex(int bitIndex)
+		{
+			Debug.Assert(bitIndex >= 0);
+			return bitIndex >> Log2BitsPerWord;
+		}
+
+		public BitSet Clone()
+		{
+			return new BitSet((ulong[])words.Clone());
+		}
+
 		/// <summary>
 		/// Gets whether at least one bit is set.
 		/// </summary>
@@ -80,6 +81,7 @@ namespace ICSharpCode.Decompiler.Util
 				if (words[i] != 0)
 					return true;
 			}
+
 			return false;
 		}
 
@@ -93,6 +95,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return true;
 			}
+
 			int startWordIndex = WordIndex(startIndex);
 			int endWordIndex = WordIndex(endIndex - 1);
 			ulong startMask = Mask << startIndex;
@@ -110,6 +113,7 @@ namespace ICSharpCode.Decompiler.Util
 					if (words[i] != ulong.MaxValue)
 						return false;
 				}
+
 				return (words[endWordIndex] & endMask) == endMask;
 			}
 		}
@@ -125,6 +129,7 @@ namespace ICSharpCode.Decompiler.Util
 				if (words[i] != other.words[i])
 					return false;
 			}
+
 			return true;
 		}
 
@@ -138,6 +143,7 @@ namespace ICSharpCode.Decompiler.Util
 				if ((words[i] & ~other.words[i]) != 0)
 					return false;
 			}
+
 			return true;
 		}
 
@@ -169,6 +175,7 @@ namespace ICSharpCode.Decompiler.Util
 				if ((words[i] & other.words[i]) != 0)
 					return true;
 			}
+
 			return false;
 		}
 
@@ -204,6 +211,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return;
 			}
+
 			int startWordIndex = WordIndex(startIndex);
 			int endWordIndex = WordIndex(endIndex - 1);
 			ulong startMask = Mask << startIndex;
@@ -219,6 +227,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					words[i] = ulong.MaxValue;
 				}
+
 				words[endWordIndex] |= endMask;
 			}
 		}
@@ -241,6 +250,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return;
 			}
+
 			int startWordIndex = WordIndex(startIndex);
 			int endWordIndex = WordIndex(endIndex - 1);
 			ulong startMask = Mask << startIndex;
@@ -256,6 +266,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					words[i] = 0;
 				}
+
 				words[endWordIndex] &= ~endMask;
 			}
 		}
@@ -276,7 +287,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			b.Append('{');
 			for (int i = 0; i < words.Length * BitsPerWord; i++)
 			{
@@ -289,9 +300,11 @@ namespace ICSharpCode.Decompiler.Util
 						b.Append("...");
 						break;
 					}
+
 					b.Append(i);
 				}
 			}
+
 			b.Append('}');
 			return b.ToString();
 		}

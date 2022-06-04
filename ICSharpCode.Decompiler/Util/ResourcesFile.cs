@@ -33,61 +33,18 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	public class ResourcesFile : IEnumerable<KeyValuePair<string, object?>>, IDisposable
 	{
-		sealed class MyBinaryReader : BinaryReader
-		{
-			public MyBinaryReader(Stream input, bool leaveOpen) : base(input, Encoding.UTF8, leaveOpen)
-			{
-			}
-
-			// upgrade from protected to public visibility
-			public new int Read7BitEncodedInt()
-			{
-				return base.Read7BitEncodedInt();
-			}
-
-			public void Seek(long pos, SeekOrigin origin)
-			{
-				BaseStream.Seek(pos, origin);
-			}
-		}
-
-		enum ResourceTypeCode
-		{
-			Null = 0,
-			String = 1,
-			Boolean = 2,
-			Char = 3,
-			Byte = 4,
-			SByte = 5,
-			Int16 = 6,
-			UInt16 = 7,
-			Int32 = 8,
-			UInt32 = 9,
-			Int64 = 10,
-			UInt64 = 11,
-			Single = 12,
-			Double = 13,
-			Decimal = 14,
-			DateTime = 0xF,
-			TimeSpan = 0x10,
-			LastPrimitive = 0x10,
-			ByteArray = 0x20,
-			Stream = 33,
-			StartOfUserTypes = 0x40
-		}
-
 		/// <summary>Holds the number used to identify resource files.</summary>
 		public const int MagicNumber = unchecked((int)0xBEEFCACE);
+
 		const int ResourceSetVersion = 2;
+		readonly long dataSectionPosition;
+		readonly long fileStartPosition;
+		readonly int[] namePositions;
+		readonly long nameSectionPosition;
 
 		readonly MyBinaryReader reader;
-		readonly int version;
-		readonly int numResources;
 		readonly string[] typeTable;
-		readonly int[] namePositions;
-		readonly long fileStartPosition;
-		readonly long nameSectionPosition;
-		readonly long dataSectionPosition;
+		readonly int version;
 		long[]? startPositions;
 
 		/// <summary>
@@ -121,6 +78,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				throw new BadImageFormatException(ResourcesHeaderCorrupted);
 			}
+
 			if (resMgrHeaderVersion > 1)
 			{
 				reader.BaseStream.Seek(numBytesToSkip, SeekOrigin.Current);
@@ -141,8 +99,8 @@ namespace ICSharpCode.Decompiler.Util
 			if (version != ResourceSetVersion && version != 1)
 				throw new BadImageFormatException($"Unsupported resource set version: {version}");
 
-			numResources = reader.ReadInt32();
-			if (numResources < 0)
+			ResourceCount = reader.ReadInt32();
+			if (ResourceCount < 0)
 			{
 				throw new BadImageFormatException(ResourcesHeaderCorrupted);
 			}
@@ -154,6 +112,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				throw new BadImageFormatException(ResourcesHeaderCorrupted);
 			}
+
 			typeTable = new string[numTypes];
 			for (int i = 0; i < numTypes; i++)
 			{
@@ -179,7 +138,7 @@ namespace ICSharpCode.Decompiler.Util
 			// Skip over the array of name hashes
 			try
 			{
-				reader.Seek(checked(4 * numResources), SeekOrigin.Current);
+				reader.Seek(checked(4 * ResourceCount), SeekOrigin.Current);
 			}
 			catch (OverflowException)
 			{
@@ -187,14 +146,15 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			// Read in the array of relative positions for all the names.
-			namePositions = new int[numResources];
-			for (int i = 0; i < numResources; i++)
+			namePositions = new int[ResourceCount];
+			for (int i = 0; i < ResourceCount; i++)
 			{
 				int namePosition = reader.ReadInt32();
 				if (namePosition < 0)
 				{
 					throw new BadImageFormatException(ResourcesHeaderCorrupted);
 				}
+
 				namePositions[i] = namePosition;
 			}
 
@@ -216,12 +176,27 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
+		public int ResourceCount { get; }
+
 		public void Dispose()
 		{
 			reader.Dispose();
 		}
 
-		public int ResourceCount => numResources;
+		public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+		{
+			for (int i = 0; i < ResourceCount; i++)
+			{
+				string name = GetResourceName(i, out int dataOffset);
+				object? val = LoadObject(dataOffset);
+				yield return new KeyValuePair<string, object?>(name, val);
+			}
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
 
 		public string GetResourceName(int index)
 		{
@@ -247,6 +222,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					throw new BadImageFormatException("Resource name has negative length");
 				}
+
 				bytes = new byte[byteLen];
 				// We must read byteLen bytes, or we have a corrupted file.
 				// Use a blocking read in case the stream doesn't give us back
@@ -259,12 +235,14 @@ namespace ICSharpCode.Decompiler.Util
 						throw new BadImageFormatException("End of stream within a resource name");
 					count -= n;
 				}
+
 				dataOffset = reader.ReadInt32();
 				if (dataOffset < 0)
 				{
 					throw new BadImageFormatException("Negative data offset");
 				}
 			}
+
 			return Encoding.Unicode.GetString(bytes);
 		}
 
@@ -274,7 +252,7 @@ namespace ICSharpCode.Decompiler.Util
 				return false;
 			lock (reader)
 			{
-				for (int i = 0; i < numResources; i++)
+				for (int i = 0; i < ResourceCount; i++)
 				{
 					int dataOffset = GetResourceDataOffset(i);
 					reader.Seek(dataSectionPosition + dataOffset, SeekOrigin.Begin);
@@ -283,6 +261,7 @@ namespace ICSharpCode.Decompiler.Util
 						return false;
 				}
 			}
+
 			return true;
 		}
 
@@ -331,8 +310,9 @@ namespace ICSharpCode.Decompiler.Util
 			if (comma > 0)
 			{
 				// strip assembly name
-				typeName = typeName.Substring(0, comma);
+				typeName = typeName[..comma];
 			}
+
 			switch (typeName)
 			{
 				case "System.String":
@@ -442,6 +422,7 @@ namespace ICSharpCode.Decompiler.Util
 					{
 						throw new BadImageFormatException("Resource with negative length");
 					}
+
 					return reader.ReadBytes(len);
 				}
 
@@ -452,6 +433,7 @@ namespace ICSharpCode.Decompiler.Util
 					{
 						throw new BadImageFormatException("Resource with negative length");
 					}
+
 					byte[] bytes = reader.ReadBytes(len);
 					return new MemoryStream(bytes, writable: false);
 				}
@@ -461,7 +443,9 @@ namespace ICSharpCode.Decompiler.Util
 					{
 						throw new BadImageFormatException("Invalid typeCode");
 					}
-					return new ResourceSerializedObject(FindType(typeCode - ResourceTypeCode.StartOfUserTypes), this, reader.BaseStream.Position);
+
+					return new ResourceSerializedObject(FindType(typeCode - ResourceTypeCode.StartOfUserTypes), this,
+						reader.BaseStream.Position);
 			}
 		}
 
@@ -469,21 +453,6 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			GetResourceName(index, out int dataOffset);
 			return LoadObject(dataOffset);
-		}
-
-		public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
-		{
-			for (int i = 0; i < numResources; i++)
-			{
-				string name = GetResourceName(i, out int dataOffset);
-				object? val = LoadObject(dataOffset);
-				yield return new KeyValuePair<string, object?>(name, val);
-			}
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
 		}
 
 		long[] GetStartPositions()
@@ -497,13 +466,14 @@ namespace ICSharpCode.Decompiler.Util
 				positions = LazyInit.VolatileRead(ref startPositions);
 				if (positions != null)
 					return positions;
-				positions = new long[numResources * 2];
+				positions = new long[ResourceCount * 2];
 				int outPos = 0;
-				for (int i = 0; i < numResources; i++)
+				for (int i = 0; i < ResourceCount; i++)
 				{
 					positions[outPos++] = nameSectionPosition + namePositions[i];
 					positions[outPos++] = dataSectionPosition + GetResourceDataOffset(i);
 				}
+
 				Array.Sort(positions);
 				return LazyInit.GetOrSet(ref startPositions, positions);
 			}
@@ -522,6 +492,7 @@ namespace ICSharpCode.Decompiler.Util
 				// Note: if 'pos' does exist in the array, that means the stream has length 0,
 				// so we keep the i that we found.
 			}
+
 			lock (reader)
 			{
 				long endPos;
@@ -533,16 +504,59 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					endPos = positions[i];
 				}
+
 				int len = (int)(endPos - pos);
 				reader.Seek(pos, SeekOrigin.Begin);
 				return reader.ReadBytes(len);
 			}
 		}
+
+		sealed class MyBinaryReader : BinaryReader
+		{
+			public MyBinaryReader(Stream input, bool leaveOpen) : base(input, Encoding.UTF8, leaveOpen)
+			{
+			}
+
+			// upgrade from protected to public visibility
+			public new int Read7BitEncodedInt()
+			{
+				return base.Read7BitEncodedInt();
+			}
+
+			public void Seek(long pos, SeekOrigin origin)
+			{
+				BaseStream.Seek(pos, origin);
+			}
+		}
+
+		enum ResourceTypeCode
+		{
+			Null = 0,
+			String = 1,
+			Boolean = 2,
+			Char = 3,
+			Byte = 4,
+			SByte = 5,
+			Int16 = 6,
+			UInt16 = 7,
+			Int32 = 8,
+			UInt32 = 9,
+			Int64 = 10,
+			UInt64 = 11,
+			Single = 12,
+			Double = 13,
+			Decimal = 14,
+			DateTime = 0xF,
+			TimeSpan = 0x10,
+			LastPrimitive = 0x10,
+			ByteArray = 0x20,
+			Stream = 33,
+			StartOfUserTypes = 0x40
+		}
 	}
 
 	public class ResourceSerializedObject
 	{
-		public string? TypeName { get; }
 		readonly ResourcesFile file;
 		readonly long position;
 
@@ -552,6 +566,8 @@ namespace ICSharpCode.Decompiler.Util
 			this.file = file;
 			this.position = position;
 		}
+
+		public string? TypeName { get; }
 
 		/// <summary>
 		/// Gets a stream that starts with the serialized object data.

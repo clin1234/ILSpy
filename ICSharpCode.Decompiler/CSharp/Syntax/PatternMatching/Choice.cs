@@ -27,19 +27,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class Choice : Pattern, IEnumerable<INode>
 	{
-		readonly List<INode> alternatives = new List<INode>();
+		readonly List<INode> alternatives = new();
+
+		IEnumerator<INode> IEnumerable<INode>.GetEnumerator()
+		{
+			return alternatives.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return alternatives.GetEnumerator();
+		}
 
 		public void Add(string name, INode alternative)
 		{
-			if (alternative == null)
-				throw new ArgumentNullException(nameof(alternative));
+			ArgumentNullException.ThrowIfNull(alternative);
 			alternatives.Add(new NamedNode(name, alternative));
 		}
 
 		public void Add(INode alternative)
 		{
-			if (alternative == null)
-				throw new ArgumentNullException(nameof(alternative));
+			ArgumentNullException.ThrowIfNull(alternative);
 			alternatives.Add(alternative);
 		}
 
@@ -53,17 +61,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 				else
 					match.RestoreCheckPoint(checkPoint);
 			}
+
 			return false;
-		}
-
-		IEnumerator<INode> IEnumerable<INode>.GetEnumerator()
-		{
-			return alternatives.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return alternatives.GetEnumerator();
 		}
 	}
 }

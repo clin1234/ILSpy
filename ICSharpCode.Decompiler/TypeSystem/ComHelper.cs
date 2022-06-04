@@ -16,10 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
-
-using ICSharpCode.Decompiler.Semantics;
-
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -32,26 +28,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsComImport(ITypeDefinition typeDefinition)
 		{
-			return typeDefinition != null
-				&& typeDefinition.Kind == TypeKind.Interface
-				&& typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
+			return typeDefinition is { Kind: TypeKind.Interface } &&
+			       typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
 		}
 
 		/// <summary>
 		/// Gets the CoClass of the specified COM interface.
 		/// </summary>
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "Co",
-														 Justification = "Consistent with CoClassAttribute")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly",
+			MessageId = "Co",
+			Justification = "Consistent with CoClassAttribute")]
 		public static IType GetCoClass(ITypeDefinition typeDefinition)
 		{
 			if (typeDefinition == null)
 				return SpecialType.UnknownType;
 			var coClassAttribute = typeDefinition.GetAttribute(KnownAttribute.CoClass, inherit: false);
-			if (coClassAttribute != null && coClassAttribute.FixedArguments.Length == 1)
+			if (coClassAttribute is { FixedArguments.Length: 1 })
 			{
 				if (coClassAttribute.FixedArguments[0].Value is IType ty)
 					return ty;
 			}
+
 			return SpecialType.UnknownType;
 		}
 	}

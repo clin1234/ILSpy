@@ -37,42 +37,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public bool InsertParenthesesForReadability { get; set; }
 
-		enum PrecedenceLevel
-		{
-			// Higher integer value = higher precedence.
-			Assignment,
-			Conditional,    // ?:
-			NullCoalescing, // ??
-			ConditionalOr,  // ||
-			ConditionalAnd, // &&
-			BitwiseOr,      // |
-			ExclusiveOr,    // binary ^
-			BitwiseAnd,     // binary &
-			Equality,       // == !=
-			RelationalAndTypeTesting, // < <= > >= is
-			Shift,          // << >>
-			Additive,       // binary + -
-			Multiplicative, // * / %
-			Switch,         // C# 8 switch expression
-			Range,          // ..
-			Unary,
-			QueryOrLambda,
-			NullableRewrap,
-			Primary
-		}
-
 		/// <summary>
 		/// Gets the row number in the C# 4.0 spec operator precedence table.
 		/// </summary>
 		static PrecedenceLevel GetPrecedence(Expression expr)
 		{
 			// Note: the operator precedence table on MSDN is incorrect
-			if (expr is QueryExpression || expr is LambdaExpression)
+			if (expr is QueryExpression or LambdaExpression)
 			{
 				// Not part of the table in the C# spec, but we need to ensure that queries within
 				// primary expressions get parenthesized.
 				return PrecedenceLevel.QueryOrLambda;
 			}
+
 			if (expr is UnaryOperatorExpression uoe)
 			{
 				switch (uoe.Operator)
@@ -90,23 +67,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						return PrecedenceLevel.Unary;
 				}
 			}
+
 			if (expr is CastExpression)
 				return PrecedenceLevel.Unary;
 			if (expr is PrimitiveExpression primitive)
 			{
 				var value = primitive.Value;
-				if (value is int i && i < 0)
-					return PrecedenceLevel.Unary;
-				if (value is long l && l < 0)
-					return PrecedenceLevel.Unary;
-				if (value is float f && f < 0)
-					return PrecedenceLevel.Unary;
-				if (value is double d && d < 0)
-					return PrecedenceLevel.Unary;
-				if (value is decimal de && de < 0)
+				if (value is int and < 0 or long and < 0 or float and < 0 or double and < 0 or decimal and < 0)
 					return PrecedenceLevel.Unary;
 				return PrecedenceLevel.Primary;
 			}
+
 			if (expr is BinaryOperatorExpression boe)
 			{
 				switch (boe.Operator)
@@ -149,11 +120,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						throw new NotSupportedException("Invalid value for BinaryOperatorType");
 				}
 			}
+
 			if (expr is SwitchExpression)
 				return PrecedenceLevel.Switch;
-			if (expr is IsExpression || expr is AsExpression)
+			if (expr is IsExpression or AsExpression)
 				return PrecedenceLevel.RelationalAndTypeTesting;
-			if (expr is ConditionalExpression || expr is DirectionExpression)
+			if (expr is ConditionalExpression or DirectionExpression)
 				return PrecedenceLevel.Conditional;
 			if (expr is AssignmentExpression)
 				return PrecedenceLevel.Assignment;
@@ -210,6 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					Parenthesize(indexerExpression.Target);
 					break;
 			}
+
 			base.VisitIndexerExpression(indexerExpression);
 		}
 
@@ -217,8 +190,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			ParenthesizeIfRequired(unaryOperatorExpression.Expression, GetPrecedence(unaryOperatorExpression));
-			UnaryOperatorExpression child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
-			if (child != null && InsertParenthesesForReadability)
+			if (unaryOperatorExpression.Expression is UnaryOperatorExpression child && InsertParenthesesForReadability)
 				Parenthesize(child);
 			base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 		}
@@ -226,23 +198,27 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitCastExpression(CastExpression castExpression)
 		{
 			// Even in readability mode, don't parenthesize casts of casts.
-			if (!(castExpression.Expression is CastExpression))
+			if (castExpression.Expression is not CastExpression)
 			{
-				ParenthesizeIfRequired(castExpression.Expression, InsertParenthesesForReadability ? PrecedenceLevel.NullableRewrap : PrecedenceLevel.Unary);
+				ParenthesizeIfRequired(castExpression.Expression,
+					InsertParenthesesForReadability ? PrecedenceLevel.NullableRewrap : PrecedenceLevel.Unary);
 			}
+
 			// There's a nasty issue in the C# grammar: cast expressions including certain operators are ambiguous in some cases
 			// "(int)-1" is fine, but "(A)-b" is not a cast.
-			UnaryOperatorExpression uoe = castExpression.Expression as UnaryOperatorExpression;
-			if (uoe != null && !(uoe.Operator == UnaryOperatorType.BitNot || uoe.Operator == UnaryOperatorType.Not))
+			if (castExpression.Expression is UnaryOperatorExpression {
+				    Operator: not (UnaryOperatorType.BitNot or UnaryOperatorType.Not)
+			    })
 			{
 				if (TypeCanBeMisinterpretedAsExpression(castExpression.Type))
 				{
 					Parenthesize(castExpression.Expression);
 				}
 			}
+
 			// The above issue can also happen with PrimitiveExpressions representing negative values:
-			PrimitiveExpression pe = castExpression.Expression as PrimitiveExpression;
-			if (pe != null && pe.Value != null && TypeCanBeMisinterpretedAsExpression(castExpression.Type))
+			if (castExpression.Expression is PrimitiveExpression { Value: { } } pe &&
+			    TypeCanBeMisinterpretedAsExpression(castExpression.Type))
 			{
 				TypeCode typeCode = Type.GetTypeCode(pe.Value.GetType());
 				switch (typeCode)
@@ -277,6 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						break;
 				}
 			}
+
 			base.VisitCastExpression(castExpression);
 		}
 
@@ -285,8 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// SimpleTypes can always be misinterpreted as IdentifierExpressions
 			// MemberTypes can be misinterpreted as MemberReferenceExpressions if they don't use double colon
 			// PrimitiveTypes or ComposedTypes can never be misinterpreted as expressions.
-			MemberType mt = type as MemberType;
-			if (mt != null)
+			if (type is MemberType mt)
 				return !mt.IsDoubleColon;
 			else
 				return type is SimpleType;
@@ -323,7 +299,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				{
 					// In readable mode, boost the priority of the left-hand side if the operator
 					// there isn't the same as the operator on this expression.
-					PrecedenceLevel boostTo = IsBitwise(binaryOperatorExpression.Operator) ? PrecedenceLevel.Unary : PrecedenceLevel.Equality;
+					PrecedenceLevel boostTo = IsBitwise(binaryOperatorExpression.Operator)
+						? PrecedenceLevel.Unary
+						: PrecedenceLevel.Equality;
 					if (GetBinaryOperatorType(binaryOperatorExpression.Left) == binaryOperatorExpression.Operator)
 					{
 						ParenthesizeIfRequired(binaryOperatorExpression.Left, precedence);
@@ -332,6 +310,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					{
 						ParenthesizeIfRequired(binaryOperatorExpression.Left, boostTo);
 					}
+
 					ParenthesizeIfRequired(binaryOperatorExpression.Right, boostTo);
 				}
 				else
@@ -341,20 +320,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					ParenthesizeIfRequired(binaryOperatorExpression.Right, precedence + 1);
 				}
 			}
+
 			base.VisitBinaryOperatorExpression(binaryOperatorExpression);
 		}
 
 		static bool IsBitwise(BinaryOperatorType op)
 		{
-			return op == BinaryOperatorType.BitwiseAnd
-				|| op == BinaryOperatorType.BitwiseOr
-				|| op == BinaryOperatorType.ExclusiveOr;
+			return op is BinaryOperatorType.BitwiseAnd or BinaryOperatorType.BitwiseOr
+				or BinaryOperatorType.ExclusiveOr;
 		}
 
 		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
 		{
-			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
-			if (boe != null)
+			if (expr is BinaryOperatorExpression boe)
 				return boe.Operator;
 			else
 				return null;
@@ -371,6 +349,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				ParenthesizeIfRequired(isExpression.Expression, PrecedenceLevel.RelationalAndTypeTesting);
 			}
+
 			base.VisitIsExpression(isExpression);
 		}
 
@@ -385,6 +364,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				ParenthesizeIfRequired(asExpression.Expression, PrecedenceLevel.RelationalAndTypeTesting);
 			}
+
 			base.VisitAsExpression(asExpression);
 		}
 
@@ -414,13 +394,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				ParenthesizeIfRequired(conditionalExpression.TrueExpression, PrecedenceLevel.Conditional);
 				ParenthesizeIfRequired(conditionalExpression.FalseExpression, PrecedenceLevel.Conditional);
 			}
+
 			base.VisitConditionalExpression(conditionalExpression);
 		}
 
 		private bool IsConditionalRefExpression(ConditionalExpression conditionalExpression)
 		{
 			return conditionalExpression.TrueExpression is DirectionExpression
-				|| conditionalExpression.FalseExpression is DirectionExpression;
+			       || conditionalExpression.FalseExpression is DirectionExpression;
 		}
 
 		public override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
@@ -433,7 +414,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		private void HandleAssignmentRHS(Expression right)
 		{
-			if (InsertParenthesesForReadability && !(right is DirectionExpression))
+			if (InsertParenthesesForReadability && right is not DirectionExpression)
 			{
 				ParenthesizeIfRequired(right, PrecedenceLevel.Conditional + 1);
 			}
@@ -473,12 +454,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (expr.Role == BinaryOperatorExpression.LeftRole)
 				Parenthesize(expr);
-			if (expr.Parent is IsExpression || expr.Parent is AsExpression)
+			if (expr.Parent is IsExpression or AsExpression)
 				Parenthesize(expr);
 			if (InsertParenthesesForReadability)
 			{
 				// when readability is desired, always parenthesize query expressions within unary or binary operators
-				if (expr.Parent is UnaryOperatorExpression || expr.Parent is BinaryOperatorExpression)
+				if (expr.Parent is UnaryOperatorExpression or BinaryOperatorExpression)
 					Parenthesize(expr);
 			}
 		}
@@ -489,6 +470,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				ParenthesizeIfRequired(namedExpression.Expression, PrecedenceLevel.RelationalAndTypeTesting + 1);
 			}
+
 			base.VisitNamedExpression(namedExpression);
 		}
 
@@ -496,6 +478,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.Switch + 1);
 			base.VisitSwitchExpression(switchExpression);
+		}
+
+		enum PrecedenceLevel
+		{
+			// Higher integer value = higher precedence.
+			Assignment,
+			Conditional, // ?:
+			NullCoalescing, // ??
+			ConditionalOr, // ||
+			ConditionalAnd, // &&
+			BitwiseOr, // |
+			ExclusiveOr, // binary ^
+			BitwiseAnd, // binary &
+			Equality, // == !=
+			RelationalAndTypeTesting, // < <= > >= is
+			Shift, // << >>
+			Additive, // binary + -
+			Multiplicative, // * / %
+			Switch, // C# 8 switch expression
+			Range, // ..
+			Unary,
+			QueryOrLambda,
+			NullableRewrap,
+			Primary
 		}
 	}
 }

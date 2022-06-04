@@ -30,10 +30,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsNullable(IType type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
-			return pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
+			ArgumentNullException.ThrowIfNull(type);
+			return type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
+			       pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
 
 		public static bool IsNonNullableValueType(IType type)
@@ -47,10 +46,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IType GetUnderlyingType(IType type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
+			ArgumentNullException.ThrowIfNull(type);
+			if (type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
+			    pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
 				return pt.GetTypeArgument(0);
 			else
 				return type;
@@ -61,10 +59,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IType Create(ICompilation compilation, IType elementType)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
+			ArgumentNullException.ThrowIfNull(compilation);
+			ArgumentNullException.ThrowIfNull(elementType);
 
 			IType nullableType = compilation.FindType(KnownTypeCode.NullableOfT);
 			ITypeDefinition nullableTypeDef = nullableType.GetDefinition();
@@ -79,9 +75,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static ParameterizedTypeReference Create(ITypeReference elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT), new[] { elementType });
+			ArgumentNullException.ThrowIfNull(elementType);
+			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT),
+				new[] { elementType });
 		}
 	}
 }

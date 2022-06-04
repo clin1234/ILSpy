@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
-using System.Reflection.PortableExecutable;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
@@ -29,8 +26,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[Parameter(HelpMessage = "Remove dead code")]
 		public bool RemoveDeadCode { get; set; }
 
-		[Parameter(HelpMessage = "Use PDB")]
-		public string PDBFilePath { get; set; }
+		[Parameter(HelpMessage = "Use PDB")] public string PDBFilePath { get; set; }
 
 		protected override void ProcessRecord()
 		{
@@ -38,7 +34,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 			try
 			{
-				var module = new PEFile(LiteralPath, new FileStream(LiteralPath, FileMode.Open, FileAccess.Read), PEStreamOptions.Default);
+				PEFile module = new PEFile(LiteralPath, new FileStream(LiteralPath, FileMode.Open, FileAccess.Read));
 				var debugInfo = DebugInfoUtils.FromFile(module, PDBFilePath);
 				var decompiler = new CSharpDecompiler(path, new DecompilerSettings(LanguageVersion) {
 					ThrowOnAssemblyResolveErrors = false,
@@ -46,8 +42,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 					RemoveDeadStores = RemoveDeadStores,
 					UseDebugSymbols = debugInfo != null,
 					ShowDebugInfo = debugInfo != null,
-				});
-				decompiler.DebugInfoProvider = debugInfo;
+				}) {
+					DebugInfoProvider = debugInfo
+				};
 				WriteObject(decompiler);
 			}
 			catch (Exception e)

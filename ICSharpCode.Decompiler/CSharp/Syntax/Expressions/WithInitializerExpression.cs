@@ -25,8 +25,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class WithInitializerExpression : Expression
 	{
-		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
+		public static readonly TokenRole WithKeywordRole = new("with");
+		public static readonly Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -60,8 +60,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is WithInitializerExpression o
-				&& this.Expression.DoMatch(o.Expression, match)
-				&& this.Initializer.DoMatch(o.Initializer, match);
+			       && this.Expression.DoMatch(o.Expression, match)
+			       && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

@@ -31,10 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// The identity function.
 		/// </summary>
-		public static readonly TypeParameterSubstitution Identity = new TypeParameterSubstitution(null, null);
-
-		readonly IReadOnlyList<IType> classTypeArguments;
-		readonly IReadOnlyList<IType> methodTypeArguments;
+		public static readonly TypeParameterSubstitution Identity = new(null, null);
 
 		/// <summary>
 		/// Creates a new type parameter substitution.
@@ -47,150 +44,39 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The type arguments to substitute for method type parameters.
 		/// Pass <c>null</c> to keep method type parameters unmodified.
 		/// </param>
-		public TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments, IReadOnlyList<IType> methodTypeArguments)
+		public TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments,
+			IReadOnlyList<IType> methodTypeArguments)
 		{
-			this.classTypeArguments = classTypeArguments;
-			this.methodTypeArguments = methodTypeArguments;
+			this.ClassTypeArguments = classTypeArguments;
+			this.MethodTypeArguments = methodTypeArguments;
 		}
 
 		/// <summary>
 		/// Gets the list of class type arguments.
 		/// Returns <c>null</c> if this substitution keeps class type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> ClassTypeArguments {
-			get { return classTypeArguments; }
-		}
+		public IReadOnlyList<IType> ClassTypeArguments { get; }
 
 		/// <summary>
 		/// Gets the list of method type arguments.
 		/// Returns <c>null</c> if this substitution keeps method type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> MethodTypeArguments {
-			get { return methodTypeArguments; }
-		}
-
-		#region Compose
-		/// <summary>
-		/// Computes a single TypeParameterSubstitution so that for all types <c>t</c>:
-		/// <c>t.AcceptVisitor(Compose(g, f)) equals t.AcceptVisitor(f).AcceptVisitor(g)</c>
-		/// </summary>
-		/// <remarks>If you consider type parameter substitution to be a function, this is function composition.</remarks>
-		public static TypeParameterSubstitution Compose(TypeParameterSubstitution g, TypeParameterSubstitution f)
-		{
-			if (g == null)
-				return f;
-			if (f == null || (f.classTypeArguments == null && f.methodTypeArguments == null))
-				return g;
-			// The composition is a copy of 'f', with 'g' applied on the array elements.
-			// If 'f' has a null list (keeps type parameters unmodified), we have to treat it as
-			// the identity function, and thus use the list from 'g'.
-			var classTypeArguments = f.classTypeArguments != null ? GetComposedTypeArguments(f.classTypeArguments, g) : g.classTypeArguments;
-			var methodTypeArguments = f.methodTypeArguments != null ? GetComposedTypeArguments(f.methodTypeArguments, g) : g.methodTypeArguments;
-			return new TypeParameterSubstitution(classTypeArguments, methodTypeArguments);
-		}
-
-		static IReadOnlyList<IType> GetComposedTypeArguments(IReadOnlyList<IType> input, TypeParameterSubstitution substitution)
-		{
-			IType[] result = new IType[input.Count];
-			for (int i = 0; i < result.Length; i++)
-			{
-				result[i] = input[i].AcceptVisitor(substitution);
-			}
-			return result;
-		}
-		#endregion
-
-		#region Equals and GetHashCode implementation
-		public bool Equals(TypeParameterSubstitution other, TypeVisitor normalization)
-		{
-			if (other == null)
-				return false;
-			return TypeListEquals(classTypeArguments, other.classTypeArguments, normalization)
-				&& TypeListEquals(methodTypeArguments, other.methodTypeArguments, normalization);
-		}
-
-		public override bool Equals(object obj)
-		{
-			TypeParameterSubstitution other = obj as TypeParameterSubstitution;
-			if (other == null)
-				return false;
-			return TypeListEquals(classTypeArguments, other.classTypeArguments)
-				&& TypeListEquals(methodTypeArguments, other.methodTypeArguments);
-		}
-
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return 1124131 * TypeListHashCode(classTypeArguments) + 1821779 * TypeListHashCode(methodTypeArguments);
-			}
-		}
-
-		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b)
-		{
-			if (a == b)
-				return true;
-			if (a == null || b == null)
-				return false;
-			if (a.Count != b.Count)
-				return false;
-			for (int i = 0; i < a.Count; i++)
-			{
-				if (!a[i].Equals(b[i]))
-					return false;
-			}
-			return true;
-		}
-
-		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b, TypeVisitor normalization)
-		{
-			if (a == b)
-				return true;
-			if (a == null || b == null)
-				return false;
-			if (a.Count != b.Count)
-				return false;
-			for (int i = 0; i < a.Count; i++)
-			{
-				var an = a[i].AcceptVisitor(normalization);
-				var bn = b[i].AcceptVisitor(normalization);
-				if (!an.Equals(bn))
-					return false;
-			}
-			return true;
-		}
-
-		static int TypeListHashCode(IReadOnlyList<IType> obj)
-		{
-			if (obj == null)
-				return 0;
-			unchecked
-			{
-				int hashCode = 1;
-				foreach (var element in obj)
-				{
-					hashCode *= 27;
-					hashCode += element.GetHashCode();
-				}
-				return hashCode;
-			}
-		}
-		#endregion
+		public IReadOnlyList<IType> MethodTypeArguments { get; }
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
 			int index = type.Index;
-			if (classTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition)
+			if (ClassTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition)
 			{
-				if (index >= 0 && index < classTypeArguments.Count)
-					return classTypeArguments[index];
+				if (index >= 0 && index < ClassTypeArguments.Count)
+					return ClassTypeArguments[index];
 				else
 					return SpecialType.UnknownType;
 			}
-			else if (methodTypeArguments != null && type.OwnerType == SymbolKind.Method)
+			else if (MethodTypeArguments != null && type.OwnerType == SymbolKind.Method)
 			{
-				if (index >= 0 && index < methodTypeArguments.Count)
-					return methodTypeArguments[index];
+				if (index >= 0 && index < MethodTypeArguments.Count)
+					return MethodTypeArguments[index];
 				else
 					return SpecialType.UnknownType;
 			}
@@ -222,12 +108,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			b.Append('[');
 			bool first = true;
-			if (classTypeArguments != null)
+			if (ClassTypeArguments != null)
 			{
-				for (int i = 0; i < classTypeArguments.Count; i++)
+				for (int i = 0; i < ClassTypeArguments.Count; i++)
 				{
 					if (first)
 						first = false;
@@ -236,9 +122,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					b.Append('`');
 					b.Append(i);
 					b.Append(" -> ");
-					b.Append(classTypeArguments[i].ReflectionName);
+					b.Append(ClassTypeArguments[i].ReflectionName);
 				}
-				if (classTypeArguments.Count == 0)
+
+				if (ClassTypeArguments.Count == 0)
 				{
 					if (first)
 						first = false;
@@ -247,9 +134,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					b.Append("[]");
 				}
 			}
-			if (methodTypeArguments != null)
+
+			if (MethodTypeArguments != null)
 			{
-				for (int i = 0; i < methodTypeArguments.Count; i++)
+				for (int i = 0; i < MethodTypeArguments.Count; i++)
 				{
 					if (first)
 						first = false;
@@ -258,9 +146,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					b.Append("``");
 					b.Append(i);
 					b.Append(" -> ");
-					b.Append(methodTypeArguments[i].ReflectionName);
+					b.Append(MethodTypeArguments[i].ReflectionName);
 				}
-				if (methodTypeArguments.Count == 0)
+
+				if (MethodTypeArguments.Count == 0)
 				{
 					if (first)
 						first = false;
@@ -269,8 +158,129 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					b.Append("[]");
 				}
 			}
+
 			b.Append(']');
 			return b.ToString();
 		}
+
+		#region Compose
+
+		/// <summary>
+		/// Computes a single TypeParameterSubstitution so that for all types <c>t</c>:
+		/// <c>t.AcceptVisitor(Compose(g, f)) equals t.AcceptVisitor(f).AcceptVisitor(g)</c>
+		/// </summary>
+		/// <remarks>If you consider type parameter substitution to be a function, this is function composition.</remarks>
+		public static TypeParameterSubstitution Compose(TypeParameterSubstitution g, TypeParameterSubstitution f)
+		{
+			if (g == null)
+				return f;
+			if (f == null || (f.ClassTypeArguments == null && f.MethodTypeArguments == null))
+				return g;
+			// The composition is a copy of 'f', with 'g' applied on the array elements.
+			// If 'f' has a null list (keeps type parameters unmodified), we have to treat it as
+			// the identity function, and thus use the list from 'g'.
+			var classTypeArguments = f.ClassTypeArguments != null
+				? GetComposedTypeArguments(f.ClassTypeArguments, g)
+				: g.ClassTypeArguments;
+			var methodTypeArguments = f.MethodTypeArguments != null
+				? GetComposedTypeArguments(f.MethodTypeArguments, g)
+				: g.MethodTypeArguments;
+			return new TypeParameterSubstitution(classTypeArguments, methodTypeArguments);
+		}
+
+		static IReadOnlyList<IType> GetComposedTypeArguments(IReadOnlyList<IType> input,
+			TypeParameterSubstitution substitution)
+		{
+			IType[] result = new IType[input.Count];
+			for (int i = 0; i < result.Length; i++)
+			{
+				result[i] = input[i].AcceptVisitor(substitution);
+			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Equals and GetHashCode implementation
+
+		public bool Equals(TypeParameterSubstitution other, TypeVisitor normalization)
+		{
+			if (other == null)
+				return false;
+			return TypeListEquals(ClassTypeArguments, other.ClassTypeArguments, normalization)
+			       && TypeListEquals(MethodTypeArguments, other.MethodTypeArguments, normalization);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is not TypeParameterSubstitution other)
+				return false;
+			return TypeListEquals(ClassTypeArguments, other.ClassTypeArguments)
+			       && TypeListEquals(MethodTypeArguments, other.MethodTypeArguments);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return 1124131 * TypeListHashCode(ClassTypeArguments) + 1821779 * TypeListHashCode(MethodTypeArguments);
+			}
+		}
+
+		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b)
+		{
+			if (a == b)
+				return true;
+			if (a == null || b == null)
+				return false;
+			if (a.Count != b.Count)
+				return false;
+			for (int i = 0; i < a.Count; i++)
+			{
+				if (!a[i].Equals(b[i]))
+					return false;
+			}
+
+			return true;
+		}
+
+		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b, TypeVisitor normalization)
+		{
+			if (a == b)
+				return true;
+			if (a == null || b == null)
+				return false;
+			if (a.Count != b.Count)
+				return false;
+			for (int i = 0; i < a.Count; i++)
+			{
+				var an = a[i].AcceptVisitor(normalization);
+				var bn = b[i].AcceptVisitor(normalization);
+				if (!an.Equals(bn))
+					return false;
+			}
+
+			return true;
+		}
+
+		static int TypeListHashCode(IReadOnlyList<IType> obj)
+		{
+			if (obj == null)
+				return 0;
+			unchecked
+			{
+				int hashCode = 1;
+				foreach (var element in obj)
+				{
+					hashCode *= 27;
+					hashCode += element.GetHashCode();
+				}
+
+				return hashCode;
+			}
+		}
+
+		#endregion
 	}
 }

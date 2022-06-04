@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 #nullable enable
 
 using System;
@@ -30,12 +31,30 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	public static class BusyManager
 	{
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
+		[ThreadStatic] static List<object?>? _activeObjects;
+
+		public static BusyLock Enter(object? obj)
+		{
+			List<object?>? activeObjects = _activeObjects;
+			if (activeObjects == null)
+				activeObjects = _activeObjects = new List<object?>();
+			for (int i = 0; i < activeObjects.Count; i++)
+			{
+				if (activeObjects[i] == obj)
+					return BusyLock.Failed;
+			}
+
+			activeObjects.Add(obj);
+			return new BusyLock(activeObjects);
+		}
+
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance",
+			"CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible",
-														 Justification = "Should always be used with 'var'")]
+			Justification = "Should always be used with 'var'")]
 		public struct BusyLock : IDisposable
 		{
-			public static readonly BusyLock Failed = new BusyLock(null);
+			public static readonly BusyLock Failed = new(null);
 
 			readonly List<object?>? objectList;
 
@@ -55,22 +74,6 @@ namespace ICSharpCode.Decompiler.Util
 					objectList.RemoveAt(objectList.Count - 1);
 				}
 			}
-		}
-
-		[ThreadStatic] static List<object?>? _activeObjects;
-
-		public static BusyLock Enter(object? obj)
-		{
-			List<object?>? activeObjects = _activeObjects;
-			if (activeObjects == null)
-				activeObjects = _activeObjects = new List<object?>();
-			for (int i = 0; i < activeObjects.Count; i++)
-			{
-				if (activeObjects[i] == obj)
-					return BusyLock.Failed;
-			}
-			activeObjects.Add(obj);
-			return new BusyLock(activeObjects);
 		}
 	}
 }

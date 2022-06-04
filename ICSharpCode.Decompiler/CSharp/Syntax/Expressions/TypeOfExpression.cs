@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -33,7 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeOfExpression : Expression
 	{
-		public readonly static TokenRole TypeofKeywordRole = new TokenRole("typeof");
+		public static readonly TokenRole TypeofKeywordRole = new("typeof");
+
+		public TypeOfExpression()
+		{
+		}
+
+		public TypeOfExpression(AstType type)
+		{
+			AddChild(type, Roles.Type);
+		}
 
 		public CSharpTokenNode TypeOfToken {
 			get { return GetChildByRole(TypeofKeywordRole); }
@@ -50,15 +58,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public TypeOfExpression()
-		{
-		}
-
-		public TypeOfExpression(AstType type)
-		{
-			AddChild(type, Roles.Type);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -78,8 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeOfExpression o = other as TypeOfExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is TypeOfExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

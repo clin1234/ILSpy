@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -25,15 +26,23 @@ namespace ICSharpCode.Decompiler.Documentation
 	[Serializable]
 	class IdStringMemberReference : IMemberReference
 	{
-		readonly ITypeReference declaringTypeReference;
-		readonly char memberType;
 		readonly string memberIdString;
+		readonly char memberType;
 
 		public IdStringMemberReference(ITypeReference declaringTypeReference, char memberType, string memberIdString)
 		{
-			this.declaringTypeReference = declaringTypeReference;
+			DeclaringTypeReference = declaringTypeReference;
 			this.memberType = memberType;
 			this.memberIdString = memberIdString;
+		}
+
+		public ITypeReference DeclaringTypeReference { get; }
+
+		public IMember Resolve(ITypeResolveContext context)
+		{
+			IType declaringType = DeclaringTypeReference.Resolve(context);
+			return declaringType.GetMembers(CanMatch, GetMemberOptions.IgnoreInheritedMembers)
+				.FirstOrDefault(member => member.GetIdString() == memberIdString);
 		}
 
 		bool CanMatch(IMember member)
@@ -55,21 +64,6 @@ namespace ICSharpCode.Decompiler.Documentation
 				default:
 					throw new NotSupportedException(member.SymbolKind.ToString());
 			}
-		}
-
-		public ITypeReference DeclaringTypeReference {
-			get { return declaringTypeReference; }
-		}
-
-		public IMember Resolve(ITypeResolveContext context)
-		{
-			IType declaringType = declaringTypeReference.Resolve(context);
-			foreach (var member in declaringType.GetMembers(CanMatch, GetMemberOptions.IgnoreInheritedMembers))
-			{
-				if (IdStringProvider.GetIdString(member) == memberIdString)
-					return member;
-			}
-			return null;
 		}
 	}
 }

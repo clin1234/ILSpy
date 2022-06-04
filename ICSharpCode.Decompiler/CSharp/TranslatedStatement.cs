@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -8,7 +7,7 @@ using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	[DebuggerDisplay("{Statement}")]
+	[DebuggerDisplay("{" + nameof(Statement) + "}")]
 	struct TranslatedStatement
 	{
 		public readonly Statement Statement;

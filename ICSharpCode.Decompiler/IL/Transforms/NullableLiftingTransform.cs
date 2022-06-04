@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -51,6 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		#region Run
+
 		/// <summary>
 		/// Main entry point into the normal code path of this transform.
 		/// Called by expression transform.
@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.ReplaceWith(lifted);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -83,6 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				bni.ReplaceWith(lifted);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -95,14 +97,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//  leave IL_0000 (newobj .ctor(exprToLift))
 			if (pos != block.Instructions.Count - 2)
 				return false;
-			if (!(block.Instructions[pos] is IfInstruction ifInst))
+			if (block.Instructions[pos] is not IfInstruction ifInst)
 				return false;
-			if (!(Block.Unwrap(ifInst.TrueInst) is Leave thenLeave))
+			if (Block.Unwrap(ifInst.TrueInst) is not Leave thenLeave)
 				return false;
 			if (!ifInst.FalseInst.MatchNop())
 				return false;
 
-			if (!(block.Instructions[pos + 1] is Leave elseLeave))
+			if (block.Instructions[pos + 1] is not Leave elseLeave)
 				return false;
 			if (elseLeave.TargetContainer != thenLeave.TargetContainer)
 				return false;
@@ -115,11 +117,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.Remove(elseLeave);
 				return true;
 			}
+
 			return false;
 		}
+
 		#endregion
 
 		#region AnalyzeCondition
+
 		bool AnalyzeCondition(ILInstruction condition)
 		{
 			if (MatchHasValueCall(condition, out ILVariable v))
@@ -135,6 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				return AnalyzeCondition(bitand.Left) && AnalyzeCondition(bitand.Right);
 			}
+
 			return false;
 		}
 
@@ -142,14 +148,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			return condition.MatchLogicNot(out var arg) && AnalyzeCondition(arg);
 		}
+
 		#endregion
 
 		#region Main lifting logic
+
 		/// <summary>
 		/// Main entry point for lifting; called by both the expression-transform
 		/// and the block transform.
 		/// </summary>
-		ILInstruction Lift(ILInstruction ifInst, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		ILInstruction Lift(ILInstruction ifInst, ILInstruction condition, ILInstruction trueInst,
+			ILInstruction falseInst)
 		{
 			// ifInst is usually the IfInstruction to which condition belongs;
 			// but can also be a BinaryNumericInstruction.
@@ -158,13 +167,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				condition = arg;
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
 			}
-			if (context.Settings.NullPropagation && !NullPropagationTransform.IsProtectedIfInst(ifInst as IfInstruction))
+
+			if (context.Settings.NullPropagation &&
+			    !NullPropagationTransform.IsProtectedIfInst(ifInst as IfInstruction))
 			{
 				var nullPropagated = new NullPropagationTransform(context)
 					.Run(condition, trueInst, falseInst)?.WithILRange(ifInst);
 				if (nullPropagated != null)
 					return nullPropagated;
 			}
+
 			if (!context.Settings.LiftNullables)
 				return null;
 			if (AnalyzeCondition(condition))
@@ -173,6 +185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => normal lifting
 				return LiftNormal(trueInst, falseInst)?.WithILRange(ifInst);
 			}
+
 			if (MatchCompOrDecimal(condition, out var comp))
 			{
 				// This might be a C#-style lifted comparison
@@ -185,19 +198,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// handle inequality by swapping one last time
 						ExtensionMethods.Swap(ref trueInst, ref falseInst);
 					}
+
 					if (falseInst.MatchLdcI4(0))
 					{
 						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue == b.HasValue) : false
 						// => a == b
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Equality, trueInst)
-							?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Equality, trueInst);
+						       ?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Equality, trueInst);
 					}
 					else if (falseInst.MatchLdcI4(1))
 					{
 						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue != b.HasValue) : true
 						// => a != b
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst)
-							?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
+						       ?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
 					}
 					else if (IsGenericNewPattern(comp.Left, comp.Right, trueInst, falseInst))
 					{
@@ -216,11 +230,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// => comp.lifted[C#](lhs, rhs)
 						return LiftCSharpComparison(comp, comp.Kind);
 					}
+
 					if (trueInst.MatchLdcI4(0) && AnalyzeCondition(falseInst))
 					{
 						// comp(lhs, rhs) ? false : (v1 != null && ... && vn != null)
 						return LiftCSharpComparison(comp, comp.Kind.Negate());
 					}
+
 					if (falseInst.MatchLdcI4(1) && AnalyzeNegatedCondition(trueInst))
 					{
 						// comp(lhs, rhs) ? !(v1 != null && ... && vn != null) : true
@@ -230,6 +246,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return result;
 						return Comp.LogicNot(result);
 					}
+
 					if (trueInst.MatchLdcI4(1) && AnalyzeNegatedCondition(falseInst))
 					{
 						// comp(lhs, rhs) ? true : !(v1 != null && ... && vn != null)
@@ -240,10 +257,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			ILVariable v;
+
 			// Handle equality comparisons with bool?:
-			if (MatchGetValueOrDefault(condition, out v)
-				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
+			if (MatchGetValueOrDefault(condition, out ILVariable v)
+			    && NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
 			{
 				if (MatchHasValueCall(trueInst, v) && falseInst.MatchLdcI4(0))
 				{
@@ -290,17 +307,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					).WithILRange(ifInst);
 				}
 			}
+
 			// Handle & and | on bool?:
 			if (trueInst.MatchLdLoc(out v))
 			{
 				if (MatchNullableCtor(falseInst, out var utype, out var arg)
-					&& utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(0))
+				    && utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(0))
 				{
 					// condition ? v : (bool?)false
 					// => condition & v
 					context.Step("NullableLiftingTransform: 3vl.bool.and(bool, bool?)", ifInst);
 					return new ThreeValuedBoolAnd(condition, trueInst).WithILRange(ifInst);
 				}
+
 				if (falseInst.MatchLdLoc(out var v2))
 				{
 					// condition ? v : v2
@@ -323,7 +342,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else if (falseInst.MatchLdLoc(out v))
 			{
 				if (MatchNullableCtor(trueInst, out var utype, out var arg)
-					&& utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(1))
+				    && utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(1))
 				{
 					// condition ? (bool?)true : v
 					// => condition | v
@@ -331,21 +350,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return new ThreeValuedBoolOr(condition, falseInst).WithILRange(ifInst);
 				}
 			}
+
 			return null;
 		}
 
-		private bool IsGenericNewPattern(ILInstruction compLeft, ILInstruction compRight, ILInstruction trueInst, ILInstruction falseInst)
+		private bool IsGenericNewPattern(ILInstruction compLeft, ILInstruction compRight, ILInstruction trueInst,
+			ILInstruction falseInst)
 		{
 			// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
 			return falseInst.MatchDefaultValue(out var type) &&
-				(trueInst is Call c && c.Method.FullName == "System.Activator.CreateInstance" && c.Method.TypeArguments.Count == 1) &&
-				type.Kind == TypeKind.TypeParameter &&
-				compLeft.MatchDefaultValue(out var type2) &&
-				type.Equals(type2) &&
-				compRight.MatchLdNull();
+			       (trueInst is Call c && c.Method.FullName == "System.Activator.CreateInstance" &&
+			        c.Method.TypeArguments.Count == 1) &&
+			       type.Kind == TypeKind.TypeParameter &&
+			       compLeft.MatchDefaultValue(out var type2) &&
+			       type.Equals(type2) &&
+			       compRight.MatchLdNull();
 		}
 
-		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
+		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1,
+			out ILVariable nullable2)
 		{
 			// Try to match: nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)
 			nullable1 = null;
@@ -368,14 +391,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			return MatchHasValueCall(arg, nullable1);
 		}
+
 		#endregion
 
 		#region CSharpComp
+
 		static bool MatchCompOrDecimal(ILInstruction inst, out CompOrDecimal result)
 		{
 			result = default(CompOrDecimal);
 			result.Instruction = inst;
-			if (inst is Comp comp && !comp.IsLifted)
+			if (inst is Comp { IsLifted: false } comp)
 			{
 				result.Kind = comp.Kind;
 				result.Left = comp.Left;
@@ -407,10 +432,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return false;
 				}
+
 				result.Left = call.Arguments[0];
 				result.Right = call.Arguments[1];
 				return call.Method.DeclaringType.IsKnownType(KnownTypeCode.Decimal);
 			}
+
 			return false;
 		}
 
@@ -454,7 +481,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (Instruction is Comp comp)
 				{
-					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left, right).WithILRange(Instruction);
+					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left,
+						right).WithILRange(Instruction);
 				}
 				else if (Instruction is Call call)
 				{
@@ -466,7 +494,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					else if (newComparisonKind == ComparisonKind.Inequality && call.Method.Name == "op_Equality")
 					{
 						method = call.Method.DeclaringType.GetMethods(m => m.Name == "op_Inequality")
-							.FirstOrDefault(m => ParameterListComparer.Instance.Equals(m.Parameters, call.Method.Parameters));
+							.FirstOrDefault(m =>
+								ParameterListComparer.Instance.Equals(m.Parameters, call.Method.Parameters));
 						if (method == null)
 							return null;
 					}
@@ -474,6 +503,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return null;
 					}
+
 					return new Call(CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(method)) {
 						Arguments = { left, right },
 						ConstrainedTo = call.ConstrainedTo,
@@ -487,10 +517,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 		}
+
 		#endregion
 
 		#region Lift...Comparison
-		ILInstruction LiftCSharpEqualityComparison(CompOrDecimal valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
+
+		ILInstruction LiftCSharpEqualityComparison(CompOrDecimal valueComp, ComparisonKind newComparisonKind,
+			ILInstruction hasValueTest)
 		{
 			Debug.Assert(newComparisonKind.IsEqualityOrInequality());
 			bool hasValueTestNegated = false;
@@ -499,6 +532,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				hasValueTest = arg;
 				hasValueTestNegated = !hasValueTestNegated;
 			}
+
 			// The HasValue comparison must be the same operator as the Value comparison.
 			if (hasValueTest is Comp hasValueComp)
 			{
@@ -510,29 +544,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!MatchHasValueCall(hasValueComp.Right, out ILVariable rightVar))
 					return null;
 				nullableVars = new List<ILVariable> { leftVar };
-				var (left, leftBits) = DoLift(valueComp.Left);
+				(ILInstruction left, BitSet leftBits) = DoLift(valueComp.Left);
 				nullableVars[0] = rightVar;
-				var (right, rightBits) = DoLift(valueComp.Right);
+				(ILInstruction right, BitSet rightBits) = DoLift(valueComp.Right);
 				if (left != null && right != null && leftBits[0] && rightBits[0]
-					&& SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)
-				)
+				    && SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)
+				   )
 				{
 					context.Step("NullableLiftingTransform: C# (in)equality comparison", valueComp.Instruction);
 					return valueComp.MakeLifted(newComparisonKind, left, right);
 				}
 			}
-			else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out ILVariable v))
+			else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated &&
+			         MatchHasValueCall(hasValueTest, out ILVariable v))
 			{
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
 				nullableVars = new List<ILVariable> { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
 			}
-			else if (newComparisonKind == ComparisonKind.Inequality && hasValueTestNegated && MatchHasValueCall(hasValueTest, out v))
+			else if (newComparisonKind == ComparisonKind.Inequality && hasValueTestNegated &&
+			         MatchHasValueCall(hasValueTest, out v))
 			{
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
 				nullableVars = new List<ILVariable> { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
 			}
+
 			return null;
 		}
 
@@ -550,23 +587,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		ILInstruction LiftCSharpComparison(CompOrDecimal comp, ComparisonKind newComparisonKind)
 		{
-			var (left, right, bits) = DoLiftBinary(comp.Left, comp.Right, comp.LeftExpectedType, comp.RightExpectedType);
+			(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(comp.Left, comp.Right,
+				comp.LeftExpectedType, comp.RightExpectedType);
 			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
 			// (we can't check this before lifting due to the calls to GetValueOrDefault())
-			if (left != null && right != null && SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags))
+			if (left != null && right != null && SemanticHelper.IsPure(left.Flags) &&
+			    SemanticHelper.IsPure(right.Flags))
 			{
 				if (!bits.All(0, nullableVars.Count))
 				{
 					// don't lift if a nullableVar doesn't contribute to the result
 					return null;
 				}
+
 				context.Step("NullableLiftingTransform: C# comparison", comp.Instruction);
 				return comp.MakeLifted(newComparisonKind, left, right);
 			}
+
 			return null;
 		}
 
-		ILInstruction LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
+		ILInstruction LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind,
+			ILInstruction nestedIfInst)
 		{
 			// User-defined equality operator:
 			//   if (comp(call get_HasValue(ldloca nullable1) == call get_HasValue(ldloca nullable2)))
@@ -590,7 +632,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!MatchHasValueCall(hasValueComp.Right, out ILVariable nullable2))
 				return null;
-			if (!nestedIfInst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
+			if (!nestedIfInst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst,
+				    out var falseInst))
 				return null;
 			if (!MatchHasValueCall(condition, out ILVariable nullable))
 				return null;
@@ -604,7 +647,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				trueInstNegated = !trueInstNegated;
 				trueInst = arg;
 			}
-			if (!(trueInst is Call call))
+
+			if (trueInst is not Call call)
 				return null;
 			if (!(call.Method.IsOperator && call.Arguments.Count == 2))
 				return null;
@@ -615,12 +659,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (liftedOperator == null)
 				return null;
 			nullableVars = new List<ILVariable> { nullable1 };
-			var (left, leftBits) = DoLift(call.Arguments[0]);
+			(ILInstruction left, BitSet leftBits) = DoLift(call.Arguments[0]);
 			nullableVars[0] = nullable2;
-			var (right, rightBits) = DoLift(call.Arguments[1]);
+			(ILInstruction right, BitSet rightBits) = DoLift(call.Arguments[1]);
 			if (left != null && right != null && leftBits[0] && rightBits[0]
-				&& SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)
-			)
+			    && SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)
+			   )
 			{
 				context.Step("NullableLiftingTransform: C# user-defined (in)equality comparison", nestedIfInst);
 				ILInstruction replacement = new Call(liftedOperator) {
@@ -633,8 +677,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					replacement = Comp.LogicNot(replacement);
 				}
+
 				return replacement;
 			}
+
 			return null;
 		}
 
@@ -647,25 +693,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				trueInstNegated = !trueInstNegated;
 				trueInst = arg;
 			}
-			if (trueInst is Call call && !call.IsLifted
-			  && CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method)
-			  && falseInst.MatchLdcI4((call.Method.Name == "op_Inequality") ^ trueInstNegated ? 1 : 0))
+
+			if (trueInst is Call { IsLifted: false } call &&
+			    CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method) &&
+			    falseInst.MatchLdcI4((call.Method.Name == "op_Inequality") ^ trueInstNegated ? 1 : 0))
 			{
 				// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
 				var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
-				if ((call.Method.Name == "op_Equality" || call.Method.Name == "op_Inequality") && nullableVars.Count != 1)
+				if (call.Method.Name is "op_Equality" or "op_Inequality" && nullableVars.Count != 1)
 				{
 					// Equality is special (returns true if both sides are null), only handle it
 					// in the normal code path if we're dealing with only a single nullable var
 					// (comparing nullable with non-nullable).
 					return null;
 				}
+
 				if (liftedOperator == null)
 				{
 					return null;
 				}
+
 				context.Step("Lift user-defined comparison operator", trueInst);
-				var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1],
+				(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(call.Arguments[0],
+					call.Arguments[1],
 					call.Method.Parameters[0].Type, call.Method.Parameters[1].Type);
 				if (left != null && right != null && bits.All(0, nullableVars.Count))
 				{
@@ -679,15 +729,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						result = Comp.LogicNot(result);
 					}
+
 					return result;
 				}
 			}
 
 			return null;
 		}
+
 		#endregion
 
 		#region LiftNormal / DoLift
+
 		/// <summary>
 		/// Performs nullable lifting.
 		/// 
@@ -698,7 +751,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		ILInstruction LiftNormal(ILInstruction trueInst, ILInstruction falseInst)
 		{
-			if (trueInst.MatchIfInstructionPositiveCondition(out var nestedCondition, out var nestedTrue, out var nestedFalse))
+			if (trueInst.MatchIfInstructionPositiveCondition(out var nestedCondition, out var nestedTrue,
+				    out ILInstruction _))
 			{
 				// Sometimes Roslyn generates pointless conditions like:
 				//   if (nullable.HasValue && (!nullable.HasValue || nullable.GetValueOrDefault() == b))
@@ -723,10 +777,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						UnderlyingResultType = NullableType.GetUnderlyingType(nullableVars[0].Type).GetStackType()
 					};
 				}
+
 				ILInstruction result = LiftCSharpUserComparison(trueInst, falseInst);
 				if (result != null)
 					return result;
 			}
+
 			ILInstruction lifted;
 			if (nullableVars.Count == 1 && MatchGetValueOrDefault(exprToLift, nullableVars[0]))
 			{
@@ -754,20 +810,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else
 			{
 				context.Step("NullableLiftingTransform.DoLift", trueInst);
-				BitSet bits;
-				(lifted, bits) = DoLift(exprToLift);
+				(lifted, BitSet bits) = DoLift(exprToLift);
 				if (lifted == null)
 				{
 					return null;
 				}
+
 				if (!bits.All(0, nullableVars.Count))
 				{
 					// don't lift if a nullableVar doesn't contribute to the result
 					return null;
 				}
-				Debug.Assert(lifted is ILiftableInstruction liftable && liftable.IsLifted
-					&& liftable.UnderlyingResultType == exprToLift.ResultType);
+
+				Debug.Assert(lifted is ILiftableInstruction { IsLifted: true } liftable &&
+				             liftable.UnderlyingResultType == exprToLift.ResultType);
 			}
+
 			if (isNullCoalescingWithNonNullableFallback)
 			{
 				lifted = new NullCoalescingInstruction(NullCoalescingKind.NullableWithValueFallback, lifted, falseInst) {
@@ -782,6 +840,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					UnderlyingResultType = exprToLift.ResultType
 				};
 			}
+
 			return lifted;
 		}
 
@@ -807,7 +866,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (MatchGetValueOrDefault(inst, out ILVariable inputVar))
 			{
 				// n.GetValueOrDefault() lifted => n.
-				BitSet foundIndices = new BitSet(nullableVars.Count);
+				BitSet foundIndices = new(nullableVars.Count);
 				for (int i = 0; i < nullableVars.Count; i++)
 				{
 					if (nullableVars[i] == inputVar)
@@ -815,6 +874,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						foundIndices[i] = true;
 					}
 				}
+
 				if (foundIndices.Any())
 					return (new LdLoc(inputVar).WithILRange(inst), foundIndices);
 				else
@@ -822,7 +882,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (inst is Conv conv)
 			{
-				var (arg, bits) = DoLift(conv.Argument);
+				(ILInstruction arg, BitSet bits) = DoLift(conv.Argument);
 				if (arg != null)
 				{
 					if (conv.HasDirectFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count))
@@ -832,13 +892,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// (thus causing it not to throw when any of them is null).
 						return (null, null);
 					}
-					var newInst = new Conv(arg, conv.InputType, conv.InputSign, conv.TargetType, conv.CheckForOverflow, isLifted: true).WithILRange(conv);
+
+					var newInst = new Conv(arg, conv.InputType, conv.InputSign, conv.TargetType, conv.CheckForOverflow,
+						isLifted: true).WithILRange(conv);
 					return (newInst, bits);
 				}
 			}
 			else if (inst is BitNot bitnot)
 			{
-				var (arg, bits) = DoLift(bitnot.Argument);
+				(ILInstruction arg, BitSet bits) = DoLift(bitnot.Argument);
 				if (arg != null)
 				{
 					var newInst = new BitNot(arg, isLifted: true, stackType: bitnot.ResultType).WithILRange(bitnot);
@@ -847,7 +909,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (inst is BinaryNumericInstruction binary)
 			{
-				var (left, right, bits) = DoLiftBinary(binary.Left, binary.Right, SpecialType.UnknownType, SpecialType.UnknownType);
+				(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(binary.Left, binary.Right,
+					SpecialType.UnknownType, SpecialType.UnknownType);
 				if (left != null && right != null)
 				{
 					if (binary.HasDirectFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count))
@@ -857,6 +920,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// (thus causing it not to throw when any of them is null).
 						return (null, null);
 					}
+
 					var newInst = new BinaryNumericInstruction(
 						binary.Operator, left, right,
 						binary.LeftInputType, binary.RightInputType,
@@ -866,17 +930,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (newInst, bits);
 				}
 			}
-			else if (inst is Comp comp && !comp.IsLifted && comp.Kind == ComparisonKind.Equality
-			  && MatchGetValueOrDefault(comp.Left, out ILVariable v) && nullableVars.Contains(v)
-			  && NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean)
-			  && comp.Right.MatchLdcI4(0)
-		  )
+			else if (inst is Comp { IsLifted: false, Kind: ComparisonKind.Equality } comp &&
+			         MatchGetValueOrDefault(comp.Left, out ILVariable v) && nullableVars.Contains(v) &&
+			         NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean) &&
+			         comp.Right.MatchLdcI4(0)
+			        )
 			{
 				// C# doesn't support ComparisonLiftingKind.ThreeValuedLogic,
 				// except for operator! on bool?.
-				var (arg, bits) = DoLift(comp.Left);
+				(ILInstruction arg, BitSet bits) = DoLift(comp.Left);
 				Debug.Assert(arg != null);
-				var newInst = new Comp(comp.Kind, ComparisonLiftingKind.ThreeValuedLogic, comp.InputType, comp.Sign, arg, comp.Right.Clone()).WithILRange(comp);
+				var newInst = new Comp(comp.Kind, ComparisonLiftingKind.ThreeValuedLogic, comp.InputType, comp.Sign,
+					arg, comp.Right.Clone()).WithILRange(comp);
 				return (newInst, bits);
 			}
 			else if (inst is Call call && call.Method.IsOperator)
@@ -889,13 +954,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				BitSet newBits;
 				if (call.Arguments.Count == 1)
 				{
-					var (arg, bits) = DoLift(call.Arguments[0]);
+					(ILInstruction arg, BitSet bits) = DoLift(call.Arguments[0]);
 					newArgs = new[] { arg };
 					newBits = bits;
 				}
 				else if (call.Arguments.Count == 2)
 				{
-					var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1],
+					(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(call.Arguments[0],
+						call.Arguments[1],
 						call.Method.Parameters[0].Type, call.Method.Parameters[1].Type);
 					newArgs = new[] { left, right };
 					newBits = bits;
@@ -904,11 +970,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return (null, null);
 				}
+
 				if (newBits == null || !newBits.All(0, nullableVars.Count))
 				{
 					// all nullable vars must be involved when calling a method (side effect)
 					return (null, null);
 				}
+
 				var newInst = new Call(liftedOperator) {
 					ConstrainedTo = call.ConstrainedTo,
 					IsTail = call.IsTail,
@@ -917,23 +985,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				newInst.Arguments.AddRange(newArgs);
 				return (newInst, newBits);
 			}
+
 			return (null, null);
 		}
 
-		(ILInstruction, ILInstruction, BitSet) DoLiftBinary(ILInstruction lhs, ILInstruction rhs, IType leftExpectedType, IType rightExpectedType)
+		(ILInstruction, ILInstruction, BitSet) DoLiftBinary(ILInstruction lhs, ILInstruction rhs,
+			IType leftExpectedType, IType rightExpectedType)
 		{
-			var (left, leftBits) = DoLift(lhs);
-			var (right, rightBits) = DoLift(rhs);
+			(ILInstruction left, BitSet leftBits) = DoLift(lhs);
+			(ILInstruction right, BitSet rightBits) = DoLift(rhs);
 			if (left != null && right == null && SemanticHelper.IsPure(rhs.Flags))
 			{
 				// Embed non-nullable pure expression in lifted expression.
 				right = NewNullable(rhs.Clone(), rightExpectedType);
 			}
+
 			if (left == null && right != null && SemanticHelper.IsPure(lhs.Flags))
 			{
 				// Embed non-nullable pure expression in lifted expression.
 				left = NewNullable(lhs.Clone(), leftExpectedType);
 			}
+
 			if (left != null && right != null)
 			{
 				var bits = leftBits ?? rightBits;
@@ -963,16 +1035,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return inst;
 			}
 		}
+
 		#endregion
 
 		#region Match...Call
+
 		/// <summary>
 		/// Matches 'call get_HasValue(arg)'
 		/// </summary>
 		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction arg)
 		{
 			arg = null;
-			if (!(inst is Call call))
+			if (inst is not Call call)
 				return false;
 			if (call.Arguments.Count != 1)
 				return false;
@@ -993,6 +1067,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return arg.MatchLdLoca(out v);
 			}
+
 			v = null;
 			return false;
 		}
@@ -1020,7 +1095,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			underlyingType = null;
 			arg = null;
-			if (!(inst is NewObj newobj))
+			if (inst is not NewObj newobj)
 				return false;
 			if (!newobj.Method.IsConstructor || newobj.Arguments.Count != 1)
 				return false;
@@ -1037,7 +1112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction arg)
 		{
 			arg = null;
-			if (!(inst is Call call))
+			if (inst is not Call call)
 				return false;
 			if (call.Method.Name != "GetValueOrDefault" || call.Arguments.Count != 1)
 				return false;
@@ -1054,7 +1129,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			v = null;
 			return MatchGetValueOrDefault(inst, out ILInstruction arg)
-				&& arg.MatchLdLoca(out v);
+			       && arg.MatchLdLoca(out v);
 		}
 
 		/// <summary>
@@ -1073,6 +1148,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				underlyingType = NullableType.GetUnderlyingType(type);
 				return NullableType.IsNullable(type);
 			}
+
 			underlyingType = null;
 			return false;
 		}
@@ -1081,6 +1157,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			return MatchNull(inst, out var utype) && utype.Equals(underlyingType);
 		}
+
 		#endregion
 	}
 

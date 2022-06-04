@@ -15,7 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System;
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -55,6 +55,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// starts duplicating return instructions.
 				SwitchDetection.SimplifySwitchInstruction(block, context);
 			}
+
 			SimplifyBranchChains(function, context);
 			CleanUpEmptyBlocks(function, context);
 		}
@@ -64,7 +65,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Move ILRanges of special nop instructions to the previous non-nop instruction.
 			for (int i = block.Instructions.Count - 1; i > 0; i--)
 			{
-				if (block.Instructions[i] is Nop nop && nop.Kind == NopKind.Pop)
+				if (block.Instructions[i] is Nop { Kind: NopKind.Pop } nop)
 				{
 					block.Instructions[i - 1].AddILRange(nop);
 				}
@@ -82,7 +83,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// for now do this here (even though it's not control-flow related).
 			for (int i = block.Instructions.Count - 1; i >= 0; i--)
 			{
-				if (block.Instructions[i] is StLoc stloc && stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 0 && stloc.Variable.Kind == VariableKind.StackSlot)
+				if (block.Instructions[i] is StLoc stloc && stloc.Variable.IsSingleDefinition &&
+				    stloc.Variable.LoadCount == 0 && stloc.Variable.Kind == VariableKind.StackSlot)
 				{
 					context.Step($"Remove dead stack store {stloc.Variable.Name}", stloc);
 					if (aggressive ? SemanticHelper.IsPure(stloc.Value.Flags) : IsSimple(stloc.Value))
@@ -124,7 +126,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				var ret = (Leave)block.Instructions[1];
 				if (value.MatchLdLoc(out ILVariable v)
-					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction inst))
+				    && v.IsSingleDefinition && v.LoadCount == 1 &&
+				    block.Instructions[0].MatchStLoc(v, out ILInstruction inst))
 				{
 					context.Step("Inline variable in return block", block);
 					inst.AddILRange(ret.Value);
@@ -137,8 +140,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
-			List<(BlockContainer, Block)> blocksToAdd = new List<(BlockContainer, Block)>();
-			HashSet<Block> visitedBlocks = new HashSet<Block>();
+			List<(BlockContainer, Block)> blocksToAdd = new();
+			HashSet<Block> visitedBlocks = new();
 			foreach (var branch in function.Descendants.OfType<Branch>())
 			{
 				// Resolve chained branches to the final target:
@@ -151,6 +154,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// prevent infinite loop when branch chain is cyclic
 						break;
 					}
+
 					context.Step("Simplify branch to branch", branch);
 					var nextBranch = (Branch)targetBlock.Instructions[0];
 					branch.TargetBlock = nextBranch.TargetBlock;
@@ -159,6 +163,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Instructions.Clear(); // mark the block for deletion
 					targetBlock = branch.TargetBlock;
 				}
+
 				if (IsBranchToReturnBlock(branch))
 				{
 					if (aggressivelyDuplicateReturnBlocks)
@@ -182,7 +187,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						branch.TargetBlock = blockCopy;
 					}
 				}
-				else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave && leave.Value.MatchNop())
+				else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave &&
+				         leave.Value.MatchNop())
 				{
 					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
@@ -191,10 +197,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						leave2.AddILRange(branch);
 					branch.ReplaceWith(leave2);
 				}
+
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
 			}
-			foreach (var (container, block) in blocksToAdd)
+
+			foreach ((BlockContainer container, Block block) in blocksToAdd)
 			{
 				container.Blocks.Add(block);
 			}
@@ -214,6 +222,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// (this loop terminates because a block is deleted in every iteration)
 					}
 				}
+
 				// Remove return blocks that are no longer reachable:
 				container.Blocks.RemoveAll(b => b.IncomingEdgeCount == 0 && b.Instructions.Count == 0);
 			}
@@ -239,6 +248,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return false;
 				}
 			}
+
 			return true;
 		}
 
@@ -246,11 +256,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			Debug.Assert(container == block.Parent);
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
-			if (block.Instructions.Count > 1 && block.Instructions[block.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch))
+			if (block.Instructions.Count > 1 && block.Instructions[^2].HasFlag(InstructionFlags.MayBranch))
 				return false;
-			Branch br = block.Instructions.Last() as Branch;
 			// Check whether we can combine the target block with this block
-			if (br == null || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
+			if (block.Instructions.Last() is not Branch br || br.TargetBlock.Parent != container ||
+			    br.TargetBlock.IncomingEdgeCount != 1)
 				return false;
 			if (br.TargetBlock == block)
 				return false; // don't inline block into itself
@@ -278,11 +288,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (block.Instructions.Count < 3)
 				return false;
-			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore && block.Instructions[block.Instructions.Count - 3] is StLoc tempStore))
+			if (!(block.Instructions.SecondToLastOrDefault() is StLoc deadStore &&
+			      block.Instructions[^3] is StLoc tempStore))
 				return false;
 			if (!(deadStore.Variable.LoadCount == 0 && deadStore.Variable.AddressCount == 0))
 				return false;
-			if (!(deadStore.Value.MatchLdLoc(tempStore.Variable) && tempStore.Variable.IsSingleDefinition && tempStore.Variable.LoadCount == 1))
+			if (!(deadStore.Value.MatchLdLoc(tempStore.Variable) && tempStore.Variable.IsSingleDefinition &&
+			      tempStore.Variable.LoadCount == 1))
 				return false;
 			return tempStore.Value.MatchLdcI4(1) && deadStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean);
 		}

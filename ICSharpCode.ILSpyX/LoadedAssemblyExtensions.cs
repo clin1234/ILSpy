@@ -6,6 +6,10 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using Mono.Cecil;
+
+using IAssemblyResolver = ICSharpCode.Decompiler.Metadata.IAssemblyResolver;
+
 namespace ICSharpCode.ILSpyX
 {
 	public static class LoadedAssemblyExtensions
@@ -19,12 +23,12 @@ namespace ICSharpCode.ILSpyX
 		/// <remarks>Use only as last resort if there is something missing in the official ILSpy API.
 		/// Consider creating an issue at https://github.com/icsharpcode/ILSpy/issues/new
 		/// and discussing the problem with us.</remarks>
-		public unsafe static Mono.Cecil.ModuleDefinition CreateCecilObjectModel(this PEFile file)
+		public static unsafe ModuleDefinition CreateCecilObjectModel(this PEFile file)
 		{
 			if (!file.Reader.IsEntireImageAvailable)
 				throw new InvalidOperationException("Need full image to create Cecil object model!");
 			var image = file.Reader.GetEntireImage();
-			return Mono.Cecil.ModuleDefinition.ReadModule(new UnmanagedMemoryStream(image.Pointer, image.Length));
+			return ModuleDefinition.ReadModule(new UnmanagedMemoryStream(image.Pointer, image.Length));
 		}
 
 		public static IAssemblyResolver GetAssemblyResolver(this PEFile file, bool loadOnDemand = true)
@@ -32,7 +36,8 @@ namespace ICSharpCode.ILSpyX
 			return GetLoadedAssembly(file).GetAssemblyResolver(loadOnDemand);
 		}
 
-		internal static IAssemblyResolver GetAssemblyResolver(this PEFile file, AssemblyListSnapshot snapshot, bool loadOnDemand = true)
+		internal static IAssemblyResolver GetAssemblyResolver(this PEFile file, AssemblyListSnapshot snapshot,
+			bool loadOnDemand = true)
 		{
 			return GetLoadedAssembly(file).GetAssemblyResolver(snapshot, loadOnDemand);
 		}
@@ -47,21 +52,22 @@ namespace ICSharpCode.ILSpyX
 			return GetLoadedAssembly(file).GetTypeSystemOrNull();
 		}
 
-		public static ICompilation? GetTypeSystemWithDecompilerSettingsOrNull(this PEFile file, DecompilerSettings settings)
+		public static ICompilation? GetTypeSystemWithDecompilerSettingsOrNull(this PEFile file,
+			DecompilerSettings settings)
 		{
 			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settings));
 		}
 
 		public static LoadedAssembly GetLoadedAssembly(this PEFile file)
 		{
-			if (file == null)
-				throw new ArgumentNullException(nameof(file));
+			ArgumentNullException.ThrowIfNull(file);
 			LoadedAssembly? loadedAssembly;
 			lock (LoadedAssembly.loadedAssemblies)
 			{
 				if (!LoadedAssembly.loadedAssemblies.TryGetValue(file, out loadedAssembly))
 					throw new ArgumentException("The specified file is not associated with a LoadedAssembly!");
 			}
+
 			return loadedAssembly;
 		}
 	}

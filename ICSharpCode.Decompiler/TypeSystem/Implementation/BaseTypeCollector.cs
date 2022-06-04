@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class BaseTypeCollector : List<IType>
 	{
-		readonly Stack<IType> activeTypes = new Stack<IType>();
+		readonly Stack<IType> activeTypes = new();
 
 		/// <summary>
 		/// If this option is enabled, the list will not contain interfaces when retrieving the base types
@@ -56,7 +56,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				foreach (IType baseType in type.DirectBaseTypes)
 				{
-					if (SkipImplementedInterfaces && def != null && def.Kind != TypeKind.Interface && def.Kind != TypeKind.TypeParameter)
+					if (SkipImplementedInterfaces && def != null && def.Kind != TypeKind.Interface &&
+					    def.Kind != TypeKind.TypeParameter)
 					{
 						if (baseType.Kind == TypeKind.Interface)
 						{
@@ -64,14 +65,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							continue;
 						}
 					}
+
 					CollectBaseTypes(baseType);
 				}
+
 				// Add(type) at the end - we want a type to be output only after all its base types were added.
 				this.Add(type);
 				// Note that this is not the same as putting the this.Add() call in front and then reversing the list.
 				// For the diamond inheritance, Add() at the start produces "C, I1, Object, I2",
 				// while Add() at the end produces "Object, I1, I2, C".
 			}
+
 			activeTypes.Pop();
 		}
 	}

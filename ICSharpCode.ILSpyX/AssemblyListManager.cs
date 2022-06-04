@@ -45,6 +45,8 @@ namespace ICSharpCode.ILSpyX
 		public const string DotNet35List = ".NET 3.5";
 		public const string ASPDotNetMVC3List = "ASP.NET (MVC3)";
 
+		public const string DefaultListName = "(Default)";
+
 		private ISettingsProvider settingsProvider;
 
 		public AssemblyListManager(ISettingsProvider settingsProvider)
@@ -64,7 +66,7 @@ namespace ICSharpCode.ILSpyX
 		public bool ApplyWinRTProjections { get; set; }
 		public bool UseDebugSymbols { get; set; }
 
-		public ObservableCollection<string> AssemblyLists { get; } = new ObservableCollection<string>();
+		public ObservableCollection<string> AssemblyLists { get; } = new();
 
 		/// <summary>
 		/// Loads an assembly list from the ILSpySettings.
@@ -92,6 +94,7 @@ namespace ICSharpCode.ILSpyX
 					}
 				}
 			}
+
 			return new AssemblyList(this, listName ?? DefaultListName);
 		}
 
@@ -109,22 +112,22 @@ namespace ICSharpCode.ILSpyX
 			return DeleteList(selectedAssemblyList) && AddListIfNotExists(newList);
 		}
 
-		public const string DefaultListName = "(Default)";
-
 		/// <summary>
 		/// Saves the specified assembly list into the config file.
 		/// </summary>
 		public void SaveList(AssemblyList list)
 		{
 			this.settingsProvider.Update(
-				delegate (XElement root) {
+				delegate(XElement root) {
 					XElement? doc = root.Element("AssemblyLists");
 					if (doc == null)
 					{
 						doc = new XElement("AssemblyLists");
 						root.Add(doc);
 					}
-					XElement? listElement = doc.Elements("List").FirstOrDefault(e => (string?)e.Attribute("name") == list.ListName);
+
+					XElement? listElement = doc.Elements("List")
+						.FirstOrDefault(e => (string?)e.Attribute("name") == list.ListName);
 					if (listElement != null)
 						listElement.ReplaceWith(list.SaveAsXml());
 					else
@@ -140,6 +143,7 @@ namespace ICSharpCode.ILSpyX
 				SaveList(list);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -148,18 +152,21 @@ namespace ICSharpCode.ILSpyX
 			if (AssemblyLists.Remove(Name))
 			{
 				this.settingsProvider.Update(
-					delegate (XElement root) {
+					delegate(XElement root) {
 						XElement? doc = root.Element("AssemblyLists");
 						if (doc == null)
 						{
 							return;
 						}
-						XElement? listElement = doc.Elements("List").FirstOrDefault(e => (string?)e.Attribute("name") == Name);
+
+						XElement? listElement = doc.Elements("List")
+							.FirstOrDefault(e => (string?)e.Attribute("name") == Name);
 						if (listElement != null)
 							listElement.Remove();
 					});
 				return true;
 			}
+
 			return false;
 		}
 
@@ -167,12 +174,13 @@ namespace ICSharpCode.ILSpyX
 		{
 			AssemblyLists.Clear();
 			this.settingsProvider.Update(
-				delegate (XElement root) {
+				delegate(XElement root) {
 					XElement? doc = root.Element("AssemblyLists");
 					if (doc == null)
 					{
 						return;
 					}
+
 					doc.Remove();
 				});
 		}
@@ -225,13 +233,18 @@ namespace ICSharpCode.ILSpyX
 					AddToListFromGAC("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.DataSetExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"System.Data.DataSetExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Xaml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("PresentationCore, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+					AddToListFromGAC(
+						"PresentationCore, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 					AddToListFromGAC("WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 					break;
 				case DotNet35List:
@@ -239,38 +252,60 @@ namespace ICSharpCode.ILSpyX
 					AddToListFromGAC("System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.DataSetExtensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"System.Data.DataSetExtensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml.Linq, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("PresentationCore, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("PresentationFramework, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Xml.Linq, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"PresentationCore, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"PresentationFramework, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 					AddToListFromGAC("WindowsBase, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 					break;
 				case ASPDotNetMVC3List:
 					AddToListFromGAC("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.ComponentModel.DataAnnotations, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Configuration, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+					AddToListFromGAC(
+						"System.ComponentModel.DataAnnotations, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Configuration, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 					AddToListFromGAC("System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 					AddToListFromGAC("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.DataSetExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Data.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.EnterpriseServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+					AddToListFromGAC(
+						"System.Data.DataSetExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"System.Data.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+					AddToListFromGAC(
+						"System.EnterpriseServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 					AddToListFromGAC("System.Web, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.Web.Abstractions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.ApplicationServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.DynamicData, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Mvc, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Routing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-					AddToListFromGAC("System.Web.WebPages, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-					AddToListFromGAC("System.Web.Helpers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.Abstractions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.ApplicationServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.DynamicData, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.Mvc, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.Routing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+					AddToListFromGAC(
+						"System.Web.WebPages, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+					AddToListFromGAC(
+						"System.Web.Helpers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
 					AddToListFromGAC("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-					AddToListFromGAC("Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+					AddToListFromGAC(
+						"System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+					AddToListFromGAC(
+						"Microsoft.CSharp, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
 					break;
 				case object _ when path != null:
 					foreach (var file in Directory.GetFiles(path, "*.dll"))
@@ -279,8 +314,10 @@ namespace ICSharpCode.ILSpyX
 						if (DoIncludeFile(dllname))
 							AddToListFromDirectory(file);
 					}
+
 					break;
 			}
+
 			return list;
 
 			void AddToListFromGAC(string fullName)
@@ -305,10 +342,11 @@ namespace ICSharpCode.ILSpyX
 					return false;
 				if (char.IsUpper(fileName[0]))
 					return true;
-				if (fileName == "netstandard.dll")
+				if (fileName is "netstandard.dll" or "mscorlib.dll")
+				{
 					return true;
-				if (fileName == "mscorlib.dll")
-					return true;
+				}
+
 				return false;
 			}
 		}

@@ -29,12 +29,12 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public class FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
 	{
-		readonly PEFile declaringModule;
 		readonly MetadataModule? currentModule;
+		readonly PEFile declaringModule;
 		readonly TypeDefinitionHandle handle;
-		readonly string? typeName;
 		readonly string? namespaceName;
 		readonly PrimitiveTypeCode primitiveType;
+		readonly string? typeName;
 
 		/// <summary>
 		/// Constructs a FindTypeDecoder that finds uses of a specific type-definition handle.
@@ -54,32 +54,23 @@ namespace ICSharpCode.Decompiler.Metadata
 		public FindTypeDecoder(MetadataModule currentModule, ITypeDefinition type)
 		{
 			this.currentModule = currentModule;
-			this.declaringModule = type.ParentModule?.PEFile ?? throw new InvalidOperationException("Cannot use MetadataModule without PEFile as context.");
+			this.declaringModule = type.ParentModule?.PEFile ??
+			                       throw new InvalidOperationException(
+				                       "Cannot use MetadataModule without PEFile as context.");
 			this.handle = (TypeDefinitionHandle)type.MetadataToken;
-			this.primitiveType = type.KnownTypeCode == KnownTypeCode.None ? 0 : type.KnownTypeCode.ToPrimitiveTypeCode();
+			this.primitiveType =
+				type.KnownTypeCode == KnownTypeCode.None ? 0 : type.KnownTypeCode.ToPrimitiveTypeCode();
 			this.typeName = type.MetadataName;
 			this.namespaceName = type.Namespace;
 		}
 
 
-
 		public bool GetArrayType(bool elementType, ArrayShape shape) => elementType;
 		public bool GetByReferenceType(bool elementType) => elementType;
+
 		public bool GetFunctionPointerType(MethodSignature<bool> signature)
 		{
 			return AnyInMethodSignature(signature);
-		}
-
-		public static bool AnyInMethodSignature(MethodSignature<bool> signature)
-		{
-			if (signature.ReturnType)
-				return true;
-			foreach (bool type in signature.ParameterTypes)
-			{
-				if (type)
-					return true;
-			}
-			return false;
 		}
 
 		public bool GetGenericInstantiation(bool genericType, ImmutableArray<bool> typeArguments)
@@ -91,6 +82,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (ta)
 					return true;
 			}
+
 			return false;
 		}
 
@@ -120,7 +112,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			var tr = reader.GetTypeReference(handle);
 			if (!reader.StringComparer.Equals(tr.Name, typeName))
 				return false;
-			if (!((tr.Namespace.IsNil && namespaceName.Length == 0) || reader.StringComparer.Equals(tr.Namespace, namespaceName)))
+			if (!((tr.Namespace.IsNil && namespaceName.Length == 0) ||
+			      reader.StringComparer.Equals(tr.Namespace, namespaceName)))
 				return false;
 
 			var t = currentModule.ResolveType(handle, default);
@@ -131,24 +124,35 @@ namespace ICSharpCode.Decompiler.Metadata
 			return td.MetadataToken == this.handle && td.ParentModule?.PEFile == declaringModule;
 		}
 
-		public bool GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+		public bool GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle,
+			byte rawTypeKind)
 		{
 			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 		}
 
-		public bool GetTypeFromEntity(MetadataReader reader, EntityHandle handle, Unit genericContext = default, byte rawTypeKind = 0)
+		public static bool AnyInMethodSignature(MethodSignature<bool> signature)
 		{
-			switch (handle.Kind)
+			if (signature.ReturnType)
+				return true;
+			foreach (bool type in signature.ParameterTypes)
 			{
-				case HandleKind.TypeReference:
-					return GetTypeFromReference(reader, (TypeReferenceHandle)handle, rawTypeKind);
-				case HandleKind.TypeDefinition:
-					return GetTypeFromDefinition(reader, (TypeDefinitionHandle)handle, rawTypeKind);
-				case HandleKind.TypeSpecification:
-					return GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)handle, rawTypeKind);
-				default:
-					return false;
+				if (type)
+					return true;
 			}
+
+			return false;
+		}
+
+		public bool GetTypeFromEntity(MetadataReader reader, EntityHandle handle, Unit genericContext = default,
+			byte rawTypeKind = 0)
+		{
+			return handle.Kind switch {
+				HandleKind.TypeReference => GetTypeFromReference(reader, (TypeReferenceHandle)handle, rawTypeKind),
+				HandleKind.TypeDefinition => GetTypeFromDefinition(reader, (TypeDefinitionHandle)handle, rawTypeKind),
+				HandleKind.TypeSpecification => GetTypeFromSpecification(reader, genericContext,
+					(TypeSpecificationHandle)handle, rawTypeKind),
+				_ => false
+			};
 		}
 	}
 }

@@ -24,9 +24,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ArrayCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
-		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier", null);
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
+		public static readonly TokenRole NewKeywordRole = new("new");
+
+		public static readonly Role<ArraySpecifier>
+			AdditionalArraySpecifierRole = new("AdditionalArraySpecifier", null);
+
+		public static readonly Role<ArrayInitializerExpression> InitializerRole =
+			new("Initializer", ArrayInitializerExpression.Null);
 
 		public CSharpTokenNode NewToken {
 			get { return GetChildByRole(NewKeywordRole); }
@@ -71,11 +75,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArrayCreateExpression o = other as ArrayCreateExpression;
-			return o != null && this.Type.DoMatch(o.Type, match)
-				&& this.Arguments.DoMatch(o.Arguments, match)
-				&& this.AdditionalArraySpecifiers.DoMatch(o.AdditionalArraySpecifiers, match)
-				&& this.Initializer.DoMatch(o.Initializer, match);
+			return other is ArrayCreateExpression o && this.Type.DoMatch(o.Type, match)
+			                                        && this.Arguments.DoMatch(o.Arguments, match)
+			                                        && this.AdditionalArraySpecifiers.DoMatch(
+				                                        o.AdditionalArraySpecifiers, match)
+			                                        && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

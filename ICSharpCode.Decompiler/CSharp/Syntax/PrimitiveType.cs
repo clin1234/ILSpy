@@ -35,22 +35,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class PrimitiveType : AstType
 	{
-		TextLocation location;
 		string keyword = string.Empty;
-
-		public string Keyword {
-			get { return keyword; }
-			set {
-				if (value == null)
-					throw new ArgumentNullException();
-				ThrowIfFrozen();
-				keyword = value;
-			}
-		}
-
-		public KnownTypeCode KnownTypeCode {
-			get { return GetTypeCodeForPrimitiveType(this.Keyword); }
-		}
+		TextLocation location;
 
 		public PrimitiveType()
 		{
@@ -67,9 +53,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.location = location;
 		}
 
+		public string Keyword {
+			get { return keyword; }
+			set {
+				if (value == null)
+					throw new ArgumentNullException();
+				ThrowIfFrozen();
+				keyword = value;
+			}
+		}
+
+		public KnownTypeCode KnownTypeCode {
+			get { return GetTypeCodeForPrimitiveType(this.Keyword); }
+		}
+
 		public override TextLocation StartLocation {
 			get {
 				return location;
+			}
+		}
+
+		public override TextLocation EndLocation {
+			get {
+				return new TextLocation(location.Line, location.Column + keyword.Length);
 			}
 		}
 
@@ -77,12 +83,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ThrowIfFrozen();
 			this.location = value;
-		}
-
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation(location.Line, location.Column + keyword.Length);
-			}
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -102,8 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveType o = other as PrimitiveType;
-			return o != null && MatchString(this.Keyword, o.Keyword);
+			return other is PrimitiveType o && MatchString(this.Keyword, o.Keyword);
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
@@ -111,7 +110,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Keyword;
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
+			InterningProvider interningProvider = null)
 		{
 			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
 			if (typeCode == KnownTypeCode.None)
@@ -128,44 +128,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)
 		{
-			switch (keyword)
-			{
-				case "string":
-					return KnownTypeCode.String;
-				case "int":
-					return KnownTypeCode.Int32;
-				case "uint":
-					return KnownTypeCode.UInt32;
-				case "object":
-					return KnownTypeCode.Object;
-				case "bool":
-					return KnownTypeCode.Boolean;
-				case "sbyte":
-					return KnownTypeCode.SByte;
-				case "byte":
-					return KnownTypeCode.Byte;
-				case "short":
-					return KnownTypeCode.Int16;
-				case "ushort":
-					return KnownTypeCode.UInt16;
-				case "long":
-					return KnownTypeCode.Int64;
-				case "ulong":
-					return KnownTypeCode.UInt64;
-				case "float":
-					return KnownTypeCode.Single;
-				case "double":
-					return KnownTypeCode.Double;
-				case "decimal":
-					return KnownTypeCode.Decimal;
-				case "char":
-					return KnownTypeCode.Char;
-				case "void":
-					return KnownTypeCode.Void;
-				default:
-					return KnownTypeCode.None;
-			}
+			return keyword switch {
+				"string" => KnownTypeCode.String,
+				"int" => KnownTypeCode.Int32,
+				"uint" => KnownTypeCode.UInt32,
+				"object" => KnownTypeCode.Object,
+				"bool" => KnownTypeCode.Boolean,
+				"sbyte" => KnownTypeCode.SByte,
+				"byte" => KnownTypeCode.Byte,
+				"short" => KnownTypeCode.Int16,
+				"ushort" => KnownTypeCode.UInt16,
+				"long" => KnownTypeCode.Int64,
+				"ulong" => KnownTypeCode.UInt64,
+				"float" => KnownTypeCode.Single,
+				"double" => KnownTypeCode.Double,
+				"decimal" => KnownTypeCode.Decimal,
+				"char" => KnownTypeCode.Char,
+				"void" => KnownTypeCode.Void,
+				_ => KnownTypeCode.None
+			};
 		}
 	}
 }
-

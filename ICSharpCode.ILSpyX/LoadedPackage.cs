@@ -44,6 +44,41 @@ namespace ICSharpCode.ILSpyX
 			Bundle,
 		}
 
+		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
+		{
+			this.Kind = kind;
+			this.Entries = entries.ToArray();
+			var topLevelEntries = new List<PackageEntry>();
+			var folders = new Dictionary<string, PackageFolder>();
+			var rootFolder = new PackageFolder(this, null, "");
+			folders.Add("", rootFolder);
+			foreach (var entry in this.Entries)
+			{
+				(string? dirname, string? filename) = SplitName(entry.Name);
+				GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
+			}
+
+			this.RootFolder = rootFolder;
+
+			static (string, string) SplitName(string filename)
+			{
+				int pos = filename.LastIndexOfAny(new[] { '/', '\\' });
+				return pos == -1 ? ("", filename) : (filename[..pos], filename[(pos + 1)..]);
+			}
+
+			PackageFolder GetFolder(string name)
+			{
+				if (folders.TryGetValue(name, out var result))
+					return result;
+				(string? dirname, string? basename) = SplitName(name);
+				PackageFolder parent = GetFolder(dirname);
+				result = new PackageFolder(this, parent, basename);
+				parent.Folders.Add(result);
+				folders.Add(name, result);
+				return result;
+			}
+		}
+
 		/// <summary>
 		/// Gets the LoadedAssembly instance representing this bundle.
 		/// </summary>
@@ -60,43 +95,6 @@ namespace ICSharpCode.ILSpyX
 
 		internal PackageFolder RootFolder { get; }
 
-		public LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
-		{
-			this.Kind = kind;
-			this.Entries = entries.ToArray();
-			var topLevelEntries = new List<PackageEntry>();
-			var folders = new Dictionary<string, PackageFolder>();
-			var rootFolder = new PackageFolder(this, null, "");
-			folders.Add("", rootFolder);
-			foreach (var entry in this.Entries)
-			{
-				var (dirname, filename) = SplitName(entry.Name);
-				GetFolder(dirname).Entries.Add(new FolderEntry(filename, entry));
-			}
-			this.RootFolder = rootFolder;
-
-			static (string, string) SplitName(string filename)
-			{
-				int pos = filename.LastIndexOfAny(new char[] { '/', '\\' });
-				if (pos == -1)
-					return ("", filename); // file in root
-				else
-					return (filename.Substring(0, pos), filename.Substring(pos + 1));
-			}
-
-			PackageFolder GetFolder(string name)
-			{
-				if (folders.TryGetValue(name, out var result))
-					return result;
-				var (dirname, basename) = SplitName(name);
-				PackageFolder parent = GetFolder(dirname);
-				result = new PackageFolder(this, parent, basename);
-				parent.Folders.Add(result);
-				folders.Add(name, result);
-				return result;
-			}
-		}
-
 		public static LoadedPackage FromZipFile(string file)
 		{
 			Debug.WriteLine($"LoadedPackage.FromZipFile({file})");
@@ -110,7 +108,8 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public static LoadedPackage? FromBundle(string fileName)
 		{
-			using var memoryMappedFile = MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			using var memoryMappedFile =
+				MemoryMappedFile.CreateFromFile(fileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
 			var view = memoryMappedFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
 			try
 			{
@@ -118,8 +117,9 @@ namespace ICSharpCode.ILSpyX
 					return null;
 				var manifest = SingleFileBundle.ReadManifest(view, bundleHeaderOffset);
 				var entries = manifest.Entries.Select(e => new BundleEntry(fileName, view, e)).ToList();
-				var result = new LoadedPackage(PackageKind.Bundle, entries);
-				result.BundleHeader = manifest;
+				LoadedPackage result = new LoadedPackage(PackageKind.Bundle, entries) {
+					BundleHeader = manifest
+				};
 				view = null; // don't dispose the view, we're still using it in the bundle entries
 				return result;
 			}
@@ -135,13 +135,14 @@ namespace ICSharpCode.ILSpyX
 		sealed class FolderEntry : PackageEntry
 		{
 			readonly PackageEntry originalEntry;
-			public override string Name { get; }
 
 			public FolderEntry(string name, PackageEntry originalEntry)
 			{
 				this.Name = name;
 				this.originalEntry = originalEntry;
 			}
+
+			public override string Name { get; }
 
 			public override ManifestResourceAttributes Attributes => originalEntry.Attributes;
 			public override string FullName => originalEntry.FullName;
@@ -152,14 +153,15 @@ namespace ICSharpCode.ILSpyX
 		sealed class ZipFileEntry : PackageEntry
 		{
 			readonly string zipFile;
-			public override string Name { get; }
-			public override string FullName => $"zip://{zipFile};{Name}";
 
 			public ZipFileEntry(string zipFile, ZipArchiveEntry entry)
 			{
 				this.zipFile = zipFile;
 				this.Name = entry.FullName;
 			}
+
+			public override string Name { get; }
+			public override string FullName => $"zip://{zipFile};{Name}";
 
 			public override Stream? TryOpenStream()
 			{
@@ -173,6 +175,7 @@ namespace ICSharpCode.ILSpyX
 				{
 					s.CopyTo(memoryStream);
 				}
+
 				memoryStream.Position = 0;
 				return memoryStream;
 			}
@@ -181,8 +184,8 @@ namespace ICSharpCode.ILSpyX
 		sealed class BundleEntry : PackageEntry
 		{
 			readonly string bundleFile;
-			readonly MemoryMappedViewAccessor view;
 			readonly SingleFileBundle.Entry entry;
+			readonly MemoryMappedViewAccessor view;
 
 			public BundleEntry(string bundleFile, MemoryMappedViewAccessor view, SingleFileBundle.Entry entry)
 			{
@@ -204,13 +207,15 @@ namespace ICSharpCode.ILSpyX
 				}
 				else
 				{
-					Stream compressedStream = new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
+					Stream compressedStream = new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset,
+						entry.CompressedSize);
 					using var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress);
 					Stream decompressedStream = new MemoryStream((int)entry.Size);
 					deflateStream.CopyTo(decompressedStream);
 					if (decompressedStream.Length != entry.Size)
 					{
-						throw new InvalidDataException($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
+						throw new InvalidDataException(
+							$"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
 					}
 
 					decompressedStream.Seek(0, SeekOrigin.Begin);
@@ -235,10 +240,7 @@ namespace ICSharpCode.ILSpyX
 
 	sealed class PackageFolder : IAssemblyResolver
 	{
-		/// <summary>
-		/// Gets the short name of the folder.
-		/// </summary>
-		public string Name { get; }
+		private readonly Dictionary<string, LoadedAssembly?> assemblies = new(StringComparer.OrdinalIgnoreCase);
 
 		readonly LoadedPackage package;
 		readonly PackageFolder? parent;
@@ -250,8 +252,13 @@ namespace ICSharpCode.ILSpyX
 			this.Name = name;
 		}
 
-		public List<PackageFolder> Folders { get; } = new List<PackageFolder>();
-		public List<PackageEntry> Entries { get; } = new List<PackageEntry>();
+		/// <summary>
+		/// Gets the short name of the folder.
+		/// </summary>
+		public string Name { get; }
+
+		public List<PackageFolder> Folders { get; } = new();
+		public List<PackageEntry> Entries { get; } = new();
 
 		public PEFile? Resolve(IAssemblyReference reference)
 		{
@@ -260,6 +267,7 @@ namespace ICSharpCode.ILSpyX
 			{
 				return asm.GetPEFileOrNull();
 			}
+
 			return parent?.Resolve(reference);
 		}
 
@@ -270,10 +278,12 @@ namespace ICSharpCode.ILSpyX
 			{
 				return asm.GetPEFileOrNullAsync();
 			}
+
 			if (parent != null)
 			{
 				return parent.ResolveAsync(reference);
 			}
+
 			return Task.FromResult<PEFile?>(null);
 		}
 
@@ -284,6 +294,7 @@ namespace ICSharpCode.ILSpyX
 			{
 				return asm.GetPEFileOrNull();
 			}
+
 			return parent?.ResolveModule(mainModule, moduleName);
 		}
 
@@ -294,14 +305,14 @@ namespace ICSharpCode.ILSpyX
 			{
 				return asm.GetPEFileOrNullAsync();
 			}
+
 			if (parent != null)
 			{
 				return parent.ResolveModuleAsync(mainModule, moduleName);
 			}
+
 			return Task.FromResult<PEFile?>(null);
 		}
-
-		readonly Dictionary<string, LoadedAssembly?> assemblies = new Dictionary<string, LoadedAssembly?>(StringComparer.OrdinalIgnoreCase);
 
 		internal LoadedAssembly? ResolveFileName(string name)
 		{
@@ -311,7 +322,8 @@ namespace ICSharpCode.ILSpyX
 			{
 				if (assemblies.TryGetValue(name, out var asm))
 					return asm;
-				var entry = Entries.FirstOrDefault(e => string.Equals(name, e.Name, StringComparison.OrdinalIgnoreCase));
+				var entry = Entries.FirstOrDefault(e =>
+					string.Equals(name, e.Name, StringComparison.OrdinalIgnoreCase));
 				if (entry != null)
 				{
 					asm = new LoadedAssembly(
@@ -326,6 +338,7 @@ namespace ICSharpCode.ILSpyX
 				{
 					asm = null;
 				}
+
 				assemblies.Add(name, asm);
 				return asm;
 			}

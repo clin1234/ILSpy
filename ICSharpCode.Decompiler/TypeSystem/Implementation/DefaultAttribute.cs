@@ -17,13 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection.Metadata;
-
-using ICSharpCode.Decompiler.Semantics;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -32,19 +28,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class DefaultAttribute : IAttribute
 	{
-		readonly IType attributeType;
 		volatile IMethod constructor;
-
-		public ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }
-		public ImmutableArray<CustomAttributeNamedArgument<IType>> NamedArguments { get; }
 
 		public DefaultAttribute(IType attributeType,
 			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
 			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
-			if (attributeType == null)
-				throw new ArgumentNullException(nameof(attributeType));
-			this.attributeType = attributeType;
+			this.AttributeType = attributeType ?? throw new ArgumentNullException(nameof(attributeType));
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
 		}
@@ -53,10 +43,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
 			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
-			if (constructor == null)
-				throw new ArgumentNullException(nameof(constructor));
-			this.constructor = constructor;
-			this.attributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
+			this.constructor = constructor ?? throw new ArgumentNullException(nameof(constructor));
+			this.AttributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
 			if (fixedArguments.Length != constructor.Parameters.Count)
@@ -65,9 +53,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IType AttributeType {
-			get { return attributeType; }
-		}
+		public ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }
+		public ImmutableArray<CustomAttributeNamedArgument<IType>> NamedArguments { get; }
+
+		public IType AttributeType { get; }
 
 		bool IAttribute.HasDecodeErrors => false;
 
@@ -76,16 +65,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				IMethod ctor = this.constructor;
 				if (ctor == null)
 				{
-					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == FixedArguments.Length))
+					foreach (IMethod candidate in this.AttributeType.GetConstructors(m =>
+						         m.Parameters.Count == FixedArguments.Length))
 					{
-						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.FixedArguments.Select(a => a.Type)))
+						if (candidate.Parameters.Select(p => p.Type)
+						    .SequenceEqual(this.FixedArguments.Select(a => a.Type)))
 						{
 							ctor = candidate;
 							break;
 						}
 					}
+
 					this.constructor = ctor;
 				}
+
 				return ctor;
 			}
 		}

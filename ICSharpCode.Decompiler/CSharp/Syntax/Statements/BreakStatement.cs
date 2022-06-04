@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BreakStatement : Statement
 	{
-		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
+		public static readonly TokenRole BreakKeywordRole = new("break");
 
 		public CSharpTokenNode BreakToken {
 			get { return GetChildByRole(BreakKeywordRole); }
@@ -59,8 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BreakStatement o = other as BreakStatement;
-			return o != null;
+			return other is BreakStatement o;
 		}
 	}
 }

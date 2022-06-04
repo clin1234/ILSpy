@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -12,28 +13,29 @@ namespace ICSharpCode.Decompiler
 {
 	internal class DecompileRun
 	{
-		public HashSet<string> DefinedSymbols { get; } = new HashSet<string>();
-		public HashSet<string> Namespaces { get; } = new HashSet<string>();
-		public CancellationToken CancellationToken { get; set; }
-		public DecompilerSettings Settings { get; }
-		public IDocumentationProvider DocumentationProvider { get; set; }
-		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new Dictionary<ITypeDefinition, RecordDecompiler>();
-
-		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
-
-		Lazy<CSharp.TypeSystem.UsingScope> usingScope =>
-			new Lazy<CSharp.TypeSystem.UsingScope>(() => CreateUsingScope(Namespaces));
-
-		public CSharp.TypeSystem.UsingScope UsingScope => usingScope.Value;
-
 		public DecompileRun(DecompilerSettings settings)
 		{
 			this.Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		}
 
-		CSharp.TypeSystem.UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
+		public HashSet<string> DefinedSymbols { get; } = new();
+		public HashSet<string> Namespaces { get; } = new();
+		public CancellationToken CancellationToken { get; set; }
+		public DecompilerSettings Settings { get; }
+		public IDocumentationProvider DocumentationProvider { get; set; }
+		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new();
+
+		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
+
+		private Lazy<UsingScope> usingScope => new(() => CreateUsingScope(Namespaces));
+
+		public UsingScope UsingScope => usingScope.Value;
+
+		public EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
+
+		private UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
 		{
-			var usingScope = new CSharp.TypeSystem.UsingScope();
+			UsingScope usingScope = new UsingScope();
 			foreach (var ns in requiredNamespacesSuperset)
 			{
 				string[] parts = ns.Split('.');
@@ -42,15 +44,15 @@ namespace ICSharpCode.Decompiler
 				{
 					nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 				}
-				var reference = nsType.ToTypeReference(CSharp.Resolver.NameLookupMode.TypeInUsingDeclaration)
-					as CSharp.TypeSystem.TypeOrNamespaceReference;
-				if (reference != null)
+
+				if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
+				{
 					usingScope.Usings.Add(reference);
+				}
 			}
+
 			return usingScope;
 		}
-
-		public EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
 	}
 
 	enum EnumValueDisplayMode

@@ -34,13 +34,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	class SyntheticRangeIndexAccessor : IMethod
 	{
+		readonly IType indexOrRangeType;
+		readonly IReadOnlyList<IParameter> parameters;
+
 		/// <summary>
 		/// The underlying method: `get_Item(int)`, `set_Item(int, T)` or `Slice(int, int)`.
 		/// </summary>
 		readonly IMethod underlyingMethod;
-		readonly IType indexOrRangeType;
-		readonly IReadOnlyList<IParameter> parameters;
-		readonly bool slicing;
 
 		public SyntheticRangeIndexAccessor(IMethod underlyingMethod, IType indexOrRangeType, bool slicing)
 		{
@@ -48,9 +48,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			Debug.Assert(indexOrRangeType != null);
 			this.underlyingMethod = underlyingMethod;
 			this.indexOrRangeType = indexOrRangeType;
-			this.slicing = slicing;
-			var parameters = new List<IParameter>();
-			parameters.Add(new DefaultParameter(indexOrRangeType, ""));
+			this.IsSlicing = slicing;
+			var parameters = new List<IParameter> { new DefaultParameter(indexOrRangeType, "") };
 			if (slicing)
 			{
 				Debug.Assert(underlyingMethod.Parameters.Count == 2);
@@ -59,10 +58,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				parameters.AddRange(underlyingMethod.Parameters.Skip(1));
 			}
+
 			this.parameters = parameters;
 		}
 
-		public bool IsSlicing => slicing;
+		public bool IsSlicing { get; }
 
 		bool IMethod.ReturnTypeIsRefReadOnly => underlyingMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => underlyingMethod.ThisIsRefReadOnly;
@@ -105,24 +105,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string INamedElement.ReflectionName => underlyingMethod.ReflectionName;
 		string INamedElement.Namespace => underlyingMethod.Namespace;
 
-		public override bool Equals(object obj)
-		{
-			return obj is SyntheticRangeIndexAccessor g
-				&& this.underlyingMethod.Equals(g.underlyingMethod)
-				&& this.indexOrRangeType.Equals(g.indexOrRangeType)
-				&& this.slicing == g.slicing;
-		}
-
-		public override int GetHashCode()
-		{
-			return underlyingMethod.GetHashCode() ^ indexOrRangeType.GetHashCode();
-		}
-
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			return obj is SyntheticRangeIndexAccessor g
-				&& this.underlyingMethod.Equals(g.underlyingMethod, typeNormalization)
-				&& this.indexOrRangeType.AcceptVisitor(typeNormalization).Equals(g.indexOrRangeType.AcceptVisitor(typeNormalization));
+			       && this.underlyingMethod.Equals(g.underlyingMethod, typeNormalization)
+			       && this.indexOrRangeType.AcceptVisitor(typeNormalization)
+				       .Equals(g.indexOrRangeType.AcceptVisitor(typeNormalization));
 		}
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => underlyingMethod.GetAttributes();
@@ -131,12 +119,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMethod IMethod.Specialize(TypeParameterSubstitution substitution)
 		{
-			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType, slicing);
+			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType,
+				IsSlicing);
 		}
 
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
-			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType, slicing);
+			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType,
+				IsSlicing);
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is SyntheticRangeIndexAccessor g
+			       && this.underlyingMethod.Equals(g.underlyingMethod)
+			       && this.indexOrRangeType.Equals(g.indexOrRangeType)
+			       && this.IsSlicing == g.IsSlicing;
+		}
+
+		public override int GetHashCode()
+		{
+			return underlyingMethod.GetHashCode() ^ indexOrRangeType.GetHashCode();
 		}
 	}
 }

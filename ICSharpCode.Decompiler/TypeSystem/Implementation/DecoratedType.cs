@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -79,7 +78,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseType.GetMethods(filter, options);
 		}
 
-		IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+		IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+			GetMemberOptions options)
 		{
 			return baseType.GetMethods(typeArguments, filter, options);
 		}
@@ -89,7 +89,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseType.GetNestedTypes(filter, options);
 		}
 
-		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter,
+			GetMemberOptions options)
 		{
 			return baseType.GetNestedTypes(typeArguments, filter, options);
 		}

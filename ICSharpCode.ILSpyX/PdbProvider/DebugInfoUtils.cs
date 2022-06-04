@@ -16,22 +16,26 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
+using System.Text;
 
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
-
-#nullable enable
 
 namespace ICSharpCode.ILSpyX.PdbProvider
 {
 	public static class DebugInfoUtils
 	{
+		const string LegacyPDBPrefix = "Microsoft C/C++ MSF 7.00";
+		static readonly byte[] buffer = new byte[LegacyPDBPrefix.Length];
+
 		public static IDebugInfoProvider? LoadSymbols(PEFile module)
 		{
 			try
@@ -54,10 +58,11 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					}
 				}
 			}
-			catch (Exception ex) when (ex is BadImageFormatException || ex is COMException)
+			catch (Exception ex) when (ex is BadImageFormatException or COMException)
 			{
 				// Ignore PDB load errors
 			}
+
 			return null;
 		}
 
@@ -71,7 +76,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				return null;
 
 			if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
-				&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
+			    && Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
 			{
 				stream.Position = 0;
 				return new MonoCecilDebugInfoProvider(module, pdbFileName);
@@ -83,9 +88,6 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
 			}
 		}
-
-		const string LegacyPDBPrefix = "Microsoft C/C++ MSF 7.00";
-		static readonly byte[] buffer = new byte[LegacyPDBPrefix.Length];
 
 		static bool TryOpenPortablePdb(PEFile module,
 			[NotNullWhen(true)] out MetadataReaderProvider? provider,
@@ -101,6 +103,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					return reader.TryOpenAssociatedPortablePdb(module.FileName, OpenStream,
 						out provider, out pdbFileName);
 				}
+
 				if (entry.Type == DebugDirectoryEntryType.CodeView)
 				{
 					string pdbDirectory = Path.GetDirectoryName(module.FileName)!;
@@ -110,16 +113,18 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 					if (stream != null)
 					{
 						if (stream.Read(buffer, 0, buffer.Length) == LegacyPDBPrefix.Length
-							&& System.Text.Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
+						    && Encoding.ASCII.GetString(buffer) == LegacyPDBPrefix)
 						{
 							return false;
 						}
+
 						stream.Position = 0;
 						provider = MetadataReaderProvider.FromPortablePdbStream(stream);
 						return true;
 					}
 				}
 			}
+
 			return false;
 		}
 

@@ -25,18 +25,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedProperty : SpecializedParameterizedMember, IProperty
 	{
-		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution substitution)
-		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution) || propertyDefinition.DeclaringType.TypeParameterCount == 0)
-			{
-				return propertyDefinition;
-			}
-			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
-				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
-			return new SpecializedProperty(propertyDefinition, substitution);
-		}
-
 		readonly IProperty propertyDefinition;
+
+		IMethod getter, setter;
 
 		public SpecializedProperty(IProperty propertyDefinition, TypeParameterSubstitution substitution)
 			: base(propertyDefinition)
@@ -53,8 +44,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return propertyDefinition.CanSet; }
 		}
 
-		IMethod getter, setter;
-
 		public IMethod Getter {
 			get { return WrapAccessor(ref this.getter, propertyDefinition.Getter); }
 		}
@@ -68,5 +57,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public bool ReturnTypeIsRefReadOnly => propertyDefinition.ReturnTypeIsRefReadOnly;
+
+		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution) ||
+			    propertyDefinition.DeclaringType.TypeParameterCount == 0)
+			{
+				return propertyDefinition;
+			}
+
+			if (substitution.MethodTypeArguments is { Count: > 0 })
+				substitution =
+					new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			return new SpecializedProperty(propertyDefinition, substitution);
+		}
 	}
 }

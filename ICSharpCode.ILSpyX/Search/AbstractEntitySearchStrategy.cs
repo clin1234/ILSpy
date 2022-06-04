@@ -16,18 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Concurrent;
+
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpyX.Abstractions;
-
 	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
-		protected readonly ILanguage language;
 		protected readonly ApiVisibility apiVisibility;
+		protected readonly ILanguage language;
 
 		protected AbstractEntitySearchStrategy(ILanguage language, ApiVisibility apiVisibility,
 			SearchRequest searchRequest, IProducerConsumerCollection<SearchResult> resultQueue)
@@ -46,19 +45,20 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				if (apiVisibility == ApiVisibility.PublicOnly)
 				{
-					if (!(entity.Accessibility == Accessibility.Public ||
-						entity.Accessibility == Accessibility.Protected ||
-						entity.Accessibility == Accessibility.ProtectedOrInternal))
+					if (entity.Accessibility is not (Accessibility.Public or Accessibility.Protected
+					    or Accessibility.ProtectedOrInternal))
+					{
 						return false;
+					}
 				}
 				else if (apiVisibility == ApiVisibility.PublicAndInternal)
 				{
 					if (!language.ShowMember(entity))
 						return false;
 				}
+
 				entity = entity.DeclaringTypeDefinition;
-			}
-			while (entity != null);
+			} while (entity != null);
 
 			return true;
 		}

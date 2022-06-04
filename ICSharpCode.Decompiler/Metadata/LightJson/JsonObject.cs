@@ -1,16 +1,16 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
 namespace LightJson
 {
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Diagnostics.CodeAnalysis;
-
 	/// <summary>
 	/// Represents a key-value pair collection of JsonValue objects.
 	/// </summary>
-	[DebuggerDisplay("Count = {Count}")]
+	[DebuggerDisplay("Count = {" + nameof(Count) + "}")]
 	[DebuggerTypeProxy(typeof(JsonObjectDebugView))]
 	internal sealed class JsonObject : IEnumerable<KeyValuePair<string, JsonValue>>, IEnumerable<JsonValue>
 	{
@@ -43,9 +43,7 @@ namespace LightJson
 		/// </remarks>
 		public JsonValue this[string key] {
 			get {
-				JsonValue value;
-
-				if (this.properties.TryGetValue(key, out value))
+				if (this.properties.TryGetValue(key, out JsonValue value))
 				{
 					return value;
 				}
@@ -58,6 +56,33 @@ namespace LightJson
 			set {
 				this.properties[key] = value;
 			}
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through this collection.
+		/// </summary>
+		/// <returns>The enumerator that iterates through this collection.</returns>
+		IEnumerator<JsonValue> IEnumerable<JsonValue>.GetEnumerator()
+		{
+			return this.properties.Values.GetEnumerator();
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through this collection.
+		/// </summary>
+		/// <returns>The enumerator that iterates through this collection.</returns>
+		public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator()
+		{
+			return this.properties.GetEnumerator();
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through this collection.
+		/// </summary>
+		/// <returns>The enumerator that iterates through this collection.</returns>
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
 		}
 
 		/// <summary>
@@ -123,9 +148,7 @@ namespace LightJson
 				return this;
 			}
 
-			JsonValue value;
-
-			if (this.properties.TryGetValue(oldKey, out value))
+			if (this.properties.TryGetValue(oldKey, out JsonValue value))
 			{
 				this[newKey] = value;
 				this.Remove(oldKey);
@@ -152,33 +175,6 @@ namespace LightJson
 		public bool Contains(JsonValue value)
 		{
 			return this.properties.Values.Contains(value);
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through this collection.
-		/// </summary>
-		/// <returns>The enumerator that iterates through this collection.</returns>
-		public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator()
-		{
-			return this.properties.GetEnumerator();
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through this collection.
-		/// </summary>
-		/// <returns>The enumerator that iterates through this collection.</returns>
-		IEnumerator<JsonValue> IEnumerable<JsonValue>.GetEnumerator()
-		{
-			return this.properties.Values.GetEnumerator();
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through this collection.
-		/// </summary>
-		/// <returns>The enumerator that iterates through this collection.</returns>
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
 		}
 
 		[ExcludeFromCodeCoverage]

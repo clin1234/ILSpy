@@ -33,25 +33,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public class UsingScope : AbstractFreezable
 	{
-		readonly UsingScope parent;
-		string shortName = "";
-		IList<TypeOrNamespaceReference> usings;
-		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
 		IList<string> externAliases;
-
-		protected override void FreezeInternal()
-		{
-			usings = FreezableHelper.FreezeList(usings);
-			usingAliases = FreezableHelper.FreezeList(usingAliases);
-			externAliases = FreezableHelper.FreezeList(externAliases);
-
-			// In current model (no child scopes), it makes sense to freeze the parent as well
-			// to ensure the whole lookup chain is immutable.
-			if (parent != null)
-				parent.Freeze();
-
-			base.FreezeInternal();
-		}
+		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
+		IList<TypeOrNamespaceReference> usings;
 
 		/// <summary>
 		/// Creates a new root using scope.
@@ -67,30 +51,20 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// <param name="shortName">The short namespace name.</param>
 		public UsingScope(UsingScope parent, string shortName)
 		{
-			if (parent == null)
-				throw new ArgumentNullException(nameof(parent));
-			if (shortName == null)
-				throw new ArgumentNullException(nameof(shortName));
-			this.parent = parent;
-			this.shortName = shortName;
+			this.Parent = parent ?? throw new ArgumentNullException(nameof(parent));
+			this.ShortNamespaceName = shortName ?? throw new ArgumentNullException(nameof(shortName));
 		}
 
-		public UsingScope Parent {
-			get { return parent; }
-		}
+		public UsingScope Parent { get; }
 
-		public string ShortNamespaceName {
-			get {
-				return shortName;
-			}
-		}
+		public string ShortNamespaceName { get; } = "";
 
 		public string NamespaceName {
 			get {
-				if (parent != null)
-					return NamespaceDeclaration.BuildQualifiedName(parent.NamespaceName, shortName);
+				if (Parent != null)
+					return NamespaceDeclaration.BuildQualifiedName(Parent.NamespaceName, ShortNamespaceName);
 				else
-					return shortName;
+					return ShortNamespaceName;
 			}
 			//			set {
 			//				if (value == null)
@@ -124,6 +98,20 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
+		protected override void FreezeInternal()
+		{
+			usings = FreezableHelper.FreezeList(usings);
+			usingAliases = FreezableHelper.FreezeList(usingAliases);
+			externAliases = FreezableHelper.FreezeList(externAliases);
+
+			// In current model (no child scopes), it makes sense to freeze the parent as well
+			// to ensure the whole lookup chain is immutable.
+			if (Parent != null)
+				Parent.Freeze();
+
+			base.FreezeInternal();
+		}
+
 		//		public IList<UsingScope> ChildScopes {
 		//			get {
 		//				if (childScopes == null)
@@ -146,6 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 						return true;
 				}
 			}
+
 			return externAliases != null && externAliases.Contains(identifier);
 		}
 
@@ -155,12 +144,12 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public ResolvedUsingScope Resolve(ICompilation compilation)
 		{
 			CacheManager cache = compilation.CacheManager;
-			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
-			if (resolved == null)
+			if (cache.GetShared(this) is not ResolvedUsingScope resolved)
 			{
-				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent != null ? parent.Resolve(compilation) : null);
+				var csContext = new CSharpTypeResolveContext(compilation.MainModule, Parent?.Resolve(compilation));
 				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
 			}
+
 			return resolved;
 		}
 	}

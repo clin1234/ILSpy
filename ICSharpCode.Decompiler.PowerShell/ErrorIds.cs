@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ICSharpCode.Decompiler.PowerShell
+﻿namespace ICSharpCode.Decompiler.PowerShell
 {
 	public static class ErrorIds
 	{

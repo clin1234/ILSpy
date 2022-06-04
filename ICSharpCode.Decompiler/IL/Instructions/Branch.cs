@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public int TargetILOffset {
-			get { return targetBlock != null ? targetBlock.StartILOffset : targetILOffset; }
+			get { return targetBlock?.StartILOffset ?? targetILOffset; }
 		}
 
 		public Block TargetBlock {
@@ -60,6 +60,19 @@ namespace ICSharpCode.Decompiler.IL
 				targetBlock = value;
 				if (targetBlock != null && IsConnected)
 					targetBlock.IncomingEdgeCount++;
+			}
+		}
+
+		public string TargetLabel {
+			get { return targetBlock != null ? targetBlock.Label : $"IL_{TargetILOffset:x4}"; }
+		}
+
+		/// <summary>
+		/// Gets whether this branch executes at least one finally block before jumping to the target block.
+		/// </summary>
+		public bool TriggersFinallyBlock {
+			get {
+				return GetExecutesFinallyBlock(this, TargetContainer);
 			}
 		}
 
@@ -84,19 +97,6 @@ namespace ICSharpCode.Decompiler.IL
 				targetBlock.IncomingEdgeCount--;
 		}
 
-		public string TargetLabel {
-			get { return targetBlock != null ? targetBlock.Label : string.Format("IL_{0:x4}", TargetILOffset); }
-		}
-
-		/// <summary>
-		/// Gets whether this branch executes at least one finally block before jumping to the target block.
-		/// </summary>
-		public bool TriggersFinallyBlock {
-			get {
-				return GetExecutesFinallyBlock(this, TargetContainer);
-			}
-		}
-
 		internal static bool GetExecutesFinallyBlock(ILInstruction? inst, BlockContainer? container)
 		{
 			for (; inst != container && inst != null; inst = inst.Parent)
@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (inst.Parent is TryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
 					return true;
 			}
+
 			return false;
 		}
 

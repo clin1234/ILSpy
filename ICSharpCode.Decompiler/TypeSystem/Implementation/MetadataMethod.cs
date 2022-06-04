@@ -32,26 +32,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataMethod : IMethod
 	{
-		readonly MetadataModule module;
-		readonly MethodDefinitionHandle handle;
+		readonly EntityHandle accessorOwner;
 
 		// eagerly loaded fields:
 		readonly MethodAttributes attributes;
-		readonly SymbolKind symbolKind;
+		readonly MethodDefinitionHandle handle;
+		readonly MetadataModule module;
 		readonly ITypeParameter[] typeParameters;
-		readonly EntityHandle accessorOwner;
-		public MethodSemanticsAttributes AccessorKind { get; }
-		public bool IsExtensionMethod { get; }
-		bool IMethod.IsLocalFunction => false;
 
 		// lazy-loaded fields:
 		ITypeDefinition declaringType;
+		bool isInitOnly;
 		string name;
 		IParameter[] parameters;
 		IType returnType;
 		byte returnTypeIsRefReadonly = ThreeState.Unknown;
 		byte thisIsRefReadonly = ThreeState.Unknown;
-		bool isInitOnly;
 
 		internal MetadataMethod(MetadataModule module, MethodDefinitionHandle handle)
 		{
@@ -63,49 +59,52 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var def = metadata.GetMethodDefinition(handle);
 			this.attributes = def.Attributes;
 
-			this.symbolKind = SymbolKind.Method;
-			var (accessorOwner, semanticsAttribute) = module.PEFile.MethodSemanticsLookup.GetSemantics(handle);
-			const MethodAttributes finalizerAttributes = (MethodAttributes.Virtual | MethodAttributes.Family | MethodAttributes.HideBySig);
+			this.SymbolKind = SymbolKind.Method;
+			(EntityHandle accessorOwner, MethodSemanticsAttributes semanticsAttribute) =
+				module.PEFile.MethodSemanticsLookup.GetSemantics(handle);
+			const MethodAttributes finalizerAttributes =
+				(MethodAttributes.Virtual | MethodAttributes.Family | MethodAttributes.HideBySig);
 			this.typeParameters = MetadataTypeParameter.Create(module, this, def.GetGenericParameters());
 			if (semanticsAttribute != 0)
 			{
-				this.symbolKind = SymbolKind.Accessor;
+				this.SymbolKind = SymbolKind.Accessor;
 				this.accessorOwner = accessorOwner;
 				this.AccessorKind = semanticsAttribute;
 			}
 			else if ((attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) != 0
-				&& typeParameters.Length == 0)
+			         && typeParameters.Length == 0)
 			{
 				string name = this.Name;
-				if (name == ".cctor" || name == ".ctor")
+				if (name is ".cctor" or ".ctor")
 				{
-					this.symbolKind = SymbolKind.Constructor;
+					this.SymbolKind = SymbolKind.Constructor;
 				}
 				else if (name.StartsWith("op_", StringComparison.Ordinal)
-					&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
+				         && CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
 				{
-					this.symbolKind = SymbolKind.Operator;
+					this.SymbolKind = SymbolKind.Operator;
 				}
 			}
 			else if ((attributes & finalizerAttributes) == finalizerAttributes && typeParameters.Length == 0)
 			{
 				if (Name == "Finalize" && Parameters.Count == 0 && ReturnType.IsKnownType(KnownTypeCode.Void)
-					&& (DeclaringTypeDefinition as MetadataTypeDefinition)?.Kind == TypeKind.Class)
+				    && (DeclaringTypeDefinition as MetadataTypeDefinition)?.Kind == TypeKind.Class)
 				{
-					this.symbolKind = SymbolKind.Destructor;
+					this.SymbolKind = SymbolKind.Destructor;
 				}
 			}
+
 			this.IsExtensionMethod = (attributes & MethodAttributes.Static) == MethodAttributes.Static
-				&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
-				&& def.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
+			                         && (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) ==
+			                         TypeSystemOptions.ExtensionMethods
+			                         && def.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 		}
+
+		public MethodSemanticsAttributes AccessorKind { get; }
+		public bool IsExtensionMethod { get; }
+		bool IMethod.IsLocalFunction => false;
 
 		public EntityHandle MetadataToken => handle;
-
-		public override string ToString()
-		{
-			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
-		}
 
 		public string Name {
 			get {
@@ -121,11 +120,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<ITypeParameter> TypeParameters => typeParameters;
 		IReadOnlyList<IType> IMethod.TypeArguments => typeParameters;
 
-		public SymbolKind SymbolKind => symbolKind;
-		public bool IsConstructor => symbolKind == SymbolKind.Constructor;
-		public bool IsDestructor => symbolKind == SymbolKind.Destructor;
-		public bool IsOperator => symbolKind == SymbolKind.Operator;
-		public bool IsAccessor => symbolKind == SymbolKind.Accessor;
+		public SymbolKind SymbolKind { get; }
+
+		public bool IsConstructor => SymbolKind == SymbolKind.Constructor;
+		public bool IsDestructor => SymbolKind == SymbolKind.Destructor;
+		public bool IsOperator => SymbolKind == SymbolKind.Operator;
+		public bool IsAccessor => SymbolKind == SymbolKind.Accessor;
 
 		public bool HasBody => module.metadata.GetMethodDefinition(handle).HasBody();
 
@@ -142,140 +142,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return null;
 			}
 		}
-
-		#region Signature (ReturnType + Parameters)
-		public IReadOnlyList<IParameter> Parameters {
-			get {
-				var parameters = LazyInit.VolatileRead(ref this.parameters);
-				if (parameters != null)
-					return parameters;
-				DecodeSignature();
-				return this.parameters;
-			}
-		}
-
-		public IType ReturnType {
-			get {
-				var returnType = LazyInit.VolatileRead(ref this.returnType);
-				if (returnType != null)
-					return returnType;
-				DecodeSignature();
-				return this.returnType;
-			}
-		}
-
-		public bool IsInitOnly {
-			get {
-				var returnType = LazyInit.VolatileRead(ref this.returnType);
-				if (returnType == null)
-					DecodeSignature();
-				return this.isInitOnly;
-			}
-		}
-
-		internal Nullability NullableContext {
-			get {
-				var methodDef = module.metadata.GetMethodDefinition(handle);
-				return methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
-			}
-		}
-
-		private void DecodeSignature()
-		{
-			var methodDef = module.metadata.GetMethodDefinition(handle);
-			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
-			IType returnType;
-			IParameter[] parameters;
-			ModifiedType mod;
-			try
-			{
-				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ?? DeclaringTypeDefinition.NullableContext;
-				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
-				(returnType, parameters, mod) = DecodeSignature(module, this, signature,
-					methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
-			}
-			catch (BadImageFormatException)
-			{
-				returnType = SpecialType.UnknownType;
-				parameters = Empty<IParameter>.Array;
-				mod = null;
-			}
-			this.isInitOnly = mod is { Modifier: { Name: "IsExternalInit", Namespace: "System.Runtime.CompilerServices" } };
-			LazyInit.GetOrSet(ref this.returnType, returnType);
-			LazyInit.GetOrSet(ref this.parameters, parameters);
-		}
-
-		internal static (IType returnType, IParameter[] parameters, ModifiedType returnTypeModifier) DecodeSignature(
-			MetadataModule module, IParameterizedMember owner,
-			MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles,
-			Nullability nullableContext, TypeSystemOptions typeSystemOptions,
-			CustomAttributeHandleCollection? returnTypeAttributes = null)
-		{
-			var metadata = module.metadata;
-			int i = 0;
-			IParameter[] parameters = new IParameter[signature.RequiredParameterCount
-				+ (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs ? 1 : 0)];
-			IType parameterType;
-			if (parameterHandles != null)
-			{
-				foreach (var parameterHandle in parameterHandles)
-				{
-					var par = metadata.GetParameter(parameterHandle);
-					if (par.SequenceNumber == 0)
-					{
-						// "parameter" holds return type attributes.
-						// Note: for properties, the attributes normally stored on a method's return type
-						// are instead stored as normal attributes on the property.
-						// So MetadataProperty provides a non-null value for returnTypeAttributes,
-						// which then should be preferred over the attributes on the accessor's parameters.
-						if (returnTypeAttributes == null)
-						{
-							returnTypeAttributes = par.GetCustomAttributes();
-						}
-					}
-					else if (i < par.SequenceNumber && par.SequenceNumber <= signature.RequiredParameterCount)
-					{
-						// "Successive rows of the Param table that are owned by the same method shall be
-						// ordered by increasing Sequence value - although gaps in the sequence are allowed"
-						Debug.Assert(par.SequenceNumber <= signature.ParameterTypes.Length);
-						Debug.Assert(par.SequenceNumber <= parameters.Length);
-						// Fill gaps in the sequence with non-metadata parameters:
-						while (i < par.SequenceNumber - 1)
-						{
-							parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-								signature.ParameterTypes[i], module.Compilation, null, metadata, typeSystemOptions, nullableContext);
-							parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
-								referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
-							i++;
-						}
-						parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-							signature.ParameterTypes[i], module.Compilation,
-							par.GetCustomAttributes(), metadata, typeSystemOptions, nullableContext);
-						parameters[i] = new MetadataParameter(module, owner, parameterType, parameterHandle);
-						i++;
-					}
-				}
-			}
-			while (i < signature.RequiredParameterCount)
-			{
-				parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-					signature.ParameterTypes[i], module.Compilation, null, metadata, typeSystemOptions, nullableContext);
-				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
-					referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
-				i++;
-			}
-			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
-			{
-				parameters[i] = new DefaultParameter(SpecialType.ArgList, name: string.Empty, owner);
-				i++;
-			}
-			Debug.Assert(i == parameters.Length);
-			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext,
-				isSignatureReturnType: true);
-			return (returnType, parameters, signature.ReturnType as ModifiedType);
-		}
-		#endregion
 
 		public bool IsExplicitInterfaceImplementation {
 			get {
@@ -318,7 +184,231 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IModule ParentModule => module;
 		public ICompilation Compilation => module.Compilation;
 
+		public Accessibility Accessibility => GetAccessibility(attributes);
+
+		public bool IsStatic => (attributes & MethodAttributes.Static) != 0;
+		public bool IsAbstract => (attributes & MethodAttributes.Abstract) != 0;
+
+		public bool IsSealed =>
+			(attributes & (MethodAttributes.Abstract | MethodAttributes.Final | MethodAttributes.NewSlot |
+			               MethodAttributes.Static)) == MethodAttributes.Final;
+
+		public bool IsVirtual =>
+			(attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.NewSlot |
+			               MethodAttributes.Final)) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
+
+		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Virtual)) ==
+		                          MethodAttributes.Virtual;
+
+		public bool IsOverridable
+			=> (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) != 0
+			   && (attributes & MethodAttributes.Final) == 0;
+
+		public string FullName => $"{DeclaringType?.FullName}.{Name}";
+		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
+		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
+
+		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			return Equals(obj);
+		}
+
+		public IMethod Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedMethod.Create(this, substitution);
+		}
+
+		IMember IMember.Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedMethod.Create(this, substitution);
+		}
+
+		public override string ToString()
+		{
+			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
+		}
+
+		internal static Accessibility GetAccessibility(MethodAttributes attr)
+		{
+			return (attr & MethodAttributes.MemberAccessMask) switch {
+				MethodAttributes.Public => Accessibility.Public,
+				MethodAttributes.Assembly => Accessibility.Internal,
+				MethodAttributes.Private => Accessibility.Private,
+				MethodAttributes.Family => Accessibility.Protected,
+				MethodAttributes.FamANDAssem => Accessibility.ProtectedAndInternal,
+				MethodAttributes.FamORAssem => Accessibility.ProtectedOrInternal,
+				_ => Accessibility.None
+			};
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataMethod m)
+			{
+				return handle == m.handle && module.PEFile == m.module.PEFile;
+			}
+
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x5a00d671 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
+		}
+
+		#region Signature (ReturnType + Parameters)
+
+		public IReadOnlyList<IParameter> Parameters {
+			get {
+				var parameters = LazyInit.VolatileRead(ref this.parameters);
+				if (parameters != null)
+					return parameters;
+				DecodeSignature();
+				return this.parameters;
+			}
+		}
+
+		public IType ReturnType {
+			get {
+				var returnType = LazyInit.VolatileRead(ref this.returnType);
+				if (returnType != null)
+					return returnType;
+				DecodeSignature();
+				return this.returnType;
+			}
+		}
+
+		public bool IsInitOnly {
+			get {
+				var returnType = LazyInit.VolatileRead(ref this.returnType);
+				if (returnType == null)
+					DecodeSignature();
+				return this.isInitOnly;
+			}
+		}
+
+		internal Nullability NullableContext {
+			get {
+				var methodDef = module.metadata.GetMethodDefinition(handle);
+				return methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ??
+				       DeclaringTypeDefinition.NullableContext;
+			}
+		}
+
+		private void DecodeSignature()
+		{
+			var methodDef = module.metadata.GetMethodDefinition(handle);
+			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
+			IType returnType;
+			IParameter[] parameters;
+			ModifiedType mod;
+			try
+			{
+				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ??
+				                      DeclaringTypeDefinition.NullableContext;
+				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
+				(returnType, parameters, mod) = DecodeSignature(module, this, signature,
+					methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
+			}
+			catch (BadImageFormatException)
+			{
+				returnType = SpecialType.UnknownType;
+				parameters = Empty<IParameter>.Array;
+				mod = null;
+			}
+
+			this.isInitOnly = mod is
+				{ Modifier: { Name: "IsExternalInit", Namespace: "System.Runtime.CompilerServices" } };
+			LazyInit.GetOrSet(ref this.returnType, returnType);
+			LazyInit.GetOrSet(ref this.parameters, parameters);
+		}
+
+		internal static (IType returnType, IParameter[] parameters, ModifiedType returnTypeModifier) DecodeSignature(
+			MetadataModule module, IParameterizedMember owner,
+			MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles,
+			Nullability nullableContext, TypeSystemOptions typeSystemOptions,
+			CustomAttributeHandleCollection? returnTypeAttributes = null)
+		{
+			var metadata = module.metadata;
+			int i = 0;
+			IParameter[] parameters = new IParameter[signature.RequiredParameterCount
+			                                         + (signature.Header.CallingConvention ==
+			                                            SignatureCallingConvention.VarArgs
+				                                         ? 1
+				                                         : 0)];
+			IType parameterType;
+			if (parameterHandles != null)
+			{
+				foreach (var parameterHandle in parameterHandles)
+				{
+					var par = metadata.GetParameter(parameterHandle);
+					if (par.SequenceNumber == 0)
+					{
+						// "parameter" holds return type attributes.
+						// Note: for properties, the attributes normally stored on a method's return type
+						// are instead stored as normal attributes on the property.
+						// So MetadataProperty provides a non-null value for returnTypeAttributes,
+						// which then should be preferred over the attributes on the accessor's parameters.
+						if (returnTypeAttributes == null)
+						{
+							returnTypeAttributes = par.GetCustomAttributes();
+						}
+					}
+					else if (i < par.SequenceNumber && par.SequenceNumber <= signature.RequiredParameterCount)
+					{
+						// "Successive rows of the Param table that are owned by the same method shall be
+						// ordered by increasing Sequence value - although gaps in the sequence are allowed"
+						Debug.Assert(par.SequenceNumber <= signature.ParameterTypes.Length);
+						Debug.Assert(par.SequenceNumber <= parameters.Length);
+						// Fill gaps in the sequence with non-metadata parameters:
+						while (i < par.SequenceNumber - 1)
+						{
+							parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+								signature.ParameterTypes[i], module.Compilation, null, metadata, typeSystemOptions,
+								nullableContext);
+							parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
+								referenceKind: parameterType.Kind == TypeKind.ByReference
+									? ReferenceKind.Ref
+									: ReferenceKind.None);
+							i++;
+						}
+
+						parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+							signature.ParameterTypes[i], module.Compilation,
+							par.GetCustomAttributes(), metadata, typeSystemOptions, nullableContext);
+						parameters[i] = new MetadataParameter(module, owner, parameterType, parameterHandle);
+						i++;
+					}
+				}
+			}
+
+			while (i < signature.RequiredParameterCount)
+			{
+				parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+					signature.ParameterTypes[i], module.Compilation, null, metadata, typeSystemOptions,
+					nullableContext);
+				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
+					referenceKind: parameterType.Kind == TypeKind.ByReference ? ReferenceKind.Ref : ReferenceKind.None);
+				i++;
+			}
+
+			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
+			{
+				parameters[i] = new DefaultParameter(SpecialType.ArgList, name: string.Empty, owner);
+				i++;
+			}
+
+			Debug.Assert(i == parameters.Length);
+			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
+				module.Compilation, returnTypeAttributes, metadata, typeSystemOptions, nullableContext,
+				isSignatureReturnType: true);
+			return (returnType, parameters, signature.ReturnType as ModifiedType);
+		}
+
+		#endregion
+
 		#region Attributes
+
 		IType FindInteropType(string name)
 		{
 			return module.Compilation.FindType(new TopLevelTypeName(
@@ -336,6 +426,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int methodCodeType = (int)(def.ImplAttributes & MethodImplAttributes.CodeTypeMask);
 
 			#region DllImportAttribute
+
 			var info = def.GetImport();
 			if ((attributes & MethodAttributes.PinvokeImpl) == MethodAttributes.PinvokeImpl && !info.Module.IsNil)
 			{
@@ -344,9 +435,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					metadata.GetString(metadata.GetModuleReference(info.Module).Name));
 
 				var importAttrs = info.Attributes;
-				if ((importAttrs & MethodImportAttributes.BestFitMappingDisable) == MethodImportAttributes.BestFitMappingDisable)
+				if ((importAttrs & MethodImportAttributes.BestFitMappingDisable) ==
+				    MethodImportAttributes.BestFitMappingDisable)
 					dllImport.AddNamedArg("BestFitMapping", KnownTypeCode.Boolean, false);
-				if ((importAttrs & MethodImportAttributes.BestFitMappingEnable) == MethodImportAttributes.BestFitMappingEnable)
+				if ((importAttrs & MethodImportAttributes.BestFitMappingEnable) ==
+				    MethodImportAttributes.BestFitMappingEnable)
 					dllImport.AddNamedArg("BestFitMapping", KnownTypeCode.Boolean, true);
 
 				CallingConvention callingConvention;
@@ -374,25 +467,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					default:
 						throw new NotSupportedException("unknown calling convention");
 				}
+
 				if (callingConvention != CallingConvention.Winapi)
 				{
 					var callingConventionType = FindInteropType(nameof(CallingConvention));
 					dllImport.AddNamedArg("CallingConvention", callingConventionType, (int)callingConvention);
 				}
 
-				CharSet charSet = CharSet.None;
-				switch (info.Attributes & MethodImportAttributes.CharSetMask)
-				{
-					case MethodImportAttributes.CharSetAnsi:
-						charSet = CharSet.Ansi;
-						break;
-					case MethodImportAttributes.CharSetAuto:
-						charSet = CharSet.Auto;
-						break;
-					case MethodImportAttributes.CharSetUnicode:
-						charSet = CharSet.Unicode;
-						break;
-				}
+				CharSet charSet = (info.Attributes & MethodImportAttributes.CharSetMask) switch {
+					MethodImportAttributes.CharSetAnsi => CharSet.Ansi,
+					MethodImportAttributes.CharSetAuto => CharSet.Auto,
+					MethodImportAttributes.CharSetUnicode => CharSet.Unicode,
+					_ => CharSet.None
+				};
 				if (charSet != CharSet.None)
 				{
 					var charSetType = FindInteropType(nameof(CharSet));
@@ -421,51 +508,66 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((info.Attributes & MethodImportAttributes.SetLastError) == MethodImportAttributes.SetLastError)
 					dllImport.AddNamedArg("SetLastError", KnownTypeCode.Boolean, true);
 
-				if ((info.Attributes & MethodImportAttributes.ThrowOnUnmappableCharDisable) == MethodImportAttributes.ThrowOnUnmappableCharDisable)
+				if ((info.Attributes & MethodImportAttributes.ThrowOnUnmappableCharDisable) ==
+				    MethodImportAttributes.ThrowOnUnmappableCharDisable)
 					dllImport.AddNamedArg("ThrowOnUnmappableChar", KnownTypeCode.Boolean, false);
-				if ((info.Attributes & MethodImportAttributes.ThrowOnUnmappableCharEnable) == MethodImportAttributes.ThrowOnUnmappableCharEnable)
+				if ((info.Attributes & MethodImportAttributes.ThrowOnUnmappableCharEnable) ==
+				    MethodImportAttributes.ThrowOnUnmappableCharEnable)
 					dllImport.AddNamedArg("ThrowOnUnmappableChar", KnownTypeCode.Boolean, true);
 
 				b.Add(dllImport.Build());
 			}
+
 			#endregion
 
 			#region PreserveSigAttribute
+
 			if (implAttributes == MethodImplAttributes.PreserveSig && methodCodeType == 0)
 			{
 				b.Add(KnownAttribute.PreserveSig);
 				implAttributes = 0;
 			}
+
 			#endregion
 
 			#region MethodImplAttribute
+
 			if (implAttributes != 0)
 			{
 				var methodImpl = new AttributeBuilder(module, KnownAttribute.MethodImpl);
-				methodImpl.AddFixedArg(new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplOptions)), (int)implAttributes);
+				methodImpl.AddFixedArg(
+					new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplOptions)),
+					(int)implAttributes);
 				if (methodCodeType != 0)
 				{
-					methodImpl.AddNamedArg("MethodCodeType", new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodCodeType)), methodCodeType);
+					methodImpl.AddNamedArg("MethodCodeType",
+						new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodCodeType)),
+						methodCodeType);
 				}
+
 				b.Add(methodImpl.Build());
 			}
+
 			#endregion
 
 			// SpecialName
-			if ((def.Attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) == MethodAttributes.SpecialName
-				&& SymbolKind == SymbolKind.Method)
+			if ((def.Attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) ==
+			    MethodAttributes.SpecialName
+			    && SymbolKind == SymbolKind.Method)
 			{
 				b.Add(KnownAttribute.SpecialName);
 			}
 
-			b.Add(def.GetCustomAttributes(), symbolKind);
+			b.Add(def.GetCustomAttributes(), SymbolKind);
 			b.AddSecurityAttributes(def.GetDeclarativeSecurityAttributes());
 
 			return b.Build();
 		}
+
 		#endregion
 
 		#region Return type attributes
+
 		public IEnumerable<IAttribute> GetReturnTypeAttributes()
 		{
 			var b = new AttributeListBuilder(module);
@@ -481,6 +583,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					b.Add(retParam.GetCustomAttributes(), SymbolKind.ReturnType);
 				}
 			}
+
 			return b.Build();
 		}
 
@@ -490,6 +593,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return returnTypeIsRefReadonly == ThreeState.True;
 				}
+
 				var metadata = module.metadata;
 				var methodDefinition = metadata.GetMethodDefinition(handle);
 				var parameters = methodDefinition.GetParameters();
@@ -499,9 +603,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					var retParam = metadata.GetParameter(parameters.First());
 					if (retParam.SequenceNumber == 0)
 					{
-						hasReadOnlyAttr = retParam.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+						hasReadOnlyAttr = retParam.GetCustomAttributes()
+							.HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
 					}
 				}
+
 				this.returnTypeIsRefReadonly = ThreeState.From(hasReadOnlyAttr);
 				return hasReadOnlyAttr;
 			}
@@ -513,83 +619,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return thisIsRefReadonly == ThreeState.True;
 				}
+
 				var metadata = module.metadata;
 				var methodDefinition = metadata.GetMethodDefinition(handle);
 				bool hasReadOnlyAttr = DeclaringTypeDefinition?.IsReadOnly ?? false;
 				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyMethods) != 0)
 				{
-					hasReadOnlyAttr |= methodDefinition.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+					hasReadOnlyAttr |= methodDefinition.GetCustomAttributes()
+						.HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
 				}
+
 				this.thisIsRefReadonly = ThreeState.From(hasReadOnlyAttr);
 				return hasReadOnlyAttr;
 			}
 		}
 
 		#endregion
-
-		public Accessibility Accessibility => GetAccessibility(attributes);
-
-		internal static Accessibility GetAccessibility(MethodAttributes attr)
-		{
-			switch (attr & MethodAttributes.MemberAccessMask)
-			{
-				case MethodAttributes.Public:
-					return Accessibility.Public;
-				case MethodAttributes.Assembly:
-					return Accessibility.Internal;
-				case MethodAttributes.Private:
-					return Accessibility.Private;
-				case MethodAttributes.Family:
-					return Accessibility.Protected;
-				case MethodAttributes.FamANDAssem:
-					return Accessibility.ProtectedAndInternal;
-				case MethodAttributes.FamORAssem:
-					return Accessibility.ProtectedOrInternal;
-				default:
-					return Accessibility.None;
-			}
-		}
-
-		public bool IsStatic => (attributes & MethodAttributes.Static) != 0;
-		public bool IsAbstract => (attributes & MethodAttributes.Abstract) != 0;
-		public bool IsSealed => (attributes & (MethodAttributes.Abstract | MethodAttributes.Final | MethodAttributes.NewSlot | MethodAttributes.Static)) == MethodAttributes.Final;
-		public bool IsVirtual => (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.NewSlot | MethodAttributes.Final)) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
-		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Virtual)) == MethodAttributes.Virtual;
-		public bool IsOverridable
-			=> (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) != 0
-			&& (attributes & MethodAttributes.Final) == 0;
-
-		public string FullName => $"{DeclaringType?.FullName}.{Name}";
-		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
-		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
-
-		public override bool Equals(object obj)
-		{
-			if (obj is MetadataMethod m)
-			{
-				return handle == m.handle && module.PEFile == m.module.PEFile;
-			}
-			return false;
-		}
-
-		public override int GetHashCode()
-		{
-			return 0x5a00d671 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
-		}
-
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
-		{
-			return Equals(obj);
-		}
-
-		public IMethod Specialize(TypeParameterSubstitution substitution)
-		{
-			return SpecializedMethod.Create(this, substitution);
-		}
-
-		IMember IMember.Specialize(TypeParameterSubstitution substitution)
-		{
-			return SpecializedMethod.Create(this, substitution);
-		}
 	}
 }

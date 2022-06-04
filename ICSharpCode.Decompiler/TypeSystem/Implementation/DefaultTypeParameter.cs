@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.Util;
@@ -25,10 +24,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public class DefaultTypeParameter : AbstractTypeParameter
 	{
-		readonly bool hasValueTypeConstraint;
-		readonly bool hasReferenceTypeConstraint;
-		readonly bool hasDefaultConstructorConstraint;
-		readonly Nullability nullabilityConstraint;
 		readonly IReadOnlyList<IAttribute> attributes;
 
 		public DefaultTypeParameter(
@@ -36,14 +31,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
 			IReadOnlyList<IAttribute> attributes = null,
-			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
+			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false,
+			bool hasDefaultConstructorConstraint = false,
 			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
 			: base(owner, index, name, variance)
 		{
-			this.hasValueTypeConstraint = hasValueTypeConstraint;
-			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
-			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
-			this.nullabilityConstraint = nullabilityConstraint;
+			this.HasValueTypeConstraint = hasValueTypeConstraint;
+			this.HasReferenceTypeConstraint = hasReferenceTypeConstraint;
+			this.HasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
+			this.NullabilityConstraint = nullabilityConstraint;
 			this.TypeConstraints = MakeConstraints(constraints);
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
@@ -53,27 +49,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
 			IReadOnlyList<IAttribute> attributes = null,
-			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
+			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false,
+			bool hasDefaultConstructorConstraint = false,
 			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
 			: base(compilation, ownerType, index, name, variance)
 		{
-			this.hasValueTypeConstraint = hasValueTypeConstraint;
-			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
-			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
-			this.nullabilityConstraint = nullabilityConstraint;
+			this.HasValueTypeConstraint = hasValueTypeConstraint;
+			this.HasReferenceTypeConstraint = hasReferenceTypeConstraint;
+			this.HasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
+			this.NullabilityConstraint = nullabilityConstraint;
 			this.TypeConstraints = MakeConstraints(constraints);
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
 
-		public override IEnumerable<IAttribute> GetAttributes() => attributes;
+		public override bool HasValueTypeConstraint { get; }
 
-		public override bool HasValueTypeConstraint => hasValueTypeConstraint;
-		public override bool HasReferenceTypeConstraint => hasReferenceTypeConstraint;
-		public override bool HasDefaultConstructorConstraint => hasDefaultConstructorConstraint;
+		public override bool HasReferenceTypeConstraint { get; }
+
+		public override bool HasDefaultConstructorConstraint { get; }
+
 		public override bool HasUnmanagedConstraint => false;
-		public override Nullability NullabilityConstraint => nullabilityConstraint;
+		public override Nullability NullabilityConstraint { get; }
 
 		public override IReadOnlyList<TypeConstraint> TypeConstraints { get; }
+
+		public override IEnumerable<IAttribute> GetAttributes() => attributes;
 
 		IReadOnlyList<TypeConstraint> MakeConstraints(IReadOnlyList<IType> constraints)
 		{
@@ -88,11 +88,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						hasNonInterfaceConstraint = true;
 				}
 			}
+
 			// Do not add the 'System.Object' constraint if there is another constraint with a base class.
 			if (this.HasValueTypeConstraint || !hasNonInterfaceConstraint)
 			{
-				result.Add(new TypeConstraint(this.Compilation.FindType(this.HasValueTypeConstraint ? KnownTypeCode.ValueType : KnownTypeCode.Object)));
+				result.Add(new TypeConstraint(this.Compilation.FindType(this.HasValueTypeConstraint
+					? KnownTypeCode.ValueType
+					: KnownTypeCode.Object)));
 			}
+
 			return result;
 		}
 	}

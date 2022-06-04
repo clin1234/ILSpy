@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
@@ -31,9 +32,20 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	public class ControlFlowNode
 	{
 		/// <summary>
-		/// User index, can be used to look up additional information in an array.
+		/// List of incoming control flow edges.
 		/// </summary>
-		public int UserIndex;
+		public readonly List<ControlFlowNode> Predecessors = new();
+
+		/// <summary>
+		/// List of outgoing control flow edges.
+		/// </summary>
+		public readonly List<ControlFlowNode> Successors = new();
+
+		/// <summary>
+		/// Gets the node index in a post-order traversal of the control flow graph, starting at the
+		/// entry point. This field gets computed by dominance analysis.
+		/// </summary>
+		public int PostOrderNumber;
 
 		/// <summary>
 		/// User data.
@@ -41,15 +53,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		public object UserData;
 
 		/// <summary>
+		/// User index, can be used to look up additional information in an array.
+		/// </summary>
+		public int UserIndex;
+
+		/// <summary>
 		/// Visited flag, used in various algorithms.
 		/// </summary>
 		public bool Visited;
-
-		/// <summary>
-		/// Gets the node index in a post-order traversal of the control flow graph, starting at the
-		/// entry point. This field gets computed by dominance analysis.
-		/// </summary>
-		public int PostOrderNumber;
 
 		/// <summary>
 		/// Gets whether this node is reachable. Requires that dominance is computed!
@@ -70,23 +81,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		public List<ControlFlowNode> DominatorTreeChildren { get; internal set; }
 
-		/// <summary>
-		/// List of incoming control flow edges.
-		/// </summary>
-		public readonly List<ControlFlowNode> Predecessors = new List<ControlFlowNode>();
-
-		/// <summary>
-		/// List of outgoing control flow edges.
-		/// </summary>
-		public readonly List<ControlFlowNode> Successors = new List<ControlFlowNode>();
-
 		public void AddEdgeTo(ControlFlowNode target)
 		{
 			this.Successors.Add(target);
 			target.Predecessors.Add(this);
 		}
 
-		public void TraversePreOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
+		public void TraversePreOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children,
+			Action<ControlFlowNode> visitAction)
 		{
 			if (Visited)
 				return;
@@ -96,7 +98,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				t.TraversePreOrder(children, visitAction);
 		}
 
-		public void TraversePostOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
+		public void TraversePostOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children,
+			Action<ControlFlowNode> visitAction)
 		{
 			if (Visited)
 				return;
@@ -119,34 +122,33 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					return true;
 				tmp = tmp.ImmediateDominator;
 			}
+
 			return false;
 		}
 
 #if DEBUG
-		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes, Func<ControlFlowNode, string> labelFunc = null)
+		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes,
+			Func<ControlFlowNode, string> labelFunc = null)
 		{
-			if (labelFunc == null)
-			{
-				labelFunc = node => {
-					var block = node.UserData as IL.Block;
-					return block != null ? block.Label : node.UserData?.ToString();
-				};
-			}
-			GraphVizGraph g = new GraphVizGraph();
+			labelFunc ??= static node => node.UserData is Block block ? block.Label : node.UserData?.ToString();
+			GraphVizGraph g = new();
 			GraphVizNode[] n = new GraphVizNode[nodes.Count];
 			for (int i = 0; i < n.Length; i++)
 			{
-				n[i] = new GraphVizNode(nodes[i].UserIndex);
-				n[i].shape = "box";
-				n[i].label = labelFunc(nodes[i]);
+				n[i] = new GraphVizNode(nodes[i].UserIndex) {
+					shape = "box",
+					label = labelFunc(nodes[i])
+				};
 				g.AddNode(n[i]);
 			}
+
 			foreach (var source in nodes)
 			{
 				foreach (var target in source.Successors)
 				{
 					g.AddEdge(new GraphVizEdge(source.UserIndex, target.UserIndex));
 				}
+
 				if (source.ImmediateDominator != null)
 				{
 					g.AddEdge(
@@ -155,6 +157,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 						});
 				}
 			}
+
 			return g;
 		}
 #endif

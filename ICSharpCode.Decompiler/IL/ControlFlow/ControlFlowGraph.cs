@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
@@ -18,16 +14,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class ControlFlowGraph
 	{
-		readonly BlockContainer container;
-
-		/// <summary>
-		/// The container for which the ControlFlowGraph was created.
-		/// 
-		/// This may differ from the container currently holding a block,
-		/// because a transform could have moved the block since the CFG was created.
-		/// </summary>
-		public BlockContainer Container { get { return container; } }
-
 		/// <summary>
 		/// Nodes array, indexed by original block index.
 		/// 
@@ -41,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Unlike the cfg array, this can be used to discover control flow nodes even after
 		/// blocks were moved/reordered by transforms.
 		/// </summary>
-		readonly Dictionary<Block, ControlFlowNode> dict = new Dictionary<Block, ControlFlowNode>();
+		readonly Dictionary<Block, ControlFlowNode> dict = new();
 
 		/// <summary>
 		/// nodeHasDirectExitOutOfContainer[i] == true iff cfg[i] directly contains a
@@ -61,9 +47,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Return statements, exceptions, or branches leaving the block container are not
 		/// modeled by the control flow graph.
 		/// </summary>
-		public ControlFlowGraph(BlockContainer container, CancellationToken cancellationToken = default(CancellationToken))
+		public ControlFlowGraph(BlockContainer container,
+			CancellationToken cancellationToken = default(CancellationToken))
 		{
-			this.container = container;
+			this.Container = container;
 			this.cfg = new ControlFlowNode[container.Blocks.Count];
 			this.nodeHasDirectExitOutOfContainer = new BitSet(cfg.Length);
 			for (int i = 0; i < cfg.Length; i++)
@@ -79,22 +66,30 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.nodeHasReachableExit.UnionWith(FindNodesWithExitsOutOfContainer());
 		}
 
+		/// <summary>
+		/// The container for which the ControlFlowGraph was created.
+		/// 
+		/// This may differ from the container currently holding a block,
+		/// because a transform could have moved the block since the CFG was created.
+		/// </summary>
+		public BlockContainer Container { get; }
+
 		void CreateEdges(CancellationToken cancellationToken)
 		{
-			for (int i = 0; i < container.Blocks.Count; i++)
+			for (int i = 0; i < Container.Blocks.Count; i++)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				var block = container.Blocks[i];
+				var block = Container.Blocks[i];
 				var sourceNode = cfg[i];
 				foreach (var node in block.Descendants)
 				{
 					if (node is Branch branch)
 					{
-						if (branch.TargetBlock.Parent == container)
+						if (branch.TargetBlock.Parent == Container)
 						{
-							sourceNode.AddEdgeTo(cfg[container.Blocks.IndexOf(branch.TargetBlock)]);
+							sourceNode.AddEdgeTo(cfg[Container.Blocks.IndexOf(branch.TargetBlock)]);
 						}
-						else if (branch.TargetBlock.IsDescendantOf(container))
+						else if (branch.TargetBlock.IsDescendantOf(Container))
 						{
 							// Internal control flow within a nested container.
 						}
@@ -141,10 +136,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							// we can stop marking when we've reached an already-marked node
 							break;
 						}
+
 						leaving.Set(p.UserIndex);
 					}
 				}
 			}
+
 			return leaving;
 		}
 

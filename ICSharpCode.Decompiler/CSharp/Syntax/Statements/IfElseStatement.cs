@@ -32,11 +32,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class IfElseStatement : Statement
 	{
-		public readonly static TokenRole IfKeywordRole = new TokenRole("if");
-		public readonly static Role<Expression> ConditionRole = Roles.Condition;
-		public readonly static Role<Statement> TrueRole = new Role<Statement>("True", Statement.Null);
-		public readonly static TokenRole ElseKeywordRole = new TokenRole("else");
-		public readonly static Role<Statement> FalseRole = new Role<Statement>("False", Statement.Null);
+		public static readonly TokenRole IfKeywordRole = new("if");
+		public static readonly Role<Expression> ConditionRole = Roles.Condition;
+		public static readonly Role<Statement> TrueRole = new("True", Null);
+		public static readonly TokenRole ElseKeywordRole = new("else");
+		public static readonly Role<Statement> FalseRole = new("False", Null);
+
+		public IfElseStatement()
+		{
+		}
+
+		public IfElseStatement(Expression condition, Statement trueStatement, Statement falseStatement = null)
+		{
+			this.Condition = condition;
+			this.TrueStatement = trueStatement;
+			this.FalseStatement = falseStatement;
+		}
 
 		public CSharpTokenNode IfToken {
 			get { return GetChildByRole(IfKeywordRole); }
@@ -86,19 +97,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IfElseStatement o = other as IfElseStatement;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);
-		}
-
-		public IfElseStatement()
-		{
-		}
-
-		public IfElseStatement(Expression condition, Statement trueStatement, Statement falseStatement = null)
-		{
-			this.Condition = condition;
-			this.TrueStatement = trueStatement;
-			this.FalseStatement = falseStatement;
+			return other is IfElseStatement o && this.Condition.DoMatch(o.Condition, match) &&
+			       this.TrueStatement.DoMatch(o.TrueStatement, match) &&
+			       this.FalseStatement.DoMatch(o.FalseStatement, match);
 		}
 	}
 }

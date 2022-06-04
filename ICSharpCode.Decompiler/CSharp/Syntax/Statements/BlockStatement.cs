@@ -33,10 +33,64 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BlockStatement : Statement, IEnumerable<Statement>
 	{
-		public static readonly Role<Statement> StatementRole = new Role<Statement>("Statement", Statement.Null);
+		public static readonly Role<Statement> StatementRole = new("Statement", Statement.Null);
+
+		public CSharpTokenNode LBraceToken {
+			get { return GetChildByRole(Roles.LBrace); }
+		}
+
+		public AstNodeCollection<Statement> Statements {
+			get { return GetChildrenByRole(StatementRole); }
+		}
+
+		public CSharpTokenNode RBraceToken {
+			get { return GetChildByRole(Roles.RBrace); }
+		}
+
+		IEnumerator<Statement> IEnumerable<Statement>.GetEnumerator()
+		{
+			return this.Statements.GetEnumerator();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return this.Statements.GetEnumerator();
+		}
+
+		public override void AcceptVisitor(IAstVisitor visitor)
+		{
+			visitor.VisitBlockStatement(this);
+		}
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitBlockStatement(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitBlockStatement(this, data);
+		}
+
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		{
+			return other is BlockStatement { IsNull: false } o && this.Statements.DoMatch(o.Statements, match);
+		}
+
+		public void Add(Statement statement)
+		{
+			AddChild(statement, StatementRole);
+		}
+
+		public void Add(Expression expression)
+		{
+			AddChild(new ExpressionStatement(expression), StatementRole);
+		}
 
 		#region Null
-		public static readonly new BlockStatement Null = new NullBlockStatement();
+
+		public new static readonly BlockStatement Null = new NullBlockStatement();
+
 		sealed class NullBlockStatement : BlockStatement
 		{
 			public override bool IsNull {
@@ -65,9 +119,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return other == null || other.IsNull;
 			}
 		}
+
 		#endregion
 
 		#region PatternPlaceholder
+
 		public static implicit operator BlockStatement(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
@@ -84,6 +140,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			public override NodeType NodeType {
 				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
 
 			public override void AcceptVisitor(IAstVisitor visitor)
@@ -105,65 +167,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return child.DoMatch(other, match);
 			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
 		}
+
 		#endregion
-
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
-		public AstNodeCollection<Statement> Statements {
-			get { return GetChildrenByRole(StatementRole); }
-		}
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitBlockStatement(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitBlockStatement(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitBlockStatement(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			BlockStatement o = other as BlockStatement;
-			return o != null && !o.IsNull && this.Statements.DoMatch(o.Statements, match);
-		}
-
-		public void Add(Statement statement)
-		{
-			AddChild(statement, StatementRole);
-		}
-
-		public void Add(Expression expression)
-		{
-			AddChild(new ExpressionStatement(expression), StatementRole);
-		}
-
-		IEnumerator<Statement> IEnumerable<Statement>.GetEnumerator()
-		{
-			return this.Statements.GetEnumerator();
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return this.Statements.GetEnumerator();
-		}
 	}
 }

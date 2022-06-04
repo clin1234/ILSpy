@@ -17,12 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-
-using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -60,7 +55,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return unchecked(982451629 * Code.GetHashCode() + 982451653 * Name.GetHashCode());
 		}
 
-		public string Link => "https://docs.microsoft.com/dotnet/api/system.reflection.emit.opcodes." + EncodedName.ToLowerInvariant();
+		public string Link => "https://docs.microsoft.com/dotnet/api/system.reflection.emit.opcodes." +
+		                      EncodedName.ToLowerInvariant();
+
 		public string EncodedName {
 			get {
 				if (encodedName != null)
@@ -86,6 +83,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						encodedName = "Volatile";
 						return encodedName;
 				}
+
 				string text = "";
 				bool toUpperCase = true;
 				foreach (var ch in Name)
@@ -105,6 +103,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						text += ch;
 					}
 				}
+
 				encodedName = text;
 				return encodedName;
 			}

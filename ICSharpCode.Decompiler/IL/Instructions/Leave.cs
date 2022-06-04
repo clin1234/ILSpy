@@ -43,40 +43,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value ?? new Nop();
 		}
 
-		protected override InstructionFlags ComputeFlags()
-		{
-			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-		}
-
 		public override InstructionFlags DirectFlags {
 			get {
 				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 			}
-		}
-
-		public BlockContainer TargetContainer {
-			get { return targetContainer!; }
-			set {
-				if (targetContainer != null && IsConnected)
-					targetContainer.LeaveCount--;
-				targetContainer = value;
-				if (targetContainer != null && IsConnected)
-					targetContainer.LeaveCount++;
-			}
-		}
-
-		protected override void Connected()
-		{
-			base.Connected();
-			if (targetContainer != null)
-				targetContainer.LeaveCount++;
-		}
-
-		protected override void Disconnected()
-		{
-			base.Disconnected();
-			if (targetContainer != null)
-				targetContainer.LeaveCount--;
 		}
 
 		public string TargetLabel {
@@ -107,11 +77,42 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		public BlockContainer TargetContainer {
+			get { return targetContainer!; }
+			set {
+				if (targetContainer != null && IsConnected)
+					targetContainer.LeaveCount--;
+				targetContainer = value;
+				if (targetContainer != null && IsConnected)
+					targetContainer.LeaveCount++;
+			}
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+		}
+
+		protected override void Connected()
+		{
+			base.Connected();
+			if (targetContainer != null)
+				targetContainer.LeaveCount++;
+		}
+
+		protected override void Disconnected()
+		{
+			base.Disconnected();
+			if (targetContainer != null)
+				targetContainer.LeaveCount--;
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer!));
-			Debug.Assert(phase <= ILPhase.InILReader || phase == ILPhase.InAsyncAwait || value.ResultType == targetContainer!.ResultType);
+			Debug.Assert(phase is <= ILPhase.InILReader or ILPhase.InAsyncAwait ||
+			             value.ResultType == targetContainer!.ResultType);
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)

@@ -81,8 +81,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IdentifierExpression o = other as IdentifierExpression;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is IdentifierExpression o && MatchString(this.Identifier, o.Identifier) &&
+			       this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}
 }

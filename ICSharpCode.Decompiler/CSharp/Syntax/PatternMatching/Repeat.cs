@@ -26,23 +26,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class Repeat : Pattern
 	{
-		readonly INode childNode;
+		public Repeat(INode childNode)
+		{
+			this.ChildNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
+			this.MinCount = 0;
+			this.MaxCount = int.MaxValue;
+		}
 
 		public int MinCount { get; set; }
 		public int MaxCount { get; set; }
 
-		public INode ChildNode {
-			get { return childNode; }
-		}
-
-		public Repeat(INode childNode)
-		{
-			if (childNode == null)
-				throw new ArgumentNullException(nameof(childNode));
-			this.childNode = childNode;
-			this.MinCount = 0;
-			this.MaxCount = int.MaxValue;
-		}
+		public INode ChildNode { get; }
 
 		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
@@ -51,17 +45,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			int matchCount = 0;
 			if (this.MinCount <= 0)
 				backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
-			while (matchCount < this.MaxCount && pos != null && childNode.DoMatch(pos, match))
+			while (matchCount < this.MaxCount && pos != null && ChildNode.DoMatch(pos, match))
 			{
 				matchCount++;
 				do
 				{
 					pos = pos.NextSibling;
 				} while (pos != null && pos.Role != role);
+
 				if (matchCount >= this.MinCount)
 					backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
 			}
-			return false; // never do a normal (single-element) match; always make the caller look at the results on the back-tracking stack.
+
+			return
+				false; // never do a normal (single-element) match; always make the caller look at the results on the back-tracking stack.
 		}
 
 		public override bool DoMatch(INode other, Match match)
@@ -69,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			if (other == null || other.IsNull)
 				return this.MinCount <= 0;
 			else
-				return this.MaxCount >= 1 && childNode.DoMatch(other, match);
+				return this.MaxCount >= 1 && ChildNode.DoMatch(other, match);
 		}
 	}
 }

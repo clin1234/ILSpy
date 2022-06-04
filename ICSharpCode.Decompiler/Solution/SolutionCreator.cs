@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.Solution
 	/// </summary>
 	public static class SolutionCreator
 	{
-		private static readonly XNamespace ProjectFileNamespace = XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
+		private static readonly XNamespace ProjectFileNamespace =
+			XNamespace.Get("http://schemas.microsoft.com/developer/msbuild/2003");
 
 		/// <summary>
 		/// Writes a solution file to the specified <paramref name="targetFile"/>.
@@ -47,10 +48,7 @@ namespace ICSharpCode.Decompiler.Solution
 				throw new ArgumentException("The target file cannot be null or empty.", nameof(targetFile));
 			}
 
-			if (projects == null)
-			{
-				throw new ArgumentNullException(nameof(projects));
-			}
+			ArgumentNullException.ThrowIfNull(projects);
 
 			if (!projects.Any())
 			{
@@ -65,7 +63,8 @@ namespace ICSharpCode.Decompiler.Solution
 			FixProjectReferences(projects);
 		}
 
-		private static void WriteSolutionFile(TextWriter writer, IEnumerable<ProjectItem> projects, string solutionFilePath)
+		private static void WriteSolutionFile(TextWriter writer, IEnumerable<ProjectItem> projects,
+			string solutionFilePath)
 		{
 			WriteHeader(writer);
 			WriteProjects(writer, projects, solutionFilePath);
@@ -98,12 +97,14 @@ namespace ICSharpCode.Decompiler.Solution
 				var typeGuid = project.TypeGuid.ToString("B").ToUpperInvariant();
 				var projectGuid = project.Guid.ToString("B").ToUpperInvariant();
 
-				writer.WriteLine($"Project(\"{typeGuid}\") = \"{project.ProjectName}\", \"{projectRelativePath}\", \"{projectGuid}\"");
+				writer.WriteLine(
+					$"Project(\"{typeGuid}\") = \"{project.ProjectName}\", \"{projectRelativePath}\", \"{projectGuid}\"");
 				writer.WriteLine("EndProject");
 			}
 		}
 
-		private static IEnumerable<string> WriteSolutionConfigurations(TextWriter writer, IEnumerable<ProjectItem> projects)
+		private static IEnumerable<string> WriteSolutionConfigurations(TextWriter writer,
+			IEnumerable<ProjectItem> projects)
 		{
 			var platforms = projects.GroupBy(p => p.PlatformName).Select(g => g.Key).ToList();
 
@@ -144,7 +145,8 @@ namespace ICSharpCode.Decompiler.Solution
 
 				foreach (var platform in solutionPlatforms)
 				{
-					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.ActiveCfg = Release|{project.PlatformName}");
+					writer.WriteLine(
+						$"\t\t{projectGuid}.Release|{platform}.ActiveCfg = Release|{project.PlatformName}");
 					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.Build.0 = Release|{project.PlatformName}");
 				}
 			}
@@ -173,7 +175,8 @@ namespace ICSharpCode.Decompiler.Solution
 			}
 		}
 
-		private static void FixProjectReferences(string projectFilePath, XElement itemGroup, IDictionary<string, ProjectItem> projects)
+		private static void FixProjectReferences(string projectFilePath, XElement itemGroup,
+			IDictionary<string, ProjectItem> projects)
 		{
 			foreach (var item in itemGroup.Elements(ProjectFileNamespace + "Reference").ToList())
 			{
@@ -183,9 +186,11 @@ namespace ICSharpCode.Decompiler.Solution
 					item.Remove();
 
 					var projectReference = new XElement(ProjectFileNamespace + "ProjectReference",
-						new XElement(ProjectFileNamespace + "Project", referencedProject.Guid.ToString("B").ToUpperInvariant()),
+						new XElement(ProjectFileNamespace + "Project",
+							referencedProject.Guid.ToString("B").ToUpperInvariant()),
 						new XElement(ProjectFileNamespace + "Name", referencedProject.ProjectName));
-					projectReference.SetAttributeValue("Include", GetRelativePath(projectFilePath, referencedProject.FilePath));
+					projectReference.SetAttributeValue("Include",
+						GetRelativePath(projectFilePath, referencedProject.FilePath));
 
 					itemGroup.Add(projectReference);
 				}
@@ -194,8 +199,8 @@ namespace ICSharpCode.Decompiler.Solution
 
 		private static string GetRelativePath(string fromFilePath, string toFilePath)
 		{
-			Uri fromUri = new Uri(fromFilePath);
-			Uri toUri = new Uri(toFilePath);
+			Uri fromUri = new(fromFilePath);
+			Uri toUri = new(toFilePath);
 
 			if (fromUri.Scheme != toUri.Scheme)
 			{

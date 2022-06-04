@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -25,8 +24,8 @@ namespace ICSharpCode.Decompiler.Semantics
 {
 	public class InterpolatedStringResolveResult : ResolveResult
 	{
-		public readonly string FormatString;
 		public readonly ResolveResult[] Arguments;
+		public readonly string FormatString;
 
 		public InterpolatedStringResolveResult(IType stringType, string formatString, params ResolveResult[] arguments)
 			: base(stringType)

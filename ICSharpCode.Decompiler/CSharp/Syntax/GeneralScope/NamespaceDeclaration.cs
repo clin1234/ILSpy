@@ -23,6 +23,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System;
 using System.Collections.Generic;
 
@@ -34,7 +35,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class NamespaceDeclaration : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
-		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", AstType.Null);
+		public static readonly Role<AstType> NamespaceNameRole = new("NamespaceName", AstType.Null);
+
+		public NamespaceDeclaration()
+		{
+		}
+
+		public NamespaceDeclaration(string name)
+		{
+			this.Name = name;
+		}
 
 		public override NodeType NodeType {
 			get {
@@ -63,22 +73,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		static AstType ConstructType(string[] arr, int i)
-		{
-			if (i < 0 || i >= arr.Length)
-				throw new ArgumentOutOfRangeException(nameof(i));
-			if (i == 0)
-				return new SimpleType(arr[i]);
-			return new MemberType(ConstructType(arr, i - 1), arr[i]);
-		}
-
 		/// <summary>
 		/// Gets the full namespace name (including any parent namespaces)
 		/// </summary>
 		public string FullName {
 			get {
-				NamespaceDeclaration parentNamespace = Parent as NamespaceDeclaration;
-				if (parentNamespace != null)
+				if (Parent is NamespaceDeclaration parentNamespace)
 					return BuildQualifiedName(parentNamespace.FullName, Name);
 				return Name;
 			}
@@ -88,14 +88,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				var result = new Stack<string>();
 				AstType type = NamespaceName;
-				while (type is MemberType)
+				while (type is MemberType mt)
 				{
-					var mt = (MemberType)type;
 					result.Push(mt.MemberName);
 					type = mt.Target;
 				}
-				if (type is SimpleType)
-					result.Push(((SimpleType)type).Identifier);
+
+				if (type is SimpleType simpleType)
+					result.Push(simpleType.Identifier);
 				return result;
 			}
 		}
@@ -112,13 +112,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RBrace); }
 		}
 
-		public NamespaceDeclaration()
+		static AstType ConstructType(string[] arr, int i)
 		{
-		}
-
-		public NamespaceDeclaration(string name)
-		{
-			this.Name = name;
+			if (i < 0 || i >= arr.Length)
+				throw new ArgumentOutOfRangeException(nameof(i));
+			if (i == 0)
+				return new SimpleType(arr[i]);
+			return new MemberType(ConstructType(arr, i - 1), arr[i]);
 		}
 
 		public static string BuildQualifiedName(string name1, string name2)
@@ -152,8 +152,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			NamespaceDeclaration o = other as NamespaceDeclaration;
-			return o != null && MatchString(this.Name, o.Name) && this.Members.DoMatch(o.Members, match);
+			return other is NamespaceDeclaration o && MatchString(this.Name, o.Name) &&
+			       this.Members.DoMatch(o.Members, match);
 		}
 	}
 };

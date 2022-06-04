@@ -32,8 +32,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DoWhileStatement : Statement
 	{
-		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
-		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+		public static readonly TokenRole DoKeywordRole = new("do");
+		public static readonly TokenRole WhileKeywordRole = new("while");
+
+		public DoWhileStatement()
+		{
+		}
+
+		public DoWhileStatement(Expression condition, Statement embeddedStatement)
+		{
+			this.Condition = condition;
+			this.EmbeddedStatement = embeddedStatement;
+		}
 
 		public CSharpTokenNode DoToken {
 			get { return GetChildByRole(DoKeywordRole); }
@@ -82,19 +92,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DoWhileStatement o = other as DoWhileStatement;
-			return o != null && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match) && this.Condition.DoMatch(o.Condition, match);
-		}
-
-		public DoWhileStatement()
-		{
-		}
-
-		public DoWhileStatement(Expression condition, Statement embeddedStatement)
-		{
-			this.Condition = condition;
-			this.EmbeddedStatement = embeddedStatement;
+			return other is DoWhileStatement o && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match) &&
+			       this.Condition.DoMatch(o.Condition, match);
 		}
 	}
 }
-

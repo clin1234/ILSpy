@@ -61,17 +61,20 @@ namespace ICSharpCode.Decompiler.Documentation
 					for (int j = i + 1; j < parts.Length && typeDef != null; j++)
 					{
 						int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
-						typeDef = typeDef.NestedTypes.FirstOrDefault(n => n.Name == parts[j] && n.TypeParameterCount == tpc);
+						typeDef = typeDef.NestedTypes.FirstOrDefault(n =>
+							n.Name == parts[j] && n.TypeParameterCount == tpc);
 					}
+
 					if (typeDef != null)
 						return typeDef;
 				}
 			}
+
 			int idx = typeName.LastIndexOf('.');
 			if (idx < 0)
 				return new UnknownType("", typeName, typeParameterCount);
 			// give back a guessed namespace/type name
-			return new UnknownType(typeName.Substring(0, idx), typeName.Substring(idx + 1), typeParameterCount);
+			return new UnknownType(typeName[..idx], typeName[(idx + 1)..], typeParameterCount);
 		}
 
 		/// <summary>
@@ -95,7 +98,8 @@ namespace ICSharpCode.Decompiler.Documentation
 					int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
 					var typeDef = module.Metadata.GetTypeDefinition(typeHandle);
 					string lookupName = parts[j] + (tpc > 0 ? "`" + tpc : "");
-					typeHandle = typeDef.GetNestedTypes().FirstOrDefault(n => IsEqualShortName(n, module.Metadata, lookupName));
+					typeHandle = typeDef.GetNestedTypes()
+						.FirstOrDefault(n => IsEqualShortName(n, module.Metadata, lookupName));
 				}
 
 				if (!typeHandle.IsNil)

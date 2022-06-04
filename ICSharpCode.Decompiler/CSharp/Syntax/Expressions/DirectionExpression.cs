@@ -40,33 +40,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DirectionExpression : Expression
 	{
-		public readonly static TokenRole RefKeywordRole = new TokenRole("ref");
-		public readonly static TokenRole OutKeywordRole = new TokenRole("out");
-		public readonly static TokenRole InKeywordRole = new TokenRole("in");
-
-		public FieldDirection FieldDirection {
-			get;
-			set;
-		}
-
-		public CSharpTokenNode FieldDirectionToken {
-			get {
-				switch (FieldDirection)
-				{
-					case FieldDirection.Ref:
-						return GetChildByRole(RefKeywordRole);
-					case FieldDirection.In:
-						return GetChildByRole(InKeywordRole);
-					default:
-						return GetChildByRole(OutKeywordRole);
-				}
-			}
-		}
-
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		public static readonly TokenRole RefKeywordRole = new("ref");
+		public static readonly TokenRole OutKeywordRole = new("out");
+		public static readonly TokenRole InKeywordRole = new("in");
 
 		public DirectionExpression()
 		{
@@ -76,6 +52,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.FieldDirection = direction;
 			AddChild(expression, Roles.Expression);
+		}
+
+		public FieldDirection FieldDirection {
+			get;
+			set;
+		}
+
+		public CSharpTokenNode FieldDirectionToken {
+			get {
+				return FieldDirection switch {
+					FieldDirection.Ref => GetChildByRole(RefKeywordRole),
+					FieldDirection.In => GetChildByRole(InKeywordRole),
+					_ => GetChildByRole(OutKeywordRole)
+				};
+			}
+		}
+
+		public Expression Expression {
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -95,8 +91,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DirectionExpression o = other as DirectionExpression;
-			return o != null && this.FieldDirection == o.FieldDirection && this.Expression.DoMatch(o.Expression, match);
+			return other is DirectionExpression o && this.FieldDirection == o.FieldDirection &&
+			       this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

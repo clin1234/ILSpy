@@ -9,16 +9,14 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-using static ICSharpCode.Decompiler.Metadata.ILOpCodeExtensions;
-
 namespace ICSharpCode.Decompiler.CSharp
 {
 	class RequiredNamespaceCollector
 	{
-		static readonly Decompiler.TypeSystem.GenericContext genericContext = default;
+		static readonly GenericContext genericContext = default;
 
 		readonly HashSet<string> namespaces;
-		readonly HashSet<IType> visitedTypes = new HashSet<IType>();
+		readonly HashSet<IType> visitedTypes = new();
 
 		public RequiredNamespaceCollector(HashSet<string> namespaces)
 		{
@@ -39,6 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				collector.CollectNamespaces(type, module, (CodeMappingInfo)null);
 			}
+
 			collector.HandleAttributes(module.GetAssemblyAttributes());
 			collector.HandleAttributes(module.GetModuleAttributes());
 		}
@@ -98,6 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						CollectNamespaces(method, module, mappingInfo);
 					}
+
 					break;
 				case IField field:
 					HandleAttributes(field.GetAttributes());
@@ -117,6 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							HandleAttributes(param.GetAttributes());
 							CollectNamespacesForTypeReference(param.Type);
 						}
+
 						HandleTypeParameters(partMethod.TypeParameters);
 						HandleOverrides(part.GetMethodImplementations(module.metadata), module);
 						var methodDef = module.metadata.GetMethodDefinition(part);
@@ -131,9 +132,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							{
 								continue;
 							}
+
 							CollectNamespacesFromMethodBody(body, module);
 						}
 					}
+
 					break;
 				case IProperty property:
 					HandleAttributes(property.GetAttributes());
@@ -179,6 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						CollectNamespacesForTypeReference(elementType);
 					}
+
 					break;
 				case FunctionPointerType fnPtrType:
 					CollectNamespacesForTypeReference(fnPtrType.ReturnType);
@@ -186,11 +190,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						CollectNamespacesForTypeReference(paramType);
 					}
+
 					break;
 				default:
 					namespaces.Add(type.Namespace);
 					break;
 			}
+
 			foreach (var baseType in type.GetAllBaseTypes())
 			{
 				namespaces.Add(baseType.Namespace);
@@ -213,6 +219,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					HandleAttributeValue(arg.Type, arg.Value);
 				}
+
 				foreach (var arg in attr.NamedArguments)
 				{
 					HandleAttributeValue(arg.Type, arg.Value);
@@ -264,6 +271,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// Issue #1211: ignore invalid local signatures
 					localSignature = ImmutableArray<IType>.Empty;
 				}
+
 				foreach (var type in localSignature)
 					CollectNamespacesForTypeReference(type);
 			}
@@ -281,6 +289,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					continue;
 				}
+
 				CollectNamespacesForTypeReference(ty);
 			}
 
@@ -295,6 +304,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return;
 				}
+
 				switch (opCode.GetOperandType())
 				{
 					case OperandType.Field:
@@ -311,6 +321,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
+
 						if (handle.IsNil)
 							break;
 						switch (handle.Kind)
@@ -327,6 +338,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								{
 									break;
 								}
+
 								CollectNamespacesForTypeReference(type);
 								break;
 							case HandleKind.FieldDefinition:
@@ -342,6 +354,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								{
 									break;
 								}
+
 								CollectNamespacesForMemberReference(member);
 								break;
 							case HandleKind.StandaloneSignature:
@@ -354,21 +367,26 @@ namespace ICSharpCode.Decompiler.CSharp
 								{
 									break;
 								}
+
 								if (sig.GetKind() == StandaloneSignatureKind.Method)
 								{
 									FunctionPointerType fpt;
 									try
 									{
-										(_, fpt) = module.DecodeMethodSignature((StandaloneSignatureHandle)handle, genericContext);
+										(_, fpt) = module.DecodeMethodSignature((StandaloneSignatureHandle)handle,
+											genericContext);
 									}
 									catch (BadImageFormatException)
 									{
 										break;
 									}
+
 									CollectNamespacesForTypeReference(fpt);
 								}
+
 								break;
 						}
+
 						break;
 					default:
 						try
@@ -379,6 +397,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
+
 						break;
 				}
 			}

@@ -31,6 +31,24 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public sealed class ResolutionException : Exception
 	{
+		public ResolutionException(IAssemblyReference reference, string? resolvedPath, Exception? innerException)
+			: base($"Failed to resolve assembly: '{reference}'{Environment.NewLine}" +
+			       $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
+		{
+			this.Reference = reference ?? throw new ArgumentNullException(nameof(reference));
+			this.ResolvedFullPath = resolvedPath;
+		}
+
+		public ResolutionException(string mainModule, string moduleName, string? resolvedPath,
+			Exception? innerException)
+			: base($"Failed to resolve module: '{moduleName} of {mainModule}'{Environment.NewLine}" +
+			       $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
+		{
+			this.MainModuleFullPath = mainModule ?? throw new ArgumentNullException(nameof(mainModule));
+			this.ModuleName = moduleName ?? throw new ArgumentNullException(nameof(moduleName));
+			this.ResolvedFullPath = resolvedPath;
+		}
+
 		public IAssemblyReference? Reference { get; }
 
 		public string? ModuleName { get; }
@@ -38,23 +56,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		public string? MainModuleFullPath { get; }
 
 		public string? ResolvedFullPath { get; }
-
-		public ResolutionException(IAssemblyReference reference, string? resolvedPath, Exception? innerException)
-			: base($"Failed to resolve assembly: '{reference}'{Environment.NewLine}" +
-				  $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
-		{
-			this.Reference = reference ?? throw new ArgumentNullException(nameof(reference));
-			this.ResolvedFullPath = resolvedPath;
-		}
-
-		public ResolutionException(string mainModule, string moduleName, string? resolvedPath, Exception? innerException)
-			: base($"Failed to resolve module: '{moduleName} of {mainModule}'{Environment.NewLine}" +
-				  $"Resolve result: {resolvedPath ?? "<not found>"}", innerException)
-		{
-			this.MainModuleFullPath = mainModule ?? throw new ArgumentNullException(nameof(mainModule));
-			this.ModuleName = moduleName ?? throw new ArgumentNullException(nameof(moduleName));
-			this.ResolvedFullPath = resolvedPath;
-		}
 	}
 
 	public interface IAssemblyResolver
@@ -126,7 +127,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				builder.Append("PublicKeyToken=");
 
 				var pk_token = PublicKeyToken;
-				if (pk_token != null && pk_token.Length > 0)
+				if (pk_token is { Length: > 0 })
 				{
 					for (int i = 0; i < pk_token.Length; i++)
 					{
@@ -158,8 +159,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static AssemblyNameReference Parse(string fullName)
 		{
-			if (fullName == null)
-				throw new ArgumentNullException(nameof(fullName));
+			ArgumentNullException.ThrowIfNull(fullName);
 			if (fullName.Length == 0)
 				throw new ArgumentException("Name can not be empty");
 
@@ -194,7 +194,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 						name.PublicKeyToken = new byte[pk_token.Length / 2];
 						for (int j = 0; j < name.PublicKeyToken.Length; j++)
-							name.PublicKeyToken[j] = Byte.Parse(pk_token.Substring(j * 2, 2), System.Globalization.NumberStyles.HexNumber);
+							name.PublicKeyToken[j] = Byte.Parse(pk_token.Substring(j * 2, 2),
+								System.Globalization.NumberStyles.HexNumber);
 
 						break;
 				}
@@ -215,15 +216,34 @@ namespace ICSharpCode.Decompiler.Metadata
 		static readonly SHA1 sha1 = SHA1.Create();
 
 		readonly System.Reflection.Metadata.AssemblyReference entry;
+		string? fullName;
+
+		string? name;
+
+		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
+		{
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+			Handle = handle;
+			entry = metadata.GetAssemblyReference(handle);
+		}
+
+		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
+		{
+			ArgumentNullException.ThrowIfNull(module);
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			Metadata = module.Metadata;
+			Handle = handle;
+			entry = Metadata.GetAssemblyReference(handle);
+		}
 
 		public MetadataReader Metadata { get; }
 		public AssemblyReferenceHandle Handle { get; }
 
 		public bool IsWindowsRuntime => (entry.Flags & AssemblyFlags.WindowsRuntime) != 0;
 		public bool IsRetargetable => (entry.Flags & AssemblyFlags.Retargetable) != 0;
-
-		string? name;
-		string? fullName;
 
 		public string Name {
 			get {
@@ -238,6 +258,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						name = $"AR:{Handle}";
 					}
 				}
+
 				return name;
 			}
 		}
@@ -255,6 +276,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						fullName = $"fullname(AR:{Handle})";
 					}
 				}
+
 				return fullName;
 			}
 		}
@@ -272,29 +294,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				return sha1.ComputeHash(bytes).Skip(12).ToArray();
 			}
+
 			return bytes;
-		}
-
-		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
-		{
-			if (metadata == null)
-				throw new ArgumentNullException(nameof(metadata));
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			Metadata = metadata;
-			Handle = handle;
-			entry = metadata.GetAssemblyReference(handle);
-		}
-
-		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
-		{
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			Metadata = module.Metadata;
-			Handle = handle;
-			entry = Metadata.GetAssemblyReference(handle);
 		}
 
 		public override string ToString()

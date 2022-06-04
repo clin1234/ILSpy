@@ -44,62 +44,54 @@ namespace ICSharpCode.Decompiler.Util
 #else
 	public
 #endif
-	class ResXResourceWriter : IDisposable
+		class ResXResourceWriter : IDisposable
 	{
-		#region Local Variables
-		private string filename;
-		private Stream stream;
-		private TextWriter textwriter;
-		private XmlTextWriter writer;
-		private bool written;
-		private string base_path;
-		#endregion    // Local Variables
+		const string WinFormsAssemblyName =
+			", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 
-		#region Static Fields
-		public static readonly string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
-		public static readonly string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
-		public static readonly string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
-		public static readonly string ResMimeType = "text/microsoft-resx";
-		public static readonly string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
-		public static readonly string Version = "2.0";
-		#endregion  // Static Fields
-
-		#region Constructors & Destructor
-		public ResXResourceWriter(Stream stream)
-		{
-			if (stream == null)
-				throw new ArgumentNullException(nameof(stream));
-
-			if (!stream.CanWrite)
-				throw new ArgumentException("stream is not writable.", nameof(stream));
-
-			this.stream = stream;
-		}
-
-		public ResXResourceWriter(TextWriter textWriter)
-		{
-			if (textWriter == null)
-				throw new ArgumentNullException(nameof(textWriter));
-
-			this.textwriter = textWriter;
-		}
-
-		public ResXResourceWriter(string fileName)
-		{
-			if (fileName == null)
-				throw new ArgumentNullException(nameof(fileName));
-
-			this.filename = fileName;
-		}
-
-		~ResXResourceWriter()
-		{
-			Dispose(false);
-		}
-		#endregion // Constructors & Destructor
-
-		const string WinFormsAssemblyName = ", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 		const string ResXNullRefTypeName = "System.Resources.ResXNullRef" + WinFormsAssemblyName;
+
+		static string schema = @"
+	<xsd:schema id='root' xmlns='' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'>
+		<xsd:element name='root' msdata:IsDataSet='true'>
+			<xsd:complexType>
+				<xsd:choice maxOccurs='unbounded'>
+					<xsd:element name='data'>
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name='value' type='xsd:string' minOccurs='0' msdata:Ordinal='1' />
+								<xsd:element name='comment' type='xsd:string' minOccurs='0' msdata:Ordinal='2' />
+							</xsd:sequence>
+							<xsd:attribute name='name' type='xsd:string' msdata:Ordinal='1' />
+							<xsd:attribute name='type' type='xsd:string' msdata:Ordinal='3' />
+							<xsd:attribute name='mimetype' type='xsd:string' msdata:Ordinal='4' />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name='resheader'>
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name='value' type='xsd:string' minOccurs='0' msdata:Ordinal='1' />
+							</xsd:sequence>
+							<xsd:attribute name='name' type='xsd:string' use='required' />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+".Replace("'", "\"").Replace("\t", "  ");
+
+		#region Public Properties
+
+		public string BasePath { get; set; }
+
+		#endregion
+
+		public virtual void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 
 		void InitWriter()
 		{
@@ -131,24 +123,19 @@ namespace ICSharpCode.Decompiler.Util
 
 		void WriteNiceBase64(byte[] value, int offset, int length)
 		{
-			string b64;
-			StringBuilder sb;
-			int pos;
-			int inc;
-			string ins;
-
-			b64 = Convert.ToBase64String(value, offset, length);
+			string b64 = Convert.ToBase64String(value, offset, length);
 
 			// Wild guess; two extra newlines, and one newline/tab pair for every 80 chars
-			sb = new StringBuilder(b64, b64.Length + ((b64.Length + 160) / 80) * 3);
-			pos = 0;
-			inc = 80 + Environment.NewLine.Length + 1;
-			ins = Environment.NewLine + "\t";
+			StringBuilder sb = new(b64, b64.Length + ((b64.Length + 160) / 80) * 3);
+			int pos = 0;
+			int inc = 80 + Environment.NewLine.Length + 1;
+			string ins = Environment.NewLine + "\t";
 			while (pos < sb.Length)
 			{
 				sb.Insert(pos, ins);
 				pos += inc;
 			}
+
 			sb.Insert(sb.Length, Environment.NewLine);
 			writer.WriteString(sb.ToString());
 		}
@@ -196,10 +183,12 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			WriteString(name, value, null);
 		}
+
 		void WriteString(string name, string value, string type)
 		{
 			WriteString(name, value, type, String.Empty);
 		}
+
 		void WriteString(string name, string value, string type, string comment)
 		{
 			writer.WriteStartElement("data");
@@ -215,17 +204,16 @@ namespace ICSharpCode.Decompiler.Util
 				writer.WriteString(comment);
 				writer.WriteEndElement();
 			}
+
 			writer.WriteEndElement();
 			writer.WriteWhitespace("\n  ");
 		}
 
 		public void AddResource(string name, byte[] value)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
+			ArgumentNullException.ThrowIfNull(value);
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -243,14 +231,13 @@ namespace ICSharpCode.Decompiler.Util
 
 		private void AddResource(string name, object value, string comment)
 		{
-			if (value is string)
+			if (value is string s)
 			{
-				AddResource(name, (string)value, comment);
+				AddResource(name, s, comment);
 				return;
 			}
 
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -258,11 +245,12 @@ namespace ICSharpCode.Decompiler.Util
 			if (writer == null)
 				InitWriter();
 
-			if (value is byte[])
+			if (value is byte[] o)
 			{
-				WriteBytes(name, value.GetType(), (byte[])value, comment);
+				WriteBytes(name, o.GetType(), o, comment);
 				return;
 			}
+
 			if (value is ResourceSerializedObject rso)
 			{
 				var bytes = rso.GetBytes();
@@ -278,13 +266,14 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			if (value != null && !value.GetType().IsSerializable)
-				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));
+				throw new InvalidOperationException(
+					$"The element '{name}' of type '{value.GetType().Name}' is not serializable.");
 
 			TypeConverter converter = TypeDescriptor.GetConverter(value);
 
 			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
 			{
-				string str = (string)converter.ConvertToInvariantString(value);
+				string str = converter.ConvertToInvariantString(value);
 				WriteString(name, str, value.GetType().AssemblyQualifiedName, comment);
 				return;
 			}
@@ -296,8 +285,8 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			MemoryStream ms = new MemoryStream();
-			BinaryFormatter fmt = new BinaryFormatter();
+			MemoryStream ms = new();
+			BinaryFormatter fmt = new();
 			try
 			{
 				fmt.Serialize(ms, value);
@@ -305,8 +294,8 @@ namespace ICSharpCode.Decompiler.Util
 			catch (Exception e)
 			{
 				throw new InvalidOperationException("Cannot add a " + value.GetType() +
-									 "because it cannot be serialized: " +
-									 e.Message);
+				                                    "because it cannot be serialized: " +
+				                                    e.Message);
 			}
 
 			WriteBytes(name, null, ms.GetBuffer(), 0, (int)ms.Length, comment);
@@ -320,11 +309,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		private void AddResource(string name, string value, string comment)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
+			ArgumentNullException.ThrowIfNull(value);
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -337,11 +324,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddMetadata(string name, string value)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
+			ArgumentNullException.ThrowIfNull(value);
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -360,11 +345,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddMetadata(string name, byte[] value)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
+			ArgumentNullException.ThrowIfNull(value);
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -386,26 +369,25 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddMetadata(string name, object value)
 		{
-			if (value is string)
+			if (value is string s)
 			{
-				AddMetadata(name, (string)value);
+				AddMetadata(name, s);
 				return;
 			}
 
-			if (value is byte[])
+			if (value is byte[] bytes)
 			{
-				AddMetadata(name, (byte[])value);
+				AddMetadata(name, bytes);
 				return;
 			}
 
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
+			ArgumentNullException.ThrowIfNull(value);
 
 			if (!value.GetType().IsSerializable)
-				throw new InvalidOperationException(String.Format("The element '{0}' of type '{1}' is not serializable.", name, value.GetType().Name));
+				throw new InvalidOperationException(
+					$"The element '{name}' of type '{value.GetType().Name}' is not serializable.");
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -418,7 +400,7 @@ namespace ICSharpCode.Decompiler.Util
 			TypeConverter converter = TypeDescriptor.GetConverter(value);
 			if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
 			{
-				string str = (string)converter.ConvertToInvariantString(value);
+				string str = converter.ConvertToInvariantString(value);
 				writer.WriteStartElement("metadata");
 				writer.WriteAttributeString("name", name);
 				if (type != null)
@@ -456,8 +438,8 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			MemoryStream ms = new MemoryStream();
-			BinaryFormatter fmt = new BinaryFormatter();
+			MemoryStream ms = new();
+			BinaryFormatter fmt = new();
 			try
 			{
 				fmt.Serialize(ms, value);
@@ -465,8 +447,8 @@ namespace ICSharpCode.Decompiler.Util
 			catch (Exception e)
 			{
 				throw new InvalidOperationException("Cannot add a " + value.GetType() +
-									 "because it cannot be serialized: " +
-									 e.Message);
+				                                    "because it cannot be serialized: " +
+				                                    e.Message);
 			}
 
 			writer.WriteStartElement("metadata");
@@ -507,12 +489,6 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		public virtual void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
 		public void Generate()
 		{
 			if (written)
@@ -529,41 +505,57 @@ namespace ICSharpCode.Decompiler.Util
 				Close();
 		}
 
-		static string schema = @"
-	<xsd:schema id='root' xmlns='' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'>
-		<xsd:element name='root' msdata:IsDataSet='true'>
-			<xsd:complexType>
-				<xsd:choice maxOccurs='unbounded'>
-					<xsd:element name='data'>
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name='value' type='xsd:string' minOccurs='0' msdata:Ordinal='1' />
-								<xsd:element name='comment' type='xsd:string' minOccurs='0' msdata:Ordinal='2' />
-							</xsd:sequence>
-							<xsd:attribute name='name' type='xsd:string' msdata:Ordinal='1' />
-							<xsd:attribute name='type' type='xsd:string' msdata:Ordinal='3' />
-							<xsd:attribute name='mimetype' type='xsd:string' msdata:Ordinal='4' />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name='resheader'>
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name='value' type='xsd:string' minOccurs='0' msdata:Ordinal='1' />
-							</xsd:sequence>
-							<xsd:attribute name='name' type='xsd:string' use='required' />
-						</xsd:complexType>
-					</xsd:element>
-				</xsd:choice>
-			</xsd:complexType>
-		</xsd:element>
-	</xsd:schema>
-".Replace("'", "\"").Replace("\t", "  ");
+		#region Local Variables
 
-		#region Public Properties
-		public string BasePath {
-			get { return base_path; }
-			set { base_path = value; }
+		private string filename;
+		private Stream stream;
+		private TextWriter textwriter;
+		private XmlTextWriter writer;
+		private bool written;
+
+		#endregion // Local Variables
+
+		#region Static Fields
+
+		public static readonly string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
+
+		public static readonly string ByteArraySerializedObjectMimeType =
+			"application/x-microsoft.net.object.bytearray.base64";
+
+		public static readonly string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
+		public static readonly string ResMimeType = "text/microsoft-resx";
+		public static readonly string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
+		public static readonly string Version = "2.0";
+
+		#endregion // Static Fields
+
+		#region Constructors & Destructor
+
+		public ResXResourceWriter(Stream stream)
+		{
+			ArgumentNullException.ThrowIfNull(stream);
+
+			if (!stream.CanWrite)
+				throw new ArgumentException("stream is not writable.", nameof(stream));
+
+			this.stream = stream;
 		}
-		#endregion
+
+		public ResXResourceWriter(TextWriter textWriter)
+		{
+			this.textwriter = textWriter ?? throw new ArgumentNullException(nameof(textWriter));
+		}
+
+		public ResXResourceWriter(string fileName)
+		{
+			this.filename = fileName ?? throw new ArgumentNullException(nameof(fileName));
+		}
+
+		~ResXResourceWriter()
+		{
+			Dispose(false);
+		}
+
+		#endregion // Constructors & Destructor
 	}
 }

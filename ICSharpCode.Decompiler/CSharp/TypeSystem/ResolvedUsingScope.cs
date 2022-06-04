@@ -26,7 +26,6 @@ using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.TypeSystem
@@ -37,19 +36,20 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	public class ResolvedUsingScope
 	{
 		readonly CSharpTypeResolveContext parentContext;
-		readonly UsingScope usingScope;
 
-		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new ConcurrentDictionary<string, ResolveResult>();
+		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new();
 		internal List<List<IMethod>> AllExtensionMethods;
+
+		INamespace @namespace;
+
+		IList<KeyValuePair<string, ResolveResult>> usingAliases;
+
+		IList<INamespace> usings;
 
 		public ResolvedUsingScope(CSharpTypeResolveContext context, UsingScope usingScope)
 		{
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-			if (usingScope == null)
-				throw new ArgumentNullException(nameof(usingScope));
-			this.parentContext = context;
-			this.usingScope = usingScope;
+			this.parentContext = context ?? throw new ArgumentNullException(nameof(context));
+			this.UnresolvedUsingScope = usingScope ?? throw new ArgumentNullException(nameof(usingScope));
 			if (usingScope.Parent != null)
 			{
 				if (context.CurrentUsingScope == null)
@@ -62,11 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
-		public UsingScope UnresolvedUsingScope {
-			get { return usingScope; }
-		}
-
-		INamespace @namespace;
+		public UsingScope UnresolvedUsingScope { get; }
 
 		public INamespace Namespace {
 			get {
@@ -79,14 +75,17 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				{
 					if (parentContext.CurrentUsingScope != null)
 					{
-						result = parentContext.CurrentUsingScope.Namespace.GetChildNamespace(usingScope.ShortNamespaceName);
+						result = parentContext.CurrentUsingScope.Namespace.GetChildNamespace(UnresolvedUsingScope
+							.ShortNamespaceName);
 						if (result == null)
-							result = new DummyNamespace(parentContext.CurrentUsingScope.Namespace, usingScope.ShortNamespaceName);
+							result = new DummyNamespace(parentContext.CurrentUsingScope.Namespace,
+								UnresolvedUsingScope.ShortNamespaceName);
 					}
 					else
 					{
 						result = parentContext.Compilation.RootNamespace;
 					}
+
 					Debug.Assert(result != null);
 					return LazyInit.GetOrSet(ref this.@namespace, result);
 				}
@@ -96,8 +95,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public ResolvedUsingScope Parent {
 			get { return parentContext.CurrentUsingScope; }
 		}
-
-		IList<INamespace> usings;
 
 		public IList<INamespace> Usings {
 			get {
@@ -109,19 +106,18 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				else
 				{
 					result = new List<INamespace>();
-					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
-					foreach (var u in usingScope.Usings)
+					CSharpResolver resolver = new(parentContext.WithUsingScope(this));
+					foreach (var u in UnresolvedUsingScope.Usings)
 					{
 						INamespace ns = u.ResolveNamespace(resolver);
 						if (ns != null && !result.Contains(ns))
 							result.Add(ns);
 					}
+
 					return LazyInit.GetOrSet(ref this.usings, new ReadOnlyCollection<INamespace>(result));
 				}
 			}
 		}
-
-		IList<KeyValuePair<string, ResolveResult>> usingAliases;
 
 		public IList<KeyValuePair<string, ResolveResult>> UsingAliases {
 			get {
@@ -132,31 +128,34 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				}
 				else
 				{
-					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
-					result = new KeyValuePair<string, ResolveResult>[usingScope.UsingAliases.Count];
+					CSharpResolver resolver = new(parentContext.WithUsingScope(this));
+					result = new KeyValuePair<string, ResolveResult>[UnresolvedUsingScope.UsingAliases.Count];
 					for (int i = 0; i < result.Count; i++)
 					{
-						var rr = usingScope.UsingAliases[i].Value.Resolve(resolver);
-						if (rr is TypeResolveResult)
+						var rr = UnresolvedUsingScope.UsingAliases[i].Value.Resolve(resolver);
+						if (rr is TypeResolveResult resolveResult)
 						{
-							rr = new AliasTypeResolveResult(usingScope.UsingAliases[i].Key, (TypeResolveResult)rr);
+							rr = new AliasTypeResolveResult(UnresolvedUsingScope.UsingAliases[i].Key, resolveResult);
 						}
-						else if (rr is NamespaceResolveResult)
+						else if (rr is NamespaceResolveResult namespaceResolveResult)
 						{
-							rr = new AliasNamespaceResolveResult(usingScope.UsingAliases[i].Key, (NamespaceResolveResult)rr);
+							rr = new AliasNamespaceResolveResult(UnresolvedUsingScope.UsingAliases[i].Key,
+								namespaceResolveResult);
 						}
+
 						result[i] = new KeyValuePair<string, ResolveResult>(
-							usingScope.UsingAliases[i].Key,
+							UnresolvedUsingScope.UsingAliases[i].Key,
 							rr
 						);
 					}
+
 					return LazyInit.GetOrSet(ref this.usingAliases, result);
 				}
 			}
 		}
 
 		public IList<string> ExternAliases {
-			get { return usingScope.ExternAliases; }
+			get { return UnresolvedUsingScope.ExternAliases; }
 		}
 
 		/// <summary>
@@ -165,29 +164,26 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public bool HasAlias(string identifier)
 		{
-			return usingScope.HasAlias(identifier);
+			return UnresolvedUsingScope.HasAlias(identifier);
 		}
 
 		sealed class DummyNamespace : INamespace
 		{
 			readonly INamespace parentNamespace;
-			readonly string name;
 
 			public DummyNamespace(INamespace parentNamespace, string name)
 			{
 				this.parentNamespace = parentNamespace;
-				this.name = name;
+				this.Name = name;
 			}
 
 			public string ExternAlias { get; set; }
 
 			string INamespace.FullName {
-				get { return NamespaceDeclaration.BuildQualifiedName(parentNamespace.FullName, name); }
+				get { return NamespaceDeclaration.BuildQualifiedName(parentNamespace.FullName, Name); }
 			}
 
-			public string Name {
-				get { return name; }
-			}
+			public string Name { get; }
 
 			SymbolKind ISymbol.SymbolKind {
 				get { return SymbolKind.Namespace; }

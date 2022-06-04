@@ -41,33 +41,37 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (pointerElementType == null)
 				return null;
-			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I)
+			if (byteOffsetInst is Conv { InputType: StackType.I8, ResultType: StackType.I } conv)
 			{
 				byteOffsetInst = conv.Argument;
 			}
+
 			int? elementSize = ComputeSizeOf(pointerElementType);
 			if (elementSize == 1)
 			{
 				return byteOffsetInst;
 			}
-			else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul)
+			else if (byteOffsetInst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Mul } mul)
 			{
 				if (mul.IsLifted)
 					return null;
 				if (mul.CheckForOverflow != checkForOverflow)
 					return null;
 				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
-					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType))
+				    || mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf &&
+				    NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType))
 				{
 					var countOffsetInst = mul.Left;
 					if (unwrapZeroExtension)
 					{
 						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);
 					}
+
 					return countOffsetInst;
 				}
 			}
-			else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerElementType))
+			else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf &&
+			         sizeOf.Type.Equals(pointerElementType))
 			{
 				return new LdcI4(1).WithILRange(byteOffsetInst);
 			}
@@ -84,6 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				}
 			}
+
 			return null;
 		}
 
@@ -110,6 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 				case KnownTypeCode.Decimal:
 					return 16;
 			}
+
 			return null;
 		}
 
@@ -120,15 +126,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal static bool IsFixedVariable(ILInstruction inst)
 		{
-			switch (inst)
-			{
-				case LdLoca ldloca:
-					return ldloca.Variable.CaptureScope == null; // locals are fixed if uncaptured
-				case LdFlda ldflda:
-					return IsFixedVariable(ldflda.Target);
-				default:
-					return inst.ResultType == StackType.I;
-			}
+			return inst switch {
+				LdLoca ldloca => ldloca.Variable.CaptureScope == null // locals are fixed if uncaptured
+				,
+				LdFlda ldflda => IsFixedVariable(ldflda.Target),
+				_ => inst.ResultType == StackType.I
+			};
 		}
 	}
 }

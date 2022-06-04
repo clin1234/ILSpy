@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
+
 namespace LightJson.Serialization
 {
-	using System;
-
 	/// <summary>
 	/// The exception that is thrown when a JSON message cannot be parsed.
 	/// </summary>
@@ -13,6 +13,32 @@ namespace LightJson.Serialization
 	/// </remarks>
 	internal sealed class JsonParseException : Exception
 	{
+		/// <summary>
+		/// Enumerates the types of errors that can occur when parsing a JSON message.
+		/// </summary>
+		public enum ErrorType : int
+		{
+			/// <summary>
+			/// Indicates that the cause of the error is unknown.
+			/// </summary>
+			Unknown = 0,
+
+			/// <summary>
+			/// Indicates that the text ended before the message could be parsed.
+			/// </summary>
+			IncompleteMessage,
+
+			/// <summary>
+			/// Indicates that a JsonObject contains more than one key with the same name.
+			/// </summary>
+			DuplicateObjectKeys,
+
+			/// <summary>
+			/// Indicates that the parser encountered and invalid or unexpected character.
+			/// </summary>
+			InvalidOrUnexpectedCharacter,
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="JsonParseException"/> class.
 		/// </summary>
@@ -45,32 +71,6 @@ namespace LightJson.Serialization
 		}
 
 		/// <summary>
-		/// Enumerates the types of errors that can occur when parsing a JSON message.
-		/// </summary>
-		public enum ErrorType : int
-		{
-			/// <summary>
-			/// Indicates that the cause of the error is unknown.
-			/// </summary>
-			Unknown = 0,
-
-			/// <summary>
-			/// Indicates that the text ended before the message could be parsed.
-			/// </summary>
-			IncompleteMessage,
-
-			/// <summary>
-			/// Indicates that a JsonObject contains more than one key with the same name.
-			/// </summary>
-			DuplicateObjectKeys,
-
-			/// <summary>
-			/// Indicates that the parser encountered and invalid or unexpected character.
-			/// </summary>
-			InvalidOrUnexpectedCharacter,
-		}
-
-		/// <summary>
 		/// Gets the text position where the error occurred.
 		/// </summary>
 		/// <value>The text position where the error occurred.</value>
@@ -84,20 +84,12 @@ namespace LightJson.Serialization
 
 		private static string GetDefaultMessage(ErrorType type)
 		{
-			switch (type)
-			{
-				case ErrorType.IncompleteMessage:
-					return "The string ended before a value could be parsed.";
-
-				case ErrorType.InvalidOrUnexpectedCharacter:
-					return "The parser encountered an invalid or unexpected character.";
-
-				case ErrorType.DuplicateObjectKeys:
-					return "The parser encountered a JsonObject with duplicate keys.";
-
-				default:
-					return "An error occurred while parsing the JSON message.";
-			}
+			return type switch {
+				ErrorType.IncompleteMessage => "The string ended before a value could be parsed.",
+				ErrorType.InvalidOrUnexpectedCharacter => "The parser encountered an invalid or unexpected character.",
+				ErrorType.DuplicateObjectKeys => "The parser encountered a JsonObject with duplicate keys.",
+				_ => "An error occurred while parsing the JSON message."
+			};
 		}
 	}
 }

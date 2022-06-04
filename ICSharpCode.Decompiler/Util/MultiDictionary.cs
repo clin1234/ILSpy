@@ -39,44 +39,6 @@ namespace ICSharpCode.Decompiler.Util
 			dict = new Dictionary<TKey, List<TValue>>(comparer);
 		}
 
-		public void Add(TKey key, TValue value)
-		{
-			if (!dict.TryGetValue(key, out List<TValue>? valueList))
-			{
-				valueList = new List<TValue>();
-				dict.Add(key, valueList);
-			}
-			valueList.Add(value);
-		}
-
-		public bool Remove(TKey key, TValue value)
-		{
-			if (dict.TryGetValue(key, out List<TValue>? valueList))
-			{
-				if (valueList.Remove(value))
-				{
-					if (valueList.Count == 0)
-						dict.Remove(key);
-					return true;
-				}
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Removes all entries with the specified key.
-		/// </summary>
-		/// <returns>Returns true if at least one entry was removed.</returns>
-		public bool RemoveAll(TKey key)
-		{
-			return dict.Remove(key);
-		}
-
-		public void Clear()
-		{
-			dict.Clear();
-		}
-
 		public IReadOnlyList<TValue> this[TKey key] {
 			get {
 				if (dict.TryGetValue(key, out var list))
@@ -86,19 +48,19 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		/// <summary>
-		/// Returns the number of different keys.
-		/// </summary>
-		public int Count {
-			get { return dict.Count; }
-		}
-
 		public ICollection<TKey> Keys {
 			get { return dict.Keys; }
 		}
 
 		public IEnumerable<TValue> Values {
 			get { return dict.Values.SelectMany(list => list); }
+		}
+
+		/// <summary>
+		/// Returns the number of different keys.
+		/// </summary>
+		public int Count {
+			get { return dict.Count; }
 		}
 
 		IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] {
@@ -121,20 +83,57 @@ namespace ICSharpCode.Decompiler.Util
 			return GetEnumerator();
 		}
 
+		public void Add(TKey key, TValue value)
+		{
+			if (!dict.TryGetValue(key, out List<TValue>? valueList))
+			{
+				valueList = new List<TValue>();
+				dict.Add(key, valueList);
+			}
+
+			valueList.Add(value);
+		}
+
+		public bool Remove(TKey key, TValue value)
+		{
+			if (dict.TryGetValue(key, out List<TValue>? valueList))
+			{
+				if (valueList.Remove(value))
+				{
+					if (valueList.Count == 0)
+						dict.Remove(key);
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Removes all entries with the specified key.
+		/// </summary>
+		/// <returns>Returns true if at least one entry was removed.</returns>
+		public bool RemoveAll(TKey key)
+		{
+			return dict.Remove(key);
+		}
+
+		public void Clear()
+		{
+			dict.Clear();
+		}
+
 		sealed class Grouping : IGrouping<TKey, TValue>
 		{
-			readonly TKey key;
 			readonly List<TValue> values;
 
 			public Grouping(TKey key, List<TValue> values)
 			{
-				this.key = key;
+				this.Key = key;
 				this.values = values;
 			}
 
-			public TKey Key {
-				get { return key; }
-			}
+			public TKey Key { get; }
 
 			public IEnumerator<TValue> GetEnumerator()
 			{

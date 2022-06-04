@@ -25,17 +25,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedField : SpecializedMember, IField
 	{
-		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
-		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution) || fieldDefinition.DeclaringType.TypeParameterCount == 0)
-			{
-				return fieldDefinition;
-			}
-			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
-				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
-			return new SpecializedField(fieldDefinition, substitution);
-		}
-
 		readonly IField fieldDefinition;
 
 		public SpecializedField(IField fieldDefinition, TypeParameterSubstitution substitution)
@@ -64,6 +53,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
+		}
+
+		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution) ||
+			    fieldDefinition.DeclaringType.TypeParameterCount == 0)
+			{
+				return fieldDefinition;
+			}
+
+			if (substitution.MethodTypeArguments is { Count: > 0 })
+				substitution =
+					new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			return new SpecializedField(fieldDefinition, substitution);
 		}
 	}
 }

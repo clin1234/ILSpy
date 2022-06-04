@@ -17,9 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Text;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -29,9 +27,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		public EnumUnderlyingTypeResolveException() { }
 		public EnumUnderlyingTypeResolveException(string message) : base(message) { }
 		public EnumUnderlyingTypeResolveException(string message, Exception inner) : base(message, inner) { }
+
 		protected EnumUnderlyingTypeResolveException(
-		  SerializationInfo info,
-		  StreamingContext context) : base(info, context) { }
+			SerializationInfo info,
+			StreamingContext context) : base(info, context)
+		{
+		}
 	}
 
 	[Serializable]
@@ -40,8 +41,11 @@ namespace ICSharpCode.Decompiler.Metadata
 		public PEFileNotSupportedException() { }
 		public PEFileNotSupportedException(string message) : base(message) { }
 		public PEFileNotSupportedException(string message, Exception inner) : base(message, inner) { }
+
 		protected PEFileNotSupportedException(
-		  SerializationInfo info,
-		  StreamingContext context) : base(info, context) { }
+			SerializationInfo info,
+			StreamingContext context) : base(info, context)
+		{
+		}
 	}
 }

@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static void WriteTo(this IMember member, ITextOutput output)
 		{
-			if (member is IMethod method && method.IsConstructor)
+			if (member is IMethod { IsConstructor: true } method)
 				output.WriteReference(member, method.DeclaringType?.Name + "." + method.Name);
 			else
 				output.WriteReference(member, member.Name);
@@ -69,15 +69,16 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write($"[{interval.Start:x4}..{interval.InclusiveEnd:x4}] ");
 		}
 
-		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output, Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
+		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output,
+			Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
 		{
 			if (entity.IsNil)
 			{
 				output.Write("<nil>");
 				return;
 			}
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
+
+			ArgumentNullException.ThrowIfNull(module);
 			var metadata = module.Metadata;
 			Action<ILNameSyntax> signature;
 			MethodSignature<Action<ILNameSyntax>> methodSignature;
@@ -102,14 +103,17 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						resolutionScope = default;
 					}
+
 					if (!resolutionScope.IsNil)
 					{
 						output.Write("[");
 						var currentTypeRef = tr;
 						while (currentTypeRef.ResolutionScope.Kind == HandleKind.TypeReference)
 						{
-							currentTypeRef = metadata.GetTypeReference((TypeReferenceHandle)currentTypeRef.ResolutionScope);
+							currentTypeRef =
+								metadata.GetTypeReference((TypeReferenceHandle)currentTypeRef.ResolutionScope);
 						}
+
 						switch (currentTypeRef.ResolutionScope.Kind)
 						{
 							case HandleKind.ModuleDefinition:
@@ -119,26 +123,32 @@ namespace ICSharpCode.Decompiler.IL
 							case HandleKind.ModuleReference:
 								break;
 							case HandleKind.AssemblyReference:
-								var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)currentTypeRef.ResolutionScope);
+								var asmRef =
+									metadata.GetAssemblyReference(
+										(AssemblyReferenceHandle)currentTypeRef.ResolutionScope);
 								output.Write(DisassemblerHelpers.Escape(metadata.GetString(asmRef.Name)));
 								break;
 						}
+
 						output.Write("]");
 					}
+
 					output.WriteReference(module, entity, entity.GetFullTypeName(metadata).ToILNameString());
 					break;
 				}
 				case HandleKind.TypeSpecification:
 				{
 					var ts = metadata.GetTypeSpecification((TypeSpecificationHandle)entity);
-					signature = ts.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+					signature = ts.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
+						genericContext);
 					signature(syntax);
 					break;
 				}
 				case HandleKind.FieldDefinition:
 				{
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)entity);
-					signature = fd.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.MetadataGenericContext(fd.GetDeclaringType(), module));
+					signature = fd.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
+						new Metadata.MetadataGenericContext(fd.GetDeclaringType(), module));
 					signature(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
 					((EntityHandle)fd.GetDeclaringType()).WriteTo(module, output, default, ILNameSyntax.TypeName);
@@ -149,7 +159,8 @@ namespace ICSharpCode.Decompiler.IL
 				case HandleKind.MethodDefinition:
 				{
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)entity);
-					methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module));
+					methodSignature = md.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
+						new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module));
 					methodSignature.Header.WriteTo(output);
 					methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 					output.Write(' ');
@@ -159,15 +170,20 @@ namespace ICSharpCode.Decompiler.IL
 						((EntityHandle)declaringType).WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
 						output.Write("::");
 					}
-					bool isCompilerControlled = (md.Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.PrivateScope;
+
+					bool isCompilerControlled = (md.Attributes & MethodAttributes.MemberAccessMask) ==
+					                            MethodAttributes.PrivateScope;
 					if (isCompilerControlled)
 					{
-						output.WriteReference(module, entity, DisassemblerHelpers.Escape(metadata.GetString(md.Name) + "$PST" + MetadataTokens.GetToken(entity).ToString("X8")));
+						output.WriteReference(module, entity,
+							DisassemblerHelpers.Escape(metadata.GetString(md.Name) + "$PST" +
+							                           MetadataTokens.GetToken(entity).ToString("X8")));
 					}
 					else
 					{
 						output.WriteReference(module, entity, DisassemblerHelpers.Escape(metadata.GetString(md.Name)));
 					}
+
 					var genericParameters = md.GetGenericParameters();
 					if (genericParameters.Count > 0)
 					{
@@ -177,18 +193,23 @@ namespace ICSharpCode.Decompiler.IL
 							if (i > 0)
 								output.Write(", ");
 							var gp = metadata.GetGenericParameter(genericParameters[i]);
-							if ((gp.Attributes & GenericParameterAttributes.ReferenceTypeConstraint) == GenericParameterAttributes.ReferenceTypeConstraint)
+							if ((gp.Attributes & GenericParameterAttributes.ReferenceTypeConstraint) ==
+							    GenericParameterAttributes.ReferenceTypeConstraint)
 							{
 								output.Write("class ");
 							}
-							else if ((gp.Attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) == GenericParameterAttributes.NotNullableValueTypeConstraint)
+							else if ((gp.Attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) ==
+							         GenericParameterAttributes.NotNullableValueTypeConstraint)
 							{
 								output.Write("valuetype ");
 							}
-							if ((gp.Attributes & GenericParameterAttributes.DefaultConstructorConstraint) == GenericParameterAttributes.DefaultConstructorConstraint)
+
+							if ((gp.Attributes & GenericParameterAttributes.DefaultConstructorConstraint) ==
+							    GenericParameterAttributes.DefaultConstructorConstraint)
 							{
 								output.Write(".ctor ");
 							}
+
 							var constraints = gp.GetConstraints();
 							if (constraints.Count > 0)
 							{
@@ -198,22 +219,31 @@ namespace ICSharpCode.Decompiler.IL
 									if (j > 0)
 										output.Write(", ");
 									var constraint = metadata.GetGenericParameterConstraint(constraints[j]);
-									constraint.Type.WriteTo(module, output, new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module), ILNameSyntax.TypeName);
+									constraint.Type.WriteTo(module, output,
+										new Metadata.MetadataGenericContext((MethodDefinitionHandle)entity, module),
+										ILNameSyntax.TypeName);
 								}
+
 								output.Write(") ");
 							}
-							if ((gp.Attributes & GenericParameterAttributes.Contravariant) == GenericParameterAttributes.Contravariant)
+
+							if ((gp.Attributes & GenericParameterAttributes.Contravariant) ==
+							    GenericParameterAttributes.Contravariant)
 							{
 								output.Write('-');
 							}
-							else if ((gp.Attributes & GenericParameterAttributes.Covariant) == GenericParameterAttributes.Covariant)
+							else if ((gp.Attributes & GenericParameterAttributes.Covariant) ==
+							         GenericParameterAttributes.Covariant)
 							{
 								output.Write('+');
 							}
+
 							output.Write(DisassemblerHelpers.Escape(metadata.GetString(gp.Name)));
 						}
+
 						output.Write('>');
 					}
+
 					WriteParameterList(output, methodSignature);
 					break;
 				}
@@ -223,7 +253,9 @@ namespace ICSharpCode.Decompiler.IL
 					switch (mr.GetKind())
 					{
 						case MemberReferenceKind.Method:
-							methodSignature = mr.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+							methodSignature =
+								mr.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output),
+									genericContext);
 							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
@@ -233,7 +265,9 @@ namespace ICSharpCode.Decompiler.IL
 							WriteParameterList(output, methodSignature);
 							break;
 						case MemberReferenceKind.Field:
-							var fieldSignature = mr.DecodeFieldSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+							var fieldSignature =
+								mr.DecodeFieldSignature(new DisassemblerSignatureTypeProvider(module, output),
+									genericContext);
 							fieldSignature(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
@@ -241,41 +275,54 @@ namespace ICSharpCode.Decompiler.IL
 							output.WriteReference(module, entity, DisassemblerHelpers.Escape(memberName));
 							break;
 					}
+
 					break;
 				case HandleKind.MethodSpecification:
 					var ms = metadata.GetMethodSpecification((MethodSpecificationHandle)entity);
-					var substitution = ms.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+					var substitution = ms.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
+						genericContext);
 					switch (ms.Method.Kind)
 					{
 						case HandleKind.MethodDefinition:
 							var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)ms.Method);
 							var methodName = metadata.GetString(methodDefinition.Name);
-							methodSignature = methodDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+							methodSignature =
+								methodDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output),
+									genericContext);
 							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
 							var declaringType = methodDefinition.GetDeclaringType();
 							if (!declaringType.IsNil)
 							{
-								((EntityHandle)declaringType).WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
+								((EntityHandle)declaringType).WriteTo(module, output, genericContext,
+									ILNameSyntax.TypeName);
 								output.Write("::");
 							}
-							bool isCompilerControlled = (methodDefinition.Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.PrivateScope;
+
+							bool isCompilerControlled =
+								(methodDefinition.Attributes & MethodAttributes.MemberAccessMask) ==
+								MethodAttributes.PrivateScope;
 							if (isCompilerControlled)
 							{
-								output.Write(DisassemblerHelpers.Escape(methodName + "$PST" + MetadataTokens.GetToken(ms.Method).ToString("X8")));
+								output.Write(DisassemblerHelpers.Escape(methodName + "$PST" +
+								                                        MetadataTokens.GetToken(ms.Method)
+									                                        .ToString("X8")));
 							}
 							else
 							{
 								output.Write(DisassemblerHelpers.Escape(methodName));
 							}
+
 							WriteTypeParameterList(output, syntax, substitution);
 							WriteParameterList(output, methodSignature);
 							break;
 						case HandleKind.MemberReference:
 							var memberReference = metadata.GetMemberReference((MemberReferenceHandle)ms.Method);
 							memberName = metadata.GetString(memberReference.Name);
-							methodSignature = memberReference.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+							methodSignature =
+								memberReference.DecodeMethodSignature(
+									new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							output.Write(' ');
@@ -286,6 +333,7 @@ namespace ICSharpCode.Decompiler.IL
 							WriteParameterList(output, methodSignature);
 							break;
 					}
+
 					break;
 				case HandleKind.StandaloneSignature:
 					var standaloneSig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)entity);
@@ -293,7 +341,9 @@ namespace ICSharpCode.Decompiler.IL
 					switch (header.Kind)
 					{
 						case SignatureKind.Method:
-							methodSignature = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureTypeProvider(module, output), genericContext);
+							methodSignature =
+								standaloneSig.DecodeMethodSignature(
+									new DisassemblerSignatureTypeProvider(module, output), genericContext);
 							methodSignature.Header.WriteTo(output);
 							methodSignature.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
 							WriteParameterList(output, methodSignature);
@@ -302,6 +352,7 @@ namespace ICSharpCode.Decompiler.IL
 							output.Write($"@{MetadataTokens.GetToken(entity):X8} /* signature {header.Kind} */");
 							break;
 					}
+
 					break;
 				default:
 					output.Write($"@{MetadataTokens.GetToken(entity):X8}");
@@ -309,7 +360,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		static void WriteTypeParameterList(ITextOutput output, ILNameSyntax syntax, System.Collections.Immutable.ImmutableArray<Action<ILNameSyntax>> substitution)
+		static void WriteTypeParameterList(ITextOutput output, ILNameSyntax syntax,
+			System.Collections.Immutable.ImmutableArray<Action<ILNameSyntax>> substitution)
 		{
 			output.Write('<');
 			for (int i = 0; i < substitution.Length; i++)
@@ -318,6 +370,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(", ");
 				substitution[i](syntax);
 			}
+
 			output.Write('>');
 		}
 
@@ -332,6 +385,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write("..., ");
 				methodSignature.ParameterTypes[i](ILNameSyntax.SignatureNoNamedTypeParameters);
 			}
+
 			output.Write(")");
 		}
 
@@ -345,6 +399,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write("instance ");
 			}
+
 			if (header.CallingConvention != SignatureCallingConvention.Default)
 			{
 				output.Write(header.CallingConvention.ToILSyntax());
@@ -352,7 +407,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		static void WriteParent(ITextOutput output, PEFile module, MetadataReader metadata, EntityHandle parentHandle, Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax)
+		static void WriteParent(ITextOutput output, PEFile module, MetadataReader metadata, EntityHandle parentHandle,
+			Metadata.MetadataGenericContext genericContext, ILNameSyntax syntax)
 		{
 			switch (parentHandle.Kind)
 			{
@@ -373,6 +429,5 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 		}
-
 	}
 }

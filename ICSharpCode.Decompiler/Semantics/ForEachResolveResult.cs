@@ -28,19 +28,15 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class ForEachResolveResult : ResolveResult
 	{
 		/// <summary>
-		/// Gets the semantic tree for the call to GetEnumerator.
-		/// </summary>
-		public readonly ResolveResult GetEnumeratorCall;
-
-		/// <summary>
 		/// Gets the collection type.
 		/// </summary>
 		public readonly IType CollectionType;
 
 		/// <summary>
-		/// Gets the enumerator type.
+		/// Gets the Current property on the IEnumerator.
+		/// Returns null if the property is not found.
 		/// </summary>
-		public readonly IType EnumeratorType;
+		public readonly IProperty CurrentProperty;
 
 		/// <summary>
 		/// Gets the element type.
@@ -50,10 +46,14 @@ namespace ICSharpCode.Decompiler.Semantics
 		public readonly IType ElementType;
 
 		/// <summary>
-		/// Gets the Current property on the IEnumerator.
-		/// Returns null if the property is not found.
+		/// Gets the enumerator type.
 		/// </summary>
-		public readonly IProperty CurrentProperty;
+		public readonly IType EnumeratorType;
+
+		/// <summary>
+		/// Gets the semantic tree for the call to GetEnumerator.
+		/// </summary>
+		public readonly ResolveResult GetEnumeratorCall;
 
 		/// <summary>
 		/// Gets the MoveNext() method on the IEnumerator.
@@ -61,21 +61,14 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public readonly IMethod MoveNextMethod;
 
-		public ForEachResolveResult(ResolveResult getEnumeratorCall, IType collectionType, IType enumeratorType, IType elementType, IProperty currentProperty, IMethod moveNextMethod, IType voidType)
+		public ForEachResolveResult(ResolveResult getEnumeratorCall, IType collectionType, IType enumeratorType,
+			IType elementType, IProperty currentProperty, IMethod moveNextMethod, IType voidType)
 			: base(voidType)
 		{
-			if (getEnumeratorCall == null)
-				throw new ArgumentNullException(nameof(getEnumeratorCall));
-			if (collectionType == null)
-				throw new ArgumentNullException(nameof(collectionType));
-			if (enumeratorType == null)
-				throw new ArgumentNullException(nameof(enumeratorType));
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			this.GetEnumeratorCall = getEnumeratorCall;
-			this.CollectionType = collectionType;
-			this.EnumeratorType = enumeratorType;
-			this.ElementType = elementType;
+			this.GetEnumeratorCall = getEnumeratorCall ?? throw new ArgumentNullException(nameof(getEnumeratorCall));
+			this.CollectionType = collectionType ?? throw new ArgumentNullException(nameof(collectionType));
+			this.EnumeratorType = enumeratorType ?? throw new ArgumentNullException(nameof(enumeratorType));
+			this.ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 			this.CurrentProperty = currentProperty;
 			this.MoveNextMethod = moveNextMethod;
 		}

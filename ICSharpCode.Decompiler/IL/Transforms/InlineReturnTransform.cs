@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -44,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instructionsToModify.AddRange(list);
 			}
 
-			foreach (var (container, b, br) in instructionsToModify)
+			foreach ((BlockContainer container, Block b, Branch br) in instructionsToModify)
 			{
 				Block block = b;
 				// if there is only one branch to this return block, move it to the matching container.
@@ -57,6 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					block = (Block)block.Clone();
 				}
+
 				container.Blocks.Add(block);
 				// adjust the target of the branch to the newly created block.
 				br.TargetBlock = block;
@@ -74,18 +74,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Returns true, if all instructions meet these criteria, and <paramref name="instructionsToModify"/> contains a list of 3-tuples.
 		/// Each tuple consists of the target block container, the leave block, and the branch instruction that should be modified.
 		/// </summary>
-		static bool CanModifyInstructions(ILVariable returnVar, Block leaveBlock, out List<(BlockContainer, Block, Branch)> instructionsToModify)
+		static bool CanModifyInstructions(ILVariable returnVar, Block leaveBlock,
+			out List<(BlockContainer, Block, Branch)> instructionsToModify)
 		{
 			instructionsToModify = new List<(BlockContainer, Block, Branch)>();
 			foreach (var inst in returnVar.StoreInstructions)
 			{
-				if (!(inst is StLoc store))
-					return false;
-				if (!(store.Parent is Block storeBlock))
+				if (inst is not StLoc { Parent: Block storeBlock } store)
 					return false;
 				if (store.ChildIndex + 2 != storeBlock.Instructions.Count)
 					return false;
-				if (!(storeBlock.Instructions[store.ChildIndex + 1] is Branch br))
+				if (storeBlock.Instructions[store.ChildIndex + 1] is not Branch br)
 					return false;
 				if (br.TargetBlock != leaveBlock)
 					return false;

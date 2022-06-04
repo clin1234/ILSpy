@@ -22,10 +22,15 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class MatchInstruction : ILInstruction
 	{
+		public MatchInstruction(ILVariable variable, ILInstruction testedOperand)
+			: this(variable, method: null, testedOperand)
+		{
+		}
 		/* Pseudo-Code for interpreting a MatchInstruction:
 			bool Eval()
 			{
@@ -89,24 +94,20 @@ namespace ICSharpCode.Decompiler.IL
 				}
 		 */
 
-		public bool IsVar => !CheckType && !CheckNotNull && !IsDeconstructCall && !IsDeconstructTuple && SubPatterns.Count == 0;
+		public bool IsVar => !CheckType && !CheckNotNull && !IsDeconstructCall && !IsDeconstructTuple &&
+		                     SubPatterns.Count == 0;
 
 		public bool HasDesignator => Variable.LoadCount + Variable.AddressCount > SubPatterns.Count;
 
 		public int NumPositionalPatterns {
 			get {
 				if (IsDeconstructCall)
-					return method!.Parameters.Count - (method.IsStatic ? 1 : 0);
+					return Method!.Parameters.Count - (Method.IsStatic ? 1 : 0);
 				else if (IsDeconstructTuple)
 					return TupleType.GetTupleElementTypes(variable.Type).Length;
 				else
 					return 0;
 			}
-		}
-
-		public MatchInstruction(ILVariable variable, ILInstruction testedOperand)
-			: this(variable, method: null, testedOperand)
-		{
 		}
 
 		/// <summary>
@@ -159,17 +160,19 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (this.IsDeconstructCall)
 			{
-				int firstOutParam = (method!.IsStatic ? 1 : 0);
-				var outParamType = method.Parameters[firstOutParam + index].Type;
+				int firstOutParam = (Method!.IsStatic ? 1 : 0);
+				var outParamType = Method.Parameters[firstOutParam + index].Type;
 				if (outParamType is not ByReferenceType brt)
 					throw new InvalidOperationException("deconstruct out param must be by reference");
 				return brt.ElementType;
 			}
+
 			if (this.IsDeconstructTuple)
 			{
 				var elementTypes = TupleType.GetTupleElementTypes(this.variable.Type);
 				return elementTypes[index];
 			}
+
 			throw new InvalidOperationException("GetDeconstructResultType requires a deconstruct pattern");
 		}
 
@@ -178,16 +181,18 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(variable.Kind == VariableKind.PatternLocal);
 			if (this.IsDeconstructCall)
 			{
-				Debug.Assert(IsDeconstructMethod(method));
+				Debug.Assert(IsDeconstructMethod(Method));
 			}
 			else
 			{
-				Debug.Assert(method == null);
+				Debug.Assert(Method == null);
 			}
+
 			if (this.IsDeconstructTuple)
 			{
 				Debug.Assert(variable.Type.Kind == TypeKind.Tuple);
 			}
+
 			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			foreach (var subPattern in SubPatterns)
 			{
@@ -218,9 +223,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal static bool IsDeconstructMethod(IMethod? method)
 		{
-			if (method == null)
-				return false;
-			if (method.Name != "Deconstruct")
+			if (method is not { Name: "Deconstruct" })
 				return false;
 			if (method.ReturnType.Kind != TypeKind.Void)
 				return false;
@@ -259,25 +262,29 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".notnull");
 			}
+
 			if (CheckType)
 			{
 				output.Write(".type[");
 				variable.Type.WriteTo(output);
 				output.Write(']');
 			}
+
 			if (IsDeconstructCall)
 			{
 				output.Write(".deconstruct[");
-				if (method == null)
+				if (Method == null)
 					output.Write("<null>");
 				else
-					method.WriteTo(output);
+					Method.WriteTo(output);
 				output.Write(']');
 			}
+
 			if (IsDeconstructTuple)
 			{
 				output.Write(".tuple");
 			}
+
 			output.Write(' ');
 			output.Write('(');
 			Variable.WriteTo(output);
@@ -294,6 +301,7 @@ namespace ICSharpCode.Decompiler.IL
 					pattern.WriteTo(output, options);
 					output.WriteLine();
 				}
+
 				output.Unindent();
 				output.Write('}');
 				output.MarkFoldEnd();

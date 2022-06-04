@@ -40,100 +40,266 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	public class CSharpResolver : ICodeContext
 	{
 		static readonly ResolveResult ErrorResult = ErrorResolveResult.UnknownError;
-		readonly ICompilation compilation;
 		internal readonly CSharpConversions conversions;
-		readonly CSharpTypeResolveContext context;
-		readonly bool checkForOverflow;
-		readonly bool isWithinLambdaExpression;
+
+		#region ResolveIdentifierInObjectInitializer
+
+		public ResolveResult ResolveIdentifierInObjectInitializer(string identifier)
+		{
+			MemberLookup memberLookup = CreateMemberLookup();
+			return memberLookup.Lookup(this.CurrentObjectInitializer, identifier, EmptyList<IType>.Instance, false);
+		}
+
+		#endregion
+
+		#region ResolveObjectCreation
+
+		/// <summary>
+		/// Resolves an object creation.
+		/// </summary>
+		/// <param name="type">Type of the object to create.</param>
+		/// <param name="arguments">
+		/// Arguments passed to the constructor.
+		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// </param>
+		/// <param name="argumentNames">
+		/// The argument names. Pass the null string for positional arguments.
+		/// </param>
+		/// <param name="allowProtectedAccess">
+		/// Whether to allow calling protected constructors.
+		/// This should be false except when resolving constructor initializers.
+		/// </param>
+		/// <param name="initializerStatements">
+		/// Statements for Objects/Collections initializer.
+		/// <see cref="InvocationResolveResult.InitializerStatements"/>
+		/// </param>
+		/// <returns>InvocationResolveResult or ErrorResolveResult</returns>
+		public ResolveResult ResolveObjectCreation(IType type, ResolveResult[] arguments, string[] argumentNames = null,
+			bool allowProtectedAccess = false, IList<ResolveResult> initializerStatements = null)
+		{
+			if (type.Kind == TypeKind.Delegate && arguments.Length == 1)
+			{
+				ResolveResult input = arguments[0];
+				IMethod invoke = input.Type.GetDelegateInvokeMethod();
+				if (invoke != null)
+				{
+					input = new MethodGroupResolveResult(
+						input, invoke.Name,
+						methods: new[] { new MethodListWithDeclaringType(input.Type) { invoke } },
+						typeArguments: EmptyList<IType>.Instance
+					);
+				}
+
+				return Convert(input, type);
+			}
+
+			OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
+			MemberLookup lookup = CreateMemberLookup();
+			var allApplicable = (arguments.Any(a => a.Type.Kind == TypeKind.Dynamic) ? new List<IMethod>() : null);
+			foreach (IMethod ctor in type.GetConstructors())
+			{
+				if (lookup.IsAccessible(ctor, allowProtectedAccess))
+				{
+					var orErrors = or.AddCandidate(ctor);
+					if (allApplicable != null && OverloadResolution.IsApplicable(orErrors))
+						allApplicable.Add(ctor);
+				}
+				else
+					or.AddCandidate(ctor, OverloadResolutionErrors.Inaccessible);
+			}
+
+			if (allApplicable is { Count: > 1 })
+			{
+				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable constructor.
+				return new DynamicInvocationResolveResult(
+					new MethodGroupResolveResult(null, allApplicable[0].Name,
+						new[] { new MethodListWithDeclaringType(type, allApplicable) }, null),
+					DynamicInvocationType.ObjectCreation, AddArgumentNamesIfNecessary(arguments, argumentNames),
+					initializerStatements);
+			}
+
+			if (or.BestCandidate != null)
+			{
+				return or.CreateResolveResult(null, initializerStatements);
+			}
+			else
+			{
+				return new ErrorResolveResult(type);
+			}
+		}
+
+		#endregion
+
+		#region ResolveSizeOf
+
+		/// <summary>
+		/// Resolves 'sizeof(type)'.
+		/// </summary>
+		public ResolveResult ResolveSizeOf(IType type)
+		{
+			IType int32 = Compilation.FindType(KnownTypeCode.Int32);
+			int? size = null;
+			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
+
+			switch (typeForConstant.GetTypeCode())
+			{
+				case TypeCode.Boolean:
+				case TypeCode.SByte:
+				case TypeCode.Byte:
+					size = 1;
+					break;
+				case TypeCode.Char:
+				case TypeCode.Int16:
+				case TypeCode.UInt16:
+					size = 2;
+					break;
+				case TypeCode.Int32:
+				case TypeCode.UInt32:
+				case TypeCode.Single:
+					size = 4;
+					break;
+				case TypeCode.Int64:
+				case TypeCode.UInt64:
+				case TypeCode.Double:
+					size = 8;
+					break;
+			}
+
+			return new SizeOfResolveResult(int32, type, size);
+		}
+
+		#endregion
+
+		#region ResolvePrimitive
+
+		public ResolveResult ResolvePrimitive(object value)
+		{
+			if (value == null)
+			{
+				return new ResolveResult(SpecialType.NullType);
+			}
+			else
+			{
+				TypeCode typeCode = Type.GetTypeCode(value.GetType());
+				IType type = Compilation.FindType(typeCode);
+				return new ConstantResolveResult(type, value);
+			}
+		}
+
+		#endregion
+
+		public ResolveResult ResolveTypeOf(IType referencedType)
+		{
+			return new TypeOfResolveResult(Compilation.FindType(KnownTypeCode.Type), referencedType);
+		}
+
+		#region ResolveAssignment
+
+		public ResolveResult ResolveAssignment(AssignmentOperatorType op, ResolveResult lhs, ResolveResult rhs)
+		{
+			var linqOp = AssignmentExpression.GetLinqNodeType(op, this.CheckForOverflow);
+			var bop = AssignmentExpression.GetCorrespondingBinaryOperator(op);
+			if (bop == null)
+			{
+				return new OperatorResolveResult(lhs.Type, linqOp, lhs, this.Convert(rhs, lhs.Type));
+			}
+
+			ResolveResult bopResult = ResolveBinaryOperator(bop.Value, lhs, rhs);
+			if (bopResult is not OperatorResolveResult opResult || opResult.Operands.Count != 2)
+				return bopResult;
+			return new OperatorResolveResult(lhs.Type, linqOp, opResult.UserDefinedOperatorMethod,
+				opResult.IsLiftedOperator,
+				new[] { lhs, opResult.Operands[1] });
+		}
+
+		#endregion
 
 		#region Constructor
+
 		public CSharpResolver(ICompilation compilation)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			this.compilation = compilation;
+			this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.conversions = CSharpConversions.Get(compilation);
-			this.context = new CSharpTypeResolveContext(compilation.MainModule);
+			this.CurrentTypeResolveContext = new CSharpTypeResolveContext(compilation.MainModule);
 		}
 
 		public CSharpResolver(CSharpTypeResolveContext context)
 		{
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-			this.compilation = context.Compilation;
-			this.conversions = CSharpConversions.Get(compilation);
-			this.context = context;
+			ArgumentNullException.ThrowIfNull(context);
+			this.Compilation = context.Compilation;
+			this.conversions = CSharpConversions.Get(Compilation);
+			this.CurrentTypeResolveContext = context;
 			if (context.CurrentTypeDefinition != null)
 				currentTypeDefinitionCache = new TypeDefinitionCache(context.CurrentTypeDefinition);
 		}
 
-		private CSharpResolver(ICompilation compilation, CSharpConversions conversions, CSharpTypeResolveContext context, bool checkForOverflow, bool isWithinLambdaExpression, TypeDefinitionCache currentTypeDefinitionCache, ImmutableStack<IVariable> localVariableStack, ObjectInitializerContext objectInitializerStack)
+		private CSharpResolver(ICompilation compilation, CSharpConversions conversions,
+			CSharpTypeResolveContext context, bool checkForOverflow, bool isWithinLambdaExpression,
+			TypeDefinitionCache currentTypeDefinitionCache, ImmutableStack<IVariable> localVariableStack,
+			ObjectInitializerContext objectInitializerStack)
 		{
-			this.compilation = compilation;
+			this.Compilation = compilation;
 			this.conversions = conversions;
-			this.context = context;
-			this.checkForOverflow = checkForOverflow;
-			this.isWithinLambdaExpression = isWithinLambdaExpression;
+			this.CurrentTypeResolveContext = context;
+			this.CheckForOverflow = checkForOverflow;
+			this.IsWithinLambdaExpression = isWithinLambdaExpression;
 			this.currentTypeDefinitionCache = currentTypeDefinitionCache;
 			this.localVariableStack = localVariableStack;
 			this.objectInitializerStack = objectInitializerStack;
 		}
+
 		#endregion
 
 		#region Properties
+
 		/// <summary>
 		/// Gets the compilation used by the resolver.
 		/// </summary>
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
+		public ICompilation Compilation { get; }
 
 		/// <summary>
 		/// Gets the current type resolve context.
 		/// </summary>
-		public CSharpTypeResolveContext CurrentTypeResolveContext {
-			get { return context; }
-		}
+		public CSharpTypeResolveContext CurrentTypeResolveContext { get; }
 
 		IModule ITypeResolveContext.CurrentModule {
-			get { return context.CurrentModule; }
+			get { return CurrentTypeResolveContext.CurrentModule; }
 		}
 
 		CSharpResolver WithContext(CSharpTypeResolveContext newContext)
 		{
-			return new CSharpResolver(compilation, conversions, newContext, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new CSharpResolver(Compilation, conversions, newContext, CheckForOverflow, IsWithinLambdaExpression,
+				currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
 		/// <summary>
 		/// Gets whether the current context is <c>checked</c>.
 		/// </summary>
-		public bool CheckForOverflow {
-			get { return checkForOverflow; }
-		}
+		public bool CheckForOverflow { get; }
 
 		/// <summary>
 		/// Sets whether the current context is <c>checked</c>.
 		/// </summary>
 		public CSharpResolver WithCheckForOverflow(bool checkForOverflow)
 		{
-			if (checkForOverflow == this.checkForOverflow)
+			if (checkForOverflow == this.CheckForOverflow)
 				return this;
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new CSharpResolver(Compilation, conversions, CurrentTypeResolveContext, checkForOverflow,
+				IsWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
 		/// <summary>
 		/// Gets whether the resolver is currently within a lambda expression or anonymous method.
 		/// </summary>
-		public bool IsWithinLambdaExpression {
-			get { return isWithinLambdaExpression; }
-		}
+		public bool IsWithinLambdaExpression { get; }
 
 		/// <summary>
 		/// Sets whether the resolver is currently within a lambda expression.
 		/// </summary>
 		public CSharpResolver WithIsWithinLambdaExpression(bool isWithinLambdaExpression)
 		{
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new CSharpResolver(Compilation, conversions, CurrentTypeResolveContext, CheckForOverflow,
+				isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 
 		/// <summary>
@@ -141,7 +307,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// or type parameters.
 		/// </summary>
 		public IMember CurrentMember {
-			get { return context.CurrentMember; }
+			get { return CurrentTypeResolveContext.CurrentMember; }
 		}
 
 		/// <summary>
@@ -151,7 +317,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// setting one of the properties does not automatically set the other.</remarks>
 		public CSharpResolver WithCurrentMember(IMember member)
 		{
-			return WithContext(context.WithCurrentMember(member));
+			return WithContext(CurrentTypeResolveContext.WithCurrentMember(member));
 		}
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember member)
@@ -163,7 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Gets the current using scope that is used to look up identifiers as class names.
 		/// </summary>
 		public ResolvedUsingScope CurrentUsingScope {
-			get { return context.CurrentUsingScope; }
+			get { return CurrentTypeResolveContext.CurrentUsingScope; }
 		}
 
 		/// <summary>
@@ -171,18 +337,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public CSharpResolver WithCurrentUsingScope(ResolvedUsingScope usingScope)
 		{
-			return WithContext(context.WithUsingScope(usingScope));
+			return WithContext(CurrentTypeResolveContext.WithUsingScope(usingScope));
 		}
+
 		#endregion
 
 		#region Per-CurrentTypeDefinition Cache
+
 		readonly TypeDefinitionCache currentTypeDefinitionCache;
 
 		/// <summary>
 		/// Gets the current type definition.
 		/// </summary>
 		public ITypeDefinition CurrentTypeDefinition {
-			get { return context.CurrentTypeDefinition; }
+			get { return CurrentTypeResolveContext.CurrentTypeDefinition; }
 		}
 
 		/// <summary>
@@ -199,8 +367,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			else
 				newTypeDefinitionCache = null;
 
-			return new CSharpResolver(compilation, conversions, context.WithCurrentTypeDefinition(typeDefinition),
-									  checkForOverflow, isWithinLambdaExpression, newTypeDefinitionCache, localVariableStack, objectInitializerStack);
+			return new CSharpResolver(Compilation, conversions,
+				CurrentTypeResolveContext.WithCurrentTypeDefinition(typeDefinition),
+				CheckForOverflow, IsWithinLambdaExpression, newTypeDefinitionCache, localVariableStack,
+				objectInitializerStack);
 		}
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
@@ -210,16 +380,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		sealed class TypeDefinitionCache
 		{
+			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheExpression = new();
+			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheInvocationTarget = new();
+			public readonly Dictionary<string, ResolveResult> SimpleTypeLookupCache = new();
 			public readonly ITypeDefinition TypeDefinition;
-			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheExpression = new Dictionary<string, ResolveResult>();
-			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheInvocationTarget = new Dictionary<string, ResolveResult>();
-			public readonly Dictionary<string, ResolveResult> SimpleTypeLookupCache = new Dictionary<string, ResolveResult>();
 
 			public TypeDefinitionCache(ITypeDefinition typeDefinition)
 			{
 				this.TypeDefinition = typeDefinition;
 			}
 		}
+
 		#endregion
 
 		#region Local Variable Management
@@ -232,7 +403,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		CSharpResolver WithLocalVariableStack(ImmutableStack<IVariable> stack)
 		{
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, stack, objectInitializerStack);
+			return new CSharpResolver(Compilation, conversions, CurrentTypeResolveContext, CheckForOverflow,
+				IsWithinLambdaExpression, currentTypeDefinitionCache, stack, objectInitializerStack);
 		}
 
 		/// <summary>
@@ -255,6 +427,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				removedVar = stack.Peek();
 				stack = stack.Pop();
 			} while (removedVar != null);
+
 			return WithLocalVariableStack(stack);
 		}
 
@@ -263,8 +436,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public CSharpResolver AddVariable(IVariable variable)
 		{
-			if (variable == null)
-				throw new ArgumentNullException(nameof(variable));
+			ArgumentNullException.ThrowIfNull(variable);
 			return WithLocalVariableStack(localVariableStack.Push(variable));
 		}
 
@@ -287,15 +459,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return localVariableStack.Where(v => v != null);
 			}
 		}
+
 		#endregion
 
 		#region Object Initializer Context
+
 		sealed class ObjectInitializerContext
 		{
 			internal readonly ResolveResult initializedObject;
 			internal readonly ObjectInitializerContext prev;
 
-			public ObjectInitializerContext(ResolveResult initializedObject, CSharpResolver.ObjectInitializerContext prev)
+			public ObjectInitializerContext(ResolveResult initializedObject, ObjectInitializerContext prev)
 			{
 				this.initializedObject = initializedObject;
 				this.prev = prev;
@@ -306,7 +480,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		CSharpResolver WithObjectInitializerStack(ObjectInitializerContext stack)
 		{
-			return new CSharpResolver(compilation, conversions, context, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, stack);
+			return new CSharpResolver(Compilation, conversions, CurrentTypeResolveContext, CheckForOverflow,
+				IsWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, stack);
 		}
 
 		/// <summary>
@@ -314,8 +489,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public CSharpResolver PushObjectInitializer(ResolveResult initializedObject)
 		{
-			if (initializedObject == null)
-				throw new ArgumentNullException(nameof(initializedObject));
+			ArgumentNullException.ThrowIfNull(initializedObject);
 			return WithObjectInitializerStack(new ObjectInitializerContext(initializedObject, objectInitializerStack));
 		}
 
@@ -352,17 +526,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public IType CurrentObjectInitializerType {
 			get { return CurrentObjectInitializer.Type; }
 		}
+
 		#endregion
 
 		#region ResolveUnaryOperator
+
 		#region ResolveUnaryOperator method
+
 		public ResolveResult ResolveUnaryOperator(UnaryOperatorType op, ResolveResult expression)
 		{
 			if (expression.Type.Kind == TypeKind.Dynamic)
 			{
 				if (op == UnaryOperatorType.Await)
 				{
-					return new AwaitResolveResult(SpecialType.Dynamic, new DynamicInvocationResolveResult(new DynamicMemberResolveResult(expression, "GetAwaiter"), DynamicInvocationType.Invocation, EmptyList<ResolveResult>.Instance), SpecialType.Dynamic, null, null, null);
+					return new AwaitResolveResult(SpecialType.Dynamic,
+						new DynamicInvocationResolveResult(new DynamicMemberResolveResult(expression, "GetAwaiter"),
+							DynamicInvocationType.Invocation, EmptyList<ResolveResult>.Instance), SpecialType.Dynamic,
+						null, null, null);
 				}
 				else
 				{
@@ -377,8 +557,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				switch (op)
 				{
 					case UnaryOperatorType.Dereference:
-						PointerType p = expression.Type as PointerType;
-						if (p != null)
+						if (expression.Type is PointerType p)
 							return UnaryOperatorResolveResult(p.ElementType, op, expression);
 						else
 							return ErrorResult;
@@ -386,18 +565,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return UnaryOperatorResolveResult(new PointerType(expression.Type), op, expression);
 					case UnaryOperatorType.Await:
 					{
-						ResolveResult getAwaiterMethodGroup = ResolveMemberAccess(expression, "GetAwaiter", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup, Empty<ResolveResult>.Array, argumentNames: null, allowOptionalParameters: false);
+						ResolveResult getAwaiterMethodGroup = ResolveMemberAccess(expression, "GetAwaiter",
+							EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
+						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup,
+							Empty<ResolveResult>.Array, argumentNames: null, allowOptionalParameters: false);
 
 						var lookup = CreateMemberLookup();
 						IMethod getResultMethod;
 						IType awaitResultType;
-						var getResultMethodGroup = lookup.Lookup(getAwaiterInvocation, "GetResult", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-						if (getResultMethodGroup != null)
+						if (lookup.Lookup(getAwaiterInvocation, "GetResult", EmptyList<IType>.Instance, true) is
+						    MethodGroupResolveResult getResultMethodGroup)
 						{
-							var getResultOR = getResultMethodGroup.PerformOverloadResolution(compilation, Empty<ResolveResult>.Array, allowExtensionMethods: false, conversions: conversions);
-							getResultMethod = getResultOR.FoundApplicableCandidate ? getResultOR.GetBestCandidateWithSubstitutedTypeArguments() as IMethod : null;
-							awaitResultType = getResultMethod != null ? getResultMethod.ReturnType : SpecialType.UnknownType;
+							var getResultOR = getResultMethodGroup.PerformOverloadResolution(Compilation,
+								Empty<ResolveResult>.Array, allowExtensionMethods: false, conversions: conversions);
+							getResultMethod = getResultOR.FoundApplicableCandidate
+								? getResultOR.GetBestCandidateWithSubstitutedTypeArguments() as IMethod
+								: null;
+							awaitResultType = getResultMethod != null
+								? getResultMethod.ReturnType
+								: SpecialType.UnknownType;
 						}
 						else
 						{
@@ -405,9 +591,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							awaitResultType = SpecialType.UnknownType;
 						}
 
-						var isCompletedRR = lookup.Lookup(getAwaiterInvocation, "IsCompleted", EmptyList<IType>.Instance, false);
-						var isCompletedProperty = (isCompletedRR is MemberResolveResult ? ((MemberResolveResult)isCompletedRR).Member as IProperty : null);
-						if (isCompletedProperty != null && (!isCompletedProperty.ReturnType.IsKnownType(KnownTypeCode.Boolean) || !isCompletedProperty.CanGet))
+						var isCompletedRR = lookup.Lookup(getAwaiterInvocation, "IsCompleted",
+							EmptyList<IType>.Instance, false);
+						var isCompletedProperty = (isCompletedRR is MemberResolveResult result
+							? result.Member as IProperty
+							: null);
+						if (isCompletedProperty != null &&
+						    (!isCompletedProperty.ReturnType.IsKnownType(KnownTypeCode.Boolean) ||
+						     !isCompletedProperty.CanGet))
 							isCompletedProperty = null;
 						/*
 						var interfaceOnCompleted = compilation.FindType(KnownTypeCode.INotifyCompletion).GetMethods().FirstOrDefault(x => x.Name == "OnCompleted");
@@ -435,6 +626,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return ErrorResolveResult.UnknownError;
 				}
 			}
+
 			// If the type is nullable, get the underlying type:
 			IType type = NullableType.GetUnderlyingType(expression.Type);
 			bool isNullable = NullableType.IsNullable(expression.Type);
@@ -445,14 +637,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				userDefinedOperatorOR.AddCandidate(candidate);
 			}
+
 			if (userDefinedOperatorOR.FoundApplicableCandidate)
 			{
-				return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, UnaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
+				return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR,
+					UnaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
 			}
 
 			expression = UnaryNumericPromotion(op, ref type, isNullable, expression);
 			CSharpOperators.OperatorMethod[] methodGroup;
-			CSharpOperators operators = CSharpOperators.Get(compilation);
+			CSharpOperators operators = CSharpOperators.Get(Compilation);
 			switch (op)
 			{
 				case UnaryOperatorType.Increment:
@@ -461,8 +655,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case UnaryOperatorType.PostDecrement:
 					// C# 4.0 spec: §7.6.9 Postfix increment and decrement operators
 					// C# 4.0 spec: §7.7.5 Prefix increment and decrement operators
-					TypeCode code = ReflectionHelper.GetTypeCode(type);
-					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer || type.IsCSharpNativeIntegerType())
+					TypeCode code = type.GetTypeCode();
+					if (code is >= TypeCode.Char and <= TypeCode.Decimal ||
+					    type.Kind is TypeKind.Enum or TypeKind.Pointer || type.IsCSharpNativeIntegerType())
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					else
 						return new ErrorResolveResult(expression.Type);
@@ -471,6 +666,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					}
+
 					methodGroup = operators.UnaryPlusOperators;
 					break;
 				case UnaryOperatorType.Minus:
@@ -478,7 +674,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					}
-					methodGroup = CheckForOverflow ? operators.CheckedUnaryMinusOperators : operators.UncheckedUnaryMinusOperators;
+
+					methodGroup = CheckForOverflow
+						? operators.CheckedUnaryMinusOperators
+						: operators.UncheckedUnaryMinusOperators;
 					break;
 				case UnaryOperatorType.Not:
 					methodGroup = operators.LogicalNegationOperators;
@@ -489,13 +688,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						if (expression.IsCompileTimeConstant && !isNullable && expression.ConstantValue != null)
 						{
 							// evaluate as (E)(~(U)x);
-							var U = compilation.FindType(expression.ConstantValue.GetType());
+							var U = Compilation.FindType(expression.ConstantValue.GetType());
 							var unpackedEnum = new ConstantResolveResult(U, expression.ConstantValue);
 							var rr = ResolveUnaryOperator(op, unpackedEnum);
 							rr = WithCheckForOverflow(false).ResolveCast(type, rr);
 							if (rr.IsCompileTimeConstant)
 								return rr;
 						}
+
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					}
 					else if (type.IsCSharpNativeIntegerType())
@@ -510,12 +710,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				default:
 					throw new InvalidOperationException();
 			}
+
 			OverloadResolution builtinOperatorOR = CreateOverloadResolution(new[] { expression });
 			foreach (var candidate in methodGroup)
 			{
 				builtinOperatorOR.AddCandidate(candidate);
 			}
-			CSharpOperators.UnaryOperatorMethod m = (CSharpOperators.UnaryOperatorMethod)builtinOperatorOR.BestCandidate;
+
+			CSharpOperators.UnaryOperatorMethod
+				m = (CSharpOperators.UnaryOperatorMethod)builtinOperatorOR.BestCandidate;
 			IType resultType = m.ReturnType;
 			if (builtinOperatorOR.BestCandidateErrors != OverloadResolutionErrors.None)
 			{
@@ -523,7 +726,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					// If there are any user-defined operators, prefer those over the built-in operators.
 					// It'll be a more informative error.
-					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, UnaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
+					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR,
+						UnaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
 				}
 				else if (builtinOperatorOR.BestCandidateAmbiguousWith != null)
 				{
@@ -547,29 +751,34 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					return new ErrorResolveResult(resultType);
 				}
+
 				return new ConstantResolveResult(resultType, val);
 			}
 			else
 			{
 				expression = Convert(expression, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
 				return UnaryOperatorResolveResult(resultType, op, expression,
-												  builtinOperatorOR.BestCandidate is ILiftedOperator);
+					builtinOperatorOR.BestCandidate is ILiftedOperator);
 			}
 		}
 
-		OperatorResolveResult UnaryOperatorResolveResult(IType resultType, UnaryOperatorType op, ResolveResult expression, bool isLifted = false)
+		OperatorResolveResult UnaryOperatorResolveResult(IType resultType, UnaryOperatorType op,
+			ResolveResult expression, bool isLifted = false)
 		{
 			return new OperatorResolveResult(
 				resultType, UnaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow),
 				null, isLifted, new[] { expression });
 		}
+
 		#endregion
 
 		#region UnaryNumericPromotion
-		ResolveResult UnaryNumericPromotion(UnaryOperatorType op, ref IType type, bool isNullable, ResolveResult expression)
+
+		ResolveResult UnaryNumericPromotion(UnaryOperatorType op, ref IType type, bool isNullable,
+			ResolveResult expression)
 		{
 			// C# 4.0 spec: §7.3.6.1
-			TypeCode code = ReflectionHelper.GetTypeCode(type);
+			TypeCode code = type.GetTypeCode();
 			if (isNullable && type.Kind == TypeKind.Null)
 				code = TypeCode.SByte; // cause promotion of null to int32
 			switch (op)
@@ -577,26 +786,31 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case UnaryOperatorType.Minus:
 					if (code == TypeCode.UInt32)
 					{
-						type = compilation.FindType(KnownTypeCode.Int64);
+						type = Compilation.FindType(KnownTypeCode.Int64);
 						return Convert(expression, MakeNullable(type, isNullable),
-									   isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
+							isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
 					}
+
 					goto case UnaryOperatorType.Plus;
 				case UnaryOperatorType.Plus:
 				case UnaryOperatorType.BitNot:
-					if (code >= TypeCode.Char && code <= TypeCode.UInt16)
+					if (code is >= TypeCode.Char and <= TypeCode.UInt16)
 					{
-						type = compilation.FindType(KnownTypeCode.Int32);
+						type = Compilation.FindType(KnownTypeCode.Int32);
 						return Convert(expression, MakeNullable(type, isNullable),
-									   isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
+							isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
 					}
+
 					break;
 			}
+
 			return expression;
 		}
+
 		#endregion
 
 		#region GetOverloadableOperatorName
+
 		static string GetOverloadableOperatorName(UnaryOperatorType op)
 		{
 			switch (op)
@@ -619,11 +833,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return null;
 			}
 		}
+
 		#endregion
+
 		#endregion
 
 		#region ResolveBinaryOperator
+
 		#region ResolveBinaryOperator method
+
 		public ResolveResult ResolveBinaryOperator(BinaryOperatorType op, ResolveResult lhs, ResolveResult rhs)
 		{
 			if (lhs.Type.Kind == TypeKind.Dynamic || rhs.Type.Kind == TypeKind.Dynamic)
@@ -637,7 +855,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			string overloadableOperatorName = GetOverloadableOperatorName(op);
 			if (overloadableOperatorName == null)
 			{
-
 				// Handle logical and/or exactly as bitwise and/or:
 				// - If the user overloads a bitwise operator, that implicitly creates the corresponding logical operator.
 				// - If both inputs are compile-time constants, it doesn't matter that we don't short-circuit.
@@ -668,24 +885,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// the operator is overloadable:
 			OverloadResolution userDefinedOperatorOR = CreateOverloadResolution(new[] { lhs, rhs });
-			HashSet<IParameterizedMember> userOperatorCandidates = new HashSet<IParameterizedMember>();
+			HashSet<IParameterizedMember> userOperatorCandidates = new();
 			userOperatorCandidates.UnionWith(GetUserDefinedOperatorCandidates(lhsType, overloadableOperatorName));
 			userOperatorCandidates.UnionWith(GetUserDefinedOperatorCandidates(rhsType, overloadableOperatorName));
 			foreach (var candidate in userOperatorCandidates)
 			{
 				userDefinedOperatorOR.AddCandidate(candidate);
 			}
+
 			if (userDefinedOperatorOR.FoundApplicableCandidate)
 			{
-				return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, BinaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
+				return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR,
+					BinaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
 			}
 
 			if (lhsType.Kind == TypeKind.Null && rhsType.IsReferenceType == false
-				|| lhsType.IsReferenceType == false && rhsType.Kind == TypeKind.Null)
+			    || lhsType.IsReferenceType == false && rhsType.Kind == TypeKind.Null)
 			{
 				isNullable = true;
 			}
-			if (op == BinaryOperatorType.ShiftLeft || op == BinaryOperatorType.ShiftRight)
+
+			if (op is BinaryOperatorType.ShiftLeft or BinaryOperatorType.ShiftRight)
 			{
 				// special case: the shift operators allow "var x = null << null", producing int?.
 				if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
@@ -696,16 +916,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else
 			{
-				bool allowNullableConstants = op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality;
+				bool allowNullableConstants = op is BinaryOperatorType.Equality or BinaryOperatorType.InEquality;
 				if (!BinaryNumericPromotion(isNullable, ref lhs, ref rhs, allowNullableConstants))
 					return new ErrorResolveResult(lhs.Type);
 			}
+
 			// re-read underlying types after numeric promotion
 			lhsType = NullableType.GetUnderlyingType(lhs.Type);
 			rhsType = NullableType.GetUnderlyingType(rhs.Type);
 
 			IEnumerable<CSharpOperators.OperatorMethod> methodGroup;
-			CSharpOperators operators = CSharpOperators.Get(compilation);
+			CSharpOperators operators = CSharpOperators.Get(Compilation);
 			switch (op)
 			{
 				case BinaryOperatorType.Multiply:
@@ -719,85 +940,88 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					break;
 				case BinaryOperatorType.Add:
 					methodGroup = operators.AdditionOperators;
+				{
+					if (lhsType.Kind == TypeKind.Enum)
 					{
-						if (lhsType.Kind == TypeKind.Enum)
+						// E operator +(E x, U y);
+						IType underlyingType = MakeNullable(GetEnumUnderlyingType(lhsType), isNullable);
+						if (TryConvertEnum(ref rhs, underlyingType, ref isNullable, ref lhs))
 						{
-							// E operator +(E x, U y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(lhsType), isNullable);
-							if (TryConvertEnum(ref rhs, underlyingType, ref isNullable, ref lhs))
-							{
-								return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
-							}
+							return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
 						}
-						if (rhsType.Kind == TypeKind.Enum)
-						{
-							// E operator +(U x, E y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(rhsType), isNullable);
-							if (TryConvertEnum(ref lhs, underlyingType, ref isNullable, ref rhs))
-							{
-								return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
-							}
-						}
-
-						if (lhsType.Kind == TypeKind.Delegate && TryConvert(ref rhs, lhsType))
-						{
-							return BinaryOperatorResolveResult(lhsType, lhs, op, rhs);
-						}
-						else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType))
-						{
-							return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
-						}
-
-						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-							return new ErrorResolveResult(SpecialType.NullType);
 					}
+
+					if (rhsType.Kind == TypeKind.Enum)
+					{
+						// E operator +(U x, E y);
+						IType underlyingType = MakeNullable(GetEnumUnderlyingType(rhsType), isNullable);
+						if (TryConvertEnum(ref lhs, underlyingType, ref isNullable, ref rhs))
+						{
+							return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
+						}
+					}
+
+					if (lhsType.Kind == TypeKind.Delegate && TryConvert(ref rhs, lhsType))
+					{
+						return BinaryOperatorResolveResult(lhsType, lhs, op, rhs);
+					}
+					else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType))
+					{
+						return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
+					}
+
+					if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
+						return new ErrorResolveResult(SpecialType.NullType);
+				}
 					break;
 				case BinaryOperatorType.Subtract:
 					methodGroup = operators.SubtractionOperators;
+				{
+					if (lhsType.Kind == TypeKind.Enum)
 					{
-						if (lhsType.Kind == TypeKind.Enum)
+						// U operator –(E x, E y);
+						if (TryConvertEnum(ref rhs, lhs.Type, ref isNullable, ref lhs,
+							    allowConversionFromConstantZero: false))
 						{
-							// U operator –(E x, E y);
-							if (TryConvertEnum(ref rhs, lhs.Type, ref isNullable, ref lhs, allowConversionFromConstantZero: false))
-							{
-								return HandleEnumSubtraction(isNullable, lhsType, lhs, rhs);
-							}
-
-							// E operator –(E x, U y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(lhsType), isNullable);
-							if (TryConvertEnum(ref rhs, underlyingType, ref isNullable, ref lhs))
-							{
-								return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
-							}
-						}
-						if (rhsType.Kind == TypeKind.Enum)
-						{
-							// U operator –(E x, E y);
-							if (TryConvertEnum(ref lhs, rhs.Type, ref isNullable, ref rhs))
-							{
-								return HandleEnumSubtraction(isNullable, rhsType, lhs, rhs);
-							}
-
-							// E operator -(U x, E y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(rhsType), isNullable);
-							if (TryConvertEnum(ref lhs, underlyingType, ref isNullable, ref rhs))
-							{
-								return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
-							}
+							return HandleEnumSubtraction(isNullable, lhsType, lhs, rhs);
 						}
 
-						if (lhsType.Kind == TypeKind.Delegate && TryConvert(ref rhs, lhsType))
+						// E operator –(E x, U y);
+						IType underlyingType = MakeNullable(GetEnumUnderlyingType(lhsType), isNullable);
+						if (TryConvertEnum(ref rhs, underlyingType, ref isNullable, ref lhs))
 						{
-							return BinaryOperatorResolveResult(lhsType, lhs, op, rhs);
+							return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
 						}
-						else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType))
-						{
-							return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
-						}
-
-						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-							return new ErrorResolveResult(SpecialType.NullType);
 					}
+
+					if (rhsType.Kind == TypeKind.Enum)
+					{
+						// U operator –(E x, E y);
+						if (TryConvertEnum(ref lhs, rhs.Type, ref isNullable, ref rhs))
+						{
+							return HandleEnumSubtraction(isNullable, rhsType, lhs, rhs);
+						}
+
+						// E operator -(U x, E y);
+						IType underlyingType = MakeNullable(GetEnumUnderlyingType(rhsType), isNullable);
+						if (TryConvertEnum(ref lhs, underlyingType, ref isNullable, ref rhs))
+						{
+							return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
+						}
+					}
+
+					if (lhsType.Kind == TypeKind.Delegate && TryConvert(ref rhs, lhsType))
+					{
+						return BinaryOperatorResolveResult(lhsType, lhs, op, rhs);
+					}
+					else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType))
+					{
+						return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
+					}
+
+					if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
+						return new ErrorResolveResult(SpecialType.NullType);
+				}
 					break;
 				case BinaryOperatorType.ShiftLeft:
 					methodGroup = operators.ShiftLeftOperators;
@@ -824,16 +1048,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 					else if (lhsType is PointerType && rhsType is PointerType)
 					{
-						return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
+						return BinaryOperatorResolveResult(Compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
 					}
 					else if (lhsType.IsCSharpNativeIntegerType() || rhsType.IsCSharpNativeIntegerType())
 					{
 						if (lhsType.Equals(rhsType))
-							return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs, isLifted: isNullable);
+							return BinaryOperatorResolveResult(Compilation.FindType(KnownTypeCode.Boolean), lhs, op,
+								rhs, isLifted: isNullable);
 						else
-							return new ErrorResolveResult(compilation.FindType(KnownTypeCode.Boolean));
+							return new ErrorResolveResult(Compilation.FindType(KnownTypeCode.Boolean));
 					}
-					if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality)
+
+					if (op is BinaryOperatorType.Equality or BinaryOperatorType.InEquality)
 					{
 						if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true)
 						{
@@ -845,37 +1071,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							break;
 						}
 						else if (lhsType.Kind == TypeKind.Null && IsNullableTypeOrNonValueType(rhs.Type)
-								 || IsNullableTypeOrNonValueType(lhs.Type) && rhsType.Kind == TypeKind.Null)
+						         || IsNullableTypeOrNonValueType(lhs.Type) && rhsType.Kind == TypeKind.Null)
 						{
 							// compare type parameter or nullable type with the null literal
-							return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
+							return BinaryOperatorResolveResult(Compilation.FindType(KnownTypeCode.Boolean), lhs, op,
+								rhs);
 						}
 					}
-					switch (op)
-					{
-						case BinaryOperatorType.Equality:
-							methodGroup = operators.ValueEqualityOperators;
-							break;
-						case BinaryOperatorType.InEquality:
-							methodGroup = operators.ValueInequalityOperators;
-							break;
-						case BinaryOperatorType.LessThan:
-							methodGroup = operators.LessThanOperators;
-							break;
-						case BinaryOperatorType.GreaterThan:
-							methodGroup = operators.GreaterThanOperators;
-							break;
-						case BinaryOperatorType.LessThanOrEqual:
-							methodGroup = operators.LessThanOrEqualOperators;
-							break;
-						case BinaryOperatorType.GreaterThanOrEqual:
-							methodGroup = operators.GreaterThanOrEqualOperators;
-							break;
-						default:
-							throw new InvalidOperationException();
-					}
+
+					methodGroup = op switch {
+						BinaryOperatorType.Equality => operators.ValueEqualityOperators,
+						BinaryOperatorType.InEquality => operators.ValueInequalityOperators,
+						BinaryOperatorType.LessThan => operators.LessThanOperators,
+						BinaryOperatorType.GreaterThan => operators.GreaterThanOperators,
+						BinaryOperatorType.LessThanOrEqual => operators.LessThanOrEqualOperators,
+						BinaryOperatorType.GreaterThanOrEqual => operators.GreaterThanOrEqualOperators,
+						_ => throw new InvalidOperationException()
+					};
 				}
-				break;
+					break;
 				case BinaryOperatorType.BitwiseAnd:
 				case BinaryOperatorType.BitwiseOr:
 				case BinaryOperatorType.ExclusiveOr:
@@ -898,22 +1112,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 					}
 
-					switch (op)
-					{
-						case BinaryOperatorType.BitwiseAnd:
-							methodGroup = operators.BitwiseAndOperators;
-							break;
-						case BinaryOperatorType.BitwiseOr:
-							methodGroup = operators.BitwiseOrOperators;
-							break;
-						case BinaryOperatorType.ExclusiveOr:
-							methodGroup = operators.BitwiseXorOperators;
-							break;
-						default:
-							throw new InvalidOperationException();
-					}
+					methodGroup = op switch {
+						BinaryOperatorType.BitwiseAnd => operators.BitwiseAndOperators,
+						BinaryOperatorType.BitwiseOr => operators.BitwiseOrOperators,
+						BinaryOperatorType.ExclusiveOr => operators.BitwiseXorOperators,
+						_ => throw new InvalidOperationException()
+					};
 				}
-				break;
+					break;
 				case BinaryOperatorType.ConditionalAnd:
 					methodGroup = operators.LogicalAndOperators;
 					break;
@@ -923,30 +1129,36 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				default:
 					throw new InvalidOperationException();
 			}
+
 			if (lhsType.IsCSharpNativeIntegerType() || rhsType.IsCSharpNativeIntegerType())
 			{
 				if (lhsType.Equals(rhsType))
 				{
 					return BinaryOperatorResolveResult(
-						isNullable ? NullableType.Create(compilation, lhsType) : lhsType,
+						isNullable ? NullableType.Create(Compilation, lhsType) : lhsType,
 						lhs, op, rhs, isLifted: isNullable);
 				}
+
 				// mixing nint/nuint is not allowed
 				return new ErrorResolveResult(lhsType);
 			}
+
 			OverloadResolution builtinOperatorOR = CreateOverloadResolution(new[] { lhs, rhs });
 			foreach (var candidate in methodGroup)
 			{
 				builtinOperatorOR.AddCandidate(candidate);
 			}
-			CSharpOperators.BinaryOperatorMethod m = (CSharpOperators.BinaryOperatorMethod)builtinOperatorOR.BestCandidate;
+
+			CSharpOperators.BinaryOperatorMethod m =
+				(CSharpOperators.BinaryOperatorMethod)builtinOperatorOR.BestCandidate;
 			IType resultType = m.ReturnType;
 			if (builtinOperatorOR.BestCandidateErrors != OverloadResolutionErrors.None)
 			{
 				// If there are any user-defined operators, prefer those over the built-in operators.
 				// It'll be a more informative error.
 				if (userDefinedOperatorOR.BestCandidate != null)
-					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, BinaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
+					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR,
+						BinaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow));
 				else
 					return new ErrorResolveResult(resultType);
 			}
@@ -961,6 +1173,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					return new ErrorResolveResult(resultType);
 				}
+
 				return new ConstantResolveResult(resultType, val);
 			}
 			else
@@ -968,7 +1181,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				lhs = Convert(lhs, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
 				rhs = Convert(rhs, m.Parameters[1].Type, builtinOperatorOR.ArgumentConversions[1]);
 				return BinaryOperatorResolveResult(resultType, lhs, op, rhs,
-												   builtinOperatorOR.BestCandidate is ILiftedOperator);
+					builtinOperatorOR.BestCandidate is ILiftedOperator);
 			}
 		}
 
@@ -977,28 +1190,34 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return NullableType.IsNullable(type) || type.IsReferenceType != false;
 		}
 
-		ResolveResult BinaryOperatorResolveResult(IType resultType, ResolveResult lhs, BinaryOperatorType op, ResolveResult rhs, bool isLifted = false)
+		ResolveResult BinaryOperatorResolveResult(IType resultType, ResolveResult lhs, BinaryOperatorType op,
+			ResolveResult rhs, bool isLifted = false)
 		{
 			return new OperatorResolveResult(
 				resultType, BinaryOperatorExpression.GetLinqNodeType(op, this.CheckForOverflow),
 				null, isLifted, new[] { lhs, rhs });
 		}
+
 		#endregion
 
 		#region Pointer arithmetic
-		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1, KnownTypeCode inputType2)
+
+		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1,
+			KnownTypeCode inputType2)
 		{
-			return PointerArithmeticOperator(resultType, inputType1, compilation.FindType(inputType2));
+			return PointerArithmeticOperator(resultType, inputType1, Compilation.FindType(inputType2));
 		}
 
-		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, KnownTypeCode inputType1, IType inputType2)
+		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, KnownTypeCode inputType1,
+			IType inputType2)
 		{
-			return PointerArithmeticOperator(resultType, compilation.FindType(inputType1), inputType2);
+			return PointerArithmeticOperator(resultType, Compilation.FindType(inputType1), inputType2);
 		}
 
-		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1, IType inputType2)
+		CSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1,
+			IType inputType2)
 		{
-			return new CSharpOperators.BinaryOperatorMethod(compilation) {
+			return new CSharpOperators.BinaryOperatorMethod(Compilation) {
 				ReturnType = resultType,
 				parameters = {
 					new DefaultParameter(inputType1, string.Empty),
@@ -1006,9 +1225,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			};
 		}
+
 		#endregion
 
 		#region Enum helper methods
+
 		IType GetEnumUnderlyingType(IType enumType)
 		{
 			ITypeDefinition def = enumType.GetDefinition();
@@ -1019,17 +1240,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Handle the case where an enum value is compared with another enum value
 		/// bool operator op(E x, E y);
 		/// </summary>
-		ResolveResult HandleEnumComparison(BinaryOperatorType op, IType enumType, bool isNullable, ResolveResult lhs, ResolveResult rhs)
+		ResolveResult HandleEnumComparison(BinaryOperatorType op, IType enumType, bool isNullable, ResolveResult lhs,
+			ResolveResult rhs)
 		{
 			// evaluate as ((U)x op (U)y)
 			IType elementType = GetEnumUnderlyingType(enumType);
-			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum)
+			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable &&
+			    elementType.Kind != TypeKind.Enum)
 			{
 				var rr = ResolveBinaryOperator(op, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
 				if (rr.IsCompileTimeConstant)
 					return rr;
 			}
-			IType resultType = compilation.FindType(KnownTypeCode.Boolean);
+
+			IType resultType = Compilation.FindType(KnownTypeCode.Boolean);
 			return BinaryOperatorResolveResult(resultType, lhs, op, rhs, isNullable);
 		}
 
@@ -1041,13 +1265,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// evaluate as (U)((U)x – (U)y)
 			IType elementType = GetEnumUnderlyingType(enumType);
-			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum)
+			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable &&
+			    elementType.Kind != TypeKind.Enum)
 			{
-				var rr = ResolveBinaryOperator(BinaryOperatorType.Subtract, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
+				var rr = ResolveBinaryOperator(BinaryOperatorType.Subtract, ResolveCast(elementType, lhs),
+					ResolveCast(elementType, rhs));
 				rr = WithCheckForOverflow(false).ResolveCast(elementType, rr);
 				if (rr.IsCompileTimeConstant)
 					return rr;
 			}
+
 			IType resultType = MakeNullable(elementType, isNullable);
 			return BinaryOperatorResolveResult(resultType, lhs, BinaryOperatorType.Subtract, rhs, isNullable);
 		}
@@ -1061,7 +1288,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// E operator |(E x, E y);
 		/// E operator ^(E x, E y);
 		/// </summary>
-		ResolveResult HandleEnumOperator(bool isNullable, IType enumType, BinaryOperatorType op, ResolveResult lhs, ResolveResult rhs)
+		ResolveResult HandleEnumOperator(bool isNullable, IType enumType, BinaryOperatorType op, ResolveResult lhs,
+			ResolveResult rhs)
 		{
 			// evaluate as (E)((U)x op (U)y)
 			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable)
@@ -1075,6 +1303,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return rr;
 				}
 			}
+
 			IType resultType = MakeNullable(enumType, isNullable);
 			return BinaryOperatorResolveResult(resultType, lhs, op, rhs, isNullable);
 		}
@@ -1082,20 +1311,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		IType MakeNullable(IType type, bool isNullable)
 		{
 			if (isNullable)
-				return NullableType.Create(compilation, type);
+				return NullableType.Create(Compilation, type);
 			else
 				return type;
 		}
+
 		#endregion
 
 		#region BinaryNumericPromotion
-		bool BinaryNumericPromotion(bool isNullable, ref ResolveResult lhs, ref ResolveResult rhs, bool allowNullableConstants)
+
+		bool BinaryNumericPromotion(bool isNullable, ref ResolveResult lhs, ref ResolveResult rhs,
+			bool allowNullableConstants)
 		{
 			// C# 4.0 spec: §7.3.6.2
 			var lhsUType = NullableType.GetUnderlyingType(lhs.Type);
 			var rhsUType = NullableType.GetUnderlyingType(rhs.Type);
-			TypeCode lhsCode = ReflectionHelper.GetTypeCode(lhsUType);
-			TypeCode rhsCode = ReflectionHelper.GetTypeCode(rhsUType);
+			TypeCode lhsCode = lhsUType.GetTypeCode();
+			TypeCode rhsCode = rhsUType.GetTypeCode();
 			// Treat C# 9 native integers as falling between int and long.
 			// However they don't have a TypeCode, so we hack around that here:
 			if (lhsUType.Kind == TypeKind.NInt)
@@ -1106,6 +1338,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				lhsCode = TypeCode.UInt32;
 			}
+
 			if (rhsUType.Kind == TypeKind.NInt)
 			{
 				rhsCode = TypeCode.Int32;
@@ -1114,27 +1347,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				rhsCode = TypeCode.UInt32;
 			}
+
 			// if one of the inputs is the null literal, promote that to the type of the other operand
-			if (isNullable && lhs.Type.Kind == TypeKind.Null && rhsCode >= TypeCode.Boolean && rhsCode <= TypeCode.Decimal)
+			if (isNullable && lhs.Type.Kind == TypeKind.Null && rhsCode is >= TypeCode.Boolean and <= TypeCode.Decimal)
 			{
 				lhs = CastTo(rhsCode, isNullable, lhs, allowNullableConstants);
 				lhsCode = rhsCode;
 			}
-			else if (isNullable && rhs.Type.Kind == TypeKind.Null && lhsCode >= TypeCode.Boolean && lhsCode <= TypeCode.Decimal)
+			else if (isNullable && rhs.Type.Kind == TypeKind.Null &&
+			         lhsCode is >= TypeCode.Boolean and <= TypeCode.Decimal)
 			{
 				rhs = CastTo(lhsCode, isNullable, rhs, allowNullableConstants);
 				rhsCode = lhsCode;
 			}
+
 			bool bindingError = false;
-			if (lhsCode >= TypeCode.Char && lhsCode <= TypeCode.Decimal
-				&& rhsCode >= TypeCode.Char && rhsCode <= TypeCode.Decimal)
+			if (lhsCode is >= TypeCode.Char and <= TypeCode.Decimal &&
+			    rhsCode is >= TypeCode.Char and <= TypeCode.Decimal)
 			{
 				TypeCode targetType;
 				if (lhsCode == TypeCode.Decimal || rhsCode == TypeCode.Decimal)
 				{
 					targetType = TypeCode.Decimal;
-					bindingError = (lhsCode == TypeCode.Single || lhsCode == TypeCode.Double
-									|| rhsCode == TypeCode.Single || rhsCode == TypeCode.Double);
+					bindingError = (lhsCode is TypeCode.Single or TypeCode.Double ||
+					                rhsCode is TypeCode.Single or TypeCode.Double);
 				}
 				else if (lhsCode == TypeCode.Double || rhsCode == TypeCode.Double)
 				{
@@ -1174,9 +1410,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					targetType = TypeCode.Int32;
 				}
+
 				lhs = CastTo(targetType, isNullable, lhs, allowNullableConstants);
 				rhs = CastTo(targetType, isNullable, rhs, allowNullableConstants);
 			}
+
 			return !bindingError;
 		}
 
@@ -1206,9 +1444,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		ResolveResult CastTo(TypeCode targetType, bool isNullable, ResolveResult expression, bool allowNullableConstants)
+		ResolveResult CastTo(TypeCode targetType, bool isNullable, ResolveResult expression,
+			bool allowNullableConstants)
 		{
-			return CastTo(compilation.FindType(targetType), isNullable, expression, allowNullableConstants);
+			return CastTo(Compilation.FindType(targetType), isNullable, expression, allowNullableConstants);
 		}
 
 		ResolveResult CastTo(IType targetType, bool isNullable, ResolveResult expression, bool allowNullableConstants)
@@ -1229,55 +1468,41 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			else
 			{
 				return Convert(expression, nullableType,
-							   isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
+					isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
 			}
 		}
+
 		#endregion
 
 		#region GetOverloadableOperatorName
+
 		static string GetOverloadableOperatorName(BinaryOperatorType op)
 		{
-			switch (op)
-			{
-				case BinaryOperatorType.Add:
-					return "op_Addition";
-				case BinaryOperatorType.Subtract:
-					return "op_Subtraction";
-				case BinaryOperatorType.Multiply:
-					return "op_Multiply";
-				case BinaryOperatorType.Divide:
-					return "op_Division";
-				case BinaryOperatorType.Modulus:
-					return "op_Modulus";
-				case BinaryOperatorType.BitwiseAnd:
-					return "op_BitwiseAnd";
-				case BinaryOperatorType.BitwiseOr:
-					return "op_BitwiseOr";
-				case BinaryOperatorType.ExclusiveOr:
-					return "op_ExclusiveOr";
-				case BinaryOperatorType.ShiftLeft:
-					return "op_LeftShift";
-				case BinaryOperatorType.ShiftRight:
-					return "op_RightShift";
-				case BinaryOperatorType.Equality:
-					return "op_Equality";
-				case BinaryOperatorType.InEquality:
-					return "op_Inequality";
-				case BinaryOperatorType.GreaterThan:
-					return "op_GreaterThan";
-				case BinaryOperatorType.LessThan:
-					return "op_LessThan";
-				case BinaryOperatorType.GreaterThanOrEqual:
-					return "op_GreaterThanOrEqual";
-				case BinaryOperatorType.LessThanOrEqual:
-					return "op_LessThanOrEqual";
-				default:
-					return null;
-			}
+			return op switch {
+				BinaryOperatorType.Add => "op_Addition",
+				BinaryOperatorType.Subtract => "op_Subtraction",
+				BinaryOperatorType.Multiply => "op_Multiply",
+				BinaryOperatorType.Divide => "op_Division",
+				BinaryOperatorType.Modulus => "op_Modulus",
+				BinaryOperatorType.BitwiseAnd => "op_BitwiseAnd",
+				BinaryOperatorType.BitwiseOr => "op_BitwiseOr",
+				BinaryOperatorType.ExclusiveOr => "op_ExclusiveOr",
+				BinaryOperatorType.ShiftLeft => "op_LeftShift",
+				BinaryOperatorType.ShiftRight => "op_RightShift",
+				BinaryOperatorType.Equality => "op_Equality",
+				BinaryOperatorType.InEquality => "op_Inequality",
+				BinaryOperatorType.GreaterThan => "op_GreaterThan",
+				BinaryOperatorType.LessThan => "op_LessThan",
+				BinaryOperatorType.GreaterThanOrEqual => "op_GreaterThanOrEqual",
+				BinaryOperatorType.LessThanOrEqual => "op_LessThanOrEqual",
+				_ => null
+			};
 		}
+
 		#endregion
 
 		#region Null coalescing operator
+
 		ResolveResult ResolveNullCoalescingOperator(ResolveResult lhs, ResolveResult rhs)
 		{
 			if (NullableType.IsNullable(lhs.Type))
@@ -1288,10 +1513,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return BinaryOperatorResolveResult(a0, lhs, BinaryOperatorType.NullCoalescing, rhs);
 				}
 			}
+
 			if (TryConvert(ref rhs, lhs.Type))
 			{
 				return BinaryOperatorResolveResult(lhs.Type, lhs, BinaryOperatorType.NullCoalescing, rhs);
 			}
+
 			if (TryConvert(ref lhs, rhs.Type))
 			{
 				return BinaryOperatorResolveResult(rhs.Type, lhs, BinaryOperatorType.NullCoalescing, rhs);
@@ -1301,21 +1528,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return new ErrorResolveResult(lhs.Type);
 			}
 		}
+
 		#endregion
+
 		#endregion
 
 		#region Get user-defined operator candidates
+
 		public IEnumerable<IParameterizedMember> GetUserDefinedOperatorCandidates(IType type, string operatorName)
 		{
 			if (operatorName == null)
 				return EmptyList<IMethod>.Instance;
-			TypeCode c = ReflectionHelper.GetTypeCode(type);
-			if (TypeCode.Boolean <= c && c <= TypeCode.Decimal)
+			TypeCode c = type.GetTypeCode();
+			if (c is >= TypeCode.Boolean and <= TypeCode.Decimal)
 			{
 				// The .NET framework contains some of C#'s built-in operators as user-defined operators.
 				// However, we must not use those as user-defined operators (we would skip numeric promotion).
 				return EmptyList<IMethod>.Instance;
 			}
+
 			// C# 4.0 spec: §7.3.5 Candidate user-defined operators
 			var operators = type.GetMethods(m => m.IsOperator && m.Name == operatorName).ToList();
 			LiftUserDefinedOperators(operators);
@@ -1334,18 +1565,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		ResolveResult CreateResolveResultForUserDefinedOperator(OverloadResolution r, System.Linq.Expressions.ExpressionType operatorType)
+		ResolveResult CreateResolveResultForUserDefinedOperator(OverloadResolution r,
+			System.Linq.Expressions.ExpressionType operatorType)
 		{
 			if (r.BestCandidateErrors != OverloadResolutionErrors.None)
 				return r.CreateResolveResult(null);
 			IMethod method = (IMethod)r.BestCandidate;
 			return new OperatorResolveResult(method.ReturnType, operatorType, method,
-											 isLiftedOperator: method is ILiftedOperator,
-											 operands: r.GetArgumentsWithConversions());
+				isLiftedOperator: method is ILiftedOperator,
+				operands: r.GetArgumentsWithConversions());
 		}
+
 		#endregion
 
 		#region ResolveCast
+
 		bool TryConvert(ref ResolveResult rr, IType targetType)
 		{
 			Conversion c = conversions.ImplicitConversion(rr, targetType);
@@ -1374,7 +1608,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </param>
 		/// <returns>True if the conversion is successful; false otherwise.
 		/// If the conversion is not successful, the ref parameters will not be modified.</returns>
-		bool TryConvertEnum(ref ResolveResult rr, IType targetType, ref bool isNullable, ref ResolveResult enumRR, bool allowConversionFromConstantZero = true)
+		bool TryConvertEnum(ref ResolveResult rr, IType targetType, ref bool isNullable, ref ResolveResult enumRR,
+			bool allowConversionFromConstantZero = true)
 		{
 			Conversion c;
 			if (!isNullable)
@@ -1387,9 +1622,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return true;
 				}
 			}
+
 			// make targetType nullable if it isn't already:
 			if (!targetType.IsKnownType(KnownTypeCode.NullableOfT))
-				targetType = NullableType.Create(compilation, targetType);
+				targetType = NullableType.Create(Compilation, targetType);
 
 			c = conversions.ImplicitConversion(rr, targetType);
 			if (c.IsValid && (allowConversionFromConstantZero || !c.IsEnumerationConversion))
@@ -1399,11 +1635,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// Also convert the enum-typed RR to nullable, if it isn't already
 				if (!enumRR.Type.IsKnownType(KnownTypeCode.NullableOfT))
 				{
-					var nullableType = NullableType.Create(compilation, enumRR.Type);
+					var nullableType = NullableType.Create(Compilation, enumRR.Type);
 					enumRR = new ConversionResolveResult(nullableType, enumRR, Conversion.ImplicitNullableConversion);
 				}
+
 				return true;
 			}
+
 			return false;
 		}
 
@@ -1419,7 +1657,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			else if (rr.IsCompileTimeConstant && c != Conversion.None && !c.IsUserDefined)
 				return ResolveCast(targetType, rr);
 			else
-				return new ConversionResolveResult(targetType, rr, c, checkForOverflow);
+				return new ConversionResolveResult(targetType, rr, c, CheckForOverflow);
 		}
 
 		public ResolveResult ResolveCast(IType targetType, ResolveResult expression)
@@ -1429,16 +1667,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (expression.IsCompileTimeConstant && !c.IsUserDefined)
 			{
 				IType underlyingType = targetType.GetEnumUnderlyingType();
-				TypeCode code = ReflectionHelper.GetTypeCode(underlyingType);
-				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null)
+				TypeCode code = underlyingType.GetTypeCode();
+				if (code is >= TypeCode.Boolean and <= TypeCode.Decimal && expression.ConstantValue != null)
 				{
 					if (expression.ConstantValue is string)
 					{
 						return new ErrorResolveResult(targetType);
 					}
+
 					try
 					{
-						return new ConstantResolveResult(targetType, CSharpPrimitiveCast(code, expression.ConstantValue));
+						return new ConstantResolveResult(targetType,
+							CSharpPrimitiveCast(code, expression.ConstantValue));
 					}
 					catch (OverflowException)
 					{
@@ -1451,26 +1691,28 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				else if (code == TypeCode.String)
 				{
-					if (expression.ConstantValue == null || expression.ConstantValue is string)
+					if (expression.ConstantValue is null or string)
 						return new ConstantResolveResult(targetType, expression.ConstantValue);
 					else
 						return new ErrorResolveResult(targetType);
 				}
-				else if ((underlyingType.Kind == TypeKind.NInt || underlyingType.Kind == TypeKind.NUInt) && expression.ConstantValue != null)
+				else if (underlyingType.Kind is TypeKind.NInt or TypeKind.NUInt && expression.ConstantValue != null)
 				{
 					if (expression.ConstantValue is string)
 					{
 						return new ErrorResolveResult(targetType);
 					}
+
 					code = (underlyingType.Kind == TypeKind.NInt ? TypeCode.Int32 : TypeCode.UInt32);
 					try
 					{
-						return new ConstantResolveResult(targetType, Util.CSharpPrimitiveCast.Cast(code, expression.ConstantValue, checkForOverflow: true));
+						return new ConstantResolveResult(targetType,
+							Util.CSharpPrimitiveCast.Cast(code, expression.ConstantValue, checkForOverflow: true));
 					}
 					catch (OverflowException)
 					{
 						// If constant value doesn't fit into 32-bits, the conversion is not a compile-time constant
-						return new ConversionResolveResult(targetType, expression, c, checkForOverflow);
+						return new ConversionResolveResult(targetType, expression, c, CheckForOverflow);
 					}
 					catch (InvalidCastException)
 					{
@@ -1478,17 +1720,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
-			return new ConversionResolveResult(targetType, expression, c, checkForOverflow);
+
+			return new ConversionResolveResult(targetType, expression, c, CheckForOverflow);
 		}
 
 		internal object CSharpPrimitiveCast(TypeCode targetType, object input)
 		{
 			return Util.CSharpPrimitiveCast.Cast(targetType, input, this.CheckForOverflow);
 		}
+
 		#endregion
 
 		#region ResolveSimpleName
-		public ResolveResult ResolveSimpleName(string identifier, IReadOnlyList<IType> typeArguments, bool isInvocationTarget = false)
+
+		public ResolveResult ResolveSimpleName(string identifier, IReadOnlyList<IType> typeArguments,
+			bool isInvocationTarget = false)
 		{
 			// C# 4.0 spec: §7.6.2 Simple Names
 
@@ -1497,20 +1743,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				isInvocationTarget ? NameLookupMode.InvocationTarget : NameLookupMode.Expression);
 		}
 
-		public ResolveResult LookupSimpleNameOrTypeName(string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode)
+		public ResolveResult LookupSimpleNameOrTypeName(string identifier, IReadOnlyList<IType> typeArguments,
+			NameLookupMode lookupMode)
 		{
 			// C# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
 
-			if (identifier == null)
-				throw new ArgumentNullException(nameof(identifier));
-			if (typeArguments == null)
-				throw new ArgumentNullException(nameof(typeArguments));
+			ArgumentNullException.ThrowIfNull(identifier);
+			ArgumentNullException.ThrowIfNull(typeArguments);
 
 			int k = typeArguments.Count;
 
 			if (k == 0)
 			{
-				if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
+				if (lookupMode is NameLookupMode.Expression or NameLookupMode.InvocationTarget)
 				{
 					// Look in local variables
 					foreach (IVariable v in this.LocalVariables)
@@ -1520,9 +1765,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							return new LocalResolveResult(v);
 						}
 					}
+
 					// Look in parameters of current method
-					IParameterizedMember parameterizedMember = this.CurrentMember as IParameterizedMember;
-					if (parameterizedMember != null)
+					if (this.CurrentMember is IParameterizedMember parameterizedMember)
 					{
 						foreach (IParameter p in parameterizedMember.Parameters)
 						{
@@ -1535,8 +1780,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 
 				// look in type parameters of current method
-				IMethod m = this.CurrentMember as IMethod;
-				if (m != null)
+				if (this.CurrentMember is IMethod m)
 				{
 					foreach (ITypeParameter tp in m.TypeParameters)
 					{
@@ -1546,7 +1790,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 
-			bool parameterizeResultType = !(typeArguments.Count != 0 && typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
+			bool parameterizeResultType = !(typeArguments.Count != 0 &&
+			                                typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
 
 			ResolveResult r = null;
 			if (currentTypeDefinitionCache != null)
@@ -1555,27 +1800,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				bool foundInCache = false;
 				if (k == 0)
 				{
-					switch (lookupMode)
-					{
-						case NameLookupMode.Expression:
-							cache = currentTypeDefinitionCache.SimpleNameLookupCacheExpression;
-							break;
-						case NameLookupMode.InvocationTarget:
-							cache = currentTypeDefinitionCache.SimpleNameLookupCacheInvocationTarget;
-							break;
-						case NameLookupMode.Type:
-							cache = currentTypeDefinitionCache.SimpleTypeLookupCache;
-							break;
-					}
+					cache = lookupMode switch {
+						NameLookupMode.Expression => currentTypeDefinitionCache.SimpleNameLookupCacheExpression,
+						NameLookupMode.InvocationTarget => currentTypeDefinitionCache
+							.SimpleNameLookupCacheInvocationTarget,
+						NameLookupMode.Type => currentTypeDefinitionCache.SimpleTypeLookupCache,
+						_ => cache
+					};
 					if (cache != null)
 					{
 						lock (cache)
 							foundInCache = cache.TryGetValue(identifier, out r);
 					}
 				}
+
 				if (foundInCache)
 				{
-					r = (r != null ? r.ShallowClone() : null);
+					r = r?.ShallowClone();
 				}
 				else
 				{
@@ -1587,34 +1828,38 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							cache[identifier] = r;
 					}
 				}
+
 				if (r != null)
 					return r;
 			}
 
-			if (context.CurrentUsingScope == null)
+			if (CurrentTypeResolveContext.CurrentUsingScope == null)
 			{
 				// If no using scope was specified, we still need to look in the global namespace:
-				r = LookInUsingScopeNamespace(null, compilation.RootNamespace, identifier, typeArguments, parameterizeResultType);
+				r = LookInUsingScopeNamespace(null, Compilation.RootNamespace, identifier, typeArguments,
+					parameterizeResultType);
 			}
 			else
 			{
 				if (k == 0 && lookupMode != NameLookupMode.TypeInUsingDeclaration)
 				{
-					if (context.CurrentUsingScope.ResolveCache.TryGetValue(identifier, out r))
+					if (CurrentTypeResolveContext.CurrentUsingScope.ResolveCache.TryGetValue(identifier, out r))
 					{
-						r = (r != null ? r.ShallowClone() : null);
+						r = r?.ShallowClone();
 					}
 					else
 					{
 						r = LookInCurrentUsingScope(identifier, typeArguments, false, false);
-						context.CurrentUsingScope.ResolveCache.TryAdd(identifier, r);
+						CurrentTypeResolveContext.CurrentUsingScope.ResolveCache.TryAdd(identifier, r);
 					}
 				}
 				else
 				{
-					r = LookInCurrentUsingScope(identifier, typeArguments, lookupMode == NameLookupMode.TypeInUsingDeclaration, parameterizeResultType);
+					r = LookInCurrentUsingScope(identifier, typeArguments,
+						lookupMode == NameLookupMode.TypeInUsingDeclaration, parameterizeResultType);
 				}
 			}
+
 			if (r != null)
 				return r;
 
@@ -1630,16 +1875,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, out TypeResolveResult trr)
 		{
-			if (!(rr is MemberResolveResult || rr is LocalResolveResult))
+			if (rr is not (MemberResolveResult or LocalResolveResult))
 			{
 				trr = null;
 				return false;
 			}
-			trr = LookupSimpleNameOrTypeName(identifier, EmptyList<IType>.Instance, NameLookupMode.Type) as TypeResolveResult;
+
+			trr = LookupSimpleNameOrTypeName(identifier, EmptyList<IType>.Instance, NameLookupMode.Type) as
+				TypeResolveResult;
 			return trr != null && trr.Type.Equals(rr.Type);
 		}
 
-		ResolveResult LookInCurrentType(string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)
+		ResolveResult LookInCurrentType(string identifier, IReadOnlyList<IType> typeArguments,
+			NameLookupMode lookupMode, bool parameterizeResultType)
 		{
 			int k = typeArguments.Count;
 			MemberLookup lookup = CreateMemberLookup(lookupMode);
@@ -1666,28 +1914,35 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 
 				ResolveResult r;
-				if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
+				if (lookupMode is NameLookupMode.Expression or NameLookupMode.InvocationTarget)
 				{
-					var targetResolveResult = (t == this.CurrentTypeDefinition ? ResolveThisReference() : new TypeResolveResult(t));
-					r = lookup.Lookup(targetResolveResult, identifier, typeArguments, lookupMode == NameLookupMode.InvocationTarget);
+					var targetResolveResult = (t == this.CurrentTypeDefinition
+						? ResolveThisReference()
+						: new TypeResolveResult(t));
+					r = lookup.Lookup(targetResolveResult, identifier, typeArguments,
+						lookupMode == NameLookupMode.InvocationTarget);
 				}
 				else
 				{
 					r = lookup.LookupType(t, identifier, typeArguments, parameterizeResultType);
 				}
-				if (!(r is UnknownMemberResolveResult)) // but do return AmbiguousMemberResolveResult
+
+				if (r is not UnknownMemberResolveResult) // but do return AmbiguousMemberResolveResult
 					return r;
 			}
+
 			return null;
 		}
 
-		ResolveResult LookInCurrentUsingScope(string identifier, IReadOnlyList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
+		ResolveResult LookInCurrentUsingScope(string identifier, IReadOnlyList<IType> typeArguments,
+			bool isInUsingDeclaration, bool parameterizeResultType)
 		{
 			// look in current namespace definitions
 			ResolvedUsingScope currentUsingScope = this.CurrentUsingScope;
 			for (ResolvedUsingScope u = currentUsingScope; u != null; u = u.Parent)
 			{
-				var resultInNamespace = LookInUsingScopeNamespace(u, u.Namespace, identifier, typeArguments, parameterizeResultType);
+				var resultInNamespace =
+					LookInUsingScopeNamespace(u, u.Namespace, identifier, typeArguments, parameterizeResultType);
 				if (resultInNamespace != null)
 					return resultInNamespace;
 				// then look for aliases:
@@ -1697,6 +1952,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					{
 						return ResolveExternAlias(identifier);
 					}
+
 					if (!(isInUsingDeclaration && u == currentUsingScope))
 					{
 						foreach (var pair in u.UsingAliases)
@@ -1708,6 +1964,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 					}
 				}
+
 				// finally, look in the imported namespaces:
 				if (!(isInUsingDeclaration && u == currentUsingScope))
 				{
@@ -1734,15 +1991,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							}
 						}
 					}
+
 					if (firstResult != null)
 						return new TypeResolveResult(firstResult);
 				}
 				// if we didn't find anything: repeat lookup with parent namespace
 			}
+
 			return null;
 		}
 
-		ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier,
+			IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (n == null)
 				return null;
@@ -1758,6 +2018,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return new NamespaceResolveResult(childNamespace);
 				}
 			}
+
 			// then look for a type
 			ITypeDefinition def = n.GetTypeDefinition(identifier, k);
 			if (def != null)
@@ -1767,11 +2028,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					result = new ParameterizedType(def, typeArguments);
 				}
+
 				if (usingScope != null && usingScope.HasAlias(identifier))
 					return new AmbiguousTypeResolveResult(result);
 				else
 					return new TypeResolveResult(result);
 			}
+
 			return null;
 		}
 
@@ -1779,8 +2042,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (typeDef.Accessibility == Accessibility.Internal)
 			{
-				return typeDef.ParentModule.InternalsVisibleTo(compilation.MainModule);
+				return typeDef.ParentModule.InternalsVisibleTo(Compilation.MainModule);
 			}
+
 			return true;
 		}
 
@@ -1790,7 +2054,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult ResolveAlias(string identifier)
 		{
 			if (identifier == "global")
-				return new NamespaceResolveResult(compilation.RootNamespace);
+				return new NamespaceResolveResult(Compilation.RootNamespace);
 
 			for (ResolvedUsingScope n = this.CurrentUsingScope; n != null; n = n.Parent)
 			{
@@ -1798,6 +2062,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					return ResolveExternAlias(identifier);
 				}
+
 				foreach (var pair in n.UsingAliases)
 				{
 					if (pair.Key == identifier)
@@ -1806,27 +2071,31 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
+
 			return ErrorResult;
 		}
 
 		ResolveResult ResolveExternAlias(string alias)
 		{
-			INamespace ns = compilation.GetNamespaceForExternAlias(alias);
+			INamespace ns = Compilation.GetNamespaceForExternAlias(alias);
 			if (ns != null)
 				return new NamespaceResolveResult(ns);
 			else
 				return ErrorResult;
 		}
+
 		#endregion
 
 		#region ResolveMemberAccess
-		public ResolveResult ResolveMemberAccess(ResolveResult target, string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode = NameLookupMode.Expression)
+
+		public ResolveResult ResolveMemberAccess(ResolveResult target, string identifier,
+			IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode = NameLookupMode.Expression)
 		{
 			// C# 4.0 spec: §7.6.4
 
-			bool parameterizeResultType = !(typeArguments.Count != 0 && typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
-			NamespaceResolveResult nrr = target as NamespaceResolveResult;
-			if (nrr != null)
+			bool parameterizeResultType = !(typeArguments.Count != 0 &&
+			                                typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
+			if (target is NamespaceResolveResult nrr)
 			{
 				return ResolveMemberAccessOnNamespace(nrr, identifier, typeArguments, parameterizeResultType);
 			}
@@ -1853,6 +2122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				default:
 					throw new NotSupportedException("Invalid value for NameLookupMode");
 			}
+
 			if (result is UnknownMemberResolveResult)
 			{
 				// We intentionally use all extension methods here, not just the eligible ones.
@@ -1862,25 +2132,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var extensionMethods = GetExtensionMethods(identifier, typeArguments);
 				if (extensionMethods.Count > 0)
 				{
-					return new MethodGroupResolveResult(target, identifier, EmptyList<MethodListWithDeclaringType>.Instance, typeArguments) {
+					return new MethodGroupResolveResult(target, identifier,
+						EmptyList<MethodListWithDeclaringType>.Instance, typeArguments) {
 						extensionMethods = extensionMethods
 					};
 				}
 			}
 			else
 			{
-				MethodGroupResolveResult mgrr = result as MethodGroupResolveResult;
-				if (mgrr != null)
+				if (result is MethodGroupResolveResult mgrr)
 				{
 					Debug.Assert(mgrr.extensionMethods == null);
 					// set the values that are necessary to make MethodGroupResolveResult.GetExtensionMethods() work
 					mgrr.resolver = this;
 				}
 			}
+
 			return result;
 		}
 
-		ResolveResult ResolveMemberAccessOnNamespace(NamespaceResolveResult nrr, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult ResolveMemberAccessOnNamespace(NamespaceResolveResult nrr, string identifier,
+			IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (typeArguments.Count == 0)
 			{
@@ -1888,6 +2160,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (childNamespace != null)
 					return new NamespaceResolveResult(childNamespace);
 			}
+
 			ITypeDefinition def = nrr.Namespace.GetTypeDefinition(identifier, typeArguments.Count);
 			if (def != null)
 			{
@@ -1896,6 +2169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 					return new TypeResolveResult(def);
 			}
+
 			return ErrorResult;
 		}
 
@@ -1905,8 +2179,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public MemberLookup CreateMemberLookup()
 		{
 			ITypeDefinition currentTypeDefinition = this.CurrentTypeDefinition;
-			bool isInEnumMemberInitializer = this.CurrentMember != null && this.CurrentMember.SymbolKind == SymbolKind.Field
-				&& currentTypeDefinition != null && currentTypeDefinition.Kind == TypeKind.Enum;
+			bool isInEnumMemberInitializer = this.CurrentMember is { SymbolKind: SymbolKind.Field } &&
+			                                 currentTypeDefinition is { Kind: TypeKind.Enum };
 			return new MemberLookup(currentTypeDefinition, this.Compilation.MainModule, isInEnumMemberInitializer);
 		}
 
@@ -1921,24 +2195,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// for accessibility purposes.
 				// This avoids a stack overflow when referencing a protected class nested inside the base class
 				// of a parent class. (NameLookupTests.InnerClassInheritingFromProtectedBaseInnerClassShouldNotCauseStackOverflow)
-				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainModule, false);
+				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainModule,
+					false);
 			}
 			else
 			{
 				return CreateMemberLookup();
 			}
 		}
-		#endregion
 
-		#region ResolveIdentifierInObjectInitializer
-		public ResolveResult ResolveIdentifierInObjectInitializer(string identifier)
-		{
-			MemberLookup memberLookup = CreateMemberLookup();
-			return memberLookup.Lookup(this.CurrentObjectInitializer, identifier, EmptyList<IType>.Instance, false);
-		}
 		#endregion
 
 		#region ResolveForeach
+
 		public ForEachResolveResult ResolveForeach(ResolveResult expression)
 		{
 			var memberLookup = CreateMemberLookup();
@@ -1947,10 +2216,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ResolveResult getEnumeratorInvocation;
 			ResolveResult currentRR = null;
 			// C# 4.0 spec: §8.8.4 The foreach statement
-			if (expression.Type.Kind == TypeKind.Array || expression.Type.Kind == TypeKind.Dynamic)
+			if (expression.Type.Kind is TypeKind.Array or TypeKind.Dynamic)
 			{
-				collectionType = compilation.FindType(KnownTypeCode.IEnumerable);
-				enumeratorType = compilation.FindType(KnownTypeCode.IEnumerator);
+				collectionType = Compilation.FindType(KnownTypeCode.IEnumerable);
+				enumeratorType = Compilation.FindType(KnownTypeCode.IEnumerator);
 				if (expression.Type.Kind == TypeKind.Array)
 				{
 					elementType = ((ArrayType)expression.Type).ElementType;
@@ -1959,69 +2228,78 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					elementType = SpecialType.Dynamic;
 				}
+
 				getEnumeratorInvocation = ResolveCast(collectionType, expression);
-				getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
+				getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator",
+					EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
 				getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, Empty<ResolveResult>.Array);
 			}
 			else
 			{
-				var getEnumeratorMethodGroup = memberLookup.Lookup(expression, "GetEnumerator", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-				if (getEnumeratorMethodGroup != null)
+				if (memberLookup.Lookup(expression, "GetEnumerator", EmptyList<IType>.Instance, true) is
+				    MethodGroupResolveResult getEnumeratorMethodGroup)
 				{
 					var or = getEnumeratorMethodGroup.PerformOverloadResolution(
-						compilation, Empty<ResolveResult>.Array,
+						Compilation, Empty<ResolveResult>.Array,
 						allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
-					if (or.FoundApplicableCandidate && !or.IsAmbiguous && !or.BestCandidate.IsStatic && or.BestCandidate.Accessibility == Accessibility.Public)
+					if (or.FoundApplicableCandidate && !or.IsAmbiguous && !or.BestCandidate.IsStatic &&
+					    or.BestCandidate.Accessibility == Accessibility.Public)
 					{
 						collectionType = expression.Type;
 						getEnumeratorInvocation = or.CreateResolveResult(expression);
 						enumeratorType = getEnumeratorInvocation.Type;
-						currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance, false);
+						currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current",
+							EmptyList<IType>.Instance, false);
 						elementType = currentRR.Type;
 					}
 					else
 					{
-						CheckForEnumerableInterface(expression, out collectionType, out enumeratorType, out elementType, out getEnumeratorInvocation);
+						CheckForEnumerableInterface(expression, out collectionType, out enumeratorType, out elementType,
+							out getEnumeratorInvocation);
 					}
 				}
 				else
 				{
-					CheckForEnumerableInterface(expression, out collectionType, out enumeratorType, out elementType, out getEnumeratorInvocation);
+					CheckForEnumerableInterface(expression, out collectionType, out enumeratorType, out elementType,
+						out getEnumeratorInvocation);
 				}
 			}
+
 			IMethod moveNextMethod = null;
-			var moveNextMethodGroup = memberLookup.Lookup(new ResolveResult(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) as MethodGroupResolveResult;
-			if (moveNextMethodGroup != null)
+			if (memberLookup.Lookup(new ResolveResult(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) is
+			    MethodGroupResolveResult moveNextMethodGroup)
 			{
 				var or = moveNextMethodGroup.PerformOverloadResolution(
-					compilation, Empty<ResolveResult>.Array,
+					Compilation, Empty<ResolveResult>.Array,
 					allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
 				moveNextMethod = or.GetBestCandidateWithSubstitutedTypeArguments() as IMethod;
 			}
 
 			if (currentRR == null)
-				currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance, false);
+				currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance,
+					false);
 			IProperty currentProperty = null;
-			if (currentRR is MemberResolveResult)
-				currentProperty = ((MemberResolveResult)currentRR).Member as IProperty;
+			if (currentRR is MemberResolveResult result)
+				currentProperty = result.Member as IProperty;
 
-			var voidType = compilation.FindType(KnownTypeCode.Void);
+			var voidType = Compilation.FindType(KnownTypeCode.Void);
 			return new ForEachResolveResult(getEnumeratorInvocation, collectionType, enumeratorType, elementType,
-											currentProperty, moveNextMethod, voidType);
+				currentProperty, moveNextMethod, voidType);
 		}
 
-		void CheckForEnumerableInterface(ResolveResult expression, out IType collectionType, out IType enumeratorType, out IType elementType, out ResolveResult getEnumeratorInvocation)
+		void CheckForEnumerableInterface(ResolveResult expression, out IType collectionType, out IType enumeratorType,
+			out IType elementType, out ResolveResult getEnumeratorInvocation)
 		{
-			elementType = expression.Type.GetElementTypeFromIEnumerable(compilation, false, out bool? isGeneric);
+			elementType = expression.Type.GetElementTypeFromIEnumerable(Compilation, false, out bool? isGeneric);
 			if (isGeneric == true)
 			{
-				ITypeDefinition enumerableOfT = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
+				ITypeDefinition enumerableOfT = Compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
 				if (enumerableOfT != null)
 					collectionType = new ParameterizedType(enumerableOfT, new[] { elementType });
 				else
 					collectionType = SpecialType.UnknownType;
 
-				ITypeDefinition enumeratorOfT = compilation.FindType(KnownTypeCode.IEnumeratorOfT).GetDefinition();
+				ITypeDefinition enumeratorOfT = Compilation.FindType(KnownTypeCode.IEnumeratorOfT).GetDefinition();
 				if (enumeratorOfT != null)
 					enumeratorType = new ParameterizedType(enumeratorOfT, new[] { elementType });
 				else
@@ -2029,21 +2307,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else if (isGeneric == false)
 			{
-				collectionType = compilation.FindType(KnownTypeCode.IEnumerable);
-				enumeratorType = compilation.FindType(KnownTypeCode.IEnumerator);
+				collectionType = Compilation.FindType(KnownTypeCode.IEnumerable);
+				enumeratorType = Compilation.FindType(KnownTypeCode.IEnumerator);
 			}
 			else
 			{
 				collectionType = SpecialType.UnknownType;
 				enumeratorType = SpecialType.UnknownType;
 			}
+
 			getEnumeratorInvocation = ResolveCast(collectionType, expression);
-			getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
+			getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator",
+				EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
 			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, Empty<ResolveResult>.Array);
 		}
+
 		#endregion
 
 		#region GetExtensionMethods
+
 		/// <summary>
 		/// Gets all extension methods that are available in the current context.
 		/// </summary>
@@ -2090,13 +2372,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		///    new List { all extensions from SomeExtensions }
 		/// }
 		/// </remarks>
-		public List<List<IMethod>> GetExtensionMethods(IType targetType, string name = null, IReadOnlyList<IType> typeArguments = null, bool substituteInferredTypes = false)
+		public List<List<IMethod>> GetExtensionMethods(IType targetType, string name = null,
+			IReadOnlyList<IType> typeArguments = null, bool substituteInferredTypes = false)
 		{
 			var lookup = CreateMemberLookup();
-			List<List<IMethod>> extensionMethodGroups = new List<List<IMethod>>();
+			List<List<IMethod>> extensionMethodGroups = new();
 			foreach (var inputGroup in GetAllExtensionMethods(lookup))
 			{
-				List<IMethod> outputGroup = new List<IMethod>();
+				List<IMethod> outputGroup = new();
 				foreach (var method in inputGroup)
 				{
 					if (name != null && method.Name != name)
@@ -2104,17 +2387,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (!lookup.IsAccessible(method, false))
 						continue;
 					IType[] inferredTypes;
-					if (typeArguments != null && typeArguments.Count > 0)
+					if (typeArguments is { Count: > 0 })
 					{
 						if (method.TypeParameters.Count != typeArguments.Count)
 							continue;
 						var sm = method.Specialize(new TypeParameterSubstitution(null, typeArguments));
-						if (IsEligibleExtensionMethod(compilation, conversions, targetType, sm, false, out inferredTypes))
+						if (IsEligibleExtensionMethod(Compilation, conversions, targetType, sm, false,
+							    out inferredTypes))
 							outputGroup.Add(sm);
 					}
 					else
 					{
-						if (IsEligibleExtensionMethod(compilation, conversions, targetType, method, true, out inferredTypes))
+						if (IsEligibleExtensionMethod(Compilation, conversions, targetType, method, true,
+							    out inferredTypes))
 						{
 							if (substituteInferredTypes && inferredTypes != null)
 							{
@@ -2127,9 +2412,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 					}
 				}
+
 				if (outputGroup.Count > 0)
 					extensionMethodGroups.Add(outputGroup);
 			}
+
 			return extensionMethodGroups;
 		}
 
@@ -2148,17 +2435,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// If an array is returned, any slot with an uninferred type argument will be set to the method's
 		/// corresponding type parameter.
 		/// </param>
-		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference, out IType[] outInferredTypes)
+		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference,
+			out IType[] outInferredTypes)
 		{
-			if (targetType == null)
-				throw new ArgumentNullException(nameof(targetType));
-			if (method == null)
-				throw new ArgumentNullException(nameof(method));
+			ArgumentNullException.ThrowIfNull(targetType);
+			ArgumentNullException.ThrowIfNull(method);
 			var compilation = method.Compilation;
-			return IsEligibleExtensionMethod(compilation, CSharpConversions.Get(compilation), targetType, method, useTypeInference, out outInferredTypes);
+			return IsEligibleExtensionMethod(compilation, CSharpConversions.Get(compilation), targetType, method,
+				useTypeInference, out outInferredTypes);
 		}
 
-		static bool IsEligibleExtensionMethod(ICompilation compilation, CSharpConversions conversions, IType targetType, IMethod method, bool useTypeInference, out IType[] outInferredTypes)
+		static bool IsEligibleExtensionMethod(ICompilation compilation, CSharpConversions conversions, IType targetType,
+			IMethod method, bool useTypeInference, out IType[] outInferredTypes)
 		{
 			outInferredTypes = null;
 			if (targetType == null)
@@ -2171,11 +2459,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// extension method with `this in` or `this ref`
 				thisParameterType = ((ByReferenceType)thisParameterType).ElementType;
 			}
+
 			if (useTypeInference && method.TypeParameters.Count > 0)
 			{
 				// We need to infer type arguments from targetType:
-				TypeInference ti = new TypeInference(compilation, conversions);
-				ResolveResult[] arguments = { new ResolveResult(targetType) };
+				TypeInference ti = new(compilation, conversions);
+				ResolveResult[] arguments = { new(targetType) };
 				IType[] parameterTypes = { thisParameterType };
 				var inferredTypes = ti.InferTypeArguments(method.TypeParameters, arguments, parameterTypes, out _);
 				var substitution = new TypeParameterSubstitution(null, inferredTypes);
@@ -2183,21 +2472,26 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				bool hasInferredTypes = false;
 				for (int i = 0; i < inferredTypes.Length; i++)
 				{
-					if (inferredTypes[i].Kind != TypeKind.Unknown && inferredTypes[i].Kind != TypeKind.UnboundTypeArgument)
+					if (inferredTypes[i].Kind != TypeKind.Unknown &&
+					    inferredTypes[i].Kind != TypeKind.UnboundTypeArgument)
 					{
 						hasInferredTypes = true;
-						if (!OverloadResolution.ValidateConstraints(method.TypeParameters[i], inferredTypes[i], substitution, conversions))
+						if (!OverloadResolution.ValidateConstraints(method.TypeParameters[i], inferredTypes[i],
+							    substitution, conversions))
 							return false;
 					}
 					else
 					{
-						inferredTypes[i] = method.TypeParameters[i]; // do not substitute types that could not be inferred
+						inferredTypes[i] =
+							method.TypeParameters[i]; // do not substitute types that could not be inferred
 					}
 				}
+
 				if (hasInferredTypes)
 					outInferredTypes = inferredTypes;
 				thisParameterType = thisParameterType.AcceptVisitor(substitution);
 			}
+
 			Conversion c = conversions.ImplicitConversion(targetType, thisParameterType);
 			return c.IsValid && (c.IsIdentityConversion || c.IsReferenceConversion || c.IsBoxingConversion);
 		}
@@ -2208,14 +2502,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		IList<List<IMethod>> GetAllExtensionMethods(MemberLookup lookup)
 		{
-			var currentUsingScope = context.CurrentUsingScope;
+			var currentUsingScope = CurrentTypeResolveContext.CurrentUsingScope;
 			if (currentUsingScope == null)
 				return EmptyList<List<IMethod>>.Instance;
-			List<List<IMethod>> extensionMethodGroups = LazyInit.VolatileRead(ref currentUsingScope.AllExtensionMethods);
+			List<List<IMethod>> extensionMethodGroups =
+				LazyInit.VolatileRead(ref currentUsingScope.AllExtensionMethods);
 			if (extensionMethodGroups != null)
 			{
 				return extensionMethodGroups;
 			}
+
 			extensionMethodGroups = new List<List<IMethod>>();
 			List<IMethod> m;
 			for (ResolvedUsingScope scope = currentUsingScope; scope != null; scope = scope.Parent)
@@ -2235,6 +2531,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (m.Count > 0)
 					extensionMethodGroups.Add(m);
 			}
+
 			return LazyInit.GetOrSet(ref currentUsingScope.AllExtensionMethods, extensionMethodGroups);
 		}
 
@@ -2243,11 +2540,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// TODO: maybe make this a property on INamespace?
 			return
 				from c in ns.Types
-				where c.IsStatic && c.HasExtensionMethods && c.TypeParameters.Count == 0 && lookup.IsAccessible(c, false)
+				where c.IsStatic && c.HasExtensionMethods && c.TypeParameters.Count == 0 &&
+				      lookup.IsAccessible(c, false)
 				from m in c.Methods
 				where m.IsExtensionMethod
 				select m;
 		}
+
 		#endregion
 
 		#region ResolveInvocation
@@ -2263,35 +2562,41 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var result = new ResolveResult[arguments.Length];
 				for (int i = 0; i < arguments.Length; i++)
 				{
-					result[i] = (argumentNames[i] != null ? new NamedArgumentResolveResult(argumentNames[i], arguments[i]) : arguments[i]);
+					result[i] = (argumentNames[i] != null
+						? new NamedArgumentResolveResult(argumentNames[i], arguments[i])
+						: arguments[i]);
 				}
+
 				return result;
 			}
 		}
 
-		private ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[] argumentNames, bool allowOptionalParameters)
+		private ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[] argumentNames,
+			bool allowOptionalParameters)
 		{
 			// C# 4.0 spec: §7.6.5
 
 			if (target.Type.Kind == TypeKind.Dynamic)
 			{
-				return new DynamicInvocationResolveResult(target, DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
+				return new DynamicInvocationResolveResult(target, DynamicInvocationType.Invocation,
+					AddArgumentNamesIfNecessary(arguments, argumentNames));
 			}
 
 			bool isDynamic = arguments.Any(a => a.Type.Kind == TypeKind.Dynamic);
-			MethodGroupResolveResult mgrr = target as MethodGroupResolveResult;
-			if (mgrr != null)
+			if (target is MethodGroupResolveResult mgrr)
 			{
 				if (isDynamic)
 				{
 					// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable method.
 					var or2 = CreateOverloadResolution(arguments, argumentNames, mgrr.TypeArguments.ToArray());
-					var applicableMethods = mgrr.MethodsGroupedByDeclaringType.SelectMany(m => m, (x, m) => new { x.DeclaringType, Method = m }).Where(x => OverloadResolution.IsApplicable(or2.AddCandidate(x.Method))).ToList();
+					var applicableMethods = mgrr.MethodsGroupedByDeclaringType
+						.SelectMany(m => m, (x, m) => new { x.DeclaringType, Method = m })
+						.Where(x => OverloadResolution.IsApplicable(or2.AddCandidate(x.Method))).ToList();
 
 					if (applicableMethods.Count > 1)
 					{
 						ResolveResult actualTarget;
-						if (applicableMethods.All(x => x.Method.IsStatic) && !(mgrr.TargetResult is TypeResolveResult))
+						if (applicableMethods.All(x => x.Method.IsStatic) && mgrr.TargetResult is not TypeResolveResult)
 							actualTarget = new TypeResolveResult(mgrr.TargetType);
 						else
 							actualTarget = mgrr.TargetResult;
@@ -2299,40 +2604,52 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						var l = new List<MethodListWithDeclaringType>();
 						foreach (var m in applicableMethods)
 						{
-							if (l.Count == 0 || l[l.Count - 1].DeclaringType != m.DeclaringType)
+							if (l.Count == 0 || l[^1].DeclaringType != m.DeclaringType)
 								l.Add(new MethodListWithDeclaringType(m.DeclaringType));
-							l[l.Count - 1].Add(m.Method);
+							l[^1].Add(m.Method);
 						}
-						return new DynamicInvocationResolveResult(new MethodGroupResolveResult(actualTarget, mgrr.MethodName, l, mgrr.TypeArguments), DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
+
+						return new DynamicInvocationResolveResult(
+							new MethodGroupResolveResult(actualTarget, mgrr.MethodName, l, mgrr.TypeArguments),
+							DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
 					}
 				}
 
-				OverloadResolution or = mgrr.PerformOverloadResolution(compilation, arguments, argumentNames, checkForOverflow: checkForOverflow, conversions: conversions, allowOptionalParameters: allowOptionalParameters);
+				OverloadResolution or = mgrr.PerformOverloadResolution(Compilation, arguments, argumentNames,
+					checkForOverflow: CheckForOverflow, conversions: conversions,
+					allowOptionalParameters: allowOptionalParameters);
 				if (or.BestCandidate != null)
 				{
-					if (or.BestCandidate.IsStatic && !or.IsExtensionMethodInvocation && !(mgrr.TargetResult is TypeResolveResult))
-						return or.CreateResolveResult(new TypeResolveResult(mgrr.TargetType), returnTypeOverride: isDynamic ? SpecialType.Dynamic : null);
+					if (or.BestCandidate.IsStatic && !or.IsExtensionMethodInvocation &&
+					    mgrr.TargetResult is not TypeResolveResult)
+						return or.CreateResolveResult(new TypeResolveResult(mgrr.TargetType),
+							returnTypeOverride: isDynamic ? SpecialType.Dynamic : null);
 					else
-						return or.CreateResolveResult(mgrr.TargetResult, returnTypeOverride: isDynamic ? SpecialType.Dynamic : null);
+						return or.CreateResolveResult(mgrr.TargetResult,
+							returnTypeOverride: isDynamic ? SpecialType.Dynamic : null);
 				}
 				else
 				{
 					// No candidate found at all (not even an inapplicable one).
 					// This can happen with empty method groups (as sometimes used with extension methods)
 					return new UnknownMethodResolveResult(
-						mgrr.TargetType, mgrr.MethodName, mgrr.TypeArguments, CreateParameters(arguments, argumentNames));
+						mgrr.TargetType, mgrr.MethodName, mgrr.TypeArguments,
+						CreateParameters(arguments, argumentNames));
 				}
 			}
-			UnknownMemberResolveResult umrr = target as UnknownMemberResolveResult;
-			if (umrr != null)
+
+			if (target is UnknownMemberResolveResult umrr)
 			{
-				return new UnknownMethodResolveResult(umrr.TargetType, umrr.MemberName, umrr.TypeArguments, CreateParameters(arguments, argumentNames));
+				return new UnknownMethodResolveResult(umrr.TargetType, umrr.MemberName, umrr.TypeArguments,
+					CreateParameters(arguments, argumentNames));
 			}
-			UnknownIdentifierResolveResult uirr = target as UnknownIdentifierResolveResult;
-			if (uirr != null && CurrentTypeDefinition != null)
+
+			if (target is UnknownIdentifierResolveResult uirr && CurrentTypeDefinition != null)
 			{
-				return new UnknownMethodResolveResult(CurrentTypeDefinition, uirr.Identifier, EmptyList<IType>.Instance, CreateParameters(arguments, argumentNames));
+				return new UnknownMethodResolveResult(CurrentTypeDefinition, uirr.Identifier, EmptyList<IType>.Instance,
+					CreateParameters(arguments, argumentNames));
 			}
+
 			IMethod invokeMethod = target.Type.GetDelegateInvokeMethod();
 			if (invokeMethod != null)
 			{
@@ -2346,6 +2663,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					argumentToParameterMap: or.GetArgumentToParameterMap(),
 					returnTypeOverride: isDynamic ? SpecialType.Dynamic : null);
 			}
+
 			return ErrorResult;
 		}
 
@@ -2361,14 +2679,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// The argument names. Pass the null string for positional arguments.
 		/// </param>
 		/// <returns>InvocationResolveResult or UnknownMethodResolveResult</returns>
-		public ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[] argumentNames = null)
+		public ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments,
+			string[] argumentNames = null)
 		{
 			return ResolveInvocation(target, arguments, argumentNames, allowOptionalParameters: true);
 		}
 
 		List<IParameter> CreateParameters(ResolveResult[] arguments, string[] argumentNames)
 		{
-			List<IParameter> list = new List<IParameter>();
+			List<IParameter> list = new();
 			if (argumentNames == null)
 			{
 				argumentNames = new string[arguments.Length];
@@ -2379,6 +2698,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					throw new ArgumentException();
 				argumentNames = (string[])argumentNames.Clone();
 			}
+
 			for (int i = 0; i < arguments.Length; i++)
 			{
 				// invent argument names where necessary:
@@ -2395,24 +2715,26 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							newName = newArgumentName + num.ToString();
 							num++;
 						} while (argumentNames.Contains(newName));
+
 						newArgumentName = newName;
 					}
+
 					argumentNames[i] = newArgumentName;
 				}
 
 				// create the parameter:
-				ByReferenceResolveResult brrr = arguments[i] as ByReferenceResolveResult;
-				if (brrr != null)
+				if (arguments[i] is ByReferenceResolveResult brrr)
 				{
-					list.Add(new DefaultParameter(arguments[i].Type, argumentNames[i], referenceKind: brrr.ReferenceKind));
+					list.Add(new DefaultParameter(arguments[i].Type, argumentNames[i],
+						referenceKind: brrr.ReferenceKind));
 				}
 				else
 				{
 					// argument might be a lambda or delegate type, so we have to try to guess the delegate type
 					IType type = arguments[i].Type;
-					if (type.Kind == TypeKind.Null || type.Kind == TypeKind.None)
+					if (type.Kind is TypeKind.Null or TypeKind.None)
 					{
-						list.Add(new DefaultParameter(compilation.FindType(KnownTypeCode.Object), argumentNames[i]));
+						list.Add(new DefaultParameter(Compilation.FindType(KnownTypeCode.Object), argumentNames[i]));
 					}
 					else
 					{
@@ -2420,25 +2742,22 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
+
 			return list;
 		}
 
 		static string GuessParameterName(ResolveResult rr)
 		{
-			MemberResolveResult mrr = rr as MemberResolveResult;
-			if (mrr != null)
+			if (rr is MemberResolveResult mrr)
 				return mrr.Member.Name;
 
-			UnknownMemberResolveResult umrr = rr as UnknownMemberResolveResult;
-			if (umrr != null)
+			if (rr is UnknownMemberResolveResult umrr)
 				return umrr.MemberName;
 
-			MethodGroupResolveResult mgrr = rr as MethodGroupResolveResult;
-			if (mgrr != null)
+			if (rr is MethodGroupResolveResult mgrr)
 				return mgrr.MethodName;
 
-			LocalResolveResult vrr = rr as LocalResolveResult;
-			if (vrr != null)
+			if (rr is LocalResolveResult vrr)
 				return MakeParameterName(vrr.Variable.Name);
 
 			if (rr.Type.Kind != TypeKind.Unknown && !string.IsNullOrEmpty(rr.Type.Name))
@@ -2456,19 +2775,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (string.IsNullOrEmpty(variableName))
 				return "parameter";
 			if (variableName.Length > 1 && variableName[0] == '_')
-				variableName = variableName.Substring(1);
-			return char.ToLower(variableName[0]) + variableName.Substring(1);
+				variableName = variableName[1..];
+			return char.ToLower(variableName[0]) + variableName[1..];
 		}
 
-		OverloadResolution CreateOverloadResolution(ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null)
+		OverloadResolution CreateOverloadResolution(ResolveResult[] arguments, string[] argumentNames = null,
+			IType[] typeArguments = null)
 		{
-			var or = new OverloadResolution(compilation, arguments, argumentNames, typeArguments, conversions);
-			or.CheckForOverflow = checkForOverflow;
+			var or = new OverloadResolution(Compilation, arguments, argumentNames, typeArguments, conversions) {
+				CheckForOverflow = CheckForOverflow
+			};
 			return or;
 		}
+
 		#endregion
 
 		#region ResolveIndexer
+
 		/// <summary>
 		/// Resolves an indexer access.
 		/// </summary>
@@ -2481,18 +2804,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// The argument names. Pass the null string for positional arguments.
 		/// </param>
 		/// <returns>ArrayAccessResolveResult, InvocationResolveResult, or ErrorResolveResult</returns>
-		public ResolveResult ResolveIndexer(ResolveResult target, ResolveResult[] arguments, string[] argumentNames = null)
+		public ResolveResult ResolveIndexer(ResolveResult target, ResolveResult[] arguments,
+			string[] argumentNames = null)
 		{
 			switch (target.Type.Kind)
 			{
 				case TypeKind.Dynamic:
-					return new DynamicInvocationResolveResult(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
+					return new DynamicInvocationResolveResult(target, DynamicInvocationType.Indexing,
+						AddArgumentNamesIfNecessary(arguments, argumentNames));
 
 				case TypeKind.Array:
 				case TypeKind.Pointer:
 					// §7.6.6.1 Array access / §18.5.3 Pointer element access
 					AdjustArrayAccessArguments(arguments);
-					return new ArrayAccessResolveResult(((TypeWithElementType)target.Type).ElementType, target, arguments);
+					return new ArrayAccessResolveResult(((TypeWithElementType)target.Type).ElementType, target,
+						arguments);
 			}
 
 			// §7.6.6.2 Indexer access
@@ -2504,11 +2830,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable indexer.
 				var or2 = CreateOverloadResolution(arguments, argumentNames, null);
-				var applicableIndexers = indexers.SelectMany(x => x).Where(m => OverloadResolution.IsApplicable(or2.AddCandidate(m))).ToList();
+				var applicableIndexers = indexers.SelectMany(x => x)
+					.Where(m => OverloadResolution.IsApplicable(or2.AddCandidate(m))).ToList();
 
 				if (applicableIndexers.Count > 1)
 				{
-					return new DynamicInvocationResolveResult(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
+					return new DynamicInvocationResolveResult(target, DynamicInvocationType.Indexing,
+						AddArgumentNamesIfNecessary(arguments, argumentNames));
 				}
 			}
 
@@ -2531,125 +2859,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			for (int i = 0; i < arguments.Length; i++)
 			{
-				if (!(TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.Int32)) ||
-					  TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.UInt32)) ||
-					  TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.Int64)) ||
-					  TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.UInt64))))
+				if (!(TryConvert(ref arguments[i], Compilation.FindType(KnownTypeCode.Int32)) ||
+				      TryConvert(ref arguments[i], Compilation.FindType(KnownTypeCode.UInt32)) ||
+				      TryConvert(ref arguments[i], Compilation.FindType(KnownTypeCode.Int64)) ||
+				      TryConvert(ref arguments[i], Compilation.FindType(KnownTypeCode.UInt64))))
 				{
 					// conversion failed
-					arguments[i] = Convert(arguments[i], compilation.FindType(KnownTypeCode.Int32), Conversion.None);
+					arguments[i] = Convert(arguments[i], Compilation.FindType(KnownTypeCode.Int32), Conversion.None);
 				}
 			}
 		}
-		#endregion
 
-		#region ResolveObjectCreation
-		/// <summary>
-		/// Resolves an object creation.
-		/// </summary>
-		/// <param name="type">Type of the object to create.</param>
-		/// <param name="arguments">
-		/// Arguments passed to the constructor.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
-		/// </param>
-		/// <param name="argumentNames">
-		/// The argument names. Pass the null string for positional arguments.
-		/// </param>
-		/// <param name="allowProtectedAccess">
-		/// Whether to allow calling protected constructors.
-		/// This should be false except when resolving constructor initializers.
-		/// </param>
-		/// <param name="initializerStatements">
-		/// Statements for Objects/Collections initializer.
-		/// <see cref="InvocationResolveResult.InitializerStatements"/>
-		/// </param>
-		/// <returns>InvocationResolveResult or ErrorResolveResult</returns>
-		public ResolveResult ResolveObjectCreation(IType type, ResolveResult[] arguments, string[] argumentNames = null, bool allowProtectedAccess = false, IList<ResolveResult> initializerStatements = null)
-		{
-			if (type.Kind == TypeKind.Delegate && arguments.Length == 1)
-			{
-				ResolveResult input = arguments[0];
-				IMethod invoke = input.Type.GetDelegateInvokeMethod();
-				if (invoke != null)
-				{
-					input = new MethodGroupResolveResult(
-						input, invoke.Name,
-						methods: new[] { new MethodListWithDeclaringType(input.Type) { invoke } },
-						typeArguments: EmptyList<IType>.Instance
-					);
-				}
-				return Convert(input, type);
-			}
-			OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
-			MemberLookup lookup = CreateMemberLookup();
-			var allApplicable = (arguments.Any(a => a.Type.Kind == TypeKind.Dynamic) ? new List<IMethod>() : null);
-			foreach (IMethod ctor in type.GetConstructors())
-			{
-				if (lookup.IsAccessible(ctor, allowProtectedAccess))
-				{
-					var orErrors = or.AddCandidate(ctor);
-					if (allApplicable != null && OverloadResolution.IsApplicable(orErrors))
-						allApplicable.Add(ctor);
-				}
-				else
-					or.AddCandidate(ctor, OverloadResolutionErrors.Inaccessible);
-			}
-
-			if (allApplicable != null && allApplicable.Count > 1)
-			{
-				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable constructor.
-				return new DynamicInvocationResolveResult(new MethodGroupResolveResult(null, allApplicable[0].Name, new[] { new MethodListWithDeclaringType(type, allApplicable) }, null), DynamicInvocationType.ObjectCreation, AddArgumentNamesIfNecessary(arguments, argumentNames), initializerStatements);
-			}
-
-			if (or.BestCandidate != null)
-			{
-				return or.CreateResolveResult(null, initializerStatements);
-			}
-			else
-			{
-				return new ErrorResolveResult(type);
-			}
-		}
-		#endregion
-
-		#region ResolveSizeOf
-		/// <summary>
-		/// Resolves 'sizeof(type)'.
-		/// </summary>
-		public ResolveResult ResolveSizeOf(IType type)
-		{
-			IType int32 = compilation.FindType(KnownTypeCode.Int32);
-			int? size = null;
-			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
-
-			switch (ReflectionHelper.GetTypeCode(typeForConstant))
-			{
-				case TypeCode.Boolean:
-				case TypeCode.SByte:
-				case TypeCode.Byte:
-					size = 1;
-					break;
-				case TypeCode.Char:
-				case TypeCode.Int16:
-				case TypeCode.UInt16:
-					size = 2;
-					break;
-				case TypeCode.Int32:
-				case TypeCode.UInt32:
-				case TypeCode.Single:
-					size = 4;
-					break;
-				case TypeCode.Int64:
-				case TypeCode.UInt64:
-				case TypeCode.Double:
-					size = 8;
-					break;
-			}
-			return new SizeOfResolveResult(int32, type, size);
-		}
 		#endregion
 
 		#region Resolve This/Base Reference
+
 		/// <summary>
 		/// Resolves 'this'.
 		/// </summary>
@@ -2668,6 +2892,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return new ThisResolveResult(t);
 				}
 			}
+
 			return ErrorResult;
 		}
 
@@ -2687,29 +2912,34 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
+
 			return ErrorResult;
 		}
+
 		#endregion
 
 		#region ResolveConditional
+
 		/// <summary>
 		/// Converts the input to <c>bool</c> using the rules for boolean expressions.
 		/// That is, <c>operator true</c> is used if a regular conversion to <c>bool</c> is not possible.
 		/// </summary>
 		public ResolveResult ResolveCondition(ResolveResult input)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			IType boolean = compilation.FindType(KnownTypeCode.Boolean);
+			ArgumentNullException.ThrowIfNull(input);
+			IType boolean = Compilation.FindType(KnownTypeCode.Boolean);
 			Conversion c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid)
 			{
 				var opTrue = input.Type.GetMethods(m => m.IsOperator && m.Name == "op_True").FirstOrDefault();
 				if (opTrue != null)
 				{
-					c = Conversion.UserDefinedConversion(opTrue, isImplicit: true, conversionBeforeUserDefinedOperator: Conversion.None, conversionAfterUserDefinedOperator: Conversion.None);
+					c = Conversion.UserDefinedConversion(opTrue, isImplicit: true,
+						conversionBeforeUserDefinedOperator: Conversion.None,
+						conversionAfterUserDefinedOperator: Conversion.None);
 				}
 			}
+
 			return Convert(input, boolean, c);
 		}
 
@@ -2720,23 +2950,26 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public ResolveResult ResolveConditionFalse(ResolveResult input)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			IType boolean = compilation.FindType(KnownTypeCode.Boolean);
+			ArgumentNullException.ThrowIfNull(input);
+			IType boolean = Compilation.FindType(KnownTypeCode.Boolean);
 			Conversion c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid)
 			{
 				var opFalse = input.Type.GetMethods(m => m.IsOperator && m.Name == "op_False").FirstOrDefault();
 				if (opFalse != null)
 				{
-					c = Conversion.UserDefinedConversion(opFalse, isImplicit: true, conversionBeforeUserDefinedOperator: Conversion.None, conversionAfterUserDefinedOperator: Conversion.None);
+					c = Conversion.UserDefinedConversion(opFalse, isImplicit: true,
+						conversionBeforeUserDefinedOperator: Conversion.None,
+						conversionAfterUserDefinedOperator: Conversion.None);
 					return Convert(input, boolean, c);
 				}
 			}
+
 			return ResolveUnaryOperator(UnaryOperatorType.Not, Convert(input, boolean, c));
 		}
 
-		public ResolveResult ResolveConditional(ResolveResult condition, ResolveResult trueExpression, ResolveResult falseExpression)
+		public ResolveResult ResolveConditional(ResolveResult condition, ResolveResult trueExpression,
+			ResolveResult falseExpression)
 		{
 			// C# 4.0 spec §7.14: Conditional operator
 
@@ -2786,10 +3019,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				return ErrorResult;
 			}
+
 			condition = ResolveCondition(condition);
 			if (isValid)
 			{
-				if (condition.IsCompileTimeConstant && trueExpression.IsCompileTimeConstant && falseExpression.IsCompileTimeConstant)
+				if (condition.IsCompileTimeConstant && trueExpression.IsCompileTimeConstant &&
+				    falseExpression.IsCompileTimeConstant)
 				{
 					bool? val = condition.ConstantValue as bool?;
 					if (val == true)
@@ -2797,8 +3032,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					else if (val == false)
 						return falseExpression;
 				}
+
 				return new OperatorResolveResult(resultType, System.Linq.Expressions.ExpressionType.Conditional,
-												 condition, trueExpression, falseExpression);
+					condition, trueExpression, falseExpression);
 			}
 			else
 			{
@@ -2811,7 +3047,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Valid is better than ImplicitConstantExpressionConversion is better than invalid
 			if (!c1.IsValid)
 				return false;
-			if (c1 != Conversion.ImplicitConstantExpressionConversion && c2 == Conversion.ImplicitConstantExpressionConversion)
+			if (c1 != Conversion.ImplicitConstantExpressionConversion &&
+			    c2 == Conversion.ImplicitConstantExpressionConversion)
 				return true;
 			return !c2.IsValid;
 		}
@@ -2820,25 +3057,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			return r.Type.Kind != TypeKind.None && r.Type.Kind != TypeKind.Null;
 		}
-		#endregion
 
-		#region ResolvePrimitive
-		public ResolveResult ResolvePrimitive(object value)
-		{
-			if (value == null)
-			{
-				return new ResolveResult(SpecialType.NullType);
-			}
-			else
-			{
-				TypeCode typeCode = Type.GetTypeCode(value.GetType());
-				IType type = compilation.FindType(typeCode);
-				return new ConstantResolveResult(type, value);
-			}
-		}
 		#endregion
 
 		#region ResolveDefaultValue
+
 		public ResolveResult ResolveDefaultValue(IType type)
 		{
 			return new ConstantResolveResult(type, GetDefaultValue(type));
@@ -2855,41 +3078,29 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (typeDef == null)
 					return null;
 			}
-			switch (typeDef.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-					return false;
-				case KnownTypeCode.Char:
-					return '\0';
-				case KnownTypeCode.SByte:
-					return (sbyte)0;
-				case KnownTypeCode.Byte:
-					return (byte)0;
-				case KnownTypeCode.Int16:
-					return (short)0;
-				case KnownTypeCode.UInt16:
-					return (ushort)0;
-				case KnownTypeCode.Int32:
-					return 0;
-				case KnownTypeCode.UInt32:
-					return 0U;
-				case KnownTypeCode.Int64:
-					return 0L;
-				case KnownTypeCode.UInt64:
-					return 0UL;
-				case KnownTypeCode.Single:
-					return 0f;
-				case KnownTypeCode.Double:
-					return 0.0;
-				case KnownTypeCode.Decimal:
-					return 0m;
-				default:
-					return null;
-			}
+
+			return typeDef.KnownTypeCode switch {
+				KnownTypeCode.Boolean => false,
+				KnownTypeCode.Char => '\0',
+				KnownTypeCode.SByte => 0,
+				KnownTypeCode.Byte => 0,
+				KnownTypeCode.Int16 => 0,
+				KnownTypeCode.UInt16 => 0,
+				KnownTypeCode.Int32 => 0,
+				KnownTypeCode.UInt32 => 0U,
+				KnownTypeCode.Int64 => 0L,
+				KnownTypeCode.UInt64 => 0UL,
+				KnownTypeCode.Single => 0f,
+				KnownTypeCode.Double => 0.0,
+				KnownTypeCode.Decimal => 0m,
+				_ => null
+			};
 		}
+
 		#endregion
 
 		#region ResolveArrayCreation
+
 		/// <summary>
 		/// Resolves an array creation.
 		/// </summary>
@@ -2906,7 +3117,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// The initializer elements. May be null if no array initializer was specified.
 		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
 		/// </param>
-		public ArrayCreateResolveResult ResolveArrayCreation(IType elementType, int[] sizeArguments, ResolveResult[] initializerElements = null)
+		public ArrayCreateResolveResult ResolveArrayCreation(IType elementType, int[] sizeArguments,
+			ResolveResult[] initializerElements = null)
 		{
 			ResolveResult[] sizeArgResults = new ResolveResult[sizeArguments.Length];
 			for (int i = 0; i < sizeArguments.Length; i++)
@@ -2914,8 +3126,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (sizeArguments[i] < 0)
 					sizeArgResults[i] = ErrorResolveResult.UnknownError;
 				else
-					sizeArgResults[i] = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), sizeArguments[i]);
+					sizeArgResults[i] =
+						new ConstantResolveResult(Compilation.FindType(KnownTypeCode.Int32), sizeArguments[i]);
 			}
+
 			return ResolveArrayCreation(elementType, sizeArgResults, initializerElements);
 		}
 
@@ -2935,17 +3149,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// The initializer elements. May be null if no array initializer was specified.
 		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
 		/// </param>
-		public ArrayCreateResolveResult ResolveArrayCreation(IType elementType, ResolveResult[] sizeArguments, ResolveResult[] initializerElements = null)
+		public ArrayCreateResolveResult ResolveArrayCreation(IType elementType, ResolveResult[] sizeArguments,
+			ResolveResult[] initializerElements = null)
 		{
 			int dimensions = sizeArguments.Length;
 			if (dimensions == 0)
 				throw new ArgumentException("sizeArguments.Length must not be 0");
 			if (elementType == null)
 			{
-				TypeInference typeInference = new TypeInference(compilation, conversions);
+				TypeInference typeInference = new(Compilation, conversions);
 				elementType = typeInference.GetBestCommonType(initializerElements, out _);
 			}
-			IType arrayType = new ArrayType(compilation, elementType, dimensions);
+
+			IType arrayType = new ArrayType(Compilation, elementType, dimensions);
 
 			AdjustArrayAccessArguments(sizeArguments);
 
@@ -2956,31 +3172,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					initializerElements[i] = Convert(initializerElements[i], elementType);
 				}
 			}
+
 			return new ArrayCreateResolveResult(arrayType, sizeArguments, initializerElements);
 		}
-		#endregion
 
-		public ResolveResult ResolveTypeOf(IType referencedType)
-		{
-			return new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), referencedType);
-		}
-
-		#region ResolveAssignment
-		public ResolveResult ResolveAssignment(AssignmentOperatorType op, ResolveResult lhs, ResolveResult rhs)
-		{
-			var linqOp = AssignmentExpression.GetLinqNodeType(op, this.CheckForOverflow);
-			var bop = AssignmentExpression.GetCorrespondingBinaryOperator(op);
-			if (bop == null)
-			{
-				return new OperatorResolveResult(lhs.Type, linqOp, lhs, this.Convert(rhs, lhs.Type));
-			}
-			ResolveResult bopResult = ResolveBinaryOperator(bop.Value, lhs, rhs);
-			OperatorResolveResult opResult = bopResult as OperatorResolveResult;
-			if (opResult == null || opResult.Operands.Count != 2)
-				return bopResult;
-			return new OperatorResolveResult(lhs.Type, linqOp, opResult.UserDefinedOperatorMethod, opResult.IsLiftedOperator,
-											 new[] { lhs, opResult.Operands[1] });
-		}
 		#endregion
 	}
 }

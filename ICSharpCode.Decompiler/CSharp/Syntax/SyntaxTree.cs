@@ -26,22 +26,27 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class SyntaxTree : AstNode
 	{
-		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
+		public static readonly Role<AstNode> MemberRole = new("Member", Null);
+
+		IList<string> conditionalSymbols = null;
+
+		string fileName;
+
+		public SyntaxTree()
+		{
+		}
 
 		public override NodeType NodeType {
 			get {
 				return NodeType.Unknown;
 			}
 		}
-
-		string fileName;
 
 		/// <summary>
 		/// Gets/Sets the file name of this syntax tree.
@@ -57,8 +62,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNodeCollection<AstNode> Members {
 			get { return GetChildrenByRole(MemberRole); }
 		}
-
-		IList<string> conditionalSymbols = null;
 
 		/// <summary>
 		/// Gets the conditional symbols used to parse the source file. Note that this list contains
@@ -86,10 +89,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			internal set;
 		}
 
-		public SyntaxTree()
-		{
-		}
-
 		/// <summary>
 		/// Gets all defined types in this syntax tree.
 		/// </summary>
@@ -98,19 +97,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode> nodeStack = new Stack<AstNode>();
+			Stack<AstNode> nodeStack = new();
 			nodeStack.Push(this);
 			while (nodeStack.Count > 0)
 			{
 				var curNode = nodeStack.Pop();
-				if (curNode is TypeDeclaration || curNode is DelegateDeclaration)
+				if (curNode is TypeDeclaration or DelegateDeclaration)
 				{
 					yield return (EntityDeclaration)curNode;
 				}
+
 				foreach (var child in curNode.Children)
 				{
-					if (!(child is Statement || child is Expression) &&
-						(child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
+					if (child is not (Statement or Expression) &&
+					    (child.Role != Roles.TypeMemberRole ||
+					     (child is TypeDeclaration or DelegateDeclaration && includeInnerTypes)))
 						nodeStack.Push(child);
 				}
 			}
@@ -119,8 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SyntaxTree o = other as SyntaxTree;
-			return o != null && this.Members.DoMatch(o.Members, match);
+			return other is SyntaxTree o && this.Members.DoMatch(o.Members, match);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

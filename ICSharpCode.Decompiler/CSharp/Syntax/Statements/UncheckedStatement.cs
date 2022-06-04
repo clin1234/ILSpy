@@ -32,16 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UncheckedStatement : Statement
 	{
-		public static readonly TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
-
-		public CSharpTokenNode UncheckedToken {
-			get { return GetChildByRole(UncheckedKeywordRole); }
-		}
-
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		public static readonly TokenRole UncheckedKeywordRole = new("unchecked");
 
 		public UncheckedStatement()
 		{
@@ -50,6 +41,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public UncheckedStatement(BlockStatement body)
 		{
 			AddChild(body, Roles.Body);
+		}
+
+		public CSharpTokenNode UncheckedToken {
+			get { return GetChildByRole(UncheckedKeywordRole); }
+		}
+
+		public BlockStatement Body {
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -69,8 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UncheckedStatement o = other as UncheckedStatement;
-			return o != null && this.Body.DoMatch(o.Body, match);
+			return other is UncheckedStatement o && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

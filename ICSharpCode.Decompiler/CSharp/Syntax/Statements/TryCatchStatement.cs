@@ -32,11 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TryCatchStatement : Statement
 	{
-		public static readonly TokenRole TryKeywordRole = new TokenRole("try");
-		public static readonly Role<BlockStatement> TryBlockRole = new Role<BlockStatement>("TryBlock", BlockStatement.Null);
-		public static readonly Role<CatchClause> CatchClauseRole = new Role<CatchClause>("CatchClause", CatchClause.Null);
-		public static readonly TokenRole FinallyKeywordRole = new TokenRole("finally");
-		public static readonly Role<BlockStatement> FinallyBlockRole = new Role<BlockStatement>("FinallyBlock", BlockStatement.Null);
+		public static readonly TokenRole TryKeywordRole = new("try");
+		public static readonly Role<BlockStatement> TryBlockRole = new("TryBlock", BlockStatement.Null);
+		public static readonly Role<CatchClause> CatchClauseRole = new("CatchClause", CatchClause.Null);
+		public static readonly TokenRole FinallyKeywordRole = new("finally");
+		public static readonly Role<BlockStatement> FinallyBlockRole = new("FinallyBlock", BlockStatement.Null);
 
 		public CSharpTokenNode TryToken {
 			get { return GetChildByRole(TryKeywordRole); }
@@ -77,8 +77,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TryCatchStatement o = other as TryCatchStatement;
-			return o != null && this.TryBlock.DoMatch(o.TryBlock, match) && this.CatchClauses.DoMatch(o.CatchClauses, match) && this.FinallyBlock.DoMatch(o.FinallyBlock, match);
+			return other is TryCatchStatement o && this.TryBlock.DoMatch(o.TryBlock, match) &&
+			       this.CatchClauses.DoMatch(o.CatchClauses, match) && this.FinallyBlock.DoMatch(o.FinallyBlock, match);
 		}
 	}
 
@@ -87,90 +87,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CatchClause : AstNode
 	{
-		public static readonly TokenRole CatchKeywordRole = new TokenRole("catch");
-		public static readonly TokenRole WhenKeywordRole = new TokenRole("when");
+		public static readonly TokenRole CatchKeywordRole = new("catch");
+		public static readonly TokenRole WhenKeywordRole = new("when");
 		public static readonly Role<Expression> ConditionRole = Roles.Condition;
-		public static readonly TokenRole CondLPar = new TokenRole("(");
-		public static readonly TokenRole CondRPar = new TokenRole(")");
-
-		#region Null
-		public new static readonly CatchClause Null = new NullCatchClause();
-
-		sealed class NullCatchClause : CatchClause
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-		#endregion
-
-		#region PatternPlaceholder
-		public static implicit operator CatchClause(PatternMatching.Pattern pattern)
-		{
-			return pattern != null ? new PatternPlaceholder(pattern) : null;
-		}
-
-		sealed class PatternPlaceholder : CatchClause, PatternMatching.INode
-		{
-			readonly PatternMatching.Pattern child;
-
-			public PatternPlaceholder(PatternMatching.Pattern child)
-			{
-				this.child = child;
-			}
-
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitPatternPlaceholder(this, child, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return child.DoMatch(other, match);
-			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
-		}
-		#endregion
+		public static readonly TokenRole CondLPar = new("(");
+		public static readonly TokenRole CondRPar = new(")");
 
 		public override NodeType NodeType {
 			get {
@@ -253,8 +174,92 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CatchClause o = other as CatchClause;
-			return o != null && this.Type.DoMatch(o.Type, match) && MatchString(this.VariableName, o.VariableName) && this.Body.DoMatch(o.Body, match);
+			return other is CatchClause o && this.Type.DoMatch(o.Type, match) &&
+			       MatchString(this.VariableName, o.VariableName) && this.Body.DoMatch(o.Body, match);
 		}
+
+		#region Null
+
+		public new static readonly CatchClause Null = new NullCatchClause();
+
+		sealed class NullCatchClause : CatchClause
+		{
+			public override bool IsNull {
+				get {
+					return true;
+				}
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitNullNode(this);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitNullNode(this);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitNullNode(this, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return other == null || other.IsNull;
+			}
+		}
+
+		#endregion
+
+		#region PatternPlaceholder
+
+		public static implicit operator CatchClause(PatternMatching.Pattern pattern)
+		{
+			return pattern != null ? new PatternPlaceholder(pattern) : null;
+		}
+
+		sealed class PatternPlaceholder : CatchClause, PatternMatching.INode
+		{
+			readonly PatternMatching.Pattern child;
+
+			public PatternPlaceholder(PatternMatching.Pattern child)
+			{
+				this.child = child;
+			}
+
+			public override NodeType NodeType {
+				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitPatternPlaceholder(this, child, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return child.DoMatch(other, match);
+			}
+		}
+
+		#endregion
 	}
 }

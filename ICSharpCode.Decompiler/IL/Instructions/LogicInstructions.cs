@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			Debug.Assert(Left.ResultType is StackType.I4 or StackType.O);
 		}
 	}
 
@@ -44,23 +44,23 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			Debug.Assert(Left.ResultType is StackType.I4 or StackType.O);
 		}
 	}
 
 	partial class UserDefinedLogicOperator
 	{
-		protected override InstructionFlags ComputeFlags()
-		{
-			// left is always executed; right only sometimes
-			return DirectFlags | left.Flags
-				| SemanticHelper.CombineBranches(InstructionFlags.None, right.Flags);
-		}
-
 		public override InstructionFlags DirectFlags {
 			get {
 				return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
 			}
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			// left is always executed; right only sometimes
+			return DirectFlags | left.Flags
+			                   | SemanticHelper.CombineBranches(InstructionFlags.None, right.Flags);
 		}
 	}
 }

@@ -23,79 +23,19 @@ using System.Linq;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public class FunctionPointerType : AbstractType
 	{
-		public static FunctionPointerType FromSignature(MethodSignature<IType> signature, MetadataModule module)
-		{
-			IType returnType = signature.ReturnType;
-			bool returnIsRefReadOnly = false;
-			var customCallConvs = ImmutableArray.CreateBuilder<IType>();
-			while (returnType is ModifiedType modReturn)
-			{
-				if (modReturn.Modifier.IsKnownType(KnownAttribute.In))
-				{
-					returnType = modReturn.ElementType;
-					returnIsRefReadOnly = true;
-				}
-				else if (modReturn.Modifier.Name.StartsWith("CallConv", StringComparison.Ordinal)
-					&& modReturn.Modifier.Namespace == "System.Runtime.CompilerServices")
-				{
-					returnType = modReturn.ElementType;
-					customCallConvs.Add(modReturn.Modifier);
-				}
-				else
-				{
-					break;
-				}
-			}
-			var parameterTypes = ImmutableArray.CreateBuilder<IType>(signature.ParameterTypes.Length);
-			var parameterReferenceKinds = ImmutableArray.CreateBuilder<ReferenceKind>(signature.ParameterTypes.Length);
-			foreach (var p in signature.ParameterTypes)
-			{
-				IType paramType = p;
-				ReferenceKind kind = ReferenceKind.None;
-				if (p is ModifiedType modreq)
-				{
-					if (modreq.Modifier.IsKnownType(KnownAttribute.In))
-					{
-						kind = ReferenceKind.In;
-						paramType = modreq.ElementType;
-					}
-					else if (modreq.Modifier.IsKnownType(KnownAttribute.Out))
-					{
-						kind = ReferenceKind.Out;
-						paramType = modreq.ElementType;
-					}
-				}
-				if (paramType.Kind == TypeKind.ByReference)
-				{
-					if (kind == ReferenceKind.None)
-						kind = ReferenceKind.Ref;
-				}
-				else
-				{
-					kind = ReferenceKind.None;
-				}
-				parameterTypes.Add(paramType);
-				parameterReferenceKinds.Add(kind);
-			}
-			return new FunctionPointerType(
-				module, signature.Header.CallingConvention, customCallConvs.ToImmutable(),
-				returnType, returnIsRefReadOnly,
-				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());
-		}
-
-		private readonly MetadataModule module;
 		public readonly SignatureCallingConvention CallingConvention;
 		public readonly ImmutableArray<IType> CustomCallingConventions;
-		public readonly IType ReturnType;
-		public readonly bool ReturnIsRefReadOnly;
-		public readonly ImmutableArray<IType> ParameterTypes;
+
+		private readonly MetadataModule module;
 		public readonly ImmutableArray<ReferenceKind> ParameterReferenceKinds;
+		public readonly ImmutableArray<IType> ParameterTypes;
+		public readonly bool ReturnIsRefReadOnly;
+		public readonly IType ReturnType;
 
 		public FunctionPointerType(MetadataModule module,
 			SignatureCallingConvention callingConvention, ImmutableArray<IType> customCallingConventions,
@@ -116,20 +56,81 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool? IsReferenceType => false;
 
-		public override TypeKind Kind => ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0) ? TypeKind.FunctionPointer : TypeKind.Struct;
+		public override TypeKind Kind => ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0)
+			? TypeKind.FunctionPointer
+			: TypeKind.Struct;
+
+		public static FunctionPointerType FromSignature(MethodSignature<IType> signature, MetadataModule module)
+		{
+			IType returnType = signature.ReturnType;
+			bool returnIsRefReadOnly = false;
+			var customCallConvs = ImmutableArray.CreateBuilder<IType>();
+			while (returnType is ModifiedType modReturn)
+			{
+				if (modReturn.Modifier.IsKnownType(KnownAttribute.In))
+				{
+					returnType = modReturn.ElementType;
+					returnIsRefReadOnly = true;
+				}
+				else if (modReturn.Modifier.Name.StartsWith("CallConv", StringComparison.Ordinal)
+				         && modReturn.Modifier.Namespace == "System.Runtime.CompilerServices")
+				{
+					returnType = modReturn.ElementType;
+					customCallConvs.Add(modReturn.Modifier);
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			var parameterTypes = ImmutableArray.CreateBuilder<IType>(signature.ParameterTypes.Length);
+			var parameterReferenceKinds = ImmutableArray.CreateBuilder<ReferenceKind>(signature.ParameterTypes.Length);
+			foreach (var p in signature.ParameterTypes)
+			{
+				IType paramType = p;
+				ReferenceKind kind = ReferenceKind.None;
+				if (p is ModifiedType modreq)
+				{
+					if (modreq.Modifier.IsKnownType(KnownAttribute.In))
+					{
+						kind = ReferenceKind.In;
+						paramType = modreq.ElementType;
+					}
+					else if (modreq.Modifier.IsKnownType(KnownAttribute.Out))
+					{
+						kind = ReferenceKind.Out;
+						paramType = modreq.ElementType;
+					}
+				}
+
+				if (paramType.Kind == TypeKind.ByReference)
+				{
+					if (kind == ReferenceKind.None)
+						kind = ReferenceKind.Ref;
+				}
+				else
+				{
+					kind = ReferenceKind.None;
+				}
+
+				parameterTypes.Add(paramType);
+				parameterReferenceKinds.Add(kind);
+			}
+
+			return new FunctionPointerType(
+				module, signature.Header.CallingConvention, customCallConvs.ToImmutable(),
+				returnType, returnIsRefReadOnly,
+				parameterTypes.MoveToImmutable(), parameterReferenceKinds.MoveToImmutable());
+		}
 
 		public override ITypeDefinition GetDefinition()
 		{
-			if ((module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0)
-			{
-				return null;
-			}
-			else
-			{
-				// If FunctionPointers are not enabled in the TS, we still use FunctionPointerType instances;
-				// but have them act as if they were aliases for UIntPtr.
-				return module.Compilation.FindType(KnownTypeCode.UIntPtr).GetDefinition();
-			}
+			// If FunctionPointers are not enabled in the TS, we still use FunctionPointerType instances;
+			// but have them act as if they were aliases for UIntPtr.
+			return (module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0
+				? null
+				: module.Compilation.FindType(KnownTypeCode.UIntPtr).GetDefinition();
 		}
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
@@ -156,9 +157,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						pt[j] = ParameterTypes[j];
 					}
 				}
+
 				if (pt != null)
 					pt[i] = p;
 			}
+
 			if (pt == null)
 				return this;
 			else
@@ -172,12 +175,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override bool Equals(IType other)
 		{
 			return other is FunctionPointerType fpt
-				&& CallingConvention == fpt.CallingConvention
-				&& CustomCallingConventions.SequenceEqual(fpt.CustomCallingConventions)
-				&& ReturnType.Equals(fpt.ReturnType)
-				&& ReturnIsRefReadOnly == fpt.ReturnIsRefReadOnly
-				&& ParameterTypes.SequenceEqual(fpt.ParameterTypes)
-				&& ParameterReferenceKinds.SequenceEqual(fpt.ParameterReferenceKinds);
+			       && CallingConvention == fpt.CallingConvention
+			       && CustomCallingConventions.SequenceEqual(fpt.CustomCallingConventions)
+			       && ReturnType.Equals(fpt.ReturnType)
+			       && ReturnIsRefReadOnly == fpt.ReturnIsRefReadOnly
+			       && ParameterTypes.SequenceEqual(fpt.ParameterTypes)
+			       && ParameterReferenceKinds.SequenceEqual(fpt.ParameterReferenceKinds);
 		}
 
 		public override int GetHashCode()
@@ -185,11 +188,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			unchecked
 			{
 				int hash = ReturnType.GetHashCode() ^ CallingConvention.GetHashCode();
-				foreach (var (p, k) in ParameterTypes.Zip(ParameterReferenceKinds))
+				foreach ((IType p, ReferenceKind k) in ParameterTypes.Zip(ParameterReferenceKinds))
 				{
 					hash ^= p.GetHashCode() ^ k.GetHashCode();
 					hash *= 8310859;
 				}
+
 				return hash;
 			}
 		}

@@ -29,60 +29,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public static class ReflectionHelper
 	{
-		/// <summary>
-		/// A reflection class used to represent <c>null</c>.
-		/// </summary>
-		public sealed class Null { }
-
-		/// <summary>
-		/// A reflection class used to represent <c>dynamic</c>.
-		/// </summary>
-		public sealed class Dynamic { }
-
-		/// <summary>
-		/// A reflection class used to represent <c>nint</c>.
-		/// </summary>
-		public sealed class NInt { }
-
-		/// <summary>
-		/// A reflection class used to represent <c>nuint</c>.
-		/// </summary>
-		public sealed class NUInt { }
-
-		/// <summary>
-		/// A reflection class used to represent an unbound type argument.
-		/// </summary>
-		public sealed class UnboundTypeArgument { }
-
-		#region ICompilation.FindType
-		/// <summary>
-		/// Retrieves the specified type in this compilation.
-		/// Returns <see cref="SpecialType.UnknownType"/> if the type cannot be found in this compilation.
-		/// </summary>
-		/// <remarks>
-		/// This method cannot be used with open types; all type parameters will be substituted
-		/// with <see cref="SpecialType.UnknownType"/>.
-		/// </remarks>
-		public static IType FindType(this ICompilation compilation, Type type)
-		{
-			return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(compilation));
-		}
-
-		public static IType FindType(this ICompilation compilation, StackType stackType, Sign sign = Sign.None)
-		{
-			switch (stackType)
-			{
-				case StackType.Unknown:
-					return SpecialType.UnknownType;
-				case StackType.Ref:
-					return new ByReferenceType(SpecialType.UnknownType);
-				default:
-					return compilation.FindType(stackType.ToKnownTypeCode(sign));
-			}
-		}
-		#endregion
-
 		#region Type.ToTypeReference()
+
 		/// <summary>
 		/// Creates a reference to the specified type.
 		/// </summary>
@@ -109,6 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					args[i] = ToTypeReference(arguments[i]);
 					allUnbound &= args[i].Equals(SpecialType.UnboundTypeArgument);
 				}
+
 				if (allUnbound)
 					return def;
 				else
@@ -150,21 +99,82 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				else if (type == typeof(UnboundTypeArgument))
 					return SpecialType.UnboundTypeArgument;
 				ITypeReference baseTypeRef = ToTypeReference(type.DeclaringType);
-				int typeParameterCount;
-				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
+				string name = SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 				return new NestedTypeReference(baseTypeRef, name, typeParameterCount);
 			}
 			else
 			{
 				IModuleReference assemblyReference = new DefaultAssemblyReference(type.Assembly.FullName);
-				int typeParameterCount;
-				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
+				string name = SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 				return new GetClassTypeReference(assemblyReference, type.Namespace, name, typeParameterCount);
 			}
 		}
+
+		#endregion
+
+		/// <summary>
+		/// A reflection class used to represent <c>null</c>.
+		/// </summary>
+		public sealed class Null
+		{
+		}
+
+		/// <summary>
+		/// A reflection class used to represent <c>dynamic</c>.
+		/// </summary>
+		public sealed class Dynamic
+		{
+		}
+
+		/// <summary>
+		/// A reflection class used to represent <c>nint</c>.
+		/// </summary>
+		public sealed class NInt
+		{
+		}
+
+		/// <summary>
+		/// A reflection class used to represent <c>nuint</c>.
+		/// </summary>
+		public sealed class NUInt
+		{
+		}
+
+		/// <summary>
+		/// A reflection class used to represent an unbound type argument.
+		/// </summary>
+		public sealed class UnboundTypeArgument
+		{
+		}
+
+		#region ICompilation.FindType
+
+		/// <summary>
+		/// Retrieves the specified type in this compilation.
+		/// Returns <see cref="SpecialType.UnknownType"/> if the type cannot be found in this compilation.
+		/// </summary>
+		/// <remarks>
+		/// This method cannot be used with open types; all type parameters will be substituted
+		/// with <see cref="SpecialType.UnknownType"/>.
+		/// </remarks>
+		public static IType FindType(this ICompilation compilation, Type type)
+		{
+			return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(compilation));
+		}
+
+		public static IType FindType(this ICompilation compilation, StackType stackType, Sign sign = Sign.None)
+		{
+			return stackType switch {
+				StackType.Unknown => SpecialType.UnknownType,
+				StackType.Ref => new ByReferenceType(SpecialType.UnknownType),
+				_ => compilation.FindType(stackType.ToKnownTypeCode(sign))
+			};
+		}
+
 		#endregion
 
 		#region SplitTypeParameterCountFromReflectionName
+
 		/// <summary>
 		/// Removes the ` with type parameter count from the reflection name.
 		/// </summary>
@@ -178,7 +188,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			else
 			{
-				return reflectionName.Substring(0, pos);
+				return reflectionName[..pos];
 			}
 		}
 
@@ -186,7 +196,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Removes the ` with type parameter count from the reflection name.
 		/// </summary>
 		/// <remarks>Do not use this method with the full name of inner classes.</remarks>
-		public static string SplitTypeParameterCountFromReflectionName(string reflectionName, out int typeParameterCount)
+		public static string SplitTypeParameterCountFromReflectionName(string reflectionName,
+			out int typeParameterCount)
 		{
 			int pos = reflectionName.LastIndexOf('`');
 			if (pos < 0)
@@ -196,16 +207,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			else
 			{
-				string typeCount = reflectionName.Substring(pos + 1);
+				string typeCount = reflectionName[(pos + 1)..];
 				if (int.TryParse(typeCount, out typeParameterCount))
-					return reflectionName.Substring(0, pos);
+					return reflectionName[..pos];
 				else
 					return reflectionName;
 			}
 		}
+
 		#endregion
 
 		#region TypeCode support
+
 		/// <summary>
 		/// Retrieves a built-in type using the specified type code.
 		/// </summary>
@@ -229,8 +242,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static TypeCode GetTypeCode(this IType type)
 		{
-			ITypeDefinition def = type as ITypeDefinition;
-			if (def != null)
+			if (type is ITypeDefinition def)
 			{
 				KnownTypeCode typeCode = def.KnownTypeCode;
 				if (typeCode <= KnownTypeCode.String && typeCode != KnownTypeCode.Void)
@@ -238,11 +250,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				else
 					return TypeCode.Empty;
 			}
+
 			return TypeCode.Empty;
 		}
+
 		#endregion
 
 		#region ParseReflectionName
+
 		/// <summary>
 		/// Parses a reflection name into a type reference.
 		/// </summary>
@@ -262,8 +277,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <seealso cref="FullTypeName(string)"/>
 		public static ITypeReference ParseReflectionName(string reflectionTypeName)
 		{
-			if (reflectionTypeName == null)
-				throw new ArgumentNullException(nameof(reflectionTypeName));
+			ArgumentNullException.ThrowIfNull(reflectionTypeName);
 			int pos = 0;
 			ITypeReference r = ParseReflectionName(reflectionTypeName, ref pos);
 			if (pos < reflectionTypeName.Length)
@@ -324,14 +338,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				string assemblyName = local ? null : SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
 				reference = CreateGetClassTypeReference(assemblyName, typeName, tpc);
 			}
+
 			// read type suffixes
 			while (pos < reflectionTypeName.Length)
 			{
 				switch (reflectionTypeName[pos++])
 				{
 					case '+':
-						int tpc;
-						string typeName = ReadTypeName(reflectionTypeName, ref pos, out tpc);
+						string typeName = ReadTypeName(reflectionTypeName, ref pos, out int tpc);
 						reference = new NestedTypeReference(reference, typeName, tpc);
 						break;
 					case '*':
@@ -347,7 +361,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						if (reflectionTypeName[pos] != ']' && reflectionTypeName[pos] != ',')
 						{
 							// it's a generic type
-							List<ITypeReference> typeArguments = new List<ITypeReference>();
+							List<ITypeReference> typeArguments = new();
 							bool first = true;
 							while (first || pos < reflectionTypeName.Length && reflectionTypeName[pos] == ',')
 							{
@@ -359,6 +373,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								{
 									pos++; // skip ','
 								}
+
 								if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == '[')
 								{
 									// non-local type names are enclosed in another set of []
@@ -397,6 +412,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								dimensions++;
 								pos++;
 							}
+
 							if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ']')
 							{
 								pos++; // end of array
@@ -407,6 +423,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								throw new ReflectionNameParseException(pos, "Invalid array modifier");
 							}
 						}
+
 						break;
 					case ',' when !local:
 						// assembly qualified name, ignore everything up to the end/next ']'
@@ -418,9 +435,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						if (reflectionTypeName[pos] == ']' || reflectionTypeName[pos] == ',')
 							return reference; // return from a nested generic
 						else
-							throw new ReflectionNameParseException(pos, "Unexpected character: '" + reflectionTypeName[pos] + "'");
+							throw new ReflectionNameParseException(pos,
+								"Unexpected character: '" + reflectionTypeName[pos] + "'");
 				}
 			}
+
 			return reference;
 		}
 
@@ -435,11 +454,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				assemblyReference = null;
 			}
+
 			int pos = typeName.LastIndexOf('.');
 			if (pos < 0)
 				return new GetClassTypeReference(assemblyReference, string.Empty, typeName, tpc);
 			else
-				return new GetClassTypeReference(assemblyReference, typeName.Substring(0, pos), typeName.Substring(pos + 1), tpc);
+				return new GetClassTypeReference(assemblyReference, typeName[..pos], typeName[(pos + 1)..], tpc);
 		}
 
 		static string SkipAheadAndReadAssemblyName(string reflectionTypeName, int pos)
@@ -469,9 +489,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								endPos++;
 							return reflectionTypeName.Substring(pos, endPos - pos);
 						}
+
 						break;
 				}
 			}
+
 			return null;
 		}
 
@@ -493,6 +515,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				tpc = 0;
 			}
+
 			return typeName;
 		}
 
@@ -502,15 +525,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			while (pos < reflectionTypeName.Length)
 			{
 				char c = reflectionTypeName[pos];
-				if (c < '0' || c > '9')
+				if (c is < '0' or > '9')
 					break;
 				pos++;
 			}
-			int tpc;
-			if (!int.TryParse(reflectionTypeName.Substring(startPos, pos - startPos), out tpc))
+
+			if (!int.TryParse(reflectionTypeName.Substring(startPos, pos - startPos), out int tpc))
 				throw new ReflectionNameParseException(pos, "Expected type parameter count");
 			return tpc;
 		}
+
 		#endregion
 	}
 }

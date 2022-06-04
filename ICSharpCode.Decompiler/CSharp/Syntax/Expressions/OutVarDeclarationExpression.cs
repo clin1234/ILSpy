@@ -23,7 +23,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class OutVarDeclarationExpression : Expression
 	{
-		public readonly static TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
+		public static readonly TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
+
+		public OutVarDeclarationExpression()
+		{
+		}
+
+		public OutVarDeclarationExpression(AstType type, string name)
+		{
+			this.Type = type;
+			this.Variable = new VariableInitializer(name);
+		}
 
 		public CSharpTokenNode OutKeywordToken {
 			get { return GetChildByRole(OutKeywordRole); }
@@ -37,16 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public VariableInitializer Variable {
 			get { return GetChildByRole(Roles.Variable); }
 			set { SetChildByRole(Roles.Variable, value); }
-		}
-
-		public OutVarDeclarationExpression()
-		{
-		}
-
-		public OutVarDeclarationExpression(AstType type, string name)
-		{
-			this.Type = type;
-			this.Variable = new VariableInitializer(name);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -66,8 +66,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as OutVarDeclarationExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Variable.DoMatch(o.Variable, match);
+			return other is OutVarDeclarationExpression o && this.Type.DoMatch(o.Type, match) &&
+			       this.Variable.DoMatch(o.Variable, match);
 		}
 	}
 }

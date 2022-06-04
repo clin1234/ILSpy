@@ -45,9 +45,10 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// If the method returns true, it adds the capture groups (if any) to the match.
 		/// If the method returns false, the match object remains in a partially-updated state and needs to be restored
 		/// before it can be reused.</returns>
-		internal static bool DoMatch(IReadOnlyList<ILInstruction> patterns, IReadOnlyList<ILInstruction?> syntaxList, ref Match match)
+		internal static bool DoMatch(IReadOnlyList<ILInstruction> patterns, IReadOnlyList<ILInstruction?> syntaxList,
+			ref Match match)
 		{
-			ListMatch listMatch = new ListMatch(syntaxList);
+			ListMatch listMatch = new(syntaxList);
 			do
 			{
 				if (PerformMatchSequence(patterns, ref listMatch, ref match))
@@ -59,6 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 				}
 				// Otherwise, restore a savepoint created by PerformMatch() and resume the matching logic at that savepoint.
 			} while (listMatch.RestoreSavePoint(ref match));
+
 			return false;
 		}
 
@@ -73,7 +75,8 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// and adds the capture groups (if any) to the match.
 		/// If the method returns false, the listMatch and match objects remain in a partially-updated state and need to be restored
 		/// before they can be reused.</returns>
-		internal static bool PerformMatchSequence(IReadOnlyList<ILInstruction> patterns, ref ListMatch listMatch, ref Match match)
+		internal static bool PerformMatchSequence(IReadOnlyList<ILInstruction> patterns, ref ListMatch listMatch,
+			ref Match match)
 		{
 			// The patterns may create savepoints, so we need to save the 'i' variable
 			// as part of those checkpoints.
@@ -85,6 +88,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 				if (!success)
 					return false;
 			}
+
 			return true;
 		}
 
@@ -142,7 +146,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 
 		internal int GetSavePointStartMarker()
 		{
-			return backtrackingStack != null ? backtrackingStack.Count : 0;
+			return backtrackingStack?.Count ?? 0;
 		}
 
 		internal void PushToSavePoints(int startMarker, int data)
@@ -170,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		{
 			if (backtrackingStack == null || backtrackingStack.Count == 0)
 				return false;
-			var savepoint = backtrackingStack[backtrackingStack.Count - 1];
+			var savepoint = backtrackingStack[^1];
 			backtrackingStack.RemoveAt(backtrackingStack.Count - 1);
 			match.RestoreCheckPoint(savepoint.CheckPoint);
 			this.SyntaxIndex = savepoint.SyntaxIndex;

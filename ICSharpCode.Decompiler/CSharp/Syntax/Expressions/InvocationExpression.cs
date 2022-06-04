@@ -33,6 +33,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class InvocationExpression : Expression
 	{
+		public InvocationExpression()
+		{
+		}
+
+		public InvocationExpression(Expression target, IEnumerable<Expression> arguments)
+		{
+			AddChild(target, Roles.TargetExpression);
+			if (arguments != null)
+			{
+				foreach (var arg in arguments)
+				{
+					AddChild(arg, Roles.Argument);
+				}
+			}
+		}
+
+		public InvocationExpression(Expression target, params Expression[] arguments) : this(target,
+			(IEnumerable<Expression>)arguments)
+		{
+		}
+
 		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
 			set { SetChildByRole(Roles.TargetExpression, value); }
@@ -65,30 +86,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInvocationExpression(this, data);
 		}
 
-		public InvocationExpression()
-		{
-		}
-
-		public InvocationExpression(Expression target, IEnumerable<Expression> arguments)
-		{
-			AddChild(target, Roles.TargetExpression);
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, Roles.Argument);
-				}
-			}
-		}
-
-		public InvocationExpression(Expression target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
-		{
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			InvocationExpression o = other as InvocationExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
+			return other is InvocationExpression o && this.Target.DoMatch(o.Target, match) &&
+			       this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }

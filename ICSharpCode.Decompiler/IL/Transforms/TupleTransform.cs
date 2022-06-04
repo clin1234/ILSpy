@@ -17,9 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -33,7 +31,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// E.g. matches:
 		/// <c>ldflda Item1(ldflda Rest(target))</c>
 		/// </summary>
-		public static bool MatchTupleFieldAccess(LdFlda inst, out IType tupleType, out ILInstruction target, out int position)
+		public static bool MatchTupleFieldAccess(LdFlda inst, out IType tupleType, out ILInstruction target,
+			out int position)
 		{
 			tupleType = inst.Field.DeclaringType;
 			target = inst.Target;
@@ -42,16 +41,19 @@ namespace ICSharpCode.Decompiler.IL
 				position = 0;
 				return false;
 			}
-			if (!int.TryParse(inst.Field.Name.Substring(4), out position))
+
+			if (!int.TryParse(inst.Field.Name[4..], out position))
 				return false;
 			if (!TupleType.IsTupleCompatible(tupleType, out _))
 				return false;
-			while (target is LdFlda ldflda && ldflda.Field.Name == "Rest" && TupleType.IsTupleCompatible(ldflda.Field.DeclaringType, out _))
+			while (target is LdFlda ldflda && ldflda.Field.Name == "Rest" &&
+			       TupleType.IsTupleCompatible(ldflda.Field.DeclaringType, out _))
 			{
 				tupleType = ldflda.Field.DeclaringType;
 				target = ldflda.Target;
 				position += TupleType.RestPosition - 1;
 			}
+
 			return true;
 		}
 
@@ -76,6 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					arguments[outIndex++] = newobj.Arguments[pos - 1];
 				}
+
 				elementCount -= TupleType.RestPosition - 1;
 				Debug.Assert(outIndex + elementCount == arguments.Length);
 				newobj = newobj.Arguments.Last() as NewObj;
@@ -86,6 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (restElementCount != elementCount)
 					return false;
 			}
+
 			Debug.Assert(outIndex + elementCount == arguments.Length);
 			if (newobj.Arguments.Count != elementCount)
 				return false;
@@ -93,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				arguments[outIndex++] = newobj.Arguments[i];
 			}
+
 			return true;
 		}
 	}

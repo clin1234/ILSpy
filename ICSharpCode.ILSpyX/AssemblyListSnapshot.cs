@@ -36,12 +36,13 @@ namespace ICSharpCode.ILSpyX
 		Dictionary<string, PEFile>? asmLookupByFullName;
 		Dictionary<string, PEFile>? asmLookupByShortName;
 		Dictionary<string, List<(PEFile module, Version version)>>? asmLookupByShortNameGrouped;
-		public ImmutableArray<LoadedAssembly> Assemblies => assemblies;
 
 		public AssemblyListSnapshot(ImmutableArray<LoadedAssembly> assemblies)
 		{
 			this.assemblies = assemblies;
 		}
+
+		public ImmutableArray<LoadedAssembly> Assemblies => assemblies;
 
 		public async Task<PEFile?> TryGetModuleAsync(IAssemblyReference reference, string tfm)
 		{
@@ -50,6 +51,7 @@ namespace ICSharpCode.ILSpyX
 			{
 				tfm = ".NETFramework,Version=v4";
 			}
+
 			string key = tfm + ";" + (isWinRT ? reference.Name : reference.FullName);
 			var lookup = LazyInit.VolatileRead(ref isWinRT ? ref asmLookupByShortName : ref asmLookupByFullName);
 			if (lookup == null)
@@ -57,6 +59,7 @@ namespace ICSharpCode.ILSpyX
 				lookup = await CreateLoadedAssemblyLookupAsync(shortNames: isWinRT).ConfigureAwait(false);
 				lookup = LazyInit.GetOrSet(ref isWinRT ? ref asmLookupByShortName : ref asmLookupByFullName, lookup);
 			}
+
 			if (lookup.TryGetValue(key, out PEFile? module))
 				return module;
 			return null;
@@ -94,8 +97,9 @@ namespace ICSharpCode.ILSpyX
 					{
 						tfm = ".NETFramework,Version=v4";
 					}
+
 					string key = tfm + ";"
-						+ (shortNames ? module.Name : module.FullName);
+					                 + (shortNames ? module.Name : module.FullName);
 					if (!result.ContainsKey(key))
 					{
 						result.Add(key, module);
@@ -103,15 +107,17 @@ namespace ICSharpCode.ILSpyX
 				}
 				catch (BadImageFormatException)
 				{
-					continue;
 				}
 			}
+
 			return result;
 		}
 
-		private async Task<Dictionary<string, List<(PEFile module, Version version)>>> CreateLoadedAssemblyShortNameGroupLookupAsync()
+		private async Task<Dictionary<string, List<(PEFile module, Version version)>>>
+			CreateLoadedAssemblyShortNameGroupLookupAsync()
 		{
-			var result = new Dictionary<string, List<(PEFile module, Version version)>>(StringComparer.OrdinalIgnoreCase);
+			var result =
+				new Dictionary<string, List<(PEFile module, Version version)>>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (LoadedAssembly loaded in assemblies)
 			{
@@ -140,7 +146,6 @@ namespace ICSharpCode.ILSpyX
 				}
 				catch (BadImageFormatException)
 				{
-					continue;
 				}
 			}
 
@@ -166,6 +171,7 @@ namespace ICSharpCode.ILSpyX
 					results.Add(asm);
 					continue;
 				}
+
 				if (result.Package != null)
 				{
 					AddDescendants(result.Package.RootFolder);

@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler.Util;
 
@@ -29,20 +28,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataParameter : IParameter
 	{
-		readonly MetadataModule module;
-		readonly ParameterHandle handle;
+		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 		readonly ParameterAttributes attributes;
+		readonly ParameterHandle handle;
 
-		public IType Type { get; }
-		public IParameterizedMember Owner { get; }
+		readonly MetadataModule module;
 
-		// lazy-loaded:
-		string name;
 		// these can't be bool? as bool? is not thread-safe from torn reads
 		byte constantValueInSignatureState;
 		byte decimalConstantState;
 
-		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type, ParameterHandle handle)
+		// lazy-loaded:
+		string name;
+
+		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type,
+			ParameterHandle handle)
 		{
 			this.module = module;
 			this.Owner = owner;
@@ -57,7 +57,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public EntityHandle MetadataToken => handle;
 
+		bool IsDecimalConstant {
+			get {
+				if (decimalConstantState == ThreeState.Unknown)
+				{
+					var parameterDef = module.metadata.GetParameter(handle);
+					decimalConstantState =
+						ThreeState.From(
+							DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
+				}
+
+				return decimalConstantState == ThreeState.True;
+			}
+		}
+
+		public IType Type { get; }
+		public IParameterizedMember Owner { get; }
+
 		#region Attributes
+
 		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
@@ -74,14 +92,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
 					b.Add(KnownAttribute.Out);
 			}
+
 			b.Add(parameter.GetCustomAttributes(), SymbolKind.Parameter);
 			b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
 
 			return b.Build();
 		}
-		#endregion
 
-		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
+		#endregion
 
 		public ReferenceKind ReferenceKind => DetectRefKind();
 		public bool IsRef => DetectRefKind() == ReferenceKind.Ref;
@@ -89,22 +107,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsIn => DetectRefKind() == ReferenceKind.In;
 
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
-
-		ReferenceKind DetectRefKind()
-		{
-			if (Type.Kind != TypeKind.ByReference)
-				return ReferenceKind.None;
-			if ((attributes & inOut) == ParameterAttributes.Out)
-				return ReferenceKind.Out;
-			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0)
-			{
-				var metadata = module.metadata;
-				var parameterDef = metadata.GetParameter(handle);
-				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
-					return ReferenceKind.In;
-			}
-			return ReferenceKind.Ref;
-		}
 
 		public bool IsParams {
 			get {
@@ -165,29 +167,38 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					if (IsDecimalConstant)
 					{
-						constantValueInSignatureState = ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module));
+						constantValueInSignatureState =
+							ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module));
 					}
 					else
 					{
-						constantValueInSignatureState = ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
+						constantValueInSignatureState =
+							ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
 					}
 				}
+
 				return constantValueInSignatureState == ThreeState.True;
 			}
 		}
 
-		bool IsDecimalConstant {
-			get {
-				if (decimalConstantState == ThreeState.Unknown)
-				{
-					var parameterDef = module.metadata.GetParameter(handle);
-					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
-				}
-				return decimalConstantState == ThreeState.True;
-			}
-		}
-
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
+
+		ReferenceKind DetectRefKind()
+		{
+			if (Type.Kind != TypeKind.ByReference)
+				return ReferenceKind.None;
+			if ((attributes & inOut) == ParameterAttributes.Out)
+				return ReferenceKind.Out;
+			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0)
+			{
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly))
+					return ReferenceKind.In;
+			}
+
+			return ReferenceKind.Ref;
+		}
 
 		public override string ToString()
 		{

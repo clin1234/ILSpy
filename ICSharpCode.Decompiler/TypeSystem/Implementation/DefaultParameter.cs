@@ -29,39 +29,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public sealed class DefaultParameter : IParameter
 	{
-		readonly IType type;
-		readonly string name;
 		readonly IReadOnlyList<IAttribute> attributes;
-		readonly ReferenceKind referenceKind;
-		readonly bool isParams, isOptional;
 		readonly object defaultValue;
-		readonly IParameterizedMember owner;
 
 		public DefaultParameter(IType type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.type = type;
-			this.name = name;
+			this.Type = type ?? throw new ArgumentNullException(nameof(type));
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 
-		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-								ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
+		public DefaultParameter(IType type, string name, IParameterizedMember owner = null,
+			IReadOnlyList<IAttribute> attributes = null,
+			ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false,
+			object defaultValue = null)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.type = type;
-			this.name = name;
-			this.owner = owner;
+			this.Type = type ?? throw new ArgumentNullException(nameof(type));
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
+			this.Owner = owner;
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
-			this.referenceKind = referenceKind;
-			this.isParams = isParams;
-			this.isOptional = isOptional;
+			this.ReferenceKind = referenceKind;
+			this.IsParams = isParams;
+			this.IsOptional = isOptional;
 			this.defaultValue = defaultValue;
 		}
 
@@ -69,28 +58,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return SymbolKind.Parameter; }
 		}
 
-		public IParameterizedMember Owner {
-			get { return owner; }
-		}
+		public IParameterizedMember Owner { get; }
 
 		public IEnumerable<IAttribute> GetAttributes() => attributes;
 
-		public ReferenceKind ReferenceKind => referenceKind;
-		public bool IsRef => referenceKind == ReferenceKind.Ref;
-		public bool IsOut => referenceKind == ReferenceKind.Out;
-		public bool IsIn => referenceKind == ReferenceKind.In;
+		public ReferenceKind ReferenceKind { get; }
 
-		public bool IsParams => isParams;
+		public bool IsRef => ReferenceKind == ReferenceKind.Ref;
+		public bool IsOut => ReferenceKind == ReferenceKind.Out;
+		public bool IsIn => ReferenceKind == ReferenceKind.In;
 
-		public bool IsOptional => isOptional;
+		public bool IsParams { get; }
 
-		public string Name {
-			get { return name; }
-		}
+		public bool IsOptional { get; }
 
-		public IType Type {
-			get { return type; }
-		}
+		public string Name { get; }
+
+		public IType Type { get; }
 
 		bool IVariable.IsConst {
 			get { return false; }
@@ -112,7 +96,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static string ToString(IParameter parameter)
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			if (parameter.IsRef)
 				b.Append("ref ");
 			if (parameter.IsOut)
@@ -133,6 +117,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else
 					b.Append("null");
 			}
+
 			return b.ToString();
 		}
 	}

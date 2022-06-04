@@ -59,15 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public abstract bool IsAsync { get; }
 
 		/// <summary>
-		/// Gets the return type inferred when the parameter types are inferred to be <paramref name="parameterTypes"/>
-		/// </summary>
-		/// <remarks>
-		/// This method determines the return type inferred from the lambda body, which is used as part of C# type inference.
-		/// Use the <see cref="ReturnType"/> property to retrieve the actual return type as determined by the target delegate type.
-		/// </remarks>
-		public abstract IType GetInferredReturnType(IType[] parameterTypes);
-
-		/// <summary>
 		/// Gets the list of parameters.
 		/// </summary>
 		public abstract IReadOnlyList<IParameter> Parameters { get; }
@@ -80,6 +71,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public abstract IType ReturnType { get; }
 
 		/// <summary>
+		/// Gets the resolve result for the lambda body.
+		/// Returns a resolve result for 'void' for statement lambdas.
+		/// </summary>
+		public abstract ResolveResult Body { get; }
+
+		/// <summary>
+		/// Gets the return type inferred when the parameter types are inferred to be <paramref name="parameterTypes"/>
+		/// </summary>
+		/// <remarks>
+		/// This method determines the return type inferred from the lambda body, which is used as part of C# type inference.
+		/// Use the <see cref="ReturnType"/> property to retrieve the actual return type as determined by the target delegate type.
+		/// </remarks>
+		public abstract IType GetInferredReturnType(IType[] parameterTypes);
+
+		/// <summary>
 		/// Gets whether the lambda body is valid for the given parameter types and return type.
 		/// </summary>
 		/// <returns>
@@ -87,12 +93,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// otherwise returns <see cref="Conversion.None"/>.
 		/// </returns>
 		public abstract Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions);
-
-		/// <summary>
-		/// Gets the resolve result for the lambda body.
-		/// Returns a resolve result for 'void' for statement lambdas.
-		/// </summary>
-		public abstract ResolveResult Body { get; }
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
@@ -102,8 +102,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 	sealed class DecompiledLambdaResolveResult : LambdaResolveResult
 	{
-		readonly IL.ILFunction function;
 		public readonly IType DelegateType;
+		readonly IL.ILFunction function;
 
 		/// <summary>
 		/// The inferred return type.
@@ -169,8 +169,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
+
 			if (conversions.IdentityConversion(this.ReturnType, returnType)
-				|| conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid)
+			    || conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid)
 			{
 				return LambdaConversion.Instance;
 			}
@@ -183,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 	class LambdaConversion : Conversion
 	{
-		public static readonly LambdaConversion Instance = new LambdaConversion();
+		public static readonly LambdaConversion Instance = new();
 
 		public override bool IsAnonymousFunctionConversion => true;
 		public override bool IsImplicit => true;

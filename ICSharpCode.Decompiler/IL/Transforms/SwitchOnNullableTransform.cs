@@ -16,13 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -36,15 +33,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.LiftNullables)
 				return;
 
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			HashSet<BlockContainer> changedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
 				bool changed = false;
 				for (int i = block.Instructions.Count - 1; i >= 0; i--)
 				{
-					SwitchInstruction newSwitch;
-					if (MatchSwitchOnNullable(block.Instructions, i, out newSwitch))
+					if (MatchSwitchOnNullable(block.Instructions, i, out SwitchInstruction newSwitch))
 					{
 						newSwitch.AddILRange(block.Instructions[i - 2]);
 						block.Instructions[i + 1].ReplaceWith(newSwitch);
@@ -53,6 +49,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						changed = true;
 						continue;
 					}
+
 					if (MatchRoslynSwitchOnNullable(block.Instructions, i, out newSwitch))
 					{
 						newSwitch.AddILRange(block.Instructions[i]);
@@ -60,9 +57,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions[i].ReplaceWith(newSwitch);
 						block.Instructions.RemoveAt(i + 1);
 						changed = true;
-						continue;
 					}
 				}
+
 				if (!changed)
 					continue;
 				SwitchDetection.SimplifySwitchInstruction(block, context);
@@ -77,7 +74,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches legacy C# switch on nullable.
 		/// </summary>
-		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction newSwitch)
+		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i,
+			out SwitchInstruction newSwitch)
 		{
 			newSwitch = null;
 			// match first block:
@@ -88,8 +86,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (i < 2)
 				return false;
 			if (!instructions[i - 2].MatchStLoc(out var tmp, out var ldloca) ||
-				!instructions[i - 1].MatchStLoc(out var switchVariable, out var getValueOrDefault) ||
-				!instructions[i].MatchIfInstruction(out var condition, out var trueInst))
+			    !instructions[i - 1].MatchStLoc(out var switchVariable, out var getValueOrDefault) ||
+			    !instructions[i].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 			if (!tmp.IsSingleDefinition || tmp.LoadCount != 2)
 				return false;
@@ -101,7 +99,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!condition.MatchLogicNot(out var getHasValue))
 				return false;
-			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction getValueOrDefaultArg))
+			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault,
+				    out ILInstruction getValueOrDefaultArg))
 				return false;
 			if (!NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction getHasValueArg))
 				return false;
@@ -115,16 +114,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// }
 			if (switchBlock.Instructions.Count != 1 || switchBlock.IncomingEdgeCount != 1)
 				return false;
-			if (!(switchBlock.Instructions[0] is SwitchInstruction switchInst))
+			if (switchBlock.Instructions[0] is not SwitchInstruction switchInst)
 				return false;
 			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, new LdLoc(switchValueVar));
 			return true;
 		}
 
-		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst, ILInstruction switchValue)
+		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst,
+			ILInstruction switchValue)
 		{
-			SwitchInstruction newSwitch = new SwitchInstruction(switchValue);
-			newSwitch.IsLifted = true;
+			SwitchInstruction newSwitch = new(switchValue) {
+				IsLifted = true
+			};
 			newSwitch.Sections.AddRange(switchInst.Sections);
 			newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
 			return newSwitch;
@@ -133,7 +134,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches Roslyn C# switch on nullable.
 		/// </summary>
-		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction newSwitch)
+		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i,
+			out SwitchInstruction newSwitch)
 		{
 			newSwitch = null;
 			// match first block:
@@ -143,7 +145,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!instructions[i + 1].MatchBranch(out var switchBlock) || !trueInst.MatchBranch(out var nullCaseBlock))
 				return false;
-			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction target) || !SemanticHelper.IsPure(target.Flags))
+			if (!condition.MatchLogicNot(out var getHasValue) ||
+			    !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction target) ||
+			    !SemanticHelper.IsPure(target.Flags))
 				return false;
 			// match second block: switchBlock
 			// note: I have seen cases where switchVar is inlined into the switch.
@@ -165,9 +169,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
 						return false;
-					if (!(NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction target2) && target2.Match(target).Success))
+					if (!(NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault,
+						    out ILInstruction target2) && target2.Match(target).Success))
 						return false;
-					if (!(switchBlock.Instructions[1] is SwitchInstruction si))
+					if (switchBlock.Instructions[1] is not SwitchInstruction si)
 						return false;
 					switchInst = si;
 					break;
@@ -175,9 +180,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case 1:
 				{
 					// this is the special case where `call GetValueOrDefault(ldloca tmp)` is inlined into the switch.
-					if (!(switchBlock.Instructions[0] is SwitchInstruction si))
+					if (switchBlock.Instructions[0] is not SwitchInstruction si)
 						return false;
-					if (!(NullableLiftingTransform.MatchGetValueOrDefault(si.Value, out ILInstruction target2) && target2.Match(target).Success))
+					if (!(NullableLiftingTransform.MatchGetValueOrDefault(si.Value, out ILInstruction target2) &&
+					      target2.Match(target).Success))
 						return false;
 					switchInst = si;
 					break;
@@ -187,6 +193,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				}
 			}
+
 			ILInstruction switchValue;
 			if (target.MatchLdLoca(out var v))
 				switchValue = new LdLoc(v).WithILRange(target);

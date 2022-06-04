@@ -33,18 +33,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class MetadataField : IField
 	{
-		readonly MetadataModule module;
-		readonly FieldDefinitionHandle handle;
 		readonly FieldAttributes attributes;
+		readonly FieldDefinitionHandle handle;
+		readonly MetadataModule module;
+
+		object constantValue;
+
+		// this can't be bool? as bool? is not thread-safe from torn reads
+		byte decimalConstantState;
 
 		// lazy-loaded fields:
 		ITypeDefinition declaringType;
-		string name;
-		object constantValue;
-		IType type;
 		bool isVolatile; // initialized together with this.type
-						 // this can't be bool? as bool? is not thread-safe from torn reads
-		byte decimalConstantState;
+		string name;
+		IType type;
 
 		internal MetadataField(MetadataModule module, FieldDefinitionHandle handle)
 		{
@@ -55,16 +57,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var def = module.metadata.GetFieldDefinition(handle);
 			this.attributes = def.Attributes;
 
-			if ((attributes & (FieldAttributes.Static | FieldAttributes.InitOnly)) != (FieldAttributes.Static | FieldAttributes.InitOnly))
+			if ((attributes & (FieldAttributes.Static | FieldAttributes.InitOnly)) !=
+			    (FieldAttributes.Static | FieldAttributes.InitOnly))
 				decimalConstantState = ThreeState.False;
 		}
 
-		public EntityHandle MetadataToken => handle;
+		bool IsDecimalConstant {
+			get {
+				if (decimalConstantState == ThreeState.Unknown)
+				{
+					var fieldDef = module.metadata.GetFieldDefinition(handle);
+					decimalConstantState =
+						ThreeState.From(
+							DecimalConstantHelper.IsDecimalConstant(module, fieldDef.GetCustomAttributes()));
+				}
 
-		public override string ToString()
-		{
-			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
+				return decimalConstantState == ThreeState.True;
+			}
 		}
+
+		public EntityHandle MetadataToken => handle;
 
 		public string Name {
 			get {
@@ -79,21 +91,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public Accessibility Accessibility {
 			get {
-				switch (attributes & FieldAttributes.FieldAccessMask)
-				{
-					case FieldAttributes.Public:
-						return Accessibility.Public;
-					case FieldAttributes.FamANDAssem:
-						return Accessibility.ProtectedAndInternal;
-					case FieldAttributes.Assembly:
-						return Accessibility.Internal;
-					case FieldAttributes.Family:
-						return Accessibility.Protected;
-					case FieldAttributes.FamORAssem:
-						return Accessibility.ProtectedOrInternal;
-					default:
-						return Accessibility.Private;
-				}
+				return (attributes & FieldAttributes.FieldAccessMask) switch {
+					FieldAttributes.Public => Accessibility.Public,
+					FieldAttributes.FamANDAssem => Accessibility.ProtectedAndInternal,
+					FieldAttributes.Assembly => Accessibility.Internal,
+					FieldAttributes.Family => Accessibility.Protected,
+					FieldAttributes.FamORAssem => Accessibility.ProtectedOrInternal,
+					_ => Accessibility.Private
+				};
 			}
 		}
 
@@ -153,7 +158,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 
 			// SpecialName
-			if ((fieldDef.Attributes & (FieldAttributes.SpecialName | FieldAttributes.RTSpecialName)) == FieldAttributes.SpecialName)
+			if ((fieldDef.Attributes & (FieldAttributes.SpecialName | FieldAttributes.RTSpecialName)) ==
+			    FieldAttributes.SpecialName)
 			{
 				b.Add(KnownAttribute.SpecialName);
 			}
@@ -174,10 +180,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					DecodeTypeAndVolatileFlag();
 				}
+
 				return this.isVolatile;
 			}
 		}
+
 		IType IMember.ReturnType => Type;
+
 		public IType Type {
 			get {
 				var ty = LazyInit.VolatileRead(ref this.type);
@@ -185,47 +194,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return ty;
 				}
+
 				return DecodeTypeAndVolatileFlag();
 			}
 		}
 
-		private IType DecodeTypeAndVolatileFlag()
-		{
-			var metadata = module.metadata;
-			var fieldDef = metadata.GetFieldDefinition(handle);
-			IType ty;
-			try
-			{
-				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
-				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices")
-				{
-					Volatile.Write(ref this.isVolatile, true);
-					ty = mod.ElementType;
-				}
-				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
-					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),
-					DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious);
-			}
-			catch (BadImageFormatException)
-			{
-				ty = SpecialType.UnknownType;
-			}
-			return LazyInit.GetOrSet(ref this.type, ty);
-		}
-
 		public bool IsConst => (attributes & FieldAttributes.Literal) != 0
-							|| (IsDecimalConstant && DecimalConstantHelper.AllowsDecimalConstants(module));
-
-		bool IsDecimalConstant {
-			get {
-				if (decimalConstantState == ThreeState.Unknown)
-				{
-					var fieldDef = module.metadata.GetFieldDefinition(handle);
-					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, fieldDef.GetCustomAttributes()));
-				}
-				return decimalConstantState == ThreeState.True;
-			}
-		}
+		                       || (IsDecimalConstant && DecimalConstantHelper.AllowsDecimalConstants(module));
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
@@ -256,26 +231,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						throw new BadImageFormatException($"Constant with invalid typecode: {constant.TypeCode}");
 					}
 				}
+
 				return LazyInit.GetOrSet(ref this.constantValue, val);
 			}
 			catch (BadImageFormatException) when (!throwOnInvalidMetadata)
 			{
 				return null;
 			}
-		}
-
-		public override bool Equals(object obj)
-		{
-			if (obj is MetadataField f)
-			{
-				return handle == f.handle && module.PEFile == f.module.PEFile;
-			}
-			return false;
-		}
-
-		public override int GetHashCode()
-		{
-			return 0x11dda32b ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
@@ -286,6 +248,53 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedField.Create(this, substitution);
+		}
+
+		public override string ToString()
+		{
+			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
+		}
+
+		private IType DecodeTypeAndVolatileFlag()
+		{
+			var metadata = module.metadata;
+			var fieldDef = metadata.GetFieldDefinition(handle);
+			IType ty;
+			try
+			{
+				ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
+				if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" &&
+				    mod.Modifier.Namespace == "System.Runtime.CompilerServices")
+				{
+					Volatile.Write(ref this.isVolatile, true);
+					ty = mod.ElementType;
+				}
+
+				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
+					fieldDef.GetCustomAttributes(), metadata, module.OptionsForEntity(this),
+					DeclaringTypeDefinition?.NullableContext ?? Nullability.Oblivious);
+			}
+			catch (BadImageFormatException)
+			{
+				ty = SpecialType.UnknownType;
+			}
+
+			return LazyInit.GetOrSet(ref this.type, ty);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataField f)
+			{
+				return handle == f.handle && module.PEFile == f.module.PEFile;
+			}
+
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x11dda32b ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 	}
 }

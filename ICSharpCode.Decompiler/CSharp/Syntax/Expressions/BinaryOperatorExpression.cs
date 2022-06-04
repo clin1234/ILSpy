@@ -34,30 +34,30 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BinaryOperatorExpression : Expression
 	{
-		public readonly static TokenRole BitwiseAndRole = new TokenRole("&");
-		public readonly static TokenRole BitwiseOrRole = new TokenRole("|");
-		public readonly static TokenRole ConditionalAndRole = new TokenRole("&&");
-		public readonly static TokenRole ConditionalOrRole = new TokenRole("||");
-		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^");
-		public readonly static TokenRole GreaterThanRole = new TokenRole(">");
-		public readonly static TokenRole GreaterThanOrEqualRole = new TokenRole(">=");
-		public readonly static TokenRole EqualityRole = new TokenRole("==");
-		public readonly static TokenRole InEqualityRole = new TokenRole("!=");
-		public readonly static TokenRole LessThanRole = new TokenRole("<");
-		public readonly static TokenRole LessThanOrEqualRole = new TokenRole("<=");
-		public readonly static TokenRole AddRole = new TokenRole("+");
-		public readonly static TokenRole SubtractRole = new TokenRole("-");
-		public readonly static TokenRole MultiplyRole = new TokenRole("*");
-		public readonly static TokenRole DivideRole = new TokenRole("/");
-		public readonly static TokenRole ModulusRole = new TokenRole("%");
-		public readonly static TokenRole ShiftLeftRole = new TokenRole("<<");
-		public readonly static TokenRole ShiftRightRole = new TokenRole(">>");
-		public readonly static TokenRole NullCoalescingRole = new TokenRole("??");
-		public readonly static TokenRole RangeRole = new TokenRole("..");
-		public readonly static TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
+		public static readonly TokenRole BitwiseAndRole = new("&");
+		public static readonly TokenRole BitwiseOrRole = new("|");
+		public static readonly TokenRole ConditionalAndRole = new("&&");
+		public static readonly TokenRole ConditionalOrRole = new("||");
+		public static readonly TokenRole ExclusiveOrRole = new("^");
+		public static readonly TokenRole GreaterThanRole = new(">");
+		public static readonly TokenRole GreaterThanOrEqualRole = new(">=");
+		public static readonly TokenRole EqualityRole = new("==");
+		public static readonly TokenRole InEqualityRole = new("!=");
+		public static readonly TokenRole LessThanRole = new("<");
+		public static readonly TokenRole LessThanOrEqualRole = new("<=");
+		public static readonly TokenRole AddRole = new("+");
+		public static readonly TokenRole SubtractRole = new("-");
+		public static readonly TokenRole MultiplyRole = new("*");
+		public static readonly TokenRole DivideRole = new("/");
+		public static readonly TokenRole ModulusRole = new("%");
+		public static readonly TokenRole ShiftLeftRole = new("<<");
+		public static readonly TokenRole ShiftRightRole = new(">>");
+		public static readonly TokenRole NullCoalescingRole = new("??");
+		public static readonly TokenRole RangeRole = new("..");
+		public static readonly TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
 
-		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", Expression.Null);
-		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", Expression.Null);
+		public static readonly Role<Expression> LeftRole = new("Left", Null);
+		public static readonly Role<Expression> RightRole = new("Right", Null);
 
 		public BinaryOperatorExpression()
 		{
@@ -106,109 +106,69 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BinaryOperatorExpression o = other as BinaryOperatorExpression;
-			return o != null && (this.Operator == BinaryOperatorType.Any || this.Operator == o.Operator)
-				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
+			return other is BinaryOperatorExpression o && (this.Operator == BinaryOperatorType.Any ||
+			                                               this.Operator == o.Operator)
+			                                           && this.Left.DoMatch(o.Left, match) &&
+			                                           this.Right.DoMatch(o.Right, match);
 		}
 
 		public static TokenRole GetOperatorRole(BinaryOperatorType op)
 		{
-			switch (op)
-			{
-				case BinaryOperatorType.BitwiseAnd:
-					return BitwiseAndRole;
-				case BinaryOperatorType.BitwiseOr:
-					return BitwiseOrRole;
-				case BinaryOperatorType.ConditionalAnd:
-					return ConditionalAndRole;
-				case BinaryOperatorType.ConditionalOr:
-					return ConditionalOrRole;
-				case BinaryOperatorType.ExclusiveOr:
-					return ExclusiveOrRole;
-				case BinaryOperatorType.GreaterThan:
-					return GreaterThanRole;
-				case BinaryOperatorType.GreaterThanOrEqual:
-					return GreaterThanOrEqualRole;
-				case BinaryOperatorType.Equality:
-					return EqualityRole;
-				case BinaryOperatorType.InEquality:
-					return InEqualityRole;
-				case BinaryOperatorType.LessThan:
-					return LessThanRole;
-				case BinaryOperatorType.LessThanOrEqual:
-					return LessThanOrEqualRole;
-				case BinaryOperatorType.Add:
-					return AddRole;
-				case BinaryOperatorType.Subtract:
-					return SubtractRole;
-				case BinaryOperatorType.Multiply:
-					return MultiplyRole;
-				case BinaryOperatorType.Divide:
-					return DivideRole;
-				case BinaryOperatorType.Modulus:
-					return ModulusRole;
-				case BinaryOperatorType.ShiftLeft:
-					return ShiftLeftRole;
-				case BinaryOperatorType.ShiftRight:
-					return ShiftRightRole;
-				case BinaryOperatorType.NullCoalescing:
-					return NullCoalescingRole;
-				case BinaryOperatorType.Range:
-					return RangeRole;
-				case BinaryOperatorType.IsPattern:
-					return IsKeywordRole;
-				default:
-					throw new NotSupportedException("Invalid value for BinaryOperatorType");
-			}
+			return op switch {
+				BinaryOperatorType.BitwiseAnd => BitwiseAndRole,
+				BinaryOperatorType.BitwiseOr => BitwiseOrRole,
+				BinaryOperatorType.ConditionalAnd => ConditionalAndRole,
+				BinaryOperatorType.ConditionalOr => ConditionalOrRole,
+				BinaryOperatorType.ExclusiveOr => ExclusiveOrRole,
+				BinaryOperatorType.GreaterThan => GreaterThanRole,
+				BinaryOperatorType.GreaterThanOrEqual => GreaterThanOrEqualRole,
+				BinaryOperatorType.Equality => EqualityRole,
+				BinaryOperatorType.InEquality => InEqualityRole,
+				BinaryOperatorType.LessThan => LessThanRole,
+				BinaryOperatorType.LessThanOrEqual => LessThanOrEqualRole,
+				BinaryOperatorType.Add => AddRole,
+				BinaryOperatorType.Subtract => SubtractRole,
+				BinaryOperatorType.Multiply => MultiplyRole,
+				BinaryOperatorType.Divide => DivideRole,
+				BinaryOperatorType.Modulus => ModulusRole,
+				BinaryOperatorType.ShiftLeft => ShiftLeftRole,
+				BinaryOperatorType.ShiftRight => ShiftRightRole,
+				BinaryOperatorType.NullCoalescing => NullCoalescingRole,
+				BinaryOperatorType.Range => RangeRole,
+				BinaryOperatorType.IsPattern => IsKeywordRole,
+				_ => throw new NotSupportedException("Invalid value for BinaryOperatorType")
+			};
 		}
 
 		public static ExpressionType GetLinqNodeType(BinaryOperatorType op, bool checkForOverflow)
 		{
-			switch (op)
-			{
-				case BinaryOperatorType.BitwiseAnd:
-					return ExpressionType.And;
-				case BinaryOperatorType.BitwiseOr:
-					return ExpressionType.Or;
-				case BinaryOperatorType.ConditionalAnd:
-					return ExpressionType.AndAlso;
-				case BinaryOperatorType.ConditionalOr:
-					return ExpressionType.OrElse;
-				case BinaryOperatorType.ExclusiveOr:
-					return ExpressionType.ExclusiveOr;
-				case BinaryOperatorType.GreaterThan:
-					return ExpressionType.GreaterThan;
-				case BinaryOperatorType.GreaterThanOrEqual:
-					return ExpressionType.GreaterThanOrEqual;
-				case BinaryOperatorType.Equality:
-					return ExpressionType.Equal;
-				case BinaryOperatorType.InEquality:
-					return ExpressionType.NotEqual;
-				case BinaryOperatorType.LessThan:
-					return ExpressionType.LessThan;
-				case BinaryOperatorType.LessThanOrEqual:
-					return ExpressionType.LessThanOrEqual;
-				case BinaryOperatorType.Add:
-					return checkForOverflow ? ExpressionType.AddChecked : ExpressionType.Add;
-				case BinaryOperatorType.Subtract:
-					return checkForOverflow ? ExpressionType.SubtractChecked : ExpressionType.Subtract;
-				case BinaryOperatorType.Multiply:
-					return checkForOverflow ? ExpressionType.MultiplyChecked : ExpressionType.Multiply;
-				case BinaryOperatorType.Divide:
-					return ExpressionType.Divide;
-				case BinaryOperatorType.Modulus:
-					return ExpressionType.Modulo;
-				case BinaryOperatorType.ShiftLeft:
-					return ExpressionType.LeftShift;
-				case BinaryOperatorType.ShiftRight:
-					return ExpressionType.RightShift;
-				case BinaryOperatorType.NullCoalescing:
-					return ExpressionType.Coalesce;
-				case BinaryOperatorType.Range:
-					return ExpressionType.Extension;
-				default:
-					throw new NotSupportedException("Invalid value for BinaryOperatorType");
-			}
+			return op switch {
+				BinaryOperatorType.BitwiseAnd => ExpressionType.And,
+				BinaryOperatorType.BitwiseOr => ExpressionType.Or,
+				BinaryOperatorType.ConditionalAnd => ExpressionType.AndAlso,
+				BinaryOperatorType.ConditionalOr => ExpressionType.OrElse,
+				BinaryOperatorType.ExclusiveOr => ExpressionType.ExclusiveOr,
+				BinaryOperatorType.GreaterThan => ExpressionType.GreaterThan,
+				BinaryOperatorType.GreaterThanOrEqual => ExpressionType.GreaterThanOrEqual,
+				BinaryOperatorType.Equality => ExpressionType.Equal,
+				BinaryOperatorType.InEquality => ExpressionType.NotEqual,
+				BinaryOperatorType.LessThan => ExpressionType.LessThan,
+				BinaryOperatorType.LessThanOrEqual => ExpressionType.LessThanOrEqual,
+				BinaryOperatorType.Add => checkForOverflow ? ExpressionType.AddChecked : ExpressionType.Add,
+				BinaryOperatorType.Subtract => checkForOverflow
+					? ExpressionType.SubtractChecked
+					: ExpressionType.Subtract,
+				BinaryOperatorType.Multiply => checkForOverflow
+					? ExpressionType.MultiplyChecked
+					: ExpressionType.Multiply,
+				BinaryOperatorType.Divide => ExpressionType.Divide,
+				BinaryOperatorType.Modulus => ExpressionType.Modulo,
+				BinaryOperatorType.ShiftLeft => ExpressionType.LeftShift,
+				BinaryOperatorType.ShiftRight => ExpressionType.RightShift,
+				BinaryOperatorType.NullCoalescing => ExpressionType.Coalesce,
+				BinaryOperatorType.Range => ExpressionType.Extension,
+				_ => throw new NotSupportedException("Invalid value for BinaryOperatorType")
+			};
 		}
 	}
 
@@ -225,46 +185,61 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// but the C# spec uses logical='|', conditional='||'
 		/// <summary>left &amp; right</summary>
 		BitwiseAnd,
+
 		/// <summary>left | right</summary>
 		BitwiseOr,
+
 		/// <summary>left &amp;&amp; right</summary>
 		ConditionalAnd,
+
 		/// <summary>left || right</summary>
 		ConditionalOr,
+
 		/// <summary>left ^ right</summary>
 		ExclusiveOr,
 
 		/// <summary>left &gt; right</summary>
 		GreaterThan,
+
 		/// <summary>left &gt;= right</summary>
 		GreaterThanOrEqual,
+
 		/// <summary>left == right</summary>
 		Equality,
+
 		/// <summary>left != right</summary>
 		InEquality,
+
 		/// <summary>left &lt; right</summary>
 		LessThan,
+
 		/// <summary>left &lt;= right</summary>
 		LessThanOrEqual,
 
 		/// <summary>left + right</summary>
 		Add,
+
 		/// <summary>left - right</summary>
 		Subtract,
+
 		/// <summary>left * right</summary>
 		Multiply,
+
 		/// <summary>left / right</summary>
 		Divide,
+
 		/// <summary>left % right</summary>
 		Modulus,
 
 		/// <summary>left &lt;&lt; right</summary>
 		ShiftLeft,
+
 		/// <summary>left &gt;&gt; right</summary>
 		ShiftRight,
 
 		/// <summary>left ?? right</summary>
 		NullCoalescing,
+
 		/// <summary>left .. right</summary>
 		/// <remarks>left and right are optional = may be Expression.Null</remarks>
 		Range,

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection.Metadata;
-using System.Text;
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
@@ -20,9 +18,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	public interface IDebugInfoProvider
 	{
 		string Description { get; }
+		string SourceFileName { get; }
 		IList<SequencePoint> GetSequencePoints(MethodDefinitionHandle method);
 		IList<Variable> GetVariables(MethodDefinitionHandle method);
 		bool TryGetName(MethodDefinitionHandle method, int index, out string name);
-		string SourceFileName { get; }
 	}
 }

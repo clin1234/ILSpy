@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading;
 
 using ICSharpCode.Decompiler.Util;
 
@@ -33,55 +32,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public abstract class SpecializedMember : IMember
 	{
 		protected readonly IMember baseMember;
-		TypeParameterSubstitution substitution;
 
 		IType declaringType;
 		IType returnType;
 
 		protected SpecializedMember(IMember memberDefinition)
 		{
-			if (memberDefinition == null)
-				throw new ArgumentNullException(nameof(memberDefinition));
+			ArgumentNullException.ThrowIfNull(memberDefinition);
 			if (memberDefinition is SpecializedMember)
-				throw new ArgumentException("Member definition cannot be specialized. Please use IMember.Specialize() instead of directly constructing SpecializedMember instances.");
+				throw new ArgumentException(
+					"Member definition cannot be specialized. Please use IMember.Specialize() instead of directly constructing SpecializedMember instances.");
 
 			this.baseMember = memberDefinition;
-			this.substitution = TypeParameterSubstitution.Identity;
-		}
-
-		/// <summary>
-		/// Performs a substitution. This method may only be called by constructors in derived classes.
-		/// </summary>
-		protected void AddSubstitution(TypeParameterSubstitution newSubstitution)
-		{
-			Debug.Assert(declaringType == null);
-			Debug.Assert(returnType == null);
-			this.substitution = TypeParameterSubstitution.Compose(newSubstitution, this.substitution);
-		}
-
-		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
-		{
-			if (accessorDefinition == null)
-				return null;
-			var result = LazyInit.VolatileRead(ref cachingField);
-			if (result != null)
-			{
-				return result;
-			}
-			else
-			{
-				var sm = accessorDefinition.Specialize(substitution);
-				//sm.AccessorOwner = this;
-				return LazyInit.GetOrSet(ref cachingField, sm);
-			}
+			this.Substitution = TypeParameterSubstitution.Identity;
 		}
 
 		/// <summary>
 		/// Gets the substitution belonging to this specialized member.
 		/// </summary>
-		public TypeParameterSubstitution Substitution {
-			get { return substitution; }
-		}
+		public TypeParameterSubstitution Substitution { get; private set; }
 
 		public IType DeclaringType {
 			get {
@@ -89,22 +58,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				IType definitionDeclaringType = baseMember.DeclaringType;
-				ITypeDefinition definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
-				if (definitionDeclaringTypeDef != null && definitionDeclaringType.TypeParameterCount > 0)
+				if (definitionDeclaringType is ITypeDefinition definitionDeclaringTypeDef &&
+				    definitionDeclaringType.TypeParameterCount > 0)
 				{
-					if (substitution.ClassTypeArguments != null && substitution.ClassTypeArguments.Count == definitionDeclaringType.TypeParameterCount)
+					if (Substitution.ClassTypeArguments != null && Substitution.ClassTypeArguments.Count ==
+					    definitionDeclaringType.TypeParameterCount)
 					{
-						result = new ParameterizedType(definitionDeclaringTypeDef, substitution.ClassTypeArguments);
+						result = new ParameterizedType(definitionDeclaringTypeDef, Substitution.ClassTypeArguments);
 					}
 					else
 					{
-						result = new ParameterizedType(definitionDeclaringTypeDef, definitionDeclaringTypeDef.TypeParameters).AcceptVisitor(substitution);
+						result = new ParameterizedType(definitionDeclaringTypeDef,
+							definitionDeclaringTypeDef.TypeParameters).AcceptVisitor(Substitution);
 					}
 				}
 				else if (definitionDeclaringType != null)
 				{
-					result = definitionDeclaringType.AcceptVisitor(substitution);
+					result = definitionDeclaringType.AcceptVisitor(Substitution);
 				}
+
 				return LazyInit.GetOrSet(ref this.declaringType, result);
 			}
 			internal set {
@@ -127,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				else
-					return LazyInit.GetOrSet(ref this.returnType, baseMember.ReturnType.AcceptVisitor(substitution));
+					return LazyInit.GetOrSet(ref this.returnType, baseMember.ReturnType.AcceptVisitor(Substitution));
 			}
 			protected set {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
@@ -167,7 +139,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				// Note: if the interface is generic, then the interface members should already be specialized,
 				// so we only need to append our substitution.
-				return baseMember.ExplicitlyImplementedInterfaceMembers.Select(m => m.Specialize(substitution));
+				return baseMember.ExplicitlyImplementedInterfaceMembers.Select(m => m.Specialize(Substitution));
 			}
 		}
 
@@ -217,37 +189,62 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public virtual IMember Specialize(TypeParameterSubstitution newSubstitution)
 		{
-			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
+			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.Substitution));
 		}
 
 		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMember other = obj as SpecializedMember;
-			if (other == null)
+			if (obj is not SpecializedMember other)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
-				&& this.substitution.Equals(other.substitution, typeNormalization);
+			       && this.Substitution.Equals(other.Substitution, typeNormalization);
+		}
+
+		/// <summary>
+		/// Performs a substitution. This method may only be called by constructors in derived classes.
+		/// </summary>
+		protected void AddSubstitution(TypeParameterSubstitution newSubstitution)
+		{
+			Debug.Assert(declaringType == null);
+			Debug.Assert(returnType == null);
+			this.Substitution = TypeParameterSubstitution.Compose(newSubstitution, this.Substitution);
+		}
+
+		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
+		{
+			if (accessorDefinition == null)
+				return null;
+			var result = LazyInit.VolatileRead(ref cachingField);
+			if (result != null)
+			{
+				return result;
+			}
+			else
+			{
+				var sm = accessorDefinition.Specialize(Substitution);
+				//sm.AccessorOwner = this;
+				return LazyInit.GetOrSet(ref cachingField, sm);
+			}
 		}
 
 		public override bool Equals(object obj)
 		{
-			SpecializedMember other = obj as SpecializedMember;
-			if (other == null)
+			if (obj is not SpecializedMember other)
 				return false;
-			return this.baseMember.Equals(other.baseMember) && this.substitution.Equals(other.substitution);
+			return this.baseMember.Equals(other.baseMember) && this.Substitution.Equals(other.Substitution);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				return 1000000007 * baseMember.GetHashCode() + 1000000009 * substitution.GetHashCode();
+				return 1000000007 * baseMember.GetHashCode() + 1000000009 * Substitution.GetHashCode();
 			}
 		}
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ToString());
@@ -275,7 +272,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				else
-					return LazyInit.GetOrSet(ref this.parameters, CreateParameters(t => t.AcceptVisitor(this.Substitution)));
+					return LazyInit.GetOrSet(ref this.parameters,
+						CreateParameters(t => t.AcceptVisitor(this.Substitution)));
 			}
 			protected set {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
@@ -303,13 +301,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					IType newType = substitution(p.Type);
 					parameters[i] = new SpecializedParameter(p, newType, this);
 				}
+
 				return parameters;
 			}
 		}
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ReflectionName);
@@ -322,6 +321,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					b.Append(", ");
 				b.Append(this.Parameters[i].ToString());
 			}
+
 			b.Append("):");
 			b.Append(this.ReturnType.ReflectionName);
 			b.Append(']');

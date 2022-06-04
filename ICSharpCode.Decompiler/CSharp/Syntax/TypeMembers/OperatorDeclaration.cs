@@ -71,77 +71,77 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class OperatorDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole OperatorKeywordRole = new TokenRole("operator");
+		public static readonly TokenRole OperatorKeywordRole = new("operator");
 
 		// Unary operators
-		public static readonly TokenRole LogicalNotRole = new TokenRole("!");
-		public static readonly TokenRole OnesComplementRole = new TokenRole("~");
-		public static readonly TokenRole IncrementRole = new TokenRole("++");
-		public static readonly TokenRole DecrementRole = new TokenRole("--");
-		public static readonly TokenRole TrueRole = new TokenRole("true");
-		public static readonly TokenRole FalseRole = new TokenRole("false");
+		public static readonly TokenRole LogicalNotRole = new("!");
+		public static readonly TokenRole OnesComplementRole = new("~");
+		public static readonly TokenRole IncrementRole = new("++");
+		public static readonly TokenRole DecrementRole = new("--");
+		public static readonly TokenRole TrueRole = new("true");
+		public static readonly TokenRole FalseRole = new("false");
 
 		// Unary and Binary operators
-		public static readonly TokenRole AdditionRole = new TokenRole("+");
-		public static readonly TokenRole SubtractionRole = new TokenRole("-");
+		public static readonly TokenRole AdditionRole = new("+");
+		public static readonly TokenRole SubtractionRole = new("-");
 
 		// Binary operators
-		public static readonly TokenRole MultiplyRole = new TokenRole("*");
-		public static readonly TokenRole DivisionRole = new TokenRole("/");
-		public static readonly TokenRole ModulusRole = new TokenRole("%");
-		public static readonly TokenRole BitwiseAndRole = new TokenRole("&");
-		public static readonly TokenRole BitwiseOrRole = new TokenRole("|");
-		public static readonly TokenRole ExclusiveOrRole = new TokenRole("^");
-		public static readonly TokenRole LeftShiftRole = new TokenRole("<<");
-		public static readonly TokenRole RightShiftRole = new TokenRole(">>");
-		public static readonly TokenRole EqualityRole = new TokenRole("==");
-		public static readonly TokenRole InequalityRole = new TokenRole("!=");
-		public static readonly TokenRole GreaterThanRole = new TokenRole(">");
-		public static readonly TokenRole LessThanRole = new TokenRole("<");
-		public static readonly TokenRole GreaterThanOrEqualRole = new TokenRole(">=");
-		public static readonly TokenRole LessThanOrEqualRole = new TokenRole("<=");
+		public static readonly TokenRole MultiplyRole = new("*");
+		public static readonly TokenRole DivisionRole = new("/");
+		public static readonly TokenRole ModulusRole = new("%");
+		public static readonly TokenRole BitwiseAndRole = new("&");
+		public static readonly TokenRole BitwiseOrRole = new("|");
+		public static readonly TokenRole ExclusiveOrRole = new("^");
+		public static readonly TokenRole LeftShiftRole = new("<<");
+		public static readonly TokenRole RightShiftRole = new(">>");
+		public static readonly TokenRole EqualityRole = new("==");
+		public static readonly TokenRole InequalityRole = new("!=");
+		public static readonly TokenRole GreaterThanRole = new(">");
+		public static readonly TokenRole LessThanRole = new("<");
+		public static readonly TokenRole GreaterThanOrEqualRole = new(">=");
+		public static readonly TokenRole LessThanOrEqualRole = new("<=");
 
-		public static readonly TokenRole ExplicitRole = new TokenRole("explicit");
-		public static readonly TokenRole ImplicitRole = new TokenRole("implicit");
+		public static readonly TokenRole ExplicitRole = new("explicit");
+		public static readonly TokenRole ImplicitRole = new("implicit");
 
 		static readonly string[][] names;
+
+		OperatorType operatorType;
 
 		static OperatorDeclaration()
 		{
 			names = new string[(int)OperatorType.Explicit + 1][];
-			names[(int)OperatorType.LogicalNot] = new string[] { "!", "op_LogicalNot" };
-			names[(int)OperatorType.OnesComplement] = new string[] { "~", "op_OnesComplement" };
-			names[(int)OperatorType.Increment] = new string[] { "++", "op_Increment" };
-			names[(int)OperatorType.Decrement] = new string[] { "--", "op_Decrement" };
-			names[(int)OperatorType.True] = new string[] { "true", "op_True" };
-			names[(int)OperatorType.False] = new string[] { "false", "op_False" };
-			names[(int)OperatorType.Addition] = new string[] { "+", "op_Addition" };
-			names[(int)OperatorType.Subtraction] = new string[] { "-", "op_Subtraction" };
-			names[(int)OperatorType.UnaryPlus] = new string[] { "+", "op_UnaryPlus" };
-			names[(int)OperatorType.UnaryNegation] = new string[] { "-", "op_UnaryNegation" };
-			names[(int)OperatorType.Multiply] = new string[] { "*", "op_Multiply" };
-			names[(int)OperatorType.Division] = new string[] { "/", "op_Division" };
-			names[(int)OperatorType.Modulus] = new string[] { "%", "op_Modulus" };
-			names[(int)OperatorType.BitwiseAnd] = new string[] { "&", "op_BitwiseAnd" };
-			names[(int)OperatorType.BitwiseOr] = new string[] { "|", "op_BitwiseOr" };
-			names[(int)OperatorType.ExclusiveOr] = new string[] { "^", "op_ExclusiveOr" };
-			names[(int)OperatorType.LeftShift] = new string[] { "<<", "op_LeftShift" };
-			names[(int)OperatorType.RightShift] = new string[] { ">>", "op_RightShift" };
-			names[(int)OperatorType.Equality] = new string[] { "==", "op_Equality" };
-			names[(int)OperatorType.Inequality] = new string[] { "!=", "op_Inequality" };
-			names[(int)OperatorType.GreaterThan] = new string[] { ">", "op_GreaterThan" };
-			names[(int)OperatorType.LessThan] = new string[] { "<", "op_LessThan" };
-			names[(int)OperatorType.GreaterThanOrEqual] = new string[] { ">=", "op_GreaterThanOrEqual" };
-			names[(int)OperatorType.LessThanOrEqual] = new string[] { "<=", "op_LessThanOrEqual" };
-			names[(int)OperatorType.Implicit] = new string[] { "implicit", "op_Implicit" };
-			names[(int)OperatorType.Explicit] = new string[] { "explicit", "op_Explicit" };
+			names[(int)OperatorType.LogicalNot] = new[] { "!", "op_LogicalNot" };
+			names[(int)OperatorType.OnesComplement] = new[] { "~", "op_OnesComplement" };
+			names[(int)OperatorType.Increment] = new[] { "++", "op_Increment" };
+			names[(int)OperatorType.Decrement] = new[] { "--", "op_Decrement" };
+			names[(int)OperatorType.True] = new[] { "true", "op_True" };
+			names[(int)OperatorType.False] = new[] { "false", "op_False" };
+			names[(int)OperatorType.Addition] = new[] { "+", "op_Addition" };
+			names[(int)OperatorType.Subtraction] = new[] { "-", "op_Subtraction" };
+			names[(int)OperatorType.UnaryPlus] = new[] { "+", "op_UnaryPlus" };
+			names[(int)OperatorType.UnaryNegation] = new[] { "-", "op_UnaryNegation" };
+			names[(int)OperatorType.Multiply] = new[] { "*", "op_Multiply" };
+			names[(int)OperatorType.Division] = new[] { "/", "op_Division" };
+			names[(int)OperatorType.Modulus] = new[] { "%", "op_Modulus" };
+			names[(int)OperatorType.BitwiseAnd] = new[] { "&", "op_BitwiseAnd" };
+			names[(int)OperatorType.BitwiseOr] = new[] { "|", "op_BitwiseOr" };
+			names[(int)OperatorType.ExclusiveOr] = new[] { "^", "op_ExclusiveOr" };
+			names[(int)OperatorType.LeftShift] = new[] { "<<", "op_LeftShift" };
+			names[(int)OperatorType.RightShift] = new[] { ">>", "op_RightShift" };
+			names[(int)OperatorType.Equality] = new[] { "==", "op_Equality" };
+			names[(int)OperatorType.Inequality] = new[] { "!=", "op_Inequality" };
+			names[(int)OperatorType.GreaterThan] = new[] { ">", "op_GreaterThan" };
+			names[(int)OperatorType.LessThan] = new[] { "<", "op_LessThan" };
+			names[(int)OperatorType.GreaterThanOrEqual] = new[] { ">=", "op_GreaterThanOrEqual" };
+			names[(int)OperatorType.LessThanOrEqual] = new[] { "<=", "op_LessThanOrEqual" };
+			names[(int)OperatorType.Implicit] = new[] { "implicit", "op_Implicit" };
+			names[(int)OperatorType.Explicit] = new[] { "explicit", "op_Explicit" };
 		}
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Operator; }
 		}
-
-		OperatorType operatorType;
 
 		public OperatorType OperatorType {
 			get { return operatorType; }
@@ -174,6 +174,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
+		}
+
+		public override string Name {
+			get { return GetName(this.OperatorType); }
+			set { throw new NotSupportedException(); }
+		}
+
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public override Identifier NameToken {
+			get { return Identifier.Null; }
+			set { throw new NotSupportedException(); }
 		}
 
 		/// <summary>
@@ -249,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ExplicitRole;
 
 				default:
-					throw new System.ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
@@ -286,23 +297,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitOperatorDeclaration(this, data);
 		}
 
-		public override string Name {
-			get { return GetName(this.OperatorType); }
-			set { throw new NotSupportedException(); }
-		}
-
-		[EditorBrowsable(EditorBrowsableState.Never)]
-		public override Identifier NameToken {
-			get { return Identifier.Null; }
-			set { throw new NotSupportedException(); }
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			OperatorDeclaration o = other as OperatorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match) && this.OperatorType == o.OperatorType
-				&& this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
+			return other is OperatorDeclaration o && this.MatchAttributesAndModifiers(o, match) &&
+			       this.OperatorType == o.OperatorType
+			       && this.ReturnType.DoMatch(o.ReturnType, match)
+			       && this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

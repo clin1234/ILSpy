@@ -30,36 +30,18 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public abstract class TypeOrNamespaceReference : ITypeReference
 	{
-		/// <summary>
-		/// Resolves the reference and returns the ResolveResult.
-		/// </summary>
-		public abstract ResolveResult Resolve(CSharpResolver resolver);
-
-		/// <summary>
-		/// Returns the type that is referenced; or an <c>UnknownType</c> if the type isn't found.
-		/// </summary>
-		public abstract IType ResolveType(CSharpResolver resolver);
-
-		/// <summary>
-		/// Returns the namespace that is referenced; or null if no such namespace is found.
-		/// </summary>
-		public INamespace ResolveNamespace(CSharpResolver resolver)
-		{
-			NamespaceResolveResult nrr = Resolve(resolver) as NamespaceResolveResult;
-			return nrr != null ? nrr.Namespace : null;
-		}
-
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			// Strictly speaking, we might have to resolve the type in a nested compilation, similar
 			// to what we're doing with ConstantExpression.
 			// However, in almost all cases this will work correctly - if the resulting type is only available in the
 			// nested compilation and not in this, we wouldn't be able to map it anyways.
-			var ctx = context as CSharpTypeResolveContext;
-			if (ctx == null)
+			if (context is not CSharpTypeResolveContext ctx)
 			{
-				ctx = new CSharpTypeResolveContext(context.CurrentModule ?? context.Compilation.MainModule, null, context.CurrentTypeDefinition, context.CurrentMember);
+				ctx = new CSharpTypeResolveContext(context.CurrentModule ?? context.Compilation.MainModule, null,
+					context.CurrentTypeDefinition, context.CurrentMember);
 			}
+
 			return ResolveType(new CSharpResolver(ctx));
 
 			// A potential issue might be this scenario:
@@ -77,6 +59,24 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			//  uses C.Field;
 
 			// Here we would not be able to resolve 'B.Nested' in the compilation of assembly 4, as type B is missing there.
+		}
+
+		/// <summary>
+		/// Resolves the reference and returns the ResolveResult.
+		/// </summary>
+		public abstract ResolveResult Resolve(CSharpResolver resolver);
+
+		/// <summary>
+		/// Returns the type that is referenced; or an <c>UnknownType</c> if the type isn't found.
+		/// </summary>
+		public abstract IType ResolveType(CSharpResolver resolver);
+
+		/// <summary>
+		/// Returns the namespace that is referenced; or null if no such namespace is found.
+		/// </summary>
+		public INamespace ResolveNamespace(CSharpResolver resolver)
+		{
+			return Resolve(resolver) is NamespaceResolveResult nrr ? nrr.Namespace : null;
 		}
 	}
 }

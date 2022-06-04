@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -20,29 +17,37 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class MetadataExtensions
 	{
-		static HashAlgorithm GetHashAlgorithm(this MetadataReader reader)
-		{
-			switch (reader.GetAssemblyDefinition().HashAlgorithm)
-			{
-				case AssemblyHashAlgorithm.None:
-					// only for multi-module assemblies?
-					return SHA1.Create();
-				case AssemblyHashAlgorithm.MD5:
-					return MD5.Create();
-				case AssemblyHashAlgorithm.Sha1:
-					return SHA1.Create();
-				case AssemblyHashAlgorithm.Sha256:
-					return SHA256.Create();
-				case AssemblyHashAlgorithm.Sha384:
-					return SHA384.Create();
-				case AssemblyHashAlgorithm.Sha512:
-					return SHA512.Create();
-				default:
-					return SHA1.Create(); // default?
-			}
+		internal static readonly TypeProvider minimalCorlibTypeProvider =
+			new(new SimpleCompilation(MinimalCorlib.Instance));
+
+		/// <summary>
+		/// An attribute type provider that can be used to decode attribute signatures
+		/// that only mention built-in types.
+		/// </summary>
+		public static SRM.ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
+			get => minimalCorlibTypeProvider;
 		}
 
-		static string CalculatePublicKeyToken(BlobHandle blob, MetadataReader reader)
+		public static SRM.ISignatureTypeProvider<IType, GenericContext> MinimalSignatureTypeProvider {
+			get => minimalCorlibTypeProvider;
+		}
+
+		static HashAlgorithm GetHashAlgorithm(this SRM.MetadataReader reader)
+		{
+			return reader.GetAssemblyDefinition().HashAlgorithm switch {
+				AssemblyHashAlgorithm.None =>
+					// only for multi-module assemblies?
+					SHA1.Create(),
+				AssemblyHashAlgorithm.MD5 => MD5.Create(),
+				AssemblyHashAlgorithm.Sha1 => SHA1.Create(),
+				AssemblyHashAlgorithm.Sha256 => SHA256.Create(),
+				AssemblyHashAlgorithm.Sha384 => SHA384.Create(),
+				AssemblyHashAlgorithm.Sha512 => SHA512.Create(),
+				_ => SHA1.Create()
+			};
+		}
+
+		static string CalculatePublicKeyToken(SRM.BlobHandle blob, SRM.MetadataReader reader)
 		{
 			// Calculate public key token:
 			// 1. hash the public key using the appropriate algorithm.
@@ -52,7 +57,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);
 		}
 
-		public static string GetPublicKeyToken(this MetadataReader reader)
+		public static string GetPublicKeyToken(this SRM.MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
 				return string.Empty;
@@ -63,22 +68,23 @@ namespace ICSharpCode.Decompiler.Metadata
 				// AssemblyFlags.PublicKey does not apply to assembly definitions
 				publicKey = CalculatePublicKeyToken(asm.PublicKey, reader);
 			}
+
 			return publicKey;
 		}
 
-		public static string GetFullAssemblyName(this MetadataReader reader)
+		public static string GetFullAssemblyName(this SRM.MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
 				return string.Empty;
 			var asm = reader.GetAssemblyDefinition();
 			string publicKey = reader.GetPublicKeyToken();
 			return $"{reader.GetString(asm.Name)}, " +
-				$"Version={asm.Version}, " +
-				$"Culture={(asm.Culture.IsNil ? "neutral" : reader.GetString(asm.Culture))}, " +
-				$"PublicKeyToken={publicKey}";
+			       $"Version={asm.Version}, " +
+			       $"Culture={(asm.Culture.IsNil ? "neutral" : reader.GetString(asm.Culture))}, " +
+			       $"PublicKeyToken={publicKey}";
 		}
 
-		public static bool TryGetFullAssemblyName(this MetadataReader reader, out string assemblyName)
+		public static bool TryGetFullAssemblyName(this SRM.MetadataReader reader, out string assemblyName)
 		{
 			try
 			{
@@ -92,9 +98,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
+		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, SRM.MetadataReader reader)
 		{
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new();
 			builder.Append(reader.GetString(reference.Name));
 			builder.Append(", Version=");
 			builder.Append(reference.Version);
@@ -122,14 +128,17 @@ namespace ICSharpCode.Decompiler.Metadata
 				builder.Append(", PublicKeyToken=");
 				builder.AppendHexString(reader.GetBlobReader(reference.PublicKeyOrToken));
 			}
+
 			if ((reference.Flags & AssemblyFlags.Retargetable) != 0)
 			{
 				builder.Append(", Retargetable=true");
 			}
+
 			return builder.ToString();
 		}
 
-		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader, out string assemblyName)
+		public static bool TryGetFullAssemblyName(this SRM.AssemblyReference reference, SRM.MetadataReader reader,
+			out string assemblyName)
 		{
 			try
 			{
@@ -145,16 +154,15 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
-			if (bytes == null)
-				throw new ArgumentNullException(nameof(bytes));
+			ArgumentNullException.ThrowIfNull(bytes);
 
-			StringBuilder sb = new StringBuilder(estimatedLength * 2);
+			StringBuilder sb = new(estimatedLength * 2);
 			foreach (var b in bytes)
 				sb.AppendFormat("{0:x2}", b);
 			return sb.ToString();
 		}
 
-		public static void AppendHexString(this StringBuilder builder, BlobReader reader)
+		public static void AppendHexString(this StringBuilder builder, SRM.BlobReader reader)
 		{
 			for (int i = 0; i < reader.Length; i++)
 			{
@@ -162,9 +170,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string ToHexString(this BlobReader reader)
+		public static string ToHexString(this SRM.BlobReader reader)
 		{
-			StringBuilder sb = new StringBuilder(reader.Length * 3);
+			StringBuilder sb = new(reader.Length * 3);
 			for (int i = 0; i < reader.Length; i++)
 			{
 				if (i == 0)
@@ -172,10 +180,11 @@ namespace ICSharpCode.Decompiler.Metadata
 				else
 					sb.AppendFormat("-{0:X2}", reader.ReadByte());
 			}
+
 			return sb.ToString();
 		}
 
-		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
+		public static IEnumerable<SRM.TypeDefinitionHandle> GetTopLevelTypeDefinitions(this SRM.MetadataReader reader)
 		{
 			foreach (var handle in reader.TypeDefinitions)
 			{
@@ -193,13 +202,16 @@ namespace ICSharpCode.Decompiler.Metadata
 				name = typeName.Name;
 				if (!omitGenerics)
 				{
-					int localTypeParameterCount = typeName.GetNestedTypeAdditionalTypeParameterCount(typeName.NestingLevel - 1);
+					int localTypeParameterCount =
+						typeName.GetNestedTypeAdditionalTypeParameterCount(typeName.NestingLevel - 1);
 					if (localTypeParameterCount > 0)
 						name += "`" + localTypeParameterCount;
 				}
+
 				name = Disassembler.DisassemblerHelpers.Escape(name);
 				return $"{typeName.GetDeclaringType().ToILNameString(omitGenerics)}/{name}";
 			}
+
 			if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace))
 			{
 				name = $"{typeName.TopLevelTypeName.Namespace}.{typeName.Name}";
@@ -212,11 +224,13 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (!omitGenerics && typeName.TypeParameterCount > 0)
 					name += "`" + typeName.TypeParameterCount;
 			}
+
 			return Disassembler.DisassemblerHelpers.Escape(name);
 		}
 
 		[Obsolete("Use MetadataModule.GetDeclaringModule() instead")]
-		public static IModuleReference GetDeclaringModule(this TypeReferenceHandle handle, MetadataReader reader)
+		public static IModuleReference GetDeclaringModule(this SRM.TypeReferenceHandle handle,
+			SRM.MetadataReader reader)
 		{
 			var tr = reader.GetTypeReference(handle);
 			switch (tr.ResolutionScope.Kind)
@@ -234,113 +248,58 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		internal static readonly TypeProvider minimalCorlibTypeProvider =
-			new TypeProvider(new SimpleCompilation(MinimalCorlib.Instance));
-
-		/// <summary>
-		/// An attribute type provider that can be used to decode attribute signatures
-		/// that only mention built-in types.
-		/// </summary>
-		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
-			get => minimalCorlibTypeProvider;
-		}
-
-		public static ISignatureTypeProvider<IType, TypeSystem.GenericContext> MinimalSignatureTypeProvider {
-			get => minimalCorlibTypeProvider;
-		}
-
 		/// <summary>
 		/// Converts <see cref="KnownTypeCode"/> to <see cref="PrimitiveTypeCode"/>.
 		/// Returns 0 for known types that are not primitive types (such as <see cref="Span{T}"/>).
 		/// </summary>
-		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
+		public static SRM.PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
 		{
-			switch (typeCode)
-			{
-				case KnownTypeCode.Object:
-					return PrimitiveTypeCode.Object;
-				case KnownTypeCode.Boolean:
-					return PrimitiveTypeCode.Boolean;
-				case KnownTypeCode.Char:
-					return PrimitiveTypeCode.Char;
-				case KnownTypeCode.SByte:
-					return PrimitiveTypeCode.SByte;
-				case KnownTypeCode.Byte:
-					return PrimitiveTypeCode.Byte;
-				case KnownTypeCode.Int16:
-					return PrimitiveTypeCode.Int16;
-				case KnownTypeCode.UInt16:
-					return PrimitiveTypeCode.UInt16;
-				case KnownTypeCode.Int32:
-					return PrimitiveTypeCode.Int32;
-				case KnownTypeCode.UInt32:
-					return PrimitiveTypeCode.UInt32;
-				case KnownTypeCode.Int64:
-					return PrimitiveTypeCode.Int64;
-				case KnownTypeCode.UInt64:
-					return PrimitiveTypeCode.UInt64;
-				case KnownTypeCode.Single:
-					return PrimitiveTypeCode.Single;
-				case KnownTypeCode.Double:
-					return PrimitiveTypeCode.Double;
-				case KnownTypeCode.String:
-					return PrimitiveTypeCode.String;
-				case KnownTypeCode.Void:
-					return PrimitiveTypeCode.Void;
-				case KnownTypeCode.TypedReference:
-					return PrimitiveTypeCode.TypedReference;
-				case KnownTypeCode.IntPtr:
-					return PrimitiveTypeCode.IntPtr;
-				case KnownTypeCode.UIntPtr:
-					return PrimitiveTypeCode.UIntPtr;
-				default:
-					return 0;
-			}
+			return typeCode switch {
+				KnownTypeCode.Object => PrimitiveTypeCode.Object,
+				KnownTypeCode.Boolean => PrimitiveTypeCode.Boolean,
+				KnownTypeCode.Char => PrimitiveTypeCode.Char,
+				KnownTypeCode.SByte => PrimitiveTypeCode.SByte,
+				KnownTypeCode.Byte => PrimitiveTypeCode.Byte,
+				KnownTypeCode.Int16 => PrimitiveTypeCode.Int16,
+				KnownTypeCode.UInt16 => PrimitiveTypeCode.UInt16,
+				KnownTypeCode.Int32 => PrimitiveTypeCode.Int32,
+				KnownTypeCode.UInt32 => PrimitiveTypeCode.UInt32,
+				KnownTypeCode.Int64 => PrimitiveTypeCode.Int64,
+				KnownTypeCode.UInt64 => PrimitiveTypeCode.UInt64,
+				KnownTypeCode.Single => PrimitiveTypeCode.Single,
+				KnownTypeCode.Double => PrimitiveTypeCode.Double,
+				KnownTypeCode.String => PrimitiveTypeCode.String,
+				KnownTypeCode.Void => PrimitiveTypeCode.Void,
+				KnownTypeCode.TypedReference => PrimitiveTypeCode.TypedReference,
+				KnownTypeCode.IntPtr => PrimitiveTypeCode.IntPtr,
+				KnownTypeCode.UIntPtr => PrimitiveTypeCode.UIntPtr,
+				_ => 0
+			};
 		}
 
 		public static KnownTypeCode ToKnownTypeCode(this PrimitiveTypeCode typeCode)
 		{
-			switch (typeCode)
-			{
-				case PrimitiveTypeCode.Boolean:
-					return KnownTypeCode.Boolean;
-				case PrimitiveTypeCode.Byte:
-					return KnownTypeCode.Byte;
-				case PrimitiveTypeCode.SByte:
-					return KnownTypeCode.SByte;
-				case PrimitiveTypeCode.Char:
-					return KnownTypeCode.Char;
-				case PrimitiveTypeCode.Int16:
-					return KnownTypeCode.Int16;
-				case PrimitiveTypeCode.UInt16:
-					return KnownTypeCode.UInt16;
-				case PrimitiveTypeCode.Int32:
-					return KnownTypeCode.Int32;
-				case PrimitiveTypeCode.UInt32:
-					return KnownTypeCode.UInt32;
-				case PrimitiveTypeCode.Int64:
-					return KnownTypeCode.Int64;
-				case PrimitiveTypeCode.UInt64:
-					return KnownTypeCode.UInt64;
-				case PrimitiveTypeCode.Single:
-					return KnownTypeCode.Single;
-				case PrimitiveTypeCode.Double:
-					return KnownTypeCode.Double;
-				case PrimitiveTypeCode.IntPtr:
-					return KnownTypeCode.IntPtr;
-				case PrimitiveTypeCode.UIntPtr:
-					return KnownTypeCode.UIntPtr;
-				case PrimitiveTypeCode.Object:
-					return KnownTypeCode.Object;
-				case PrimitiveTypeCode.String:
-					return KnownTypeCode.String;
-				case PrimitiveTypeCode.TypedReference:
-					return KnownTypeCode.TypedReference;
-				case PrimitiveTypeCode.Void:
-					return KnownTypeCode.Void;
-				default:
-					return KnownTypeCode.None;
-			}
+			return typeCode switch {
+				PrimitiveTypeCode.Boolean => KnownTypeCode.Boolean,
+				PrimitiveTypeCode.Byte => KnownTypeCode.Byte,
+				PrimitiveTypeCode.SByte => KnownTypeCode.SByte,
+				PrimitiveTypeCode.Char => KnownTypeCode.Char,
+				PrimitiveTypeCode.Int16 => KnownTypeCode.Int16,
+				PrimitiveTypeCode.UInt16 => KnownTypeCode.UInt16,
+				PrimitiveTypeCode.Int32 => KnownTypeCode.Int32,
+				PrimitiveTypeCode.UInt32 => KnownTypeCode.UInt32,
+				PrimitiveTypeCode.Int64 => KnownTypeCode.Int64,
+				PrimitiveTypeCode.UInt64 => KnownTypeCode.UInt64,
+				PrimitiveTypeCode.Single => KnownTypeCode.Single,
+				PrimitiveTypeCode.Double => KnownTypeCode.Double,
+				PrimitiveTypeCode.IntPtr => KnownTypeCode.IntPtr,
+				PrimitiveTypeCode.UIntPtr => KnownTypeCode.UIntPtr,
+				PrimitiveTypeCode.Object => KnownTypeCode.Object,
+				PrimitiveTypeCode.String => KnownTypeCode.String,
+				PrimitiveTypeCode.TypedReference => KnownTypeCode.TypedReference,
+				PrimitiveTypeCode.Void => KnownTypeCode.Void,
+				_ => KnownTypeCode.None
+			};
 		}
 
 		public static IEnumerable<ModuleReferenceHandle> GetModuleReferences(this MetadataReader metadata)
@@ -370,21 +329,25 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static IEnumerable<(Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle Association)> GetMethodSemantics(this MetadataReader metadata)
+		public static
+			IEnumerable<(Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle
+				Association)> GetMethodSemantics(this MetadataReader metadata)
 		{
 			int offset = metadata.GetTableMetadataOffset(TableIndex.MethodSemantics);
 			int rowSize = metadata.GetTableRowSize(TableIndex.MethodSemantics);
 			int rowCount = metadata.GetTableRowCount(TableIndex.MethodSemantics);
 
 			bool methodSmall = metadata.GetTableRowCount(TableIndex.MethodDef) <= ushort.MaxValue;
-			bool assocSmall = metadata.GetTableRowCount(TableIndex.Property) <= ushort.MaxValue && metadata.GetTableRowCount(TableIndex.Event) <= ushort.MaxValue;
+			bool assocSmall = metadata.GetTableRowCount(TableIndex.Property) <= ushort.MaxValue &&
+			                  metadata.GetTableRowCount(TableIndex.Event) <= ushort.MaxValue;
 			int assocOffset = (methodSmall ? 2 : 4) + 2;
 			for (int row = 0; row < rowCount; row++)
 			{
 				yield return Read(row);
 			}
 
-			unsafe (Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle Association) Read(int row)
+			unsafe (Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle
+				Association) Read(int row)
 			{
 				byte* ptr = metadata.MetadataPointer + offset + rowSize * row;
 				int methodDef = methodSmall ? *(ushort*)(ptr + 2) : (int)*(uint*)(ptr + 2);
@@ -398,7 +361,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					propOrEvent = MetadataTokens.EventDefinitionHandle(assocDef >> 1);
 				}
-				return (MetadataTokens.Handle(0x18000000 | (row + 1)), (MethodSemanticsAttributes)(*(ushort*)ptr), MetadataTokens.MethodDefinitionHandle(methodDef), propOrEvent);
+
+				return (MetadataTokens.Handle(0x18000000 | (row + 1)), (MethodSemanticsAttributes)(*(ushort*)ptr),
+					MetadataTokens.MethodDefinitionHandle(methodDef), propOrEvent);
 			}
 		}
 
@@ -411,7 +376,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public unsafe static (int Offset, FieldDefinitionHandle FieldDef) GetFieldLayout(this MetadataReader metadata, EntityHandle fieldLayoutHandle)
+		public static unsafe (int Offset, FieldDefinitionHandle FieldDef) GetFieldLayout(this MetadataReader metadata,
+			EntityHandle fieldLayoutHandle)
 		{
 			byte* startPointer = metadata.MetadataPointer;
 			int offset = metadata.GetTableMetadataOffset(TableIndex.FieldLayout);
@@ -429,6 +395,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					return (*(int*)ptr, MetadataTokens.FieldDefinitionHandle(fieldRowNo));
 				}
 			}
+
 			return (0, default);
 		}
 	}

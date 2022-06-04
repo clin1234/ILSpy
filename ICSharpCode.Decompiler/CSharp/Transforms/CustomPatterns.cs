@@ -27,8 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	sealed class TypePattern : Pattern
 	{
-		readonly string ns;
 		readonly string name;
+		readonly string ns;
 
 		public TypePattern(Type type)
 		{
@@ -38,9 +38,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			ComposedType ct = other as ComposedType;
 			AstType o;
-			if (ct != null && !ct.HasRefSpecifier && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any())
+			if (other is ComposedType { HasRefSpecifier: false, HasNullableSpecifier: false, PointerRank: 0 } ct &&
+			    !ct.ArraySpecifiers.Any())
 			{
 				// Special case: ILSpy sometimes produces a ComposedType but then removed all array specifiers
 				// from it. In that case, we need to look at the base type for the annotations.
@@ -52,8 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (o == null)
 					return false;
 			}
-			var trr = o.GetResolveResult() as TypeResolveResult;
-			return trr != null && trr.Type.Namespace == ns && trr.Type.Name == name;
+
+			return o.GetResolveResult() is TypeResolveResult trr && trr.Type.Namespace == ns && trr.Type.Name == name;
 		}
 
 		public override string ToString()
@@ -73,11 +73,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			InvocationExpression ie = other as InvocationExpression;
-			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1)
+			if (other is InvocationExpression ie && ie.Annotation<LdTokenAnnotation>() != null &&
+			    ie.Arguments.Count == 1)
 			{
 				return childNode.DoMatch(ie.Arguments.Single(), match);
 			}
+
 			return false;
 		}
 

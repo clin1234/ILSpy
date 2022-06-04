@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -40,12 +39,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		TransformContext context;
 
+		void IAstTransform.Run(AstNode node, TransformContext context)
+		{
+			this.context = context;
+			try
+			{
+				node.AcceptVisitor(this);
+			}
+			finally
+			{
+				this.context = null;
+			}
+		}
+
 		public override void VisitAssignmentExpression(AssignmentExpression assignment)
 		{
 			base.VisitAssignmentExpression(assignment);
 			// Combine "x = x op y" into "x op= y"
-			BinaryOperatorExpression binary = assignment.Right as BinaryOperatorExpression;
-			if (binary != null && assignment.Operator == AssignmentOperatorType.Assign)
+			if (assignment.Right is BinaryOperatorExpression binary &&
+			    assignment.Operator == AssignmentOperatorType.Assign)
 			{
 				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left))
 				{
@@ -58,23 +70,33 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			}
-			if (context.Settings.IntroduceIncrementAndDecrement && assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract)
+
+			if (context.Settings.IntroduceIncrementAndDecrement && assignment.Operator == AssignmentOperatorType.Add ||
+			    assignment.Operator == AssignmentOperatorType.Subtract)
 			{
 				// detect increment/decrement
 				var rr = assignment.Right.GetResolveResult();
-				if (rr.IsCompileTimeConstant && rr.Type.IsCSharpPrimitiveIntegerType() && CSharpPrimitiveCast.Cast(rr.Type.GetTypeCode(), 1, false).Equals(rr.ConstantValue))
+				if (rr.IsCompileTimeConstant && rr.Type.IsCSharpPrimitiveIntegerType() && CSharpPrimitiveCast
+					    .Cast(rr.Type.GetTypeCode(), 1, false).Equals(rr.ConstantValue))
 				{
 					// only if it's not a custom operator
-					if (assignment.Annotation<IL.CallInstruction>() == null && assignment.Annotation<IL.UserDefinedCompoundAssign>() == null && assignment.Annotation<IL.DynamicCompoundAssign>() == null)
+					if (assignment.Annotation<IL.CallInstruction>() == null &&
+					    assignment.Annotation<IL.UserDefinedCompoundAssign>() == null &&
+					    assignment.Annotation<IL.DynamicCompoundAssign>() == null)
 					{
 						UnaryOperatorType type;
 						// When the parent is an expression statement, pre- or post-increment doesn't matter;
 						// so we can pick post-increment which is more commonly used (for (int i = 0; i < x; i++))
 						if (assignment.Parent is ExpressionStatement)
-							type = (assignment.Operator == AssignmentOperatorType.Add) ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement;
+							type = (assignment.Operator == AssignmentOperatorType.Add)
+								? UnaryOperatorType.PostIncrement
+								: UnaryOperatorType.PostDecrement;
 						else
-							type = (assignment.Operator == AssignmentOperatorType.Add) ? UnaryOperatorType.Increment : UnaryOperatorType.Decrement;
-						assignment.ReplaceWith(new UnaryOperatorExpression(type, assignment.Left.Detach()).CopyAnnotationsFrom(assignment));
+							type = (assignment.Operator == AssignmentOperatorType.Add)
+								? UnaryOperatorType.Increment
+								: UnaryOperatorType.Decrement;
+						assignment.ReplaceWith(new UnaryOperatorExpression(type, assignment.Left.Detach())
+							.CopyAnnotationsFrom(assignment));
 					}
 				}
 			}
@@ -82,63 +104,36 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public static AssignmentOperatorType GetAssignmentOperatorForBinaryOperator(BinaryOperatorType bop)
 		{
-			switch (bop)
-			{
-				case BinaryOperatorType.Add:
-					return AssignmentOperatorType.Add;
-				case BinaryOperatorType.Subtract:
-					return AssignmentOperatorType.Subtract;
-				case BinaryOperatorType.Multiply:
-					return AssignmentOperatorType.Multiply;
-				case BinaryOperatorType.Divide:
-					return AssignmentOperatorType.Divide;
-				case BinaryOperatorType.Modulus:
-					return AssignmentOperatorType.Modulus;
-				case BinaryOperatorType.ShiftLeft:
-					return AssignmentOperatorType.ShiftLeft;
-				case BinaryOperatorType.ShiftRight:
-					return AssignmentOperatorType.ShiftRight;
-				case BinaryOperatorType.BitwiseAnd:
-					return AssignmentOperatorType.BitwiseAnd;
-				case BinaryOperatorType.BitwiseOr:
-					return AssignmentOperatorType.BitwiseOr;
-				case BinaryOperatorType.ExclusiveOr:
-					return AssignmentOperatorType.ExclusiveOr;
-				default:
-					return AssignmentOperatorType.Assign;
-			}
+			return bop switch {
+				BinaryOperatorType.Add => AssignmentOperatorType.Add,
+				BinaryOperatorType.Subtract => AssignmentOperatorType.Subtract,
+				BinaryOperatorType.Multiply => AssignmentOperatorType.Multiply,
+				BinaryOperatorType.Divide => AssignmentOperatorType.Divide,
+				BinaryOperatorType.Modulus => AssignmentOperatorType.Modulus,
+				BinaryOperatorType.ShiftLeft => AssignmentOperatorType.ShiftLeft,
+				BinaryOperatorType.ShiftRight => AssignmentOperatorType.ShiftRight,
+				BinaryOperatorType.BitwiseAnd => AssignmentOperatorType.BitwiseAnd,
+				BinaryOperatorType.BitwiseOr => AssignmentOperatorType.BitwiseOr,
+				BinaryOperatorType.ExclusiveOr => AssignmentOperatorType.ExclusiveOr,
+				_ => AssignmentOperatorType.Assign
+			};
 		}
 
 		static bool CanConvertToCompoundAssignment(Expression left)
 		{
-			MemberReferenceExpression mre = left as MemberReferenceExpression;
-			if (mre != null)
+			if (left is MemberReferenceExpression mre)
 				return IsWithoutSideEffects(mre.Target);
-			IndexerExpression ie = left as IndexerExpression;
-			if (ie != null)
+			if (left is IndexerExpression ie)
 				return IsWithoutSideEffects(ie.Target) && ie.Arguments.All(IsWithoutSideEffects);
-			UnaryOperatorExpression uoe = left as UnaryOperatorExpression;
-			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
+			if (left is UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } uoe)
 				return IsWithoutSideEffects(uoe.Expression);
 			return IsWithoutSideEffects(left);
 		}
 
 		static bool IsWithoutSideEffects(Expression left)
 		{
-			return left is ThisReferenceExpression || left is IdentifierExpression || left is TypeReferenceExpression || left is BaseReferenceExpression;
-		}
-
-		void IAstTransform.Run(AstNode node, TransformContext context)
-		{
-			this.context = context;
-			try
-			{
-				node.AcceptVisitor(this);
-			}
-			finally
-			{
-				this.context = null;
-			}
+			return left is ThisReferenceExpression or IdentifierExpression or TypeReferenceExpression
+				or BaseReferenceExpression;
 		}
 	}
 }

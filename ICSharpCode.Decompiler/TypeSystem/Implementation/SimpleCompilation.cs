@@ -28,12 +28,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		readonly CacheManager cacheManager = new CacheManager();
-		IModule mainModule;
-		KnownTypeCache knownTypeCache;
 		IReadOnlyList<IModule> assemblies;
-		IReadOnlyList<IModule> referencedAssemblies;
 		bool initialized;
+		KnownTypeCache knownTypeCache;
+		IModule mainModule;
+		IReadOnlyList<IModule> referencedAssemblies;
 		INamespace rootNamespace;
 
 		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)
@@ -48,39 +47,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected SimpleCompilation()
 		{
-		}
-
-		protected void Init(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
-		{
-			if (mainAssembly == null)
-				throw new ArgumentNullException(nameof(mainAssembly));
-			if (assemblyReferences == null)
-				throw new ArgumentNullException(nameof(assemblyReferences));
-			var context = new SimpleTypeResolveContext(this);
-			this.mainModule = mainAssembly.Resolve(context);
-			List<IModule> assemblies = new List<IModule>();
-			assemblies.Add(this.mainModule);
-			List<IModule> referencedAssemblies = new List<IModule>();
-			foreach (var asmRef in assemblyReferences)
-			{
-				IModule asm;
-				try
-				{
-					asm = asmRef.Resolve(context);
-				}
-				catch (InvalidOperationException)
-				{
-					throw new InvalidOperationException("Tried to initialize compilation with an invalid assembly reference. (Forgot to load the assembly reference ? - see CecilLoader)");
-				}
-				if (asm != null && !assemblies.Contains(asm))
-					assemblies.Add(asm);
-				if (asm != null && !referencedAssemblies.Contains(asm))
-					referencedAssemblies.Add(asm);
-			}
-			this.assemblies = assemblies.AsReadOnly();
-			this.referencedAssemblies = referencedAssemblies.AsReadOnly();
-			this.knownTypeCache = new KnownTypeCache(this);
-			this.initialized = true;
 		}
 
 		public IModule MainModule {
@@ -123,22 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		protected virtual INamespace CreateRootNamespace()
-		{
-			// SimpleCompilation does not support extern aliases; but derived classes might.
-			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
-			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
-			namespaces[0] = mainModule.RootNamespace;
-			for (int i = 0; i < referencedAssemblies.Count; i++)
-			{
-				namespaces[i + 1] = referencedAssemblies[i].RootNamespace;
-			}
-			return new MergedNamespace(this, namespaces);
-		}
-
-		public CacheManager CacheManager {
-			get { return cacheManager; }
-		}
+		public CacheManager CacheManager { get; } = new();
 
 		public virtual INamespace GetNamespaceForExternAlias(string alias)
 		{
@@ -155,6 +106,53 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public StringComparer NameComparer {
 			get { return StringComparer.Ordinal; }
+		}
+
+		protected void Init(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
+		{
+			ArgumentNullException.ThrowIfNull(mainAssembly);
+			ArgumentNullException.ThrowIfNull(assemblyReferences);
+			var context = new SimpleTypeResolveContext(this);
+			this.mainModule = mainAssembly.Resolve(context);
+			List<IModule> assemblies = new() { this.mainModule };
+			List<IModule> referencedAssemblies = new();
+			foreach (var asmRef in assemblyReferences)
+			{
+				IModule asm;
+				try
+				{
+					asm = asmRef.Resolve(context);
+				}
+				catch (InvalidOperationException)
+				{
+					throw new InvalidOperationException(
+						"Tried to initialize compilation with an invalid assembly reference. (Forgot to load the assembly reference ? - see CecilLoader)");
+				}
+
+				if (asm != null && !assemblies.Contains(asm))
+					assemblies.Add(asm);
+				if (asm != null && !referencedAssemblies.Contains(asm))
+					referencedAssemblies.Add(asm);
+			}
+
+			this.assemblies = assemblies.AsReadOnly();
+			this.referencedAssemblies = referencedAssemblies.AsReadOnly();
+			this.knownTypeCache = new KnownTypeCache(this);
+			this.initialized = true;
+		}
+
+		protected virtual INamespace CreateRootNamespace()
+		{
+			// SimpleCompilation does not support extern aliases; but derived classes might.
+			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
+			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
+			namespaces[0] = mainModule.RootNamespace;
+			for (int i = 0; i < referencedAssemblies.Count; i++)
+			{
+				namespaces[i + 1] = referencedAssemblies[i].RootNamespace;
+			}
+
+			return new MergedNamespace(this, namespaces);
 		}
 
 		public override string ToString()

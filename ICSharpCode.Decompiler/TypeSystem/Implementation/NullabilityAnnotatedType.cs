@@ -9,8 +9,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class NullabilityAnnotatedType : DecoratedType, IType
 	{
-		readonly Nullability nullability;
-
 		internal NullabilityAnnotatedType(IType type, Nullability nullability)
 			: base(type)
 		{
@@ -19,15 +17,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// Due to IType -> concrete type casts all over the type system, we can insert
 			// the NullabilityAnnotatedType wrapper only in some limited places.
 			Debug.Assert(type is ITypeDefinition
-				|| type.Kind == TypeKind.Dynamic
-				|| type.Kind == TypeKind.Unknown
-				|| (type is ITypeParameter && this is ITypeParameter));
-			this.nullability = nullability;
+			             || type.Kind is TypeKind.Dynamic or TypeKind.Unknown ||
+			             (type is ITypeParameter && this is ITypeParameter));
+			this.Nullability = nullability;
 		}
 
-		public Nullability Nullability => nullability;
-
 		public IType TypeWithoutAnnotation => baseType;
+
+		public Nullability Nullability { get; }
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
@@ -37,13 +34,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool Equals(IType other)
 		{
 			return other is NullabilityAnnotatedType nat
-				&& nat.nullability == nullability
-				&& nat.baseType.Equals(baseType);
+			       && nat.Nullability == Nullability
+			       && nat.baseType.Equals(baseType);
 		}
 
 		public override IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == this.nullability)
+			if (nullability == this.Nullability)
 				return this;
 			else
 				return baseType.ChangeNullability(nullability);
@@ -60,9 +57,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					// This happens during type substitution for generic methods.
 					return newBase;
 				}
+
 				if (newBase.Kind == TypeKind.TypeParameter || newBase.IsReferenceType == true)
 				{
-					return newBase.ChangeNullability(nullability);
+					return newBase.ChangeNullability(Nullability);
 				}
 				else
 				{
@@ -78,14 +76,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override string ToString()
 		{
-			switch (nullability)
+			switch (Nullability)
 			{
 				case Nullability.Nullable:
 					return $"{baseType.ToString()}?";
 				case Nullability.NotNullable:
 					return $"{baseType.ToString()}!";
 				default:
-					Debug.Assert(nullability == Nullability.Oblivious);
+					Debug.Assert(Nullability == Nullability.Oblivious);
 					return $"{baseType.ToString()}~";
 			}
 		}
@@ -93,31 +91,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 	public sealed class NullabilityAnnotatedTypeParameter : NullabilityAnnotatedType, ITypeParameter
 	{
-		readonly new ITypeParameter baseType;
-
 		internal NullabilityAnnotatedTypeParameter(ITypeParameter type, Nullability nullability)
 			: base(type, nullability)
 		{
-			this.baseType = type;
+			this.OriginalTypeParameter = type;
 		}
 
-		public ITypeParameter OriginalTypeParameter => baseType;
+		public ITypeParameter OriginalTypeParameter { get; }
 
-		SymbolKind ITypeParameter.OwnerType => baseType.OwnerType;
-		IEntity ITypeParameter.Owner => baseType.Owner;
-		int ITypeParameter.Index => baseType.Index;
-		string ITypeParameter.Name => baseType.Name;
-		string ISymbol.Name => baseType.Name;
-		VarianceModifier ITypeParameter.Variance => baseType.Variance;
-		IType ITypeParameter.EffectiveBaseClass => baseType.EffectiveBaseClass;
-		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet => baseType.EffectiveInterfaceSet;
-		bool ITypeParameter.HasDefaultConstructorConstraint => baseType.HasDefaultConstructorConstraint;
-		bool ITypeParameter.HasReferenceTypeConstraint => baseType.HasReferenceTypeConstraint;
-		bool ITypeParameter.HasValueTypeConstraint => baseType.HasValueTypeConstraint;
-		bool ITypeParameter.HasUnmanagedConstraint => baseType.HasUnmanagedConstraint;
-		Nullability ITypeParameter.NullabilityConstraint => baseType.NullabilityConstraint;
-		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => baseType.TypeConstraints;
+		SymbolKind ITypeParameter.OwnerType => OriginalTypeParameter.OwnerType;
+		IEntity ITypeParameter.Owner => OriginalTypeParameter.Owner;
+		int ITypeParameter.Index => OriginalTypeParameter.Index;
+		string ITypeParameter.Name => OriginalTypeParameter.Name;
+		string ISymbol.Name => OriginalTypeParameter.Name;
+		VarianceModifier ITypeParameter.Variance => OriginalTypeParameter.Variance;
+		IType ITypeParameter.EffectiveBaseClass => OriginalTypeParameter.EffectiveBaseClass;
+		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet => OriginalTypeParameter.EffectiveInterfaceSet;
+		bool ITypeParameter.HasDefaultConstructorConstraint => OriginalTypeParameter.HasDefaultConstructorConstraint;
+		bool ITypeParameter.HasReferenceTypeConstraint => OriginalTypeParameter.HasReferenceTypeConstraint;
+		bool ITypeParameter.HasValueTypeConstraint => OriginalTypeParameter.HasValueTypeConstraint;
+		bool ITypeParameter.HasUnmanagedConstraint => OriginalTypeParameter.HasUnmanagedConstraint;
+		Nullability ITypeParameter.NullabilityConstraint => OriginalTypeParameter.NullabilityConstraint;
+		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => OriginalTypeParameter.TypeConstraints;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
-		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => baseType.GetAttributes();
+		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => OriginalTypeParameter.GetAttributes();
 	}
 }

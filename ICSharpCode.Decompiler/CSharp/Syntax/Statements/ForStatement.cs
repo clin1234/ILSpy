@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ForStatement : Statement
 	{
-		public static readonly TokenRole ForKeywordRole = new TokenRole("for");
-		public readonly static Role<Statement> InitializerRole = new Role<Statement>("Initializer", Statement.Null);
-		public readonly static Role<Statement> IteratorRole = new Role<Statement>("Iterator", Statement.Null);
+		public static readonly TokenRole ForKeywordRole = new("for");
+		public static readonly Role<Statement> InitializerRole = new("Initializer", Null);
+		public static readonly Role<Statement> IteratorRole = new("Iterator", Null);
 
 		public CSharpTokenNode ForToken {
 			get { return GetChildByRole(ForKeywordRole); }
@@ -88,9 +88,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ForStatement o = other as ForStatement;
-			return o != null && this.Initializers.DoMatch(o.Initializers, match) && this.Condition.DoMatch(o.Condition, match)
-				&& this.Iterators.DoMatch(o.Iterators, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is ForStatement o && this.Initializers.DoMatch(o.Initializers, match) &&
+			       this.Condition.DoMatch(o.Condition, match)
+			       && this.Iterators.DoMatch(o.Iterators, match) &&
+			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

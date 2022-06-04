@@ -37,12 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNodeCollection(AstNode node, Role<T> role)
 		{
-			if (node == null)
-				throw new ArgumentNullException(nameof(node));
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
-			this.node = node;
-			this.role = role;
+			this.node = node ?? throw new ArgumentNullException(nameof(node));
+			this.role = role ?? throw new ArgumentNullException(nameof(role));
 		}
 
 		public int Count {
@@ -54,6 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (cur.RoleIndex == roleIndex)
 						count++;
 				}
+
 				return count;
 			}
 		}
@@ -61,6 +58,60 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public void Add(T element)
 		{
 			node.AddChild(element, role);
+		}
+
+		public bool Contains(T element)
+		{
+			return element != null && element.Parent == node && element.RoleIndex == role.Index;
+		}
+
+		public bool Remove(T element)
+		{
+			if (Contains(element))
+			{
+				element.Remove();
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public void CopyTo(T[] array, int arrayIndex)
+		{
+			foreach (T item in this)
+				array[arrayIndex++] = item;
+		}
+
+		public void Clear()
+		{
+			foreach (T item in this)
+				item.Remove();
+		}
+
+		bool ICollection<T>.IsReadOnly {
+			get { return false; }
+		}
+
+		public IEnumerator<T> GetEnumerator()
+		{
+			uint roleIndex = role.Index;
+			AstNode next;
+			for (AstNode cur = node.FirstChild; cur != null; cur = next)
+			{
+				Debug.Assert(cur.Parent == node);
+				// Remember next before yielding cur.
+				// This allows removing/replacing nodes while iterating through the list.
+				next = cur.NextSibling;
+				if (cur.RoleIndex == roleIndex)
+					yield return (T)cur;
+			}
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
 		}
 
 		public void AddRange(IEnumerable<T> nodes)
@@ -100,43 +151,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void MoveTo(ICollection<T> targetCollection)
 		{
-			if (targetCollection == null)
-				throw new ArgumentNullException(nameof(targetCollection));
+			ArgumentNullException.ThrowIfNull(targetCollection);
 			foreach (T node in this)
 			{
 				node.Remove();
 				targetCollection.Add(node);
 			}
-		}
-
-		public bool Contains(T element)
-		{
-			return element != null && element.Parent == node && element.RoleIndex == role.Index;
-		}
-
-		public bool Remove(T element)
-		{
-			if (Contains(element))
-			{
-				element.Remove();
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		public void CopyTo(T[] array, int arrayIndex)
-		{
-			foreach (T item in this)
-				array[arrayIndex++] = item;
-		}
-
-		public void Clear()
-		{
-			foreach (T item in this)
-				item.Remove();
 		}
 
 		public IEnumerable<T> Detach()
@@ -170,45 +190,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return result;
 		}
 
-		bool ICollection<T>.IsReadOnly {
-			get { return false; }
-		}
-
-		public IEnumerator<T> GetEnumerator()
-		{
-			uint roleIndex = role.Index;
-			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next)
-			{
-				Debug.Assert(cur.Parent == node);
-				// Remember next before yielding cur.
-				// This allows removing/replacing nodes while iterating through the list.
-				next = cur.NextSibling;
-				if (cur.RoleIndex == roleIndex)
-					yield return (T)cur;
-			}
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
-
-		#region Equals and GetHashCode implementation
-		public override int GetHashCode()
-		{
-			return node.GetHashCode() ^ role.GetHashCode();
-		}
-
-		public override bool Equals(object obj)
-		{
-			AstNodeCollection<T> other = obj as AstNodeCollection<T>;
-			if (other == null)
-				return false;
-			return this.node == other.node && this.role == other.role;
-		}
-		#endregion
-
 		internal bool DoMatch(AstNodeCollection<T> other, Match match)
 		{
 			return Pattern.DoMatchCollection(role, node.FirstChild, other.node.FirstChild, match);
@@ -241,5 +222,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					cur.AcceptVisitor(visitor);
 			}
 		}
+
+		#region Equals and GetHashCode implementation
+
+		public override int GetHashCode()
+		{
+			return node.GetHashCode() ^ role.GetHashCode();
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is not AstNodeCollection<T> other)
+				return false;
+			return this.node == other.node && this.role == other.role;
+		}
+
+		#endregion
 	}
 }

@@ -106,15 +106,16 @@ namespace ICSharpCode.Decompiler.Util
 		public override string ToString()
 		{
 			if (End == int.MinValue)
-				return string.Format("[{0}..int.MaxValue]", Start);
+				return $"[{Start}..int.MaxValue]";
 			else
-				return string.Format("[{0}..{1})", Start, End);
+				return $"[{Start}..{End})";
 		}
 
 		#region Equals and GetHashCode implementation
+
 		public override bool Equals(object? obj)
 		{
-			return (obj is Interval) && Equals((Interval)obj);
+			return (obj is Interval interval) && Equals(interval);
 		}
 
 		public bool Equals(Interval other)
@@ -136,6 +137,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return !(lhs == rhs);
 		}
+
 		#endregion
 	}
 
@@ -282,9 +284,10 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		#region Equals and GetHashCode implementation
+
 		public override bool Equals(object? obj)
 		{
-			return (obj is LongInterval) && Equals((LongInterval)obj);
+			return (obj is LongInterval interval) && Equals(interval);
 		}
 
 		public bool Equals(LongInterval other)
@@ -306,6 +309,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return !(lhs == rhs);
 		}
+
 		#endregion
 	}
 }

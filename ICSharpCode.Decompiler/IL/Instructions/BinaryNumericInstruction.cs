@@ -46,6 +46,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly bool CheckForOverflow;
 
+		public readonly StackType LeftInputType;
+
+		/// <summary>
+		/// The operator used by this binary operator instruction.
+		/// </summary>
+		public readonly BinaryNumericOperator Operator;
+
+		public readonly StackType RightInputType;
+
 		/// <summary>
 		/// For integer operations that depend on the sign, specifies whether the operation
 		/// is signed or unsigned.
@@ -53,13 +62,36 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly Sign Sign;
 
-		public readonly StackType LeftInputType;
-		public readonly StackType RightInputType;
+		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right,
+			bool checkForOverflow, Sign sign)
+			: this(op, left, right, left.ResultType, right.ResultType, checkForOverflow, sign)
+		{
+		}
 
-		/// <summary>
-		/// The operator used by this binary operator instruction.
-		/// </summary>
-		public readonly BinaryNumericOperator Operator;
+		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right,
+			StackType leftInputType, StackType rightInputType, bool checkForOverflow, Sign sign, bool isLifted = false)
+			: base(OpCode.BinaryNumericInstruction, left, right)
+		{
+			this.CheckForOverflow = checkForOverflow;
+			this.Sign = sign;
+			this.Operator = op;
+			this.LeftInputType = leftInputType;
+			this.RightInputType = rightInputType;
+			this.IsLifted = isLifted;
+			this.UnderlyingResultType = ComputeResultType(op, LeftInputType, RightInputType);
+		}
+
+		public sealed override StackType ResultType {
+			get => IsLifted ? StackType.O : UnderlyingResultType;
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
+					return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags;
+			}
+		}
 
 		/// <summary>
 		/// Gets whether this is a lifted nullable operation.
@@ -76,35 +108,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public bool IsLifted { get; }
 
-		readonly StackType resultType;
-
-		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
-			: this(op, left, right, left.ResultType, right.ResultType, checkForOverflow, sign)
-		{
-		}
-
-		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, StackType leftInputType, StackType rightInputType, bool checkForOverflow, Sign sign, bool isLifted = false)
-			: base(OpCode.BinaryNumericInstruction, left, right)
-		{
-			this.CheckForOverflow = checkForOverflow;
-			this.Sign = sign;
-			this.Operator = op;
-			this.LeftInputType = leftInputType;
-			this.RightInputType = rightInputType;
-			this.IsLifted = isLifted;
-			this.resultType = ComputeResultType(op, LeftInputType, RightInputType);
-		}
+		public StackType UnderlyingResultType { get; }
 
 		internal static StackType ComputeResultType(BinaryNumericOperator op, StackType left, StackType right)
 		{
 			// Based on Table 2: Binary Numeric Operations
 			// also works for Table 5: Integer Operations
 			// and for Table 7: Overflow Arithmetic Operations
-			if (left == right || op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight)
+			if (left == right || op is BinaryNumericOperator.ShiftLeft or BinaryNumericOperator.ShiftRight)
 			{
 				// Shift op codes use Table 6
 				return left;
 			}
+
 			if (left == StackType.Ref || right == StackType.Ref)
 			{
 				if (left == StackType.Ref && right == StackType.Ref)
@@ -116,17 +132,12 @@ namespace ICSharpCode.Decompiler.IL
 				else
 				{
 					// add/sub with I or I4 and &
-					Debug.Assert(op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub);
+					Debug.Assert(op is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
 					return StackType.Ref;
 				}
 			}
+
 			return StackType.Unknown;
-		}
-
-		public StackType UnderlyingResultType { get => resultType; }
-
-		public sealed override StackType ResultType {
-			get => IsLifted ? StackType.O : resultType;
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
@@ -142,46 +153,26 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
-			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+			if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
-					return base.DirectFlags | InstructionFlags.MayThrow;
-				return base.DirectFlags;
-			}
-		}
-
 		internal static string GetOperatorName(BinaryNumericOperator @operator)
 		{
-			switch (@operator)
-			{
-				case BinaryNumericOperator.Add:
-					return "add";
-				case BinaryNumericOperator.Sub:
-					return "sub";
-				case BinaryNumericOperator.Mul:
-					return "mul";
-				case BinaryNumericOperator.Div:
-					return "div";
-				case BinaryNumericOperator.Rem:
-					return "rem";
-				case BinaryNumericOperator.BitAnd:
-					return "bit.and";
-				case BinaryNumericOperator.BitOr:
-					return "bit.or";
-				case BinaryNumericOperator.BitXor:
-					return "bit.xor";
-				case BinaryNumericOperator.ShiftLeft:
-					return "bit.shl";
-				case BinaryNumericOperator.ShiftRight:
-					return "bit.shr";
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return @operator switch {
+				BinaryNumericOperator.Add => "add",
+				BinaryNumericOperator.Sub => "sub",
+				BinaryNumericOperator.Mul => "mul",
+				BinaryNumericOperator.Div => "div",
+				BinaryNumericOperator.Rem => "rem",
+				BinaryNumericOperator.BitAnd => "bit.and",
+				BinaryNumericOperator.BitOr => "bit.or",
+				BinaryNumericOperator.BitXor => "bit.xor",
+				BinaryNumericOperator.ShiftLeft => "bit.shl",
+				BinaryNumericOperator.ShiftRight => "bit.shr",
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -193,6 +184,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".ovf");
 			}
+
 			if (Sign == Sign.Unsigned)
 			{
 				output.Write(".unsigned");
@@ -201,12 +193,14 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".signed");
 			}
+
 			output.Write('.');
-			output.Write(resultType.ToString().ToLowerInvariant());
+			output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
 			if (IsLifted)
 			{
 				output.Write(".lifted");
 			}
+
 			output.Write('(');
 			Left.WriteTo(output, options);
 			output.Write(", ");

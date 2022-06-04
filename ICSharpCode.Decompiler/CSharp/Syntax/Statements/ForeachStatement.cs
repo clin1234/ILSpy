@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ForeachStatement : Statement
 	{
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
-		public static readonly TokenRole ForeachKeywordRole = new TokenRole("foreach");
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
+		public static readonly TokenRole ForeachKeywordRole = new("foreach");
+		public static readonly TokenRole InKeywordRole = new("in");
 
 		public CSharpTokenNode AwaitToken {
 			get { return GetChildByRole(AwaitRole); }
@@ -98,9 +98,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ForeachStatement o = other as ForeachStatement;
-			return o != null && this.VariableType.DoMatch(o.VariableType, match) && this.VariableDesignation.DoMatch(o.VariableDesignation, match)
-				&& this.InExpression.DoMatch(o.InExpression, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is ForeachStatement o && this.VariableType.DoMatch(o.VariableType, match) &&
+			       this.VariableDesignation.DoMatch(o.VariableDesignation, match)
+			       && this.InExpression.DoMatch(o.InExpression, match) &&
+			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

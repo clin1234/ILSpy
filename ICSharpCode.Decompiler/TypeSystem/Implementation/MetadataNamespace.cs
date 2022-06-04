@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Metadata;
@@ -30,9 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly MetadataModule module;
 		readonly NamespaceDefinition ns;
 
-		public INamespace ParentNamespace { get; }
-		public string FullName { get; }
-		public string Name { get; }
+		INamespace[] childNamespaces;
 
 		public MetadataNamespace(MetadataModule module, INamespace parent, string fullName, NamespaceDefinition ns)
 		{
@@ -45,9 +42,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Name = module.GetString(ns.Name);
 		}
 
-		string INamespace.ExternAlias => string.Empty;
+		public INamespace ParentNamespace { get; }
+		public string FullName { get; }
+		public string Name { get; }
 
-		INamespace[] childNamespaces;
+		string INamespace.ExternAlias => string.Empty;
 
 		public IEnumerable<INamespace> ChildNamespaces {
 			get {
@@ -56,6 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return children;
 				}
+
 				var nsDefs = ns.NamespaceDefinitions;
 				children = new INamespace[nsDefs.Length];
 				for (int i = 0; i < children.Length; i++)
@@ -65,6 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					children[i] = new MetadataNamespace(module, this, fullName,
 						module.metadata.GetNamespaceDefinition(nsHandle));
 				}
+
 				return LazyInit.GetOrSet(ref childNamespaces, children);
 			}
 		}
@@ -93,6 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (ns.Name == name)
 					return ns;
 			}
+
 			return null;
 		}
 

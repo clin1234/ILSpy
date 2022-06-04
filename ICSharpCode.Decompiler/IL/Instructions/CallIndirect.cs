@@ -29,11 +29,23 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		// Note: while in IL the arguments come first and the function pointer last;
 		// in the ILAst we're handling it as in C#: the function pointer is evaluated first, the arguments later.
-		public static readonly SlotInfo FunctionPointerSlot = new SlotInfo("FunctionPointer", canInlineInto: true);
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
+		public static readonly SlotInfo FunctionPointerSlot = new("FunctionPointer", canInlineInto: true);
+		public static readonly SlotInfo ArgumentSlot = new("Argument", canInlineInto: true, isCollection: true);
+		public readonly InstructionCollection<ILInstruction> Arguments;
 
 		ILInstruction functionPointer = null!;
-		public readonly InstructionCollection<ILInstruction> Arguments;
+
+		public CallIndirect(bool isInstance, bool hasExplicitThis, FunctionPointerType functionPointerType,
+			ILInstruction functionPointer, IEnumerable<ILInstruction> arguments) : base(OpCode.CallIndirect)
+		{
+			this.IsInstance = isInstance;
+			this.HasExplicitThis = hasExplicitThis;
+			this.FunctionPointerType = functionPointerType;
+			this.FunctionPointer = functionPointer;
+			this.Arguments = new InstructionCollection<ILInstruction>(this, 1);
+			this.Arguments.AddRange(arguments);
+		}
+
 		public bool IsInstance { get; }
 		public bool HasExplicitThis { get; }
 		public FunctionPointerType FunctionPointerType { get; }
@@ -48,15 +60,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public CallIndirect(bool isInstance, bool hasExplicitThis, FunctionPointerType functionPointerType,
-			ILInstruction functionPointer, IEnumerable<ILInstruction> arguments) : base(OpCode.CallIndirect)
-		{
-			this.IsInstance = isInstance;
-			this.HasExplicitThis = hasExplicitThis;
-			this.FunctionPointerType = functionPointerType;
-			this.FunctionPointer = functionPointer;
-			this.Arguments = new InstructionCollection<ILInstruction>(this, 1);
-			this.Arguments.AddRange(arguments);
+		public override StackType ResultType => FunctionPointerType.ReturnType.GetStackType();
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
 		}
 
 		public override ILInstruction Clone()
@@ -65,8 +74,6 @@ namespace ICSharpCode.Decompiler.IL
 				functionPointer.Clone(), this.Arguments.Select(inst => inst.Clone())
 			).WithILRange(this);
 		}
-
-		public override StackType ResultType => FunctionPointerType.ReturnType.GetStackType();
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -87,13 +94,16 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(", ");
 				Arguments[0].WriteTo(output, options);
 			}
-			foreach (var (inst, type) in Arguments.Zip(FunctionPointerType.ParameterTypes, (a, b) => (a, b)))
+
+			foreach ((ILInstruction? inst, IType? type) in Arguments.Zip(FunctionPointerType.ParameterTypes,
+				         (a, b) => (a, b)))
 			{
 				output.Write(", ");
 				inst.WriteTo(output, options);
 				output.Write(" : ");
 				type.WriteTo(output);
 			}
+
 			if (Arguments.Count > 0)
 				output.Write(')');
 		}
@@ -134,13 +144,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				flags |= inst.Flags;
 			}
-			return flags;
-		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
+			return flags;
 		}
 
 		bool EqualSignature(CallIndirect other)

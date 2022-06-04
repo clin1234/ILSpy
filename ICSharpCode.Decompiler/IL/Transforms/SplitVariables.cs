@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Variable = groupStores.GetNewVariable(inst);
 				}
 			}
+
 			function.Variables.RemoveDead();
 		}
 
@@ -60,6 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						}
 					}
+
 					return true;
 				case VariableKind.StackSlot:
 					// stack slots: are already split by construction,
@@ -76,30 +78,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		enum AddressUse
-		{
-			Unknown,
-			/// <summary>
-			/// Address is immediately used for reading and/or writing,
-			/// without the possibility of the variable being directly stored to (via 'stloc')
-			/// in between the 'ldloca' and the use of the address.
-			/// </summary>
-			Immediate,
-			/// <summary>
-			/// We support some limited form of ref locals referring to a target variable,
-			/// without giving up splitting of the target variable.
-			/// Requirements:
-			///  * the ref local is single-assignment
-			///  * the ref local is initialized directly with 'ldloca target; stloc ref_local',
-			///       not a derived pointer (e.g. 'ldloca target; ldflda F; stloc ref_local').
-			///  * all uses of the ref_local are immediate.
-			/// There may be stores to the target variable in between the 'stloc ref_local' and its uses,
-			/// but we handle that case by treating each use of the ref_local as an address access
-			/// of the target variable (as if the ref_local was eliminated via copy propagation).
-			/// </summary>
-			WithSupportedRefLocals,
-		}
-
 		static AddressUse DetermineAddressUse(ILInstruction addressLoadingInstruction, ILVariable targetVar)
 		{
 			switch (addressLoadingInstruction.Parent)
@@ -109,38 +87,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return AddressUse.Immediate;
 				case LdFlda ldflda:
 					return DetermineAddressUse(ldflda, targetVar);
-				case Await await:
+				case Await:
 					// GetAwaiter() may write to the struct, but shouldn't store the address for later use
 					return AddressUse.Immediate;
 				case CallInstruction call:
 					return HandleCall(addressLoadingInstruction, targetVar, call);
 				case StLoc stloc when stloc.Variable.IsSingleDefinition:
 					// Address stored in local variable: also check all uses of that variable.
-					if (!(stloc.Variable.Kind == VariableKind.StackSlot || stloc.Variable.Kind == VariableKind.Local))
+					if (stloc.Variable.Kind is not (VariableKind.StackSlot or VariableKind.Local))
 						return AddressUse.Unknown;
 					var value = stloc.Value;
 					while (value is LdFlda ldFlda)
 					{
 						value = ldFlda.Target;
 					}
+
 					if (value.OpCode != OpCode.LdLoca)
 					{
 						// GroupStores only handles ref-locals correctly when they are supported by GetAddressLoadForRefLocalUse(),
 						// which only works for ldflda*(ldloca)
 						return AddressUse.Unknown;
 					}
+
 					foreach (var load in stloc.Variable.LoadInstructions)
 					{
 						if (DetermineAddressUse(load, targetVar) != AddressUse.Immediate)
 							return AddressUse.Unknown;
 					}
+
 					return AddressUse.WithSupportedRefLocals;
 				default:
 					return AddressUse.Unknown;
 			}
 		}
 
-		static AddressUse HandleCall(ILInstruction addressLoadingInstruction, ILVariable targetVar, CallInstruction call)
+		static AddressUse HandleCall(ILInstruction addressLoadingInstruction, ILVariable targetVar,
+			CallInstruction call)
 		{
 			// Address is passed to method.
 			// We'll assume the method only uses the address locally,
@@ -153,12 +135,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (DetermineAddressUse(call, targetVar) != AddressUse.Immediate)
 					return AddressUse.Unknown;
 			}
+
 			foreach (var p in call.Method.Parameters)
 			{
 				// catch "out Span<int>" and similar
 				if (p.Type.SkipModifiers() is ByReferenceType brt && brt.ElementType.IsByRefLike)
 					return AddressUse.Unknown;
 			}
+
 			// ensure there's no 'stloc target' in between the ldloca and the call consuming the address
 			for (int i = addressLoadingInstruction.ChildIndex + 1; i < call.Arguments.Count; i++)
 			{
@@ -168,6 +152,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return AddressUse.Unknown;
 				}
 			}
+
 			return AddressUse.Immediate;
 		}
 
@@ -187,9 +172,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					value = ldFlda.Target;
 				}
+
 				return value as LdLoca;
 			}
+
 			return null;
+		}
+
+		enum AddressUse
+		{
+			Unknown,
+
+			/// <summary>
+			/// Address is immediately used for reading and/or writing,
+			/// without the possibility of the variable being directly stored to (via 'stloc')
+			/// in between the 'ldloca' and the use of the address.
+			/// </summary>
+			Immediate,
+
+			/// <summary>
+			/// We support some limited form of ref locals referring to a target variable,
+			/// without giving up splitting of the target variable.
+			/// Requirements:
+			///  * the ref local is single-assignment
+			///  * the ref local is initialized directly with 'ldloca target; stloc ref_local',
+			///       not a derived pointer (e.g. 'ldloca target; ldflda F; stloc ref_local').
+			///  * all uses of the ref_local are immediate.
+			/// There may be stores to the target variable in between the 'stloc ref_local' and its uses,
+			/// but we handle that case by treating each use of the ref_local as an address access
+			/// of the target variable (as if the ref_local was eliminated via copy propagation).
+			/// </summary>
+			WithSupportedRefLocals,
 		}
 
 		/// <summary>
@@ -200,16 +213,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		class GroupStores : ReachingDefinitionsVisitor
 		{
-			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new UnionFind<IInstructionWithVariableOperand>();
+			readonly Dictionary<IInstructionWithVariableOperand, ILVariable> newVariables = new();
 
 			/// <summary>
 			/// For each uninitialized variable, one representative instruction that
 			/// potentially observes the unintialized value of the variable.
 			/// Used to merge together all such loads of the same uninitialized value.
 			/// </summary>
-			readonly Dictionary<ILVariable, IInstructionWithVariableOperand> uninitVariableUsage = new Dictionary<ILVariable, IInstructionWithVariableOperand>();
+			readonly Dictionary<ILVariable, IInstructionWithVariableOperand> uninitVariableUsage = new();
 
-			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable, cancellationToken)
+			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new();
+
+			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable,
+				cancellationToken)
 			{
 			}
 
@@ -248,6 +264,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							uninitVariableUsage.Add(inst.Variable, inst);
 						}
 					}
+
 					foreach (var store in GetStores(state, inst.Variable))
 					{
 						unionFind.Merge(inst, (IInstructionWithVariableOperand)store);
@@ -255,31 +272,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			readonly Dictionary<IInstructionWithVariableOperand, ILVariable> newVariables = new Dictionary<IInstructionWithVariableOperand, ILVariable>();
-
 			/// <summary>
 			/// Gets the new variable for a LdLoc, StLoc or TryCatchHandler instruction.
 			/// </summary>
 			internal ILVariable GetNewVariable(IInstructionWithVariableOperand inst)
 			{
 				var representative = unionFind.Find(inst);
-				ILVariable v;
-				if (!newVariables.TryGetValue(representative, out v))
+				if (!newVariables.TryGetValue(representative, out ILVariable v))
 				{
-					v = new ILVariable(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index);
-					v.Name = inst.Variable.Name;
-					v.HasGeneratedName = inst.Variable.HasGeneratedName;
-					v.StateMachineField = inst.Variable.StateMachineField;
-					v.InitialValueIsInitialized = inst.Variable.InitialValueIsInitialized;
-					v.UsesInitialValue = false; // we'll set UsesInitialValue when we encounter an uninit load
-					v.RemoveIfRedundant = inst.Variable.RemoveIfRedundant;
+					v = new ILVariable(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType,
+						inst.Variable.Index) {
+						Name = inst.Variable.Name,
+						HasGeneratedName = inst.Variable.HasGeneratedName,
+						StateMachineField = inst.Variable.StateMachineField,
+						InitialValueIsInitialized = inst.Variable.InitialValueIsInitialized,
+						UsesInitialValue = false, // we'll set UsesInitialValue when we encounter an uninit load
+						RemoveIfRedundant = inst.Variable.RemoveIfRedundant
+					};
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);
 				}
-				if (inst.Variable.UsesInitialValue && uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad) && uninitLoad == inst)
+
+				if (inst.Variable.UsesInitialValue &&
+				    uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad) && uninitLoad == inst)
 				{
 					v.UsesInitialValue = true;
 				}
+
 				return v;
 			}
 		}

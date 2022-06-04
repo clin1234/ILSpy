@@ -33,12 +33,13 @@ namespace ICSharpCode.Decompiler.Documentation
 	public static class IdStringProvider
 	{
 		#region GetIdString
+
 		/// <summary>
 		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity.
 		/// </summary>
 		public static string GetIdString(this IEntity entity)
 		{
-			StringBuilder b = new StringBuilder();
+			StringBuilder b = new();
 			switch (entity.SymbolKind)
 			{
 				case SymbolKind.TypeDefinition:
@@ -59,26 +60,29 @@ namespace ICSharpCode.Decompiler.Documentation
 					b.Append("M:");
 					break;
 			}
+
 			IMember member = (IMember)entity;
 			if (member.DeclaringType != null)
 			{
 				AppendTypeName(b, member.DeclaringType, false);
 				b.Append('.');
 			}
-			if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ExplicitlyImplementedInterfaceMembers.Count() == 1)
+
+			if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 &&
+			    member.ExplicitlyImplementedInterfaceMembers.Count() == 1)
 			{
 				AppendTypeName(b, member.ExplicitlyImplementedInterfaceMembers.First().DeclaringType, true);
 				b.Append('#');
 			}
+
 			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
-			IMethod method = member as IMethod;
-			if (method != null && method.TypeParameters.Count > 0)
+			if (member is IMethod method && method.TypeParameters.Count > 0)
 			{
 				b.Append("``");
 				b.Append(method.TypeParameters.Count);
 			}
-			IParameterizedMember parameterizedMember = member as IParameterizedMember;
-			if (parameterizedMember != null && parameterizedMember.Parameters.Count > 0)
+
+			if (member is IParameterizedMember parameterizedMember && parameterizedMember.Parameters.Count > 0)
 			{
 				b.Append('(');
 				var parameters = parameterizedMember.Parameters;
@@ -88,23 +92,94 @@ namespace ICSharpCode.Decompiler.Documentation
 						b.Append(',');
 					AppendTypeName(b, parameters[i].Type, false);
 				}
+
 				b.Append(')');
 			}
-			if (member.SymbolKind == SymbolKind.Operator && (member.Name == "op_Implicit" || member.Name == "op_Explicit"))
+
+			if (member.SymbolKind == SymbolKind.Operator && member.Name is "op_Implicit" or "op_Explicit")
 			{
 				b.Append('~');
 				AppendTypeName(b, member.ReturnType, false);
 			}
+
 			return b.ToString();
 		}
+
+		#endregion
+
+		#region ParseMemberName
+
+		/// <summary>
+		/// Parse the ID string into a member reference.
+		/// </summary>
+		/// <param name="memberIdString">The ID string representing the member (with "M:", "F:", "P:" or "E:" prefix).</param>
+		/// <returns>A member reference that represents the ID string.</returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
+		/// <remarks>
+		/// The member reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
+		/// and if the member is not found there,
+		/// it will look in all other assemblies of the compilation.
+		/// </remarks>
+		public static IMemberReference ParseMemberIdString(string memberIdString)
+		{
+			ArgumentNullException.ThrowIfNull(memberIdString);
+			if (memberIdString.Length < 2 || memberIdString[1] != ':')
+				throw new ReflectionNameParseException(0, "Missing type tag");
+			char typeChar = memberIdString[0];
+			int parenPos = memberIdString.IndexOf('(');
+			if (parenPos < 0)
+				parenPos = memberIdString.LastIndexOf('~');
+			if (parenPos < 0)
+				parenPos = memberIdString.Length;
+			int dotPos = memberIdString.LastIndexOf('.', parenPos - 1);
+			if (dotPos < 0)
+				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
+			string typeName = memberIdString[..dotPos];
+			int pos = 2;
+			ITypeReference typeReference = ParseTypeName(typeName, ref pos);
+			if (pos != typeName.Length)
+				throw new ReflectionNameParseException(pos, "Expected end of type name");
+			//			string memberName = memberIDString.Substring(dotPos + 1, parenPos - (dotPos + 1));
+			//			pos = memberName.LastIndexOf("``");
+			//			if (pos > 0)
+			//				memberName = memberName.Substring(0, pos);
+			//			memberName = memberName.Replace('#', '.');
+			return new IdStringMemberReference(typeReference, typeChar, memberIdString);
+		}
+
+		#endregion
+
+		#region FindEntity
+
+		/// <summary>
+		/// Finds the entity in the given type resolve context.
+		/// </summary>
+		/// <param name="idString">ID string of the entity.</param>
+		/// <param name="context">Type resolve context</param>
+		/// <returns>Returns the entity, or null if it is not found.</returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
+		public static IEntity FindEntity(string idString, ITypeResolveContext context)
+		{
+			ArgumentNullException.ThrowIfNull(idString);
+			ArgumentNullException.ThrowIfNull(context);
+			if (idString.StartsWith("T:", StringComparison.Ordinal))
+			{
+				return ParseTypeName(idString[2..]).Resolve(context).GetDefinition();
+			}
+			else
+			{
+				return ParseMemberIdString(idString).Resolve(context);
+			}
+		}
+
 		#endregion
 
 		#region GetTypeName
+
 		public static string GetTypeName(IType type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			StringBuilder b = new StringBuilder();
+			ArgumentNullException.ThrowIfNull(type);
+			StringBuilder b = new();
 			AppendTypeName(b, type, false);
 			return b.ToString();
 		}
@@ -129,6 +204,7 @@ namespace ICSharpCode.Decompiler.Documentation
 							b.Append('`');
 						b.Append(tp.Index);
 					}
+
 					break;
 				case TypeKind.Array:
 					ArrayType array = (ArrayType)type;
@@ -144,6 +220,7 @@ namespace ICSharpCode.Decompiler.Documentation
 								b.Append("0:");
 						}
 					}
+
 					b.Append(']');
 					break;
 				case TypeKind.Pointer:
@@ -165,23 +242,21 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					else
 					{
-						if (explicitInterfaceImpl)
-							b.Append(type.FullName.Replace('.', '#'));
-						else
-							b.Append(type.FullName);
+						b.Append(explicitInterfaceImpl ? type.FullName.Replace('.', '#') : type.FullName);
 						AppendTypeParameters(b, type, 0, explicitInterfaceImpl);
 					}
+
 					break;
 			}
 		}
 
-		static void AppendTypeParameters(StringBuilder b, IType type, int outerTypeParameterCount, bool explicitInterfaceImpl)
+		static void AppendTypeParameters(StringBuilder b, IType type, int outerTypeParameterCount,
+			bool explicitInterfaceImpl)
 		{
 			int tpc = type.TypeParameterCount - outerTypeParameterCount;
 			if (tpc > 0)
 			{
-				ParameterizedType pt = type as ParameterizedType;
-				if (pt != null)
+				if (type is ParameterizedType pt)
 				{
 					b.Append('{');
 					var ta = pt.TypeArguments;
@@ -191,6 +266,7 @@ namespace ICSharpCode.Decompiler.Documentation
 							b.Append(explicitInterfaceImpl ? '@' : ',');
 						AppendTypeName(b, ta[i], explicitInterfaceImpl);
 					}
+
 					b.Append('}');
 				}
 				else
@@ -200,50 +276,11 @@ namespace ICSharpCode.Decompiler.Documentation
 				}
 			}
 		}
-		#endregion
 
-		#region ParseMemberName
-		/// <summary>
-		/// Parse the ID string into a member reference.
-		/// </summary>
-		/// <param name="memberIdString">The ID string representing the member (with "M:", "F:", "P:" or "E:" prefix).</param>
-		/// <returns>A member reference that represents the ID string.</returns>
-		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
-		/// <remarks>
-		/// The member reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
-		/// and if the member is not found there,
-		/// it will look in all other assemblies of the compilation.
-		/// </remarks>
-		public static IMemberReference ParseMemberIdString(string memberIdString)
-		{
-			if (memberIdString == null)
-				throw new ArgumentNullException(nameof(memberIdString));
-			if (memberIdString.Length < 2 || memberIdString[1] != ':')
-				throw new ReflectionNameParseException(0, "Missing type tag");
-			char typeChar = memberIdString[0];
-			int parenPos = memberIdString.IndexOf('(');
-			if (parenPos < 0)
-				parenPos = memberIdString.LastIndexOf('~');
-			if (parenPos < 0)
-				parenPos = memberIdString.Length;
-			int dotPos = memberIdString.LastIndexOf('.', parenPos - 1);
-			if (dotPos < 0)
-				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
-			string typeName = memberIdString.Substring(0, dotPos);
-			int pos = 2;
-			ITypeReference typeReference = ParseTypeName(typeName, ref pos);
-			if (pos != typeName.Length)
-				throw new ReflectionNameParseException(pos, "Expected end of type name");
-			//			string memberName = memberIDString.Substring(dotPos + 1, parenPos - (dotPos + 1));
-			//			pos = memberName.LastIndexOf("``");
-			//			if (pos > 0)
-			//				memberName = memberName.Substring(0, pos);
-			//			memberName = memberName.Replace('#', '.');
-			return new IdStringMemberReference(typeReference, typeChar, memberIdString);
-		}
 		#endregion
 
 		#region ParseTypeName
+
 		/// <summary>
 		/// Parse the ID string type name into a type reference.
 		/// </summary>
@@ -264,8 +301,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </remarks>
 		public static ITypeReference ParseTypeName(string typeName)
 		{
-			if (typeName == null)
-				throw new ArgumentNullException(nameof(typeName));
+			ArgumentNullException.ThrowIfNull(typeName);
 			int pos = 0;
 			if (typeName.StartsWith("T:", StringComparison.Ordinal))
 				pos = 2;
@@ -325,20 +361,24 @@ namespace ICSharpCode.Decompiler.Documentation
 			else
 			{
 				// not a type parameter reference: read the actual type name
-				List<ITypeReference> typeArguments = new List<ITypeReference>();
-				string typeNameWithoutSuffix = ReadTypeName(typeName, ref pos, true, out int typeParameterCount, typeArguments);
+				List<ITypeReference> typeArguments = new();
+				string typeNameWithoutSuffix =
+					ReadTypeName(typeName, ref pos, true, out int typeParameterCount, typeArguments);
 				result = new GetPotentiallyNestedClassTypeReference(typeNameWithoutSuffix, typeParameterCount);
 				while (pos < typeName.Length && typeName[pos] == '.')
 				{
 					pos++;
-					string nestedTypeName = ReadTypeName(typeName, ref pos, false, out typeParameterCount, typeArguments);
+					string nestedTypeName =
+						ReadTypeName(typeName, ref pos, false, out typeParameterCount, typeArguments);
 					result = new NestedTypeReference(result, nestedTypeName, typeParameterCount);
 				}
+
 				if (typeArguments.Count > 0)
 				{
 					result = new ParameterizedTypeReference(result, typeArguments);
 				}
 			}
+
 			while (pos < typeName.Length)
 			{
 				switch (typeName[pos])
@@ -353,6 +393,7 @@ namespace ICSharpCode.Decompiler.Documentation
 							if (typeName[pos] == ',')
 								dimensions++;
 						} while (typeName[pos] != ']');
+
 						result = new ArrayTypeReference(result, dimensions);
 						break;
 					case '*':
@@ -364,16 +405,20 @@ namespace ICSharpCode.Decompiler.Documentation
 					default:
 						return result;
 				}
+
 				pos++;
 			}
+
 			return result;
 		}
 
-		static string ReadTypeName(string typeName, ref int pos, bool allowDottedName, out int typeParameterCount, List<ITypeReference> typeArguments)
+		static string ReadTypeName(string typeName, ref int pos, bool allowDottedName, out int typeParameterCount,
+			List<ITypeReference> typeArguments)
 		{
 			int startPos = pos;
 			// skip the simple name portion:
-			while (pos < typeName.Length && !IsIDStringSpecialCharacter(typeName[pos]) && (allowDottedName || typeName[pos] != '.'))
+			while (pos < typeName.Length && !IsIDStringSpecialCharacter(typeName[pos]) &&
+			       (allowDottedName || typeName[pos] != '.'))
 				pos++;
 			if (pos == startPos)
 				throw new ReflectionNameParseException(pos, "Expected type name");
@@ -397,37 +442,15 @@ namespace ICSharpCode.Decompiler.Documentation
 					if (pos == typeName.Length)
 						throw new ReflectionNameParseException(pos, "Unexpected end");
 				} while (typeName[pos] == ',');
+
 				if (typeName[pos] != '}')
 					throw new ReflectionNameParseException(pos, "Expected '}'");
 				pos++;
 			}
+
 			return shortTypeName;
 		}
-		#endregion
 
-		#region FindEntity
-		/// <summary>
-		/// Finds the entity in the given type resolve context.
-		/// </summary>
-		/// <param name="idString">ID string of the entity.</param>
-		/// <param name="context">Type resolve context</param>
-		/// <returns>Returns the entity, or null if it is not found.</returns>
-		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
-		public static IEntity FindEntity(string idString, ITypeResolveContext context)
-		{
-			if (idString == null)
-				throw new ArgumentNullException(nameof(idString));
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-			if (idString.StartsWith("T:", StringComparison.Ordinal))
-			{
-				return ParseTypeName(idString.Substring(2)).Resolve(context).GetDefinition();
-			}
-			else
-			{
-				return ParseMemberIdString(idString).Resolve(context);
-			}
-		}
 		#endregion
 	}
 }

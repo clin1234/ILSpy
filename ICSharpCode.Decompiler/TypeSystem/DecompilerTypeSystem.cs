@@ -25,8 +25,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
-using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
-
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -41,12 +39,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// No options enabled; stay as close to the metadata as possible.
 		/// </summary>
 		None = 0,
+
 		/// <summary>
 		/// [DynamicAttribute] is used to replace 'object' types with the 'dynamic' type.
 		/// 
 		/// If this option is not active, the 'dynamic' type is not used, and the attribute is preserved.
 		/// </summary>
 		Dynamic = 1,
+
 		/// <summary>
 		/// Tuple types are represented using the TupleType class.
 		/// [TupleElementNames] is used to name the tuple elements.
@@ -54,15 +54,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If this option is not active, the tuples are represented using their underlying type, and the attribute is preserved.
 		/// </summary>
 		Tuple = 2,
+
 		/// <summary>
 		/// If this option is active, [ExtensionAttribute] is removed and methods are marked as IsExtensionMethod.
 		/// Otherwise, the attribute is preserved but the methods are not marked.
 		/// </summary>
 		ExtensionMethods = 4,
+
 		/// <summary>
 		/// Only load the public API into the type system.
 		/// </summary>
 		OnlyPublicAPI = 8,
+
 		/// <summary>
 		/// Do not cache accessed entities.
 		/// In a normal type system (without this option), every type or member definition has exactly one ITypeDefinition/IMember
@@ -73,10 +76,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and thus will fail with uncached type systems.
 		/// </summary>
 		Uncached = 0x10,
+
 		/// <summary>
 		/// If this option is active, [DecimalConstantAttribute] is removed and constant values are transformed into simple decimal literals.
 		/// </summary>
 		DecimalConstants = 0x20,
+
 		/// <summary>
 		/// If this option is active, modopt and modreq types are preserved in the type system.
 		/// 
@@ -84,47 +89,55 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// activating this option may lead to incorrect decompilation or internal errors.
 		/// </summary>
 		KeepModifiers = 0x40,
+
 		/// <summary>
 		/// If this option is active, [IsReadOnlyAttribute] on parameters+structs is removed
 		/// and parameters are marked as in, structs as readonly.
 		/// Otherwise, the attribute is preserved but the parameters and structs are not marked.
 		/// </summary>
 		ReadOnlyStructsAndParameters = 0x80,
+
 		/// <summary>
 		/// If this option is active, [IsByRefLikeAttribute] is removed and structs are marked as ref.
 		/// Otherwise, the attribute is preserved but the structs are not marked.
 		/// </summary>
 		RefStructs = 0x100,
+
 		/// <summary>
 		/// If this option is active, [IsUnmanagedAttribute] is removed from type parameters,
 		/// and HasUnmanagedConstraint is set instead.
 		/// </summary>
 		UnmanagedConstraints = 0x200,
+
 		/// <summary>
 		/// If this option is active, [NullableAttribute] is removed and reference types with
 		/// nullability annotations are used instead.
 		/// </summary>
 		NullabilityAnnotations = 0x400,
+
 		/// <summary>
 		/// If this option is active, [IsReadOnlyAttribute] on methods is removed
 		/// and the method marked as ThisIsRefReadOnly.
 		/// </summary>
 		ReadOnlyMethods = 0x800,
+
 		/// <summary>
 		/// [NativeIntegerAttribute] is used to replace 'IntPtr' types with the 'nint' type.
 		/// </summary>
 		NativeIntegers = 0x1000,
+
 		/// <summary>
 		/// Allow function pointer types. If this option is not enabled, function pointers are
 		/// replaced with the 'IntPtr' type.
 		/// </summary>
 		FunctionPointers = 0x2000,
+
 		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
-			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
-			| NativeIntegers | FunctionPointers
+		          | RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
+		          | NativeIntegers | FunctionPointers
 	}
 
 	/// <summary>
@@ -135,6 +148,36 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public class DecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 	{
+		static readonly string[] implicitReferences = new[] {
+			"System.Runtime.InteropServices",
+			"System.Runtime.CompilerServices.Unsafe"
+		};
+
+		private DecompilerTypeSystem()
+		{
+		}
+
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
+			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
+		{
+		}
+
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+			: this(mainModule, assemblyResolver,
+				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))))
+		{
+		}
+
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver,
+			TypeSystemOptions typeSystemOptions)
+		{
+			ArgumentNullException.ThrowIfNull(mainModule);
+			ArgumentNullException.ThrowIfNull(assemblyResolver);
+			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
+		}
+
+		public new MetadataModule MainModule { get; private set; }
+
 		public static TypeSystemOptions GetOptions(DecompilerSettings settings)
 		{
 			var typeSystemOptions = TypeSystemOptions.None;
@@ -168,66 +211,41 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return CreateAsync(mainModule, assemblyResolver, TypeSystemOptions.Default);
 		}
 
-		public static Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+		public static Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver,
+			DecompilerSettings settings)
 		{
-			return CreateAsync(mainModule, assemblyResolver, GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))));
+			return CreateAsync(mainModule, assemblyResolver,
+				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))));
 		}
 
-		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule,
+			IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
 		{
-			if (mainModule == null)
-				throw new ArgumentNullException(nameof(mainModule));
-			if (assemblyResolver == null)
-				throw new ArgumentNullException(nameof(assemblyResolver));
+			ArgumentNullException.ThrowIfNull(mainModule);
+			ArgumentNullException.ThrowIfNull(assemblyResolver);
 			var ts = new DecompilerTypeSystem();
 			await ts.InitializeAsync(mainModule, assemblyResolver, typeSystemOptions)
 				.ConfigureAwait(false);
 			return ts;
 		}
 
-		private MetadataModule mainModule;
-
-		private DecompilerTypeSystem()
-		{
-		}
-
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
-			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
-		{
-		}
-
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
-			: this(mainModule, assemblyResolver, GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))))
-		{
-		}
-
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
-		{
-			if (mainModule == null)
-				throw new ArgumentNullException(nameof(mainModule));
-			if (assemblyResolver == null)
-				throw new ArgumentNullException(nameof(assemblyResolver));
-			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
-		}
-
-		static readonly string[] implicitReferences = new[] {
-			"System.Runtime.InteropServices",
-			"System.Runtime.CompilerServices.Unsafe"
-		};
-
-		private async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		private async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver,
+			TypeSystemOptions typeSystemOptions)
 		{
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<PEFile>();
-			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference, Task<PEFile> ResolveTask)>();
+			var assemblyReferenceQueue =
+				new Queue<(bool IsAssembly, PEFile MainModule, object Reference, Task<PEFile> ResolveTask)>();
 			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
-				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
-									   "M:" + reference.Reference);
+				reference.IsAssembly
+					? "A:" + ((IAssemblyReference)reference.Reference).FullName
+					: "M:" + reference.Reference);
 			var assemblyReferencesInQueue = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			var mainMetadata = mainModule.Metadata;
 			var tfm = mainModule.DetectTargetFrameworkId();
-			var (identifier, version) = UniversalAssemblyResolver.ParseTargetFramework(tfm);
+			(TargetFrameworkIdentifier identifier, Version version) =
+				UniversalAssemblyResolver.ParseTargetFramework(tfm);
 			foreach (var h in mainMetadata.GetModuleReferences())
 			{
 				try
@@ -248,10 +266,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 				}
 			}
+
 			foreach (var refs in mainModule.AssemblyReferences)
 			{
 				AddToQueue(true, mainModule, refs);
 			}
+
 			while (assemblyReferenceQueue.Count > 0)
 			{
 				var asmRef = assemblyReferenceQueue.Dequeue();
@@ -266,15 +286,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						switch (exportedType.Implementation.Kind)
 						{
 							case SRM.HandleKind.AssemblyReference:
-								AddToQueue(true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation));
+								AddToQueue(true, asm,
+									new AssemblyReference(asm,
+										(SRM.AssemblyReferenceHandle)exportedType.Implementation));
 								break;
 							case SRM.HandleKind.AssemblyFile:
-								var file = metadata.GetAssemblyFile((SRM.AssemblyFileHandle)exportedType.Implementation);
+								var file = metadata.GetAssemblyFile(
+									(SRM.AssemblyFileHandle)exportedType.Implementation);
 								AddToQueue(false, asm, metadata.GetString(file.Name));
 								break;
 						}
 					}
 				}
+
 				if (assemblyReferenceQueue.Count == 0)
 				{
 					// For .NET Core and .NET 5 and newer, we need to pull in implicit references which are not included in the metadata,
@@ -289,29 +313,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								var existing = referencedAssemblies.FirstOrDefault(asm => asm.Name == item);
 								if (existing == null)
 								{
-									AddToQueue(true, mainModule, AssemblyNameReference.Parse(item + ", Version=" + version.ToString(3) + ".0, Culture=neutral"));
+									AddToQueue(true, mainModule,
+										AssemblyNameReference.Parse(item + ", Version=" + version.ToString(3) +
+										                            ".0, Culture=neutral"));
 								}
 							}
+
 							break;
 					}
-
 				}
 			}
+
 			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
-			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(typeSystemOptions));
+			var referencedAssembliesWithOptions =
+				referencedAssemblies.Select(file => file.WithOptions(typeSystemOptions));
 			// Primitive types are necessary to avoid assertions in ILReader.
 			// Other known types are necessary in order for transforms to work (e.g. Task<T> for async transform).
 			// Figure out which known types are missing from our type system so far:
 			var missingKnownTypes = KnownTypeReference.AllKnownTypes.Where(IsMissing).ToList();
 			if (missingKnownTypes.Count > 0)
 			{
-				Init(mainModule.WithOptions(typeSystemOptions), referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.CreateWithTypes(missingKnownTypes) }));
+				Init(mainModule.WithOptions(typeSystemOptions),
+					referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.CreateWithTypes(missingKnownTypes) }));
 			}
 			else
 			{
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
-			this.mainModule = (MetadataModule)base.MainModule;
+
+			this.MainModule = (MetadataModule)base.MainModule;
 
 			void AddToQueue(bool isAssembly, PEFile mainModule, object reference)
 			{
@@ -328,6 +358,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					{
 						asm = assemblyResolver.ResolveModuleAsync(mainModule, (string)reference);
 					}
+
 					assemblyReferenceQueue.Enqueue((isAssembly, mainModule, reference, asm));
 				}
 			}
@@ -342,10 +373,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (!file.GetTypeDefinition(name).IsNil)
 						return false;
 				}
+
 				return true;
 			}
 		}
-
-		public new MetadataModule MainModule => mainModule;
 	}
 }

@@ -25,6 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override NodeType NodeType => NodeType.Unknown;
 
 		#region Null
+
 		public new static readonly VariableDesignation Null = new NullVariableDesignation();
 
 		sealed class NullVariableDesignation : VariableDesignation
@@ -50,13 +51,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
 		}
-		#endregion
 
+		#endregion
 	}
 
 	/// <summary>
@@ -64,7 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class SingleVariableDesignation : VariableDesignation
 	{
-
 		public string Identifier {
 			get { return GetChildByRole(Roles.Identifier).Name; }
 			set { SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value)); }
@@ -101,7 +101,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ParenthesizedVariableDesignation : VariableDesignation
 	{
-
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
@@ -131,7 +130,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			return other is ParenthesizedVariableDesignation o && VariableDesignations.DoMatch(o.VariableDesignations, match);
+			return other is ParenthesizedVariableDesignation o &&
+			       VariableDesignations.DoMatch(o.VariableDesignations, match);
 		}
 	}
 }

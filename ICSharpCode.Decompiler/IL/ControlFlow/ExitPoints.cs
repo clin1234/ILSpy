@@ -52,8 +52,33 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class DetectExitPoints : ILVisitor, IILTransform
 	{
-		static readonly Nop ExitNotYetDetermined = new Nop { Comment = "ExitNotYetDetermined" };
-		static readonly Nop NoExit = new Nop { Comment = "NoExit" };
+		static readonly Nop ExitNotYetDetermined = new() { Comment = "ExitNotYetDetermined" };
+		static readonly Nop NoExit = new() { Comment = "NoExit" };
+		readonly List<Block> blocksPotentiallyMadeUnreachable = new();
+		readonly Stack<ContainerContext> containerStack = new();
+
+		CancellationToken cancellationToken;
+
+		public void Run(ILFunction function, ILTransformContext context)
+		{
+			cancellationToken = context.CancellationToken;
+			blocksPotentiallyMadeUnreachable.Clear();
+			containerStack.Clear();
+			function.AcceptVisitor(this);
+			// It's possible that there are unreachable code blocks which we only
+			// detect as such during exit point detection.
+			// Clean them up.
+			foreach (var block in blocksPotentiallyMadeUnreachable)
+			{
+				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block))
+				{
+					block.Remove();
+				}
+			}
+
+			blocksPotentiallyMadeUnreachable.Clear();
+			containerStack.Clear();
+		}
 
 		/// <summary>
 		/// Gets the next instruction after <paramref name="inst"/> is executed.
@@ -68,15 +93,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Block block = (Block)inst.Parent!;
 				return block.Instructions.ElementAtOrDefault(inst.ChildIndex + 1) ?? ExitNotYetDetermined;
 			}
-			else if (slot == TryInstruction.TryBlockSlot
-			  || slot == TryCatchHandler.BodySlot
-			  || slot == TryCatch.HandlerSlot
-			  || slot == PinnedRegion.BodySlot
-			  || slot == UsingInstruction.BodySlot
-			  || slot == LockInstruction.BodySlot)
+
+			if (slot == TryInstruction.TryBlockSlot
+			    || slot == TryCatchHandler.BodySlot
+			    || slot == TryCatch.HandlerSlot
+			    || slot == PinnedRegion.BodySlot
+			    || slot == UsingInstruction.BodySlot
+			    || slot == LockInstruction.BodySlot)
 			{
 				return GetExit(inst.Parent!);
 			}
+
 			return NoExit;
 		}
 
@@ -97,79 +124,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				case OpCode.Leave:
 					Leave leave1 = (Leave)exit1;
 					Leave leave2 = (Leave)exit2;
-					return leave1.TargetContainer == leave2.TargetContainer && leave1.Value.MatchNop() && leave2.Value.MatchNop();
+					return leave1.TargetContainer == leave2.TargetContainer && leave1.Value.MatchNop() &&
+					       leave2.Value.MatchNop();
 				default:
 					return false;
 			}
 		}
 
-		class ContainerContext
-		{
-			public readonly BlockContainer Container;
-
-			/// <summary>
-			/// The instruction that will be executed next after leaving the Container.
-			/// <c>ExitNotYetDetermined</c> means the container is last in its parent block, and thus does not
-			/// yet have any leave instructions. This means we can move any exit instruction of
-			/// our choice our of the container and replace it with a leave instruction.
-			/// </summary>
-			public readonly ILInstruction CurrentExit;
-
-			/// <summary>
-			/// If <c>currentExit==ExitNotYetDetermined</c>, holds the list of potential exit instructions.
-			/// After the currentContainer was visited completely, one of these will be selected as exit instruction.
-			/// </summary>
-			public readonly List<ILInstruction>? PotentialExits = null;
-
-			public ContainerContext(BlockContainer container, ILInstruction currentExit)
-			{
-				this.Container = container;
-				this.CurrentExit = currentExit;
-				this.PotentialExits = (currentExit == ExitNotYetDetermined ? new List<ILInstruction>() : null);
-			}
-
-			public void HandleExit(ILInstruction inst)
-			{
-				if (this.CurrentExit == ExitNotYetDetermined && this.Container.LeaveCount == 0)
-				{
-					this.PotentialExits!.Add(inst);
-				}
-				else if (CompatibleExitInstruction(inst, this.CurrentExit))
-				{
-					inst.ReplaceWith(new Leave(this.Container).WithILRange(inst));
-				}
-			}
-		}
-
-		CancellationToken cancellationToken;
-		readonly List<Block> blocksPotentiallyMadeUnreachable = new List<Block>();
-		readonly Stack<ContainerContext> containerStack = new Stack<ContainerContext>();
-
-		public void Run(ILFunction function, ILTransformContext context)
-		{
-			cancellationToken = context.CancellationToken;
-			blocksPotentiallyMadeUnreachable.Clear();
-			containerStack.Clear();
-			function.AcceptVisitor(this);
-			// It's possible that there are unreachable code blocks which we only
-			// detect as such during exit point detection.
-			// Clean them up.
-			foreach (var block in blocksPotentiallyMadeUnreachable)
-			{
-				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block))
-				{
-					block.Remove();
-				}
-			}
-			blocksPotentiallyMadeUnreachable.Clear();
-			containerStack.Clear();
-		}
-
 		static bool IsInfiniteLoop(Block block)
 		{
 			return block.Instructions.Count == 1
-				&& block.Instructions[0] is Branch b
-				&& b.TargetBlock == block;
+			       && block.Instructions[0] is Branch b
+			       && b.TargetBlock == block;
 		}
 
 		protected override void Default(ILInstruction inst)
@@ -196,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						exit.ReplaceWith(new Leave(container).WithILRange(exit));
 					}
 				}
+
 				ILInstruction inst = container;
 				// traverse up to the block (we'll always find one because GetExit
 				// only returns ExitNotYetDetermined if there's a block)
@@ -218,6 +185,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					block.Instructions.Add(newExit);
 				}
 			}
+
 			if (containerStack.Pop() != stackEntry)
 			{
 				Debug.Fail("containerStack got imbalanced");
@@ -234,10 +202,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				while (enumerator.MoveNext())
 				{
 					var exit = enumerator.Current;
-					if (!(exit is Leave { IsLeavingFunction: true }))
+					if (exit is not Leave { IsLeavingFunction: true })
 						return exit;
 				}
 			}
+
 			return first;
 		}
 
@@ -290,6 +259,44 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				else
 				{
 					entry.HandleExit(inst);
+				}
+			}
+		}
+
+		class ContainerContext
+		{
+			public readonly BlockContainer Container;
+
+			/// <summary>
+			/// The instruction that will be executed next after leaving the Container.
+			/// <c>ExitNotYetDetermined</c> means the container is last in its parent block, and thus does not
+			/// yet have any leave instructions. This means we can move any exit instruction of
+			/// our choice our of the container and replace it with a leave instruction.
+			/// </summary>
+			public readonly ILInstruction CurrentExit;
+
+			/// <summary>
+			/// If <c>currentExit==ExitNotYetDetermined</c>, holds the list of potential exit instructions.
+			/// After the currentContainer was visited completely, one of these will be selected as exit instruction.
+			/// </summary>
+			public readonly List<ILInstruction>? PotentialExits = null;
+
+			public ContainerContext(BlockContainer container, ILInstruction currentExit)
+			{
+				this.Container = container;
+				this.CurrentExit = currentExit;
+				this.PotentialExits = (currentExit == ExitNotYetDetermined ? new List<ILInstruction>() : null);
+			}
+
+			public void HandleExit(ILInstruction inst)
+			{
+				if (this.CurrentExit == ExitNotYetDetermined && this.Container.LeaveCount == 0)
+				{
+					this.PotentialExits!.Add(inst);
+				}
+				else if (CompatibleExitInstruction(inst, this.CurrentExit))
+				{
+					inst.ReplaceWith(new Leave(this.Container).WithILRange(inst));
 				}
 			}
 		}

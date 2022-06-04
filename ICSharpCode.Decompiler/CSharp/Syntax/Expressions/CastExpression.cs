@@ -23,7 +23,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -32,6 +31,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CastExpression : Expression
 	{
+		public CastExpression()
+		{
+		}
+
+		public CastExpression(AstType castToType, Expression expression)
+		{
+			AddChild(castToType, Roles.Type);
+			AddChild(expression, Roles.Expression);
+		}
+
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
@@ -48,16 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
-		}
-
-		public CastExpression()
-		{
-		}
-
-		public CastExpression(AstType castToType, Expression expression)
-		{
-			AddChild(castToType, Roles.Type);
-			AddChild(expression, Roles.Expression);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -77,9 +76,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CastExpression o = other as CastExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Expression.DoMatch(o.Expression, match);
+			return other is CastExpression o && this.Type.DoMatch(o.Type, match) &&
+			       this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }
-

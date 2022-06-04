@@ -32,9 +32,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UsingAliasDeclaration : AstNode
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", Identifier.Null);
+		public static readonly TokenRole UsingKeywordRole = new("using");
+		public static readonly Role<Identifier> AliasRole = new("Alias", Identifier.Null);
 		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
+
+		public UsingAliasDeclaration()
+		{
+		}
+
+		public UsingAliasDeclaration(string alias, string nameSpace)
+		{
+			AddChild(Identifier.Create(alias), AliasRole);
+			AddChild(new SimpleType(nameSpace), ImportRole);
+		}
+
+		public UsingAliasDeclaration(string alias, AstType import)
+		{
+			AddChild(Identifier.Create(alias), AliasRole);
+			AddChild(import, ImportRole);
+		}
 
 		public override NodeType NodeType {
 			get {
@@ -68,22 +84,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public UsingAliasDeclaration()
-		{
-		}
-
-		public UsingAliasDeclaration(string alias, string nameSpace)
-		{
-			AddChild(Identifier.Create(alias), AliasRole);
-			AddChild(new SimpleType(nameSpace), ImportRole);
-		}
-
-		public UsingAliasDeclaration(string alias, AstType import)
-		{
-			AddChild(Identifier.Create(alias), AliasRole);
-			AddChild(import, ImportRole);
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitUsingAliasDeclaration(this);
@@ -101,8 +101,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingAliasDeclaration o = other as UsingAliasDeclaration;
-			return o != null && MatchString(this.Alias, o.Alias) && this.Import.DoMatch(o.Import, match);
+			return other is UsingAliasDeclaration o && MatchString(this.Alias, o.Alias) &&
+			       this.Import.DoMatch(o.Import, match);
 		}
 	}
 }

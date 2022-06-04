@@ -28,12 +28,65 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public class ILVariableCollection : ICollection<ILVariable>, IReadOnlyList<ILVariable>
 	{
+		readonly List<ILVariable> list = new();
 		readonly ILFunction scope;
-		readonly List<ILVariable> list = new List<ILVariable>();
 
 		internal ILVariableCollection(ILFunction scope)
 		{
 			this.scope = scope;
+		}
+
+		void ICollection<ILVariable>.Add(ILVariable item)
+		{
+			Add(item);
+		}
+
+		public void Clear()
+		{
+			foreach (var v in list)
+			{
+				v.Function = null;
+			}
+
+			list.Clear();
+		}
+
+		public bool Contains(ILVariable item)
+		{
+			Debug.Assert(item.Function != scope || list[item.IndexInFunction] == item);
+			return item.Function == scope;
+		}
+
+		public bool Remove(ILVariable item)
+		{
+			if (item.Function != scope)
+				return false;
+			Debug.Assert(list[item.IndexInFunction] == item);
+			RemoveAt(item.IndexInFunction);
+			return true;
+		}
+
+		public int Count {
+			get { return list.Count; }
+		}
+
+		public void CopyTo(ILVariable[] array, int arrayIndex)
+		{
+			list.CopyTo(array, arrayIndex);
+		}
+
+		bool ICollection<ILVariable>.IsReadOnly {
+			get { return false; }
+		}
+
+		IEnumerator<ILVariable> IEnumerable<ILVariable>.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
 		}
 
 		/// <summary>
@@ -54,38 +107,10 @@ namespace ICSharpCode.Decompiler.IL
 				else
 					throw new ArgumentException("Variable already belongs to another scope");
 			}
+
 			item.Function = scope;
 			item.IndexInFunction = list.Count;
 			list.Add(item);
-			return true;
-		}
-
-		void ICollection<ILVariable>.Add(ILVariable item)
-		{
-			Add(item);
-		}
-
-		public void Clear()
-		{
-			foreach (var v in list)
-			{
-				v.Function = null;
-			}
-			list.Clear();
-		}
-
-		public bool Contains(ILVariable item)
-		{
-			Debug.Assert(item.Function != scope || list[item.IndexInFunction] == item);
-			return item.Function == scope;
-		}
-
-		public bool Remove(ILVariable item)
-		{
-			if (item.Function != scope)
-				return false;
-			Debug.Assert(list[item.IndexInFunction] == item);
-			RemoveAt(item.IndexInFunction);
 			return true;
 		}
 
@@ -93,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			list[index].Function = null;
 			// swap-remove index
-			list[index] = list[list.Count - 1];
+			list[index] = list[^1];
 			list[index].IndexInFunction = index;
 			list.RemoveAt(list.Count - 1);
 		}
@@ -133,36 +158,14 @@ namespace ICSharpCode.Decompiler.IL
 						return true;
 					return false;
 				}
+
 				return true;
 			}
-		}
-
-		public int Count {
-			get { return list.Count; }
-		}
-
-		public void CopyTo(ILVariable[] array, int arrayIndex)
-		{
-			list.CopyTo(array, arrayIndex);
-		}
-
-		bool ICollection<ILVariable>.IsReadOnly {
-			get { return false; }
 		}
 
 		public List<ILVariable>.Enumerator GetEnumerator()
 		{
 			return list.GetEnumerator();
-		}
-
-		IEnumerator<ILVariable> IEnumerable<ILVariable>.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
 		}
 	}
 }

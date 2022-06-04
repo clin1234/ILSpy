@@ -47,11 +47,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				result |= child.AcceptVisitor(this);
 			}
-			if (result && node is EntityDeclaration && !(node is Accessor))
+
+			if (result && node is EntityDeclaration declaration and not Accessor)
 			{
-				((EntityDeclaration)node).Modifiers |= Modifiers.Unsafe;
+				declaration.Modifiers |= Modifiers.Unsafe;
 				return false;
 			}
+
 			return result;
 		}
 
@@ -87,19 +89,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 			if (unaryOperatorExpression.Operator == UnaryOperatorType.Dereference)
 			{
-				var bop = unaryOperatorExpression.Expression as BinaryOperatorExpression;
-				if (bop != null && bop.Operator == BinaryOperatorType.Add
-					&& bop.GetResolveResult() is OperatorResolveResult orr
-					&& orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
+				if (unaryOperatorExpression.Expression is BinaryOperatorExpression {
+					    Operator: BinaryOperatorType.Add
+				    } bop && bop.GetResolveResult() is OperatorResolveResult orr &&
+				    orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
 				{
 					// transform "*(ptr + int)" to "ptr[int]"
-					IndexerExpression indexer = new IndexerExpression();
-					indexer.Target = bop.Left.Detach();
+					IndexerExpression indexer = new() {
+						Target = bop.Left.Detach()
+					};
 					indexer.Arguments.Add(bop.Right.Detach());
 					indexer.CopyAnnotationsFrom(unaryOperatorExpression);
 					indexer.CopyAnnotationsFrom(bop);
 					unaryOperatorExpression.ReplaceWith(indexer);
 				}
+
 				return true;
 			}
 			else if (unaryOperatorExpression.Operator == UnaryOperatorType.AddressOf)
@@ -115,18 +119,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
 		{
 			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
-			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
-			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
+			if (memberReferenceExpression.Target is UnaryOperatorExpression {
+				    Operator: UnaryOperatorType.Dereference
+			    } uoe)
 			{
-				PointerReferenceExpression pre = new PointerReferenceExpression();
-				pre.Target = uoe.Expression.Detach();
-				pre.MemberName = memberReferenceExpression.MemberName;
+				PointerReferenceExpression pre = new() {
+					Target = uoe.Expression.Detach(),
+					MemberName = memberReferenceExpression.MemberName
+				};
 				memberReferenceExpression.TypeArguments.MoveTo(pre.TypeArguments);
 				pre.CopyAnnotationsFrom(uoe);
 				pre.RemoveAnnotations<ResolveResult>(); // only copy the ResolveResult from the MRE
 				pre.CopyAnnotationsFrom(memberReferenceExpression);
 				memberReferenceExpression.ReplaceWith(pre);
 			}
+
 			var rr = memberReferenceExpression.GetResolveResult();
 			if (rr != null)
 			{
@@ -170,6 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (pm.Parameters.Any(p => IsUnsafeType(p.Type)))
 					return true;
 			}
+
 			return result;
 		}
 
@@ -186,9 +194,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Using a delegate which involves pointers in its signature needs the unsafe modifier
 				// https://github.com/icsharpcode/ILSpy/issues/949
 				IMethod invoke = type.GetDelegateInvokeMethod();
-				if (invoke != null && (ContainsPointer(invoke.ReturnType) || invoke.Parameters.Any(p => ContainsPointer(p.Type))))
+				if (invoke != null && (ContainsPointer(invoke.ReturnType) ||
+				                       invoke.Parameters.Any(p => ContainsPointer(p.Type))))
 					return true;
 			}
+
 			return ContainsPointer(type);
 		}
 

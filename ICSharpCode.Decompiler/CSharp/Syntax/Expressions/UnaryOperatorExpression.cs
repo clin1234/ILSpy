@@ -34,18 +34,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UnaryOperatorExpression : Expression
 	{
-		public readonly static TokenRole NotRole = new TokenRole("!");
-		public readonly static TokenRole BitNotRole = new TokenRole("~");
-		public readonly static TokenRole MinusRole = new TokenRole("-");
-		public readonly static TokenRole PlusRole = new TokenRole("+");
-		public readonly static TokenRole IncrementRole = new TokenRole("++");
-		public readonly static TokenRole DecrementRole = new TokenRole("--");
-		public readonly static TokenRole DereferenceRole = new TokenRole("*");
-		public readonly static TokenRole AddressOfRole = new TokenRole("&");
-		public readonly static TokenRole AwaitRole = new TokenRole("await");
-		public readonly static TokenRole NullConditionalRole = new TokenRole("?");
-		public readonly static TokenRole SuppressNullableWarningRole = new TokenRole("!");
-		public readonly static TokenRole IndexFromEndRole = new TokenRole("^");
+		public static readonly TokenRole NotRole = new("!");
+		public static readonly TokenRole BitNotRole = new("~");
+		public static readonly TokenRole MinusRole = new("-");
+		public static readonly TokenRole PlusRole = new("+");
+		public static readonly TokenRole IncrementRole = new("++");
+		public static readonly TokenRole DecrementRole = new("--");
+		public static readonly TokenRole DereferenceRole = new("*");
+		public static readonly TokenRole AddressOfRole = new("&");
+		public static readonly TokenRole AwaitRole = new("await");
+		public static readonly TokenRole NullConditionalRole = new("?");
+		public static readonly TokenRole SuppressNullableWarningRole = new("!");
+		public static readonly TokenRole IndexFromEndRole = new("^");
 
 		public UnaryOperatorExpression()
 		{
@@ -88,9 +88,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UnaryOperatorExpression o = other as UnaryOperatorExpression;
-			return o != null && (this.Operator == UnaryOperatorType.Any || this.Operator == o.Operator)
-				&& this.Expression.DoMatch(o.Expression, match);
+			return other is UnaryOperatorExpression o && (this.Operator == UnaryOperatorType.Any ||
+			                                              this.Operator == o.Operator)
+			                                          && this.Expression.DoMatch(o.Expression, match);
 		}
 
 		public static TokenRole GetOperatorRole(UnaryOperatorType op)
@@ -172,46 +172,61 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>Logical not (!a)</summary>
 		Not,
+
 		/// <summary>Bitwise not (~a)</summary>
 		BitNot,
+
 		/// <summary>Unary minus (-a)</summary>
 		Minus,
+
 		/// <summary>Unary plus (+a)</summary>
 		Plus,
+
 		/// <summary>Pre increment (++a)</summary>
 		Increment,
+
 		/// <summary>Pre decrement (--a)</summary>
 		Decrement,
+
 		/// <summary>Post increment (a++)</summary>
 		PostIncrement,
+
 		/// <summary>Post decrement (a--)</summary>
 		PostDecrement,
+
 		/// <summary>Dereferencing (*a)</summary>
 		Dereference,
+
 		/// <summary>Get address (&amp;a)</summary>
 		AddressOf,
+
 		/// <summary>C# 5.0 await</summary>
 		Await,
+
 		/// <summary>C# 6 null-conditional operator.
 		/// Occurs as target of member reference or indexer expressions
 		/// to indicate <c>?.</c> or <c>?[]</c>.
 		/// Corresponds to <c>nullable.unwrap</c> in ILAst.
 		/// </summary>
 		NullConditional,
+
 		/// <summary>
 		/// Wrapper around a primary expression containing a null conditional operator.
 		/// Corresponds to <c>nullable.rewrap</c> in ILAst.
 		/// This has no syntax in C#, but the node is used to ensure parentheses are inserted where necessary.
 		/// </summary>
 		NullConditionalRewrap,
+
 		/// <summary>
 		/// Implicit call of "operator true".
 		/// </summary>
 		IsTrue,
+
 		/// <summary>
 		/// C# 8 postfix ! operator (dammit operator)
 		/// </summary>
 		SuppressNullableWarning,
+
 		/// <summary>
 		/// C# 8 prefix ^ operator
 		/// </summary>

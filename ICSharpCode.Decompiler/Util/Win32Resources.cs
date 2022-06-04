@@ -18,10 +18,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns></returns>
 		public static unsafe Win32ResourceDirectory? ReadWin32Resources(this PEReader pe)
 		{
-			if (pe == null)
-			{
-				throw new ArgumentNullException(nameof(pe));
-			}
+			ArgumentNullException.ThrowIfNull(pe);
 
 			int rva = pe.PEHeaders.PEHeader?.ResourceTableDirectory.RelativeVirtualAddress ?? 0;
 			if (rva == 0)
@@ -32,65 +29,43 @@ namespace ICSharpCode.Decompiler.Util
 
 		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type)
 		{
-			if (root is null)
-				throw new ArgumentNullException(nameof(root));
+			ArgumentNullException.ThrowIfNull(root);
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 
 			return root.FindDirectory(type);
 		}
 
-		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type, Win32ResourceName name)
+		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type,
+			Win32ResourceName name)
 		{
-			if (root is null)
-				throw new ArgumentNullException(nameof(root));
+			ArgumentNullException.ThrowIfNull(root);
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-			if (name is null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(type);
+			ArgumentNullException.ThrowIfNull(name);
 
 			return root.FindDirectory(type)?.FindDirectory(name);
 		}
 
-		public static Win32ResourceData? Find(this Win32ResourceDirectory root, Win32ResourceName type, Win32ResourceName name, Win32ResourceName langId)
+		public static Win32ResourceData? Find(this Win32ResourceDirectory root, Win32ResourceName type,
+			Win32ResourceName name, Win32ResourceName langId)
 		{
-			if (root is null)
-				throw new ArgumentNullException(nameof(root));
+			ArgumentNullException.ThrowIfNull(root);
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
-			if (type is null)
-				throw new ArgumentNullException(nameof(type));
-			if (name is null)
-				throw new ArgumentNullException(nameof(name));
-			if (langId is null)
-				throw new ArgumentNullException(nameof(langId));
+			ArgumentNullException.ThrowIfNull(type);
+			ArgumentNullException.ThrowIfNull(name);
+			ArgumentNullException.ThrowIfNull(langId);
 
 			return root.FindDirectory(type)?.FindDirectory(name)?.FindData(langId);
 		}
 	}
 
-	[DebuggerDisplay("Directory: {Name}")]
+	[DebuggerDisplay("Directory: {" + nameof(Name) + "}")]
 	public sealed class Win32ResourceDirectory
 	{
-		#region Structure
-		public uint Characteristics { get; }
-		public uint TimeDateStamp { get; }
-		public ushort MajorVersion { get; }
-		public ushort MinorVersion { get; }
-		public ushort NumberOfNamedEntries { get; }
-		public ushort NumberOfIdEntries { get; }
-		#endregion
-
-		public Win32ResourceName Name { get; }
-
-		public IList<Win32ResourceDirectory> Directories { get; }
-
-		public IList<Win32ResourceData> Datas { get; }
-
 		internal unsafe Win32ResourceDirectory(PEReader pe, byte* pRoot, int offset, Win32ResourceName name)
 		{
 			var p = (IMAGE_RESOURCE_DIRECTORY*)(pRoot + offset);
@@ -113,9 +88,16 @@ namespace ICSharpCode.Decompiler.Util
 				if ((pEntry->OffsetToData & 0x80000000) == 0)
 					Datas.Add(new Win32ResourceData(pe, pRoot, (int)pEntry->OffsetToData, name));
 				else
-					Directories.Add(new Win32ResourceDirectory(pe, pRoot, (int)(pEntry->OffsetToData & 0x7FFFFFFF), name));
+					Directories.Add(new Win32ResourceDirectory(pe, pRoot, (int)(pEntry->OffsetToData & 0x7FFFFFFF),
+						name));
 			}
 		}
+
+		public Win32ResourceName Name { get; }
+
+		public IList<Win32ResourceDirectory> Directories { get; }
+
+		public IList<Win32ResourceData> Datas { get; }
 
 		static unsafe string ReadString(byte* pRoot, int offset)
 		{
@@ -130,6 +112,7 @@ namespace ICSharpCode.Decompiler.Util
 				if (directory.Name == name)
 					return directory;
 			}
+
 			return null;
 		}
 
@@ -140,6 +123,7 @@ namespace ICSharpCode.Decompiler.Util
 				if (data.Name == name)
 					return data;
 			}
+
 			return null;
 		}
 
@@ -152,30 +136,23 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return Datas.Count != 0 ? Datas[0] : null;
 		}
+
+		#region Structure
+
+		public uint Characteristics { get; }
+		public uint TimeDateStamp { get; }
+		public ushort MajorVersion { get; }
+		public ushort MinorVersion { get; }
+		public ushort NumberOfNamedEntries { get; }
+		public ushort NumberOfIdEntries { get; }
+
+		#endregion
 	}
 
-	[DebuggerDisplay("Data: {Name}")]
+	[DebuggerDisplay("Data: {" + nameof(Name) + "}")]
 	public sealed unsafe class Win32ResourceData
 	{
-		#region Structure
-		public uint OffsetToData { get; }
-		public uint Size { get; }
-		public uint CodePage { get; }
-		public uint Reserved { get; }
-		#endregion
-
 		private readonly void* _pointer;
-
-		public Win32ResourceName Name { get; }
-
-		public byte[] Data {
-			get {
-				byte[] data = new byte[Size];
-				fixed (void* pData = data)
-					Buffer.MemoryCopy(_pointer, pData, Size, Size);
-				return data;
-			}
-		}
 
 		internal Win32ResourceData(PEReader pe, byte* pRoot, int offset, Win32ResourceName name)
 		{
@@ -188,19 +165,31 @@ namespace ICSharpCode.Decompiler.Util
 			_pointer = pe.GetSectionData((int)OffsetToData).Pointer;
 			Name = name;
 		}
+
+		public Win32ResourceName Name { get; }
+
+		public byte[] Data {
+			get {
+				byte[] data = new byte[Size];
+				fixed (void* pData = data)
+					Buffer.MemoryCopy(_pointer, pData, Size, Size);
+				return data;
+			}
+		}
+
+		#region Structure
+
+		public uint OffsetToData { get; }
+		public uint Size { get; }
+		public uint CodePage { get; }
+		public uint Reserved { get; }
+
+		#endregion
 	}
 
 	public sealed class Win32ResourceName
 	{
 		private readonly object _name;
-
-		public bool HasName => _name is string;
-
-		public bool HasId => _name is ushort;
-
-		public string Name => (string)_name;
-
-		public ushort Id => (ushort)_name;
 
 		public Win32ResourceName(string name)
 		{
@@ -218,7 +207,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		internal unsafe Win32ResourceName(byte* pRoot, IMAGE_RESOURCE_DIRECTORY_ENTRY* pEntry)
 		{
-			_name = (pEntry->Name & 0x80000000) == 0 ? (object)(ushort)pEntry->Name : ReadString(pRoot, (int)(pEntry->Name & 0x7FFFFFFF));
+			_name = (pEntry->Name & 0x80000000) == 0
+				? (ushort)pEntry->Name
+				: ReadString(pRoot, (int)(pEntry->Name & 0x7FFFFFFF));
 
 			static string ReadString(byte* pRoot, int offset)
 			{
@@ -226,6 +217,14 @@ namespace ICSharpCode.Decompiler.Util
 				return new string(pString->NameString, 0, pString->Length);
 			}
 		}
+
+		public bool HasName => _name is string;
+
+		public bool HasId => _name is ushort;
+
+		public string Name => (string)_name;
+
+		public ushort Id => (ushort)_name;
 
 		public static bool operator ==(Win32ResourceName x, Win32ResourceName y)
 		{
@@ -251,7 +250,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public override bool Equals(object? obj)
 		{
-			if (!(obj is Win32ResourceName name))
+			if (obj is not Win32ResourceName name)
 				return false;
 			return this == name;
 		}

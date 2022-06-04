@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	class InsertSpecialsDecorator : DecoratingTokenWriter
 	{
-		readonly Stack<AstNode> positionStack = new Stack<AstNode>();
+		readonly Stack<AstNode> positionStack = new();
 		int visitorWroteNewLine = 0;
 
 		public InsertSpecialsDecorator(TokenWriter writer) : base(writer)
@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				WriteSpecialsUpToNode(node);
 			}
+
 			positionStack.Push(node.FirstChild);
 			base.StartNode(node);
 		}
@@ -56,6 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				WriteSpecialsUpToRole(role);
 			}
+
 			base.WriteKeyword(role, keyword);
 		}
 
@@ -79,6 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		#region WriteSpecials
+
 		/// <summary>
 		/// Writes all specials from start to end (exclusive). Does not touch the positionStack.
 		/// </summary>
@@ -93,6 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					base.WriteComment(node.CommentType, node.Content);
 					base.EndNode(node);
 				}
+
 				// see CSharpOutputVisitor.VisitNewLine()
 				//				if (pos.Role == Roles.NewLine) {
 				//					if (visitorWroteNewLine <= 0)
@@ -124,6 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				return;
 			}
+
 			// Look for the role between the current position and the nextNode.
 			for (AstNode pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling)
 			{
@@ -149,6 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				return;
 			}
+
 			for (AstNode pos = positionStack.Peek(); pos != null; pos = pos.NextSibling)
 			{
 				if (pos == node)
@@ -162,10 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 		}
+
 		#endregion
 	}
 }
-
-
-
-

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Management.Automation;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -17,8 +14,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[Parameter(Position = 0, Mandatory = true)]
 		public CSharpDecompiler Decompiler { get; set; }
 
-		[Parameter(Mandatory = true)]
-		public string[] Types { get; set; }
+		[Parameter(Mandatory = true)] public string[] Types { get; set; }
 
 		protected override void ProcessRecord()
 		{
@@ -26,7 +22,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 			try
 			{
-				List<ITypeDefinition> output = new List<ITypeDefinition>();
+				List<ITypeDefinition> output = new();
 				foreach (var type in Decompiler.TypeSystem.MainModule.TypeDefinitions)
 				{
 					if (!kinds.Contains(type.Kind))

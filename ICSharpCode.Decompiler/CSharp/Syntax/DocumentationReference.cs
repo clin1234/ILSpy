@@ -25,12 +25,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DocumentationReference : AstNode
 	{
-		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", AstType.Null);
-		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", AstType.Null);
+		public static readonly Role<AstType> DeclaringTypeRole = new("DeclaringType", AstType.Null);
+
+		public static readonly Role<AstType> ConversionOperatorReturnTypeRole =
+			new("ConversionOperatorReturnType", AstType.Null);
+
+		bool hasParameterList;
+		OperatorType operatorType;
 
 		SymbolKind symbolKind;
-		OperatorType operatorType;
-		bool hasParameterList;
 
 		/// <summary>
 		/// Gets/Sets the entity type.
@@ -111,14 +114,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DocumentationReference o = other as DocumentationReference;
-			if (!(o != null && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
+			if (!(other is DocumentationReference o && this.SymbolKind == o.SymbolKind &&
+			      this.HasParameterList == o.HasParameterList))
 				return false;
 			if (this.SymbolKind == SymbolKind.Operator)
 			{
 				if (this.OperatorType != o.OperatorType)
 					return false;
-				if (this.OperatorType == OperatorType.Implicit || this.OperatorType == OperatorType.Explicit)
+				if (this.OperatorType is OperatorType.Implicit or OperatorType.Explicit)
 				{
 					if (!this.ConversionOperatorReturnType.DoMatch(o.ConversionOperatorReturnType, match))
 						return false;
@@ -131,6 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (!this.TypeArguments.DoMatch(o.TypeArguments, match))
 					return false;
 			}
+
 			return this.Parameters.DoMatch(o.Parameters, match);
 		}
 

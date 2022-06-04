@@ -26,25 +26,21 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public sealed partial class LdLen
 	{
-		readonly StackType resultType;
-
 		public LdLen(StackType type, ILInstruction array) : base(OpCode.LdLen)
 		{
-			Debug.Assert(type == StackType.I || type == StackType.I4 || type == StackType.I8);
-			this.resultType = type;
+			Debug.Assert(type is StackType.I or StackType.I4 or StackType.I8);
+			this.ResultType = type;
 			this.Array = array;
 		}
 
-		public override StackType ResultType {
-			get { return resultType; }
-		}
+		public override StackType ResultType { get; }
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write('.');
-			output.Write(resultType);
+			output.Write(ResultType);
 			output.Write('(');
 			this.array.WriteTo(output, options);
 			output.Write(')');

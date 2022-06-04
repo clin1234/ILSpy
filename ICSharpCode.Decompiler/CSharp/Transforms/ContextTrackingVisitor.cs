@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Diagnostics;
-
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -28,8 +26,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public abstract class ContextTrackingVisitor<TResult> : DepthFirstAstVisitor<TResult>
 	{
-		protected ITypeDefinition currentTypeDefinition;
 		protected IMethod currentMethod;
+		protected ITypeDefinition currentTypeDefinition;
 
 		protected void Initialize(TransformContext context)
 		{

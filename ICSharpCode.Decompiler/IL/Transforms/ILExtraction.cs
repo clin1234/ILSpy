@@ -30,17 +30,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	class ExtractionContext
 	{
+		readonly ILTransformContext context;
+
 		/// <summary>
 		/// Nearest function, used for registering the new locals that are created by extraction.
 		/// </summary>
 		readonly ILFunction Function;
-
-		readonly ILTransformContext context;
-
-		/// <summary>
-		/// Combined flags of all instructions being moved.
-		/// </summary>
-		internal InstructionFlags FlagsBeingMoved;
 
 		/// <summary>
 		/// List of actions to be executed when performing the extraction.
@@ -49,7 +44,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// with a load of a fresh temporary variable; and returns the the store to the temporary variable,
 		/// which will be inserted at block-level.
 		/// </summary>
-		readonly List<Func<ILInstruction>> MoveActions = new List<Func<ILInstruction>>();
+		readonly List<Func<ILInstruction>> MoveActions = new();
+
+		/// <summary>
+		/// Combined flags of all instructions being moved.
+		/// </summary>
+		internal InstructionFlags FlagsBeingMoved;
 
 		ExtractionContext(ILFunction function, ILTransformContext context)
 		{
@@ -100,8 +100,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
-			ExtractionContext ctx = new ExtractionContext(function, context);
-			ctx.FlagsBeingMoved = instToExtract.Flags;
+			ExtractionContext ctx = new(function, context) {
+				FlagsBeingMoved = instToExtract.Flags
+			};
 			ILInstruction inst = instToExtract;
 			while (inst != null)
 			{
@@ -110,11 +111,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// this context doesn't support extraction, but maybe we can create a block here?
 					if (ifInst.ResultType == StackType.Void)
 					{
-						Block newBlock = new Block();
+						Block newBlock = new();
 						inst.ReplaceWith(newBlock);
 						newBlock.Instructions.Add(inst);
 					}
 				}
+
 				if (inst.Parent is Block { Kind: BlockKind.ControlFlow } block)
 				{
 					// We've reached a target block, and extraction is possible all the way.
@@ -135,6 +137,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 									inst = container;
 									continue;
 								}
+
 								break;
 							case ContainerKind.While:
 								// extraction is possible, unless in the entry-point (i.e., the condition block)
@@ -142,6 +145,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								{
 									return null;
 								}
+
 								break;
 							case ContainerKind.DoWhile:
 								// extraction is possible, unless in the last block (i.e., the condition block)
@@ -149,18 +153,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								{
 									return null;
 								}
+
 								break;
 							case ContainerKind.For:
 								// extraction is possible, unless in the first or last block
 								// (i.e., the condition block or increment block)
 								if (block == container.EntryPoint
-									|| block == container.Blocks.Last())
+								    || block == container.Blocks.Last())
 								{
 									return null;
 								}
+
 								break;
 						}
 					}
+
 					int insertIndex = inst.ChildIndex;
 					var type = context.TypeSystem.FindType(instToExtract.ResultType);
 					// Move instToExtract itself:
@@ -172,12 +179,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						block.Instructions.Insert(insertIndex, moveAction());
 					}
+
 					return v;
 				}
+
 				if (!inst.Parent.PrepareExtract(inst.ChildIndex, ctx))
 					return null;
 				inst = inst.Parent;
 			}
+
 			return null;
 		}
 	}

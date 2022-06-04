@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class LockStatement : Statement
 	{
-		public static readonly TokenRole LockKeywordRole = new TokenRole("lock");
+		public static readonly TokenRole LockKeywordRole = new("lock");
 
 		public CSharpTokenNode LockToken {
 			get { return GetChildByRole(LockKeywordRole); }
@@ -73,8 +73,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			LockStatement o = other as LockStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is LockStatement o && this.Expression.DoMatch(o.Expression, match) &&
+			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

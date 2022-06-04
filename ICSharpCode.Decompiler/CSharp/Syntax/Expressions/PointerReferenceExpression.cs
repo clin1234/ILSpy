@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class PointerReferenceExpression : Expression
 	{
-		public readonly static TokenRole ArrowRole = new TokenRole("->");
+		public static readonly TokenRole ArrowRole = new("->");
 
 		public Expression Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
@@ -82,8 +82,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PointerReferenceExpression o = other as PointerReferenceExpression;
-			return o != null && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is PointerReferenceExpression o && MatchString(this.MemberName, o.MemberName) &&
+			       this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}
 }

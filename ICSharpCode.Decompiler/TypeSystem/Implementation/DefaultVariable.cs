@@ -25,40 +25,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public sealed class DefaultVariable : IVariable
 	{
-		readonly string name;
-		readonly IType type;
 		readonly object constantValue;
-		readonly bool isConst;
 
 		public DefaultVariable(IType type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.type = type;
-			this.name = name;
+			Type = type ?? throw new ArgumentNullException(nameof(type));
+			Name = name ?? throw new ArgumentNullException(nameof(name));
 		}
 
 		public DefaultVariable(IType type, string name,
-							   bool isConst = false, object constantValue = null)
+			bool isConst = false, object constantValue = null)
 			: this(type, name)
 		{
-			this.isConst = isConst;
+			IsConst = isConst;
 			this.constantValue = constantValue;
 		}
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name { get; }
 
-		public IType Type {
-			get { return type; }
-		}
+		public IType Type { get; }
 
-		public bool IsConst {
-			get { return isConst; }
-		}
+		public bool IsConst { get; }
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{

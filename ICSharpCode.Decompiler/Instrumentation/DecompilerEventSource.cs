@@ -23,6 +23,8 @@ namespace ICSharpCode.Decompiler.Instrumentation
 	[EventSource(Name = "ICSharpCode.Decompiler")]
 	public sealed class DecompilerEventSource : EventSource
 	{
+		public static DecompilerEventSource Log = new();
+
 		[Event(1, Level = EventLevel.Informational)]
 		public void DoDecompileEvent(string eventName, long elapsedMilliseconds)
 		{
@@ -52,8 +54,5 @@ namespace ICSharpCode.Decompiler.Instrumentation
 		{
 			WriteEvent(5, methodName, elapsedMilliseconds);
 		}
-
-		public static DecompilerEventSource Log = new DecompilerEventSource();
 	}
-
 }

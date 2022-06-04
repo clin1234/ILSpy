@@ -41,13 +41,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UndocumentedExpression : Expression
 	{
-		public readonly static TokenRole ArglistKeywordRole = new TokenRole("__arglist");
-		public readonly static TokenRole RefvalueKeywordRole = new TokenRole("__refvalue");
-		public readonly static TokenRole ReftypeKeywordRole = new TokenRole("__reftype");
-		public readonly static TokenRole MakerefKeywordRole = new TokenRole("__makeref");
+		public static readonly TokenRole ArglistKeywordRole = new("__arglist");
+		public static readonly TokenRole RefvalueKeywordRole = new("__refvalue");
+		public static readonly TokenRole ReftypeKeywordRole = new("__reftype");
+		public static readonly TokenRole MakerefKeywordRole = new("__makeref");
 
 		public UndocumentedExpressionType UndocumentedExpressionType {
-			get; set;
+			get;
+			set;
 		}
 
 		public CSharpTokenNode UndocumentedToken {
@@ -64,6 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					case UndocumentedExpressionType.MakeRef:
 						return GetChildByRole(MakerefKeywordRole);
 				}
+
 				return CSharpTokenNode.Null;
 			}
 		}
@@ -97,9 +99,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UndocumentedExpression o = other as UndocumentedExpression;
-			return o != null && this.UndocumentedExpressionType == o.UndocumentedExpressionType && this.Arguments.DoMatch(o.Arguments, match);
+			return other is UndocumentedExpression o &&
+			       this.UndocumentedExpressionType == o.UndocumentedExpressionType &&
+			       this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }
-

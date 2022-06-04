@@ -34,8 +34,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UsingDeclaration : AstNode
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", AstType.Null);
+		public static readonly TokenRole UsingKeywordRole = new("using");
+		public static readonly Role<AstType> ImportRole = new("Import", AstType.Null);
+
+		public UsingDeclaration()
+		{
+		}
+
+		public UsingDeclaration(string nameSpace)
+		{
+			AddChild(AstType.Create(nameSpace), ImportRole);
+		}
+
+		public UsingDeclaration(AstType import)
+		{
+			AddChild(import, ImportRole);
+		}
 
 		public override NodeType NodeType {
 			get {
@@ -56,12 +70,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return ConstructNamespace(Import); }
 		}
 
+		public CSharpTokenNode SemicolonToken {
+			get { return GetChildByRole(Roles.Semicolon); }
+		}
+
 		internal static string ConstructNamespace(AstType type)
 		{
 			var stack = new Stack<string>();
-			while (type is MemberType)
+			while (type is MemberType mt)
 			{
-				var mt = (MemberType)type;
 				stack.Push(mt.MemberName);
 				type = mt.Target;
 				if (mt.IsDoubleColon)
@@ -73,31 +90,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					stack.Push(".");
 				}
 			}
-			if (type is SimpleType)
-				stack.Push(((SimpleType)type).Identifier);
+
+			if (type is SimpleType simpleType)
+				stack.Push(simpleType.Identifier);
 
 			var result = new StringBuilder();
 			while (stack.Count > 0)
 				result.Append(stack.Pop());
 			return result.ToString();
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
-		public UsingDeclaration()
-		{
-		}
-
-		public UsingDeclaration(string nameSpace)
-		{
-			AddChild(AstType.Create(nameSpace), ImportRole);
-		}
-
-		public UsingDeclaration(AstType import)
-		{
-			AddChild(import, ImportRole);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -117,8 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingDeclaration o = other as UsingDeclaration;
-			return o != null && this.Import.DoMatch(o.Import, match);
+			return other is UsingDeclaration o && this.Import.DoMatch(o.Import, match);
 		}
 	}
 }

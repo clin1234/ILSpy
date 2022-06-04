@@ -34,44 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class SimpleType : AstType
 	{
-		#region Null
-		public new static readonly SimpleType Null = new NullSimpleType();
-
-		sealed class NullSimpleType : SimpleType
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
-			{
-				return SpecialType.UnknownType;
-			}
-		}
-		#endregion
-
 		public SimpleType()
 		{
 		}
@@ -100,7 +62,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public SimpleType(string identifier, params AstType[] typeArguments) : this(identifier, (IEnumerable<AstType>)typeArguments)
+		public SimpleType(string identifier, params AstType[] typeArguments) : this(identifier,
+			(IEnumerable<AstType>)typeArguments)
 		{
 		}
 
@@ -143,11 +106,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SimpleType o = other as SimpleType;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is SimpleType o && MatchString(this.Identifier, o.Identifier) &&
+			       this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
+			InterningProvider interningProvider = null)
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;
@@ -156,15 +120,58 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
+
 			string identifier = interningProvider.Intern(this.Identifier);
 			if (typeArguments.Count == 0 && string.IsNullOrEmpty(identifier))
 			{
 				// empty SimpleType is used for typeof(List<>).
 				return SpecialType.UnboundTypeArgument;
 			}
-			var t = new SimpleTypeOrNamespaceReference(identifier, interningProvider.InternList(typeArguments), lookupMode);
+
+			var t = new SimpleTypeOrNamespaceReference(identifier, interningProvider.InternList(typeArguments),
+				lookupMode);
 			return interningProvider.Intern(t);
 		}
+
+		#region Null
+
+		public new static readonly SimpleType Null = new NullSimpleType();
+
+		sealed class NullSimpleType : SimpleType
+		{
+			public override bool IsNull {
+				get {
+					return true;
+				}
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitNullNode(this);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitNullNode(this);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitNullNode(this, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return other == null || other.IsNull;
+			}
+
+			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
+				InterningProvider interningProvider)
+			{
+				return SpecialType.UnknownType;
+			}
+		}
+
+		#endregion
 	}
 }
-

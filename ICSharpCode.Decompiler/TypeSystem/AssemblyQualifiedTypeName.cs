@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(object obj)
 		{
-			return (obj is AssemblyQualifiedTypeName) && Equals((AssemblyQualifiedTypeName)obj);
+			return (obj is AssemblyQualifiedTypeName name) && Equals(name);
 		}
 
 		public bool Equals(AssemblyQualifiedTypeName other)
@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					hashCode += 1000000007 * AssemblyName.GetHashCode();
 				hashCode += TypeName.GetHashCode();
 			}
+
 			return hashCode;
 		}
 

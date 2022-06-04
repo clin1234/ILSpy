@@ -32,12 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class FixedVariableInitializer : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		public FixedVariableInitializer()
 		{
 		}
@@ -46,6 +40,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.Name = name;
 			this.CountExpression = initializer;
+		}
+
+		public override NodeType NodeType {
+			get {
+				return NodeType.Unknown;
+			}
 		}
 
 		public string Name {
@@ -96,9 +96,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as FixedVariableInitializer;
-			return o != null && MatchString(this.Name, o.Name) && this.CountExpression.DoMatch(o.CountExpression, match);
+			return other is FixedVariableInitializer o && MatchString(this.Name, o.Name) &&
+			       this.CountExpression.DoMatch(o.CountExpression, match);
 		}
 	}
 }
-

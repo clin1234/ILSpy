@@ -33,18 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ArrayInitializerExpression : Expression
 	{
-		/// <summary>
-		/// For ease of use purposes in the resolver the ast representation
-		/// of { a, b, c }  is { {a}, {b}, {c} }.
-		/// If IsSingleElement is true then this array initializer expression is a generated one.
-		/// That has no meaning in the source code (and contains no brace tokens).
-		/// </summary>
-		public virtual bool IsSingleElement {
-			get {
-				return false;
-			}
-		}
-
 		public ArrayInitializerExpression()
 		{
 		}
@@ -59,38 +47,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Elements.AddRange(elements);
 		}
 
-		#region Null
-		public new static readonly ArrayInitializerExpression Null = new NullArrayInitializerExpression();
-
-		sealed class NullArrayInitializerExpression : ArrayInitializerExpression
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
+		/// <summary>
+		/// For ease of use purposes in the resolver the ast representation
+		/// of { a, b, c }  is { {a}, {b}, {c} }.
+		/// If IsSingleElement is true then this array initializer expression is a generated one.
+		/// That has no meaning in the source code (and contains no brace tokens).
+		/// </summary>
+		public virtual bool IsSingleElement {
+			get {
+				return false;
 			}
 		}
-		#endregion
 
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(Roles.LBrace); }
@@ -121,14 +88,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArrayInitializerExpression o = other as ArrayInitializerExpression;
-			return o != null && this.Elements.DoMatch(o.Elements, match);
+			return other is ArrayInitializerExpression o && this.Elements.DoMatch(o.Elements, match);
 		}
 
 		public static ArrayInitializerExpression CreateSingleElementInitializer()
 		{
 			return new SingleArrayInitializerExpression();
 		}
+
 		/// <summary>
 		/// Single elements in array initializers are represented with this special class.
 		/// </summary>
@@ -139,10 +106,45 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return true;
 				}
 			}
-
 		}
 
+		#region Null
+
+		public new static readonly ArrayInitializerExpression Null = new NullArrayInitializerExpression();
+
+		sealed class NullArrayInitializerExpression : ArrayInitializerExpression
+		{
+			public override bool IsNull {
+				get {
+					return true;
+				}
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitNullNode(this);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitNullNode(this);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitNullNode(this, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return other == null || other.IsNull;
+			}
+		}
+
+		#endregion
+
 		#region PatternPlaceholder
+
 		public static implicit operator ArrayInitializerExpression(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
@@ -159,6 +161,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			public override NodeType NodeType {
 				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
 
 			public override void AcceptVisitor(IAstVisitor visitor)
@@ -180,13 +188,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return child.DoMatch(other, match);
 			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
 		}
+
 		#endregion
 	}
 }
-

@@ -24,64 +24,42 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	public sealed class CSharpTypeResolveContext : ITypeResolveContext
 	{
-		readonly IModule module;
-		readonly ResolvedUsingScope currentUsingScope;
-		readonly ITypeDefinition currentTypeDefinition;
-		readonly IMember currentMember;
 		readonly string[] methodTypeParameterNames;
 
-		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope = null, ITypeDefinition typeDefinition = null, IMember member = null)
+		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope = null,
+			ITypeDefinition typeDefinition = null, IMember member = null)
 		{
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
-			this.module = module;
-			this.currentUsingScope = usingScope;
-			this.currentTypeDefinition = typeDefinition;
-			this.currentMember = member;
+			this.CurrentModule = module ?? throw new ArgumentNullException(nameof(module));
+			this.CurrentUsingScope = usingScope;
+			this.CurrentTypeDefinition = typeDefinition;
+			this.CurrentMember = member;
 		}
 
-		private CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope, ITypeDefinition typeDefinition, IMember member, string[] methodTypeParameterNames)
+		private CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope, ITypeDefinition typeDefinition,
+			IMember member, string[] methodTypeParameterNames)
 		{
-			this.module = module;
-			this.currentUsingScope = usingScope;
-			this.currentTypeDefinition = typeDefinition;
-			this.currentMember = member;
+			this.CurrentModule = module;
+			this.CurrentUsingScope = usingScope;
+			this.CurrentTypeDefinition = typeDefinition;
+			this.CurrentMember = member;
 			this.methodTypeParameterNames = methodTypeParameterNames;
 		}
 
-		public ResolvedUsingScope CurrentUsingScope {
-			get { return currentUsingScope; }
-		}
+		public ResolvedUsingScope CurrentUsingScope { get; }
 
 		public ICompilation Compilation {
-			get { return module.Compilation; }
+			get { return CurrentModule.Compilation; }
 		}
 
-		public IModule CurrentModule {
-			get { return module; }
-		}
+		public IModule CurrentModule { get; }
 
-		public ITypeDefinition CurrentTypeDefinition {
-			get { return currentTypeDefinition; }
-		}
+		public ITypeDefinition CurrentTypeDefinition { get; }
 
-		public IMember CurrentMember {
-			get { return currentMember; }
-		}
-
-		public CSharpTypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
-		{
-			return new CSharpTypeResolveContext(module, currentUsingScope, typeDefinition, currentMember, methodTypeParameterNames);
-		}
+		public IMember CurrentMember { get; }
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{
 			return WithCurrentTypeDefinition(typeDefinition);
-		}
-
-		public CSharpTypeResolveContext WithCurrentMember(IMember member)
-		{
-			return new CSharpTypeResolveContext(module, currentUsingScope, currentTypeDefinition, member, methodTypeParameterNames);
 		}
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember member)
@@ -89,9 +67,22 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			return WithCurrentMember(member);
 		}
 
+		public CSharpTypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
+		{
+			return new CSharpTypeResolveContext(CurrentModule, CurrentUsingScope, typeDefinition, CurrentMember,
+				methodTypeParameterNames);
+		}
+
+		public CSharpTypeResolveContext WithCurrentMember(IMember member)
+		{
+			return new CSharpTypeResolveContext(CurrentModule, CurrentUsingScope, CurrentTypeDefinition, member,
+				methodTypeParameterNames);
+		}
+
 		public CSharpTypeResolveContext WithUsingScope(ResolvedUsingScope usingScope)
 		{
-			return new CSharpTypeResolveContext(module, usingScope, currentTypeDefinition, currentMember, methodTypeParameterNames);
+			return new CSharpTypeResolveContext(CurrentModule, usingScope, CurrentTypeDefinition, CurrentMember,
+				methodTypeParameterNames);
 		}
 	}
 }

@@ -28,9 +28,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public class UnknownType : AbstractType, ITypeReference
 	{
-		readonly bool namespaceKnown;
 		readonly FullTypeName fullTypeName;
 		readonly bool? isReferenceType = null;
+		readonly bool namespaceKnown;
 
 		/// <summary>
 		/// Creates a new unknown type.
@@ -40,8 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="typeParameterCount">Type parameter count, zero if unknown.</param>
 		public UnknownType(string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 			this.namespaceKnown = namespaceName != null;
 			this.fullTypeName = new TopLevelTypeName(namespaceName ?? string.Empty, name, typeParameterCount);
 			this.isReferenceType = isReferenceType;
@@ -71,13 +70,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return TypeKind.Unknown; }
 		}
 
-		IType ITypeReference.Resolve(ITypeResolveContext context)
-		{
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-			return this;
-		}
-
 		public override string Name {
 			get { return fullTypeName.Name; }
 		}
@@ -93,11 +85,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public FullTypeName FullTypeName => fullTypeName;
 
 		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
-		public override IReadOnlyList<ITypeParameter> TypeParameters => DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
+
+		public override IReadOnlyList<ITypeParameter> TypeParameters =>
+			DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
+
 		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
 
 		public override bool? IsReferenceType {
 			get { return isReferenceType; }
+		}
+
+		IType ITypeReference.Resolve(ITypeResolveContext context)
+		{
+			ArgumentNullException.ThrowIfNull(context);
+			return this;
 		}
 
 		public override IType ChangeNullability(Nullability nullability)
@@ -115,10 +116,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(IType other)
 		{
-			UnknownType o = other as UnknownType;
-			if (o == null)
+			if (other is not UnknownType o)
 				return false;
-			return this.namespaceKnown == o.namespaceKnown && this.fullTypeName == o.fullTypeName && this.isReferenceType == o.isReferenceType;
+			return this.namespaceKnown == o.namespaceKnown && this.fullTypeName == o.fullTypeName &&
+			       this.isReferenceType == o.isReferenceType;
 		}
 
 		public override string ToString()

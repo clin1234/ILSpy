@@ -19,15 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -43,14 +40,24 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	/// </summary>
 	class DebugInfoGenerator : DepthFirstAstVisitor
 	{
-		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer = new KeyComparer<ILVariable, int>(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
+		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer =
+			new(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
+
+		readonly ImportScopeInfo globalImportScope = new();
+		ImportScopeInfo currentImportScope;
+		List<ILFunction> functions = new();
+		List<ImportScopeInfo> importScopes = new();
 
 		IDecompilerTypeSystem typeSystem;
-		readonly ImportScopeInfo globalImportScope = new ImportScopeInfo();
-		ImportScopeInfo currentImportScope;
-		List<ImportScopeInfo> importScopes = new List<ImportScopeInfo>();
-		internal List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)> LocalScopes { get; } = new List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)>();
-		List<ILFunction> functions = new List<ILFunction>();
+
+		public DebugInfoGenerator(IDecompilerTypeSystem typeSystem)
+		{
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
+			this.currentImportScope = globalImportScope;
+		}
+
+		internal List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length,
+			HashSet<ILVariable> Locals)> LocalScopes { get; } = new();
 
 		/// <summary>
 		/// Gets all functions with bodies that were seen by the visitor so far.
@@ -59,18 +66,12 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			get => functions;
 		}
 
-		public DebugInfoGenerator(IDecompilerTypeSystem typeSystem)
-		{
-			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
-			this.currentImportScope = globalImportScope;
-		}
-
 		public void GenerateImportScopes(MetadataBuilder metadata, ImportScopeHandle globalImportScope)
 		{
 			foreach (var scope in importScopes)
 			{
 				var blob = EncodeImports(metadata, scope);
-				scope.Handle = metadata.AddImportScope(scope.Parent == null ? globalImportScope : scope.Parent.Handle, blob);
+				scope.Handle = metadata.AddImportScope(scope.Parent?.Handle ?? globalImportScope, blob);
 			}
 		}
 
@@ -156,6 +157,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				base.VisitQueryGroupClause(queryGroupClause);
 				return;
 			}
+
 			HandleMethod(queryGroupClause.Projection, annotation.ProjectionLambda);
 			HandleMethod(queryGroupClause.Key, annotation.KeyLambda);
 		}
@@ -168,6 +170,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				base.VisitQueryJoinClause(queryJoinClause);
 				return;
 			}
+
 			HandleMethod(queryJoinClause.OnExpression, annotation.OnLambda);
 			HandleMethod(queryJoinClause.EqualsExpression, annotation.EqualsLambda);
 		}

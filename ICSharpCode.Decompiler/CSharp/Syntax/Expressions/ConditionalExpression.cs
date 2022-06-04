@@ -23,7 +23,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -32,11 +31,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ConditionalExpression : Expression
 	{
-		public readonly static Role<Expression> ConditionRole = Roles.Condition;
-		public readonly static TokenRole QuestionMarkRole = new TokenRole("?");
-		public readonly static Role<Expression> TrueRole = new Role<Expression>("True", Expression.Null);
-		public readonly static TokenRole ColonRole = Roles.Colon;
-		public readonly static Role<Expression> FalseRole = new Role<Expression>("False", Expression.Null);
+		public static readonly Role<Expression> ConditionRole = Roles.Condition;
+		public static readonly TokenRole QuestionMarkRole = new("?");
+		public static readonly Role<Expression> TrueRole = new("True", Null);
+		public static readonly TokenRole ColonRole = Roles.Colon;
+		public static readonly Role<Expression> FalseRole = new("False", Null);
+
+		public ConditionalExpression()
+		{
+		}
+
+		public ConditionalExpression(Expression condition, Expression trueExpression, Expression falseExpression)
+		{
+			AddChild(condition, ConditionRole);
+			AddChild(trueExpression, TrueRole);
+			AddChild(falseExpression, FalseRole);
+		}
 
 		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }
@@ -61,17 +71,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(FalseRole, value); }
 		}
 
-		public ConditionalExpression()
-		{
-		}
-
-		public ConditionalExpression(Expression condition, Expression trueExpression, Expression falseExpression)
-		{
-			AddChild(condition, ConditionRole);
-			AddChild(trueExpression, TrueRole);
-			AddChild(falseExpression, FalseRole);
-		}
-
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
 			visitor.VisitConditionalExpression(this);
@@ -89,8 +88,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ConditionalExpression o = other as ConditionalExpression;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueExpression.DoMatch(o.TrueExpression, match) && this.FalseExpression.DoMatch(o.FalseExpression, match);
+			return other is ConditionalExpression o && this.Condition.DoMatch(o.Condition, match) &&
+			       this.TrueExpression.DoMatch(o.TrueExpression, match) &&
+			       this.FalseExpression.DoMatch(o.FalseExpression, match);
 		}
 	}
 }

@@ -32,7 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CheckedExpression : Expression
 	{
-		public readonly static TokenRole CheckedKeywordRole = new TokenRole("checked");
+		public static readonly TokenRole CheckedKeywordRole = new("checked");
+
+		public CheckedExpression()
+		{
+		}
+
+		public CheckedExpression(Expression expression)
+		{
+			AddChild(expression, Roles.Expression);
+		}
 
 		public CSharpTokenNode CheckedToken {
 			get { return GetChildByRole(CheckedKeywordRole); }
@@ -49,15 +58,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public CheckedExpression()
-		{
-		}
-
-		public CheckedExpression(Expression expression)
-		{
-			AddChild(expression, Roles.Expression);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -77,8 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CheckedExpression o = other as CheckedExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is CheckedExpression o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

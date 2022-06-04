@@ -27,6 +27,8 @@ namespace ICSharpCode.Decompiler.Util
 {
 	static class FileUtility
 	{
+		static readonly char[] separators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+
 		/// <summary>
 		/// Gets the normalized version of fileName.
 		/// Slashes are replaced with backslashes, backreferences "." and ".." are 'evaluated'.
@@ -56,7 +58,7 @@ namespace ICSharpCode.Decompiler.Util
 			bool isRelative;
 			bool isAbsoluteUnixPath = false;
 
-			StringBuilder result = new StringBuilder();
+			StringBuilder result = new();
 			if (isWeb == false && IsUNCPath(fileName))
 			{
 				// UNC path
@@ -75,6 +77,7 @@ namespace ICSharpCode.Decompiler.Util
 					outputSeparator = '\\';
 				}
 			}
+
 			int levelsBack = 0;
 			int segmentStartPos = i;
 			for (; i <= fileName.Length; i++)
@@ -90,6 +93,7 @@ namespace ICSharpCode.Decompiler.Util
 							{
 								result.Append(outputSeparator);
 							}
+
 							break;
 						case 1:
 							// ignore /./ segment, but append other one-letter segments
@@ -99,6 +103,7 @@ namespace ICSharpCode.Decompiler.Util
 									result.Append(outputSeparator);
 								result.Append(fileName[segmentStartPos]);
 							}
+
 							break;
 						case 2:
 							if (fileName[segmentStartPos] == '.' && fileName[segmentStartPos + 1] == '.')
@@ -108,6 +113,7 @@ namespace ICSharpCode.Decompiler.Util
 								for (j = result.Length - 1; j >= 0 && result[j] != outputSeparator; j--)
 								{
 								}
+
 								if (j > 0)
 								{
 									result.Length = j;
@@ -123,6 +129,7 @@ namespace ICSharpCode.Decompiler.Util
 									else
 										result.Length = 0;
 								}
+
 								break;
 							}
 							else
@@ -136,9 +143,11 @@ namespace ICSharpCode.Decompiler.Util
 							result.Append(fileName, segmentStartPos, segmentLength);
 							break;
 					}
+
 					segmentStartPos = i + 1; // remember start position for next segment
 				}
 			}
+
 			if (isWeb == false)
 			{
 				if (isRelative)
@@ -148,36 +157,41 @@ namespace ICSharpCode.Decompiler.Util
 						result.Insert(0, ".." + outputSeparator);
 					}
 				}
-				if (result.Length > 0 && result[result.Length - 1] == outputSeparator)
+
+				if (result.Length > 0 && result[^1] == outputSeparator)
 				{
 					result.Length -= 1;
 				}
+
 				if (isAbsoluteUnixPath)
 				{
 					result.Insert(0, '/');
 				}
+
 				if (result.Length == 2 && result[1] == ':')
 				{
 					result.Append(outputSeparator);
 				}
+
 				if (result.Length == 0)
 					return ".";
 			}
+
 			return result.ToString();
 		}
 
 		static bool IsUNCPath(string fileName)
 		{
 			return fileName.Length > 2
-				&& (fileName[0] == '\\' || fileName[0] == '/')
-				&& (fileName[1] == '\\' || fileName[1] == '/');
+			       && (fileName[0] == '\\' || fileName[0] == '/')
+			       && (fileName[1] == '\\' || fileName[1] == '/');
 		}
 
 		public static bool IsEqualFileName(string? fileName1, string? fileName2)
 		{
 			return string.Equals(NormalizePath(fileName1),
-								 NormalizePath(fileName2),
-								 StringComparison.OrdinalIgnoreCase);
+				NormalizePath(fileName2),
+				StringComparison.OrdinalIgnoreCase);
 		}
 
 		public static bool IsBaseDirectory(string? baseDirectory, string? testDirectory)
@@ -185,7 +199,7 @@ namespace ICSharpCode.Decompiler.Util
 			if (baseDirectory == null || testDirectory == null)
 				return false;
 			baseDirectory = NormalizePath(baseDirectory);
-			if (baseDirectory == "." || baseDirectory == "")
+			if (baseDirectory is "." or "")
 				return !Path.IsPathRooted(testDirectory);
 			baseDirectory = AddTrailingSeparator(baseDirectory);
 			testDirectory = AddTrailingSeparator(NormalizePath(testDirectory));
@@ -198,7 +212,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			if (input == null || input.Length == 0)
 				return input;
-			if (input[input.Length - 1] == Path.DirectorySeparatorChar || input[input.Length - 1] == Path.AltDirectorySeparatorChar)
+			if (input[^1] == Path.DirectorySeparatorChar || input[^1] == Path.AltDirectorySeparatorChar)
 				return input;
 			else
 				return input + GetSeparatorForPath(input).ToString();
@@ -210,8 +224,6 @@ namespace ICSharpCode.Decompiler.Util
 				return '\\';
 			return '/';
 		}
-
-		readonly static char[] separators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
 		/// <summary>
 		/// Converts a given absolute path and a given base path to a path that leads
@@ -227,7 +239,9 @@ namespace ICSharpCode.Decompiler.Util
 			baseDirectoryPath = NormalizePath(baseDirectoryPath);
 			absPath = NormalizePath(absPath);
 
-			string[] bPath = baseDirectoryPath != "." ? baseDirectoryPath.TrimEnd(separators).Split(separators) : new string[0];
+			string[] bPath = baseDirectoryPath != "."
+				? baseDirectoryPath.TrimEnd(separators).Split(separators)
+				: new string[0];
 			string[] aPath = absPath != "." ? absPath.TrimEnd(separators).Split(separators) : new string[0];
 			int indx = 0;
 			for (; indx < Math.Min(bPath.Length, aPath.Length); ++indx)
@@ -245,14 +259,16 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return ".";
 			}
-			StringBuilder erg = new StringBuilder();
+
+			StringBuilder erg = new();
 			for (int i = indx; i < bPath.Length; ++i)
 			{
 				erg.Append("..");
 				erg.Append(Path.DirectorySeparatorChar);
 			}
+
 			erg.Append(String.Join(Path.DirectorySeparatorChar.ToString(), aPath, indx, aPath.Length - indx));
-			if (erg[erg.Length - 1] == Path.DirectorySeparatorChar)
+			if (erg[^1] == Path.DirectorySeparatorChar)
 				erg.Length -= 1;
 			return erg.ToString();
 		}
@@ -270,6 +286,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				sep = Path.AltDirectorySeparatorChar;
 			}
+
 			string[] parts = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 			int len = ellipsisLength; // For initial ellipsis
 			int index = parts.Length;
@@ -280,7 +297,7 @@ namespace ICSharpCode.Decompiler.Util
 				index--;
 			}
 
-			StringBuilder result = new StringBuilder();
+			StringBuilder result = new();
 			result.Append(ellipsis);
 			// If there's 5 chars left, partially fit another part:
 			if (index > 1 && len + 5 <= max_chars)
@@ -294,16 +311,19 @@ namespace ICSharpCode.Decompiler.Util
 					result.Clear();
 					result.Append(parts[0]);
 				}
+
 				result.Append(sep);
 				result.Append(parts[index - 1], 0, max_chars - len - 3);
 				result.Append(ellipsis);
 			}
+
 			while (index < parts.Length)
 			{
 				result.Append(sep);
 				result.Append(parts[index]);
 				index++;
 			}
+
 			return result.ToString();
 		}
 	}

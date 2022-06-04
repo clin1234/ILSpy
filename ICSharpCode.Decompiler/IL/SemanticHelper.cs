@@ -20,8 +20,6 @@
 
 using System.Linq;
 
-using ICSharpCode.Decompiler.Util;
-
 namespace ICSharpCode.Decompiler.IL
 {
 	static class SemanticHelper
@@ -71,12 +69,14 @@ namespace ICSharpCode.Decompiler.IL
 				// quick exit if inst1 doesn't read any variables
 				return false;
 			}
-			var variables = inst1.Descendants.OfType<LdLoc>().Select(load => load.Variable).ToHashSet();
-			if (inst2.HasFlag(InstructionFlags.SideEffect) && variables.Any(v => v.AddressCount > 0))
+
+			var variables = inst1.Descendants.OfType<LdLoc>().Select(static load => load.Variable).ToHashSet();
+			if (inst2.HasFlag(InstructionFlags.SideEffect) && variables.Any(static v => v.AddressCount > 0))
 			{
 				// If inst2 might have indirect writes, we cannot reorder with any loads of variables that have their address taken.
 				return true;
 			}
+
 			foreach (var inst in inst2.Descendants)
 			{
 				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals))
@@ -88,6 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				}
 			}
+
 			return false;
 		}
 	}

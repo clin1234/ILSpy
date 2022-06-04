@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -11,9 +10,13 @@ namespace ICSharpCode.Decompiler.PowerShell
 	{
 		public static HashSet<TypeKind> ParseSelection(string[] values)
 		{
-			var possibleValues = new Dictionary<string, TypeKind>(StringComparer.OrdinalIgnoreCase) { ["class"] = TypeKind.Class, ["struct"] = TypeKind.Struct, ["interface"] = TypeKind.Interface, ["enum"] = TypeKind.Enum, ["delegate"] = TypeKind.Delegate };
-			HashSet<TypeKind> kinds = new HashSet<TypeKind>();
-			if (values.Length == 1 && !possibleValues.Keys.Any(v => values[0].StartsWith(v, StringComparison.OrdinalIgnoreCase)))
+			var possibleValues = new Dictionary<string, TypeKind>(StringComparer.OrdinalIgnoreCase) {
+				["class"] = TypeKind.Class, ["struct"] = TypeKind.Struct, ["interface"] = TypeKind.Interface,
+				["enum"] = TypeKind.Enum, ["delegate"] = TypeKind.Delegate
+			};
+			HashSet<TypeKind> kinds = new();
+			if (values.Length == 1 &&
+			    !possibleValues.Keys.Any(v => values[0].StartsWith(v, StringComparison.OrdinalIgnoreCase)))
 			{
 				foreach (char ch in values[0])
 				{
@@ -48,6 +51,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 						kinds.Add(kind);
 				}
 			}
+
 			return kinds;
 		}
 	}

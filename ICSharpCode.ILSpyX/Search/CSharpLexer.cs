@@ -86,6 +86,13 @@ namespace ICSharpCode.ILSpyX.Search
 		internal readonly string val;
 		internal Literal next;
 
+		public Literal(string val, object literalValue, LiteralFormat literalFormat)
+		{
+			this.val = val;
+			this.literalValue = literalValue;
+			this.literalFormat = literalFormat;
+		}
+
 		public LiteralFormat LiteralFormat {
 			get { return literalFormat; }
 		}
@@ -97,43 +104,65 @@ namespace ICSharpCode.ILSpyX.Search
 		public string Value {
 			get { return val; }
 		}
-
-		public Literal(string val, object literalValue, LiteralFormat literalFormat)
-		{
-			this.val = val;
-			this.literalValue = literalValue;
-			this.literalFormat = literalFormat;
-		}
 	}
 
 	internal abstract class AbstractLexer : IDisposable
 	{
-		LATextReader reader;
-		int col = 1;
-		int line = 1;
+		protected Literal curToken = null;
 
 		protected Literal lastToken = null;
-		protected Literal curToken = null;
-		protected Literal peekToken = null;
-
-		protected StringBuilder sb = new StringBuilder();
 
 		// used for the original value of strings (with escape sequences).
-		protected StringBuilder originalValue = new StringBuilder();
-
-		protected int Line {
-			get {
-				return line;
-			}
-		}
-		protected int Col {
-			get {
-				return col;
-			}
-		}
+		protected StringBuilder originalValue = new();
+		protected Literal peekToken = null;
+		LATextReader reader;
+		protected StringBuilder recordedText = new();
 
 		protected bool recordRead = false;
-		protected StringBuilder recordedText = new StringBuilder();
+
+		protected StringBuilder sb = new();
+
+		/// <summary>
+		/// Constructor for the abstract lexer class.
+		/// </summary>
+		protected AbstractLexer(TextReader reader)
+		{
+			this.reader = new LATextReader(reader);
+		}
+
+		protected int Line { get; private set; } = 1;
+
+		protected int Col { get; private set; } = 1;
+
+		/// <summary>
+		/// The current Token. <seealso cref="ICSharpCode.NRefactory.Parser.Token"/>
+		/// </summary>
+		public Literal Token {
+			get {
+				return lastToken;
+			}
+		}
+
+		/// <summary>
+		/// The next Token (The <see cref="Token"/> after <see cref="NextToken"/> call) . <seealso cref="ICSharpCode.NRefactory.Parser.Token"/>
+		/// </summary>
+		public Literal LookAhead {
+			get {
+				return curToken;
+			}
+		}
+
+		#region System.IDisposable interface implementation
+
+		public virtual void Dispose()
+		{
+			reader.Close();
+			reader = null;
+			lastToken = curToken = peekToken = null;
+			sb = originalValue = null;
+		}
+
+		#endregion
 
 		protected int ReaderRead()
 		{
@@ -142,14 +171,15 @@ namespace ICSharpCode.ILSpyX.Search
 				recordedText.Append((char)val);
 			if ((val == '\r' && reader.Peek() != '\n') || val == '\n')
 			{
-				++line;
-				col = 1;
+				++Line;
+				Col = 1;
 				LineBreak();
 			}
 			else if (val >= 0)
 			{
-				col++;
+				Col++;
 			}
+
 			return val;
 		}
 
@@ -173,7 +203,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 		protected string ReaderPeekString(int length)
 		{
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new();
 
 			for (int i = 0; i < length; i++)
 			{
@@ -184,42 +214,6 @@ namespace ICSharpCode.ILSpyX.Search
 
 			return builder.ToString();
 		}
-
-		/// <summary>
-		/// The current Token. <seealso cref="ICSharpCode.NRefactory.Parser.Token"/>
-		/// </summary>
-		public Literal Token {
-			get {
-				return lastToken;
-			}
-		}
-
-		/// <summary>
-		/// The next Token (The <see cref="Token"/> after <see cref="NextToken"/> call) . <seealso cref="ICSharpCode.NRefactory.Parser.Token"/>
-		/// </summary>
-		public Literal LookAhead {
-			get {
-				return curToken;
-			}
-		}
-
-		/// <summary>
-		/// Constructor for the abstract lexer class.
-		/// </summary>
-		protected AbstractLexer(TextReader reader)
-		{
-			this.reader = new LATextReader(reader);
-		}
-
-		#region System.IDisposable interface implementation
-		public virtual void Dispose()
-		{
-			reader.Close();
-			reader = null;
-			lastToken = curToken = peekToken = null;
-			sb = originalValue = null;
-		}
-		#endregion
 
 		/// <summary>
 		/// Must be called before a peek operation.
@@ -240,6 +234,7 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				peekToken.next = Next();
 			}
+
 			peekToken = peekToken.next;
 			return peekToken;
 		}
@@ -274,7 +269,7 @@ namespace ICSharpCode.ILSpyX.Search
 		protected static bool IsIdentifierPart(int ch)
 		{
 			if (ch == 95)
-				return true;  // 95 = '_'
+				return true; // 95 = '_'
 			if (ch == -1)
 				return false;
 			return char.IsLetterOrDigit((char)ch); // accept unicode letters
@@ -282,7 +277,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 		protected static bool IsHex(char digit)
 		{
-			return Char.IsDigit(digit) || ('A' <= digit && digit <= 'F') || ('a' <= digit && digit <= 'f');
+			return Char.IsDigit(digit) || digit is >= 'A' and <= 'F' or >= 'a' and <= 'f';
 		}
 
 		protected int GetHexNumber(char digit)
@@ -291,40 +286,49 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				return digit - '0';
 			}
-			if ('A' <= digit && digit <= 'F')
+
+			if (digit is >= 'A' and <= 'F')
 			{
 				return digit - 'A' + 0xA;
 			}
-			if ('a' <= digit && digit <= 'f')
+
+			if (digit is >= 'a' and <= 'f')
 			{
 				return digit - 'a' + 0xA;
 			}
+
 			return 0;
 		}
+
 		protected void LineBreak()
 		{
 		}
+
 		protected bool HandleLineEnd(char ch)
 		{
 			// Handle MS-DOS or MacOS line ends.
 			if (ch == '\r')
 			{
 				if (reader.Peek() == '\n')
-				{ // MS-DOS line end '\r\n'
+				{
+					// MS-DOS line end '\r\n'
 					ReaderRead(); // LineBreak (); called by ReaderRead ();
 					return true;
 				}
 				else
-				{ // assume MacOS line end which is '\r'
+				{
+					// assume MacOS line end which is '\r'
 					LineBreak();
 					return true;
 				}
 			}
+
 			if (ch == '\n')
 			{
 				LineBreak();
 				return true;
 			}
+
 			return false;
 		}
 
@@ -339,10 +343,11 @@ namespace ICSharpCode.ILSpyX.Search
 						reader.Read();
 					nextChar = '\n';
 				}
+
 				if (nextChar == '\n')
 				{
-					++line;
-					col = 1;
+					++Line;
+					Col = 1;
 					break;
 				}
 			}
@@ -362,11 +367,12 @@ namespace ICSharpCode.ILSpyX.Search
 						reader.Read();
 					nextChar = '\n';
 				}
+
 				// Return read string, if EOL is reached
 				if (nextChar == '\n')
 				{
-					++line;
-					col = 1;
+					++Line;
+					Col = 1;
 					return sb.ToString();
 				}
 
@@ -375,13 +381,20 @@ namespace ICSharpCode.ILSpyX.Search
 
 			// Got EOF before EOL
 			string retStr = sb.ToString();
-			col += retStr.Length;
+			Col += retStr.Length;
 			return retStr;
 		}
 	}
 
 	internal sealed class Lexer : AbstractLexer
 	{
+		// The C# compiler has a fixed size length therefore we'll use a fixed size char array for identifiers
+		// it's also faster than using a string builder.
+		const int MAX_IDENTIFIER_LENGTH = 512;
+
+		readonly char[] escapeSequenceBuffer = new char[12];
+		char[] identBuffer = new char[MAX_IDENTIFIER_LENGTH];
+
 		public Lexer(TextReader reader) : base(reader)
 		{
 		}
@@ -430,32 +443,32 @@ namespace ICSharpCode.ILSpyX.Search
 							}
 							else if (Char.IsLetterOrDigit(ch) || ch == '_')
 							{
-								bool canBeKeyword;
-								string s = ReadIdent(ch, out canBeKeyword);
+								string s = ReadIdent(ch, out bool canBeKeyword);
 								return new Literal(null, null, LiteralFormat.None);
 							}
 							else
 							{
 								HandleLineEnd(ch);
-								Error(y, x, String.Format("Unexpected char in Lexer.Next() : {0}", ch));
+								Error(y, x, $"Unexpected char in Lexer.Next() : {ch}");
 								continue;
 							}
 						}
+
 						break;
 					default: // non-ws chars are handled here
 						ch = (char)nextChar;
-						if (Char.IsLetter(ch) || ch == '_' || ch == '\\')
+						if (Char.IsLetter(ch) || ch is '_' or '\\')
 						{
 							int x = Col - 1; // Col was incremented above, but we want the start of the identifier
 							int y = Line;
-							bool canBeKeyword;
-							string s = ReadIdent(ch, out canBeKeyword);
+							string s = ReadIdent(ch, out bool canBeKeyword);
 							return new Literal(null, null, LiteralFormat.None);
 						}
 						else if (Char.IsDigit(ch))
 						{
 							token = ReadDigit(ch, Col - 1);
 						}
+
 						break;
 				}
 
@@ -468,11 +481,6 @@ namespace ICSharpCode.ILSpyX.Search
 
 			return new Literal(null, null, LiteralFormat.None);
 		}
-
-		// The C# compiler has a fixed size length therefore we'll use a fixed size char array for identifiers
-		// it's also faster than using a string builder.
-		const int MAX_IDENTIFIER_LENGTH = 512;
-		char[] identBuffer = new char[MAX_IDENTIFIER_LENGTH];
 
 		string ReadIdent(char ch, out bool canBeKeyword)
 		{
@@ -488,15 +496,17 @@ namespace ICSharpCode.ILSpyX.Search
 					{
 						Error(Line, Col, "Identifiers can only contain unicode escape sequences");
 					}
+
 					canBeKeyword = false;
-					string surrogatePair;
-					ReadEscapeSequence(out ch, out surrogatePair);
+					ReadEscapeSequence(out ch, out string surrogatePair);
 					if (surrogatePair != null)
 					{
 						if (!char.IsLetterOrDigit(surrogatePair, 0))
 						{
-							Error(Line, Col, "Unicode escape sequences in identifiers cannot be used to represent characters that are invalid in identifiers");
+							Error(Line, Col,
+								"Unicode escape sequences in identifiers cannot be used to represent characters that are invalid in identifiers");
 						}
+
 						for (int i = 0; i < surrogatePair.Length - 1; i++)
 						{
 							if (curPos < MAX_IDENTIFIER_LENGTH)
@@ -504,13 +514,15 @@ namespace ICSharpCode.ILSpyX.Search
 								identBuffer[curPos++] = surrogatePair[i];
 							}
 						}
-						ch = surrogatePair[surrogatePair.Length - 1];
+
+						ch = surrogatePair[^1];
 					}
 					else
 					{
 						if (!IsIdentifierPart(ch))
 						{
-							Error(Line, Col, "Unicode escape sequences in identifiers cannot be used to represent characters that are invalid in identifiers");
+							Error(Line, Col,
+								"Unicode escape sequences in identifiers cannot be used to represent characters that are invalid in identifiers");
 						}
 					}
 				}
@@ -518,7 +530,7 @@ namespace ICSharpCode.ILSpyX.Search
 				if (curPos < MAX_IDENTIFIER_LENGTH)
 				{
 					if (ch != '\0') // only add character, if it is valid
-									// prevents \ from being added
+						// prevents \ from being added
 						identBuffer[curPos++] = ch;
 				}
 				else
@@ -528,8 +540,10 @@ namespace ICSharpCode.ILSpyX.Search
 					{
 						ReaderRead();
 					}
+
 					break;
 				}
+
 				peek = ReaderPeek();
 				if (IsIdentifierPart(peek) || peek == '\\')
 				{
@@ -540,13 +554,15 @@ namespace ICSharpCode.ILSpyX.Search
 					break;
 				}
 			}
+
 			return new String(identBuffer, 0, curPos);
 		}
 
 		Literal ReadDigit(char ch, int x)
 		{
 			unchecked
-			{ // prevent exception when ReaderPeek() = -1 is cast to char
+			{
+				// prevent exception when ReaderPeek() = -1 is cast to char
 				int y = Line;
 				sb.Length = 0;
 				sb.Append(ch);
@@ -567,12 +583,14 @@ namespace ICSharpCode.ILSpyX.Search
 					isdouble = true;
 
 					while (Char.IsDigit((char)ReaderPeek()))
-					{ // read decimal digits beyond the dot
+					{
+						// read decimal digits beyond the dot
 						sb.Append((char)ReaderRead());
 					}
+
 					peek = (char)ReaderPeek();
 				}
-				else if (ch == '0' && (peek == 'x' || peek == 'X'))
+				else if (ch == '0' && peek is 'x' or 'X')
 				{
 					ReaderRead(); // skip 'x'
 					sb.Length = 0; // Remove '0' from 0x prefix from the stringvalue
@@ -580,11 +598,13 @@ namespace ICSharpCode.ILSpyX.Search
 					{
 						sb.Append((char)ReaderRead());
 					}
+
 					if (sb.Length == 0)
 					{
 						sb.Append('0'); // dummy value to prevent exception
 						Error(y, x, "Invalid hexadecimal integer literal");
 					}
+
 					ishex = true;
 					prefix = "0x";
 					peek = (char)ReaderPeek();
@@ -595,12 +615,14 @@ namespace ICSharpCode.ILSpyX.Search
 					{
 						sb.Append((char)ReaderRead());
 					}
+
 					peek = (char)ReaderPeek();
 				}
 
 				Literal nextToken = null; // if we accidently read a 'dot'
 				if (peek == '.')
-				{ // read floating point number
+				{
+					// read floating point number
 					ReaderRead();
 					peek = (char)ReaderPeek();
 					if (!Char.IsDigit(peek))
@@ -615,54 +637,64 @@ namespace ICSharpCode.ILSpyX.Search
 						{
 							Error(y, x, "No hexadecimal floating point values allowed");
 						}
+
 						sb.Append('.');
 
 						while (Char.IsDigit((char)ReaderPeek()))
-						{ // read decimal digits beyond the dot
+						{
+							// read decimal digits beyond the dot
 							sb.Append((char)ReaderRead());
 						}
+
 						peek = (char)ReaderPeek();
 					}
 				}
 
-				if (peek == 'e' || peek == 'E')
-				{ // read exponent
+				if (peek is 'e' or 'E')
+				{
+					// read exponent
 					isdouble = true;
 					sb.Append((char)ReaderRead());
 					peek = (char)ReaderPeek();
-					if (peek == '-' || peek == '+')
+					if (peek is '-' or '+')
 					{
 						sb.Append((char)ReaderRead());
 					}
+
 					while (Char.IsDigit((char)ReaderPeek()))
-					{ // read exponent value
+					{
+						// read exponent value
 						sb.Append((char)ReaderRead());
 					}
+
 					isunsigned = true;
 					peek = (char)ReaderPeek();
 				}
 
-				if (peek == 'f' || peek == 'F')
-				{ // float value
+				if (peek is 'f' or 'F')
+				{
+					// float value
 					ReaderRead();
 					suffix = "f";
 					isfloat = true;
 				}
-				else if (peek == 'd' || peek == 'D')
-				{ // double type suffix (obsolete, double is default)
+				else if (peek is 'd' or 'D')
+				{
+					// double type suffix (obsolete, double is default)
 					ReaderRead();
 					suffix = "d";
 					isdouble = true;
 				}
-				else if (peek == 'm' || peek == 'M')
-				{ // decimal value
+				else if (peek is 'm' or 'M')
+				{
+					// decimal value
 					ReaderRead();
 					suffix = "m";
 					isdecimal = true;
 				}
 				else if (!isdouble)
 				{
-					if (peek == 'u' || peek == 'U')
+					if (peek is 'u' or 'U')
 					{
 						ReaderRead();
 						suffix = "u";
@@ -670,12 +702,12 @@ namespace ICSharpCode.ILSpyX.Search
 						peek = (char)ReaderPeek();
 					}
 
-					if (peek == 'l' || peek == 'L')
+					if (peek is 'l' or 'L')
 					{
 						ReaderRead();
 						peek = (char)ReaderPeek();
 						islong = true;
-						if (!isunsigned && (peek == 'u' || peek == 'U'))
+						if (!isunsigned && peek is 'u' or 'U')
 						{
 							ReaderRead();
 							suffix = "Lu";
@@ -693,40 +725,39 @@ namespace ICSharpCode.ILSpyX.Search
 
 				if (isfloat)
 				{
-					float num;
-					if (float.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
+					if (float.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out float num))
 					{
 						return new Literal(stringValue, num, LiteralFormat.DecimalNumber);
 					}
 					else
 					{
-						Error(y, x, String.Format("Can't parse float {0}", digit));
+						Error(y, x, $"Can't parse float {digit}");
 						return new Literal(stringValue, 0f, LiteralFormat.DecimalNumber);
 					}
 				}
+
 				if (isdecimal)
 				{
-					decimal num;
-					if (decimal.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
+					if (decimal.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal num))
 					{
 						return new Literal(stringValue, num, LiteralFormat.DecimalNumber);
 					}
 					else
 					{
-						Error(y, x, String.Format("Can't parse decimal {0}", digit));
+						Error(y, x, $"Can't parse decimal {digit}");
 						return new Literal(stringValue, 0m, LiteralFormat.DecimalNumber);
 					}
 				}
+
 				if (isdouble)
 				{
-					double num;
-					if (double.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
+					if (double.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out double num))
 					{
 						return new Literal(stringValue, num, LiteralFormat.DecimalNumber);
 					}
 					else
 					{
-						Error(y, x, String.Format("Can't parse double {0}", digit));
+						Error(y, x, $"Can't parse double {digit}");
 						return new Literal(stringValue, 0d, LiteralFormat.DecimalNumber);
 					}
 				}
@@ -737,7 +768,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (!ulong.TryParse(digit, NumberStyles.HexNumber, null, out result))
 					{
-						Error(y, x, String.Format("Can't parse hexadecimal constant {0}", digit));
+						Error(y, x, $"Can't parse hexadecimal constant {digit}");
 						return new Literal(stringValue.ToString(), 0, LiteralFormat.HexadecimalNumber);
 					}
 				}
@@ -745,7 +776,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (!ulong.TryParse(digit, NumberStyles.Integer, null, out result))
 					{
-						Error(y, x, String.Format("Can't parse integral constant {0}", digit));
+						Error(y, x, $"Can't parse integral constant {digit}");
 						return new Literal(stringValue.ToString(), 0, LiteralFormat.DecimalNumber);
 					}
 				}
@@ -771,27 +802,27 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (isunsigned)
 					{
-						ulong num;
-						if (ulong.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (ulong.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number,
+							    CultureInfo.InvariantCulture, out ulong num))
 						{
 							token = new Literal(stringValue, num, literalFormat);
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse unsigned long {0}", digit));
+							Error(y, x, $"Can't parse unsigned long {digit}");
 							token = new Literal(stringValue, 0UL, literalFormat);
 						}
 					}
 					else
 					{
-						long num;
-						if (long.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (long.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number,
+							    CultureInfo.InvariantCulture, out long num))
 						{
 							token = new Literal(stringValue, num, literalFormat);
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse long {0}", digit));
+							Error(y, x, $"Can't parse long {digit}");
 							token = new Literal(stringValue, 0L, literalFormat);
 						}
 					}
@@ -800,31 +831,32 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (isunsigned)
 					{
-						uint num;
-						if (uint.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (uint.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number,
+							    CultureInfo.InvariantCulture, out uint num))
 						{
 							token = new Literal(stringValue, num, literalFormat);
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse unsigned int {0}", digit));
+							Error(y, x, $"Can't parse unsigned int {digit}");
 							token = new Literal(stringValue, (uint)0, literalFormat);
 						}
 					}
 					else
 					{
-						int num;
-						if (int.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (int.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number,
+							    CultureInfo.InvariantCulture, out int num))
 						{
 							token = new Literal(stringValue, num, literalFormat);
 						}
 						else
 						{
-							Error(y, x, String.Format("Can't parse int {0}", digit));
+							Error(y, x, $"Can't parse int {digit}");
 							token = new Literal(stringValue, 0, literalFormat);
 						}
 					}
 				}
+
 				token.next = nextToken;
 				return token;
 			}
@@ -854,8 +886,7 @@ namespace ICSharpCode.ILSpyX.Search
 				if (ch == '\\')
 				{
 					originalValue.Append('\\');
-					string surrogatePair;
-					originalValue.Append(ReadEscapeSequence(out ch, out surrogatePair));
+					originalValue.Append(ReadEscapeSequence(out ch, out string surrogatePair));
 					if (surrogatePair != null)
 					{
 						sb.Append(surrogatePair);
@@ -903,6 +934,7 @@ namespace ICSharpCode.ILSpyX.Search
 						originalValue.Append('"');
 						break;
 					}
+
 					originalValue.Append("\"\"");
 					sb.Append('"');
 					ReaderRead();
@@ -927,8 +959,6 @@ namespace ICSharpCode.ILSpyX.Search
 			return new Literal(originalValue.ToString(), sb.ToString(), LiteralFormat.VerbatimStringLiteral);
 		}
 
-		readonly char[] escapeSequenceBuffer = new char[12];
-
 		/// <summary>
 		/// reads an escape sequence
 		/// </summary>
@@ -950,6 +980,7 @@ namespace ICSharpCode.ILSpyX.Search
 				ch = '\0';
 				return String.Empty;
 			}
+
 			int number;
 			char c = (char)nextChar;
 			int curPos = 1;
@@ -998,8 +1029,9 @@ namespace ICSharpCode.ILSpyX.Search
 
 					if (number < 0)
 					{
-						Error(Line, Col - 1, String.Format("Invalid char in literal : {0}", c));
+						Error(Line, Col - 1, $"Invalid char in literal : {c}");
 					}
+
 					for (int i = 0; i < 3; ++i)
 					{
 						if (IsHex((char)ReaderPeek()))
@@ -1014,6 +1046,7 @@ namespace ICSharpCode.ILSpyX.Search
 							break;
 						}
 					}
+
 					ch = (char)number;
 					break;
 				case 'U':
@@ -1030,10 +1063,11 @@ namespace ICSharpCode.ILSpyX.Search
 						}
 						else
 						{
-							Error(Line, Col - 1, String.Format("Invalid char in literal : {0}", (char)ReaderPeek()));
+							Error(Line, Col - 1, $"Invalid char in literal : {(char)ReaderPeek()}");
 							break;
 						}
 					}
+
 					if (number > 0xffff)
 					{
 						ch = '\0';
@@ -1043,12 +1077,14 @@ namespace ICSharpCode.ILSpyX.Search
 					{
 						ch = (char)number;
 					}
+
 					break;
 				default:
-					Error(Line, Col, String.Format("Unexpected escape sequence : {0}", c));
+					Error(Line, Col, $"Unexpected escape sequence : {c}");
 					ch = '\0';
 					break;
 			}
+
 			return new String(escapeSequenceBuffer, 0, curPos);
 		}
 
@@ -1061,16 +1097,17 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				return null;
 			}
+
 			char ch = (char)nextChar;
 			char chValue = ch;
 			string escapeSequence = String.Empty;
 			if (ch == '\\')
 			{
-				string surrogatePair;
-				escapeSequence = ReadEscapeSequence(out chValue, out surrogatePair);
+				escapeSequence = ReadEscapeSequence(out chValue, out string surrogatePair);
 				if (surrogatePair != null)
 				{
-					Error(y, x, "The unicode character must be represented by a surrogate pair and does not fit into a System.Char");
+					Error(y, x,
+						"The unicode character must be represented by a surrogate pair and does not fit into a System.Char");
 				}
 			}
 
@@ -1081,6 +1118,7 @@ namespace ICSharpCode.ILSpyX.Search
 					Error(y, x, "Char not terminated");
 				}
 			}
+
 			return new Literal("'" + ch + escapeSequence + "'", chValue, LiteralFormat.CharLiteral);
 		}
 

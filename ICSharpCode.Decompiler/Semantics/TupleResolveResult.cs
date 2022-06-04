@@ -16,14 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Semantics
 {
@@ -32,28 +29,30 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class TupleResolveResult : ResolveResult
 	{
-		public ImmutableArray<ResolveResult> Elements { get; }
-
 		public TupleResolveResult(ICompilation compilation,
 			ImmutableArray<ResolveResult> elements,
 			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
 			IModule valueTupleAssembly = null)
-		: base(GetTupleType(compilation, elements, elementNames, valueTupleAssembly))
+			: base(GetTupleType(compilation, elements, elementNames, valueTupleAssembly))
 		{
 			this.Elements = elements;
 		}
+
+		public ImmutableArray<ResolveResult> Elements { get; }
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
 			return Elements;
 		}
 
-		static IType GetTupleType(ICompilation compilation, ImmutableArray<ResolveResult> elements, ImmutableArray<string> elementNames, IModule valueTupleAssembly)
+		static IType GetTupleType(ICompilation compilation, ImmutableArray<ResolveResult> elements,
+			ImmutableArray<string> elementNames, IModule valueTupleAssembly)
 		{
-			if (elements.Any(e => e.Type.Kind == TypeKind.None || e.Type.Kind == TypeKind.Null))
+			if (elements.Any(e => e.Type.Kind is TypeKind.None or TypeKind.Null))
 				return SpecialType.NoType;
 			else
-				return new TupleType(compilation, elements.Select(e => e.Type).ToImmutableArray(), elementNames, valueTupleAssembly);
+				return new TupleType(compilation, elements.Select(e => e.Type).ToImmutableArray(), elementNames,
+					valueTupleAssembly);
 		}
 	}
 }

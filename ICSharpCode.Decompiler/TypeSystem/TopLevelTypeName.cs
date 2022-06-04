@@ -29,18 +29,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public readonly struct TopLevelTypeName : IEquatable<TopLevelTypeName>
 	{
-		readonly string namespaceName;
-		readonly string name;
 		readonly int typeParameterCount;
 
 		public TopLevelTypeName(string namespaceName, string name, int typeParameterCount = 0)
 		{
-			if (namespaceName == null)
-				throw new ArgumentNullException(nameof(namespaceName));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.namespaceName = namespaceName;
-			this.name = name;
+			this.Namespace = namespaceName ?? throw new ArgumentNullException(nameof(namespaceName));
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
 			this.typeParameterCount = typeParameterCount;
 		}
 
@@ -49,24 +43,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			int pos = reflectionName.LastIndexOf('.');
 			if (pos < 0)
 			{
-				namespaceName = string.Empty;
-				name = reflectionName;
+				Namespace = string.Empty;
+				Name = reflectionName;
 			}
 			else
 			{
-				namespaceName = reflectionName.Substring(0, pos);
-				name = reflectionName.Substring(pos + 1);
+				Namespace = reflectionName[..pos];
+				Name = reflectionName[(pos + 1)..];
 			}
-			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out typeParameterCount);
+
+			Name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Name, out typeParameterCount);
 		}
 
-		public string Namespace {
-			get { return namespaceName; }
-		}
+		public string Namespace { get; }
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name { get; }
 
 		public int TypeParameterCount {
 			get { return typeParameterCount; }
@@ -74,18 +65,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public string ReflectionName {
 			get {
-				StringBuilder b = new StringBuilder();
-				if (!string.IsNullOrEmpty(namespaceName))
+				StringBuilder b = new();
+				if (!string.IsNullOrEmpty(Namespace))
 				{
-					b.Append(namespaceName);
+					b.Append(Namespace);
 					b.Append('.');
 				}
-				b.Append(name);
+
+				b.Append(Name);
 				if (typeParameterCount > 0)
 				{
 					b.Append('`');
 					b.Append(typeParameterCount);
 				}
+
 				return b.ToString();
 			}
 		}
@@ -97,17 +90,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(object obj)
 		{
-			return (obj is TopLevelTypeName) && Equals((TopLevelTypeName)obj);
+			return (obj is TopLevelTypeName typeName) && Equals(typeName);
 		}
 
 		public bool Equals(TopLevelTypeName other)
 		{
-			return this.namespaceName == other.namespaceName && this.name == other.name && this.typeParameterCount == other.typeParameterCount;
+			return this.Namespace == other.Namespace && this.Name == other.Name &&
+			       this.typeParameterCount == other.typeParameterCount;
 		}
 
 		public override int GetHashCode()
 		{
-			return (name != null ? name.GetHashCode() : 0) ^ (namespaceName != null ? namespaceName.GetHashCode() : 0) ^ typeParameterCount;
+			return (Name != null ? Name.GetHashCode() : 0) ^ (Namespace != null ? Namespace.GetHashCode() : 0) ^
+			       typeParameterCount;
 		}
 
 		public static bool operator ==(TopLevelTypeName lhs, TopLevelTypeName rhs)
@@ -124,8 +119,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class TopLevelTypeNameComparer : IEqualityComparer<TopLevelTypeName>
 	{
-		public static readonly TopLevelTypeNameComparer Ordinal = new TopLevelTypeNameComparer(StringComparer.Ordinal);
-		public static readonly TopLevelTypeNameComparer OrdinalIgnoreCase = new TopLevelTypeNameComparer(StringComparer.OrdinalIgnoreCase);
+		public static readonly TopLevelTypeNameComparer Ordinal = new(StringComparer.Ordinal);
+		public static readonly TopLevelTypeNameComparer OrdinalIgnoreCase = new(StringComparer.OrdinalIgnoreCase);
 
 		public readonly StringComparer NameComparer;
 
@@ -137,13 +132,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool Equals(TopLevelTypeName x, TopLevelTypeName y)
 		{
 			return x.TypeParameterCount == y.TypeParameterCount
-				&& NameComparer.Equals(x.Name, y.Name)
-				&& NameComparer.Equals(x.Namespace, y.Namespace);
+			       && NameComparer.Equals(x.Name, y.Name)
+			       && NameComparer.Equals(x.Namespace, y.Namespace);
 		}
 
 		public int GetHashCode(TopLevelTypeName obj)
 		{
-			return NameComparer.GetHashCode(obj.Name) ^ NameComparer.GetHashCode(obj.Namespace) ^ obj.TypeParameterCount;
+			return NameComparer.GetHashCode(obj.Name) ^ NameComparer.GetHashCode(obj.Namespace) ^
+			       obj.TypeParameterCount;
 		}
 	}
 }

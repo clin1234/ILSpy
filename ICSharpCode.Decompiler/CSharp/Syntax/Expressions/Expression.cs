@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -30,7 +29,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </remarks>
 	public abstract class Expression : AstNode
 	{
+		public override NodeType NodeType {
+			get {
+				return NodeType.Expression;
+			}
+		}
+
+		public new Expression Clone()
+		{
+			return (Expression)base.Clone();
+		}
+
+		public Expression ReplaceWith(Func<Expression, Expression> replaceFunction)
+		{
+			ArgumentNullException.ThrowIfNull(replaceFunction);
+			return (Expression)base.ReplaceWith(node => replaceFunction((Expression)node));
+		}
+
 		#region Null
+
 		public new static readonly Expression Null = new NullExpression();
 
 		sealed class NullExpression : Expression
@@ -61,9 +78,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return other == null || other.IsNull;
 			}
 		}
+
 		#endregion
 
 		#region PatternPlaceholder
+
 		public static implicit operator Expression(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
@@ -80,6 +99,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			public override NodeType NodeType {
 				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
 
 			public override void AcceptVisitor(IAstVisitor visitor)
@@ -101,30 +126,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return child.DoMatch(other, match);
 			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
 		}
+
 		#endregion
-
-		public override NodeType NodeType {
-			get {
-				return NodeType.Expression;
-			}
-		}
-
-		public new Expression Clone()
-		{
-			return (Expression)base.Clone();
-		}
-
-		public Expression ReplaceWith(Func<Expression, Expression> replaceFunction)
-		{
-			if (replaceFunction == null)
-				throw new ArgumentNullException(nameof(replaceFunction));
-			return (Expression)base.ReplaceWith(node => replaceFunction((Expression)node));
-		}
 	}
 }

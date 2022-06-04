@@ -26,22 +26,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class Backreference : Pattern
 	{
-		readonly string referencedGroupName;
-
-		public string ReferencedGroupName {
-			get { return referencedGroupName; }
-		}
-
 		public Backreference(string referencedGroupName)
 		{
-			if (referencedGroupName == null)
-				throw new ArgumentNullException(nameof(referencedGroupName));
-			this.referencedGroupName = referencedGroupName;
+			this.ReferencedGroupName =
+				referencedGroupName ?? throw new ArgumentNullException(nameof(referencedGroupName));
 		}
+
+		public string ReferencedGroupName { get; }
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			var last = match.Get(referencedGroupName).LastOrDefault();
+			var last = match.Get(ReferencedGroupName).LastOrDefault();
 			if (last == null && other == null)
 				return true;
 			return last.IsMatch(other);

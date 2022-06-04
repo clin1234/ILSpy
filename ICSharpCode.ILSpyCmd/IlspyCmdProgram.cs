@@ -23,7 +23,8 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace ICSharpCode.ILSpyCmd
 {
-	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
+	[Command(Name = "ilspycmd",
+		Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
 		ExtendedHelpText = @"
 Remarks:
   -o is valid with every option and required when using -p.
@@ -48,20 +49,23 @@ Examples:
 		MemberName = nameof(DecompilerVersion))]
 	class ILSpyCmdProgram
 	{
-		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
-
 		[FilesExist]
 		[Required]
-		[Argument(0, "Assembly file name(s)", "The list of assemblies that is being decompiled. This argument is mandatory.")]
+		[Argument(0, "Assembly file name(s)",
+			"The list of assemblies that is being decompiled. This argument is mandatory.")]
 		public string[] InputAssemblyNames { get; }
 
-		[Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue)]
+		[Option("-o|--outputdir <directory>",
+			"The output directory, if omitted decompiler output is written to standard out.",
+			CommandOptionType.SingleValue)]
 		public string OutputDirectory { get; }
 
-		[Option("-p|--project", "Decompile assembly as compilable project. This requires the output directory option.", CommandOptionType.NoValue)]
+		[Option("-p|--project", "Decompile assembly as compilable project. This requires the output directory option.",
+			CommandOptionType.NoValue)]
 		public bool CreateCompilableProjectFlag { get; }
 
-		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue)]
+		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.",
+			CommandOptionType.SingleValue)]
 		public string TypeName { get; }
 
 		[Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue)]
@@ -77,22 +81,26 @@ Examples:
 		[Option("-usepdb|--use-varnames-from-pdb", "Use variable names from PDB.", CommandOptionType.SingleOrNoValue)]
 		public (bool IsSet, string Value) InputPDBFile { get; }
 
-		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
-		public string[] EntityTypes { get; } = new string[0];
+		[Option("-l|--list <entity-type(s)>",
+			"Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)",
+			CommandOptionType.MultipleValue)]
+		public IEnumerable<string> EntityTypes { get; } = Array.Empty<string>();
 
-		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
-				Environment.NewLine
-				+ "ICSharpCode.Decompiler: " +
-				typeof(FullTypeName).Assembly.GetName().Version.ToString();
+		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version +
+		                                   Environment.NewLine
+		                                   + "ICSharpCode.Decompiler: " +
+		                                   typeof(FullTypeName).Assembly.GetName().Version;
 
 		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
-			"CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-			"CSharp_10_0 or Latest", CommandOptionType.SingleValue)]
+		                                           "CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
+		                                           "CSharp_10_0 or Latest", CommandOptionType.SingleValue)]
 		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[DirectoryExists]
-		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
-		public string[] ReferencePaths { get; } = new string[0];
+		[Option("-r|--referencepath <path>",
+			"Path to a directory containing dependencies of the assembly that is being decompiled.",
+			CommandOptionType.MultipleValue)]
+		public IEnumerable<string> ReferencePaths { get; } = Array.Empty<string>();
 
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
 		public bool RemoveDeadCode { get; }
@@ -100,15 +108,19 @@ Examples:
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
 		public bool RemoveDeadStores { get; }
 
-		[Option("-d|--dump-package", "Dump package assembiles into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
+		[Option("-d|--dump-package",
+			"Dump package assembiles into a folder. This requires the output directory option.",
+			CommandOptionType.NoValue)]
 		public bool DumpPackageFlag { get; }
 
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
 		public bool NestedDirectories { get; }
 
+		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
+
 		private int OnExecute(CommandLineApplication app)
 		{
-			TextWriter output = System.Console.Out;
+			TextWriter output = Console.Out;
 			bool outputDirectorySpecified = !string.IsNullOrEmpty(OutputDirectory);
 
 			if (outputDirectorySpecified)
@@ -122,19 +134,26 @@ Examples:
 				{
 					if (InputAssemblyNames.Length == 1)
 					{
-						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
+						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory,
+							Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
 						return 0;
 					}
+
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
 					{
-						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
+						string projectFileName = Path.Combine(Environment.CurrentDirectory, OutputDirectory,
+							Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
 						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
 						ProjectId projectId = DecompileAsProject(file, projectFileName);
-						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
+						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid,
+							projectId.TypeGuid));
 					}
-					SolutionCreator.WriteSolutionFile(Path.Combine(Environment.CurrentDirectory, OutputDirectory, Path.GetFileNameWithoutExtension(OutputDirectory) + ".sln"), projects);
+
+					SolutionCreator.WriteSolutionFile(
+						Path.Combine(Environment.CurrentDirectory, OutputDirectory,
+							Path.GetFileNameWithoutExtension(OutputDirectory) + ".sln"), projects);
 					return 0;
 				}
 				else
@@ -145,6 +164,7 @@ Examples:
 						if (result != 0)
 							return result;
 					}
+
 					return 0;
 				}
 			}
@@ -162,7 +182,7 @@ Examples:
 			{
 				if (EntityTypes.Any())
 				{
-					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
+					string[] values = EntityTypes.SelectMany(static v => v.Split(',', ';')).ToArray();
 					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
 					if (outputDirectorySpecified)
 					{
@@ -184,7 +204,7 @@ Examples:
 				}
 				else if (CreateDebugInfoFlag)
 				{
-					string pdbFileName = null;
+					string pdbFileName;
 					if (outputDirectorySpecified)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
@@ -229,11 +249,13 @@ Examples:
 		CSharpDecompiler GetDecompiler(string assemblyFileName)
 		{
 			var module = new PEFile(assemblyFileName);
-			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
+			var resolver =
+				new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths)
 			{
 				resolver.AddSearchDirectory(path);
 			}
+
 			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings(module)) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
@@ -243,12 +265,12 @@ Examples:
 		{
 			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 
-			foreach (var type in decompiler.TypeSystem.MainModule.TypeDefinitions)
+			foreach (ITypeDefinition type in decompiler.TypeSystem.MainModule.TypeDefinitions.Where(type =>
+				         kinds.Contains(type.Kind)))
 			{
-				if (!kinds.Contains(type.Kind))
-					continue;
 				output.WriteLine($"{type.Kind} {type.FullName}");
 			}
+
 			return 0;
 		}
 
@@ -267,14 +289,16 @@ Examples:
 		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
 			var module = new PEFile(assemblyFileName);
-			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
+			var resolver =
+				new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in ReferencePaths)
 			{
 				resolver.AddSearchDirectory(path);
 			}
+
 			var decompiler = new WholeProjectDecompiler(GetSettings(module), resolver, resolver, TryLoadPDB(module));
-			using (var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName)))
-				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
+			using StreamWriter projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName));
+			return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}
 
 		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
@@ -290,6 +314,7 @@ Examples:
 				var name = new FullTypeName(typeName);
 				output.Write(decompiler.DecompileTypeAsString(name));
 			}
+
 			return 0;
 		}
 
@@ -302,65 +327,65 @@ Examples:
 
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module))
 			{
-				app.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
+				app.Error.WriteLine(
+					$"Cannot create PDB file for {assemblyFileName}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
-			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write))
-			{
-				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
-			}
+			using FileStream stream = new(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write);
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
 
 			return 0;
 		}
 
 		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
 		{
-			using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read))
+			using MemoryMappedFile memoryMappedPackage =
+				MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			using MemoryMappedViewAccessor packageView =
+				memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+			if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
 			{
-				using (var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
+				app.Error.WriteLine(
+					$"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+				return ProgramExitCodes.EX_DATAERR;
+			}
+
+			SingleFileBundle.Header manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
+			foreach (SingleFileBundle.Entry entry in manifest.Entries)
+			{
+				Stream contents;
+
+				if (entry.CompressedSize == 0)
 				{
-					if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
+					contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset,
+						entry.Size);
+				}
+				else
+				{
+					Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle,
+						entry.Offset, entry.CompressedSize);
+					Stream decompressedStream = new MemoryStream((int)entry.Size);
+					using (DeflateStream deflateStream =
+					       new DeflateStream(compressedStream, CompressionMode.Decompress))
 					{
-						app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+						deflateStream.CopyTo(decompressedStream);
+					}
+
+					if (decompressedStream.Length != entry.Size)
+					{
+						app.Error.WriteLine(
+							$"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
 						return ProgramExitCodes.EX_DATAERR;
 					}
 
-					var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
-					foreach (var entry in manifest.Entries)
-					{
-						Stream contents;
-
-						if (entry.CompressedSize == 0)
-						{
-							contents = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.Size);
-						}
-						else
-						{
-							Stream compressedStream = new UnmanagedMemoryStream(packageView.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
-							Stream decompressedStream = new MemoryStream((int)entry.Size);
-							using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
-							{
-								deflateStream.CopyTo(decompressedStream);
-							}
-
-							if (decompressedStream.Length != entry.Size)
-							{
-								app.Error.WriteLine($"Corrupted single-file entry '${entry.RelativePath}'. Declared decompressed size '${entry.Size}' is not the same as actual decompressed size '${decompressedStream.Length}'.");
-								return ProgramExitCodes.EX_DATAERR;
-							}
-
-							decompressedStream.Seek(0, SeekOrigin.Begin);
-							contents = decompressedStream;
-						}
-
-						using (var fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath)))
-						{
-							contents.CopyTo(fileStream);
-						}
-					}
+					decompressedStream.Seek(0, SeekOrigin.Begin);
+					contents = decompressedStream;
 				}
+
+				using FileStream fileStream = File.Create(Path.Combine(outputDirectory, entry.RelativePath));
+				contents.CopyTo(fileStream);
 			}
 
 			return 0;

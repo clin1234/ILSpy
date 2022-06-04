@@ -1,19 +1,17 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.IO;
+
 namespace LightJson.Serialization
 {
-	using System.IO;
-
-	using ErrorType = JsonParseException.ErrorType;
-
 	/// <summary>
 	/// Represents a text scanner that reads one character at a time.
 	/// </summary>
 	internal sealed class TextScanner
 	{
-		private TextReader reader;
 		private TextPosition position;
+		private TextReader reader;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TextScanner"/> class.
@@ -55,7 +53,7 @@ namespace LightJson.Serialization
 			if (next == -1 && throwAtEndOfFile)
 			{
 				throw new JsonParseException(
-					ErrorType.IncompleteMessage,
+					JsonParseException.ErrorType.IncompleteMessage,
 					this.position);
 			}
 			else
@@ -75,7 +73,7 @@ namespace LightJson.Serialization
 			if (next == -1)
 			{
 				throw new JsonParseException(
-					ErrorType.IncompleteMessage,
+					JsonParseException.ErrorType.IncompleteMessage,
 					this.position);
 			}
 			else
@@ -105,12 +103,10 @@ namespace LightJson.Serialization
 				if (char.IsWhiteSpace(next))
 				{
 					this.Read();
-					continue;
 				}
 				else if (next == '/')
 				{
 					this.SkipComment();
-					continue;
 				}
 				else
 				{
@@ -130,8 +126,8 @@ namespace LightJson.Serialization
 			if (this.Read() != next)
 			{
 				throw new JsonParseException(
-					string.Format("Parser expected '{0}'", next),
-					ErrorType.InvalidOrUnexpectedCharacter,
+					$"Parser expected '{next}'",
+					JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 					errorPosition);
 			}
 		}
@@ -165,8 +161,8 @@ namespace LightJson.Serialization
 
 				default:
 					throw new JsonParseException(
-						string.Format("Parser expected '{0}'", this.Peek()),
-						ErrorType.InvalidOrUnexpectedCharacter,
+						$"Parser expected '{this.Peek()}'",
+						JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 						this.position);
 			}
 		}

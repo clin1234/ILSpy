@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
+﻿using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -12,7 +8,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// NormalizeTypeVisitor that does not normalize type parameters,
 		/// but performs type erasure (object->dynamic; tuple->underlying type).
 		/// </summary>
-		internal static readonly NormalizeTypeVisitor TypeErasure = new NormalizeTypeVisitor {
+		internal static readonly NormalizeTypeVisitor TypeErasure = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = true,
@@ -23,7 +19,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			RemoveNullability = true,
 		};
 
-		internal static readonly NormalizeTypeVisitor IgnoreNullabilityAndTuples = new NormalizeTypeVisitor {
+		internal static readonly NormalizeTypeVisitor IgnoreNullabilityAndTuples = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = false,
@@ -34,21 +30,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			RemoveNullability = true,
 		};
 
+		public bool DynamicAndObject = true;
+		public bool IntPtrToNInt = true;
+
+		public bool RemoveModOpt = true;
+		public bool RemoveModReq = true;
+		public bool RemoveNullability = true;
+		public bool ReplaceClassTypeParametersWithDummy = true;
+		public bool ReplaceMethodTypeParametersWithDummy = true;
+		public bool TupleToUnderlyingType = true;
+
 		public bool EquivalentTypes(IType a, IType b)
 		{
 			a = a.AcceptVisitor(this);
 			b = b.AcceptVisitor(this);
 			return a.Equals(b);
 		}
-
-		public bool RemoveModOpt = true;
-		public bool RemoveModReq = true;
-		public bool ReplaceClassTypeParametersWithDummy = true;
-		public bool ReplaceMethodTypeParametersWithDummy = true;
-		public bool DynamicAndObject = true;
-		public bool IntPtrToNInt = true;
-		public bool TupleToUnderlyingType = true;
-		public bool RemoveNullability = true;
 
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
@@ -86,6 +83,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case KnownTypeCode.UIntPtr when IntPtrToNInt:
 					return SpecialType.NUInt;
 			}
+
 			return base.VisitTypeDefinition(type);
 		}
 

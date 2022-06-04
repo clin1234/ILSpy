@@ -36,16 +36,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </remarks>
 	public class ConditionDetection : IBlockTransform
 	{
-		private enum Keyword
-		{
-			Break,
-			Return,
-			Continue,
-			Other
-		}
+		private ControlFlowNode cfgNode;
 
 		private BlockTransformContext context;
-		private ControlFlowNode cfgNode;
 		private BlockContainer currentContainer;
 
 		/// <summary>
@@ -91,6 +84,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				SwapEmptyThen(ifInst);
 				IntroduceShortCircuit(ifInst);
 			}
+
 			PickBetterBlockExit(block, ifInst);
 			OrderIfBlocks(ifInst);
 		}
@@ -119,13 +113,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return false;
 					}
 				}
+
 				return false;
 			}
 
 			context.Step("Inline block as then-branch", ifInst.TrueInst);
 			// The targetBlock was already processed, and is ready to embed
 			var targetBlock = ((Branch)ifInst.TrueInst).TargetBlock;
-			targetBlock.AddRef();  // Peformance: avoid temporarily disconnecting targetBlock
+			targetBlock.AddRef(); // Peformance: avoid temporarily disconnecting targetBlock
 			targetBlock.Remove();
 			ifInst.TrueInst = targetBlock;
 			targetBlock.ReleaseRef();
@@ -163,8 +158,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private bool CanInline(ILInstruction exitInst)
 		{
 			if (exitInst is Branch branch
-				&& branch.TargetBlock.Parent == currentContainer
-				&& branch.TargetBlock.IncomingEdgeCount == 1)
+			    && branch.TargetBlock.Parent == currentContainer
+			    && branch.TargetBlock.IncomingEdgeCount == 1)
 			{
 				// if the incoming edge count is 1, then this must be the sole branch, and dominance is already ensured
 				Debug.Assert(cfgNode.Dominates(context.ControlFlowGraph.GetNode(branch.TargetBlock)));
@@ -195,7 +190,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			int falseInstIndex = block.Instructions.IndexOf(ifInst) + 1;
 			AddExits(block, falseInstIndex, elseExits);
 
-			var commonExits = elseExits.Where(e1 => thenExits.Any(e2 => DetectExitPoints.CompatibleExitInstruction(e1, e2)));
+			var commonExits =
+				elseExits.Where(e1 => thenExits.Any(e2 => DetectExitPoints.CompatibleExitInstruction(e1, e2)));
 
 			// find the common exit with the highest block exit priority
 			ILInstruction commonExit = null;
@@ -212,7 +208,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// determine if this merge will isolate the current block exit
 			// that is, no sequence of inversions can restore it to the block exit position
 			var blockExit = block.Instructions.Last();
-			if (CompareBlockExitPriority(blockExit, commonExit, true) > 0 && !WillShortCircuit(block, ifInst, commonExit))
+			if (CompareBlockExitPriority(blockExit, commonExit, true) > 0 &&
+			    !WillShortCircuit(block, ifInst, commonExit))
 				return;
 
 			// could improve performance by directly implementing the || short-circuit when WillShortCircuit
@@ -228,7 +225,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				context.Step("Embed else-block for goto removal", ifInst);
 				Debug.Assert(IsEmpty(ifInst.FalseInst));
-				ifInst.FalseInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count - 1);
+				ifInst.FalseInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1,
+					block.Instructions.Count - 1);
 			}
 
 			// if (...) { ...; goto blockExit; } blockExit;
@@ -237,7 +235,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// if (...) { ...; goto blockExit; } else { ... } blockExit;
 			// -> if (...) { ... } else { ... } blockExit;
 			context.Step("Remove redundant 'goto blockExit;' in then-branch", ifInst);
-			if (!(ifInst.TrueInst is Block trueBlock) || trueBlock.Instructions.Count == 1)
+			if (ifInst.TrueInst is not Block trueBlock || trueBlock.Instructions.Count == 1)
 				ifInst.TrueInst = new Nop().WithILRange(ifInst.TrueInst);
 			else
 				trueBlock.Instructions.RemoveAt(trueBlock.Instructions.Count - 1);
@@ -331,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			bool ThenInstIsSingleExit(ILInstruction inst) =>
 				inst.MatchIfInstruction(out var _, out var trueInst)
-				&& (!(trueInst is Block trueBlock) || trueBlock.Instructions.Count == 1)
+				&& (trueInst is not Block trueBlock || trueBlock.Instructions.Count == 1)
 				&& TryGetExit(trueInst, out var _);
 
 			if (!ThenInstIsSingleExit(ifInst))
@@ -345,7 +343,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			return block.Instructions.IndexOf(elseIfInst) == block.Instructions.IndexOf(ifInst) + 1
-				   && ThenInstIsSingleExit(elseIfInst);
+			       && ThenInstIsSingleExit(elseIfInst);
 		}
 
 		private void InvertIf(Block block, IfInstruction ifInst) => InvertIf(block, ifInst, context);
@@ -426,10 +424,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private void IntroduceShortCircuit(IfInstruction ifInst)
 		{
 			if (IsEmpty(ifInst.FalseInst)
-					&& ifInst.TrueInst is Block trueBlock
-					&& trueBlock.Instructions.Count == 1
-					&& trueBlock.FinalInstruction is Nop
-					&& trueBlock.Instructions[0].MatchIfInstruction(out var nestedCondition, out var nestedTrueInst))
+			    && ifInst.TrueInst is Block trueBlock
+			    && trueBlock.Instructions.Count == 1
+			    && trueBlock.FinalInstruction is Nop
+			    && trueBlock.Instructions[0].MatchIfInstruction(out var nestedCondition, out var nestedTrueInst))
 			{
 				context.Step("Combine 'if (cond1 && cond2)' in then-branch", ifInst);
 				ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, nestedCondition);
@@ -444,7 +442,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private void OrderIfBlocks(IfInstruction ifInst)
 		{
-			if (IsEmpty(ifInst.FalseInst) || GetStartILOffset(ifInst.TrueInst, out _) <= GetStartILOffset(ifInst.FalseInst, out _))
+			if (IsEmpty(ifInst.FalseInst) ||
+			    GetStartILOffset(ifInst.TrueInst, out _) <= GetStartILOffset(ifInst.FalseInst, out _))
 				return;
 
 			context.Step("Swap then-branch with else-branch to match IL order", ifInst);
@@ -480,8 +479,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			var exitInst = GetExit(block);
 			if (IsEmpty(ifInst.FalseInst)
-				  && TryGetExit(ifInst.TrueInst, out var trueExitInst)
-				  && CompareBlockExitPriority(trueExitInst, exitInst) > 0)
+			    && TryGetExit(ifInst.TrueInst, out var trueExitInst)
+			    && CompareBlockExitPriority(trueExitInst, exitInst) > 0)
 				InvertIf(block, ifInst);
 		}
 
@@ -534,15 +533,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			else
-			{// for non-keywords (only Branch or Leave)
-			 // branches have lower priority than non-keyword leaves
+			{
+				// for non-keywords (only Branch or Leave)
+				// branches have lower priority than non-keyword leaves
 				bool isBranch1 = exit1 is Branch;
 				bool isBranch2 = exit2 is Branch;
 				if (isBranch1 != isBranch2)
 					return isBranch1 ? -1 : 1;
 
 				// two leaves that both want end of block priority
-				if (exit1.MatchLeave(out var container1) && exit2.MatchLeave(out var container2) && container1 != container2)
+				if (exit1.MatchLeave(out var container1) && exit2.MatchLeave(out var container2) &&
+				    container1 != container2)
 				{
 					// choose the outer one
 					return container2.IsDescendantOf(container1) ? 1 : -1;
@@ -580,6 +581,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						keyword = Keyword.Continue;
 						return true;
 					}
+
 					return false;
 				case Leave leave:
 					if (leave.IsLeavingFunction)
@@ -587,11 +589,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						keyword = Keyword.Return;
 						return true;
 					}
+
 					if (leave.TargetContainer.Kind != ContainerKind.Normal)
 					{
 						keyword = Keyword.Break;
 						return true;
 					}
+
 					return false;
 				default:
 					return true;
@@ -669,9 +673,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				extractedBlock.Instructions.Add(inst);
 				extractedBlock.AddILRange(inst);
 			}
+
 			block.Instructions.RemoveRange(startIndex, endIndex - startIndex);
 
 			return extractedBlock;
+		}
+
+		private enum Keyword
+		{
+			Break,
+			Return,
+			Continue,
+			Other
 		}
 	}
 }

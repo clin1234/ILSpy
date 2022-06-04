@@ -25,6 +25,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -39,13 +40,23 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class BlockContainer : ILInstruction
 	{
-		public static readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
+		public static readonly SlotInfo BlockSlot = new("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
+
+		Block? entryPoint;
+
+		int leaveCount;
+
+		public BlockContainer(ContainerKind kind = ContainerKind.Normal, StackType expectedResultType = StackType.Void)
+			: base(OpCode.BlockContainer)
+		{
+			this.Kind = kind;
+			this.Blocks = new InstructionCollection<Block>(this, 0);
+			this.ExpectedResultType = expectedResultType;
+		}
 
 		public ContainerKind Kind { get; set; }
 		public StackType ExpectedResultType { get; set; }
-
-		int leaveCount;
 
 		/// <summary>
 		/// Gets the number of 'leave' instructions that target this BlockContainer.
@@ -57,8 +68,6 @@ namespace ICSharpCode.Decompiler.IL
 				InvalidateFlags();
 			}
 		}
-
-		Block? entryPoint;
 
 		/// <summary>
 		/// Gets the container's entry point. This is the first block in the Blocks collection.
@@ -79,16 +88,15 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public BlockContainer(ContainerKind kind = ContainerKind.Normal, StackType expectedResultType = StackType.Void) : base(OpCode.BlockContainer)
-		{
-			this.Kind = kind;
-			this.Blocks = new InstructionCollection<Block>(this, 0);
-			this.ExpectedResultType = expectedResultType;
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
 		}
 
 		public override ILInstruction Clone()
 		{
-			BlockContainer clone = new BlockContainer();
+			BlockContainer clone = new();
 			clone.AddILRange(this);
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
@@ -97,11 +105,13 @@ namespace ICSharpCode.Decompiler.IL
 				if (branch.TargetBlock != null && branch.TargetBlock.Parent == this)
 					branch.TargetBlock = clone.Blocks[branch.TargetBlock.ChildIndex];
 			}
+
 			foreach (var leave in clone.Descendants.OfType<Leave>())
 			{
 				if (leave.TargetContainer == this)
 					leave.TargetContainer = clone;
 			}
+
 			return clone;
 		}
 
@@ -148,6 +158,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write("(for) ");
 					break;
 			}
+
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
@@ -162,9 +173,11 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write("stale reference to ");
 					output.WriteLocalReference(inst.Label, inst);
 				}
+
 				output.WriteLine();
 				output.WriteLine();
 			}
+
 			output.Unindent();
 			output.Write("}");
 			output.MarkFoldEnd();
@@ -198,8 +211,10 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 			Debug.Assert(Parent is ILFunction || !ILRangeIsEmpty);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
-			Debug.Assert(Blocks.All(b => b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
-			Debug.Assert(TopologicalSort(deleteUnreachableBlocks: true).Count == Blocks.Count, "Container should not have any unreachable blocks");
+			Debug.Assert(Blocks.All(b =>
+				b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
+			Debug.Assert(TopologicalSort(deleteUnreachableBlocks: true).Count == Blocks.Count,
+				"Container should not have any unreachable blocks");
 			Block? bodyStartBlock;
 			switch (Kind)
 			{
@@ -242,18 +257,13 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				flags |= block.Flags;
 			}
+
 			// The end point of the BlockContainer is only reachable if there's a leave instruction
 			if (LeaveCount == 0)
 				flags |= InstructionFlags.EndPointUnreachable;
 			else
 				flags &= ~InstructionFlags.EndPointUnreachable;
 			return flags;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
 		}
 
 		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
@@ -277,8 +287,8 @@ namespace ICSharpCode.Decompiler.IL
 		public List<Block> TopologicalSort(bool deleteUnreachableBlocks = false)
 		{
 			// Visit blocks in post-order
-			BitSet visited = new BitSet(Blocks.Count);
-			List<Block> postOrder = new List<Block>();
+			BitSet visited = new(Blocks.Count);
+			List<Block> postOrder = new();
 			Visit(EntryPoint);
 			postOrder.Reverse();
 			if (!deleteUnreachableBlocks)
@@ -289,6 +299,7 @@ namespace ICSharpCode.Decompiler.IL
 						postOrder.Add(Blocks[i]);
 				}
 			}
+
 			return postOrder;
 
 			void Visit(Block block)
@@ -308,7 +319,9 @@ namespace ICSharpCode.Decompiler.IL
 
 					postOrder.Add(block);
 				}
-			};
+			}
+
+			;
 		}
 
 		/// <summary>
@@ -333,6 +346,7 @@ namespace ICSharpCode.Decompiler.IL
 					return bc;
 				inst = inst.Parent;
 			}
+
 			return null;
 		}
 
@@ -344,10 +358,12 @@ namespace ICSharpCode.Decompiler.IL
 					return bc;
 				inst = inst.Parent;
 			}
+
 			return null;
 		}
 
-		public bool MatchConditionBlock(Block block, [NotNullWhen(true)] out ILInstruction? condition, [NotNullWhen(true)] out Block? bodyStartBlock)
+		public bool MatchConditionBlock(Block block, [NotNullWhen(true)] out ILInstruction? condition,
+			[NotNullWhen(true)] out Block? bodyStartBlock)
 		{
 			condition = null;
 			bodyStartBlock = null;
@@ -388,18 +404,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// Normal container that contains control-flow blocks.
 		/// </summary>
 		Normal,
+
 		/// <summary>
 		/// A while-true loop.
 		/// Continue is represented as branch to entry-point.
 		/// Return/break is represented as leave.
 		/// </summary>
 		Loop,
+
 		/// <summary>
 		/// Container that has a switch instruction as entry-point.
 		/// Goto case is represented as branch.
 		/// Break is represented as leave.
 		/// </summary>
 		Switch,
+
 		/// <summary>
 		/// while-loop.
 		/// The entry-point is a block consisting of a single if instruction
@@ -409,6 +428,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Break is a leave.
 		/// </summary>
 		While,
+
 		/// <summary>
 		/// do-while-loop.
 		/// The entry-point is a block that is the head of the loop body.
@@ -420,6 +440,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Break is a leave.
 		/// </summary>
 		DoWhile,
+
 		/// <summary>
 		/// for-loop.
 		/// The entry-point is a block consisting of a single if instruction

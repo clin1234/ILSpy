@@ -61,12 +61,12 @@ namespace ICSharpCode.ILSpyX.Search
 
 	abstract class AbstractSearchStrategy
 	{
-		protected readonly string[] searchTerm;
-		protected readonly Regex regex;
 		protected readonly bool fullNameSearch;
 		protected readonly bool omitGenerics;
-		protected readonly SearchRequest searchRequest;
+		protected readonly Regex regex;
 		private readonly IProducerConsumerCollection<SearchResult> resultQueue;
+		protected readonly SearchRequest searchRequest;
+		protected readonly string[] searchTerm;
 
 		protected AbstractSearchStrategy(SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
 		{
@@ -97,11 +97,14 @@ namespace ICSharpCode.ILSpyX.Search
 				switch (term[0])
 				{
 					case '+': // must contain
-						term = term.Substring(1);
+						term = term[1..];
 						goto default;
 					case '-': // should not contain
-						if (term.Length > 1 && text.IndexOf(term.Substring(1), StringComparison.OrdinalIgnoreCase) >= 0)
+						if (term.Length > 1 && text.IndexOf(term[1..], StringComparison.OrdinalIgnoreCase) >= 0)
+						{
 							return false;
+						}
+
 						break;
 					case '=': // exact match
 					{
@@ -109,14 +112,18 @@ namespace ICSharpCode.ILSpyX.Search
 						if (equalCompareLength == -1)
 							equalCompareLength = text.Length;
 
-						if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength),
-							StringComparison.OrdinalIgnoreCase) != 0)
+						if (term.Length > 1 && String.Compare(term, 1, text, 0,
+							    Math.Max(term.Length, equalCompareLength),
+							    StringComparison.OrdinalIgnoreCase) != 0)
 							return false;
 					}
-					break;
+						break;
 					case '~':
-						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term.Substring(1).ToLower()))
+						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term[1..].ToLower()))
+						{
 							return false;
+						}
+
 						break;
 					default:
 						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
@@ -124,6 +131,7 @@ namespace ICSharpCode.ILSpyX.Search
 						break;
 				}
 			}
+
 			return true;
 		}
 
@@ -133,11 +141,13 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				return false;
 			}
+
 			var textLength = text.Length;
 			if (searchTerm.Length > textLength)
 			{
 				return false;
 			}
+
 			var i = 0;
 			for (int searchIndex = 0; searchIndex < searchTerm.Length;)
 			{
@@ -151,11 +161,14 @@ namespace ICSharpCode.ILSpyX.Search
 						i++;
 						break;
 					}
+
 					i++;
 				}
+
 				if (i == textLength)
 					return false;
 			}
+
 			return false;
 		}
 

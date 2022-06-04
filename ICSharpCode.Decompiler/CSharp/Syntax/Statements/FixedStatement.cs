@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class FixedStatement : Statement
 	{
-		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
+		public static readonly TokenRole FixedKeywordRole = new("fixed");
 
 		public CSharpTokenNode FixedToken {
 			get { return GetChildByRole(FixedKeywordRole); }
@@ -77,8 +77,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			FixedStatement o = other as FixedStatement;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is FixedStatement o && this.Type.DoMatch(o.Type, match) &&
+			       this.Variables.DoMatch(o.Variables, match) &&
+			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

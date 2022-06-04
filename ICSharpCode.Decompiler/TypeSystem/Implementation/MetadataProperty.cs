@@ -34,10 +34,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		readonly MetadataModule module;
 		readonly PropertyDefinitionHandle propertyHandle;
-		readonly IMethod getter;
-		readonly IMethod setter;
-		readonly string name;
-		readonly SymbolKind symbolKind;
 
 		// lazy-loaded:
 		volatile Accessibility cachedAccessiblity = InvalidAccessibility;
@@ -54,24 +50,98 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var prop = metadata.GetPropertyDefinition(handle);
 			var accessors = prop.GetAccessors();
-			getter = module.GetDefinition(accessors.Getter);
-			setter = module.GetDefinition(accessors.Setter);
-			name = metadata.GetString(prop.Name);
+			Getter = module.GetDefinition(accessors.Getter);
+			Setter = module.GetDefinition(accessors.Setter);
+			Name = metadata.GetString(prop.Name);
 			// Maybe we should defer the calculation of symbolKind?
-			if (DetermineIsIndexer(name))
+			if (DetermineIsIndexer(Name))
 			{
-				symbolKind = SymbolKind.Indexer;
+				SymbolKind = SymbolKind.Indexer;
 			}
-			else if (name.IndexOf('.') >= 0)
+			else if (Name.IndexOf('.') >= 0)
 			{
 				// explicit interface implementation
 				var interfaceProp = this.ExplicitlyImplementedInterfaceMembers.FirstOrDefault() as IProperty;
-				symbolKind = interfaceProp?.SymbolKind ?? SymbolKind.Property;
+				SymbolKind = interfaceProp?.SymbolKind ?? SymbolKind.Property;
 			}
 			else
 			{
-				symbolKind = SymbolKind.Property;
+				SymbolKind = SymbolKind.Property;
 			}
+		}
+
+		IMethod AnyAccessor => Getter ?? Setter;
+
+		public EntityHandle MetadataToken => propertyHandle;
+		public string Name { get; }
+
+		public bool CanGet => Getter != null;
+		public bool CanSet => Setter != null;
+
+		public IMethod Getter { get; }
+
+		public IMethod Setter { get; }
+
+		public bool IsIndexer => SymbolKind == SymbolKind.Indexer;
+		public SymbolKind SymbolKind { get; }
+
+		public bool IsExplicitInterfaceImplementation => AnyAccessor?.IsExplicitInterfaceImplementation ?? false;
+
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers =>
+			GetInterfaceMembersFromAccessor(AnyAccessor);
+
+		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;
+		public IType DeclaringType => AnyAccessor?.DeclaringType;
+		IMember IMember.MemberDefinition => this;
+		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
+
+		#region Attributes
+
+		public IEnumerable<IAttribute> GetAttributes()
+		{
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
+			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation)
+			{
+				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
+			}
+
+			// SpecialName
+			if ((propertyDef.Attributes & (PropertyAttributes.SpecialName | PropertyAttributes.RTSpecialName)) ==
+			    PropertyAttributes.SpecialName)
+			{
+				b.Add(KnownAttribute.SpecialName);
+			}
+
+			b.Add(propertyDef.GetCustomAttributes(), SymbolKind);
+			return b.Build();
+		}
+
+		#endregion
+
+		public bool IsStatic => AnyAccessor?.IsStatic ?? false;
+		public bool IsAbstract => AnyAccessor?.IsAbstract ?? false;
+		public bool IsSealed => AnyAccessor?.IsSealed ?? false;
+		public bool IsVirtual => AnyAccessor?.IsVirtual ?? false;
+		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
+		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
+
+		public IModule ParentModule => module;
+		public ICompilation Compilation => module.Compilation;
+
+		public string FullName => $"{DeclaringType?.FullName}.{Name}";
+		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
+		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
+
+		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			return Equals(obj);
+		}
+
+		public IMember Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedProperty.Create(this, substitution);
 		}
 
 		bool DetermineIsIndexer(string name)
@@ -86,20 +156,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return $"{MetadataTokens.GetToken(propertyHandle):X8} {DeclaringType?.ReflectionName}.{Name}";
 		}
 
-		public EntityHandle MetadataToken => propertyHandle;
-		public string Name => name;
+		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
+		{
+			if (method == null)
+				return EmptyList<IMember>.Instance;
+			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner)
+				.Where(m => m != null);
+		}
 
-		public bool CanGet => getter != null;
-		public bool CanSet => setter != null;
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataProperty p)
+			{
+				return propertyHandle == p.propertyHandle && module.PEFile == p.module.PEFile;
+			}
 
-		public IMethod Getter => getter;
-		public IMethod Setter => setter;
-		IMethod AnyAccessor => getter ?? setter;
+			return false;
+		}
 
-		public bool IsIndexer => symbolKind == SymbolKind.Indexer;
-		public SymbolKind SymbolKind => symbolKind;
+		public override int GetHashCode()
+		{
+			return 0x32b6a76c ^ module.PEFile.GetHashCode() ^ propertyHandle.GetHashCode();
+		}
 
 		#region Signature (ReturnType + Parameters)
+
 		public IReadOnlyList<IParameter> Parameters {
 			get {
 				var parameters = LazyInit.VolatileRead(ref this.parameters);
@@ -145,20 +226,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					var getter = module.metadata.GetMethodDefinition(accessors.Getter);
 					parameterHandles = getter.GetParameters();
 					nullableContext = getter.GetCustomAttributes().GetNullableContext(module.metadata)
-						?? declTypeDef?.NullableContext ?? Nullability.Oblivious;
+					                  ?? declTypeDef?.NullableContext ?? Nullability.Oblivious;
 				}
 				else if (!accessors.Setter.IsNil)
 				{
 					var setter = module.metadata.GetMethodDefinition(accessors.Setter);
 					parameterHandles = setter.GetParameters();
 					nullableContext = setter.GetCustomAttributes().GetNullableContext(module.metadata)
-						?? declTypeDef?.NullableContext ?? Nullability.Oblivious;
+					                  ?? declTypeDef?.NullableContext ?? Nullability.Oblivious;
 				}
 				else
 				{
 					parameterHandles = null;
 					nullableContext = declTypeDef?.NullableContext ?? Nullability.Oblivious;
 				}
+
 				// We call OptionsForEntity() for the declaring type, not the property itself,
 				// because the property's accessibilty isn't stored in metadata but computed.
 				// Otherwise we'd get infinite recursion, because computing the accessibility
@@ -176,49 +258,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				returnType = SpecialType.UnknownType;
 				parameters = Empty<IParameter>.Array;
 			}
+
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
-		#endregion
 
-		public bool IsExplicitInterfaceImplementation => AnyAccessor?.IsExplicitInterfaceImplementation ?? false;
-		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
-
-		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
-		{
-			if (method == null)
-				return EmptyList<IMember>.Instance;
-			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
-		}
-
-		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;
-		public IType DeclaringType => AnyAccessor?.DeclaringType;
-		IMember IMember.MemberDefinition => this;
-		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
-
-		#region Attributes
-		public IEnumerable<IAttribute> GetAttributes()
-		{
-			var b = new AttributeListBuilder(module);
-			var metadata = module.metadata;
-			var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
-			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation)
-			{
-				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
-			}
-
-			// SpecialName
-			if ((propertyDef.Attributes & (PropertyAttributes.SpecialName | PropertyAttributes.RTSpecialName)) == PropertyAttributes.SpecialName)
-			{
-				b.Add(KnownAttribute.SpecialName);
-			}
-
-			b.Add(propertyDef.GetCustomAttributes(), symbolKind);
-			return b.Build();
-		}
 		#endregion
 
 		#region Accessibility
+
 		public Accessibility Accessibility {
 			get {
 				var acc = cachedAccessiblity;
@@ -231,7 +279,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		Accessibility ComputeAccessibility()
 		{
-			if (IsOverride && (getter == null || setter == null))
+			if (IsOverride && (Getter == null || Setter == null))
 			{
 				// Overrides may override only one of the accessors, hence calculating the accessibility from
 				// the declared accessors is not sufficient. We need to "copy" accessibility from the baseMember.
@@ -243,7 +291,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						// "protected internal" (ProtectedOrInternal) accessibility is "reduced"
 						// to "protected" accessibility across assembly boundaries.
 						if (baseMember.Accessibility == Accessibility.ProtectedOrInternal
-							&& this.ParentModule?.PEFile != baseMember.ParentModule?.PEFile)
+						    && this.ParentModule?.PEFile != baseMember.ParentModule?.PEFile)
 						{
 							return Accessibility.Protected;
 						}
@@ -254,48 +302,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 				}
 			}
-			return AccessibilityExtensions.Union(
-				this.Getter?.Accessibility ?? Accessibility.None,
-				this.Setter?.Accessibility ?? Accessibility.None);
+
+			return (this.Getter?.Accessibility ?? Accessibility.None).Union(this.Setter?.Accessibility ??
+			                                                                Accessibility.None);
 		}
+
 		#endregion
-
-		public bool IsStatic => AnyAccessor?.IsStatic ?? false;
-		public bool IsAbstract => AnyAccessor?.IsAbstract ?? false;
-		public bool IsSealed => AnyAccessor?.IsSealed ?? false;
-		public bool IsVirtual => AnyAccessor?.IsVirtual ?? false;
-		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
-		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
-
-		public IModule ParentModule => module;
-		public ICompilation Compilation => module.Compilation;
-
-		public string FullName => $"{DeclaringType?.FullName}.{Name}";
-		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
-		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
-
-		public override bool Equals(object obj)
-		{
-			if (obj is MetadataProperty p)
-			{
-				return propertyHandle == p.propertyHandle && module.PEFile == p.module.PEFile;
-			}
-			return false;
-		}
-
-		public override int GetHashCode()
-		{
-			return 0x32b6a76c ^ module.PEFile.GetHashCode() ^ propertyHandle.GetHashCode();
-		}
-
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
-		{
-			return Equals(obj);
-		}
-
-		public IMember Specialize(TypeParameterSubstitution substitution)
-		{
-			return SpecializedProperty.Create(this, substitution);
-		}
 	}
 }

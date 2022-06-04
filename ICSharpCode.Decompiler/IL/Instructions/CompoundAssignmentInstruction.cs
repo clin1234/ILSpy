@@ -32,6 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This mode is used only for post-increment/decrement.
 		/// </summary>
 		EvaluatesToOldValue,
+
 		/// <summary>
 		/// The compound.assign instruction will evaluate to the new value.
 		/// This mode is used for compound assignments and pre-increment/decrement.
@@ -46,11 +47,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// and the compound.assign will implicitly load/store from/to that address.
 		/// </summary>
 		Address,
+
 		/// <summary>
 		/// The Target must be a call to a property getter,
 		/// and the compound.assign will implicitly call the corresponding property setter.
 		/// </summary>
 		Property,
+
 		/// <summary>
 		/// The target is a dynamic call.
 		/// </summary>
@@ -69,7 +72,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly CompoundTargetKind TargetKind;
 
-		public CompoundAssignmentInstruction(OpCode opCode, CompoundEvalMode evalMode, ILInstruction target, CompoundTargetKind targetKind, ILInstruction value)
+		public CompoundAssignmentInstruction(OpCode opCode, CompoundEvalMode evalMode, ILInstruction target,
+			CompoundTargetKind targetKind, ILInstruction value)
 			: base(opCode)
 		{
 			this.EvalMode = evalMode;
@@ -91,15 +95,15 @@ namespace ICSharpCode.Decompiler.IL
 			switch (TargetKind)
 			{
 				case CompoundTargetKind.Address:
-					Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+					Debug.Assert(target.ResultType is StackType.Ref or StackType.I);
 					break;
 				case CompoundTargetKind.Property:
-					Debug.Assert(target.OpCode == OpCode.Call || target.OpCode == OpCode.CallVirt);
-					var owner = ((CallInstruction)target).Method.AccessorOwner as IProperty;
-					Debug.Assert(owner != null && owner.CanSet);
+					Debug.Assert(target.OpCode is OpCode.Call or OpCode.CallVirt);
+					Debug.Assert(((CallInstruction)target).Method.AccessorOwner is IProperty { CanSet: true });
 					break;
 				case CompoundTargetKind.Dynamic:
-					Debug.Assert(target.OpCode == OpCode.DynamicGetMemberInstruction || target.OpCode == OpCode.DynamicGetIndexInstruction);
+					Debug.Assert(target.OpCode is OpCode.DynamicGetMemberInstruction
+						or OpCode.DynamicGetIndexInstruction);
 					break;
 			}
 		}
@@ -115,6 +119,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(".property");
 					break;
 			}
+
 			switch (EvalMode)
 			{
 				case CompoundEvalMode.EvaluatesToNewValue:
@@ -134,23 +139,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly bool CheckForOverflow;
 
-		/// <summary>
-		/// For integer operations that depend on the sign, specifies whether the operation
-		/// is signed or unsigned.
-		/// For instructions that produce the same result for either sign, returns Sign.None.
-		/// </summary>
-		public readonly Sign Sign;
-
 		public readonly StackType LeftInputType;
-		public readonly StackType RightInputType;
-		public StackType UnderlyingResultType { get; }
 
 		/// <summary>
 		/// The operator used by this assignment operator instruction.
 		/// </summary>
 		public readonly BinaryNumericOperator Operator;
 
-		public bool IsLifted { get; }
+		public readonly StackType RightInputType;
+
+		/// <summary>
+		/// For integer operations that depend on the sign, specifies whether the operation
+		/// is signed or unsigned.
+		/// For instructions that produce the same result for either sign, returns Sign.None.
+		/// </summary>
+		public readonly Sign Sign;
 
 		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target,
 			CompoundTargetKind targetKind, ILInstruction value, IType type, CompoundEvalMode evalMode)
@@ -166,14 +169,29 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsLifted = binary.IsLifted;
 			this.type = type;
 			this.AddILRange(binary);
-			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue ||
+			             Operator is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
 			Debug.Assert(this.ResultType == (IsLifted ? StackType.O : UnderlyingResultType));
 		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				var flags = InstructionFlags.SideEffect;
+				if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
+					flags |= InstructionFlags.MayThrow;
+				return flags;
+			}
+		}
+
+		public StackType UnderlyingResultType { get; }
+
+		public bool IsLifted { get; }
 
 		/// <summary>
 		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
 		/// </summary>
-		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, DecompilerSettings? settings)
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type,
+			DecompilerSettings? settings)
 		{
 			if (binary.IsLifted)
 			{
@@ -181,6 +199,7 @@ namespace ICSharpCode.Decompiler.IL
 					return false;
 				type = NullableType.GetUnderlyingType(type);
 			}
+
 			if (type.Kind == TypeKind.Unknown)
 			{
 				return false; // avoid introducing a potentially-incorrect compound assignment
@@ -219,11 +238,12 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				// "target.intptr *= 2;" is compiler error, but
 				// "target.intptr *= (nint)2;" works
-				if (settings != null && !settings.NativeIntegers)
+				if (settings is { NativeIntegers: false })
 				{
 					// But if native integers are not available, we cannot use compound assignment.
 					return false;
 				}
+
 				// The trick with casting the RHS to n(u)int doesn't work for shifts:
 				switch (binary.Operator)
 				{
@@ -232,6 +252,7 @@ namespace ICSharpCode.Decompiler.IL
 						return false;
 				}
 			}
+
 			if (binary.Sign != Sign.None)
 			{
 				if (type.IsCSharpSmallIntegerType())
@@ -247,6 +268,7 @@ namespace ICSharpCode.Decompiler.IL
 						return false;
 				}
 			}
+
 			// Can't transform if the RHS value would be need to be truncated for the LHS type.
 			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, null, binary.IsLifted))
 				return false;
@@ -256,18 +278,9 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = Target.Flags | Value.Flags | InstructionFlags.SideEffect;
-			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+			if (CheckForOverflow || Operator is BinaryNumericOperator.Div or BinaryNumericOperator.Rem)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				var flags = InstructionFlags.SideEffect;
-				if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
-					flags |= InstructionFlags.MayThrow;
-				return flags;
-			}
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -279,6 +292,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".ovf");
 			}
+
 			if (Sign == Sign.Unsigned)
 			{
 				output.Write(".unsigned");
@@ -287,12 +301,14 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".signed");
 			}
+
 			output.Write('.');
 			output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
 			if (IsLifted)
 			{
 				output.Write(".lifted");
 			}
+
 			base.WriteSuffix(output);
 			output.Write('(');
 			Target.WriteTo(output, options);
@@ -305,7 +321,6 @@ namespace ICSharpCode.Decompiler.IL
 	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
 	{
 		public readonly IMethod Method;
-		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
 
 		public UserDefinedCompoundAssign(IMethod method, CompoundEvalMode evalMode,
 			ILInstruction target, CompoundTargetKind targetKind, ILInstruction value)
@@ -313,15 +328,18 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Method = method;
 			Debug.Assert(Method.IsOperator || IsStringConcat(method));
-			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue ||
+			             Method.Name is "op_Increment" or "op_Decrement");
 		}
+
+		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
+
+		public override StackType ResultType => Method.ReturnType.GetStackType();
 
 		public static bool IsStringConcat(IMethod method)
 		{
 			return method.Name == "Concat" && method.IsStatic && method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
-
-		public override StackType ResultType => Method.ReturnType.GetStackType();
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -340,11 +358,6 @@ namespace ICSharpCode.Decompiler.IL
 
 	public partial class DynamicCompoundAssign : CompoundAssignmentInstruction
 	{
-		public ExpressionType Operation { get; }
-		public CSharpArgumentInfo TargetArgumentInfo { get; }
-		public CSharpArgumentInfo ValueArgumentInfo { get; }
-		public CSharpBinderFlags BinderFlags { get; }
-
 		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags,
 			ILInstruction target, CSharpArgumentInfo targetArgumentInfo,
 			ILInstruction value, CSharpArgumentInfo valueArgumentInfo,
@@ -359,6 +372,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.ValueArgumentInfo = valueArgumentInfo;
 		}
 
+		public ExpressionType Operation { get; }
+		public CSharpArgumentInfo TargetArgumentInfo { get; }
+		public CSharpArgumentInfo ValueArgumentInfo { get; }
+		public CSharpBinderFlags BinderFlags { get; }
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -367,28 +385,19 @@ namespace ICSharpCode.Decompiler.IL
 			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
 			base.WriteSuffix(output);
 			output.Write(' ');
-			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
+			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo),
+				(Value, ValueArgumentInfo));
 		}
 
 		internal static bool IsExpressionTypeSupported(ExpressionType type)
 		{
-			return type == ExpressionType.AddAssign
-				|| type == ExpressionType.AddAssignChecked
-				|| type == ExpressionType.AndAssign
-				|| type == ExpressionType.DivideAssign
-				|| type == ExpressionType.ExclusiveOrAssign
-				|| type == ExpressionType.LeftShiftAssign
-				|| type == ExpressionType.ModuloAssign
-				|| type == ExpressionType.MultiplyAssign
-				|| type == ExpressionType.MultiplyAssignChecked
-				|| type == ExpressionType.OrAssign
-				|| type == ExpressionType.PostDecrementAssign
-				|| type == ExpressionType.PostIncrementAssign
-				|| type == ExpressionType.PreDecrementAssign
-				|| type == ExpressionType.PreIncrementAssign
-				|| type == ExpressionType.RightShiftAssign
-				|| type == ExpressionType.SubtractAssign
-				|| type == ExpressionType.SubtractAssignChecked;
+			return type is ExpressionType.AddAssign or ExpressionType.AddAssignChecked or ExpressionType.AndAssign
+				or ExpressionType.DivideAssign or ExpressionType.ExclusiveOrAssign or ExpressionType.LeftShiftAssign
+				or ExpressionType.ModuloAssign or ExpressionType.MultiplyAssign or ExpressionType.MultiplyAssignChecked
+				or ExpressionType.OrAssign or ExpressionType.PostDecrementAssign or ExpressionType.PostIncrementAssign
+				or ExpressionType.PreDecrementAssign or ExpressionType.PreIncrementAssign
+				or ExpressionType.RightShiftAssign or ExpressionType.SubtractAssign
+				or ExpressionType.SubtractAssignChecked;
 		}
 
 		static CompoundEvalMode CompoundEvalModeFromOperation(ExpressionType op)
@@ -404,5 +413,3 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
-
-

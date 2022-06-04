@@ -16,9 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -32,9 +29,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var catchBlock in function.Descendants.OfType<TryCatchHandler>())
 			{
 				if (catchBlock.Filter is BlockContainer container
-					&& MatchCatchWhenEntryPoint(catchBlock.Variable, container, container.EntryPoint,
-						out var exceptionType, out var exceptionSlot, out var whenConditionBlock)
-					&& exceptionType.GetStackType() == catchBlock.Variable.StackType)
+				    && MatchCatchWhenEntryPoint(catchBlock.Variable, container, container.EntryPoint,
+					    out var exceptionType, out var exceptionSlot, out var whenConditionBlock)
+				    && exceptionType.GetStackType() == catchBlock.Variable.StackType)
 				{
 					// set exceptionType
 					catchBlock.Variable.Type = exceptionType;
@@ -54,7 +51,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// stloc temp(isinst exceptionType(ldloc exceptionVar))
 						// if (comp(ldloc temp != ldnull)) br whenConditionBlock
 						// br falseBlock
-						context.Step($"Detected catch-when for {catchBlock.Variable.Name} (extra store)", instructions[0]);
+						context.Step($"Detected catch-when for {catchBlock.Variable.Name} (extra store)",
+							instructions[0]);
 						((StLoc)instructions[0]).Value = exceptionSlot;
 						instructions[1].ReplaceWith(new Branch(whenConditionBlock));
 						instructions.RemoveAt(2);
@@ -108,11 +106,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// We are only interested in store "statements" copying the exception variable
 				// without modifying it.
 				var statement = LocalFunctionDecompiler.GetStatement(load);
-				if (!(statement is StLoc stloc))
+				if (statement is not StLoc stloc)
 				{
 					i++;
 					continue;
 				}
+
 				// simple copy case:
 				// stloc b(ldloc a)
 				if (stloc.Value == load)
@@ -142,6 +141,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							continue;
 						load.ReplaceWith(new LdLoc(exceptionVariable).WithILRange(load));
 					}
+
 					if (store.Variable.LoadCount == 0 && store.Parent is Block block)
 					{
 						block.Instructions.RemoveAt(store.ChildIndex);
@@ -152,6 +152,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
+
 			context.StepEndGroup(keepIfEmpty: false);
 		}
 
@@ -162,7 +163,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br falseBlock
 		/// }
 		/// </summary>
-		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
+		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint,
+			out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
 		{
 			exceptionType = null;
 			exceptionSlot = null;
@@ -175,7 +177,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// if (comp(ldloc temp != ldnull)) br whenConditionBlock
 				// br falseBlock
 				if (!entryPoint.Instructions[0].MatchStLoc(out var temp, out var isinst) ||
-					temp.Kind != VariableKind.StackSlot || !isinst.MatchIsInst(out exceptionSlot, out exceptionType))
+				    temp.Kind != VariableKind.StackSlot || !isinst.MatchIsInst(out exceptionSlot, out exceptionType))
 					return false;
 				if (!exceptionSlot.MatchLdLoc(exceptionVar))
 					return false;
@@ -183,7 +185,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!condition.MatchCompNotEquals(out var left, out var right))
 					return false;
-				if (!entryPoint.Instructions[2].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
+				if (!entryPoint.Instructions[2].MatchBranch(out var falseBlock) ||
+				    !MatchFalseBlock(container, falseBlock, out ILVariable _, out Block _))
 					return false;
 				if ((left.MatchLdNull() && right.MatchLdLoc(temp)) || (right.MatchLdNull() && left.MatchLdLoc(temp)))
 				{
@@ -198,7 +201,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!condition.MatchCompNotEquals(out var left, out var right))
 					return false;
-				if (!entryPoint.Instructions[1].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
+				if (!entryPoint.Instructions[1].MatchBranch(out var falseBlock) ||
+				    !MatchFalseBlock(container, falseBlock, out ILVariable _, out Block _))
 					return false;
 				if (!left.MatchIsInst(out exceptionSlot, out exceptionType))
 					return false;
@@ -209,6 +213,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return branch.MatchBranch(out whenConditionBlock);
 				}
 			}
+
 			return false;
 		}
 
@@ -225,8 +230,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (falseBlock.IncomingEdgeCount != 1 || falseBlock.Instructions.Count != 2)
 				return false;
 			return falseBlock.Instructions[0].MatchStLoc(out returnVar, out var zero) &&
-				zero.MatchLdcI4(0) && falseBlock.Instructions[1].MatchBranch(out exitBlock) &&
-				MatchExitBlock(container, exitBlock, returnVar);
+			       zero.MatchLdcI4(0) && falseBlock.Instructions[1].MatchBranch(out exitBlock) &&
+			       MatchExitBlock(container, exitBlock, returnVar);
 		}
 
 		/// <summary>
@@ -239,7 +244,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (exitBlock.IncomingEdgeCount != 2 || exitBlock.Instructions.Count != 1)
 				return false;
 			return exitBlock.Instructions[0].MatchLeave(container, out var value) &&
-				value.MatchLdLoc(returnVar);
+			       value.MatchLdLoc(returnVar);
 		}
 	}
 }

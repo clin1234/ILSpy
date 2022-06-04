@@ -27,10 +27,81 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public static class InheritanceHelper
 	{
+		#region GetDerivedMember
+
+		/// <summary>
+		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
+		/// </summary>
+		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
+		{
+			ArgumentNullException.ThrowIfNull(baseMember);
+			ArgumentNullException.ThrowIfNull(derivedType);
+
+			if (baseMember.Compilation != derivedType.Compilation)
+				throw new ArgumentException("baseMember and derivedType must be from the same compilation");
+
+			baseMember = baseMember.MemberDefinition;
+			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
+			if (baseMember is IMethod method)
+			{
+				foreach (IMethod derivedMethod in derivedType.Methods)
+				{
+					if (derivedMethod.Name == method.Name && derivedMethod.Parameters.Count == method.Parameters.Count)
+					{
+						if (derivedMethod.TypeParameters.Count == method.TypeParameters.Count)
+						{
+							// The method could override the base method:
+							if (GetBaseMembers(derivedMethod, includeInterfaces)
+							    .Any(m => m.MemberDefinition == baseMember))
+								return derivedMethod;
+						}
+					}
+				}
+			}
+
+			if (baseMember is IProperty property)
+			{
+				foreach (IProperty derivedProperty in derivedType.Properties)
+				{
+					if (derivedProperty.Name == property.Name &&
+					    derivedProperty.Parameters.Count == property.Parameters.Count)
+					{
+						// The property could override the base property:
+						if (GetBaseMembers(derivedProperty, includeInterfaces)
+						    .Any(m => m.MemberDefinition == baseMember))
+							return derivedProperty;
+					}
+				}
+			}
+
+			if (baseMember is IEvent)
+			{
+				foreach (IEvent derivedEvent in derivedType.Events)
+				{
+					if (derivedEvent.Name == baseMember.Name)
+						return derivedEvent;
+				}
+			}
+
+			if (baseMember is IField)
+			{
+				foreach (IField derivedField in derivedType.Fields)
+				{
+					if (derivedField.Name == baseMember.Name)
+						return derivedField;
+				}
+			}
+
+			return null;
+		}
+
+		#endregion
+
 		// TODO: maybe these should be extension methods?
 		// or even part of the interface itself? (would allow for easy caching)
 
 		#region GetBaseMember
+
 		/// <summary>
 		/// Gets the base member that has the same signature.
 		/// </summary>
@@ -47,12 +118,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </returns>
 		public static IEnumerable<IMember> GetBaseMembers(IMember member, bool includeImplementedInterfaces)
 		{
-			if (member == null)
-				throw new ArgumentNullException(nameof(member));
+			ArgumentNullException.ThrowIfNull(member);
 
 			if (includeImplementedInterfaces)
 			{
-				if (member.IsExplicitInterfaceImplementation && member.ExplicitlyImplementedInterfaceMembers.Count() == 1)
+				if (member.IsExplicitInterfaceImplementation &&
+				    member.ExplicitlyImplementedInterfaceMembers.Count() == 1)
 				{
 					// C#-style explicit interface implementation
 					member = member.ExplicitlyImplementedInterfaceMembers.First();
@@ -79,6 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				allBaseTypes = member.DeclaringTypeDefinition.GetNonInterfaceBaseTypes();
 			}
+
 			foreach (IType baseType in allBaseTypes.Reverse())
 			{
 				if (baseType == member.DeclaringTypeDefinition)
@@ -87,12 +159,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				IEnumerable<IMember> baseMembers;
 				if (member.SymbolKind == SymbolKind.Accessor)
 				{
-					baseMembers = baseType.GetAccessors(m => m.Name == member.Name && m.Accessibility > Accessibility.Private, GetMemberOptions.IgnoreInheritedMembers);
+					baseMembers =
+						baseType.GetAccessors(m => m.Name == member.Name && m.Accessibility > Accessibility.Private,
+							GetMemberOptions.IgnoreInheritedMembers);
 				}
 				else
 				{
-					baseMembers = baseType.GetMembers(m => m.Name == member.Name && m.Accessibility > Accessibility.Private, GetMemberOptions.IgnoreInheritedMembers);
+					baseMembers =
+						baseType.GetMembers(m => m.Name == member.Name && m.Accessibility > Accessibility.Private,
+							GetMemberOptions.IgnoreInheritedMembers);
 				}
+
 				foreach (IMember baseMember in baseMembers)
 				{
 					System.Diagnostics.Debug.Assert(baseMember.Accessibility != Accessibility.Private);
@@ -103,74 +180,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 		}
-		#endregion
 
-		#region GetDerivedMember
-		/// <summary>
-		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
-		/// </summary>
-		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
-		{
-			if (baseMember == null)
-				throw new ArgumentNullException(nameof(baseMember));
-			if (derivedType == null)
-				throw new ArgumentNullException(nameof(derivedType));
-
-			if (baseMember.Compilation != derivedType.Compilation)
-				throw new ArgumentException("baseMember and derivedType must be from the same compilation");
-
-			baseMember = baseMember.MemberDefinition;
-			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
-			IMethod method = baseMember as IMethod;
-			if (method != null)
-			{
-				foreach (IMethod derivedMethod in derivedType.Methods)
-				{
-					if (derivedMethod.Name == method.Name && derivedMethod.Parameters.Count == method.Parameters.Count)
-					{
-						if (derivedMethod.TypeParameters.Count == method.TypeParameters.Count)
-						{
-							// The method could override the base method:
-							if (GetBaseMembers(derivedMethod, includeInterfaces).Any(m => m.MemberDefinition == baseMember))
-								return derivedMethod;
-						}
-					}
-				}
-			}
-			IProperty property = baseMember as IProperty;
-			if (property != null)
-			{
-				foreach (IProperty derivedProperty in derivedType.Properties)
-				{
-					if (derivedProperty.Name == property.Name && derivedProperty.Parameters.Count == property.Parameters.Count)
-					{
-						// The property could override the base property:
-						if (GetBaseMembers(derivedProperty, includeInterfaces).Any(m => m.MemberDefinition == baseMember))
-							return derivedProperty;
-					}
-				}
-			}
-			if (baseMember is IEvent)
-			{
-				foreach (IEvent derivedEvent in derivedType.Events)
-				{
-					if (derivedEvent.Name == baseMember.Name)
-						return derivedEvent;
-				}
-			}
-			if (baseMember is IField)
-			{
-				foreach (IField derivedField in derivedType.Fields)
-				{
-					if (derivedField.Name == baseMember.Name)
-						return derivedField;
-				}
-			}
-			return null;
-		}
 		#endregion
 
 		#region Attributes
+
 		internal static IEnumerable<IAttribute> GetAttributes(ITypeDefinition typeDef)
 		{
 			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
@@ -187,7 +201,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		internal static IEnumerable<IAttribute> GetAttributes(IMember member)
 		{
-			HashSet<IMember> visitedMembers = new HashSet<IMember>();
+			HashSet<IMember> visitedMembers = new();
 			do
 			{
 				member = member.MemberDefinition; // it's sufficient to look at the definitions
@@ -196,12 +210,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					// abort if we seem to be in an infinite loop (cyclic inheritance)
 					break;
 				}
+
 				foreach (var attr in member.GetAttributes())
 				{
 					yield return attr;
 				}
-			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
+			} while (member.IsOverride && (member = GetBaseMember(member)) != null);
 		}
+
 		#endregion
 	}
 }

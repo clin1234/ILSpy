@@ -50,26 +50,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			CSharpOperators? operators = (CSharpOperators?)cache.GetShared(typeof(CSharpOperators));
 			if (operators == null)
 			{
-				operators = (CSharpOperators)cache.GetOrAddShared(typeof(CSharpOperators), new CSharpOperators(compilation));
+				operators = (CSharpOperators)cache.GetOrAddShared(typeof(CSharpOperators),
+					new CSharpOperators(compilation));
 			}
+
 			return operators;
 		}
 
 		#region class OperatorMethod
+
 		OperatorMethod[] Lift(params OperatorMethod[] methods)
 		{
-			List<OperatorMethod> result = new List<OperatorMethod>(methods);
+			List<OperatorMethod> result = new(methods);
 			foreach (OperatorMethod method in methods)
 			{
 				OperatorMethod? lifted = method.Lift(this);
 				if (lifted != null)
 					result.Add(lifted);
 			}
+
 			return result.ToArray();
 		}
 
-		IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
-		IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
+		IParameter[] normalParameters = new IParameter[TypeCode.String + 1 - TypeCode.Object];
+		IParameter[] nullableParameters = new IParameter[TypeCode.Decimal + 1 - TypeCode.Boolean];
 
 		void InitParameterArrays()
 		{
@@ -77,6 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				normalParameters[i - TypeCode.Object] = new DefaultParameter(compilation.FindType(i), string.Empty);
 			}
+
 			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++)
 			{
 				IType type = NullableType.Create(compilation, compilation.FindType(i));
@@ -96,17 +101,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (normalParameter == normalParameters[i - TypeCode.Object])
 					return nullableParameters[i - TypeCode.Boolean];
 			}
+
 			throw new ArgumentException();
 		}
 
 		internal class OperatorMethod : IParameterizedMember
 		{
-			readonly ICompilation compilation;
-			internal readonly List<IParameter> parameters = new List<IParameter>();
+			internal readonly List<IParameter> parameters = new();
 
 			protected OperatorMethod(ICompilation compilation)
 			{
-				this.compilation = compilation;
+				this.Compilation = compilation;
 			}
 
 			public IReadOnlyList<IParameter> Parameters {
@@ -115,14 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public IType ReturnType { get; internal set; } = null!; // initialized by derived class ctor
 
-			public ICompilation Compilation {
-				get { return compilation; }
-			}
-
-			public virtual OperatorMethod? Lift(CSharpOperators operators)
-			{
-				return null;
-			}
+			public ICompilation Compilation { get; }
 
 			public System.Reflection.Metadata.EntityHandle MetadataToken => default;
 
@@ -182,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			IModule IEntity.ParentModule {
-				get { return compilation.MainModule; }
+				get { return Compilation.MainModule; }
 			}
 
 			TypeParameterSubstitution IMember.Substitution {
@@ -214,9 +212,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return "operator"; }
 			}
 
+			bool IMember.Equals(IMember? obj, TypeVisitor? typeNormalization)
+			{
+				return this == obj;
+			}
+
+			public virtual OperatorMethod? Lift(CSharpOperators operators)
+			{
+				return null;
+			}
+
 			public override string ToString()
 			{
-				StringBuilder b = new StringBuilder();
+				StringBuilder b = new();
 				b.Append(ReturnType + " operator(");
 				for (int i = 0; i < parameters.Count; i++)
 				{
@@ -224,29 +232,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						b.Append(", ");
 					b.Append(parameters[i].Type);
 				}
+
 				b.Append(')');
 				return b.ToString();
 			}
-
-			bool IMember.Equals(IMember? obj, TypeVisitor? typeNormalization)
-			{
-				return this == obj;
-			}
 		}
+
 		#endregion
 
 		#region Unary operator class definitions
+
 		internal class UnaryOperatorMethod : OperatorMethod
 		{
+			public UnaryOperatorMethod(ICompilation compilation) : base(compilation)
+			{
+			}
+
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 
 			public virtual object? Invoke(CSharpResolver resolver, object? input)
 			{
 				throw new NotSupportedException();
-			}
-
-			public UnaryOperatorMethod(ICompilation compilation) : base(compilation)
-			{
 			}
 		}
 
@@ -284,7 +290,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			UnaryOperatorMethod baseMethod;
 
-			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(operators.compilation)
+			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(
+				operators.compilation)
 			{
 				this.baseMethod = baseMethod;
 				this.ReturnType = NullableType.Create(baseMethod.Compilation, baseMethod.ReturnType);
@@ -294,9 +301,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
+
 		#endregion
 
 		#region Unary operator definitions
+
 		// C# 4.0 spec: §7.7.1 Unary plus operator
 		OperatorMethod[]? unaryPlusOperators;
 
@@ -407,18 +416,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
+
 		#endregion
 
 		#region Binary operator class definitions
+
 		internal class BinaryOperatorMethod : OperatorMethod
 		{
+			public BinaryOperatorMethod(ICompilation compilation) : base(compilation) { }
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
+
 			public virtual object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				throw new NotSupportedException();
 			}
-
-			public BinaryOperatorMethod(ICompilation compilation) : base(compilation) { }
 		}
 
 		sealed class LambdaBinaryOperatorMethod<T1, T2> : BinaryOperatorMethod
@@ -431,7 +442,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 			}
 
-			public LambdaBinaryOperatorMethod(CSharpOperators operators, Func<T1, T2, T1> checkedFunc, Func<T1, T2, T1> uncheckedFunc)
+			public LambdaBinaryOperatorMethod(CSharpOperators operators, Func<T1, T2, T1> checkedFunc,
+				Func<T1, T2, T1> uncheckedFunc)
 				: base(operators.compilation)
 			{
 				TypeCode t1 = Type.GetTypeCode(typeof(T1));
@@ -452,7 +464,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return null;
 				Func<T1, T2, T1> func = resolver.CheckForOverflow ? checkedFunc : uncheckedFunc;
 				return func((T1)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T1)), lhs),
-							(T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
+					(T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
 			}
 
 			public override OperatorMethod Lift(CSharpOperators operators)
@@ -477,9 +489,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
+
 		#endregion
 
 		#region Arithmetic operators
+
 		// C# 4.0 spec: §7.8.1 Multiplication operator
 
 		OperatorMethod[]? multiplicationOperators;
@@ -494,13 +508,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref multiplicationOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a * b), (a, b) => unchecked(a * b))
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b)),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a * b),
+							(a, b) => unchecked(a * b))
 					));
 				}
 			}
@@ -519,13 +540,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref divisionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a / b), (a, b) => unchecked(a / b))
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b)),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a / b),
+							(a, b) => unchecked(a / b))
 					));
 				}
 			}
@@ -544,13 +572,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref remainderOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a % b), (a, b) => unchecked(a % b))
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b)),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a % b),
+							(a, b) => unchecked(a % b))
 					));
 				}
 			}
@@ -569,13 +604,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref additionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a + b), (a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a + b),
+							(a, b) => unchecked(a + b)),
 						new StringConcatenation(this, TypeCode.String, TypeCode.String),
 						new StringConcatenation(this, TypeCode.String, TypeCode.Object),
 						new StringConcatenation(this, TypeCode.Object, TypeCode.String)
@@ -587,20 +629,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		// not in this list, but handled manually: enum addition, delegate combination
 		sealed class StringConcatenation : BinaryOperatorMethod
 		{
-			bool canEvaluateAtCompileTime;
-
 			public StringConcatenation(CSharpOperators operators, TypeCode p1, TypeCode p2)
 				: base(operators.compilation)
 			{
-				this.canEvaluateAtCompileTime = p1 == TypeCode.String && p2 == TypeCode.String;
+				this.CanEvaluateAtCompileTime = p1 == TypeCode.String && p2 == TypeCode.String;
 				this.ReturnType = operators.compilation.FindType(KnownTypeCode.String);
 				parameters.Add(operators.MakeParameter(p1));
 				parameters.Add(operators.MakeParameter(p2));
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return canEvaluateAtCompileTime; }
-			}
+			public override bool CanEvaluateAtCompileTime { get; }
 
 			public override object? Invoke(CSharpResolver? resolver, object? lhs, object? rhs)
 			{
@@ -621,13 +659,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref subtractionOperators, Lift(
-						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b)),
-						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a - b), (a, b) => unchecked(a - b))
+						new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<uint, uint>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<long, long>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<ulong, ulong>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<float, float>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<double, double>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b)),
+						new LambdaBinaryOperatorMethod<decimal, decimal>(this, (a, b) => checked(a - b),
+							(a, b) => unchecked(a - b))
 					));
 				}
 			}
@@ -675,13 +720,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
+
 		#endregion
 
 		#region Equality operators
+
 		sealed class EqualityOperatorMethod : BinaryOperatorMethod
 		{
-			public readonly TypeCode Type;
 			public readonly bool Negate;
+			public readonly TypeCode Type;
 
 			public EqualityOperatorMethod(CSharpOperators operators, TypeCode type, bool negate)
 				: base(operators.compilation)
@@ -716,14 +763,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 				else
 				{
-					equal = object.Equals(lhs, rhs);
+					equal = Equals(lhs, rhs);
 				}
+
 				return equal ^ Negate;
 			}
 
 			public override OperatorMethod? Lift(CSharpOperators operators)
 			{
-				if (Type == TypeCode.Object || Type == TypeCode.String)
+				if (Type is TypeCode.Object or TypeCode.String)
 					return null;
 				else
 					return new LiftedEqualityOperatorMethod(operators, this);
@@ -748,13 +796,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return baseMethod.CanEvaluateAtCompileTime; }
 			}
 
+			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IType NonLiftedReturnType => baseMethod.ReturnType;
+
 			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
 			}
-
-			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
-			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 
 		// C# 4.0 spec: §7.10 Relational and type-testing operators
@@ -839,9 +887,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
+
 		#endregion
 
 		#region Relational Operators
+
 		sealed class RelationalOperatorMethod<T1, T2> : BinaryOperatorMethod
 		{
 			readonly Func<T1, T2, bool> func;
@@ -864,13 +914,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (lhs == null || rhs == null)
 					return null;
 				return func((T1)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T1)), lhs),
-							(T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
+					(T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
 			}
 
 			public override OperatorMethod Lift(CSharpOperators operators)
 			{
-				var lifted = new LiftedBinaryOperatorMethod(operators, this);
-				lifted.ReturnType = this.ReturnType; // don't lift the return type for relational operators
+				var lifted = new LiftedBinaryOperatorMethod(operators, this) {
+					ReturnType = this.ReturnType // don't lift the return type for relational operators
+				};
 				return lifted;
 			}
 		}
@@ -970,9 +1021,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
+
 		#endregion
 
 		#region Bitwise operators
+
 		OperatorMethod[]? logicalAndOperators;
 
 		public OperatorMethod[] LogicalAndOperators {
@@ -985,8 +1038,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref logicalAndOperators, new OperatorMethod[] {
-												 new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a & b)
-											 });
+						new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a & b)
+					});
 				}
 			}
 		}
@@ -1027,8 +1080,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					return LazyInit.GetOrSet(ref logicalOrOperators, new OperatorMethod[] {
-												 new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a | b)
-											 });
+						new LambdaBinaryOperatorMethod<bool, bool>(this, (a, b) => a | b)
+					});
 				}
 			}
 		}
@@ -1080,9 +1133,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
+
 		#endregion
 
 		#region User-defined operators
+
 		public static IMethod? LiftUserDefinedOperator(IMethod m)
 		{
 			if (IsComparisonOperator(m))
@@ -1095,18 +1150,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (!NullableType.IsNonNullableValueType(m.ReturnType))
 					return null; // cannot lift this operator
 			}
+
 			for (int i = 0; i < m.Parameters.Count; i++)
 			{
 				if (!NullableType.IsNonNullableValueType(m.Parameters[i].Type))
 					return null; // cannot lift this operator
 			}
+
 			return new LiftedUserDefinedOperator(m);
 		}
 
 		internal static bool IsComparisonOperator(IMethod m)
 		{
 			return m.IsOperator && m.Parameters.Count == 2
-				&& (OperatorDeclaration.GetOperatorType(m.Name)?.IsComparisonOperator() ?? false);
+			                    && (OperatorDeclaration.GetOperatorType(m.Name)?.IsComparisonOperator() ?? false);
 		}
 
 		sealed class LiftedUserDefinedOperator : SpecializedMethod, ILiftedOperator
@@ -1125,7 +1182,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (IsComparisonOperator(nonLiftedMethod))
 					this.ReturnType = nonLiftedMethod.ReturnType;
 				else
-					this.ReturnType = NullableType.Create(compilation, nonLiftedMethod.ReturnType.AcceptVisitor(substitution));
+					this.ReturnType = NullableType.Create(compilation,
+						nonLiftedMethod.ReturnType.AcceptVisitor(substitution));
 			}
 
 			public IReadOnlyList<IParameter> NonLiftedParameters => nonLiftedOperator.Parameters;
@@ -1133,8 +1191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override bool Equals(object? obj)
 			{
-				LiftedUserDefinedOperator? op = obj as LiftedUserDefinedOperator;
-				return op != null && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
+				return obj is LiftedUserDefinedOperator op && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
 			}
 
 			public override int GetHashCode()
@@ -1142,6 +1199,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return nonLiftedOperator.GetHashCode() ^ 0x7191254;
 			}
 		}
+
 		#endregion
 	}
 

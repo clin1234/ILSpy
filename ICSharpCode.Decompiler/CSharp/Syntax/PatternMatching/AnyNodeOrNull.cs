@@ -33,27 +33,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <remarks>Does not match null nodes.</remarks>
 	public class AnyNodeOrNull : Pattern
 	{
-		readonly string groupName;
-
-		public string GroupName {
-			get { return groupName; }
-		}
-
 		public AnyNodeOrNull(string groupName = null)
 		{
-			this.groupName = groupName;
+			this.GroupName = groupName;
 		}
+
+		public string GroupName { get; }
 
 		public override bool DoMatch(INode other, Match match)
 		{
 			if (other == null)
 			{
-				match.AddNull(this.groupName);
+				match.AddNull(this.GroupName);
 			}
 			else
 			{
-				match.Add(this.groupName, other);
+				match.Add(this.GroupName, other);
 			}
+
 			return true;
 		}
 	}

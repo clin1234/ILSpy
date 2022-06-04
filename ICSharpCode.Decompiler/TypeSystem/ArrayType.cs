@@ -29,50 +29,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public sealed class ArrayType : TypeWithElementType, ICompilationProvider
 	{
-		readonly int dimensions;
-		readonly ICompilation compilation;
-		readonly Nullability nullability;
-
-		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1, Nullability nullability = Nullability.Oblivious) : base(elementType)
+		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1,
+			Nullability nullability = Nullability.Oblivious) : base(elementType)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
 			if (dimensions <= 0)
 				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
-			this.compilation = compilation;
-			this.dimensions = dimensions;
-			this.nullability = nullability;
+			this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+			this.Dimensions = dimensions;
+			this.Nullability = nullability;
 
-			ICompilationProvider p = elementType as ICompilationProvider;
-			if (p != null && p.Compilation != compilation)
-				throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
+			if (elementType is ICompilationProvider p && p.Compilation != compilation)
+				throw new InvalidOperationException(
+					"Cannot create an array type using a different compilation from the element type.");
 		}
 
 		public override TypeKind Kind {
 			get { return TypeKind.Array; }
 		}
 
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
+		public int Dimensions { get; }
 
-		public int Dimensions {
-			get { return dimensions; }
-		}
-
-		public override Nullability Nullability => nullability;
-
-		public override IType ChangeNullability(Nullability nullability)
-		{
-			if (nullability == this.nullability)
-				return this;
-			else
-				return new ArrayType(compilation, elementType, dimensions, nullability);
-		}
+		public override Nullability Nullability { get; }
 
 		public override string NameSuffix {
 			get {
-				return "[" + new string(',', dimensions - 1) + "]";
+				return "[" + new string(',', Dimensions - 1) + "]";
 			}
 		}
 
@@ -80,81 +61,91 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return true; }
 		}
 
-		public override int GetHashCode()
-		{
-			return unchecked(elementType.GetHashCode() * 71681 + dimensions);
-		}
-
-		public override bool Equals(IType other)
-		{
-			ArrayType a = other as ArrayType;
-			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;
-		}
-
-		public override string ToString()
-		{
-			switch (nullability)
-			{
-				case Nullability.Nullable:
-					return elementType.ToString() + NameSuffix + "?";
-				case Nullability.NotNullable:
-					return elementType.ToString() + NameSuffix + "!";
-				default:
-					return elementType.ToString() + NameSuffix;
-			}
-		}
-
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
-				List<IType> baseTypes = new List<IType>();
-				IType t = compilation.FindType(KnownTypeCode.Array);
+				List<IType> baseTypes = new();
+				IType t = Compilation.FindType(KnownTypeCode.Array);
 				if (t.Kind != TypeKind.Unknown)
 					baseTypes.Add(t);
-				if (dimensions == 1 && elementType.Kind != TypeKind.Pointer)
+				if (Dimensions == 1 && elementType.Kind != TypeKind.Pointer)
 				{
 					// single-dimensional arrays implement IList<T>
-					ITypeDefinition def = compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
-					if (def != null)
+					if (Compilation.FindType(KnownTypeCode.IListOfT) is ITypeDefinition def)
 						baseTypes.Add(new ParameterizedType(def, new[] { elementType }));
 					// And in .NET 4.5 they also implement IReadOnlyList<T>
-					def = compilation.FindType(KnownTypeCode.IReadOnlyListOfT) as ITypeDefinition;
+					def = Compilation.FindType(KnownTypeCode.IReadOnlyListOfT) as ITypeDefinition;
 					if (def != null)
 						baseTypes.Add(new ParameterizedType(def, new[] { elementType }));
 				}
+
 				return baseTypes;
 			}
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public ICompilation Compilation { get; }
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == this.Nullability)
+				return this;
+			else
+				return new ArrayType(Compilation, elementType, Dimensions, nullability);
+		}
+
+		public override int GetHashCode()
+		{
+			return unchecked(elementType.GetHashCode() * 71681 + Dimensions);
+		}
+
+		public override bool Equals(IType other)
+		{
+			return other is ArrayType a && elementType.Equals(a.elementType) && a.Dimensions == Dimensions &&
+			       a.Nullability == Nullability;
+		}
+
+		public override string ToString()
+		{
+			return Nullability switch {
+				Nullability.Nullable => elementType.ToString() + NameSuffix + "?",
+				Nullability.NotNullable => elementType.ToString() + NameSuffix + "!",
+				_ => elementType.ToString() + NameSuffix
+			};
+		}
+
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments,
+			Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IProperty>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetProperties(filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetProperties(filter, options);
 		}
 
 		// NestedTypes, Events, Fields: System.Array doesn't have any; so we can use the AbstractType default implementation
@@ -171,53 +162,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (e == elementType)
 				return this;
 			else
-				return new ArrayType(compilation, e, dimensions, nullability);
+				return new ArrayType(Compilation, e, Dimensions, Nullability);
 		}
 	}
 
 	[Serializable]
 	public sealed class ArrayTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference elementType;
-		readonly int dimensions;
-
 		public ArrayTypeReference(ITypeReference elementType, int dimensions = 1)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
 			if (dimensions <= 0)
 				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
-			this.elementType = elementType;
-			this.dimensions = dimensions;
+			this.ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
+			this.Dimensions = dimensions;
 		}
 
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
+		public ITypeReference ElementType { get; }
 
-		public int Dimensions {
-			get { return dimensions; }
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return new ArrayType(context.Compilation, elementType.Resolve(context), dimensions);
-		}
-
-		public override string ToString()
-		{
-			return elementType.ToString() + "[" + new string(',', dimensions - 1) + "]";
-		}
+		public int Dimensions { get; }
 
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return elementType.GetHashCode() ^ dimensions;
+			return ElementType.GetHashCode() ^ Dimensions;
 		}
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ArrayTypeReference o = other as ArrayTypeReference;
-			return o != null && elementType == o.elementType && dimensions == o.dimensions;
+			return other is ArrayTypeReference o && ElementType == o.ElementType && Dimensions == o.Dimensions;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return new ArrayType(context.Compilation, ElementType.Resolve(context), Dimensions);
+		}
+
+		public override string ToString()
+		{
+			return ElementType.ToString() + "[" + new string(',', Dimensions - 1) + "]";
 		}
 	}
 }

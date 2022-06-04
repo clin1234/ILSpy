@@ -49,8 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			PointerType a = other as PointerType;
-			return a != null && elementType.Equals(a.elementType);
+			return other is PointerType a && elementType.Equals(a.elementType);
 		}
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
@@ -71,38 +70,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class PointerTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference elementType;
-
 		public PointerTypeReference(ITypeReference elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			this.elementType = elementType;
+			this.ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return new PointerType(elementType.Resolve(context));
-		}
-
-		public override string ToString()
-		{
-			return elementType.ToString() + "*";
-		}
+		public ITypeReference ElementType { get; }
 
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return elementType.GetHashCode() ^ 91725812;
+			return ElementType.GetHashCode() ^ 91725812;
 		}
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			PointerTypeReference o = other as PointerTypeReference;
-			return o != null && this.elementType == o.elementType;
+			return other is PointerTypeReference o && this.ElementType == o.ElementType;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return new PointerType(ElementType.Resolve(context));
+		}
+
+		public override string ToString()
+		{
+			return ElementType.ToString() + "*";
 		}
 	}
 }

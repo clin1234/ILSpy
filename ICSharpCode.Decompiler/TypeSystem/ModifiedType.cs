@@ -27,18 +27,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class ModifiedType : TypeWithElementType, IType
 	{
 		readonly TypeKind kind;
-		readonly IType modifier;
 
 		public ModifiedType(IType modifier, IType unmodifiedType, bool isRequired) : base(unmodifiedType)
 		{
 			this.kind = isRequired ? TypeKind.ModReq : TypeKind.ModOpt;
-			this.modifier = modifier ?? throw new ArgumentNullException(nameof(modifier));
+			this.Modifier = modifier ?? throw new ArgumentNullException(nameof(modifier));
 		}
 
-		public IType Modifier => modifier;
-		public override TypeKind Kind => kind;
+		public IType Modifier { get; }
 
-		public override string NameSuffix => (kind == TypeKind.ModReq ? " modreq" : " modopt") + $"({modifier.FullName})";
+		public override string NameSuffix =>
+			(kind == TypeKind.ModReq ? " modreq" : " modopt") + $"({Modifier.FullName})";
+
+		public override TypeKind Kind => kind;
 
 		public override bool? IsReferenceType => elementType.IsReferenceType;
 		public override bool IsByRefLike => elementType.IsByRefLike;
@@ -50,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (newElementType == elementType)
 				return this;
 			else
-				return new ModifiedType(modifier, newElementType, kind == TypeKind.ModReq);
+				return new ModifiedType(Modifier, newElementType, kind == TypeKind.ModReq);
 		}
 
 		public override ITypeDefinition GetDefinition()
@@ -58,52 +59,62 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return elementType.GetDefinition();
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			return elementType.GetConstructors(filter, options);
 		}
 
-		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetEvents(filter, options);
 		}
 
-		public override IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IField> GetFields(Predicate<IField> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetFields(filter, options);
 		}
 
-		public override IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetMembers(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments,
+			Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetMethods(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments,
+			Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetNestedTypes(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetNestedTypes(filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return elementType.GetProperties(filter, options);
 		}
@@ -111,11 +122,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			var newElementType = elementType.AcceptVisitor(visitor);
-			var newModifier = modifier.AcceptVisitor(visitor);
-			if (newModifier != modifier || newElementType != elementType)
+			var newModifier = Modifier.AcceptVisitor(visitor);
+			if (newModifier != Modifier || newElementType != elementType)
 			{
 				return new ModifiedType(newModifier, newElementType, kind == TypeKind.ModReq);
 			}
+
 			return this;
 		}
 
@@ -129,14 +141,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(IType other)
 		{
-			return other is ModifiedType o && kind == o.kind && modifier.Equals(o.modifier) && elementType.Equals(o.elementType);
+			return other is ModifiedType o && kind == o.kind && Modifier.Equals(o.Modifier) &&
+			       elementType.Equals(o.elementType);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				return (int)kind ^ (elementType.GetHashCode() * 1344795899) ^ (modifier.GetHashCode() * 901375117);
+				return (int)kind ^ (elementType.GetHashCode() * 1344795899) ^ (Modifier.GetHashCode() * 901375117);
 			}
 		}
 	}

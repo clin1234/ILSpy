@@ -32,7 +32,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static Leave CombineExits(Block block)
 		{
-			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst && block.Instructions.LastOrDefault() is Leave leaveElse))
+			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst &&
+			      block.Instructions.LastOrDefault() is Leave leaveElse))
 				return null;
 			if (!ifInst.FalseInst.MatchNop())
 				return null;
@@ -53,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// leave (if (cond) value else if (cond2) value2 else value3)
 			if (trueInstruction is Block nestedBlock && nestedBlock.Instructions.Count == 2)
 				trueInstruction = CombineExits(nestedBlock);
-			if (!(trueInstruction is Leave leave))
+			if (trueInstruction is not Leave leave)
 				return null;
 			if (!(leave.IsLeavingFunction && leaveElse.IsLeavingFunction))
 				return null;
@@ -65,9 +66,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// leave (elseValue)
 			// =>
 			// leave (if (cond) value else elseValue)
-			IfInstruction value = new IfInstruction(ifInst.Condition, leave.Value, leaveElse.Value);
+			IfInstruction value = new(ifInst.Condition, leave.Value, leaveElse.Value);
 			value.AddILRange(ifInst);
-			Leave combinedLeave = new Leave(leave.TargetContainer, value);
+			Leave combinedLeave = new(leave.TargetContainer, value);
 			combinedLeave.AddILRange(leaveElse);
 			combinedLeave.AddILRange(leave);
 			ifInst.ReplaceWith(combinedLeave);

@@ -31,34 +31,22 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class UnknownMemberResolveResult : ResolveResult
 	{
-		readonly IType targetType;
-		readonly string memberName;
-		readonly ReadOnlyCollection<IType> typeArguments;
-
 		public UnknownMemberResolveResult(IType targetType, string memberName, IEnumerable<IType> typeArguments)
 			: base(SpecialType.UnknownType)
 		{
-			if (targetType == null)
-				throw new ArgumentNullException(nameof(targetType));
-			this.targetType = targetType;
-			this.memberName = memberName;
-			this.typeArguments = new ReadOnlyCollection<IType>(typeArguments.ToArray());
+			this.TargetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
+			this.MemberName = memberName;
+			this.TypeArguments = new ReadOnlyCollection<IType>(typeArguments.ToArray());
 		}
 
 		/// <summary>
 		/// The type on which the method is being called.
 		/// </summary>
-		public IType TargetType {
-			get { return targetType; }
-		}
+		public IType TargetType { get; }
 
-		public string MemberName {
-			get { return memberName; }
-		}
+		public string MemberName { get; }
 
-		public ReadOnlyCollection<IType> TypeArguments {
-			get { return typeArguments; }
-		}
+		public ReadOnlyCollection<IType> TypeArguments { get; }
 
 		public override bool IsError {
 			get { return true; }
@@ -66,7 +54,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}.{2}]", GetType().Name, targetType, memberName);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}.{2}]", GetType().Name, TargetType, MemberName);
 		}
 	}
 
@@ -75,17 +63,14 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class UnknownMethodResolveResult : UnknownMemberResolveResult
 	{
-		readonly ReadOnlyCollection<IParameter> parameters;
-
-		public UnknownMethodResolveResult(IType targetType, string methodName, IEnumerable<IType> typeArguments, IEnumerable<IParameter> parameters)
+		public UnknownMethodResolveResult(IType targetType, string methodName, IEnumerable<IType> typeArguments,
+			IEnumerable<IParameter> parameters)
 			: base(targetType, methodName, typeArguments)
 		{
-			this.parameters = new ReadOnlyCollection<IParameter>(parameters.ToArray());
+			this.Parameters = new ReadOnlyCollection<IParameter>(parameters.ToArray());
 		}
 
-		public ReadOnlyCollection<IParameter> Parameters {
-			get { return parameters; }
-		}
+		public ReadOnlyCollection<IParameter> Parameters { get; }
 	}
 
 	/// <summary>
@@ -93,23 +78,16 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class UnknownIdentifierResolveResult : ResolveResult
 	{
-		readonly string identifier;
-		readonly int typeArgumentCount;
-
 		public UnknownIdentifierResolveResult(string identifier, int typeArgumentCount = 0)
 			: base(SpecialType.UnknownType)
 		{
-			this.identifier = identifier;
-			this.typeArgumentCount = typeArgumentCount;
+			this.Identifier = identifier;
+			this.TypeArgumentCount = typeArgumentCount;
 		}
 
-		public string Identifier {
-			get { return identifier; }
-		}
+		public string Identifier { get; }
 
-		public int TypeArgumentCount {
-			get { return typeArgumentCount; }
-		}
+		public int TypeArgumentCount { get; }
 
 		public override bool IsError {
 			get { return true; }
@@ -117,7 +95,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, identifier);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, Identifier);
 		}
 	}
 }

@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -49,22 +47,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class PrimitiveExpression : Expression
 	{
-		public static readonly object AnyValue = new object();
+		public static readonly object AnyValue = new();
+		TextLocation endLocation;
+		LiteralFormat format;
 
 		TextLocation startLocation;
-		TextLocation endLocation;
-		public override TextLocation StartLocation => startLocation;
-		public override TextLocation EndLocation => endLocation;
-
-		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
-		{
-			ThrowIfFrozen();
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
-		}
 
 		object value;
-		LiteralFormat format;
+
+		public PrimitiveExpression(object value)
+		{
+			this.Value = value;
+		}
+
+		public PrimitiveExpression(object value, LiteralFormat format)
+		{
+			this.Value = value;
+			this.format = format;
+		}
+
+		public override TextLocation StartLocation => startLocation;
+		public override TextLocation EndLocation => endLocation;
 
 		public object Value {
 			get { return this.value; }
@@ -83,15 +86,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public PrimitiveExpression(object value)
+		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
 		{
-			this.Value = value;
-		}
-
-		public PrimitiveExpression(object value, LiteralFormat format)
-		{
-			this.Value = value;
-			this.format = format;
+			ThrowIfFrozen();
+			this.startLocation = startLocation;
+			this.endLocation = endLocation;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -109,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPrimitiveExpression(this, data);
 		}
 
-		unsafe static TextLocation AdvanceLocation(TextLocation startLocation, string str)
+		static unsafe TextLocation AdvanceLocation(TextLocation startLocation, string str)
 		{
 			int line = startLocation.Line;
 			int col = startLocation.Column;
@@ -136,16 +135,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					{
 						col++;
 					}
+
 					p++;
 				}
 			}
+
 			return new TextLocation(line, col);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveExpression o = other as PrimitiveExpression;
-			return o != null && (this.Value == AnyValue || object.Equals(this.Value, o.Value));
+			return other is PrimitiveExpression o && (this.Value == AnyValue || Equals(this.Value, o.Value));
 		}
 	}
 }

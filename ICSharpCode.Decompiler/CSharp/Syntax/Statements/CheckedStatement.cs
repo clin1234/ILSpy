@@ -32,16 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CheckedStatement : Statement
 	{
-		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");
-
-		public CSharpTokenNode CheckedToken {
-			get { return GetChildByRole(CheckedKeywordRole); }
-		}
-
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		public static readonly TokenRole CheckedKeywordRole = new("checked");
 
 		public CheckedStatement()
 		{
@@ -50,6 +41,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CheckedStatement(BlockStatement body)
 		{
 			AddChild(body, Roles.Body);
+		}
+
+		public CSharpTokenNode CheckedToken {
+			get { return GetChildByRole(CheckedKeywordRole); }
+		}
+
+		public BlockStatement Body {
+			get { return GetChildByRole(Roles.Body); }
+			set { SetChildByRole(Roles.Body, value); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -69,8 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CheckedStatement o = other as CheckedStatement;
-			return o != null && this.Body.DoMatch(o.Body, match);
+			return other is CheckedStatement o && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

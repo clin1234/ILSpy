@@ -47,26 +47,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static bool IsBitwise(this BinaryOperatorType operatorType)
 		{
-			return operatorType == BinaryOperatorType.BitwiseAnd
-				|| operatorType == BinaryOperatorType.BitwiseOr
-				|| operatorType == BinaryOperatorType.ExclusiveOr;
+			return operatorType is BinaryOperatorType.BitwiseAnd or BinaryOperatorType.BitwiseOr
+				or BinaryOperatorType.ExclusiveOr;
 		}
 
 		public static Statement GetNextStatement(this Statement statement)
 		{
 			AstNode next = statement.NextSibling;
-			while (next != null && !(next is Statement))
+			while (next != null && next is not Statement)
 				next = next.NextSibling;
 			return (Statement)next;
 		}
 
 		public static bool IsArgList(this AstType type)
 		{
-			var simpleType = type as SimpleType;
-			return simpleType != null && simpleType.Identifier == "__arglist";
+			return type is SimpleType { Identifier: "__arglist" };
 		}
 
-		public static void AddNamedArgument(this Syntax.Attribute attribute, string name, Expression argument)
+		public static void AddNamedArgument(this Attribute attribute, string name, Expression argument)
 		{
 			attribute.Arguments.Add(new AssignmentExpression(new IdentifierExpression(name), argument));
 		}
@@ -79,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static Expression UnwrapInDirectionExpression(this Expression expr)
 		{
-			if (!(expr is DirectionExpression dir && dir.FieldDirection == FieldDirection.In))
+			if (expr is not DirectionExpression { FieldDirection: FieldDirection.In } dir)
 				return expr;
 			return dir.Expression.Detach();
 		}

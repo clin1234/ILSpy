@@ -18,8 +18,6 @@
 
 #nullable enable
 
-using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -31,7 +29,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	class PatternMatchingTransform : IILTransform
 	{
-
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.PatternMatching)
@@ -45,9 +42,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						continue;
 					}
+
 					if (PatternMatchRefTypes(block, container, context, ref cfg))
 					{
-						continue;
 					}
 				}
 			}
@@ -84,7 +81,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// 
 		/// All other uses of V are in blocks dominated by trueBlock.
-		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
+		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context,
+			ref ControlFlowGraph? cfg)
 		{
 			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 				return false;
@@ -96,14 +94,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (pos < 0)
 					return false;
 				if (!(conditionVar.IsSingleDefinition && conditionVar.LoadCount == 1
-					&& conditionVar.Kind == VariableKind.StackSlot))
+				                                      && conditionVar.Kind == VariableKind.StackSlot))
 				{
 					return false;
 				}
+
 				if (!block.Instructions[pos].MatchStLoc(conditionVar, out condition))
 					return false;
 				pos--;
 			}
+
 			if (condition.MatchCompEqualsNull(out var loadInNullCheck))
 			{
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
@@ -116,6 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+
 			if (!loadInNullCheck.MatchLdLoc(out var s))
 				return false;
 			if (!s.IsSingleDefinition)
@@ -144,6 +145,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (v != s)
 					return false;
 			}
+
 			IType? unboxType;
 			if (value is UnboxAny unboxAny)
 			{
@@ -155,6 +157,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				unboxType = null;
 			}
+
 			if (value is not IsInst { Argument: var testedOperand, Type: var type })
 				return false;
 			if (type.IsReferenceType != true)
@@ -176,14 +179,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				CheckType = true
 			}.WithILRange(ifInst.Condition);
 			ifInst.TrueInst = trueInst;
-			block.Instructions[block.Instructions.Count - 1] = falseInst;
+			block.Instructions[^1] = falseInst;
 			block.Instructions.RemoveRange(pos, ifInst.ChildIndex - pos);
 			v.Kind = VariableKind.PatternLocal;
 			return true;
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
-			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context, ref ControlFlowGraph? cfg)
+			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context,
+			ref ControlFlowGraph? cfg)
 		{
 			var targetBlock = trueInst as Block;
 			if (targetBlock == null && !trueInst.MatchBranch(out targetBlock))
@@ -212,12 +216,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					}
 				}
+
 				if (found == null)
 					return false;
 				var node = cfg.GetNode(found);
 				if (!targetBlockNode.Dominates(node))
 					return false;
 			}
+
 			return true;
 		}
 
@@ -238,22 +244,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (match.type[T].notnull(V = testedOperand)) br unboxBlock
 		///		br falseBlock
 		///	}
-		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
+		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context,
+			ref ControlFlowGraph? cfg)
 		{
 			if (!MatchIsInstBlock(block, out var type, out var testedOperand,
-				out var unboxBlock, out var falseBlock))
+				    out var unboxBlock, out var falseBlock))
 			{
 				return false;
 			}
+
 			StLoc? tempStore = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
 			if (tempStore == null || !tempStore.Value.MatchLdLoc(testedOperand.Variable))
 			{
 				tempStore = null;
 			}
+
 			if (!MatchUnboxBlock(unboxBlock, type, out var unboxOperand, out var v, out var storeToV))
 			{
 				return false;
 			}
+
 			if (unboxOperand == testedOperand.Variable)
 			{
 				// do nothing
@@ -267,6 +277,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+
 			if (!CheckAllUsesDominatedBy(v, container, unboxBlock, storeToV, null, context, ref cfg))
 				return false;
 			context.Step($"PatternMatching with {v.Name}", block);
@@ -282,6 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				block.Instructions.Remove(tempStore);
 			}
+
 			// HACK: condition detection uses StartILOffset of blocks to decide which branch of if-else
 			// should become the then-branch. Change the unboxBlock StartILOffset from an offset inside
 			// the pattern matching machinery to an offset belonging to an instruction in the then-block.
@@ -317,13 +329,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+
 			if (!arg.MatchIsInst(out arg, out type))
 				return false;
 			testedOperand = arg as LdLoc;
 			if (testedOperand == null)
 				return false;
 			return trueInst.MatchBranch(out unboxBlock) && falseInst.MatchBranch(out falseBlock)
-				&& unboxBlock.Parent == block.Parent && falseBlock.Parent == block.Parent;
+			                                            && unboxBlock.Parent == block.Parent &&
+			                                            falseBlock.Parent == block.Parent;
 		}
 
 		/// Block unboxBlock (incoming: 1) {

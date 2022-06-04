@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class DestructorDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole TildeRole = new TokenRole("~");
+		public static readonly TokenRole TildeRole = new("~");
 
 		public CSharpTokenNode TildeToken {
 			get { return GetChildByRole(TildeRole); }
@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
+
 		public BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
@@ -69,8 +70,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DestructorDeclaration o = other as DestructorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match) && this.Body.DoMatch(o.Body, match);
+			return other is DestructorDeclaration o && this.MatchAttributesAndModifiers(o, match) &&
+			       this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

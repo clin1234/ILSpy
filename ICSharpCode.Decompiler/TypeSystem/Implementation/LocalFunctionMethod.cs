@@ -30,47 +30,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	class LocalFunctionMethod : IMethod
 	{
-		readonly IMethod baseMethod;
+		List<IParameter> parameters;
 
-		public LocalFunctionMethod(IMethod baseMethod, string name, bool isStaticLocalFunction, int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
+		List<IType> typeArguments;
+
+		List<ITypeParameter> typeParameters;
+
+		public LocalFunctionMethod(IMethod baseMethod, string name, bool isStaticLocalFunction,
+			int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
 		{
-			if (baseMethod == null)
-				throw new ArgumentNullException(nameof(baseMethod));
-			this.baseMethod = baseMethod;
+			this.ReducedFrom = baseMethod ?? throw new ArgumentNullException(nameof(baseMethod));
 			this.Name = name;
 			this.IsStaticLocalFunction = isStaticLocalFunction;
 			this.NumberOfCompilerGeneratedParameters = numberOfCompilerGeneratedParameters;
 			this.NumberOfCompilerGeneratedTypeParameters = numberOfCompilerGeneratedTypeParameters;
-		}
-
-		public bool Equals(IMember obj, TypeVisitor typeNormalization)
-		{
-			if (!(obj is LocalFunctionMethod other))
-				return false;
-			return baseMethod.Equals(other.baseMethod, typeNormalization)
-				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
-				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
-				&& IsStaticLocalFunction == other.IsStaticLocalFunction;
-		}
-
-		public override bool Equals(object obj)
-		{
-			if (!(obj is LocalFunctionMethod other))
-				return false;
-			return baseMethod.Equals(other.baseMethod)
-				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
-				&& NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
-				&& IsStaticLocalFunction == other.IsStaticLocalFunction;
-		}
-
-		public override int GetHashCode()
-		{
-			return baseMethod.GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			return string.Format("[LocalFunctionMethod: ReducedFrom={0}, Name={1}, NumberOfGeneratedParameters={2}, NumberOfCompilerGeneratedTypeParameters={3}, IsStaticLocalFunction={4}]", ReducedFrom, Name, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters, IsStaticLocalFunction);
 		}
 
 		internal int NumberOfCompilerGeneratedParameters { get; }
@@ -79,21 +52,35 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		internal bool IsStaticLocalFunction { get; }
 
+		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			if (obj is not LocalFunctionMethod other)
+				return false;
+			return ReducedFrom.Equals(other.ReducedFrom, typeNormalization)
+			       && NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
+			       && NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
+			       && IsStaticLocalFunction == other.IsStaticLocalFunction;
+		}
+
 		public IMember MemberDefinition => this;
 
-		public IType ReturnType => baseMethod.ReturnType;
-		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => baseMethod.ExplicitlyImplementedInterfaceMembers;
-		bool IMember.IsExplicitInterfaceImplementation => baseMethod.IsExplicitInterfaceImplementation;
-		public bool IsVirtual => baseMethod.IsVirtual;
-		public bool IsOverride => baseMethod.IsOverride;
-		public bool IsOverridable => baseMethod.IsOverridable;
-		public TypeParameterSubstitution Substitution => baseMethod.Substitution;
+		public IType ReturnType => ReducedFrom.ReturnType;
+
+		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers =>
+			ReducedFrom.ExplicitlyImplementedInterfaceMembers;
+
+		bool IMember.IsExplicitInterfaceImplementation => ReducedFrom.IsExplicitInterfaceImplementation;
+		public bool IsVirtual => ReducedFrom.IsVirtual;
+		public bool IsOverride => ReducedFrom.IsOverride;
+		public bool IsOverridable => ReducedFrom.IsOverridable;
+		public TypeParameterSubstitution Substitution => ReducedFrom.Substitution;
 
 		public IMethod Specialize(TypeParameterSubstitution substitution)
 		{
 			return new LocalFunctionMethod(
-				baseMethod.Specialize(substitution),
-				Name, IsStaticLocalFunction, NumberOfCompilerGeneratedParameters, NumberOfCompilerGeneratedTypeParameters);
+				ReducedFrom.Specialize(substitution),
+				Name, IsStaticLocalFunction, NumberOfCompilerGeneratedParameters,
+				NumberOfCompilerGeneratedTypeParameters);
 		}
 
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
@@ -101,70 +88,93 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return Specialize(substitution);
 		}
 
-		public bool IsExtensionMethod => baseMethod.IsExtensionMethod;
+		public bool IsExtensionMethod => ReducedFrom.IsExtensionMethod;
 		public bool IsLocalFunction => true;
-		public bool IsConstructor => baseMethod.IsConstructor;
-		public bool IsDestructor => baseMethod.IsDestructor;
-		public bool IsOperator => baseMethod.IsOperator;
-		public bool HasBody => baseMethod.HasBody;
-		public bool IsAccessor => baseMethod.IsAccessor;
-		public IMember AccessorOwner => baseMethod.AccessorOwner;
-		public MethodSemanticsAttributes AccessorKind => baseMethod.AccessorKind;
-		public IMethod ReducedFrom => baseMethod;
+		public bool IsConstructor => ReducedFrom.IsConstructor;
+		public bool IsDestructor => ReducedFrom.IsDestructor;
+		public bool IsOperator => ReducedFrom.IsOperator;
+		public bool HasBody => ReducedFrom.HasBody;
+		public bool IsAccessor => ReducedFrom.IsAccessor;
+		public IMember AccessorOwner => ReducedFrom.AccessorOwner;
+		public MethodSemanticsAttributes AccessorKind => ReducedFrom.AccessorKind;
+		public IMethod ReducedFrom { get; }
 
-		List<ITypeParameter> typeParameters;
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				if (typeParameters == null)
-					typeParameters = new List<ITypeParameter>(baseMethod.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
+					typeParameters =
+						new List<ITypeParameter>(
+							ReducedFrom.TypeParameters.Skip(NumberOfCompilerGeneratedTypeParameters));
 				return typeParameters;
 			}
 		}
 
-		List<IType> typeArguments;
 		public IReadOnlyList<IType> TypeArguments {
 			get {
 				if (typeArguments == null)
-					typeArguments = new List<IType>(baseMethod.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
+					typeArguments =
+						new List<IType>(ReducedFrom.TypeArguments.Skip(NumberOfCompilerGeneratedTypeParameters));
 				return typeArguments;
 			}
 		}
 
-		List<IParameter> parameters;
 		public IReadOnlyList<IParameter> Parameters {
 			get {
 				if (parameters == null)
-					parameters = new List<IParameter>(baseMethod.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
+					parameters =
+						new List<IParameter>(ReducedFrom.Parameters.SkipLast(NumberOfCompilerGeneratedParameters));
 				return parameters;
 			}
 		}
 
-		public System.Reflection.Metadata.EntityHandle MetadataToken => baseMethod.MetadataToken;
-		public SymbolKind SymbolKind => baseMethod.SymbolKind;
-		public ITypeDefinition DeclaringTypeDefinition => baseMethod.DeclaringTypeDefinition;
-		public IType DeclaringType => baseMethod.DeclaringType;
-		public IModule ParentModule => baseMethod.ParentModule;
-		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
-		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
-		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
-		bool IMethod.ThisIsRefReadOnly => baseMethod.ThisIsRefReadOnly;
-		bool IMethod.IsInitOnly => baseMethod.IsInitOnly;
+		public System.Reflection.Metadata.EntityHandle MetadataToken => ReducedFrom.MetadataToken;
+		public SymbolKind SymbolKind => ReducedFrom.SymbolKind;
+		public ITypeDefinition DeclaringTypeDefinition => ReducedFrom.DeclaringTypeDefinition;
+		public IType DeclaringType => ReducedFrom.DeclaringType;
+		public IModule ParentModule => ReducedFrom.ParentModule;
+		IEnumerable<IAttribute> IEntity.GetAttributes() => ReducedFrom.GetAttributes();
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => ReducedFrom.GetReturnTypeAttributes();
+		bool IMethod.ReturnTypeIsRefReadOnly => ReducedFrom.ReturnTypeIsRefReadOnly;
+		bool IMethod.ThisIsRefReadOnly => ReducedFrom.ThisIsRefReadOnly;
+		bool IMethod.IsInitOnly => ReducedFrom.IsInitOnly;
+
 		/// <summary>
 		/// We consider local functions as always static, because they do not have a "this parameter".
 		/// Even local functions in instance methods capture this.
 		/// </summary>
 		public bool IsStatic => true;
-		public bool IsAbstract => baseMethod.IsAbstract;
-		public bool IsSealed => baseMethod.IsSealed;
 
-		public Accessibility Accessibility => baseMethod.Accessibility;
+		public bool IsAbstract => ReducedFrom.IsAbstract;
+		public bool IsSealed => ReducedFrom.IsSealed;
+
+		public Accessibility Accessibility => ReducedFrom.Accessibility;
 
 		public string FullName => Name;
 		public string Name { get; set; }
-		public string ReflectionName => baseMethod.ReflectionName;
-		public string Namespace => baseMethod.Namespace;
+		public string ReflectionName => ReducedFrom.ReflectionName;
+		public string Namespace => ReducedFrom.Namespace;
 
-		public ICompilation Compilation => baseMethod.Compilation;
+		public ICompilation Compilation => ReducedFrom.Compilation;
+
+		public override bool Equals(object obj)
+		{
+			if (obj is not LocalFunctionMethod other)
+				return false;
+			return ReducedFrom.Equals(other.ReducedFrom)
+			       && NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
+			       && NumberOfCompilerGeneratedTypeParameters == other.NumberOfCompilerGeneratedTypeParameters
+			       && IsStaticLocalFunction == other.IsStaticLocalFunction;
+		}
+
+		public override int GetHashCode()
+		{
+			return ReducedFrom.GetHashCode();
+		}
+
+		public override string ToString()
+		{
+			return
+				$"[LocalFunctionMethod: ReducedFrom={ReducedFrom}, Name={Name}, NumberOfGeneratedParameters={NumberOfCompilerGeneratedParameters}, NumberOfCompilerGeneratedTypeParameters={NumberOfCompilerGeneratedTypeParameters}, IsStaticLocalFunction={IsStaticLocalFunction}]";
+		}
 	}
 }
-

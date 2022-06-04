@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -37,15 +38,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public static readonly IModuleReference Instance = new CorlibModuleReference(KnownTypeReference.AllKnownTypes);
 
-		public static IModuleReference CreateWithTypes(IEnumerable<KnownTypeReference> types)
-		{
-			return new CorlibModuleReference(types);
-		}
-
-		public ICompilation Compilation { get; }
-		CorlibTypeDefinition[] typeDefinitions;
 		readonly CorlibNamespace rootNamespace;
-		readonly Version asmVersion = new Version(0, 0, 0, 0);
+		CorlibTypeDefinition[] typeDefinitions;
 
 		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
@@ -54,15 +48,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.rootNamespace = new CorlibNamespace(this, null, string.Empty, string.Empty);
 		}
 
+		public ICompilation Compilation { get; }
+
 		bool IModule.IsMainModule => Compilation.MainModule == this;
 
 		string IModule.AssemblyName => "corlib";
-		Version IModule.AssemblyVersion => asmVersion;
+		Version IModule.AssemblyVersion { get; } = new(0, 0, 0, 0);
+
 		string IModule.FullAssemblyName => "corlib";
 		string ISymbol.Name => "corlib";
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
-		Metadata.PEFile IModule.PEFile => null;
+		PEFile IModule.PEFile => null;
 		INamespace IModule.RootNamespace => rootNamespace;
 
 		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(td => td != null);
@@ -75,6 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (typeDef.FullTypeName == topLevelTypeName)
 					return typeDef;
 			}
+
 			return null;
 		}
 
@@ -84,6 +82,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IModule.InternalsVisibleTo(IModule module)
 		{
 			return module == this;
+		}
+
+		public static IModuleReference CreateWithTypes(IEnumerable<KnownTypeReference> types)
+		{
+			return new CorlibModuleReference(types);
 		}
 
 		sealed class CorlibModuleReference : IModuleReference
@@ -103,11 +106,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		sealed class CorlibNamespace : INamespace
 		{
+			internal readonly List<INamespace> childNamespaces = new();
 			readonly MinimalCorlib corlib;
-			internal List<INamespace> childNamespaces = new List<INamespace>();
-			public INamespace ParentNamespace { get; }
-			public string FullName { get; }
-			public string Name { get; }
 
 			public CorlibNamespace(MinimalCorlib corlib, INamespace parentNamespace, string fullName, string name)
 			{
@@ -117,10 +117,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Name = name;
 			}
 
+			public INamespace ParentNamespace { get; }
+			public string FullName { get; }
+			public string Name { get; }
+
 			string INamespace.ExternAlias => string.Empty;
 
 			IEnumerable<INamespace> INamespace.ChildNamespaces => childNamespaces;
-			IEnumerable<ITypeDefinition> INamespace.Types => corlib.TopLevelTypeDefinitions.Where(td => td.Namespace == FullName);
+
+			IEnumerable<ITypeDefinition> INamespace.Types =>
+				corlib.TopLevelTypeDefinitions.Where(td => td.Namespace == FullName);
 
 			IEnumerable<IModule> INamespace.ContributingModules => new[] { corlib };
 
@@ -208,8 +214,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
 
-			IReadOnlyList<ITypeParameter> IType.TypeParameters => DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
-			IReadOnlyList<IType> IType.TypeArguments => DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
+			IReadOnlyList<ITypeParameter> IType.TypeParameters =>
+				DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
+
+			IReadOnlyList<IType> IType.TypeArguments =>
+				DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
 
 			IEnumerable<IType> IType.DirectBaseTypes {
 				get {
@@ -288,7 +297,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+			IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+				GetMemberOptions options)
 			{
 				return EmptyList<IMethod>.Instance;
 			}
@@ -298,7 +308,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IType>.Instance;
 			}
 
-			IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+			IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments,
+				Predicate<ITypeDefinition> filter, GetMemberOptions options)
 			{
 				return EmptyList<IType>.Instance;
 			}

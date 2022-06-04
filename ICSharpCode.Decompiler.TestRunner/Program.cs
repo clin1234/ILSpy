@@ -33,7 +33,11 @@ public static class Program
 		{
 			var mainAssembly = context.LoadFromAssemblyPath(args[0]);
 			int paramCount = mainAssembly.EntryPoint!.GetParameters().Length;
-			object? result = mainAssembly.EntryPoint!.Invoke(null, paramCount == 0 ? new object[0] : new object[1] { new string[0] });
+			object? result = mainAssembly.EntryPoint!.Invoke(null, paramCount == 0
+				? Array.Empty<object>()
+				: new object[] {
+					Array.Empty<string>()
+				});
 			return result is int i ? i : 0;
 		}
 		catch (Exception ex)
@@ -54,8 +58,3 @@ public static class Program
 		return null;
 	}
 }
-
-
-
-
-

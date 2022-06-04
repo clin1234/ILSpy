@@ -30,14 +30,13 @@ namespace ICSharpCode.Decompiler.Util
 	/// <remarks>This class is thread-safe</remarks>
 	public sealed class CacheManager
 	{
-		readonly ConcurrentDictionary<object, object> sharedDict = new ConcurrentDictionary<object, object>(ReferenceComparer.Instance);
+		readonly ConcurrentDictionary<object, object> sharedDict = new(ReferenceComparer.Instance);
 		// There used to be a thread-local dictionary here, but I removed it as it was causing memory
 		// leaks in some use cases.
 
 		public object? GetShared(object key)
 		{
-			object? value;
-			sharedDict.TryGetValue(key, out value);
+			sharedDict.TryGetValue(key, out object? value);
 			return value;
 		}
 

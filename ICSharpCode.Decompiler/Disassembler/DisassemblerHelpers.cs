@@ -17,9 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Text;
 
 using ICSharpCode.Decompiler.IL;
@@ -36,14 +35,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// class/valuetype + TypeName (built-in types use keyword syntax)
 		/// </summary>
 		Signature,
+
 		/// <summary>
 		/// Like signature, but always refers to type parameters using their position
 		/// </summary>
 		SignatureNoNamedTypeParameters,
+
 		/// <summary>
 		/// [assembly]Full.Type.Name (even for built-in types)
 		/// </summary>
 		TypeName,
+
 		/// <summary>
 		/// Name (but built-in types use keyword syntax)
 		/// </summary>
@@ -56,12 +58,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static string OffsetToString(int offset)
 		{
-			return string.Format("IL_{0:x4}", offset);
+			return $"IL_{offset:x4}";
 		}
 
 		public static string OffsetToString(long offset)
 		{
-			return string.Format("IL_{0:x4}", offset);
+			return $"IL_{offset:x4}";
 		}
 
 		public static void WriteOffsetReference(ITextOutput writer, int? offset)
@@ -72,7 +74,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteLocalReference(OffsetToString(offset.Value), offset);
 		}
 
-		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.PEFile module, MetadataGenericContext context, ITextOutput writer)
+		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, PEFile module,
+			MetadataGenericContext context,
+			ITextOutput writer)
 		{
 			writer.Write(".try ");
 			WriteOffsetReference(writer, exceptionHandler.TryOffset);
@@ -86,11 +90,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 				WriteOffsetReference(writer, exceptionHandler.FilterOffset);
 				writer.Write(" handler ");
 			}
+
 			if (!exceptionHandler.CatchType.IsNil)
 			{
 				writer.Write(' ');
 				exceptionHandler.CatchType.WriteTo(module, writer, context);
 			}
+
 			writer.Write(' ');
 			WriteOffsetReference(writer, exceptionHandler.HandlerOffset);
 			writer.Write('-');
@@ -99,9 +105,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static string ToInvariantCultureString(object value)
 		{
-			IConvertible convertible = value as IConvertible;
-			return (null != convertible)
-				? convertible.ToString(System.Globalization.CultureInfo.InvariantCulture)
+			return value is IConvertible convertible
+				? convertible.ToString(CultureInfo.InvariantCulture)
 				: value.ToString();
 		}
 
@@ -118,12 +123,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			// As a special case, .ctor and .cctor are valid despite starting with a dot
 			if (identifier[0] == '.')
-				return identifier == ".ctor" || identifier == ".cctor";
+				return identifier is ".ctor" or ".cctor";
 
 			if (identifier.Contains(".."))
 				return false;
 
-			if (Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier))
+			if (ILOpCodeExtensions.ILKeywords.Contains(identifier))
 				return false;
 
 			return identifier.All(IsValidIdentifierCharacter);
@@ -141,7 +146,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return $"'{EscapeString(identifier).Replace("'", "\\'")}'";
 		}
 
-		public static void WriteParameterReference(ITextOutput writer, MetadataReader metadata, MethodDefinitionHandle handle, int sequence)
+		public static void WriteParameterReference(ITextOutput writer, SRM.MetadataReader metadata,
+			SRM.MethodDefinitionHandle handle, int sequence)
 		{
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 			var signature = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default);
@@ -152,6 +158,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				index--;
 			}
+
 			if (index < 0 || index >= parameters.Length)
 			{
 				writer.WriteLocalReference(sequence.ToString(), "param_" + index);
@@ -170,36 +177,35 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public static void WriteVariableReference(ITextOutput writer, MetadataReader metadata, MethodDefinitionHandle handle, int index)
+		public static void WriteVariableReference(ITextOutput writer, SRM.MetadataReader metadata,
+			SRM.MethodDefinitionHandle handle, int index)
 		{
 			writer.WriteLocalReference(index.ToString(), "loc_" + index);
 		}
 
 		public static void WriteOperand(ITextOutput writer, object operand)
 		{
-			if (operand == null)
-				throw new ArgumentNullException(nameof(operand));
+			ArgumentNullException.ThrowIfNull(operand);
 
-			string s = operand as string;
-			if (s != null)
+			if (operand is string s)
 			{
 				WriteOperand(writer, s);
 			}
-			else if (operand is char)
+			else if (operand is char c)
 			{
-				writer.Write(((int)(char)operand).ToString());
+				writer.Write(((int)c).ToString());
 			}
-			else if (operand is float)
+			else if (operand is float f)
 			{
-				WriteOperand(writer, (float)operand);
+				WriteOperand(writer, f);
 			}
-			else if (operand is double)
+			else if (operand is double d)
 			{
-				WriteOperand(writer, (double)operand);
+				WriteOperand(writer, d);
 			}
-			else if (operand is bool)
+			else if (operand is bool b)
 			{
-				writer.Write((bool)operand ? "true" : "false");
+				writer.Write(b ? "true" : "false");
 			}
 			else
 			{
@@ -222,6 +228,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					// negative zero is a special case
 					writer.Write('-');
 				}
+
 				writer.Write("0.0");
 			}
 			else if (float.IsInfinity(val) || float.IsNaN(val))
@@ -234,11 +241,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 						writer.Write(' ');
 					writer.Write(data[i].ToString("X2"));
 				}
+
 				writer.Write(')');
 			}
 			else
 			{
-				writer.Write(val.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+				writer.Write(val.ToString("R", CultureInfo.InvariantCulture));
 			}
 		}
 
@@ -251,6 +259,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					// negative zero is a special case
 					writer.Write('-');
 				}
+
 				writer.Write("0.0");
 			}
 			else if (double.IsInfinity(val) || double.IsNaN(val))
@@ -263,11 +272,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 						writer.Write(' ');
 					writer.Write(data[i].ToString("X2"));
 				}
+
 				writer.Write(')');
 			}
 			else
 			{
-				writer.Write(val.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+				writer.Write(val.ToString("R", CultureInfo.InvariantCulture));
 			}
 		}
 
@@ -325,50 +335,35 @@ namespace ICSharpCode.Decompiler.Disassembler
 						{
 							sb.Append(ch);
 						}
+
 						break;
 				}
 			}
+
 			return sb.ToString();
 		}
+
 		public static string PrimitiveTypeName(string fullName)
 		{
-			switch (fullName)
-			{
-				case "System.SByte":
-					return "int8";
-				case "System.Int16":
-					return "int16";
-				case "System.Int32":
-					return "int32";
-				case "System.Int64":
-					return "int64";
-				case "System.Byte":
-					return "uint8";
-				case "System.UInt16":
-					return "uint16";
-				case "System.UInt32":
-					return "uint32";
-				case "System.UInt64":
-					return "uint64";
-				case "System.Single":
-					return "float32";
-				case "System.Double":
-					return "float64";
-				case "System.Void":
-					return "void";
-				case "System.Boolean":
-					return "bool";
-				case "System.String":
-					return "string";
-				case "System.Char":
-					return "char";
-				case "System.Object":
-					return "object";
-				case "System.IntPtr":
-					return "native int";
-				default:
-					return null;
-			}
+			return fullName switch {
+				"System.SByte" => "int8",
+				"System.Int16" => "int16",
+				"System.Int32" => "int32",
+				"System.Int64" => "int64",
+				"System.Byte" => "uint8",
+				"System.UInt16" => "uint16",
+				"System.UInt32" => "uint32",
+				"System.UInt64" => "uint64",
+				"System.Single" => "float32",
+				"System.Double" => "float64",
+				"System.Void" => "void",
+				"System.Boolean" => "bool",
+				"System.String" => "string",
+				"System.Char" => "char",
+				"System.Object" => "object",
+				"System.IntPtr" => "native int",
+				_ => null
+			};
 		}
 	}
 }

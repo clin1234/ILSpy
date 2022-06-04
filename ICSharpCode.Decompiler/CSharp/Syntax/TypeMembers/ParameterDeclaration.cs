@@ -40,57 +40,34 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ParameterDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
-		public static readonly TokenRole RefModifierRole = new TokenRole("ref");
-		public static readonly TokenRole OutModifierRole = new TokenRole("out");
-		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
-		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
-		public static readonly TokenRole InModifierRole = new TokenRole("in");
+		public static readonly TokenRole RefModifierRole = new("ref");
+		public static readonly TokenRole OutModifierRole = new("out");
+		public static readonly TokenRole ParamsModifierRole = new("params");
+		public static readonly TokenRole ThisModifierRole = new("this");
+		public static readonly TokenRole InModifierRole = new("in");
 
-		#region PatternPlaceholder
-		public static implicit operator ParameterDeclaration?(PatternMatching.Pattern pattern)
+		bool hasNullCheck;
+
+		bool hasThisModifier;
+
+		ParameterModifier parameterModifier;
+
+		public ParameterDeclaration()
 		{
-			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : ParameterDeclaration, PatternMatching.INode
+		public ParameterDeclaration(AstType type, string name, ParameterModifier modifier = ParameterModifier.None)
 		{
-			readonly PatternMatching.Pattern child;
-
-			public PatternPlaceholder(PatternMatching.Pattern child)
-			{
-				this.child = child;
-			}
-
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitPatternPlaceholder(this, child, data);
-			}
-
-			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
-			{
-				return child.DoMatch(other, match);
-			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
+			Type = type;
+			Name = name;
+			ParameterModifier = modifier;
 		}
-		#endregion
+
+		public ParameterDeclaration(string name, ParameterModifier modifier = ParameterModifier.None)
+		{
+			Name = name;
+			ParameterModifier = modifier;
+		}
 
 		public override NodeType NodeType {
 			get {
@@ -102,14 +79,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(AttributeRole); }
 		}
 
-		bool hasThisModifier;
-
 		public CSharpTokenNode ThisKeyword {
 			get {
 				if (hasThisModifier)
 				{
 					return GetChildByRole(ThisModifierRole);
 				}
+
 				return CSharpTokenNode.Null;
 			}
 		}
@@ -121,8 +97,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				hasThisModifier = value;
 			}
 		}
-
-		ParameterModifier parameterModifier;
 
 		public ParameterModifier ParameterModifier {
 			get { return parameterModifier; }
@@ -155,14 +129,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		bool hasNullCheck;
-
 		public CSharpTokenNode DoubleExclamationToken {
 			get {
 				if (hasNullCheck)
 				{
 					return GetChildByRole(Roles.DoubleExclamation);
 				}
+
 				return CSharpTokenNode.Null;
 			}
 		}
@@ -201,34 +174,65 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			var o = other as ParameterDeclaration;
-			return o != null && this.Attributes.DoMatch(o.Attributes, match) && this.ParameterModifier == o.ParameterModifier
-				&& this.Type.DoMatch(o.Type, match) && MatchString(this.Name, o.Name)
-				&& this.HasNullCheck == o.HasNullCheck
-				&& this.DefaultExpression.DoMatch(o.DefaultExpression, match);
-		}
-
-		public ParameterDeclaration()
-		{
-		}
-
-		public ParameterDeclaration(AstType type, string name, ParameterModifier modifier = ParameterModifier.None)
-		{
-			Type = type;
-			Name = name;
-			ParameterModifier = modifier;
-		}
-
-		public ParameterDeclaration(string name, ParameterModifier modifier = ParameterModifier.None)
-		{
-			Name = name;
-			ParameterModifier = modifier;
+			return other is ParameterDeclaration o && this.Attributes.DoMatch(o.Attributes, match) &&
+			       this.ParameterModifier == o.ParameterModifier
+			       && this.Type.DoMatch(o.Type, match) && MatchString(this.Name, o.Name)
+			       && this.HasNullCheck == o.HasNullCheck
+			       && this.DefaultExpression.DoMatch(o.DefaultExpression, match);
 		}
 
 		public new ParameterDeclaration Clone()
 		{
 			return (ParameterDeclaration)base.Clone();
 		}
+
+		#region PatternPlaceholder
+
+		public static implicit operator ParameterDeclaration?(PatternMatching.Pattern pattern)
+		{
+			return pattern != null ? new PatternPlaceholder(pattern) : null;
+		}
+
+		sealed class PatternPlaceholder : ParameterDeclaration, PatternMatching.INode
+		{
+			readonly PatternMatching.Pattern child;
+
+			public PatternPlaceholder(PatternMatching.Pattern child)
+			{
+				this.child = child;
+			}
+
+			public override NodeType NodeType {
+				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitPatternPlaceholder(this, child, data);
+			}
+
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+			{
+				return child.DoMatch(other, match);
+			}
+		}
+
+		#endregion
 	}
 }
-

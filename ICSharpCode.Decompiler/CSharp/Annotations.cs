@@ -45,7 +45,9 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Currently unused; we'll probably use the LdToken ILInstruction as annotation instead when LdToken
 	/// support gets reimplemented.
 	/// </summary>
-	public class LdTokenAnnotation { }
+	public class LdTokenAnnotation
+	{
+	}
 
 	public static class AnnotationExtensions
 	{
@@ -153,12 +155,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						return ldVirtFtn.Method;
 					}
 				}
+
 				var ldVirtDelegate = node.Annotation<LdVirtDelegate>();
 				if (ldVirtDelegate != null)
 				{
 					return ldVirtDelegate.Method;
 				}
 			}
+
 			return rr?.GetSymbol();
 		}
 
@@ -234,6 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				node.AddAnnotation(annotation);
 			}
+
 			return node;
 		}
 
@@ -247,6 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				node.AddAnnotation(annotation);
 			}
+
 			return node;
 		}
 	}
@@ -275,9 +281,9 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	public class ForeachAnnotation
 	{
+		public readonly ILInstruction GetCurrentCall;
 		public readonly ILInstruction GetEnumeratorCall;
 		public readonly ILInstruction MoveNextCall;
-		public readonly ILInstruction GetCurrentCall;
 
 		public ForeachAnnotation(ILInstruction getEnumeratorCall, ILInstruction moveNextCall,
 			ILInstruction getCurrentCall)
@@ -308,12 +314,13 @@ namespace ICSharpCode.Decompiler.CSharp
 	public class ImplicitConversionAnnotation
 	{
 		public readonly ConversionResolveResult ConversionResolveResult;
-		public IType TargetType => ConversionResolveResult.Type;
 
 		public ImplicitConversionAnnotation(ConversionResolveResult conversionResolveResult)
 		{
 			this.ConversionResolveResult = conversionResolveResult;
 		}
+
+		public IType TargetType => ConversionResolveResult.Type;
 	}
 
 	/// <summary>
@@ -336,8 +343,8 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	public class QueryJoinClauseAnnotation
 	{
-		public readonly ILFunction OnLambda;
 		public readonly ILFunction EqualsLambda;
+		public readonly ILFunction OnLambda;
 
 		public QueryJoinClauseAnnotation(ILFunction on, ILFunction equals)
 		{
@@ -351,6 +358,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	public class UseImplicitlyTypedOutAnnotation
 	{
-		public static readonly UseImplicitlyTypedOutAnnotation Instance = new UseImplicitlyTypedOutAnnotation();
+		public static readonly UseImplicitlyTypedOutAnnotation Instance = new();
 	}
 }

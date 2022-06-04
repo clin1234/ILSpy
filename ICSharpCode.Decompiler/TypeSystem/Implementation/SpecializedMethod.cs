@@ -31,32 +31,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedMethod : SpecializedParameterizedMember, IMethod
 	{
-		internal static IMethod Create(IMethod methodDefinition, TypeParameterSubstitution substitution)
-		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution))
-				return methodDefinition;
-			if (methodDefinition.DeclaringType is ArrayType)
-				return new SpecializedMethod(methodDefinition, substitution);
-			if (methodDefinition.TypeParameters.Count == 0)
-			{
-				if (methodDefinition.DeclaringType.TypeParameterCount == 0)
-					return methodDefinition;
-				if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
-					substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
-			}
-			return new SpecializedMethod(methodDefinition, substitution);
-		}
+		readonly bool isParameterized;
 
 		readonly IMethod methodDefinition;
 		readonly ITypeParameter[] specializedTypeParameters;
-		readonly bool isParameterized;
 		readonly TypeParameterSubstitution substitutionWithoutSpecializedTypeParameters;
+
+		IMember accessorOwner;
 
 		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution substitution)
 			: base(methodDefinition)
 		{
-			if (substitution == null)
-				throw new ArgumentNullException(nameof(substitution));
+			ArgumentNullException.ThrowIfNull(substitution);
 			this.methodDefinition = methodDefinition;
 			this.isParameterized = substitution.MethodTypeArguments != null;
 			if (methodDefinition.TypeParameters.Count > 0)
@@ -66,8 +52,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				specializedTypeParameters = new ITypeParameter[methodDefinition.TypeParameters.Count];
 				for (int i = 0; i < specializedTypeParameters.Length; i++)
 				{
-					specializedTypeParameters[i] = new SpecializedTypeParameter(methodDefinition.TypeParameters[i], this);
+					specializedTypeParameters[i] =
+						new SpecializedTypeParameter(methodDefinition.TypeParameters[i], this);
 				}
+
 				if (!isParameterized)
 				{
 					// Add substitution that replaces the base method's type parameters with our specialized version
@@ -76,12 +64,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					AddSubstitution(new TypeParameterSubstitution(null, specializedTypeParameters));
 				}
 			}
+
 			// Add the main substitution after the method type parameter specialization.
 			AddSubstitution(substitution);
 			if (substitutionWithoutSpecializedTypeParameters != null)
 			{
 				// If we already have a substitution without specialized type parameters, update that:
-				substitutionWithoutSpecializedTypeParameters = TypeParameterSubstitution.Compose(substitution, substitutionWithoutSpecializedTypeParameters);
+				substitutionWithoutSpecializedTypeParameters =
+					TypeParameterSubstitution.Compose(substitution, substitutionWithoutSpecializedTypeParameters);
 			}
 			else
 			{
@@ -89,6 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// in this case.
 				substitutionWithoutSpecializedTypeParameters = this.Substitution;
 			}
+
 			if (specializedTypeParameters != null)
 			{
 				// Set the substitution on the type parameters to the final composed substitution
@@ -150,8 +141,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return null; }
 		}
 
-		IMember accessorOwner;
-
 		public IMember AccessorOwner {
 			get {
 				var result = LazyInit.VolatileRead(ref accessorOwner);
@@ -175,42 +164,64 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
-			if (other == null)
+			if (obj is not SpecializedMethod other)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
-				&& this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters, typeNormalization);
+			       && this.substitutionWithoutSpecializedTypeParameters.Equals(
+				       other.substitutionWithoutSpecializedTypeParameters, typeNormalization);
+		}
+
+		public override IMember Specialize(TypeParameterSubstitution newSubstitution)
+		{
+			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution,
+				substitutionWithoutSpecializedTypeParameters));
+		}
+
+		IMethod IMethod.Specialize(TypeParameterSubstitution newSubstitution)
+		{
+			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution,
+				substitutionWithoutSpecializedTypeParameters));
+		}
+
+		internal static IMethod Create(IMethod methodDefinition, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution))
+				return methodDefinition;
+			if (methodDefinition.DeclaringType is ArrayType)
+				return new SpecializedMethod(methodDefinition, substitution);
+			if (methodDefinition.TypeParameters.Count == 0)
+			{
+				if (methodDefinition.DeclaringType.TypeParameterCount == 0)
+					return methodDefinition;
+				if (substitution.MethodTypeArguments is { Count: > 0 })
+					substitution =
+						new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			}
+
+			return new SpecializedMethod(methodDefinition, substitution);
 		}
 
 		public override bool Equals(object obj)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
-			if (other == null)
+			if (obj is not SpecializedMethod other)
 				return false;
-			return this.baseMember.Equals(other.baseMember) && this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters);
+			return this.baseMember.Equals(other.baseMember) &&
+			       this.substitutionWithoutSpecializedTypeParameters.Equals(other
+				       .substitutionWithoutSpecializedTypeParameters);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				return 1000000013 * baseMember.GetHashCode() + 1000000009 * substitutionWithoutSpecializedTypeParameters.GetHashCode();
+				return 1000000013 * baseMember.GetHashCode() +
+				       1000000009 * substitutionWithoutSpecializedTypeParameters.GetHashCode();
 			}
-		}
-
-		public override IMember Specialize(TypeParameterSubstitution newSubstitution)
-		{
-			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution, substitutionWithoutSpecializedTypeParameters));
-		}
-
-		IMethod IMethod.Specialize(TypeParameterSubstitution newSubstitution)
-		{
-			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution, substitutionWithoutSpecializedTypeParameters));
 		}
 
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			StringBuilder b = new("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ReflectionName);
@@ -225,6 +236,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						b.Append(", ");
 					b.Append(this.TypeArguments[i].ToString());
 				}
+
 				b.Append(']');
 			}
 			else if (this.TypeParameters.Count > 0)
@@ -232,6 +244,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append("``");
 				b.Append(this.TypeParameters.Count);
 			}
+
 			b.Append('(');
 			for (int i = 0; i < this.Parameters.Count; i++)
 			{
@@ -239,6 +252,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					b.Append(", ");
 				b.Append(this.Parameters[i].ToString());
 			}
+
 			b.Append("):");
 			b.Append(this.ReturnType.ToString());
 			b.Append(']');
@@ -252,12 +266,35 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// The substition is set at the end of SpecializedMethod constructor
 			internal TypeVisitor substitution;
 
+			IReadOnlyList<TypeConstraint> typeConstraints;
+
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
 				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance)
 			{
 				// We don't have to consider already-specialized baseTps because
 				// we read the baseTp directly from the unpacked memberDefinition.
 				this.baseTp = baseTp;
+			}
+
+			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
+			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
+			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
+			public override bool HasUnmanagedConstraint => baseTp.HasUnmanagedConstraint;
+
+			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
+
+			public override IReadOnlyList<TypeConstraint> TypeConstraints {
+				get {
+					var typeConstraints = LazyInit.VolatileRead(ref this.typeConstraints);
+					if (typeConstraints == null)
+					{
+						typeConstraints = baseTp.TypeConstraints.SelectReadOnlyArray(c =>
+							new TypeConstraint(c.Type.AcceptVisitor(substitution), c.Attributes));
+						typeConstraints = LazyInit.GetOrSet(ref this.typeConstraints, typeConstraints);
+					}
+
+					return typeConstraints;
+				}
 			}
 
 			public override IEnumerable<IAttribute> GetAttributes() => baseTp.GetAttributes();
@@ -270,29 +307,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override bool Equals(IType other)
 			{
 				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
-				SpecializedTypeParameter o = other as SpecializedTypeParameter;
-				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
-			}
-
-			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
-			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
-			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
-			public override bool HasUnmanagedConstraint => baseTp.HasUnmanagedConstraint;
-
-			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
-
-			IReadOnlyList<TypeConstraint> typeConstraints;
-
-			public override IReadOnlyList<TypeConstraint> TypeConstraints {
-				get {
-					var typeConstraints = LazyInit.VolatileRead(ref this.typeConstraints);
-					if (typeConstraints == null)
-					{
-						typeConstraints = baseTp.TypeConstraints.SelectReadOnlyArray(c => new TypeConstraint(c.Type.AcceptVisitor(substitution), c.Attributes));
-						typeConstraints = LazyInit.GetOrSet(ref this.typeConstraints, typeConstraints);
-					}
-					return typeConstraints;
-				}
+				return other is SpecializedTypeParameter o && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 		}
 	}

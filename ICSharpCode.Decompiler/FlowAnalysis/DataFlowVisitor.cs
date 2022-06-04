@@ -43,6 +43,28 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	public interface IDataFlowState<Self> where Self : IDataFlowState<Self>
 	{
 		/// <summary>
+		/// Gets whether this is the bottom state.
+		/// 
+		/// The bottom state represents that the data flow analysis has not yet
+		/// found a code path from the entry point to this state's position.
+		/// It thus contains no information, and is "less than" all other states.
+		/// </summary>
+		/// <remarks>
+		/// The bottom state is the bottom element in the semi-lattice.
+		/// 
+		/// Initially, all code blocks not yet visited by the analysis will be in the bottom state.
+		/// Unreachable code will always remain in the bottom state.
+		/// Some analyses may also use the bottom state for reachable code after it was processed by the analysis.
+		/// For example, in <c>DefiniteAssignmentVisitor</c> the bottom states means
+		/// "either this code is unreachable, or all variables are definitely initialized".
+		/// </remarks>
+		/// <example>
+		/// The simple state "<c>bool isReachable</c>", would implement <c>IsBottom</c> as:
+		/// <code>return !this.isReachable;</code>
+		/// </example>
+		bool IsBottom { get; }
+
+		/// <summary>
 		/// Gets whether this state is "less than" (or equal to) another state.
 		/// This is the partial order of the semi-lattice.
 		/// </summary>
@@ -125,28 +147,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		void TriggerFinally(Self finallyState);
 
 		/// <summary>
-		/// Gets whether this is the bottom state.
-		/// 
-		/// The bottom state represents that the data flow analysis has not yet
-		/// found a code path from the entry point to this state's position.
-		/// It thus contains no information, and is "less than" all other states.
-		/// </summary>
-		/// <remarks>
-		/// The bottom state is the bottom element in the semi-lattice.
-		/// 
-		/// Initially, all code blocks not yet visited by the analysis will be in the bottom state.
-		/// Unreachable code will always remain in the bottom state.
-		/// Some analyses may also use the bottom state for reachable code after it was processed by the analysis.
-		/// For example, in <c>DefiniteAssignmentVisitor</c> the bottom states means
-		/// "either this code is unreachable, or all variables are definitely initialized".
-		/// </remarks>
-		/// <example>
-		/// The simple state "<c>bool isReachable</c>", would implement <c>IsBottom</c> as:
-		/// <code>return !this.isReachable;</code>
-		/// </example>
-		bool IsBottom { get; }
-
-		/// <summary>
 		/// Equivalent to <c>this.ReplaceWith(bottomState)</c>, but may be implemented more efficiently.
 		/// </summary>
 		/// <remarks>
@@ -170,6 +170,31 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	public abstract class DataFlowVisitor<State> : ILVisitor
 		where State : IDataFlowState<State>
 	{
+		private readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new();
+
+		/// <summary>
+		/// Holds the state for incoming branches.
+		/// </summary>
+		/// <remarks>
+		/// Only used for blocks in block containers; not for inline blocks.
+		/// </remarks>
+		private readonly Dictionary<Block, State> stateOnBranch = new();
+
+		/// <summary>
+		/// Stores the stateOnException per try instruction.
+		/// </summary>
+		private readonly Dictionary<TryInstruction, State> stateOnException = new();
+
+		/// <summary>
+		/// Holds the state at the block container end-point. (=state for incoming 'leave' instructions)
+		/// </summary>
+		private readonly Dictionary<BlockContainer, State> stateOnLeave = new();
+
+		/// <summary>
+		/// For each block container, stores the set of blocks (via Block.ChildIndex)
+		/// that had their incoming state changed and were not processed yet.
+		/// </summary>
+		private readonly Dictionary<BlockContainer, SortedSet<int>> workLists = new();
 		// The data flow analysis tracks a 'state'.
 		// There are many states (one per source code position, i.e. ILInstruction), but we don't store all of them.
 		// We only keep track of:
@@ -186,13 +211,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		State bottomState;
 
 		/// <summary>
-		/// Current state.
-		/// 
-		/// Caution: any state object assigned to this member gets mutated as the visitor traverses the ILAst!
-		/// </summary>
-		protected State state;
-
-		/// <summary>
 		/// Combined state of all possible exceptional control flow paths in the current try block.
 		/// Serves as input state for catch blocks.
 		/// 
@@ -203,7 +221,24 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <seealso cref="PropagateStateOnException"/>
 		protected State currentStateOnException;
 
+		/// <summary>
+		/// Derived classes may add to this set of flags to ensure they don't forget to override an interesting method.
+		/// </summary>
+		protected InstructionFlags flagsRequiringManualImpl = InstructionFlags.ControlFlow |
+		                                                      InstructionFlags.MayBranch |
+		                                                      InstructionFlags.MayUnwrapNull |
+		                                                      InstructionFlags.EndPointUnreachable;
+
 		bool initialized;
+
+		/// <summary>
+		/// Current state.
+		/// 
+		/// Caution: any state object assigned to this member gets mutated as the visitor traverses the ILAst!
+		/// </summary>
+		protected State state;
+
+		State stateOnNullableRewrap;
 
 		/// <summary>
 		/// Initializes the DataFlowVisitor.
@@ -227,37 +262,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			this.currentStateOnException = state.Clone();
 		}
 
-#if DEBUG
-		// For debugging, capture the input + output state at every instruction.
-		readonly Dictionary<ILInstruction, State> debugInputState = new Dictionary<ILInstruction, State>();
-		readonly Dictionary<ILInstruction, State> debugOutputState = new Dictionary<ILInstruction, State>();
-
-		void DebugPoint(Dictionary<ILInstruction, State> debugDict, ILInstruction inst)
-		{
-#if DEBUG
-			Debug.Assert(initialized, "Initialize() was not called");
-
-			if (debugDict.TryGetValue(inst, out State previousState))
-			{
-				Debug.Assert(previousState.LessThanOrEqual(state));
-				previousState.JoinWith(state);
-			}
-			else
-			{
-				// limit the number of tracked instructions to make memory usage in debug builds less horrible
-				if (debugDict.Count < 1000)
-				{
-					debugDict.Add(inst, state.Clone());
-				}
-			}
-
-			// currentStateOnException should be all states within the try block joined together
-			// -> state should already have been joined into currentStateOnException.
-			Debug.Assert(state.LessThanOrEqual(currentStateOnException));
-#endif
-		}
-#endif
-
 		[Conditional("DEBUG")]
 		protected void DebugStartPoint(ILInstruction inst)
 		{
@@ -274,18 +278,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 #endif
 		}
 
-		/// <summary>
-		/// Derived classes may add to this set of flags to ensure they don't forget to override an interesting method.
-		/// </summary>
-		protected InstructionFlags flagsRequiringManualImpl = InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.MayUnwrapNull | InstructionFlags.EndPointUnreachable;
-
 		protected sealed override void Default(ILInstruction inst)
 		{
 			DebugStartPoint(inst);
 			// This method assumes normal control flow and no branches.
 			if ((inst.DirectFlags & flagsRequiringManualImpl) != 0)
 			{
-				throw new NotImplementedException(GetType().Name + " is missing implementation for " + inst.GetType().Name);
+				throw new NotImplementedException(GetType().Name + " is missing implementation for " +
+				                                  inst.GetType().Name);
 			}
 
 			// Since this instruction has normal control flow, we can evaluate our children left-to-right.
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				child.AcceptVisitor(this);
 				Debug.Assert(state.IsBottom || !child.HasFlag(InstructionFlags.EndPointUnreachable),
-							 "Unreachable code must be in the bottom state.");
+					"Unreachable code must be in the bottom state.");
 			}
 
 			DebugEndPoint(inst);
@@ -328,19 +328,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		}
 
 		/// <summary>
-		/// Holds the state for incoming branches.
-		/// </summary>
-		/// <remarks>
-		/// Only used for blocks in block containers; not for inline blocks.
-		/// </remarks>
-		readonly Dictionary<Block, State> stateOnBranch = new Dictionary<Block, State>();
-
-		/// <summary>
-		/// Holds the state at the block container end-point. (=state for incoming 'leave' instructions)
-		/// </summary>
-		readonly Dictionary<BlockContainer, State> stateOnLeave = new Dictionary<BlockContainer, State>();
-
-		/// <summary>
 		/// Gets the state object that holds the state for incoming branches to the block.
 		/// </summary>
 		/// <remarks>
@@ -362,16 +349,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 		}
 
-		/// <summary>
-		/// For each block container, stores the set of blocks (via Block.ChildIndex)
-		/// that had their incoming state changed and were not processed yet.
-		/// </summary>
-		readonly Dictionary<BlockContainer, SortedSet<int>> workLists = new Dictionary<BlockContainer, SortedSet<int>>();
-
 		protected internal override void VisitBlockContainer(BlockContainer container)
 		{
 			DebugStartPoint(container);
-			SortedSet<int> worklist = new SortedSet<int>();
+			SortedSet<int> worklist = new();
 			// register work list so that branches within this container can add to it
 			workLists.Add(container, worklist);
 			var stateOnEntry = GetBlockInputState(container.EntryPoint);
@@ -398,6 +379,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				state.ReplaceWith(stateOnBranch[block]);
 				block.AcceptVisitor(this);
 			}
+
 			if (stateOnLeave.TryGetValue(container, out State stateOnExit))
 			{
 				state.ReplaceWith(stateOnExit);
@@ -406,11 +388,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				MarkUnreachable();
 			}
+
 			DebugEndPoint(container);
 			workLists.Remove(container);
 		}
-
-		readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new List<(IBranchOrLeaveInstruction, State)>();
 
 		protected internal override void VisitBranch(Branch inst)
 		{
@@ -423,6 +404,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				MergeBranchStateIntoTargetBlock(inst, state);
 			}
+
 			MarkUnreachable();
 		}
 
@@ -458,6 +440,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				MergeBranchStateIntoStateOnLeave(inst, state);
 			}
+
 			MarkUnreachable();
 		}
 
@@ -491,11 +474,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			MarkUnreachable();
 		}
-
-		/// <summary>
-		/// Stores the stateOnException per try instruction.
-		/// </summary>
-		readonly Dictionary<TryInstruction, State> stateOnException = new Dictionary<TryInstruction, State>();
 
 		/// <summary>
 		/// Visits the TryBlock.
@@ -549,6 +527,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				handler.Body.AcceptVisitor(this);
 				endpoint.JoinWith(state);
 			}
+
 			state = endpoint;
 			DebugEndPoint(inst);
 		}
@@ -560,7 +539,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// TryCatchHandler is handled directly in VisitTryCatch
 		/// </summary>
-		protected internal override sealed void VisitTryCatchHandler(TryCatchHandler inst)
+		protected internal sealed override void VisitTryCatchHandler(TryCatchHandler inst)
 		{
 			throw new NotSupportedException();
 		}
@@ -597,7 +576,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			int outPos = branchesTriggeringFinallyOldCount;
 			for (int i = branchesTriggeringFinallyOldCount; i < branchesTriggeringFinally.Count; ++i)
 			{
-				var (branch, stateOnBranch) = branchesTriggeringFinally[i];
+				(IBranchOrLeaveInstruction branch, State stateOnBranch) = branchesTriggeringFinally[i];
 				Debug.Assert(((ILInstruction)branch).IsDescendantOf(tryFinally));
 				Debug.Assert(tryFinally.IsDescendantOf(branch.TargetContainer));
 				stateOnBranch.TriggerFinally(state);
@@ -611,7 +590,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					// Merge state into target block.
 					if (branch is Leave leave)
 					{
-						MergeBranchStateIntoStateOnLeave((Leave)branch, stateOnBranch);
+						MergeBranchStateIntoStateOnLeave(leave, stateOnBranch);
 					}
 					else
 					{
@@ -619,6 +598,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					}
 				}
 			}
+
 			branchesTriggeringFinally.RemoveRange(outPos, branchesTriggeringFinally.Count - outPos);
 		}
 
@@ -642,7 +622,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
 			DebugStartPoint(inst);
-			var (beforeThen, beforeElse) = EvaluateCondition(inst.Condition);
+			(State beforeThen, State beforeElse) = EvaluateCondition(inst.Condition);
 			state = beforeThen;
 			inst.TrueInst.AcceptVisitor(this);
 			State afterTrueState = state;
@@ -671,11 +651,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				// 'if (a?b:c)' or similar.
 				// This also includes conditions that are logic.not, logic.and, logic.or.
 				DebugStartPoint(ifInst);
-				var (beforeThen, beforeElse) = EvaluateCondition(ifInst.Condition);
+				(State beforeThen, State beforeElse) = EvaluateCondition(ifInst.Condition);
 				state = beforeThen;
-				var (afterThenTrue, afterThenFalse) = EvaluateCondition(ifInst.TrueInst);
+				(State afterThenTrue, State afterThenFalse) = EvaluateCondition(ifInst.TrueInst);
 				state = beforeElse;
-				var (afterElseTrue, afterElseFalse) = EvaluateCondition(ifInst.FalseInst);
+				(State afterElseTrue, State afterElseFalse) = EvaluateCondition(ifInst.FalseInst);
 
 				var onTrue = afterThenTrue;
 				onTrue.JoinWith(afterElseTrue);
@@ -710,7 +690,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		protected internal override void VisitMatchInstruction(MatchInstruction inst)
 		{
-			var (onTrue, onFalse) = EvaluateMatch(inst);
+			(State onTrue, State onFalse) = EvaluateMatch(inst);
 			state = onTrue;
 			state.JoinWith(onFalse);
 		}
@@ -736,13 +716,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				onFalse.ReplaceWithBottom();
 			}
+
 			HandleMatchStore(inst);
 			foreach (var subPattern in inst.SubPatterns)
 			{
-				var (subTrue, subFalse) = EvaluateCondition(subPattern);
+				(State subTrue, State subFalse) = EvaluateCondition(subPattern);
 				onFalse.JoinWith(subFalse);
 				state = subTrue;
 			}
+
 			DebugEndPoint(inst);
 			return (state, onFalse);
 		}
@@ -773,8 +755,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			state.JoinWith(branchState);
 			DebugEndPoint(parent);
 		}
-
-		State stateOnNullableRewrap;
 
 		protected internal override void VisitNullableRewrap(NullableRewrap inst)
 		{
@@ -812,6 +792,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				inst.Sections[i].AcceptVisitor(this);
 				afterSections.JoinWith(state);
 			}
+
 			state = afterSections;
 			DebugEndPoint(inst);
 		}
@@ -843,5 +824,36 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			throw new NotImplementedException();
 		}
+
+#if DEBUG
+		// For debugging, capture the input + output state at every instruction.
+		private readonly Dictionary<ILInstruction, State> debugInputState = new();
+		private readonly Dictionary<ILInstruction, State> debugOutputState = new();
+
+		void DebugPoint(Dictionary<ILInstruction, State> debugDict, ILInstruction inst)
+		{
+#if DEBUG
+			Debug.Assert(initialized, "Initialize() was not called");
+
+			if (debugDict.TryGetValue(inst, out State previousState))
+			{
+				Debug.Assert(previousState.LessThanOrEqual(state));
+				previousState.JoinWith(state);
+			}
+			else
+			{
+				// limit the number of tracked instructions to make memory usage in debug builds less horrible
+				if (debugDict.Count < 1000)
+				{
+					debugDict.Add(inst, state.Clone());
+				}
+			}
+
+			// currentStateOnException should be all states within the try block joined together
+			// -> state should already have been joined into currentStateOnException.
+			Debug.Assert(state.LessThanOrEqual(currentStateOnException));
+#endif
+		}
+#endif
 	}
 }

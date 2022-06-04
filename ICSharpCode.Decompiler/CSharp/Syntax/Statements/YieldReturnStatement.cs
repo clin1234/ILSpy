@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class YieldReturnStatement : Statement
 	{
-		public static readonly TokenRole YieldKeywordRole = new TokenRole("yield");
-		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
+		public static readonly TokenRole YieldKeywordRole = new("yield");
+		public static readonly TokenRole ReturnKeywordRole = new("return");
 
 		public CSharpTokenNode YieldToken {
 			get { return GetChildByRole(YieldKeywordRole); }
@@ -69,8 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			YieldReturnStatement o = other as YieldReturnStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is YieldReturnStatement o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

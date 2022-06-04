@@ -47,7 +47,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!inst.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return;
 			var metadata = context.PEFile.Metadata;
-			MethodDefinition methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)inst.Method.MetadataToken);
+			MethodDefinition methodDef =
+				metadata.GetMethodDefinition((MethodDefinitionHandle)inst.Method.MetadataToken);
 			if (!methodDef.HasBody())
 				return;
 			// Use the callee's generic context
@@ -55,10 +56,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// partially copied from CSharpDecompiler
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-			var proxyFunction = ilReader.ReadIL(handle, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
+			var proxyFunction = ilReader.ReadIL(handle, body, genericContext, ILFunctionKind.TopLevelFunction,
+				context.CancellationToken);
 			var transformContext = new ILTransformContext(context, proxyFunction);
 			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);
-			if (!(proxyFunction.Body is BlockContainer blockContainer))
+			if (proxyFunction.Body is not BlockContainer blockContainer)
 				return;
 			if (blockContainer.Blocks.Count != 1)
 				return;
@@ -85,32 +87,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return;
 			}
+
 			if (call == null || call.Method.IsConstructor)
 			{
 				return;
 			}
+
 			if (call.Method.IsStatic || call.Method.Parameters.Count != inst.Method.Parameters.Count)
 			{
 				return;
 			}
+
 			// check if original arguments are only correct ldloc calls
 			for (int i = 0; i < call.Arguments.Count; i++)
 			{
 				var originalArg = call.Arguments[i];
 				if (!originalArg.MatchLdLoc(out ILVariable var) ||
-					var.Kind != VariableKind.Parameter ||
-					var.Index != i - 1)
+				    var.Kind != VariableKind.Parameter ||
+				    var.Index != i - 1)
 				{
 					return;
 				}
 			}
+
 			context.Step("Replace proxy: " + inst.Method.Name + " with " + call.Method.Name, inst);
 			// Apply the wrapper call's substitution to the actual method call.
-			Call newInst = new Call(call.Method.Specialize(inst.Method.Substitution));
-			// copy flags
-			newInst.ConstrainedTo = call.ConstrainedTo;
-			newInst.ILStackWasEmpty = inst.ILStackWasEmpty;
-			newInst.IsTail = call.IsTail & inst.IsTail;
+			Call newInst = new(call.Method.Specialize(inst.Method.Substitution)) {
+				// copy flags
+				ConstrainedTo = call.ConstrainedTo,
+				ILStackWasEmpty = inst.ILStackWasEmpty,
+				IsTail = call.IsTail & inst.IsTail
+			};
 			// copy IL ranges
 			newInst.AddILRange(inst);
 			newInst.Arguments.ReplaceList(inst.Arguments);
@@ -125,6 +132,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				declaringTypeDefinition = declaringTypeDefinition.DeclaringTypeDefinition;
 			}
+
 			return false;
 		}
 	}

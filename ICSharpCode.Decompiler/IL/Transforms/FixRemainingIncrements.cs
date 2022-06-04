@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var callsToFix = new List<Call>();
 			foreach (var call in function.Descendants.OfType<Call>())
 			{
-				if (!(call.Method.IsOperator && (call.Method.Name == "op_Increment" || call.Method.Name == "op_Decrement")))
+				if (!(call.Method.IsOperator && call.Method.Name is "op_Increment" or "op_Decrement"))
 					continue;
 				if (call.Arguments.Count != 1)
 					continue;
@@ -41,8 +41,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// We can handle these calls in ReplaceMethodCallsWithOperators.
 					continue;
 				}
+
 				callsToFix.Add(call);
 			}
+
 			foreach (var call in callsToFix)
 			{
 				// A user-defined increment/decrement that was not handled by TransformAssignment.
@@ -59,7 +61,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					var store = (StLoc)call.Parent;
 					var block = (Block)store.Parent;
-					context.Step($"Fix {call.Method.Name} call at 0x{call.StartILOffset:x4} using {store.Variable.Name}", call);
+					context.Step(
+						$"Fix {call.Method.Name} call at 0x{call.StartILOffset:x4} using {store.Variable.Name}", call);
 					// stloc V(call op_Increment(...))
 					// ->
 					// stloc V(...)
@@ -67,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					call.ReplaceWith(call.Arguments[0]);
 					block.Instructions.Insert(store.ChildIndex + 1,
 						new UserDefinedCompoundAssign(call.Method, CompoundEvalMode.EvaluatesToNewValue,
-						new LdLoca(store.Variable), CompoundTargetKind.Address, new LdcI4(1)).WithILRange(call));
+							new LdLoca(store.Variable), CompoundTargetKind.Address, new LdcI4(1)).WithILRange(call));
 				}
 				else
 				{
@@ -78,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						Debug.Fail("Failed to extract argument of remaining increment/decrement");
 						continue;
 					}
+
 					newVariable.Type = call.GetParameter(0).Type;
 					Debug.Assert(call.Arguments[0].MatchLdLoc(newVariable));
 					call.ReplaceWith(new UserDefinedCompoundAssign(call.Method, CompoundEvalMode.EvaluatesToNewValue,

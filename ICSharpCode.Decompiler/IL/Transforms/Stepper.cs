@@ -21,7 +21,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 using ICSharpCode.Decompiler.Util;
 
@@ -39,6 +38,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class Stepper
 	{
+		readonly Stack<Node> groups;
+		int step = 0;
+
+		public Stepper()
+		{
+			Steps = new List<Node>();
+			groups = new Stack<Node>();
+		}
+
 		/// <summary>
 		/// Gets whether stepping of built-in transforms is supported in this build of ICSharpCode.Decompiler.
 		/// Usually only debug builds support transform stepping.
@@ -53,41 +61,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		public IList<Node> Steps => steps;
+		public IList<Node> Steps { get; }
 
 		public int StepLimit { get; set; } = int.MaxValue;
 		public bool IsDebug { get; set; }
-
-		public class Node
-		{
-			public string Description { get; }
-			public ILInstruction? Position { get; set; }
-			/// <summary>
-			/// BeginStep is inclusive.
-			/// </summary>
-			public int BeginStep { get; set; }
-			/// <summary>
-			/// EndStep is exclusive.
-			/// </summary>
-			public int EndStep { get; set; }
-
-			public IList<Node> Children { get; } = new List<Node>();
-
-			public Node(string description)
-			{
-				Description = description;
-			}
-		}
-
-		readonly Stack<Node> groups;
-		readonly IList<Node> steps;
-		int step = 0;
-
-		public Stepper()
-		{
-			steps = new List<Node>();
-			groups = new Stack<Node>();
-		}
 
 		/// <summary>
 		/// Call this method immediately before performing a transform step.
@@ -109,6 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				else
 					throw new StepLimitReachedException();
 			}
+
 			var stepNode = new Node($"{step}: {description}") {
 				Position = near,
 				BeginStep = step,
@@ -118,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (p != null)
 				p.Children.Add(stepNode);
 			else
-				steps.Add(stepNode);
+				Steps.Add(stepNode);
 			step++;
 			return stepNode;
 		}
@@ -133,11 +111,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var node = groups.Pop();
 			if (!keepIfEmpty && node.Children.Count == 0)
 			{
-				var col = groups.PeekOrDefault()?.Children ?? steps;
+				var col = groups.PeekOrDefault()?.Children ?? Steps;
 				Debug.Assert(col.Last() == node);
 				col.RemoveAt(col.Count - 1);
 			}
+
 			node.EndStep = step;
+		}
+
+		public class Node
+		{
+			public Node(string description)
+			{
+				Description = description;
+			}
+
+			public string Description { get; }
+			public ILInstruction? Position { get; set; }
+
+			/// <summary>
+			/// BeginStep is inclusive.
+			/// </summary>
+			public int BeginStep { get; set; }
+
+			/// <summary>
+			/// EndStep is exclusive.
+			/// </summary>
+			public int EndStep { get; set; }
+
+			public IList<Node> Children { get; } = new List<Node>();
 		}
 	}
 }

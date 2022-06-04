@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// "logic.and(comp(interfaces != ldnull), call get_Count(interfaces))"
 			// into "if ((interfaces?.Count ?? 0) != 0)".
 			return ifInst != null
-				&& (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
-				&& IfInstruction.IsInConditionSlot(ifInst);
+			       && (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
+			       && IfInstruction.IsInConditionSlot(ifInst);
 		}
 
 		readonly ILTransformContext context;
@@ -52,14 +52,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			/// reference type or generic type (comparison is 'comp(ldloc(testedVar) == null)')
 			/// </summary>
 			ReferenceType,
+
 			/// <summary>
 			/// nullable type, used by value (comparison is 'call get_HasValue(ldloca(testedVar))')
 			/// </summary>
 			NullableByValue,
+
 			/// <summary>
 			/// nullable type, used by reference (comparison is 'call get_HasValue(ldloc(testedVar))')
 			/// </summary>
 			NullableByReference,
+
 			/// <summary>
 			/// unconstrained generic type (see the pattern described in TransformNullPropagationOnUnconstrainedGenericExpression)
 			/// </summary>
@@ -100,6 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByReference);
 				}
 			}
+
 			return null;
 		}
 
@@ -120,6 +124,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				nonNullInst = arg;
 				removedRewrapOrNullableCtor = true;
 			}
+
 			if (!IsValidAccessChain(testedVar, mode, nonNullInst, out var varLoad))
 				return null;
 			// note: InferType will be accurate in this case because the access chain consists of calls and field accesses
@@ -155,6 +160,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					UnderlyingResultType = nullInst.ResultType
 				};
 			}
+
 			return null;
 		}
 
@@ -166,8 +172,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (block.Instructions[pos] is IfInstruction ifInst && ifInst.FalseInst.MatchNop())
 			{
-				if (ifInst.Condition is Comp comp && comp.Kind == ComparisonKind.Inequality
-					&& comp.Left.MatchLdLoc(out var testedVar) && comp.Right.MatchLdNull())
+				if (ifInst.Condition is Comp { Kind: ComparisonKind.Inequality } comp &&
+				    comp.Left.MatchLdLoc(out var testedVar) && comp.Right.MatchLdNull())
 				{
 					TryNullPropForVoidCall(testedVar, Mode.ReferenceType, ifInst.TrueInst as Block, ifInst);
 				}
@@ -183,7 +189,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			if (TransformNullPropagationOnUnconstrainedGenericExpression(block, pos, out var testedVariable, out var nonNullInst, out var nullInst, out var endBlock))
+
+			if (TransformNullPropagationOnUnconstrainedGenericExpression(block, pos, out var testedVariable,
+				    out var nonNullInst, out var nullInst, out var endBlock))
 			{
 				var parentInstruction = nonNullInst.Parent;
 				var replacement = TryNullPropagation(testedVariable, nonNullInst, nullInst, Mode.UnconstrainedType);
@@ -203,6 +211,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// has changed, but this part of the code was not properly adjusted.
 						throw new NotSupportedException();
 				}
+
 				// Remove the fallback conditions and blocks
 				block.Instructions.RemoveRange(pos + 1, 2);
 				// if the endBlock is only reachable through the current block,
@@ -213,6 +222,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					block.Instructions.RemoveAt(pos + 2);
 					endBlock.Remove();
 				}
+
 				ILInlining.InlineIfPossible(block, pos, context);
 			}
 		}
@@ -226,6 +236,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				bodyInst = arg;
 			}
+
 			if (!IsValidAccessChain(testedVar, mode, bodyInst, out var varLoad))
 				return;
 			context.Step($"Null-propagation (mode={mode}, output=void call)", body);
@@ -270,19 +281,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return false;
 					}
-					if (call.Method.IsStatic && (!call.Method.IsExtensionMethod || !CanTransformToExtensionMethodCall(call, context)))
+
+					if (call.Method.IsStatic && (!call.Method.IsExtensionMethod ||
+					                             !CanTransformToExtensionMethodCall(call, context)))
 					{
 						return false; // only instance or extension methods can be called with ?. syntax
 					}
+
 					if (call.Method.IsAccessor && !IsGetter(call.Method))
 					{
 						return false; // setter/adder/remover cannot be called with ?. syntax
 					}
+
 					inst = call.Arguments[0];
-					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && inst.MatchAddressOf(out var arg, out _))
+					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false &&
+					    inst.MatchAddressOf(out var arg, out _))
 					{
 						inst = arg;
 					}
+
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
 						return false;
@@ -305,6 +322,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						inst = addressOf.Value;
 					}
+
 					// The argument of the unwrap instruction cannot be the end of the chain, because this
 					// would result in two null-conditional operators immediately following each other,
 					// which is not valid in C#.
@@ -332,6 +350,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// unknown node -> invalid chain
 					return false;
 				}
+
 				chainLength++;
 			}
 
@@ -345,27 +364,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 				}
+
 				return false;
 			}
 
 			bool IsValidEndOfChain()
 			{
-				switch (mode)
-				{
-					case Mode.ReferenceType:
+				return mode switch {
+					Mode.ReferenceType =>
 						// either reference type (expect: ldloc(testedVar)) or unconstrained generic type (expect: ldloca(testedVar)).
-						return inst.MatchLdLocRef(testedVar);
-					case Mode.NullableByValue:
-						return NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar);
-					case Mode.NullableByReference:
-						return NullableLiftingTransform.MatchGetValueOrDefault(inst, out ILInstruction arg)
-							&& arg.MatchLdLoc(testedVar);
-					case Mode.UnconstrainedType:
+						inst.MatchLdLocRef(testedVar),
+					Mode.NullableByValue => NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar),
+					Mode.NullableByReference => NullableLiftingTransform.MatchGetValueOrDefault(inst,
+						out ILInstruction arg) && arg.MatchLdLoc(testedVar),
+					Mode.UnconstrainedType =>
 						// unconstrained generic type (expect: ldloc(testedVar))
-						return inst.MatchLdLoc(testedVar);
-					default:
-						throw new ArgumentOutOfRangeException(nameof(mode));
-				}
+						inst.MatchLdLoc(testedVar),
+					_ => throw new ArgumentOutOfRangeException(nameof(mode))
+				};
 			}
 
 			bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)
@@ -393,7 +409,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case Mode.ReferenceType:
 				case Mode.UnconstrainedType:
 					// Wrap varLoad in nullable.unwrap:
-					replacement = new NullableUnwrap(varLoad.ResultType, varLoad, refInput: varLoad.ResultType == StackType.Ref);
+					replacement = new NullableUnwrap(varLoad.ResultType, varLoad,
+						refInput: varLoad.ResultType == StackType.Ref);
 					break;
 				case Mode.NullableByValue:
 					Debug.Assert(NullableLiftingTransform.MatchGetValueOrDefault(varLoad, testedVar));
@@ -412,6 +429,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					throw new ArgumentOutOfRangeException(nameof(mode));
 			}
+
 			oldParentChildren[oldChildIndex] = replacement;
 		}
 
@@ -459,23 +477,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(target.Kind == VariableKind.StackSlot && target.LoadCount == 2 && target.StoreCount == 2))
 				return false;
 			// stloc defaultTemporary(default.value type)
-			if (!(block.Instructions[pos + 1].MatchStLoc(out var defaultTemporary, out var defaultExpression) && defaultExpression.MatchDefaultValue(out var type)))
+			if (!(block.Instructions[pos + 1].MatchStLoc(out var defaultTemporary, out var defaultExpression) &&
+			      defaultExpression.MatchDefaultValue(out var type)))
 				return false;
 			// In the above pattern the defaultTemporary variable is used two times in stloc and ldloc instructions and once in a ldloca instruction
-			if (!(defaultTemporary.Kind == VariableKind.Local && defaultTemporary.LoadCount == 2 && defaultTemporary.StoreCount == 2 && defaultTemporary.AddressCount == 1))
+			if (!(defaultTemporary.Kind == VariableKind.Local && defaultTemporary.LoadCount == 2 &&
+			      defaultTemporary.StoreCount == 2 && defaultTemporary.AddressCount == 1))
 				return false;
 			// if (logic.not(comp.o(box `0(ldloc defaultTemporary) != ldnull))) Block fallbackBlock
-			if (!(block.Instructions[pos + 2].MatchIfInstruction(out var condition, out var fallbackBlock1) && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
+			if (!(block.Instructions[pos + 2].MatchIfInstruction(out var condition, out var fallbackBlock1) &&
+			      condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
 				return false;
-			if (!MatchStLocResultTemporary(block, pos, type, target, defaultTemporary, fallbackBlock1, out nonNullInst, out nullInst, out endBlock)
-				&& !MatchLeaveResult(block, pos, type, target, defaultTemporary, fallbackBlock1, out nonNullInst, out nullInst))
+			if (!MatchStLocResultTemporary(block, pos, type, target, defaultTemporary, fallbackBlock1, out nonNullInst,
+				    out nullInst, out endBlock)
+			    && !MatchLeaveResult(block, pos, type, target, defaultTemporary, fallbackBlock1, out nonNullInst,
+				    out nullInst))
 				return false;
 			return true;
 		}
 
 		// stloc resultTemporary(constrained[type].call_instruction(ldloc target, ...))
 		// br endBlock
-		private bool MatchStLocResultTemporary(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst, out Block endBlock)
+		private bool MatchStLocResultTemporary(Block block, int pos, IType type, ILVariable target,
+			ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst,
+			out ILInstruction nullInst, out Block endBlock)
 		{
 			endBlock = null;
 			nonNullInst = null;
@@ -490,23 +515,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(block.Instructions[pos + 4].MatchBranch(out endBlock)))
 				return false;
 			// Analyze Block fallbackBlock
-			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, resultTemporary, endBlock, out nullInst)))
+			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, resultTemporary,
+				    endBlock, out nullInst)))
 				return false;
 
 			return true;
 		}
 
-		private bool MatchLeaveResult(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary, ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst)
+		private bool MatchLeaveResult(Block block, int pos, IType type, ILVariable target, ILVariable defaultTemporary,
+			ILInstruction fallbackBlock, out ILInstruction nonNullInst, out ILInstruction nullInst)
 		{
 			nonNullInst = null;
 			nullInst = null;
 
 			// leave (constrained[type].call_instruction(ldloc target, ...))
-			if (!(block.Instructions[pos + 3] is Leave leave && leave.IsLeavingFunction))
+			if (block.Instructions[pos + 3] is not Leave { IsLeavingFunction: true } leave)
 				return false;
 			nonNullInst = leave.Value;
 			// Analyze Block fallbackBlock
-			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, null, leave.TargetContainer, out nullInst)))
+			if (!(fallbackBlock is Block b && IsFallbackBlock(b, type, target, defaultTemporary, null,
+				    leave.TargetContainer, out nullInst)))
 				return false;
 			return true;
 		}
@@ -519,7 +547,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		// 		br endBlock
 		// 	}
 		// }
-		private bool IsFallbackBlock(Block block, IType type, ILVariable target, ILVariable defaultTemporary, ILVariable resultTemporary, ILInstruction endBlockOrLeaveContainer, out ILInstruction nullInst)
+		private bool IsFallbackBlock(Block block, IType type, ILVariable target, ILVariable defaultTemporary,
+			ILVariable resultTemporary, ILInstruction endBlockOrLeaveContainer, out ILInstruction nullInst)
 		{
 			nullInst = null;
 			if (!(block.Instructions.Count == 3))
@@ -530,10 +559,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(value.MatchLdObj(out var inst, out var t) && type.Equals(t) && inst.MatchLdLoc(target)))
 				return false;
 			// stloc target(ldloca defaultTemporary)
-			if (!(block.Instructions[1].MatchStLoc(target, out var defaultAddress) && defaultAddress.MatchLdLoca(defaultTemporary)))
+			if (!(block.Instructions[1].MatchStLoc(target, out var defaultAddress) &&
+			      defaultAddress.MatchLdLoca(defaultTemporary)))
 				return false;
 			// if (comp.o(ldloc defaultTemporary == ldnull)) Block fallbackBlock
-			if (!(block.Instructions[2].MatchIfInstruction(out var condition, out var tmp) && condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
+			if (!(block.Instructions[2].MatchIfInstruction(out var condition, out var tmp) &&
+			      condition.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(defaultTemporary)))
 				return false;
 			// Block fallbackBlock {
 			//   stloc resultTemporary(nullInst)
@@ -552,10 +583,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else
 			{
 				if (!(fallbackInst is Leave fallbackLeave && endBlockOrLeaveContainer is BlockContainer leaveContainer
-					&& fallbackLeave.TargetContainer == leaveContainer && !fallbackLeave.Value.MatchNop()))
+				                                          && fallbackLeave.TargetContainer == leaveContainer &&
+				                                          !fallbackLeave.Value.MatchNop()))
 					return false;
 				nullInst = fallbackLeave.Value;
 			}
+
 			return true;
 		}
 	}

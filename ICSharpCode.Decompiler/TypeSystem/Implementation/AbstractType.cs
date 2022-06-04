@@ -95,47 +95,56 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return EmptyList<IType>.Instance; }
 		}
 
-		public virtual IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IType>.Instance;
 		}
 
-		public virtual IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments,
+			Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IType>.Instance;
 		}
 
-		public virtual IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 
-		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments,
+			Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 
-		public virtual IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public virtual IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 
-		public virtual IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IProperty>.Instance;
 		}
 
-		public virtual IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IField> GetFields(Predicate<IField> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IField>.Instance;
 		}
 
-		public virtual IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IEvent>.Instance;
 		}
 
-		public virtual IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			IEnumerable<IMember> members = GetMethods(filter, options);
 			return members
@@ -144,7 +153,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				.Concat(GetEvents(filter, options));
 		}
 
-		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
@@ -154,29 +164,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 
-		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
-		{
-			return TypeParameterSubstitution.Identity;
-		}
-
-		public override sealed bool Equals(object obj)
-		{
-			return Equals(obj as IType);
-		}
-
-		public override int GetHashCode()
-		{
-			return base.GetHashCode();
-		}
-
 		public virtual bool Equals(IType other)
 		{
 			return this == other; // use reference equality by default
-		}
-
-		public override string ToString()
-		{
-			return this.ReflectionName;
 		}
 
 		public virtual IType AcceptVisitor(TypeVisitor visitor)
@@ -187,6 +177,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public virtual IType VisitChildren(TypeVisitor visitor)
 		{
 			return this;
+		}
+
+		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
+		{
+			return TypeParameterSubstitution.Identity;
+		}
+
+		public sealed override bool Equals(object obj)
+		{
+			return Equals(obj as IType);
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		public override string ToString()
+		{
+			return this.ReflectionName;
 		}
 	}
 }

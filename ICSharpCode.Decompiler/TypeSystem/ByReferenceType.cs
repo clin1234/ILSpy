@@ -51,8 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			ByReferenceType a = other as ByReferenceType;
-			return a != null && elementType.Equals(a.elementType);
+			return other is ByReferenceType a && elementType.Equals(a.elementType);
 		}
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
@@ -73,38 +72,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class ByReferenceTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference elementType;
-
 		public ByReferenceTypeReference(ITypeReference elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			this.elementType = elementType;
+			this.ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return new ByReferenceType(elementType.Resolve(context));
-		}
-
-		public override string ToString()
-		{
-			return elementType.ToString() + "&";
-		}
+		public ITypeReference ElementType { get; }
 
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return elementType.GetHashCode() ^ 91725814;
+			return ElementType.GetHashCode() ^ 91725814;
 		}
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ByReferenceTypeReference brt = other as ByReferenceTypeReference;
-			return brt != null && this.elementType == brt.elementType;
+			return other is ByReferenceTypeReference brt && this.ElementType == brt.ElementType;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return new ByReferenceType(ElementType.Resolve(context));
+		}
+
+		public override string ToString()
+		{
+			return ElementType.ToString() + "&";
 		}
 	}
 }

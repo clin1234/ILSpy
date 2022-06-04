@@ -27,10 +27,18 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class DeconstructInstruction
 	{
-		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true, isCollection: true);
-		public static readonly SlotInfo PatternSlot = new SlotInfo("Pattern", canInlineInto: true);
-		public static readonly SlotInfo ConversionsSlot = new SlotInfo("Conversions");
-		public static readonly SlotInfo AssignmentsSlot = new SlotInfo("Assignments");
+		public static readonly SlotInfo InitSlot = new("Init", canInlineInto: true, isCollection: true);
+		public static readonly SlotInfo PatternSlot = new("Pattern", canInlineInto: true);
+		public static readonly SlotInfo ConversionsSlot = new("Conversions");
+		public static readonly SlotInfo AssignmentsSlot = new("Assignments");
+
+		public readonly InstructionCollection<StLoc> Init;
+
+		Block assignments;
+
+		Block conversions;
+
+		MatchInstruction pattern;
 
 		public DeconstructInstruction()
 			: base(OpCode.DeconstructInstruction)
@@ -38,9 +46,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Init = new InstructionCollection<StLoc>(this, 0);
 		}
 
-		public readonly InstructionCollection<StLoc> Init;
-
-		MatchInstruction pattern;
 		public MatchInstruction Pattern {
 			get { return this.pattern; }
 			set {
@@ -49,7 +54,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		Block conversions;
 		public Block Conversions {
 			get { return this.conversions; }
 			set {
@@ -58,12 +62,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		Block assignments;
 		public Block Assignments {
 			get { return this.assignments; }
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref this.assignments, value, Init.Count + 2);
+			}
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
 			}
 		}
 
@@ -74,17 +83,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index - Init.Count)
-			{
-				case 0:
-					return this.pattern;
-				case 1:
-					return this.conversions;
-				case 2:
-					return this.assignments;
-				default:
-					return this.Init[index];
-			}
+			return (index - Init.Count) switch {
+				0 => this.pattern,
+				1 => this.conversions,
+				2 => this.assignments,
+				_ => this.Init[index]
+			};
 		}
 
 		protected sealed override void SetChild(int index, ILInstruction value)
@@ -108,17 +112,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index - Init.Count)
-			{
-				case 0:
-					return PatternSlot;
-				case 1:
-					return ConversionsSlot;
-				case 2:
-					return AssignmentsSlot;
-				default:
-					return InitSlot;
-			}
+			return (index - Init.Count) switch {
+				0 => PatternSlot,
+				1 => ConversionsSlot,
+				2 => AssignmentsSlot,
+				_ => InitSlot
+			};
 		}
 
 		public sealed override ILInstruction Clone()
@@ -138,14 +137,9 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				flags |= inst.Flags;
 			}
+
 			flags |= pattern.Flags | conversions.Flags | assignments.Flags;
 			return flags;
-		}
-
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
 		}
 
 		protected internal override void InstructionCollectionUpdateComplete()
@@ -173,6 +167,7 @@ namespace ICSharpCode.Decompiler.IL
 				inst.WriteTo(output, options);
 				output.WriteLine();
 			}
+
 			output.Unindent();
 			output.WriteLine("pattern:");
 			output.Indent();
@@ -190,7 +185,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldEnd();
 		}
 
-		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable, out ILVariable inputVariable)
+		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable,
+			out ILVariable inputVariable)
 		{
 			inputVariable = null;
 			if (!inst.MatchStLoc(out variable, out var value))
@@ -207,10 +203,12 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					return false;
 			}
+
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType expectedType, out ILInstruction value)
+		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType expectedType,
+			out ILInstruction value)
 		{
 			expectedType = null;
 			value = null;
@@ -226,7 +224,7 @@ namespace ICSharpCode.Decompiler.IL
 						{
 							// OK - we accept integer literals, etc.
 						}
-						else if (arg.MatchLdLoc(out var v))
+						else if (arg.MatchLdLoc(out ILVariable _))
 						{
 						}
 						else
@@ -234,6 +232,7 @@ namespace ICSharpCode.Decompiler.IL
 							return false;
 						}
 					}
+
 					expectedType = call.Method.Parameters.Last().Type;
 					value = call.Arguments.Last();
 					return true;
@@ -249,13 +248,14 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						// OK - we accept integer literals, etc.
 					}
-					else if (target.MatchLdLoc(out var v))
+					else if (target.MatchLdLoc(out ILVariable _))
 					{
 					}
 					else
 					{
 						return false;
 					}
+
 					if (stobj.Target.InferType(typeSystem) is ByReferenceType brt)
 						expectedType = brt.ElementType;
 					else
@@ -290,14 +290,17 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(patternVariables.Contains(inputVariable));
 				conversionVariables.Add(variable);
 			}
+
 			Debug.Assert(this.conversions.FinalInstruction is Nop);
 
 			foreach (var inst in assignments.Instructions)
 			{
-				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
+				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) &&
+				      value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}
+
 			Debug.Assert(this.assignments.FinalInstruction is Nop);
 
 			void ValidatePattern(MatchInstruction inst)

@@ -16,12 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -33,12 +31,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (!context.Settings.AwaitInCatchFinally)
 				return;
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			HashSet<BlockContainer> changedContainers = new();
 
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
 			{
-				if (!(tryCatch.Parent?.Parent is BlockContainer container))
+				if (tryCatch.Parent?.Parent is not BlockContainer container)
 					continue;
 				// 	} catch exceptionVariable : 02000078 System.Object when (ldc.i4 1) BlockContainer {
 				// 		Block IL_004a (incoming: 1) {
@@ -70,6 +68,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					continue;
 				}
+
 				var handler = tryCatch.Handlers[0];
 				var exceptionVariable = handler.Variable;
 				if (handler.Body is not BlockContainer catchBlockContainer)
@@ -103,29 +102,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					default:
 						continue;
 				}
-				if (!catchBlockEntry.Instructions[catchBlockEntry.Instructions.Count - 1].MatchBranch(out var entryPointOfFinally))
+
+				if (!catchBlockEntry.Instructions[^1].MatchBranch(out var entryPointOfFinally))
 					continue;
 				// globalCopyVar should only be used once, at the end of the finally-block
 				if (objectVariable.LoadCount != 1 || objectVariable.StoreCount > 2)
 					continue;
 
-				var beforeExceptionCaptureBlock = (Block)LocalFunctionDecompiler.GetStatement(objectVariable.LoadInstructions[0])?.Parent;
+				var beforeExceptionCaptureBlock =
+					(Block)LocalFunctionDecompiler.GetStatement(objectVariable.LoadInstructions[0])?.Parent;
 				if (beforeExceptionCaptureBlock == null)
 					continue;
 
-				var (noThrowBlock, exceptionCaptureBlock, objectVariableCopy) = FindBlockAfterFinally(context, beforeExceptionCaptureBlock, objectVariable);
+				(Block noThrowBlock, Block exceptionCaptureBlock, ILVariable objectVariableCopy) =
+					FindBlockAfterFinally(context, beforeExceptionCaptureBlock, objectVariable);
 				if (noThrowBlock == null || exceptionCaptureBlock == null)
 					continue;
 
-				var initOfStateVariable = tryCatch.Parent.Children.ElementAtOrDefault(tryCatch.ChildIndex - 1) as StLoc;
-				if (initOfStateVariable == null || !initOfStateVariable.Value.MatchLdcI4(0))
+				if (tryCatch.Parent.Children.ElementAtOrDefault(tryCatch.ChildIndex - 1) is not StLoc
+					    initOfStateVariable || !initOfStateVariable.Value.MatchLdcI4(0))
 					continue;
 
 				var stateVariable = initOfStateVariable.Variable;
 				if (!ValidateStateVariable(stateVariable, initOfStateVariable, tryCatch, entryPointOfFinally))
 					continue;
 
-				StateRangeAnalysis sra = new StateRangeAnalysis(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
+				StateRangeAnalysis sra = new(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
 				sra.AssignStateRanges(noThrowBlock, Util.LongSet.Universe);
 				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
 				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();
@@ -135,12 +137,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				changedContainers.Add(container);
 
 				var finallyContainer = new BlockContainer().WithILRange(catchBlockContainer);
-				tryCatch.ReplaceWith(new TryFinally(tryCatch.TryBlock, finallyContainer).WithILRange(tryCatch.TryBlock));
+				tryCatch.ReplaceWith(
+					new TryFinally(tryCatch.TryBlock, finallyContainer).WithILRange(tryCatch.TryBlock));
 
 				context.Step("Move blocks into finally", finallyContainer);
 				MoveDominatedBlocksToContainer(entryPointOfFinally, beforeExceptionCaptureBlock, cfg, finallyContainer);
 
-				SimplifyEndOfFinally(context, objectVariable, beforeExceptionCaptureBlock, objectVariableCopy, finallyContainer);
+				SimplifyEndOfFinally(context, objectVariable, beforeExceptionCaptureBlock, objectVariableCopy,
+					finallyContainer);
 
 				if (noThrowBlock.Instructions[0].MatchLdLoc(stateVariable))
 				{
@@ -152,19 +156,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (branch.TargetBlock == entryPointOfFinally)
 					{
 						if (!(branch.Parent is Block block && branch.ChildIndex > 0
-							&& block.Instructions[branch.ChildIndex - 1].MatchStLoc(stateVariable, out var v)
-							&& v.MatchLdcI4(out int value)))
+						                                   && block.Instructions[branch.ChildIndex - 1]
+							                                   .MatchStLoc(stateVariable, out var v)
+						                                   && v.MatchLdcI4(out int value)))
 						{
 							value = 0;
 						}
+
 						if (mapping.TryGetValue(value, out Block targetBlock))
 						{
-							context.Step($"branch to finally with state {value} => branch to state target " + targetBlock.Label, branch);
+							context.Step(
+								$"branch to finally with state {value} => branch to state target " + targetBlock.Label,
+								branch);
 							branch.TargetBlock = targetBlock;
 						}
 						else if (mappingForLeave.TryGetValue(value, out BlockContainer targetContainer))
 						{
-							context.Step($"branch to finally with state {value} => leave to state target " + targetContainer, branch);
+							context.Step(
+								$"branch to finally with state {value} => leave to state target " + targetContainer,
+								branch);
 							branch.ReplaceWith(new Leave(targetContainer).WithILRange(branch));
 						}
 						else
@@ -222,24 +232,28 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				target.Blocks.Add(block);
 			}
 
-			static void SimplifyEndOfFinally(ILTransformContext context, ILVariable objectVariable, Block beforeExceptionCaptureBlock, ILVariable objectVariableCopy, BlockContainer finallyContainer)
+			static void SimplifyEndOfFinally(ILTransformContext context, ILVariable objectVariable,
+				Block beforeExceptionCaptureBlock, ILVariable objectVariableCopy, BlockContainer finallyContainer)
 			{
 				if (beforeExceptionCaptureBlock.Instructions.Count >= 3
-					&& beforeExceptionCaptureBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var brInst)
-					&& beforeExceptionCaptureBlock.Instructions.LastOrDefault() is Branch branch
-					&& beforeExceptionCaptureBlock.Instructions[beforeExceptionCaptureBlock.Instructions.Count - 3].MatchStLoc(objectVariableCopy, out var value)
-					&& value.MatchLdLoc(objectVariable))
+				    && beforeExceptionCaptureBlock.Instructions.SecondToLastOrDefault()
+					    .MatchIfInstruction(out var cond, out ILInstruction _)
+				    && beforeExceptionCaptureBlock.Instructions.LastOrDefault() is Branch branch
+				    && beforeExceptionCaptureBlock.Instructions[^3].MatchStLoc(objectVariableCopy, out var value)
+				    && value.MatchLdLoc(objectVariable))
 				{
 					if (cond.MatchCompEqualsNull(out var arg) && arg.MatchLdLoc(objectVariableCopy))
 					{
 						context.Step("Simplify end of finally", beforeExceptionCaptureBlock);
-						beforeExceptionCaptureBlock.Instructions.RemoveRange(beforeExceptionCaptureBlock.Instructions.Count - 3, 2);
+						beforeExceptionCaptureBlock.Instructions.RemoveRange(
+							beforeExceptionCaptureBlock.Instructions.Count - 3, 2);
 						branch.ReplaceWith(new Leave(finallyContainer).WithILRange(branch));
 					}
 					else if (cond.MatchCompNotEqualsNull(out arg) && arg.MatchLdLoc(objectVariableCopy))
 					{
 						context.Step("Simplify end of finally", beforeExceptionCaptureBlock);
-						beforeExceptionCaptureBlock.Instructions.RemoveRange(beforeExceptionCaptureBlock.Instructions.Count - 3, 2);
+						beforeExceptionCaptureBlock.Instructions.RemoveRange(
+							beforeExceptionCaptureBlock.Instructions.Count - 3, 2);
 						branch.ReplaceWith(new Leave(finallyContainer).WithILRange(branch));
 					}
 					else
@@ -254,7 +268,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private static bool ValidateStateVariable(ILVariable stateVariable, StLoc initializer, TryCatch tryCatch, Block entryPointOfFinally)
+		private static bool ValidateStateVariable(ILVariable stateVariable, StLoc initializer, TryCatch tryCatch,
+			Block entryPointOfFinally)
 		{
 			if (stateVariable.AddressCount > 0)
 				return false;
@@ -271,14 +286,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (stloc.Parent is not Block block)
 					return false;
-				if (block.Instructions.ElementAtOrDefault(stloc.ChildIndex + 1)?.MatchBranch(entryPointOfFinally) != true)
+				if (block.Instructions.ElementAtOrDefault(stloc.ChildIndex + 1)?.MatchBranch(entryPointOfFinally) !=
+				    true)
 					return false;
 			}
 
 			return true;
 		}
 
-		static (Block, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block, ILVariable objectVariable)
+		static (Block, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block,
+			ILVariable objectVariable)
 		{
 			// Block IL_0327 (incoming: 2) {
 			// 	stloc V_7(ldloc I_0)
@@ -321,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			if (!AwaitInCatchTransform.MatchExceptionCaptureBlock(context, exceptionCaptureBlock,
-				ref objectVariableCopy, out _, out _, out _))
+				    ref objectVariableCopy, out _, out _, out _))
 			{
 				return default;
 			}

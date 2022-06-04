@@ -18,10 +18,7 @@
 
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -56,18 +53,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
+
 			if (block.Instructions.ElementAtOrDefault(i + 1) is not StObj inst2)
 			{
 				return false;
 			}
+
 			if (!(inst2.Target.MatchLdLoc(s)
-				&& TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst2.Type)
-				&& inst2.UnalignedPrefix == 0
-				&& !inst2.IsVolatile
-				&& inst2.Value is DefaultValue))
+			      && TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst2.Type)
+			      && inst2.UnalignedPrefix == 0
+			      && !inst2.IsVolatile
+			      && inst2.Value is DefaultValue))
 			{
 				return false;
 			}
+
 			context.Step("LdLocaDupInitObjTransform", inst1);
 			block.Instructions[i] = new StLoc(v, inst2.Value).WithILRange(inst2);
 			block.Instructions[i + 1] = inst1;

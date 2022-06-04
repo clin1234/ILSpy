@@ -65,13 +65,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public static TokenWriter Create(TextWriter writer, string indentation = "\t")
 		{
-			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new TextWriterTokenWriter(writer) { IndentationString = indentation }));
+			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new TextWriterTokenWriter(writer)
+				{ IndentationString = indentation }));
 		}
 
 		public static TokenWriter CreateWriterThatSetsLocationsInAST(TextWriter writer, string indentation = "\t")
 		{
 			var target = new TextWriterTokenWriter(writer) { IndentationString = indentation };
-			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new InsertMissingTokensDecorator(target, target)));
+			return new InsertSpecialsDecorator(
+				new InsertRequiredSpacesDecorator(new InsertMissingTokensDecorator(target, target)));
 		}
 
 		public static TokenWriter InsertRequiredSpaces(TokenWriter writer)
@@ -81,9 +83,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public static TokenWriter WrapInWriterThatSetsLocationsInAST(TokenWriter writer)
 		{
-			if (!(writer is ILocatable))
+			if (writer is not ILocatable locatable)
 				throw new InvalidOperationException("writer does not provide locations!");
-			return new InsertMissingTokensDecorator(writer, (ILocatable)writer);
+			return new InsertMissingTokensDecorator(writer, locatable);
 		}
 	}
 
@@ -99,9 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected DecoratingTokenWriter(TokenWriter decoratedWriter)
 		{
-			if (decoratedWriter == null)
-				throw new ArgumentNullException(nameof(decoratedWriter));
-			this.decoratedWriter = decoratedWriter;
+			this.decoratedWriter = decoratedWriter ?? throw new ArgumentNullException(nameof(decoratedWriter));
 		}
 
 		public override void StartNode(AstNode node)
@@ -175,5 +175,3 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 	}
 }
-
-

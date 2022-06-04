@@ -23,7 +23,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -32,7 +31,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AsExpression : Expression
 	{
-		public readonly static TokenRole AsKeywordRole = new TokenRole("as");
+		public static readonly TokenRole AsKeywordRole = new("as");
+
+		public AsExpression()
+		{
+		}
+
+		public AsExpression(Expression expression, AstType type)
+		{
+			AddChild(expression, Roles.Expression);
+			AddChild(type, Roles.Type);
+		}
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -46,16 +55,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
-		}
-
-		public AsExpression()
-		{
-		}
-
-		public AsExpression(Expression expression, AstType type)
-		{
-			AddChild(expression, Roles.Expression);
-			AddChild(type, Roles.Type);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -75,9 +74,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AsExpression o = other as AsExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.Type.DoMatch(o.Type, match);
+			return other is AsExpression o && this.Expression.DoMatch(o.Expression, match) &&
+			       this.Type.DoMatch(o.Type, match);
 		}
 	}
 }
-

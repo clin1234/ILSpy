@@ -21,9 +21,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -34,27 +31,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		const MethodSemanticsAttributes csharpAccessors =
 			MethodSemanticsAttributes.Getter | MethodSemanticsAttributes.Setter
-			| MethodSemanticsAttributes.Adder | MethodSemanticsAttributes.Remover;
-
-		readonly struct Entry : IComparable<Entry>
-		{
-			public readonly MethodSemanticsAttributes Semantics;
-			public readonly int MethodRowNumber;
-			public MethodDefinitionHandle Method => MetadataTokens.MethodDefinitionHandle(MethodRowNumber);
-			public readonly EntityHandle Association;
-
-			public Entry(MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
-			{
-				Semantics = semantics;
-				MethodRowNumber = MetadataTokens.GetRowNumber(method);
-				Association = association;
-			}
-
-			public int CompareTo(Entry other)
-			{
-				return MethodRowNumber.CompareTo(other.MethodRowNumber);
-			}
-		}
+			                                 | MethodSemanticsAttributes.Adder | MethodSemanticsAttributes.Remover;
 
 		// entries, sorted by MethodRowNumber
 		readonly List<Entry> entries;
@@ -65,6 +42,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				throw new NotSupportedException("SRM doesn't provide access to 'other' accessors");
 			}
+
 			entries = new List<Entry>(metadata.GetTableRowCount(TableIndex.MethodSemantics));
 			foreach (var propHandle in metadata.PropertyDefinitions)
 			{
@@ -73,6 +51,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				AddEntry(MethodSemanticsAttributes.Getter, accessors.Getter, propHandle);
 				AddEntry(MethodSemanticsAttributes.Setter, accessors.Setter, propHandle);
 			}
+
 			foreach (var eventHandle in metadata.EventDefinitions)
 			{
 				var ev = metadata.GetEventDefinition(eventHandle);
@@ -81,6 +60,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				AddEntry(MethodSemanticsAttributes.Remover, accessors.Remover, eventHandle);
 				AddEntry(MethodSemanticsAttributes.Raiser, accessors.Raiser, eventHandle);
 			}
+
 			entries.Sort();
 
 			void AddEntry(MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
@@ -101,6 +81,26 @@ namespace ICSharpCode.Decompiler.Metadata
 			else
 			{
 				return (default(EntityHandle), 0);
+			}
+		}
+
+		readonly struct Entry : IComparable<Entry>
+		{
+			public readonly MethodSemanticsAttributes Semantics;
+			public readonly int MethodRowNumber;
+			public MethodDefinitionHandle Method => MetadataTokens.MethodDefinitionHandle(MethodRowNumber);
+			public readonly EntityHandle Association;
+
+			public Entry(MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
+			{
+				Semantics = semantics;
+				MethodRowNumber = MetadataTokens.GetRowNumber(method);
+				Association = association;
+			}
+
+			public int CompareTo(Entry other)
+			{
+				return MethodRowNumber.CompareTo(other.MethodRowNumber);
 			}
 		}
 	}

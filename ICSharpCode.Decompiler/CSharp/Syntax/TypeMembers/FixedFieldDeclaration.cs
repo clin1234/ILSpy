@@ -23,14 +23,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class FixedFieldDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
-		public static readonly Role<FixedVariableInitializer> VariableRole = new Role<FixedVariableInitializer>("FixedVariable", null);
+		public static readonly TokenRole FixedKeywordRole = new("fixed");
+		public static readonly Role<FixedVariableInitializer> VariableRole = new("FixedVariable", null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }
@@ -61,9 +62,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as FixedFieldDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
+			return other is FixedFieldDeclaration o && this.MatchAttributesAndModifiers(o, match)
+			                                        && this.ReturnType.DoMatch(o.ReturnType, match) &&
+			                                        this.Variables.DoMatch(o.Variables, match);
 		}
 	}
 }

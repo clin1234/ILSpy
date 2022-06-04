@@ -19,11 +19,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Xml;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -42,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var provider = context.DecompileRun.DocumentationProvider;
 				foreach (var entityDecl in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>())
 				{
-					if (!(entityDecl.GetSymbol() is IEntity entity))
+					if (entityDecl.GetSymbol() is not IEntity entity)
 						continue;
 					string doc = provider.GetDocumentation(entity);
 					if (doc != null)
@@ -53,10 +51,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			catch (XmlException ex)
 			{
-				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' },
+					StringSplitOptions.RemoveEmptyEntries);
 				var insertionPoint = rootNode.FirstChild;
 				for (int i = 0; i < msg.Length; i++)
-					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
+					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation),
+						Roles.Comment);
 			}
 		}
 
@@ -70,7 +70,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (firstLine == null)
 					return;
 			} while (string.IsNullOrWhiteSpace(firstLine));
-			string indentation = firstLine.Substring(0, firstLine.Length - firstLine.TrimStart().Length);
+
+			string indentation = firstLine[..^firstLine.TrimStart().Length];
 			string line = firstLine;
 			int skippedWhitespaceLines = 0;
 			// Copy all lines from input to output, except for empty lines at the end.
@@ -84,17 +85,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					while (skippedWhitespaceLines > 0)
 					{
-						Comment emptyLine = new Comment(string.Empty, CommentType.Documentation);
+						Comment emptyLine = new(string.Empty, CommentType.Documentation);
 						emptyLine.AddAnnotation(node.GetResolveResult());
 						node.Parent.InsertChildBefore(node, emptyLine, Roles.Comment);
 						skippedWhitespaceLines--;
 					}
+
 					if (line.StartsWith(indentation, StringComparison.Ordinal))
-						line = line.Substring(indentation.Length);
-					Comment comment = new Comment(" " + line, CommentType.Documentation);
+						line = line[indentation.Length..];
+					Comment comment = new(" " + line, CommentType.Documentation);
 					comment.AddAnnotation(node.GetResolveResult());
 					node.Parent.InsertChildBefore(node, comment, Roles.Comment);
 				}
+
 				line = r.ReadLine();
 			}
 		}

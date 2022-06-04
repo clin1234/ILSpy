@@ -16,27 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataEvent : IEvent
 	{
-		readonly MetadataModule module;
-		readonly EventDefinitionHandle handle;
 		readonly EventAccessors accessors;
-		readonly string name;
+		readonly EventDefinitionHandle handle;
+		readonly MetadataModule module;
 
 		// lazy-loaded:
 		IType returnType;
@@ -51,16 +46,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var ev = metadata.GetEventDefinition(handle);
 			accessors = ev.GetAccessors();
-			name = metadata.GetString(ev.Name);
+			Name = metadata.GetString(ev.Name);
 		}
 
-		public override string ToString()
-		{
-			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
-		}
+		IMethod AnyAccessor => module.GetDefinition(accessors.GetAny());
 
 		public EntityHandle MetadataToken => handle;
-		public string Name => name;
+		public string Name { get; }
 
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Event;
 
@@ -70,9 +62,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMethod AddAccessor => module.GetDefinition(accessors.Adder);
 		public IMethod RemoveAccessor => module.GetDefinition(accessors.Remover);
 		public IMethod InvokeAccessor => module.GetDefinition(accessors.Raiser);
-		IMethod AnyAccessor => module.GetDefinition(accessors.GetAny());
 
 		#region Signature (ReturnType + Parameters)
+
 		public IType ReturnType {
 			get {
 				var returnType = LazyInit.VolatileRead(ref this.returnType);
@@ -86,21 +78,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// The event does not have explicit accessibility in metadata, so use its
 				// containing type to determine whether nullability applies to this type.
 				var typeOptions = module.OptionsForEntity(declaringTypeDef);
-				returnType = module.ResolveType(ev.Type, context, typeOptions, ev.GetCustomAttributes(), nullableContext);
+				returnType = module.ResolveType(ev.Type, context, typeOptions, ev.GetCustomAttributes(),
+					nullableContext);
 				return LazyInit.GetOrSet(ref this.returnType, returnType);
 			}
 		}
+
 		#endregion
 
 		public bool IsExplicitInterfaceImplementation => AnyAccessor?.IsExplicitInterfaceImplementation ?? false;
-		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
 
-		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
-		{
-			if (method == null)
-				return EmptyList<IMember>.Instance;
-			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
-		}
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers =>
+			GetInterfaceMembersFromAccessor(AnyAccessor);
 
 		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;
 		public IType DeclaringType => AnyAccessor?.DeclaringType;
@@ -108,6 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		#region Attributes
+
 		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
@@ -115,7 +105,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var eventDef = metadata.GetEventDefinition(handle);
 
 			// SpecialName
-			if ((eventDef.Attributes & (EventAttributes.SpecialName | EventAttributes.RTSpecialName)) == EventAttributes.SpecialName)
+			if ((eventDef.Attributes & (EventAttributes.SpecialName | EventAttributes.RTSpecialName)) ==
+			    EventAttributes.SpecialName)
 			{
 				b.Add(KnownAttribute.SpecialName);
 			}
@@ -123,6 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Add(eventDef.GetCustomAttributes(), SymbolKind.Event);
 			return b.Build();
 		}
+
 		#endregion
 
 		public Accessibility Accessibility => AnyAccessor?.Accessibility ?? Accessibility.None;
@@ -140,20 +132,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		public override bool Equals(object obj)
-		{
-			if (obj is MetadataEvent ev)
-			{
-				return handle == ev.handle && module.PEFile == ev.module.PEFile;
-			}
-			return false;
-		}
-
-		public override int GetHashCode()
-		{
-			return 0x7937039a ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
-		}
-
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
@@ -162,6 +140,34 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedEvent.Create(this, substitution);
+		}
+
+		public override string ToString()
+		{
+			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
+		}
+
+		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
+		{
+			if (method == null)
+				return EmptyList<IMember>.Instance;
+			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner)
+				.Where(m => m != null);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataEvent ev)
+			{
+				return handle == ev.handle && module.PEFile == ev.module.PEFile;
+			}
+
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x7937039a ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 	}
 }

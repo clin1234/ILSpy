@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				Debug.Assert(!intervals[i].IsEmpty);
 				Debug.Assert(minValue <= intervals[i].Start);
-				if (intervals[i].InclusiveEnd == long.MaxValue - 1 || intervals[i].InclusiveEnd == long.MaxValue)
+				if (intervals[i].InclusiveEnd is long.MaxValue - 1 or long.MaxValue)
 				{
 					// An inclusive end of long.MaxValue-1 or long.MaxValue means (after the gap of 1 element),
 					// there isn't any room for more non-empty intervals.
@@ -91,12 +91,12 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// The empty LongSet.
 		/// </summary>
-		public static readonly LongSet Empty = new LongSet(ImmutableArray.Create<LongInterval>());
+		public static readonly LongSet Empty = new(ImmutableArray.Create<LongInterval>());
 
 		/// <summary>
 		/// The LongSet that contains all possible long values.
 		/// </summary>
-		public static readonly LongSet Universe = new LongSet(LongInterval.Inclusive(long.MinValue, long.MaxValue));
+		public static readonly LongSet Universe = new(LongInterval.Inclusive(long.MinValue, long.MaxValue));
 
 		public bool IsEmpty {
 			get { return Intervals.IsEmpty; }
@@ -116,6 +116,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					count += (ulong)(interval.End - interval.Start);
 				}
+
 				if (count == 0 && !Intervals.IsEmpty)
 					return ulong.MaxValue;
 				else
@@ -139,6 +140,7 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					yield return intersection;
 				}
+
 				if (a.InclusiveEnd < b.InclusiveEnd)
 				{
 					moreA = enumA.MoveNext();
@@ -198,9 +200,11 @@ namespace ICSharpCode.Decompiler.Util
 					{
 						empty = false;
 					}
+
 					start = element.Start;
 					end = element.End;
 				}
+
 				if (end == long.MinValue)
 				{
 					// special case: element goes all the way up to long.MaxValue inclusive
@@ -209,6 +213,7 @@ namespace ICSharpCode.Decompiler.Util
 					break;
 				}
 			}
+
 			if (!empty)
 			{
 				yield return new LongInterval(start, end);
@@ -230,6 +235,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return this;
 			}
+
 			var newIntervals = new List<LongInterval>(Intervals.Length + 1);
 			foreach (var element in Intervals)
 			{
@@ -246,6 +252,7 @@ namespace ICSharpCode.Decompiler.Util
 					newIntervals.Add(LongInterval.Inclusive(long.MinValue, newInclusiveEnd));
 				}
 			}
+
 			newIntervals.Sort((a, b) => a.Start.CompareTo(b.Start));
 			return new LongSet(MergeOverlapping(newIntervals).ToImmutableArray());
 		}
@@ -268,7 +275,8 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return Universe;
 			}
-			List<LongInterval> newIntervals = new List<LongInterval>(Intervals.Length + 1);
+
+			List<LongInterval> newIntervals = new(Intervals.Length + 1);
 			long prevEnd = long.MinValue; // previous exclusive end
 			foreach (var interval in Intervals)
 			{
@@ -276,13 +284,16 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					newIntervals.Add(new LongInterval(prevEnd, interval.Start));
 				}
+
 				prevEnd = interval.End;
 			}
+
 			// create a final interval up to long.MaxValue inclusive
 			if (prevEnd != long.MinValue)
 			{
 				newIntervals.Add(new LongInterval(prevEnd, long.MinValue));
 			}
+
 			return new LongSet(newIntervals.ToImmutableArray());
 		}
 
@@ -331,13 +342,16 @@ namespace ICSharpCode.Decompiler.Util
 					max = m - 1;
 					continue;
 				}
+
 				if (val > i.End)
 				{
 					min = m + 1;
 					continue;
 				}
+
 				return m + 1;
 			}
+
 			return min;
 		}
 
@@ -351,9 +365,10 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		#region Equals and GetHashCode implementation
+
 		public override bool Equals(object? obj)
 		{
-			return obj is LongSet && SetEquals((LongSet)obj);
+			return obj is LongSet set && SetEquals(set);
 		}
 
 		public override int GetHashCode()
@@ -376,8 +391,10 @@ namespace ICSharpCode.Decompiler.Util
 				if (Intervals[i] != other.Intervals[i])
 					return false;
 			}
+
 			return true;
 		}
+
 		#endregion
 	}
 }

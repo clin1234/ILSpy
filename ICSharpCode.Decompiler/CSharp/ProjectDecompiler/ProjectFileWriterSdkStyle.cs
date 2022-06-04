@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const string FalseString = "False";
 		const string AnyCpuString = "AnyCPU";
 
-		static readonly HashSet<string> ImplicitReferences = new HashSet<string> {
+		static readonly HashSet<string> ImplicitReferences = new() {
 			"mscorlib",
 			"netstandard",
 			"PresentationFramework",
@@ -54,14 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			"System.Xaml",
 		};
 
-		enum ProjectType { Default, WinForms, Wpf, Web }
-
-		/// <summary>
-		/// Creates a new instance of the <see cref="ProjectFileWriterSdkStyle"/> class.
-		/// </summary>
-		/// <returns>A new instance of the <see cref="ProjectFileWriterSdkStyle"/> class.</returns>
-		public static IProjectFileWriter Create() => new ProjectFileWriterSdkStyle();
-
 		/// <inheritdoc />
 		public void Write(
 			TextWriter target,
@@ -69,14 +61,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			IEnumerable<(string itemType, string fileName)> files,
 			PEFile module)
 		{
-			using (XmlTextWriter xmlWriter = new XmlTextWriter(target))
-			{
-				xmlWriter.Formatting = Formatting.Indented;
-				Write(xmlWriter, project, files, module);
-			}
+			using XmlTextWriter xmlWriter = new(target);
+			xmlWriter.Formatting = Formatting.Indented;
+			Write(xmlWriter, project, files, module);
 		}
 
-		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<(string itemType, string fileName)> files, PEFile module)
+		/// <summary>
+		/// Creates a new instance of the <see cref="ProjectFileWriterSdkStyle"/> class.
+		/// </summary>
+		/// <returns>A new instance of the <see cref="ProjectFileWriterSdkStyle"/> class.</returns>
+		public static IProjectFileWriter Create() => new ProjectFileWriterSdkStyle();
+
+		static void Write(XmlTextWriter xml, IProjectInfoProvider project,
+			IEnumerable<(string itemType, string fileName)> files, PEFile module)
 		{
 			xml.WriteStartElement("Project");
 
@@ -105,25 +102,29 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
+		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, IProjectInfoProvider project,
+			ProjectType projectType)
 		{
 			xml.WriteElementString("AssemblyName", module.Name);
 
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
 
-			WriteOutputType(xml, module.Reader.PEHeaders.IsDll, module.Reader.PEHeaders.PEHeader.Subsystem, projectType);
+			WriteOutputType(xml, module.Reader.PEHeaders.IsDll, module.Reader.PEHeaders.PEHeader.Subsystem,
+				projectType);
 
 			WriteDesktopExtensions(xml, projectType);
 
 			string platformName = TargetServices.GetPlatformName(module);
 			var targetFramework = TargetServices.DetectTargetFramework(module);
 			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
-				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
+				targetFramework =
+					TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
 
 			if (targetFramework.Moniker == null)
 			{
-				throw new NotSupportedException($"Cannot decompile this assembly to a SDK style project. Use default project format instead.");
+				throw new NotSupportedException(
+					$"Cannot decompile this assembly to a SDK style project. Use default project format instead.");
 			}
 
 			xml.WriteElementString("TargetFramework", targetFramework.Moniker);
@@ -178,7 +179,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static void WriteProjectInfo(XmlTextWriter xml, IProjectInfoProvider project)
 		{
-			xml.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
+			xml.WriteElementString("LangVersion",
+				project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 			xml.WriteElementString("AllowUnsafeBlocks", TrueString);
 
 			if (project.StrongNameKeyFile != null)
@@ -188,9 +190,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
+		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml,
+			IEnumerable<(string itemType, string fileName)> files)
 		{
-			var (itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
+			(string itemType, string fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationIcon", fileName);
 
@@ -206,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		static void WriteResources(XmlTextWriter xml, IEnumerable<(string itemType, string fileName)> files)
 		{
 			// remove phase
-			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach ((string itemType, string fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
 				string buildAction = Path.GetExtension(fileName).ToUpperInvariant() switch {
 					".CS" => "Compile",
@@ -222,7 +225,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 
 			// include phase
-			foreach (var (itemType, fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
+			foreach ((string itemType, string fileName) in files.Where(t => t.itemType == "EmbeddedResource"))
 			{
 				if (Path.GetExtension(fileName) == ".resx")
 					continue;
@@ -233,7 +236,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project, ProjectType projectType)
+		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project,
+			ProjectType projectType)
 		{
 			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
 			var targetPacks = new HashSet<string>();
@@ -255,7 +259,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
 			{
-				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
+				if (isNetCoreApp &&
+				    project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string runtimePack) &&
+				    targetPacks.Contains(runtimePack))
 				{
 					continue;
 				}
@@ -266,7 +272,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				var asembly = project.AssemblyResolver.Resolve(reference);
 				if (asembly != null && !project.AssemblyReferenceClassifier.IsGacAssembly(reference))
 				{
-					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
+					xml.WriteElementString("HintPath",
+						FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
 				}
 
 				xml.WriteEndElement();
@@ -309,5 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			return ProjectType.Default;
 		}
+
+		enum ProjectType { Default, WinForms, Wpf, Web }
 	}
 }

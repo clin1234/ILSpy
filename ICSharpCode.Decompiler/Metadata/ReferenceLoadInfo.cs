@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,7 +23,25 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public class ReferenceLoadInfo
 	{
-		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();
+		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new();
+
+		public IReadOnlyList<UnresolvedAssemblyNameReference> Entries {
+			get {
+				lock (loadedAssemblyReferences)
+				{
+					return loadedAssemblyReferences.Values.ToList();
+				}
+			}
+		}
+
+		public bool HasErrors {
+			get {
+				lock (loadedAssemblyReferences)
+				{
+					return loadedAssemblyReferences.Any(i => i.Value.HasErrors);
+				}
+			}
+		}
 
 		public void AddMessage(string fullName, MessageKind kind, string message)
 		{
@@ -35,6 +52,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
 					loadedAssemblyReferences.Add(fullName, referenceInfo);
 				}
+
 				referenceInfo.Messages.Add((kind, message));
 			}
 		}
@@ -63,24 +81,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			lock (loadedAssemblyReferences)
 			{
 				return loadedAssemblyReferences.TryGetValue(fullName, out info);
-			}
-		}
-
-		public IReadOnlyList<UnresolvedAssemblyNameReference> Entries {
-			get {
-				lock (loadedAssemblyReferences)
-				{
-					return loadedAssemblyReferences.Values.ToList();
-				}
-			}
-		}
-
-		public bool HasErrors {
-			get {
-				lock (loadedAssemblyReferences)
-				{
-					return loadedAssemblyReferences.Any(i => i.Value.HasErrors);
-				}
 			}
 		}
 	}

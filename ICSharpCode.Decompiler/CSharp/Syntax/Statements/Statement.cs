@@ -29,7 +29,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </remarks>
 	public abstract class Statement : AstNode
 	{
+		public override NodeType NodeType {
+			get { return NodeType.Statement; }
+		}
+
+		public new Statement Clone()
+		{
+			return (Statement)base.Clone();
+		}
+
+		public Statement ReplaceWith(Func<Statement, Statement> replaceFunction)
+		{
+			ArgumentNullException.ThrowIfNull(replaceFunction);
+			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
+		}
+
 		#region Null
+
 		public new static readonly Statement Null = new NullStatement();
 
 		sealed class NullStatement : Statement
@@ -60,9 +76,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return other == null || other.IsNull;
 			}
 		}
+
 		#endregion
 
 		#region PatternPlaceholder
+
 		public static implicit operator Statement(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
@@ -79,6 +97,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			public override NodeType NodeType {
 				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
 
 			public override void AcceptVisitor(IAstVisitor visitor)
@@ -100,28 +124,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return child.DoMatch(other, match);
 			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
 		}
+
 		#endregion
-
-		public new Statement Clone()
-		{
-			return (Statement)base.Clone();
-		}
-
-		public Statement ReplaceWith(Func<Statement, Statement> replaceFunction)
-		{
-			if (replaceFunction == null)
-				throw new ArgumentNullException(nameof(replaceFunction));
-			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
-		}
-
-		public override NodeType NodeType {
-			get { return NodeType.Statement; }
-		}
 	}
 }

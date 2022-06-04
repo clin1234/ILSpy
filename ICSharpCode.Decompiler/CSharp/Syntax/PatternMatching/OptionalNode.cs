@@ -22,27 +22,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	public class OptionalNode : Pattern
 	{
-		readonly INode childNode;
-
-		public INode ChildNode {
-			get { return childNode; }
-		}
-
 		public OptionalNode(INode childNode)
 		{
-			if (childNode == null)
-				throw new ArgumentNullException(nameof(childNode));
-			this.childNode = childNode;
+			this.ChildNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
 		}
 
 		public OptionalNode(string groupName, INode childNode) : this(new NamedNode(groupName, childNode))
 		{
 		}
 
+		public INode ChildNode { get; }
+
 		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
 			backtrackingInfo.backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
-			return childNode.DoMatch(pos, match);
+			return ChildNode.DoMatch(pos, match);
 		}
 
 		public override bool DoMatch(INode other, Match match)
@@ -50,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			if (other == null || other.IsNull)
 				return true;
 			else
-				return childNode.DoMatch(other, match);
+				return ChildNode.DoMatch(other, match);
 		}
 	}
 }

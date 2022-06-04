@@ -32,16 +32,61 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public class IntersectionType : AbstractType
 	{
-		readonly ReadOnlyCollection<IType> types;
-
-		public ReadOnlyCollection<IType> Types {
-			get { return types; }
-		}
-
 		private IntersectionType(IType[] types)
 		{
 			Debug.Assert(types.Length >= 2);
-			this.types = Array.AsReadOnly(types);
+			this.Types = Array.AsReadOnly(types);
+		}
+
+		public ReadOnlyCollection<IType> Types { get; }
+
+		public override TypeKind Kind {
+			get { return TypeKind.Intersection; }
+		}
+
+		public override string Name {
+			get {
+				StringBuilder b = new();
+				foreach (var t in Types)
+				{
+					if (b.Length > 0)
+						b.Append(" & ");
+					b.Append(t.Name);
+				}
+
+				return b.ToString();
+			}
+		}
+
+		public override string ReflectionName {
+			get {
+				StringBuilder b = new();
+				foreach (var t in Types)
+				{
+					if (b.Length > 0)
+						b.Append(" & ");
+					b.Append(t.ReflectionName);
+				}
+
+				return b.ToString();
+			}
+		}
+
+		public override bool? IsReferenceType {
+			get {
+				foreach (var t in Types)
+				{
+					bool? isReferenceType = t.IsReferenceType;
+					if (isReferenceType.HasValue)
+						return isReferenceType.Value;
+				}
+
+				return null;
+			}
+		}
+
+		public override IEnumerable<IType> DirectBaseTypes {
+			get { return Types; }
 		}
 
 		public static IType Create(IEnumerable<IType> types)
@@ -52,6 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (type == null)
 					throw new ArgumentNullException();
 			}
+
 			if (arr.Length == 0)
 				return SpecialType.UnknownType;
 			else if (arr.Length == 1)
@@ -60,79 +106,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new IntersectionType(arr);
 		}
 
-		public override TypeKind Kind {
-			get { return TypeKind.Intersection; }
-		}
-
-		public override string Name {
-			get {
-				StringBuilder b = new StringBuilder();
-				foreach (var t in types)
-				{
-					if (b.Length > 0)
-						b.Append(" & ");
-					b.Append(t.Name);
-				}
-				return b.ToString();
-			}
-		}
-
-		public override string ReflectionName {
-			get {
-				StringBuilder b = new StringBuilder();
-				foreach (var t in types)
-				{
-					if (b.Length > 0)
-						b.Append(" & ");
-					b.Append(t.ReflectionName);
-				}
-				return b.ToString();
-			}
-		}
-
-		public override bool? IsReferenceType {
-			get {
-				foreach (var t in types)
-				{
-					bool? isReferenceType = t.IsReferenceType;
-					if (isReferenceType.HasValue)
-						return isReferenceType.Value;
-				}
-				return null;
-			}
-		}
-
 		public override int GetHashCode()
 		{
 			int hashCode = 0;
 			unchecked
 			{
-				foreach (var t in types)
+				foreach (var t in Types)
 				{
 					hashCode *= 7137517;
 					hashCode += t.GetHashCode();
 				}
 			}
+
 			return hashCode;
 		}
 
 		public override bool Equals(IType other)
 		{
-			IntersectionType o = other as IntersectionType;
-			if (o != null && types.Count == o.types.Count)
+			if (other is IntersectionType o && Types.Count == o.Types.Count)
 			{
-				for (int i = 0; i < types.Count; i++)
+				for (int i = 0; i < Types.Count; i++)
 				{
-					if (!types[i].Equals(o.types[i]))
+					if (!Types[i].Equals(o.Types[i]))
 						return false;
 				}
+
 				return true;
 			}
-			return false;
-		}
 
-		public override IEnumerable<IType> DirectBaseTypes {
-			get { return types; }
+			return false;
 		}
 
 		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
@@ -140,7 +142,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+			GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}

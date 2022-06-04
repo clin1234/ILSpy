@@ -1,16 +1,16 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+
+using LightJson.Serialization;
+
 namespace LightJson
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Diagnostics.CodeAnalysis;
-	using System.Globalization;
-
-	using LightJson.Serialization;
-
 	/// <summary>
 	/// A wrapper object that contains a valid JSON value.
 	/// </summary>
@@ -21,9 +21,8 @@ namespace LightJson
 		/// <summary>
 		/// Represents a null JsonValue.
 		/// </summary>
-		public static readonly JsonValue Null = new JsonValue(JsonValueType.Null, default(double), null);
+		public static readonly JsonValue Null = new(JsonValueType.Null, default(double), null);
 
-		private readonly JsonValueType type;
 		private readonly object reference;
 		private readonly double value;
 
@@ -37,13 +36,13 @@ namespace LightJson
 			{
 				this.reference = null;
 
-				this.type = JsonValueType.Boolean;
+				this.Type = JsonValueType.Boolean;
 
 				this.value = value.Value ? 1 : 0;
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -57,13 +56,13 @@ namespace LightJson
 			{
 				this.reference = null;
 
-				this.type = JsonValueType.Number;
+				this.Type = JsonValueType.Number;
 
 				this.value = value.Value;
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -77,13 +76,13 @@ namespace LightJson
 			{
 				this.value = default(double);
 
-				this.type = JsonValueType.String;
+				this.Type = JsonValueType.String;
 
 				this.reference = value;
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -97,13 +96,13 @@ namespace LightJson
 			{
 				this.value = default(double);
 
-				this.type = JsonValueType.Object;
+				this.Type = JsonValueType.Object;
 
 				this.reference = value;
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -117,13 +116,13 @@ namespace LightJson
 			{
 				this.value = default(double);
 
-				this.type = JsonValueType.Array;
+				this.Type = JsonValueType.Array;
 
 				this.reference = value;
 			}
 			else
 			{
-				this = JsonValue.Null;
+				this = Null;
 			}
 		}
 
@@ -141,7 +140,7 @@ namespace LightJson
 		/// </param>
 		private JsonValue(JsonValueType type, double value, object reference)
 		{
-			this.type = type;
+			this.Type = type;
 			this.value = value;
 			this.reference = reference;
 		}
@@ -150,11 +149,7 @@ namespace LightJson
 		/// Gets the type of this JsonValue.
 		/// </summary>
 		/// <value>The type of this JsonValue.</value>
-		public JsonValueType Type {
-			get {
-				return this.type;
-			}
-		}
+		public JsonValueType Type { get; }
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is Null.
@@ -309,8 +304,8 @@ namespace LightJson
 						return this.value;
 
 					case JsonValueType.String:
-						double number;
-						if (double.TryParse((string)this.reference, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
+						if (double.TryParse((string)this.reference, NumberStyles.Float, CultureInfo.InvariantCulture,
+							    out double number))
 						{
 							return number;
 						}
@@ -331,22 +326,12 @@ namespace LightJson
 		/// <value>This value as a String type.</value>
 		public string AsString {
 			get {
-				switch (this.Type)
-				{
-					case JsonValueType.Boolean:
-						return (this.value == 1)
-							? "true"
-							: "false";
-
-					case JsonValueType.Number:
-						return this.value.ToString(CultureInfo.InvariantCulture);
-
-					case JsonValueType.String:
-						return (string)this.reference;
-
-					default:
-						return null;
-				}
+				return this.Type switch {
+					JsonValueType.Boolean => (this.value == 1) ? "true" : "false",
+					JsonValueType.Number => this.value.ToString(CultureInfo.InvariantCulture),
+					JsonValueType.String => (string)this.reference,
+					_ => null
+				};
 			}
 		}
 
@@ -380,9 +365,7 @@ namespace LightJson
 		/// <value>This value as a system.DateTime.</value>
 		public DateTime? AsDateTime {
 			get {
-				DateTime value;
-
-				if (this.IsString && DateTime.TryParse((string)this.reference, out value))
+				if (this.IsString && DateTime.TryParse((string)this.reference, out DateTime value))
 				{
 					return value;
 				}
@@ -535,7 +518,7 @@ namespace LightJson
 		{
 			if (value == null)
 			{
-				return JsonValue.Null;
+				return Null;
 			}
 
 			return new JsonValue(value.Value.ToString("o"));
@@ -739,8 +722,8 @@ namespace LightJson
 		public static bool operator ==(JsonValue a, JsonValue b)
 		{
 			return (a.Type == b.Type)
-				&& (a.value == b.value)
-				&& Equals(a.reference, b.reference);
+			       && (a.value == b.value)
+			       && Equals(a.reference, b.reference);
 		}
 
 		/// <summary>
@@ -771,14 +754,13 @@ namespace LightJson
 				return this.IsNull;
 			}
 
-			var jsonValue = obj as JsonValue?;
-			if (jsonValue == null)
+			if (obj is not JsonValue jsonValue)
 			{
 				return false;
 			}
 			else
 			{
-				return this == jsonValue.Value;
+				return this == jsonValue;
 			}
 		}
 
@@ -792,8 +774,8 @@ namespace LightJson
 			else
 			{
 				return this.Type.GetHashCode()
-					^ this.value.GetHashCode()
-					^ EqualityComparer<object>.Default.GetHashCode(this.reference);
+				       ^ this.value.GetHashCode()
+				       ^ EqualityComparer<object>.Default.GetHashCode(this.reference);
 			}
 		}
 

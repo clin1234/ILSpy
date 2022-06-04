@@ -18,6 +18,22 @@ namespace ICSharpCode.Decompiler
 	public static class SingleFileBundle
 	{
 		/// <summary>
+		/// FileType: Identifies the type of file embedded into the bundle.
+		///
+		/// The bundler differentiates a few kinds of files via the manifest,
+		/// with respect to the way in which they'll be used by the runtime.
+		/// </summary>
+		public enum FileType : byte
+		{
+			Unknown, // Type not determined.
+			Assembly, // IL and R2R Assemblies
+			NativeBinary, // NativeBinaries
+			DepsJson, // .deps.json configuration file
+			RuntimeConfigJson, // .runtimeconfig.json configuration file
+			Symbols // PDB Files
+		};
+
+		/// <summary>
 		/// Check if the memory-mapped data is a single-file bundle
 		/// </summary>
 		public static unsafe bool IsBundle(MemoryMappedViewAccessor view, out long bundleHeaderOffset)
@@ -62,48 +78,6 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
-		public struct Header
-		{
-			public uint MajorVersion;
-			public uint MinorVersion;
-			public int FileCount;
-			public string BundleID;
-
-			// Fields introduced with v2:
-			public long DepsJsonOffset;
-			public long DepsJsonSize;
-			public long RuntimeConfigJsonOffset;
-			public long RuntimeConfigJsonSize;
-			public ulong Flags;
-
-			public ImmutableArray<Entry> Entries;
-		}
-
-		/// <summary>
-		/// FileType: Identifies the type of file embedded into the bundle.
-		///
-		/// The bundler differentiates a few kinds of files via the manifest,
-		/// with respect to the way in which they'll be used by the runtime.
-		/// </summary>
-		public enum FileType : byte
-		{
-			Unknown,           // Type not determined.
-			Assembly,          // IL and R2R Assemblies
-			NativeBinary,      // NativeBinaries
-			DepsJson,          // .deps.json configuration file
-			RuntimeConfigJson, // .runtimeconfig.json configuration file
-			Symbols            // PDB Files
-		};
-
-		public struct Entry
-		{
-			public long Offset;
-			public long Size;
-			public long CompressedSize; // 0 if not compressed, otherwise the compressed size in the bundle
-			public FileType Type;
-			public string RelativePath; // Path of an embedded file, relative to the Bundle source-directory.
-		}
-
 		static UnmanagedMemoryStream AsStream(MemoryMappedViewAccessor view)
 		{
 			long size = checked((long)view.SafeMemoryMappedViewHandle.ByteLength);
@@ -131,10 +105,12 @@ namespace ICSharpCode.Decompiler
 			header.MinorVersion = reader.ReadUInt32();
 
 			// Major versions 3, 4 and 5 were skipped to align bundle versioning with .NET versioning scheme
-			if (header.MajorVersion < 1 || header.MajorVersion > 6)
+			if (header.MajorVersion is < 1 or > 6)
 			{
-				throw new InvalidDataException($"Unsupported manifest version: {header.MajorVersion}.{header.MinorVersion}");
+				throw new InvalidDataException(
+					$"Unsupported manifest version: {header.MajorVersion}.{header.MinorVersion}");
 			}
+
 			header.FileCount = reader.ReadInt32();
 			header.BundleID = reader.ReadString();
 			if (header.MajorVersion >= 2)
@@ -145,11 +121,13 @@ namespace ICSharpCode.Decompiler
 				header.RuntimeConfigJsonSize = reader.ReadInt64();
 				header.Flags = reader.ReadUInt64();
 			}
+
 			var entries = ImmutableArray.CreateBuilder<Entry>(header.FileCount);
 			for (int i = 0; i < header.FileCount; i++)
 			{
 				entries.Add(ReadEntry(reader, header.MajorVersion));
 			}
+
 			header.Entries = entries.MoveToImmutable();
 			return header;
 		}
@@ -163,6 +141,32 @@ namespace ICSharpCode.Decompiler
 			entry.Type = (FileType)reader.ReadByte();
 			entry.RelativePath = reader.ReadString();
 			return entry;
+		}
+
+		public struct Header
+		{
+			public uint MajorVersion;
+			public uint MinorVersion;
+			public int FileCount;
+			public string BundleID;
+
+			// Fields introduced with v2:
+			public long DepsJsonOffset;
+			public long DepsJsonSize;
+			public long RuntimeConfigJsonOffset;
+			public long RuntimeConfigJsonSize;
+			public ulong Flags;
+
+			public ImmutableArray<Entry> Entries;
+		}
+
+		public struct Entry
+		{
+			public long Offset;
+			public long Size;
+			public long CompressedSize; // 0 if not compressed, otherwise the compressed size in the bundle
+			public FileType Type;
+			public string RelativePath; // Path of an embedded file, relative to the Bundle source-directory.
 		}
 	}
 }

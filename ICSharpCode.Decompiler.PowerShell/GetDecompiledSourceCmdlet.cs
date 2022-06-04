@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
-using System.Text;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -16,14 +14,13 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[Parameter(Position = 0, Mandatory = true)]
 		public CSharpDecompiler Decompiler { get; set; }
 
-		[Parameter]
-		public string TypeName { get; set; } = string.Empty;
+		[Parameter] public string TypeName { get; set; } = string.Empty;
 
 		protected override void ProcessRecord()
 		{
 			try
 			{
-				StringWriter output = new StringWriter();
+				StringWriter output = new();
 				if (TypeName == null)
 				{
 					output.Write(Decompiler.DecompileWholeModuleAsString());

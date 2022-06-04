@@ -33,115 +33,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public class OverloadResolution
 	{
-		sealed class Candidate
-		{
-			public readonly IParameterizedMember Member;
-
-			/// <summary>
-			/// Returns the normal form candidate, if this is an expanded candidate.
-			/// </summary>
-			public readonly bool IsExpandedForm;
-
-			/// <summary>
-			/// Gets the parameter types. In the first step, these are the types without any substition.
-			/// After type inference, substitutions will be performed.
-			/// </summary>
-			public readonly IType[] ParameterTypes;
-
-			/// <summary>
-			/// argument index -> parameter index; -1 for arguments that could not be mapped
-			/// </summary>
-			public int[] ArgumentToParameterMap;
-
-			public OverloadResolutionErrors Errors;
-			public int ErrorCount;
-
-			public bool HasUnmappedOptionalParameters;
-
-			public IType[] InferredTypes;
-
-			/// <summary>
-			/// Gets the original member parameters (before any substitution!)
-			/// </summary>
-			public readonly IReadOnlyList<IParameter> Parameters;
-
-			/// <summary>
-			/// Gets the original method type parameters (before any substitution!)
-			/// </summary>
-			public readonly IReadOnlyList<ITypeParameter> TypeParameters;
-
-			/// <summary>
-			/// Conversions applied to the arguments.
-			/// This field is set by the CheckApplicability step.
-			/// </summary>
-			public Conversion[] ArgumentConversions;
-
-			public bool IsGenericMethod {
-				get {
-					IMethod method = Member as IMethod;
-					return method != null && method.TypeParameters.Count > 0;
-				}
-			}
-
-			public int ArgumentsPassedToParamsArray {
-				get {
-					int count = 0;
-					if (IsExpandedForm)
-					{
-						int paramsParameterIndex = this.Parameters.Count - 1;
-						foreach (int parameterIndex in ArgumentToParameterMap)
-						{
-							if (parameterIndex == paramsParameterIndex)
-								count++;
-						}
-					}
-					return count;
-				}
-			}
-
-			public Candidate(IParameterizedMember member, bool isExpanded)
-			{
-				this.Member = member;
-				this.IsExpandedForm = isExpanded;
-				IParameterizedMember memberDefinition = (IParameterizedMember)member.MemberDefinition;
-				// For specificialized methods, go back to the original parameters:
-				// (without any type parameter substitution, not even class type parameters)
-				// We'll re-substitute them as part of RunTypeInference().
-				this.Parameters = memberDefinition.Parameters;
-				IMethod methodDefinition = memberDefinition as IMethod;
-				if (methodDefinition != null && methodDefinition.TypeParameters.Count > 0)
-				{
-					this.TypeParameters = methodDefinition.TypeParameters;
-				}
-				this.ParameterTypes = new IType[this.Parameters.Count];
-			}
-
-			public void AddError(OverloadResolutionErrors newError)
-			{
-				this.Errors |= newError;
-				if (!IsApplicable(newError))
-					this.ErrorCount++;
-			}
-		}
+		readonly string[] argumentNames;
+		readonly ResolveResult[] arguments;
 
 		readonly ICompilation compilation;
-		readonly ResolveResult[] arguments;
-		readonly string[] argumentNames;
+
 		readonly CSharpConversions conversions;
+
 		//List<Candidate> candidates = new List<Candidate>();
 		Candidate bestCandidate;
 		Candidate bestCandidateAmbiguousWith;
-		IType[] explicitlyGivenTypeArguments;
-		bool bestCandidateWasValidated;
 		OverloadResolutionErrors bestCandidateValidationResult;
+		bool bestCandidateWasValidated;
+		IType[] explicitlyGivenTypeArguments;
 
 		#region Constructor
-		public OverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null, CSharpConversions conversions = null)
+
+		public OverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null,
+			IType[] typeArguments = null, CSharpConversions conversions = null)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			if (arguments == null)
-				throw new ArgumentNullException(nameof(arguments));
+			ArgumentNullException.ThrowIfNull(compilation);
+			ArgumentNullException.ThrowIfNull(arguments);
 			if (argumentNames == null)
 				argumentNames = new string[arguments.Length];
 			else if (argumentNames.Length != arguments.Length)
@@ -151,222 +63,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.argumentNames = argumentNames;
 
 			// keep explicitlyGivenTypeArguments==null when no type arguments were specified
-			if (typeArguments != null && typeArguments.Length > 0)
+			if (typeArguments is { Length: > 0 })
 				this.explicitlyGivenTypeArguments = typeArguments;
 
 			this.conversions = conversions ?? CSharpConversions.Get(compilation);
 			this.AllowExpandingParams = true;
 			this.AllowOptionalParameters = true;
 		}
-		#endregion
 
-		#region Input Properties
-		/// <summary>
-		/// Gets/Sets whether the methods are extension methods that are being called using extension method syntax.
-		/// </summary>
-		/// <remarks>
-		/// Setting this property to true restricts the possible conversions on the first argument to
-		/// implicit identity, reference, or boxing conversions.
-		/// </remarks>
-		public bool IsExtensionMethodInvocation { get; set; }
-
-		/// <summary>
-		/// Gets/Sets whether expanding 'params' into individual elements is allowed.
-		/// The default value is true.
-		/// </summary>
-		public bool AllowExpandingParams { get; set; }
-
-		/// <summary>
-		/// Gets/Sets whether optional parameters may be left at their default value.
-		/// The default value is true.
-		/// If this property is set to false, optional parameters will be treated like regular parameters.
-		/// </summary>
-		public bool AllowOptionalParameters { get; set; }
-
-		/// <summary>
-		/// Gets/Sets whether a value argument can be passed to an `in` reference parameter.
-		/// </summary>
-		public bool AllowImplicitIn { get; set; } = true;
-
-		/// <summary>
-		/// Gets/Sets whether ConversionResolveResults created by this OverloadResolution
-		/// instance apply overflow checking.
-		/// The default value is false.
-		/// </summary>
-		public bool CheckForOverflow { get; set; }
-
-		/// <summary>
-		/// Gets the arguments for which this OverloadResolution instance was created.
-		/// </summary>
-		public IList<ResolveResult> Arguments {
-			get { return arguments; }
-		}
-		#endregion
-
-		#region AddCandidate
-		/// <summary>
-		/// Adds a candidate to overload resolution.
-		/// </summary>
-		/// <param name="member">The candidate member to add.</param>
-		/// <returns>The errors that prevent the member from being applicable, if any.
-		/// Note: this method does not return errors that do not affect applicability.</returns>
-		public OverloadResolutionErrors AddCandidate(IParameterizedMember member)
-		{
-			return AddCandidate(member, OverloadResolutionErrors.None);
-		}
-
-		/// <summary>
-		/// Adds a candidate to overload resolution.
-		/// </summary>
-		/// <param name="member">The candidate member to add.</param>
-		/// <param name="additionalErrors">Additional errors that apply to the candidate.
-		/// This is used to represent errors during member lookup (e.g. OverloadResolutionErrors.Inaccessible)
-		/// in overload resolution.</param>
-		/// <returns>The errors that prevent the member from being applicable, if any.
-		/// Note: this method does not return errors that do not affect applicability.</returns>
-		public OverloadResolutionErrors AddCandidate(IParameterizedMember member, OverloadResolutionErrors additionalErrors)
-		{
-			if (member == null)
-				throw new ArgumentNullException(nameof(member));
-
-			Candidate c = new Candidate(member, false);
-			c.AddError(additionalErrors);
-			if (CalculateCandidate(c))
-			{
-				//candidates.Add(c);
-			}
-
-			if (this.AllowExpandingParams && member.Parameters.Count > 0
-				&& member.Parameters[member.Parameters.Count - 1].IsParams)
-			{
-				Candidate expandedCandidate = new Candidate(member, true);
-				expandedCandidate.AddError(additionalErrors);
-				// consider expanded form only if it isn't obviously wrong
-				if (CalculateCandidate(expandedCandidate))
-				{
-					//candidates.Add(expandedCandidate);
-
-					if (expandedCandidate.ErrorCount < c.ErrorCount)
-						return expandedCandidate.Errors;
-				}
-			}
-			return c.Errors;
-		}
-
-		/// <summary>
-		/// Calculates applicability etc. for the candidate.
-		/// </summary>
-		/// <returns>True if the calculation was successful, false if the candidate should be removed without reporting an error</returns>
-		bool CalculateCandidate(Candidate candidate)
-		{
-			if (!ResolveParameterTypes(candidate, false))
-				return false;
-			MapCorrespondingParameters(candidate);
-			RunTypeInference(candidate);
-			CheckApplicability(candidate);
-			ConsiderIfNewCandidateIsBest(candidate);
-			return true;
-		}
-
-		bool ResolveParameterTypes(Candidate candidate, bool useSpecializedParameters)
-		{
-			for (int i = 0; i < candidate.Parameters.Count; i++)
-			{
-				IType type;
-				if (useSpecializedParameters)
-				{
-					// Use the parameter type of the specialized non-generic method or indexer
-					Debug.Assert(!candidate.IsGenericMethod);
-					type = candidate.Member.Parameters[i].Type;
-				}
-				else
-				{
-					// Use the type of the original formal parameter
-					type = candidate.Parameters[i].Type;
-				}
-				if (candidate.IsExpandedForm && i == candidate.Parameters.Count - 1)
-				{
-					ArrayType arrayType = type as ArrayType;
-					if (arrayType != null && arrayType.Dimensions == 1)
-						type = arrayType.ElementType;
-					else
-						return false; // error: cannot unpack params-array. abort considering the expanded form for this candidate
-				}
-				candidate.ParameterTypes[i] = type;
-			}
-			return true;
-		}
-		#endregion
-
-		#region AddMethodLists
-		/// <summary>
-		/// Adds all candidates from the method lists.
-		/// 
-		/// This method implements the logic that causes applicable methods in derived types to hide
-		/// all methods in base types.
-		/// </summary>
-		/// <param name="methodLists">The methods, grouped by declaring type. Base types must come first in the list.</param>
-		public void AddMethodLists(IReadOnlyList<MethodListWithDeclaringType> methodLists)
-		{
-			if (methodLists == null)
-				throw new ArgumentNullException(nameof(methodLists));
-			// Base types come first, so go through the list backwards (derived types first)
-			bool[] isHiddenByDerivedType;
-			if (methodLists.Count > 1)
-				isHiddenByDerivedType = new bool[methodLists.Count];
-			else
-				isHiddenByDerivedType = null;
-			for (int i = methodLists.Count - 1; i >= 0; i--)
-			{
-				if (isHiddenByDerivedType != null && isHiddenByDerivedType[i])
-				{
-					Log.WriteLine("  Skipping methods in {0} because they are hidden by an applicable method in a derived type", methodLists[i].DeclaringType);
-					continue;
-				}
-
-				MethodListWithDeclaringType methodList = methodLists[i];
-				bool foundApplicableCandidateInCurrentList = false;
-
-				for (int j = 0; j < methodList.Count; j++)
-				{
-					IParameterizedMember method = methodList[j];
-					Log.Indent();
-					OverloadResolutionErrors errors = AddCandidate(method);
-					Log.Unindent();
-					LogCandidateAddingResult("  Candidate", method, errors);
-
-					foundApplicableCandidateInCurrentList |= IsApplicable(errors);
-				}
-
-				if (foundApplicableCandidateInCurrentList && i > 0)
-				{
-					foreach (IType baseType in methodList.DeclaringType.GetAllBaseTypes())
-					{
-						for (int j = 0; j < i; j++)
-						{
-							if (!isHiddenByDerivedType[j] && baseType.Equals(methodLists[j].DeclaringType))
-								isHiddenByDerivedType[j] = true;
-						}
-					}
-				}
-			}
-		}
-
-		[Conditional("DEBUG")]
-		internal void LogCandidateAddingResult(string text, IParameterizedMember method, OverloadResolutionErrors errors)
-		{
-#if DEBUG
-			Log.WriteLine(string.Format("{0} {1} = {2}{3}",
-										text, method,
-										errors == OverloadResolutionErrors.None ? "Success" : errors.ToString(),
-										this.BestCandidate == method ? " (best candidate so far)" :
-										this.BestCandidateAmbiguousWith == method ? " (ambiguous)" : ""
-									   ));
-#endif
-		}
 		#endregion
 
 		#region MapCorrespondingParameters
+
 		void MapCorrespondingParameters(Candidate candidate)
 		{
 			// C# 4.0 spec: §7.5.1.1 Corresponding parameters
@@ -415,14 +123,358 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							candidate.ArgumentToParameterMap[i] = j;
 						}
 					}
+
 					if (candidate.ArgumentToParameterMap[i] < 0)
 						candidate.AddError(OverloadResolutionErrors.NoParameterFoundForNamedArgument);
 				}
 			}
 		}
+
+		#endregion
+
+		#region ConsiderIfNewCandidateIsBest
+
+		void ConsiderIfNewCandidateIsBest(Candidate candidate)
+		{
+			if (bestCandidate == null)
+			{
+				bestCandidate = candidate;
+				bestCandidateWasValidated = false;
+			}
+			else
+			{
+				switch (BetterFunctionMember(candidate, bestCandidate))
+				{
+					case 0:
+						// Overwrite 'bestCandidateAmbiguousWith' so that API users can
+						// detect the set of all ambiguous methods if they look at
+						// bestCandidateAmbiguousWith after each step.
+						bestCandidateAmbiguousWith = candidate;
+						break;
+					case 1:
+						bestCandidate = candidate;
+						bestCandidateWasValidated = false;
+						bestCandidateAmbiguousWith = null;
+						break;
+					// case 2: best candidate stays best
+				}
+			}
+		}
+
+		#endregion
+
+		sealed class Candidate
+		{
+			/// <summary>
+			/// Returns the normal form candidate, if this is an expanded candidate.
+			/// </summary>
+			public readonly bool IsExpandedForm;
+
+			public readonly IParameterizedMember Member;
+
+			/// <summary>
+			/// Gets the original member parameters (before any substitution!)
+			/// </summary>
+			public readonly IReadOnlyList<IParameter> Parameters;
+
+			/// <summary>
+			/// Gets the parameter types. In the first step, these are the types without any substition.
+			/// After type inference, substitutions will be performed.
+			/// </summary>
+			public readonly IType[] ParameterTypes;
+
+			/// <summary>
+			/// Gets the original method type parameters (before any substitution!)
+			/// </summary>
+			public readonly IReadOnlyList<ITypeParameter> TypeParameters;
+
+			/// <summary>
+			/// Conversions applied to the arguments.
+			/// This field is set by the CheckApplicability step.
+			/// </summary>
+			public Conversion[] ArgumentConversions;
+
+			/// <summary>
+			/// argument index -> parameter index; -1 for arguments that could not be mapped
+			/// </summary>
+			public int[] ArgumentToParameterMap;
+
+			public int ErrorCount;
+
+			public OverloadResolutionErrors Errors;
+
+			public bool HasUnmappedOptionalParameters;
+
+			public IType[] InferredTypes;
+
+			public Candidate(IParameterizedMember member, bool isExpanded)
+			{
+				this.Member = member;
+				this.IsExpandedForm = isExpanded;
+				IParameterizedMember memberDefinition = (IParameterizedMember)member.MemberDefinition;
+				// For specificialized methods, go back to the original parameters:
+				// (without any type parameter substitution, not even class type parameters)
+				// We'll re-substitute them as part of RunTypeInference().
+				this.Parameters = memberDefinition.Parameters;
+				if (memberDefinition is IMethod methodDefinition && methodDefinition.TypeParameters.Count > 0)
+				{
+					this.TypeParameters = methodDefinition.TypeParameters;
+				}
+
+				this.ParameterTypes = new IType[this.Parameters.Count];
+			}
+
+			public bool IsGenericMethod {
+				get {
+					return Member is IMethod method && method.TypeParameters.Count > 0;
+				}
+			}
+
+			public int ArgumentsPassedToParamsArray {
+				get {
+					int count = 0;
+					if (IsExpandedForm)
+					{
+						int paramsParameterIndex = this.Parameters.Count - 1;
+						foreach (int parameterIndex in ArgumentToParameterMap)
+						{
+							if (parameterIndex == paramsParameterIndex)
+								count++;
+						}
+					}
+
+					return count;
+				}
+			}
+
+			public void AddError(OverloadResolutionErrors newError)
+			{
+				this.Errors |= newError;
+				if (!IsApplicable(newError))
+					this.ErrorCount++;
+			}
+		}
+
+		#region Input Properties
+
+		/// <summary>
+		/// Gets/Sets whether the methods are extension methods that are being called using extension method syntax.
+		/// </summary>
+		/// <remarks>
+		/// Setting this property to true restricts the possible conversions on the first argument to
+		/// implicit identity, reference, or boxing conversions.
+		/// </remarks>
+		public bool IsExtensionMethodInvocation { get; set; }
+
+		/// <summary>
+		/// Gets/Sets whether expanding 'params' into individual elements is allowed.
+		/// The default value is true.
+		/// </summary>
+		public bool AllowExpandingParams { get; set; }
+
+		/// <summary>
+		/// Gets/Sets whether optional parameters may be left at their default value.
+		/// The default value is true.
+		/// If this property is set to false, optional parameters will be treated like regular parameters.
+		/// </summary>
+		public bool AllowOptionalParameters { get; set; }
+
+		/// <summary>
+		/// Gets/Sets whether a value argument can be passed to an `in` reference parameter.
+		/// </summary>
+		public bool AllowImplicitIn { get; set; } = true;
+
+		/// <summary>
+		/// Gets/Sets whether ConversionResolveResults created by this OverloadResolution
+		/// instance apply overflow checking.
+		/// The default value is false.
+		/// </summary>
+		public bool CheckForOverflow { get; set; }
+
+		/// <summary>
+		/// Gets the arguments for which this OverloadResolution instance was created.
+		/// </summary>
+		public IList<ResolveResult> Arguments {
+			get { return arguments; }
+		}
+
+		#endregion
+
+		#region AddCandidate
+
+		/// <summary>
+		/// Adds a candidate to overload resolution.
+		/// </summary>
+		/// <param name="member">The candidate member to add.</param>
+		/// <returns>The errors that prevent the member from being applicable, if any.
+		/// Note: this method does not return errors that do not affect applicability.</returns>
+		public OverloadResolutionErrors AddCandidate(IParameterizedMember member)
+		{
+			return AddCandidate(member, OverloadResolutionErrors.None);
+		}
+
+		/// <summary>
+		/// Adds a candidate to overload resolution.
+		/// </summary>
+		/// <param name="member">The candidate member to add.</param>
+		/// <param name="additionalErrors">Additional errors that apply to the candidate.
+		/// This is used to represent errors during member lookup (e.g. OverloadResolutionErrors.Inaccessible)
+		/// in overload resolution.</param>
+		/// <returns>The errors that prevent the member from being applicable, if any.
+		/// Note: this method does not return errors that do not affect applicability.</returns>
+		public OverloadResolutionErrors AddCandidate(IParameterizedMember member,
+			OverloadResolutionErrors additionalErrors)
+		{
+			ArgumentNullException.ThrowIfNull(member);
+
+			Candidate c = new(member, false);
+			c.AddError(additionalErrors);
+			if (CalculateCandidate(c))
+			{
+				//candidates.Add(c);
+			}
+
+			if (this.AllowExpandingParams && member.Parameters.Count > 0
+			                              && member.Parameters[^1].IsParams)
+			{
+				Candidate expandedCandidate = new(member, true);
+				expandedCandidate.AddError(additionalErrors);
+				// consider expanded form only if it isn't obviously wrong
+				if (CalculateCandidate(expandedCandidate))
+				{
+					//candidates.Add(expandedCandidate);
+
+					if (expandedCandidate.ErrorCount < c.ErrorCount)
+						return expandedCandidate.Errors;
+				}
+			}
+
+			return c.Errors;
+		}
+
+		/// <summary>
+		/// Calculates applicability etc. for the candidate.
+		/// </summary>
+		/// <returns>True if the calculation was successful, false if the candidate should be removed without reporting an error</returns>
+		bool CalculateCandidate(Candidate candidate)
+		{
+			if (!ResolveParameterTypes(candidate, false))
+				return false;
+			MapCorrespondingParameters(candidate);
+			RunTypeInference(candidate);
+			CheckApplicability(candidate);
+			ConsiderIfNewCandidateIsBest(candidate);
+			return true;
+		}
+
+		bool ResolveParameterTypes(Candidate candidate, bool useSpecializedParameters)
+		{
+			for (int i = 0; i < candidate.Parameters.Count; i++)
+			{
+				IType type;
+				if (useSpecializedParameters)
+				{
+					// Use the parameter type of the specialized non-generic method or indexer
+					Debug.Assert(!candidate.IsGenericMethod);
+					type = candidate.Member.Parameters[i].Type;
+				}
+				else
+				{
+					// Use the type of the original formal parameter
+					type = candidate.Parameters[i].Type;
+				}
+
+				if (candidate.IsExpandedForm && i == candidate.Parameters.Count - 1)
+				{
+					if (type is ArrayType { Dimensions: 1 } arrayType)
+						type = arrayType.ElementType;
+					else
+						return
+							false; // error: cannot unpack params-array. abort considering the expanded form for this candidate
+				}
+
+				candidate.ParameterTypes[i] = type;
+			}
+
+			return true;
+		}
+
+		#endregion
+
+		#region AddMethodLists
+
+		/// <summary>
+		/// Adds all candidates from the method lists.
+		/// 
+		/// This method implements the logic that causes applicable methods in derived types to hide
+		/// all methods in base types.
+		/// </summary>
+		/// <param name="methodLists">The methods, grouped by declaring type. Base types must come first in the list.</param>
+		public void AddMethodLists(IReadOnlyList<MethodListWithDeclaringType> methodLists)
+		{
+			ArgumentNullException.ThrowIfNull(methodLists);
+			// Base types come first, so go through the list backwards (derived types first)
+			bool[] isHiddenByDerivedType;
+			if (methodLists.Count > 1)
+				isHiddenByDerivedType = new bool[methodLists.Count];
+			else
+				isHiddenByDerivedType = null;
+			for (int i = methodLists.Count - 1; i >= 0; i--)
+			{
+				if (isHiddenByDerivedType != null && isHiddenByDerivedType[i])
+				{
+					Log.WriteLine(
+						"  Skipping methods in {0} because they are hidden by an applicable method in a derived type",
+						methodLists[i].DeclaringType);
+					continue;
+				}
+
+				MethodListWithDeclaringType methodList = methodLists[i];
+				bool foundApplicableCandidateInCurrentList = false;
+
+				for (int j = 0; j < methodList.Count; j++)
+				{
+					IParameterizedMember method = methodList[j];
+					Log.Indent();
+					OverloadResolutionErrors errors = AddCandidate(method);
+					Log.Unindent();
+					LogCandidateAddingResult("  Candidate", method, errors);
+
+					foundApplicableCandidateInCurrentList |= IsApplicable(errors);
+				}
+
+				if (foundApplicableCandidateInCurrentList && i > 0)
+				{
+					foreach (IType baseType in methodList.DeclaringType.GetAllBaseTypes())
+					{
+						for (int j = 0; j < i; j++)
+						{
+							if (!isHiddenByDerivedType[j] && baseType.Equals(methodLists[j].DeclaringType))
+								isHiddenByDerivedType[j] = true;
+						}
+					}
+				}
+			}
+		}
+
+		[Conditional("DEBUG")]
+		internal void LogCandidateAddingResult(string text, IParameterizedMember method,
+			OverloadResolutionErrors errors)
+		{
+#if DEBUG
+			Log.WriteLine(string.Format("{0} {1} = {2}{3}",
+				text, method,
+				errors == OverloadResolutionErrors.None ? "Success" : errors.ToString(),
+				this.BestCandidate == method ? " (best candidate so far)" :
+				this.BestCandidateAmbiguousWith == method ? " (ambiguous)" : ""
+			));
+#endif
+		}
+
 		#endregion
 
 		#region RunTypeInference
+
 		void RunTypeInference(Candidate candidate)
 		{
 			if (candidate.TypeParameters == null)
@@ -432,13 +484,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// method does not expect type arguments, but was given some
 					candidate.AddError(OverloadResolutionErrors.WrongNumberOfTypeArguments);
 				}
+
 				// Grab new parameter types:
 				ResolveParameterTypes(candidate, true);
 				return;
 			}
-			ParameterizedType parameterizedDeclaringType = candidate.Member.DeclaringType as ParameterizedType;
+
 			IReadOnlyList<IType> classTypeArguments;
-			if (parameterizedDeclaringType != null)
+			if (candidate.Member.DeclaringType is ParameterizedType parameterizedDeclaringType)
 			{
 				classTypeArguments = parameterizedDeclaringType.TypeArguments;
 			}
@@ -446,6 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				classTypeArguments = null;
 			}
+
 			// The method is generic:
 			if (explicitlyGivenTypeArguments != null)
 			{
@@ -469,20 +523,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else
 			{
-				TypeInference ti = new TypeInference(compilation, conversions);
+				TypeInference ti = new(compilation, conversions);
 				IType[] parameterTypes = candidate.ArgumentToParameterMap
-					.SelectReadOnlyArray(parameterIndex => parameterIndex >= 0 ? candidate.ParameterTypes[parameterIndex] : SpecialType.UnknownType);
-				bool success;
-				candidate.InferredTypes = ti.InferTypeArguments(candidate.TypeParameters, arguments, parameterTypes, out success, classTypeArguments);
+					.SelectReadOnlyArray(parameterIndex =>
+						parameterIndex >= 0 ? candidate.ParameterTypes[parameterIndex] : SpecialType.UnknownType);
+				candidate.InferredTypes = ti.InferTypeArguments(candidate.TypeParameters, arguments, parameterTypes,
+					out bool success, classTypeArguments);
 				if (!success)
 					candidate.AddError(OverloadResolutionErrors.TypeInferenceFailed);
 			}
+
 			// Now substitute in the formal parameters:
 			var substitution = new ConstraintValidatingSubstitution(classTypeArguments, candidate.InferredTypes, this);
 			for (int i = 0; i < candidate.ParameterTypes.Length; i++)
 			{
 				candidate.ParameterTypes[i] = candidate.ParameterTypes[i].AcceptVisitor(substitution);
 			}
+
 			if (!substitution.ConstraintsValid)
 				candidate.AddError(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint);
 		}
@@ -492,7 +549,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			readonly CSharpConversions conversions;
 			public bool ConstraintsValid = true;
 
-			public ConstraintValidatingSubstitution(IReadOnlyList<IType> classTypeArguments, IReadOnlyList<IType> methodTypeArguments, OverloadResolution overloadResolution)
+			public ConstraintValidatingSubstitution(IReadOnlyList<IType> classTypeArguments,
+				IReadOnlyList<IType> methodTypeArguments, OverloadResolution overloadResolution)
 				: base(classTypeArguments, methodTypeArguments)
 			{
 				this.conversions = overloadResolution.conversions;
@@ -504,15 +562,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (newType != type && ConstraintsValid)
 				{
 					// something was changed, so we need to validate the constraints
-					ParameterizedType newParameterizedType = newType as ParameterizedType;
-					if (newParameterizedType != null)
+					if (newType is ParameterizedType newParameterizedType)
 					{
 						// C# 4.0 spec: §4.4.4 Satisfying constraints
 						var typeParameters = newParameterizedType.TypeParameters;
 						var substitution = newParameterizedType.GetSubstitution();
 						for (int i = 0; i < typeParameters.Count; i++)
 						{
-							if (!ValidateConstraints(typeParameters[i], newParameterizedType.GetTypeArgument(i), substitution, conversions))
+							if (!ValidateConstraints(typeParameters[i], newParameterizedType.GetTypeArgument(i),
+								    substitution, conversions))
 							{
 								ConstraintsValid = false;
 								break;
@@ -520,12 +578,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 					}
 				}
+
 				return newType;
 			}
 		}
+
 		#endregion
 
 		#region Validate Constraints
+
 		OverloadResolutionErrors ValidateMethodConstraints(Candidate candidate)
 		{
 			// If type inference already failed, we won't check the constraints:
@@ -537,9 +598,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			var substitution = GetSubstitution(candidate);
 			for (int i = 0; i < candidate.TypeParameters.Count; i++)
 			{
-				if (!ValidateConstraints(candidate.TypeParameters[i], substitution.MethodTypeArguments[i], substitution))
+				if (!ValidateConstraints(candidate.TypeParameters[i], substitution.MethodTypeArguments[i],
+					    substitution))
 					return OverloadResolutionErrors.MethodConstraintsNotSatisfied;
 			}
+
 			return OverloadResolutionErrors.None;
 		}
 
@@ -552,38 +615,43 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// The substitution is used to check constraints that depend on other type parameters (or recursively on the same type parameter).
 		/// May be null if no substitution should be used.</param>
 		/// <returns>True if the constraints are satisfied; false otherwise.</returns>
-		public static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument, TypeVisitor substitution = null)
+		public static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument,
+			TypeVisitor substitution = null)
 		{
-			if (typeParameter == null)
-				throw new ArgumentNullException(nameof(typeParameter));
-			if (typeArgument == null)
-				throw new ArgumentNullException(nameof(typeArgument));
-			return ValidateConstraints(typeParameter, typeArgument, substitution, CSharpConversions.Get(typeParameter.Owner.Compilation));
+			ArgumentNullException.ThrowIfNull(typeParameter);
+			ArgumentNullException.ThrowIfNull(typeArgument);
+			return ValidateConstraints(typeParameter, typeArgument, substitution,
+				CSharpConversions.Get(typeParameter.Owner.Compilation));
 		}
 
-		internal static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument, TypeVisitor substitution, CSharpConversions conversions)
+		internal static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument,
+			TypeVisitor substitution, CSharpConversions conversions)
 		{
 			switch (typeArgument.Kind)
-			{ // void, null, and pointers cannot be used as type arguments
+			{
+				// void, null, and pointers cannot be used as type arguments
 				case TypeKind.Void:
 				case TypeKind.Null:
 				case TypeKind.Pointer:
 					return false;
 			}
+
 			if (typeParameter.HasReferenceTypeConstraint)
 			{
 				if (typeArgument.IsReferenceType != true)
 					return false;
 			}
+
 			if (typeParameter.HasValueTypeConstraint)
 			{
 				if (!NullableType.IsNonNullableValueType(typeArgument))
 					return false;
 			}
+
 			if (typeParameter.HasDefaultConstructorConstraint)
 			{
 				ITypeDefinition def = typeArgument.GetDefinition();
-				if (def != null && def.IsAbstract)
+				if (def is { IsAbstract: true })
 					return false;
 				var ctors = typeArgument.GetConstructors(
 					m => m.Parameters.Count == 0 && m.Accessibility == Accessibility.Public,
@@ -592,6 +660,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (!ctors.Any())
 					return false;
 			}
+
 			foreach (IType constraintType in typeParameter.DirectBaseTypes)
 			{
 				IType c = constraintType;
@@ -600,11 +669,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (!conversions.IsConstraintConvertible(typeArgument, c))
 					return false;
 			}
+
 			return true;
 		}
+
 		#endregion
 
 		#region CheckApplicability
+
 		/// <summary>
 		/// Returns whether a candidate with the given errors is still considered to be applicable.
 		/// </summary>
@@ -626,6 +698,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (parameterIndex >= 0)
 					argumentCountPerParameter[parameterIndex]++;
 			}
+
 			for (int i = 0; i < argumentCountPerParameter.Length; i++)
 			{
 				if (candidate.IsExpandedForm && i == argumentCountPerParameter.Length - 1)
@@ -672,8 +745,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// AllowImplicitIn: `in` parameters can be filled implicitly without `in` DirectionExpression
 					// IsExtensionMethodInvocation: `this ref` and `this in` parameters can be filled implicitly
 					if (((paramRefKind == ReferenceKind.In && AllowImplicitIn)
-						|| (IsExtensionMethodInvocation && parameterIndex == 0 && (paramRefKind == ReferenceKind.In || paramRefKind == ReferenceKind.Ref))
-						) && candidate.ParameterTypes[parameterIndex].SkipModifiers() is ByReferenceType brt)
+					     || (IsExtensionMethodInvocation && parameterIndex == 0 &&
+					         paramRefKind is ReferenceKind.In or ReferenceKind.Ref)
+					    ) && candidate.ParameterTypes[parameterIndex].SkipModifiers() is ByReferenceType brt)
 					{
 						// Treat the parameter as if it was not declared "in" for the following steps
 						// (applicability + better function member)
@@ -684,25 +758,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						candidate.AddError(OverloadResolutionErrors.ParameterPassingModeMismatch);
 					}
 				}
+
 				IType parameterType = candidate.ParameterTypes[parameterIndex];
 				Conversion c = conversions.ImplicitConversion(arguments[i], parameterType);
 				candidate.ArgumentConversions[i] = c;
 				if (IsExtensionMethodInvocation && parameterIndex == 0)
 				{
 					// First parameter to extension method must be an identity, reference or boxing conversion
-					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion))
+					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion ||
+					      c == Conversion.BoxingConversion))
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
 				}
 				else
 				{
-					if ((!c.IsValid && !c.IsUserDefined && !c.IsMethodGroupConversion) && parameterType.Kind != TypeKind.Unknown)
+					if ((!c.IsValid && !c.IsUserDefined && !c.IsMethodGroupConversion) &&
+					    parameterType.Kind != TypeKind.Unknown)
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
 				}
 			}
 		}
+
 		#endregion
 
 		#region BetterFunctionMember
+
 		/// <summary>
 		/// Returns 1 if c1 is better than c2; 2 if c2 is better than c1; or 0 if neither is better.
 		/// </summary>
@@ -745,6 +824,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
+
 			if (c1IsBetter && !c2IsBetter)
 				return 1;
 			if (!c1IsBetter && c2IsBetter)
@@ -798,6 +878,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (lift1 != null && lift2 == null)
 					return 2;
 			}
+
 			return 0;
 		}
 
@@ -829,6 +910,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						break;
 				}
 			}
+
 			if (c1IsBetter && !c2IsBetter)
 				return 1;
 			if (!c1IsBetter && c2IsBetter)
@@ -838,61 +920,33 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		static int MoreSpecificFormalParameter(IType t1, IType t2)
 		{
-			if ((t1 is ITypeParameter) && !(t2 is ITypeParameter))
+			if ((t1 is ITypeParameter) && t2 is not ITypeParameter)
 				return 2;
-			if ((t2 is ITypeParameter) && !(t1 is ITypeParameter))
+			if ((t2 is ITypeParameter) && t1 is not ITypeParameter)
 				return 1;
 
-			ParameterizedType p1 = t1 as ParameterizedType;
-			ParameterizedType p2 = t2 as ParameterizedType;
-			if (p1 != null && p2 != null && p1.TypeParameterCount == p2.TypeParameterCount)
+			if (t1 is ParameterizedType p1 && t2 is ParameterizedType p2 &&
+			    p1.TypeParameterCount == p2.TypeParameterCount)
 			{
 				int r = MoreSpecificFormalParameters(p1.TypeArguments, p2.TypeArguments);
 				if (r > 0)
 					return r;
 			}
-			TypeWithElementType tew1 = t1 as TypeWithElementType;
-			TypeWithElementType tew2 = t2 as TypeWithElementType;
-			if (tew1 != null && tew2 != null)
+
+			if (t1 is TypeWithElementType tew1 && t2 is TypeWithElementType tew2)
 			{
 				return MoreSpecificFormalParameter(tew1.ElementType, tew2.ElementType);
 			}
+
 			return 0;
 		}
-		#endregion
 
-		#region ConsiderIfNewCandidateIsBest
-		void ConsiderIfNewCandidateIsBest(Candidate candidate)
-		{
-			if (bestCandidate == null)
-			{
-				bestCandidate = candidate;
-				bestCandidateWasValidated = false;
-			}
-			else
-			{
-				switch (BetterFunctionMember(candidate, bestCandidate))
-				{
-					case 0:
-						// Overwrite 'bestCandidateAmbiguousWith' so that API users can
-						// detect the set of all ambiguous methods if they look at
-						// bestCandidateAmbiguousWith after each step.
-						bestCandidateAmbiguousWith = candidate;
-						break;
-					case 1:
-						bestCandidate = candidate;
-						bestCandidateWasValidated = false;
-						bestCandidateAmbiguousWith = null;
-						break;
-						// case 2: best candidate stays best
-				}
-			}
-		}
 		#endregion
 
 		#region Output Properties
+
 		public IParameterizedMember BestCandidate {
-			get { return bestCandidate != null ? bestCandidate.Member : null; }
+			get { return bestCandidate?.Member; }
 		}
 
 		/// <summary>
@@ -908,6 +962,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					bestCandidateValidationResult = ValidateMethodConstraints(bestCandidate);
 					bestCandidateWasValidated = true;
 				}
+
 				OverloadResolutionErrors err = bestCandidate.Errors | bestCandidateValidationResult;
 				if (bestCandidateAmbiguousWith != null)
 					err |= OverloadResolutionErrors.AmbiguousMatch;
@@ -920,11 +975,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		public IParameterizedMember BestCandidateAmbiguousWith {
-			get { return bestCandidateAmbiguousWith != null ? bestCandidateAmbiguousWith.Member : null; }
+			get { return bestCandidateAmbiguousWith?.Member; }
 		}
 
 		public bool BestCandidateIsExpandedForm {
-			get { return bestCandidate != null ? bestCandidate.IsExpandedForm : false; }
+			get { return bestCandidate?.IsExpandedForm ?? false; }
 		}
 
 		public bool IsAmbiguous {
@@ -933,7 +988,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public IReadOnlyList<IType> InferredTypeArguments {
 			get {
-				if (bestCandidate != null && bestCandidate.InferredTypes != null)
+				if (bestCandidate is { InferredTypes: { } })
 					return bestCandidate.InferredTypes;
 				else
 					return EmptyList<IType>.Instance;
@@ -945,7 +1000,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IList<Conversion> ArgumentConversions {
 			get {
-				if (bestCandidate != null && bestCandidate.ArgumentConversions != null)
+				if (bestCandidate is { ArgumentConversions: { } })
 					return bestCandidate.ArgumentConversions;
 				else
 					return Enumerable.Repeat(Conversion.None, arguments.Length).ToList();
@@ -994,7 +1049,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return GetArgumentsWithConversions(null, GetBestCandidateWithSubstitutedTypeArguments());
 		}
 
-		IList<ResolveResult> GetArgumentsWithConversions(ResolveResult targetResolveResult, IParameterizedMember bestCandidateForNamedArguments)
+		IList<ResolveResult> GetArgumentsWithConversions(ResolveResult targetResolveResult,
+			IParameterizedMember bestCandidateForNamedArguments)
 		{
 			var conversions = this.ArgumentConversions;
 			ResolveResult[] args = new ResolveResult[arguments.Length];
@@ -1010,30 +1066,38 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					IType parameterType = bestCandidate.ParameterTypes[parameterIndex];
 					if (parameterType.Kind != TypeKind.Unknown)
 					{
-						if (arguments[i].IsCompileTimeConstant && conversions[i].IsValid && !conversions[i].IsUserDefined)
+						if (arguments[i].IsCompileTimeConstant && conversions[i].IsValid &&
+						    !conversions[i].IsUserDefined)
 						{
-							argument = new CSharpResolver(compilation).WithCheckForOverflow(CheckForOverflow).ResolveCast(parameterType, argument);
+							argument = new CSharpResolver(compilation).WithCheckForOverflow(CheckForOverflow)
+								.ResolveCast(parameterType, argument);
 						}
 						else
 						{
-							argument = new ConversionResolveResult(parameterType, argument, conversions[i], CheckForOverflow);
+							argument = new ConversionResolveResult(parameterType, argument, conversions[i],
+								CheckForOverflow);
 						}
 					}
 				}
+
 				if (bestCandidateForNamedArguments != null && argumentNames[i] != null)
 				{
 					// Wrap argument in NamedArgumentResolveResult
 					if (parameterIndex >= 0)
 					{
-						argument = new NamedArgumentResolveResult(bestCandidateForNamedArguments.Parameters[parameterIndex], argument, bestCandidateForNamedArguments);
+						argument = new NamedArgumentResolveResult(
+							bestCandidateForNamedArguments.Parameters[parameterIndex], argument,
+							bestCandidateForNamedArguments);
 					}
 					else
 					{
 						argument = new NamedArgumentResolveResult(argumentNames[i], argument);
 					}
 				}
+
 				args[i] = argument;
 			}
+
 			return args;
 		}
 
@@ -1041,8 +1105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (bestCandidate == null)
 				return null;
-			IMethod method = bestCandidate.Member as IMethod;
-			if (method != null && method.TypeParameters.Count > 0)
+			if (bestCandidate.Member is IMethod method && method.TypeParameters.Count > 0)
 			{
 				return ((IMethod)method.MemberDefinition).Specialize(GetSubstitution(bestCandidate));
 			}
@@ -1056,7 +1119,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// Do not compose the substitutions, but merge them.
 			// This is required for InvocationTests.SubstituteClassAndMethodTypeParametersAtOnce
-			return new TypeParameterSubstitution(candidate.Member.Substitution.ClassTypeArguments, candidate.InferredTypes);
+			return new TypeParameterSubstitution(candidate.Member.Substitution.ClassTypeArguments,
+				candidate.InferredTypes);
 		}
 
 		/// <summary>
@@ -1072,14 +1136,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="returnTypeOverride">
 		/// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
 		/// </param>
-		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult> initializerStatements = null, IType returnTypeOverride = null)
+		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult,
+			IList<ResolveResult> initializerStatements = null, IType returnTypeOverride = null)
 		{
 			IParameterizedMember member = GetBestCandidateWithSubstitutedTypeArguments();
 			if (member == null)
 				throw new InvalidOperationException();
 
 			return new CSharpInvocationResolveResult(
-				this.IsExtensionMethodInvocation ? new TypeResolveResult(member.DeclaringType ?? SpecialType.UnknownType) : targetResolveResult,
+				this.IsExtensionMethodInvocation
+					? new TypeResolveResult(member.DeclaringType ?? SpecialType.UnknownType)
+					: targetResolveResult,
 				member,
 				GetArgumentsWithConversions(targetResolveResult, member),
 				this.BestCandidateErrors,
@@ -1090,6 +1157,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				initializerStatements: initializerStatements,
 				returnTypeOverride: returnTypeOverride);
 		}
+
 		#endregion
 	}
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -21,6 +20,28 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	class SwitchAnalysis
 	{
 		/// <summary>
+		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.
+		/// </summary>
+		public readonly List<Block> InnerBlocks = new();
+
+		/// <summary>
+		/// Gets the sections that were detected by the previous AnalyzeBlock() call.
+		/// </summary>
+		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new();
+
+		/// <summary>
+		/// Used to de-duplicate sections with a branch instruction.
+		/// Invariant: (Sections[targetBlockToSectionIndex[branch.TargetBlock]].Instruction as Branch).TargetBlock == branch.TargetBlock
+		/// </summary>
+		readonly Dictionary<Block, int> targetBlockToSectionIndex = new();
+
+		/// <summary>
+		/// Used to de-duplicate sections with a value-less leave instruction.
+		/// Invariant: (Sections[targetBlockToSectionIndex[leave.TargetContainer]].Instruction as Leave).TargetContainer == leave.TargetContainer
+		/// </summary>
+		readonly Dictionary<BlockContainer, int> targetContainerToSectionIndex = new();
+
+		/// <summary>
 		/// The variable that is used to represent the switch expression.
 		/// <c>null</c> while analyzing the first block.
 		/// </summary>
@@ -35,28 +56,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Whether at least one the analyzed blocks contained an IL switch constructors.
 		/// </summary>
 		public bool ContainsILSwitch { get; private set; }
-
-		/// <summary>
-		/// Gets the sections that were detected by the previous AnalyzeBlock() call.
-		/// </summary>
-		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new List<KeyValuePair<LongSet, ILInstruction>>();
-
-		/// <summary>
-		/// Used to de-duplicate sections with a branch instruction.
-		/// Invariant: (Sections[targetBlockToSectionIndex[branch.TargetBlock]].Instruction as Branch).TargetBlock == branch.TargetBlock
-		/// </summary>
-		readonly Dictionary<Block, int> targetBlockToSectionIndex = new Dictionary<Block, int>();
-
-		/// <summary>
-		/// Used to de-duplicate sections with a value-less leave instruction.
-		/// Invariant: (Sections[targetBlockToSectionIndex[leave.TargetContainer]].Instruction as Leave).TargetContainer == leave.TargetContainer
-		/// </summary>
-		readonly Dictionary<BlockContainer, int> targetContainerToSectionIndex = new Dictionary<BlockContainer, int>();
-
-		/// <summary>
-		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.
-		/// </summary>
-		public readonly List<Block> InnerBlocks = new List<Block>();
 
 		public Block RootBlock { get; private set; }
 
@@ -103,6 +102,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// might happen if the block was already marked for deletion in SwitchDetection
 				return false;
 			}
+
 			if (tailOnly)
 			{
 				Debug.Assert(block == RootBlock);
@@ -115,19 +115,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (block.Parent != RootBlock.Parent)
 					return false; // all blocks should belong to the same container
 			}
-			LongSet trueValues;
+
 			if (block.Instructions.Count >= 2
-				&& block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst)
-				&& AnalyzeCondition(condition, out trueValues)
-			)
+			    && block.Instructions[^2].MatchIfInstruction(out var condition, out var trueInst)
+			    && AnalyzeCondition(condition, out LongSet trueValues)
+			   )
 			{
 				if (!(tailOnly || block.Instructions.Count == 2))
 					return false;
 				trueValues = trueValues.IntersectWith(inputValues);
 				if (trueValues.SetEquals(inputValues) || trueValues.IsEmpty)
 					return false;
-				Block trueBlock;
-				if (trueInst.MatchBranch(out trueBlock) && AnalyzeBlock(trueBlock, trueValues))
+				if (trueInst.MatchBranch(out Block trueBlock) && AnalyzeBlock(trueBlock, trueValues))
 				{
 					// OK, true block was further analyzed.
 					InnerBlocks.Add(trueBlock);
@@ -147,20 +146,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					ContainsILSwitch = true; // OK
 					return true;
 				}
-				else
-				{ // switch analysis failed (e.g. switchVar mismatch)
-					return false;
-				}
+
+				// switch analysis failed (e.g. switchVar mismatch)
+				return false;
 			}
 			else
-			{ // unknown inst
+			{
+				// unknown inst
 				return false;
 			}
 
 			var remainingValues = inputValues.ExceptWith(trueValues);
 			ILInstruction falseInst = block.Instructions.Last();
-			Block falseBlock;
-			if (falseInst.MatchBranch(out falseBlock) && AnalyzeBlock(falseBlock, remainingValues))
+			if (falseInst.MatchBranch(out Block falseBlock) && AnalyzeBlock(falseBlock, remainingValues))
 			{
 				// OK, false block was further analyzed.
 				InnerBlocks.Add(falseBlock);
@@ -170,6 +168,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Create switch section for falseInst.
 				AddSection(remainingValues, falseInst);
 			}
+
 			return true;
 		}
 
@@ -200,20 +199,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 				else
-				{ // unknown bop.Left
+				{
+					// unknown bop.Left
 					return false;
 				}
 			}
 			else
-			{ // unknown inst.Value
+			{
+				// unknown inst.Value
 				return false;
 			}
+
 			foreach (var section in inst.Sections)
 			{
 				var matchValues = section.Labels.AddOffset(offset).IntersectWith(inputValues);
 				if (!AllowUnreachableCases && matchValues.IsEmpty)
 					return false;
-				if (matchValues.Count() > 1 && section.Body.MatchBranch(out var targetBlock) && AnalyzeBlock(targetBlock, matchValues))
+				if (matchValues.Count() > 1 && section.Body.MatchBranch(out var targetBlock) &&
+				    AnalyzeBlock(targetBlock, matchValues))
 				{
 					InnerBlocks.Add(targetBlock);
 				}
@@ -222,6 +225,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					AddSection(matchValues, section.Body);
 				}
 			}
+
 			return true;
 		}
 
@@ -237,6 +241,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				return;
 			}
+
 			if (inst.MatchBranch(out Block targetBlock))
 			{
 				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out int index))
@@ -277,16 +282,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (switchVar != null)
 				return inst.MatchLdLoc(switchVar);
-			else
-				return inst.MatchLdLoc(out switchVar);
+			return inst.MatchLdLoc(out switchVar);
 		}
 
 		bool MatchSwitchVar(ILInstruction inst, out long sub)
 		{
-			if (inst is BinaryNumericInstruction bn
-				&& bn.Operator == BinaryNumericOperator.Sub
-				&& !bn.CheckForOverflow && !bn.IsLifted
-				&& bn.Right.MatchLdcI(out sub))
+			if (inst is BinaryNumericInstruction {
+				    Operator: BinaryNumericOperator.Sub, CheckForOverflow: false, IsLifted: false
+			    } bn && bn.Right.MatchLdcI(out sub))
 			{
 				return MatchSwitchVar(bn.Left);
 			}
@@ -308,24 +311,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				trueValues = trueValues.AddOffset(sub);
 				return true;
 			}
-			else if (MatchSwitchVar(condition))
+
+			if (MatchSwitchVar(condition))
 			{
 				// if (ldloc V) --> branch for all values except 0
 				trueValues = new LongSet(0).Invert();
 				return true;
 			}
-			else if (condition.MatchLogicNot(out ILInstruction arg))
+
+			if (condition.MatchLogicNot(out ILInstruction arg))
 			{
 				// if (logic.not(X)) --> branch for all values where if (X) does not branch
 				bool res = AnalyzeCondition(arg, out LongSet falseValues);
 				trueValues = falseValues.Invert();
 				return res;
 			}
-			else
-			{
-				trueValues = LongSet.Empty;
-				return false;
-			}
+
+			trueValues = LongSet.Empty;
+			return false;
 		}
 
 		/// <summary>
@@ -333,23 +336,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static LongSet MakeSetWhereComparisonIsTrue(ComparisonKind kind, long val, Sign sign)
 		{
-			switch (kind)
-			{
-				case ComparisonKind.Equality:
-					return new LongSet(val);
-				case ComparisonKind.Inequality:
-					return new LongSet(val).Invert();
-				case ComparisonKind.LessThan:
-					return MakeGreaterThanOrEqualSet(val, sign).Invert();
-				case ComparisonKind.LessThanOrEqual:
-					return MakeLessThanOrEqualSet(val, sign);
-				case ComparisonKind.GreaterThan:
-					return MakeLessThanOrEqualSet(val, sign).Invert();
-				case ComparisonKind.GreaterThanOrEqual:
-					return MakeGreaterThanOrEqualSet(val, sign);
-				default:
-					throw new ArgumentException("Invalid ComparisonKind");
-			}
+			return kind switch {
+				ComparisonKind.Equality => new LongSet(val),
+				ComparisonKind.Inequality => new LongSet(val).Invert(),
+				ComparisonKind.LessThan => MakeGreaterThanOrEqualSet(val, sign).Invert(),
+				ComparisonKind.LessThanOrEqual => MakeLessThanOrEqualSet(val, sign),
+				ComparisonKind.GreaterThan => MakeLessThanOrEqualSet(val, sign).Invert(),
+				ComparisonKind.GreaterThanOrEqual => MakeGreaterThanOrEqualSet(val, sign),
+				_ => throw new ArgumentException("Invalid ComparisonKind")
+			};
 		}
 
 		private static LongSet MakeGreaterThanOrEqualSet(long val, Sign sign)
@@ -358,21 +353,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				return new LongSet(LongInterval.Inclusive(val, long.MaxValue));
 			}
-			else
+
+			Debug.Assert(sign == Sign.Unsigned);
+			if (val >= 0)
 			{
-				Debug.Assert(sign == Sign.Unsigned);
-				if (val >= 0)
-				{
-					// The range val to ulong.MaxValue expressed with signed longs
-					// is not a single contiguous range, but two ranges:
-					return new LongSet(LongInterval.Inclusive(val, long.MaxValue))
-						.UnionWith(new LongSet(new LongInterval(long.MinValue, 0)));
-				}
-				else
-				{
-					return new LongSet(new LongInterval(val, 0));
-				}
+				// The range val to ulong.MaxValue expressed with signed longs
+				// is not a single contiguous range, but two ranges:
+				return new LongSet(LongInterval.Inclusive(val, long.MaxValue))
+					.UnionWith(new LongSet(new LongInterval(long.MinValue, 0)));
 			}
+
+			return new LongSet(new LongInterval(val, 0));
 		}
 
 		private static LongSet MakeLessThanOrEqualSet(long val, Sign sign)
@@ -381,21 +372,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				return new LongSet(LongInterval.Inclusive(long.MinValue, val));
 			}
-			else
+
+			Debug.Assert(sign == Sign.Unsigned);
+			if (val >= 0)
 			{
-				Debug.Assert(sign == Sign.Unsigned);
-				if (val >= 0)
-				{
-					return new LongSet(LongInterval.Inclusive(0, val));
-				}
-				else
-				{
-					// The range 0 to (ulong)val expressed with signed longs
-					// is not a single contiguous range, but two ranges:
-					return new LongSet(LongInterval.Inclusive(0, long.MaxValue))
-						.UnionWith(new LongSet(LongInterval.Inclusive(long.MinValue, val)));
-				}
+				return new LongSet(LongInterval.Inclusive(0, val));
 			}
+
+			// The range 0 to (ulong)val expressed with signed longs
+			// is not a single contiguous range, but two ranges:
+			return new LongSet(LongInterval.Inclusive(0, long.MaxValue))
+				.UnionWith(new LongSet(LongInterval.Inclusive(long.MinValue, val)));
 		}
 	}
 }

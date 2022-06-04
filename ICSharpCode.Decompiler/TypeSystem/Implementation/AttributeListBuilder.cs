@@ -21,12 +21,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
-using System.Text;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
 using SRM = System.Reflection.Metadata;
@@ -71,7 +68,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public void Add(KnownAttribute type, KnownTypeCode argType, object argValue)
 		{
-			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(module.Compilation.FindType(argType), argValue)));
+			Add(type,
+				ImmutableArray.Create(
+					new SRM.CustomAttributeTypedArgument<IType>(module.Compilation.FindType(argType), argValue)));
 		}
 
 		/// <summary>
@@ -79,20 +78,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public void Add(KnownAttribute type, TopLevelTypeName argType, object argValue)
 		{
-			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(module.Compilation.FindType(argType), argValue)));
+			Add(type,
+				ImmutableArray.Create(
+					new SRM.CustomAttributeTypedArgument<IType>(module.Compilation.FindType(argType), argValue)));
 		}
 
 		/// <summary>
 		/// Construct a builtin attribute.
 		/// </summary>
-		public void Add(KnownAttribute type, ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments)
+		public void Add(KnownAttribute type, ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> fixedArguments)
 		{
 			Add(new DefaultAttribute(module.GetAttributeType(type), fixedArguments,
-				ImmutableArray.Create<CustomAttributeNamedArgument<IType>>()));
+				ImmutableArray.Create<SRM.CustomAttributeNamedArgument<IType>>()));
 		}
 
 		#region MarshalAsAttribute (ConvertMarshalInfo)
-		internal void AddMarshalInfo(BlobHandle marshalInfo)
+
+		internal void AddMarshalInfo(SRM.BlobHandle marshalInfo)
 		{
 			if (marshalInfo.IsNil)
 				return;
@@ -105,7 +107,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IAttribute ConvertMarshalInfo(SRM.BlobReader marshalInfo)
 		{
 			var b = new AttributeBuilder(module, KnownAttribute.MarshalAs);
-			IType unmanagedTypeType = module.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(UnmanagedType)));
+			IType unmanagedTypeType =
+				module.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(UnmanagedType)));
 
 			int type = marshalInfo.ReadByte();
 			b.AddFixedArg(unmanagedTypeType, type);
@@ -123,6 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						if (type != 0x66) // None
 							b.AddNamedArg("ArraySubType", unmanagedTypeType, type);
 					}
+
 					break;
 				case 0x1d: // SafeArray
 					if (marshalInfo.RemainingBytes > 0)
@@ -134,20 +138,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							b.AddNamedArg("SafeArraySubType", varEnumType, (int)varType);
 						}
 					}
+
 					break;
 				case 0x2a: // NATIVE_TYPE_ARRAY
-					if (marshalInfo.RemainingBytes > 0)
-					{
-						type = marshalInfo.ReadByte();
-					}
-					else
-					{
-						type = 0x66; // Cecil uses NativeType.None as default.
-					}
+					type = marshalInfo.RemainingBytes > 0 ? marshalInfo.ReadByte() : 0x66;
 					if (type != 0x50)
-					{ // Max
+					{
+						// Max
 						b.AddNamedArg("ArraySubType", unmanagedTypeType, type);
 					}
+
 					int sizeParameterIndex = marshalInfo.TryReadCompressedInteger(out int value) ? value : -1;
 					size = marshalInfo.TryReadCompressedInteger(out value) ? value : -1;
 					int sizeParameterMultiplier = marshalInfo.TryReadCompressedInteger(out value) ? value : -1;
@@ -155,10 +155,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					{
 						b.AddNamedArg("SizeConst", KnownTypeCode.Int32, size);
 					}
+
 					if (sizeParameterMultiplier != 0 && sizeParameterIndex >= 0)
 					{
 						b.AddNamedArg("SizeParamIndex", KnownTypeCode.Int16, (short)sizeParameterIndex);
 					}
+
 					break;
 				case 0x2c: // CustomMarshaler
 					string guidValue = marshalInfo.ReadSerializedString();
@@ -169,10 +171,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					{
 						b.AddNamedArg("MarshalType", KnownTypeCode.String, managedType);
 					}
+
 					if (!string.IsNullOrEmpty(cookie))
 					{
 						b.AddNamedArg("MarshalCookie", KnownTypeCode.String, cookie);
 					}
+
 					break;
 				case 0x17: // FixedSysString
 					b.AddNamedArg("SizeConst", KnownTypeCode.Int32, marshalInfo.ReadCompressedInteger());
@@ -181,10 +185,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			return b.Build();
 		}
+
 		#endregion
 
 		#region Custom Attributes (ReadAttribute)
-		public void Add(CustomAttributeHandleCollection attributes, SymbolKind target)
+
+		public void Add(SRM.CustomAttributeHandleCollection attributes, SymbolKind target)
 		{
 			var metadata = module.metadata;
 			foreach (var handle in attributes)
@@ -197,6 +203,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					continue;
 				}
+
 				Add(new CustomAttribute(module, ctor, handle));
 			}
 		}
@@ -220,7 +227,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ExtensionAttribute":
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
-							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
+							return (options & TypeSystemOptions.DecimalConstants) != 0 &&
+							       target is SymbolKind.Field or SymbolKind.Parameter;
 						case "IsReadOnlyAttribute":
 							switch (target)
 							{
@@ -233,19 +241,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 								case SymbolKind.ReturnType:
 								case SymbolKind.Property:
 								case SymbolKind.Indexer:
-									return true;  // "ref readonly" is currently always active
+									return true; // "ref readonly" is currently always active
 								default:
 									return false;
 							}
 						case "IsByRefLikeAttribute":
 							return (options & TypeSystemOptions.RefStructs) != 0 && target == SymbolKind.TypeDefinition;
 						case "IsUnmanagedAttribute":
-							return (options & TypeSystemOptions.UnmanagedConstraints) != 0 && target == SymbolKind.TypeParameter;
+							return (options & TypeSystemOptions.UnmanagedConstraints) != 0 &&
+							       target == SymbolKind.TypeParameter;
 						case "NullableAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
 						case "NullableContextAttribute":
 							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
-								&& (target == SymbolKind.TypeDefinition || IsMethodLike(target));
+							       && (target == SymbolKind.TypeDefinition || IsMethodLike(target));
 						default:
 							return false;
 					}
@@ -267,10 +276,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				_ => false
 			};
 		}
+
 		#endregion
 
 		#region Security Attributes
-		public void AddSecurityAttributes(DeclarativeSecurityAttributeHandleCollection securityDeclarations)
+
+		public void AddSecurityAttributes(SRM.DeclarativeSecurityAttributeHandleCollection securityDeclarations)
 		{
 			var metadata = module.metadata;
 			foreach (var secDecl in securityDeclarations)
@@ -292,10 +303,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public void AddSecurityAttributes(DeclarativeSecurityAttribute secDecl)
+		public void AddSecurityAttributes(SRM.DeclarativeSecurityAttribute secDecl)
 		{
-			var securityActionType = module.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
-			var securityAction = new CustomAttributeTypedArgument<IType>(securityActionType, (int)secDecl.Action);
+			var securityActionType =
+				module.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
+			var securityAction = new SRM.CustomAttributeTypedArgument<IType>(securityActionType, (int)secDecl.Action);
 			var metadata = module.metadata;
 			var reader = metadata.GetBlobReader(secDecl.PermissionSet);
 			if (reader.ReadByte() == '.')
@@ -315,7 +327,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader,
+			SRM.CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
@@ -324,16 +337,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
-		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader,
+			SRM.CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string attributeTypeName = reader.ReadSerializedString();
 			IType attributeType = module.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
 
 			reader.ReadCompressedInteger(); // ??
-											// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
+			// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
 			int numNamed = reader.ReadCompressedInteger();
 
-			var decoder = new Metadata.CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
+			var decoder = new CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
 			var namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
 
 			return new DefaultAttribute(
@@ -341,6 +355,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				fixedArguments: ImmutableArray.Create(securityAction),
 				namedArguments: namedArgs);
 		}
+
 		#endregion
 
 		public IAttribute[] Build()
@@ -356,8 +371,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly ICompilation compilation;
 		readonly IType attributeType;
-		ImmutableArray<CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
-		ImmutableArray<CustomAttributeNamedArgument<IType>>.Builder namedArgs;
+		ImmutableArray<SRM.CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
+		ImmutableArray<SRM.CustomAttributeNamedArgument<IType>>.Builder namedArgs;
 
 		public AttributeBuilder(MetadataModule module, KnownAttribute attributeType)
 			: this(module, module.GetAttributeType(attributeType))
@@ -368,11 +383,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			this.compilation = module.Compilation;
 			this.attributeType = attributeType;
-			this.fixedArgs = ImmutableArray.CreateBuilder<CustomAttributeTypedArgument<IType>>();
-			this.namedArgs = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<IType>>();
+			this.fixedArgs = ImmutableArray.CreateBuilder<SRM.CustomAttributeTypedArgument<IType>>();
+			this.namedArgs = ImmutableArray.CreateBuilder<SRM.CustomAttributeNamedArgument<IType>>();
 		}
 
-		public void AddFixedArg(CustomAttributeTypedArgument<IType> arg)
+		public void AddFixedArg(SRM.CustomAttributeTypedArgument<IType> arg)
 		{
 			fixedArgs.Add(arg);
 		}
@@ -389,7 +404,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public void AddFixedArg(IType type, object value)
 		{
-			fixedArgs.Add(new CustomAttributeTypedArgument<IType>(type, value));
+			fixedArgs.Add(new SRM.CustomAttributeTypedArgument<IType>(type, value));
 		}
 
 		public void AddNamedArg(string name, KnownTypeCode type, object value)
@@ -404,12 +419,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public void AddNamedArg(string name, IType type, object value)
 		{
-			CustomAttributeNamedArgumentKind kind;
-			if (attributeType.GetFields(f => f.Name == name, GetMemberOptions.ReturnMemberDefinitions).Any())
-				kind = CustomAttributeNamedArgumentKind.Field;
-			else
-				kind = CustomAttributeNamedArgumentKind.Property;
-			namedArgs.Add(new CustomAttributeNamedArgument<IType>(name, kind, type, value));
+			SRM.CustomAttributeNamedArgumentKind kind =
+				attributeType.GetFields(f => f.Name == name, GetMemberOptions.ReturnMemberDefinitions).Any()
+					? SRM.CustomAttributeNamedArgumentKind.Field
+					: SRM.CustomAttributeNamedArgumentKind.Property;
+			namedArgs.Add(new SRM.CustomAttributeNamedArgument<IType>(name, kind, type, value));
 		}
 
 		public IAttribute Build()

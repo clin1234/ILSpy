@@ -47,8 +47,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string DetectTargetFrameworkId(this MetadataReader metadata, string assemblyPath = null)
 		{
-			if (metadata == null)
-				throw new ArgumentNullException(nameof(metadata));
+			ArgumentNullException.ThrowIfNull(metadata);
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 
@@ -57,7 +56,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				try
 				{
 					var attribute = metadata.GetCustomAttribute(h);
-					if (attribute.GetAttributeType(metadata).GetFullTypeName(metadata).ToString() != TargetFrameworkAttributeName)
+					if (attribute.GetAttributeType(metadata).GetFullTypeName(metadata).ToString() !=
+					    TargetFrameworkAttributeName)
 						continue;
 					var blobReader = metadata.GetBlobReader(attribute.Value);
 					if (blobReader.ReadUInt16() == 0x0001)
@@ -108,10 +108,12 @@ namespace ICSharpCode.Decompiler.Metadata
 								{
 									version = "3.0";
 								}
+
 								if (r.Version >= new Version(4, 2, 2))
 								{
 									version = "3.1";
 								}
+
 								return $".NETCoreApp,Version=v{version}";
 							}
 							else
@@ -152,9 +154,9 @@ namespace ICSharpCode.Decompiler.Metadata
 						version = "4.0";
 					version = version.TrimStart('v');
 
-					if (type == "Microsoft.NET" || type == ".NETFramework")
+					if (type is "Microsoft.NET" or ".NETFramework")
 					{
-						return $".NETFramework,Version=v{version.Substring(0, Math.Min(3, version.Length))}";
+						return $".NETFramework,Version=v{version[..Math.Min(3, version.Length)]}";
 					}
 					else if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
@@ -171,7 +173,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (string.IsNullOrEmpty(version))
 						version = "4.0";
 					version = version.TrimStart('v');
-					return $".NETFramework,Version=v{version.Substring(0, Math.Min(3, version.Length))}";
+					return $".NETFramework,Version=v{version[..Math.Min(3, version.Length)]}";
 				}
 			}
 
@@ -185,24 +187,22 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static bool IsReferenceAssembly(this PEReader assembly, string assemblyPath)
 		{
-			if (assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
+			ArgumentNullException.ThrowIfNull(assembly);
 
 			var metadata = assembly.GetMetadataReader();
-			if (metadata.GetCustomAttributes(Handle.AssemblyDefinition).HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
+			if (metadata.GetCustomAttributes(Handle.AssemblyDefinition)
+			    .HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
 				return true;
 
 			// Try to detect reference assembly through specific path pattern
-			var refPathMatch = Regex.Match(assemblyPath, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			var refPathMatch =
+				Regex.Match(assemblyPath, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			return refPathMatch.Success;
 		}
 
 		public static string DetectRuntimePack(this PEFile assembly)
 		{
-			if (assembly is null)
-			{
-				throw new ArgumentNullException(nameof(assembly));
-			}
+			ArgumentNullException.ThrowIfNull(assembly);
 
 			var metadata = assembly.Metadata;
 

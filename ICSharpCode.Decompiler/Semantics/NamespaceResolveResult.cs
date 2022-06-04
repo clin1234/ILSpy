@@ -27,24 +27,20 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class NamespaceResolveResult : ResolveResult
 	{
-		readonly INamespace ns;
-
 		public NamespaceResolveResult(INamespace ns) : base(SpecialType.NoType)
 		{
-			this.ns = ns;
+			this.Namespace = ns;
 		}
 
-		public INamespace Namespace {
-			get { return ns; }
-		}
+		public INamespace Namespace { get; }
 
 		public string NamespaceName {
-			get { return ns.FullName; }
+			get { return Namespace.FullName; }
 		}
 
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, ns);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, Namespace);
 		}
 	}
 }

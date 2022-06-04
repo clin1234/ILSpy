@@ -30,9 +30,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class DelegateConstruction : IILTransform
 	{
+		readonly Stack<MethodDefinitionHandle> activeMethods = new();
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
-		readonly Stack<MethodDefinitionHandle> activeMethods = new Stack<MethodDefinitionHandle>();
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					cancellationToken.ThrowIfCancellationRequested();
 					if (!MatchDelegateConstruction(inst, out var targetMethod, out var target,
-						out var delegateType, allowTransformed: false))
+						    out var delegateType, allowTransformed: false))
 						continue;
 					context.StepStartGroup($"TransformDelegateConstruction {inst.StartILOffset}", inst);
 					ILFunction f = TransformDelegateConstruction(inst, targetMethod, target, delegateType);
@@ -61,13 +61,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							v.Kind = VariableKind.DisplayClassLocal;
 						}
+
 						if (v.IsSingleDefinition
-							&& v.StoreInstructions.SingleOrDefault() is StLoc store
-							&& store.Value is NewObj)
+						    && v.StoreInstructions.SingleOrDefault() is StLoc { Value: NewObj } store)
 						{
 							v.CaptureScope = BlockContainer.FindClosestContainer(store);
 						}
 					}
+
 					context.StepEndGroup();
 				}
 			}
@@ -93,8 +94,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					target = call.Arguments[0];
 					var opCode = call.Arguments[1].OpCode;
 					delegateType = call.Method.DeclaringType;
-					if (!(opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn
-						|| (allowTransformed && opCode == OpCode.ILFunction)))
+					if (!(opCode is OpCode.LdFtn or OpCode.LdVirtFtn ||
+					      (allowTransformed && opCode == OpCode.ILFunction)))
 						return false;
 					targetMethod = ((IInstructionWithMethodOperand)call.Arguments[1]).Method;
 					break;
@@ -106,7 +107,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return false;
 			}
-			return delegateType.Kind == TypeKind.Delegate || delegateType.Kind == TypeKind.Unknown;
+
+			return delegateType.Kind is TypeKind.Delegate or TypeKind.Unknown;
 		}
 
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
@@ -114,14 +116,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (method == null)
 				return false;
 			if (!(method.HasGeneratedName()
-				|| method.Name.Contains("$")
-				|| method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()
-				|| TransformDisplayClassUsage.IsPotentialClosure(
-					decompiledTypeDefinition, method.DeclaringTypeDefinition)
-				|| ContainsAnonymousType(method)))
+			      || method.Name.Contains("$")
+			      || method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()
+			      || TransformDisplayClassUsage.IsPotentialClosure(
+				      decompiledTypeDefinition, method.DeclaringTypeDefinition)
+			      || ContainsAnonymousType(method)))
 			{
 				return false;
 			}
+
 			return true;
 		}
 
@@ -134,6 +137,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (p.Type.ContainsAnonymousType())
 					return true;
 			}
+
 			return false;
 		}
 
@@ -151,6 +155,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 				}
 			}
+
 			if (subst.MethodTypeArguments != null)
 			{
 				foreach (var t in subst.MethodTypeArguments)
@@ -161,6 +166,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 				}
 			}
+
 			return new GenericContext(classTypeParameters, methodTypeParameters);
 		}
 
@@ -179,10 +185,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var handle = (MethodDefinitionHandle)targetMethod.MetadataToken;
 			if (activeMethods.Contains(handle))
 			{
-				this.context.Function.Warnings.Add(" Found self-referencing delegate construction. Abort transformation to avoid stack overflow.");
+				this.context.Function.Warnings.Add(
+					" Found self-referencing delegate construction. Abort transformation to avoid stack overflow.");
 				return null;
 			}
-			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
+
+			var methodDefinition =
+				context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
 			var genericContext = GenericContextFromTypeArguments(targetMethod.Substitution);
@@ -190,7 +199,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body,
+				genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
 			function.DelegateType = delegateType;
 			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
 			// how the lambda body is being transformed.
@@ -204,9 +214,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			var nestedContext = new ILTransformContext(context, function);
-			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
+			function.RunTransforms(
+				CSharpDecompiler.GetILTransforms().TakeWhile(t => t is not DelegateConstruction)
+					.Concat(GetTransforms()), nestedContext);
 			nestedContext.Step("DelegateConstruction (ReplaceDelegateTargetVisitor)", function);
-			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(VariableKindExtensions.IsThis)));
+			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target,
+				function.Variables.SingleOrDefault(VariableKindExtensions.IsThis)));
 			// handle nested lambdas
 			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)this).Run(function, nestedContext);
@@ -234,19 +247,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// TODO : ldfld chains must be validated more thoroughly, i.e., we should make sure
 					// that the value of the field is never changed.
 					ILInstruction target = ldobj;
-					while (target is LdObj || target is LdFlda)
+					while (target is LdObj or LdFlda)
 					{
 						if (target is LdObj o)
 						{
 							target = o.Target;
 							continue;
 						}
+
 						if (target is LdFlda f)
 						{
 							target = f.Target;
-							continue;
 						}
 					}
+
 					return target is LdLoc;
 				default:
 					return false;
@@ -264,8 +278,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		internal class ReplaceDelegateTargetVisitor : ILVisitor
 		{
-			readonly ILVariable thisVariable;
 			readonly ILInstruction target;
+			readonly ILVariable thisVariable;
 
 			public ReplaceDelegateTargetVisitor(ILInstruction target, ILVariable thisVariable)
 			{
@@ -297,13 +311,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							{
 								inner = ldf.Target;
 							}
+
 							if (inner is LdLoc l2)
 								v = l2.Variable;
 							break;
 					}
+
 					if (v != null)
 						function.CapturedVariables.Add(v);
 				}
+
 				base.VisitILFunction(function);
 			}
 
@@ -314,6 +331,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.ReplaceWith(target.Clone());
 					return;
 				}
+
 				base.VisitLdLoc(inst);
 			}
 
@@ -324,6 +342,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.ReplaceWith(target.Clone());
 					return;
 				}
+
 				base.VisitLdObj(inst);
 			}
 		}

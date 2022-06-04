@@ -17,29 +17,25 @@ namespace ICSharpCode.Decompiler.Util
 #if !NETCORE
 		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
-			return input1.Zip(input2, (a, b) => (a, b));
+			return input1.Zip(input2, static (a, b) => (a, b));
 		}
 #endif
 
 		public static IEnumerable<(A?, B?)> ZipLongest<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
-			using (var it1 = input1.GetEnumerator())
+			using var it1 = input1.GetEnumerator();
+			using var it2 = input2.GetEnumerator();
+			bool hasElements1 = true;
+			bool hasElements2 = true;
+			while (true)
 			{
-				using (var it2 = input2.GetEnumerator())
-				{
-					bool hasElements1 = true;
-					bool hasElements2 = true;
-					while (true)
-					{
-						if (hasElements1)
-							hasElements1 = it1.MoveNext();
-						if (hasElements2)
-							hasElements2 = it2.MoveNext();
-						if (!(hasElements1 || hasElements2))
-							break;
-						yield return ((hasElements1 ? it1.Current : default), (hasElements2 ? it2.Current : default));
-					}
-				}
+				if (hasElements1)
+					hasElements1 = it1.MoveNext();
+				if (hasElements2)
+					hasElements2 = it2.MoveNext();
+				if (!(hasElements1 || hasElements2))
+					break;
+				yield return ((hasElements1 ? it1.Current : default), (hasElements2 ? it2.Current : default));
 			}
 		}
 
@@ -100,6 +96,7 @@ namespace ICSharpCode.Decompiler.Util
 				if (value > max)
 					max = value;
 			}
+
 			return max;
 		}
 
@@ -113,8 +110,10 @@ namespace ICSharpCode.Decompiler.Util
 				{
 					return index;
 				}
+
 				index++;
 			}
+
 			return -1;
 		}
 
@@ -136,6 +135,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				result[index++] = func(element);
 			}
+
 			return result;
 		}
 
@@ -143,13 +143,15 @@ namespace ICSharpCode.Decompiler.Util
 		/// Equivalent to <code>collection.Select(func).ToImmutableArray()</code>, but more efficient as it makes
 		/// use of the input collection's known size.
 		/// </summary>
-		public static ImmutableArray<U> SelectImmutableArray<T, U>(this IReadOnlyCollection<T> collection, Func<T, U> func)
+		public static ImmutableArray<U> SelectImmutableArray<T, U>(this IReadOnlyCollection<T> collection,
+			Func<T, U> func)
 		{
 			var builder = ImmutableArray.CreateBuilder<U>(collection.Count);
 			foreach (var element in collection)
 			{
 				builder.Add(func(element));
 			}
+
 			return builder.MoveToImmutable();
 		}
 
@@ -165,6 +167,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				result[index++] = func(element);
 			}
+
 			return result;
 		}
 
@@ -180,6 +183,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				result[index++] = func(element);
 			}
+
 			return result;
 		}
 
@@ -195,6 +199,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				result[index++] = func(element);
 			}
+
 			return result;
 		}
 
@@ -204,11 +209,12 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static List<U> SelectList<T, U>(this ICollection<T> collection, Func<T, U> func)
 		{
-			List<U> result = new List<U>(collection.Count);
+			List<U> result = new(collection.Count);
 			foreach (var element in collection)
 			{
 				result.Add(func(element));
 			}
+
 			return result;
 		}
 
@@ -232,36 +238,37 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// The merge step of merge sort.
 		/// </summary>
-		public static IEnumerable<T> Merge<T>(this IEnumerable<T> input1, IEnumerable<T> input2, Comparison<T> comparison)
+		public static IEnumerable<T> Merge<T>(this IEnumerable<T> input1, IEnumerable<T> input2,
+			Comparison<T> comparison)
 		{
-			using (var enumA = input1.GetEnumerator())
-			using (var enumB = input2.GetEnumerator())
+			using var enumA = input1.GetEnumerator();
+			using var enumB = input2.GetEnumerator();
+			bool moreA = enumA.MoveNext();
+			bool moreB = enumB.MoveNext();
+			while (moreA && moreB)
 			{
-				bool moreA = enumA.MoveNext();
-				bool moreB = enumB.MoveNext();
-				while (moreA && moreB)
-				{
-					if (comparison(enumA.Current, enumB.Current) <= 0)
-					{
-						yield return enumA.Current;
-						moreA = enumA.MoveNext();
-					}
-					else
-					{
-						yield return enumB.Current;
-						moreB = enumB.MoveNext();
-					}
-				}
-				while (moreA)
+				if (comparison(enumA.Current, enumB.Current) <= 0)
 				{
 					yield return enumA.Current;
 					moreA = enumA.MoveNext();
 				}
-				while (moreB)
+				else
 				{
 					yield return enumB.Current;
 					moreB = enumB.MoveNext();
 				}
+			}
+
+			while (moreA)
+			{
+				yield return enumA.Current;
+				moreA = enumA.MoveNext();
+			}
+
+			while (moreB)
+			{
+				yield return enumB.Current;
+				moreB = enumB.MoveNext();
 			}
 		}
 
@@ -280,30 +287,26 @@ namespace ICSharpCode.Decompiler.Util
 		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
 		public static T MinBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K>? keyComparer)
 		{
-			if (source == null)
-				throw new ArgumentNullException(nameof(source));
-			if (keySelector == null)
-				throw new ArgumentNullException(nameof(keySelector));
-			if (keyComparer == null)
-				keyComparer = Comparer<K>.Default;
-			using (var enumerator = source.GetEnumerator())
+			ArgumentNullException.ThrowIfNull(source);
+			ArgumentNullException.ThrowIfNull(keySelector);
+			keyComparer ??= Comparer<K>.Default;
+			using var enumerator = source.GetEnumerator();
+			if (!enumerator.MoveNext())
+				throw new InvalidOperationException("Sequence contains no elements");
+			T minElement = enumerator.Current;
+			K minKey = keySelector(minElement);
+			while (enumerator.MoveNext())
 			{
-				if (!enumerator.MoveNext())
-					throw new InvalidOperationException("Sequence contains no elements");
-				T minElement = enumerator.Current;
-				K minKey = keySelector(minElement);
-				while (enumerator.MoveNext())
+				T element = enumerator.Current;
+				K key = keySelector(element);
+				if (keyComparer.Compare(key, minKey) < 0)
 				{
-					T element = enumerator.Current;
-					K key = keySelector(element);
-					if (keyComparer.Compare(key, minKey) < 0)
-					{
-						minElement = element;
-						minKey = key;
-					}
+					minElement = element;
+					minKey = key;
 				}
-				return minElement;
 			}
+
+			return minElement;
 		}
 
 		/// <summary>
@@ -321,40 +324,36 @@ namespace ICSharpCode.Decompiler.Util
 		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
 		public static T MaxBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K>? keyComparer)
 		{
-			if (source == null)
-				throw new ArgumentNullException(nameof(source));
-			if (keySelector == null)
-				throw new ArgumentNullException(nameof(keySelector));
-			if (keyComparer == null)
-				keyComparer = Comparer<K>.Default;
-			using (var enumerator = source.GetEnumerator())
+			ArgumentNullException.ThrowIfNull(source);
+			ArgumentNullException.ThrowIfNull(keySelector);
+			keyComparer ??= Comparer<K>.Default;
+			using var enumerator = source.GetEnumerator();
+			if (!enumerator.MoveNext())
+				throw new InvalidOperationException("Sequence contains no elements");
+			T maxElement = enumerator.Current;
+			K maxKey = keySelector(maxElement);
+			while (enumerator.MoveNext())
 			{
-				if (!enumerator.MoveNext())
-					throw new InvalidOperationException("Sequence contains no elements");
-				T maxElement = enumerator.Current;
-				K maxKey = keySelector(maxElement);
-				while (enumerator.MoveNext())
+				T element = enumerator.Current;
+				K key = keySelector(element);
+				if (keyComparer.Compare(key, maxKey) > 0)
 				{
-					T element = enumerator.Current;
-					K key = keySelector(element);
-					if (keyComparer.Compare(key, maxKey) > 0)
-					{
-						maxElement = element;
-						maxKey = key;
-					}
+					maxElement = element;
+					maxKey = key;
 				}
-				return maxElement;
 			}
+
+			return maxElement;
 		}
 
 		public static void RemoveLast<T>(this IList<T> list)
 		{
-			if (list == null)
-				throw new ArgumentNullException(nameof(list));
+			ArgumentNullException.ThrowIfNull(list);
 			list.RemoveAt(list.Count - 1);
 		}
 
-		public static T? OnlyOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate) => OnlyOrDefault(source.Where(predicate));
+		public static T? OnlyOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate) =>
+			OnlyOrDefault(source.Where(predicate));
 
 		public static T? OnlyOrDefault<T>(this IEnumerable<T> source)
 		{
@@ -372,6 +371,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		#region Aliases/shortcuts for Enumerable extension methods
+
 		public static bool Any<T>(this ICollection<T> list) => list.Count > 0;
 		public static bool Any<T>(this T[] array, Predicate<T> match) => Array.Exists(array, match);
 		public static bool Any<T>(this List<T> list, Predicate<T> match) => list.Exists(match);
@@ -382,7 +382,8 @@ namespace ICSharpCode.Decompiler.Util
 		public static T? FirstOrDefault<T>(this T[] array, Predicate<T> predicate) => Array.Find(array, predicate);
 		public static T? FirstOrDefault<T>(this List<T> list, Predicate<T> predicate) => list.Find(predicate);
 
-		public static T Last<T>(this IList<T> list) => list[list.Count - 1];
+		public static T Last<T>(this IList<T> list) => list[^1];
+
 		#endregion
 	}
 }

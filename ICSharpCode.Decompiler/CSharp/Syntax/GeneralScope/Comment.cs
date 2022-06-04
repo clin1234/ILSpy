@@ -33,18 +33,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// "//" comment
 		/// </summary>
 		SingleLine,
+
 		/// <summary>
 		/// "/* */" comment
 		/// </summary>
 		MultiLine,
+
 		/// <summary>
 		/// "///" comment
 		/// </summary>
 		Documentation,
+
 		/// <summary>
 		/// Inactive code (code in non-taken "#if")
 		/// </summary>
 		InactiveCode,
+
 		/// <summary>
 		/// "/** */" comment
 		/// </summary>
@@ -53,17 +57,41 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class Comment : AstNode
 	{
+		CommentType commentType;
+
+		string content;
+
+		TextLocation endLocation;
+
+		TextLocation startLocation;
+
+		bool startsLine;
+
+		public Comment(string content, CommentType type = CommentType.SingleLine)
+		{
+			this.CommentType = type;
+			this.Content = content;
+		}
+
+		public Comment(CommentType commentType, TextLocation startLocation, TextLocation endLocation)
+		{
+			this.CommentType = commentType;
+			this.startLocation = startLocation;
+			this.endLocation = endLocation;
+		}
+
 		public override NodeType NodeType {
 			get {
 				return NodeType.Whitespace;
 			}
 		}
 
-		CommentType commentType;
-
 		public CommentType CommentType {
 			get { return commentType; }
-			set { ThrowIfFrozen(); commentType = value; }
+			set {
+				ThrowIfFrozen();
+				commentType = value;
+			}
 		}
 
 		/// <summary>
@@ -71,32 +99,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsDocumentation {
 			get {
-				return commentType == CommentType.Documentation || commentType == CommentType.MultiLineDocumentation;
+				return commentType is CommentType.Documentation or CommentType.MultiLineDocumentation;
 			}
 		}
 
-		bool startsLine;
-
 		public bool StartsLine {
 			get { return startsLine; }
-			set { ThrowIfFrozen(); startsLine = value; }
+			set {
+				ThrowIfFrozen();
+				startsLine = value;
+			}
 		}
-
-		string content;
 
 		public string Content {
 			get { return content; }
-			set { ThrowIfFrozen(); content = value; }
+			set {
+				ThrowIfFrozen();
+				content = value;
+			}
 		}
 
-		TextLocation startLocation;
 		public override TextLocation StartLocation {
 			get {
 				return startLocation;
 			}
 		}
 
-		TextLocation endLocation;
 		public override TextLocation EndLocation {
 			get {
 				return endLocation;
@@ -113,19 +141,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ThrowIfFrozen();
 			this.endLocation = value;
-		}
-
-		public Comment(string content, CommentType type = CommentType.SingleLine)
-		{
-			this.CommentType = type;
-			this.Content = content;
-		}
-
-		public Comment(CommentType commentType, TextLocation startLocation, TextLocation endLocation)
-		{
-			this.CommentType = commentType;
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -145,9 +160,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			Comment o = other as Comment;
-			return o != null && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
+			return other is Comment o && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
 		}
 	}
 }
-

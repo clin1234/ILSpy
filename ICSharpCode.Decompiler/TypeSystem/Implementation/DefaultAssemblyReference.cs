@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public DefaultAssemblyReference(string assemblyName)
 		{
-			int pos = assemblyName != null ? assemblyName.IndexOf(',') : -1;
+			int pos = assemblyName?.IndexOf(',') ?? -1;
 			if (pos >= 0)
-				shortName = assemblyName.Substring(0, pos);
+				shortName = assemblyName[..pos];
 			else
 				shortName = assemblyName;
 		}
@@ -49,12 +49,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (string.Equals(shortName, asm.AssemblyName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
-			return null;
-		}
 
-		public override string ToString()
-		{
-			return shortName;
+			return null;
 		}
 
 		int ISupportsInterning.GetHashCodeForInterning()
@@ -67,8 +63,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			DefaultAssemblyReference o = other as DefaultAssemblyReference;
-			return o != null && shortName == o.shortName;
+			return other is DefaultAssemblyReference o && shortName == o.shortName;
+		}
+
+		public override string ToString()
+		{
+			return shortName;
 		}
 
 		[Serializable]
@@ -78,7 +78,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				IModule asm = context.CurrentModule;
 				if (asm == null)
-					throw new ArgumentException("A reference to the current assembly cannot be resolved in the compilation's global type resolve context.");
+					throw new ArgumentException(
+						"A reference to the current assembly cannot be resolved in the compilation's global type resolve context.");
 				return asm;
 			}
 		}

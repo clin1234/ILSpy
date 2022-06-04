@@ -36,17 +36,82 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </remarks>
 	public class CSharpTokenNode : AstNode
 	{
-		public static new readonly CSharpTokenNode Null = new NullCSharpTokenNode();
+		public new static readonly CSharpTokenNode Null = new NullCSharpTokenNode();
+
+		public CSharpTokenNode(TextLocation location, TokenRole role)
+		{
+			this.StartLocation = location;
+			if (role != null)
+				this.flags |= role.Index << AstNodeFlagsUsedBits;
+		}
+
+		public override NodeType NodeType {
+			get {
+				return NodeType.Token;
+			}
+		}
+
+		public override TextLocation StartLocation { get; }
+
+		int TokenLength {
+			get {
+				uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
+				if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
+				{
+					return r.Length;
+				}
+
+				return 0;
+			}
+		}
+
+		public override TextLocation EndLocation {
+			get {
+				return new TextLocation(StartLocation.Line, StartLocation.Column + TokenLength);
+			}
+		}
+
+		public override string ToString(CSharpFormattingOptions formattingOptions)
+		{
+			uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
+			if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
+			{
+				return r.Token;
+			}
+
+			return string.Empty;
+		}
+
+		public override void AcceptVisitor(IAstVisitor visitor)
+		{
+			visitor.VisitCSharpTokenNode(this);
+		}
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitCSharpTokenNode(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitCSharpTokenNode(this, data);
+		}
+
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		{
+			return other is CSharpTokenNode { IsNull: false } and not CSharpModifierToken;
+		}
+
 		class NullCSharpTokenNode : CSharpTokenNode
 		{
+			public NullCSharpTokenNode() : base(TextLocation.Empty, null)
+			{
+			}
+
 			public override bool IsNull {
 				get {
 					return true;
 				}
-			}
-
-			public NullCSharpTokenNode() : base(TextLocation.Empty, null)
-			{
 			}
 
 			public override void AcceptVisitor(IAstVisitor visitor)
@@ -68,74 +133,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return other == null || other.IsNull;
 			}
-		}
-
-		public override NodeType NodeType {
-			get {
-				return NodeType.Token;
-			}
-		}
-
-		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
-
-		int TokenLength {
-			get {
-				uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
-				if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
-				{
-					return r.Length;
-				}
-				return 0;
-			}
-		}
-
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation(StartLocation.Line, StartLocation.Column + TokenLength);
-			}
-		}
-
-		public CSharpTokenNode(TextLocation location, TokenRole role)
-		{
-			this.startLocation = location;
-			if (role != null)
-				this.flags |= role.Index << AstNodeFlagsUsedBits;
-		}
-
-		public override string ToString(CSharpFormattingOptions formattingOptions)
-		{
-			uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
-			if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
-			{
-				return r.Token;
-			}
-			return string.Empty;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitCSharpTokenNode(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitCSharpTokenNode(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitCSharpTokenNode(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			CSharpTokenNode o = other as CSharpTokenNode;
-			return o != null && !o.IsNull && !(o is CSharpModifierToken);
 		}
 	}
 }

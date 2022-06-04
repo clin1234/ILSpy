@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Management.Automation;
 using System.Threading;
@@ -15,6 +14,11 @@ namespace ICSharpCode.Decompiler.PowerShell
 	[OutputType(typeof(string))]
 	public class GetDecompiledProjectCmdlet : PSCmdlet, IProgress<DecompilationProgress>
 	{
+		private readonly object syncObject = new();
+		int completed;
+		string fileName;
+		ProgressRecord progress;
+
 		[Parameter(Position = 0, Mandatory = true)]
 		public CSharpDecompiler Decompiler { get; set; }
 
@@ -23,17 +27,13 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[ValidateNotNullOrEmpty]
 		public string LiteralPath { get; set; }
 
-		readonly object syncObject = new object();
-		int completed;
-		string fileName;
-		ProgressRecord progress;
-
 		public void Report(DecompilationProgress value)
 		{
 			lock (syncObject)
 			{
 				completed++;
-				progress = new ProgressRecord(1, "Decompiling " + fileName, $"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
+				progress = new ProgressRecord(1, "Decompiling " + fileName,
+					$"Completed {completed} of {value.TotalNumberOfFiles}: {value.Status}") {
 					PercentComplete = (int)(completed * 100.0 / value.TotalNumberOfFiles)
 				};
 			}
@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 						progress = this.progress;
 						this.progress = null;
 					}
+
 					if (progress != null)
 					{
 						timeout = 100;
@@ -78,7 +79,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 				task.Wait();
 
-				WriteProgress(new ProgressRecord(1, "Decompiling " + fileName, "Decompilation finished") { RecordType = ProgressRecordType.Completed });
+				WriteProgress(new ProgressRecord(1, "Decompiling " + fileName, "Decompilation finished")
+					{ RecordType = ProgressRecordType.Completed });
 			}
 			catch (Exception e)
 			{
@@ -90,9 +92,11 @@ namespace ICSharpCode.Decompiler.PowerShell
 		private void DoDecompile(string path)
 		{
 			PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
-			var assemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
-			WholeProjectDecompiler decompiler = new WholeProjectDecompiler(assemblyResolver);
-			decompiler.ProgressIndicator = this;
+			var assemblyResolver =
+				new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
+			WholeProjectDecompiler decompiler = new(assemblyResolver) {
+				ProgressIndicator = this
+			};
 			fileName = module.FileName;
 			completed = 0;
 			decompiler.DecompileProject(module, path);

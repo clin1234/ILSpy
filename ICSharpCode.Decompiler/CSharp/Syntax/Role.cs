@@ -33,20 +33,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static readonly Role[] roles = new Role[1 << RoleIndexBits];
 		static int nextRoleIndex = 0;
 
-		readonly uint index;
-
-		public uint Index {
-			get { return index; }
-		}
-
 		// don't allow NRefactory consumers to derive from Role
 		internal Role()
 		{
-			this.index = (uint)Interlocked.Increment(ref nextRoleIndex);
-			if (this.index >= roles.Length)
+			this.Index = (uint)Interlocked.Increment(ref nextRoleIndex);
+			if (this.Index >= roles.Length)
 				throw new InvalidOperationException("Too many roles");
-			roles[this.index] = this;
+			roles[this.Index] = this;
 		}
+
+		public uint Index { get; }
 
 		/// <summary>
 		/// Gets whether the specified node is valid in this role.
@@ -69,7 +65,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class Role<T> : Role where T : class?
 	{
 		readonly string name; // helps with debugging the AST
-		readonly T nullObject;
+
+		[Obsolete("Use the other overload explicitly specifying the nullObject.")]
+		public Role(string name)
+		{
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
+			this.NullObject = null!;
+		}
+
+		public Role(string name, T nullObject)
+		{
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
+			this.NullObject = nullObject;
+		}
 
 		/// <summary>
 		/// Gets the null object used when there's no node with this role.
@@ -79,28 +87,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Roles used for non-collections should always have a null object, so that no AST property returns null.
 		/// However, if a role used for collections only, it may leave out the null object.
 		/// </remarks>
-		public T NullObject {
-			get { return nullObject; }
-		}
+		public T NullObject { get; }
 
 		public override bool IsValid(object node)
 		{
 			return node is T;
-		}
-
-		[Obsolete("Use the other overload explicitly specifying the nullObject.")]
-		public Role(string name)
-		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.name = name;
-			this.nullObject = null!;
-		}
-
-		public Role(string name, T nullObject)
-		{
-			this.name = name ?? throw new ArgumentNullException(nameof(name));
-			this.nullObject = nullObject;
 		}
 
 		public override string ToString()

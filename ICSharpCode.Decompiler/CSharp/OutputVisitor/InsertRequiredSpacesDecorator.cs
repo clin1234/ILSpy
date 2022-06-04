@@ -29,18 +29,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		LastWritten lastWritten;
 
-		enum LastWritten
-		{
-			Whitespace,
-			Other,
-			KeywordOrIdentifier,
-			Plus,
-			Minus,
-			Ampersand,
-			QuestionMark,
-			Division
-		}
-
 		public InsertRequiredSpacesDecorator(TokenWriter writer)
 			: base(writer)
 		{
@@ -61,6 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				// this space is strictly required, so we directly call the formatter
 				base.Space();
 			}
+
 			base.WriteIdentifier(identifier);
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
@@ -71,6 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				Space();
 			}
+
 			base.WriteKeyword(role, keyword);
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
@@ -84,13 +74,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// for ?, this can happen in "a is int? ? b : c" or "a as int? ?? 0";
 			// and for /, this can happen with "1/ *ptr" or "1/ //comment".)
 			if (lastWritten == LastWritten.Plus && token[0] == '+' ||
-				lastWritten == LastWritten.Minus && token[0] == '-' ||
-				lastWritten == LastWritten.Ampersand && token[0] == '&' ||
-				lastWritten == LastWritten.QuestionMark && token[0] == '?' ||
-				lastWritten == LastWritten.Division && token[0] == '*')
+			    lastWritten == LastWritten.Minus && token[0] == '-' ||
+			    lastWritten == LastWritten.Ampersand && token[0] == '&' ||
+			    lastWritten == LastWritten.QuestionMark && token[0] == '?' ||
+			    lastWritten == LastWritten.Division && token[0] == '*')
 			{
 				base.Space();
 			}
+
 			base.WriteToken(role, token);
 			if (token == "+")
 			{
@@ -138,6 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				// "1.0 / /*comment*/a", then we need to insert a space in front of the comment.
 				base.Space();
 			}
+
 			base.WriteComment(commentType, content);
 			lastWritten = LastWritten.Whitespace;
 		}
@@ -154,8 +146,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				Space();
 			}
+
 			base.WritePrimitiveValue(value, format);
-			if (value == null || value is bool)
+			if (value is null or bool)
 				return;
 			if (value is string)
 			{
@@ -169,17 +162,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				lastWritten = LastWritten.Other;
 			}
-			else if (value is float)
+			else if (value is float f1)
 			{
-				float f = (float)value;
-				if (float.IsInfinity(f) || float.IsNaN(f))
+				if (float.IsInfinity(f1) || float.IsNaN(f1))
 					return;
 				lastWritten = LastWritten.Other;
 			}
-			else if (value is double)
+			else if (value is double d)
 			{
-				double f = (double)value;
-				if (double.IsInfinity(f) || double.IsNaN(f))
+				if (double.IsInfinity(d) || double.IsNaN(d))
 					return;
 				// needs space if identifier follows number;
 				// this avoids mistaking the following identifier as type suffix
@@ -203,6 +194,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				Space();
 			}
+
 			base.WritePrimitiveType(type);
 			if (type == "new")
 			{
@@ -212,6 +204,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				lastWritten = LastWritten.KeywordOrIdentifier;
 			}
+		}
+
+		enum LastWritten
+		{
+			Whitespace,
+			Other,
+			KeywordOrIdentifier,
+			Plus,
+			Minus,
+			Ampersand,
+			QuestionMark,
+			Division
 		}
 	}
 }

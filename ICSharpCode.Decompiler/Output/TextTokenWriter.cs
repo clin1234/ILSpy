@@ -22,7 +22,6 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -33,26 +32,20 @@ namespace ICSharpCode.Decompiler
 {
 	public class TextTokenWriter : TokenWriter
 	{
+		readonly Stack<AstNode> nodeStack = new();
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
 		readonly IDecompilerTypeSystem typeSystem;
-		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 		int braceLevelWithinType = -1;
-		bool inDocumentationComment = false;
 		bool firstUsingDeclaration;
+		bool inDocumentationComment = false;
 		bool lastUsingDeclaration;
 
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			if (settings == null)
-				throw new ArgumentNullException(nameof(settings));
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
-			this.output = output;
-			this.settings = settings;
-			this.typeSystem = typeSystem;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
+			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 		}
 
 		public override void WriteIdentifier(Identifier identifier)
@@ -116,26 +109,21 @@ namespace ICSharpCode.Decompiler
 			{
 				symbol = node.Parent.GetSymbol();
 			}
+
 			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression)
 			{
 				symbol = node.Parent.GetSymbol();
 			}
 
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
-			{
-				var declaringType = member.DeclaringType;
-				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
-					return null;
-			}
+			if (node is IdentifierExpression && node.Role == Roles.TargetExpression &&
+			    node.Parent is InvocationExpression &&
+			    symbol is IMember { DeclaringType: { Kind: TypeKind.Delegate } }) return null;
 			return FilterMember(symbol);
 		}
 
 		ISymbol FilterMember(ISymbol symbol)
 		{
-			if (symbol == null)
-				return null;
-
-			if (symbol is LocalFunctionMethod)
+			if (symbol is null or LocalFunctionMethod)
 				return null;
 
 			return symbol;
@@ -175,7 +163,7 @@ namespace ICSharpCode.Decompiler
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
 
-			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation)
+			if (node is ParameterDeclaration or VariableInitializer or CatchClause or VariableDesignation)
 			{
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
@@ -205,8 +193,7 @@ namespace ICSharpCode.Decompiler
 
 			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement)
 			{
-				var localFunction = node.Parent.GetResolveResult() as MemberResolveResult;
-				if (localFunction != null)
+				if (node.Parent.GetResolveResult() is MemberResolveResult localFunction)
 					return localFunction.Member;
 			}
 
@@ -238,6 +225,7 @@ namespace ICSharpCode.Decompiler
 					return;
 				}
 			}
+
 			output.Write(keyword);
 		}
 
@@ -251,12 +239,16 @@ namespace ICSharpCode.Decompiler
 						output.Write("{");
 						break;
 					}
+
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces)
 					{
-						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1, isDefinition: braceLevelWithinType == 1);
+						output.MarkFoldStart(
+							defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1,
+							isDefinition: braceLevelWithinType == 1);
 					}
+
 					output.Write("{");
 					break;
 				case "}":
@@ -286,6 +278,7 @@ namespace ICSharpCode.Decompiler
 					}
 					else
 						output.Write(token);
+
 					break;
 			}
 		}
@@ -312,6 +305,7 @@ namespace ICSharpCode.Decompiler
 				output.MarkFoldEnd();
 				lastUsingDeclaration = false;
 			}
+
 			output.WriteLine();
 		}
 
@@ -329,12 +323,13 @@ namespace ICSharpCode.Decompiler
 					output.Write("*/");
 					break;
 				case CommentType.Documentation:
-					bool isLastLine = !(nodeStack.Peek().NextSibling is Comment);
+					bool isLastLine = nodeStack.Peek().NextSibling is not Comment;
 					if (!inDocumentationComment && !isLastLine)
 					{
 						inDocumentationComment = true;
 						output.MarkFoldStart("///" + content, true);
 					}
+
 					output.Write("///");
 					output.Write(content);
 					if (inDocumentationComment && isLastLine)
@@ -342,6 +337,7 @@ namespace ICSharpCode.Decompiler
 						inDocumentationComment = false;
 						output.MarkFoldEnd();
 					}
+
 					output.WriteLine();
 					break;
 				default:
@@ -360,6 +356,7 @@ namespace ICSharpCode.Decompiler
 				output.Write(' ');
 				output.Write(argument);
 			}
+
 			output.WriteLine();
 		}
 
@@ -406,6 +403,7 @@ namespace ICSharpCode.Decompiler
 					{
 						symbol = nodeStack.Peek().GetSymbol();
 					}
+
 					if (symbol == null)
 						goto default;
 					switch (symbol)
@@ -417,6 +415,7 @@ namespace ICSharpCode.Decompiler
 							output.WriteReference(m, type, false);
 							return;
 					}
+
 					break;
 				default:
 					output.Write(type);
@@ -439,12 +438,13 @@ namespace ICSharpCode.Decompiler
 					lastUsingDeclaration = false;
 				}
 			}
+
 			nodeStack.Push(node);
 		}
 
 		private bool IsUsingDeclaration(AstNode node)
 		{
-			return node is UsingDeclaration || node is UsingAliasDeclaration;
+			return node is UsingDeclaration or UsingAliasDeclaration;
 		}
 
 		public override void EndNode(AstNode node)
@@ -455,18 +455,20 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsDefinition(ref AstNode node)
 		{
-			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
+			if (node is EntityDeclaration && node.Parent is not LocalFunctionDeclarationStatement)
 				return true;
 			if (node is VariableInitializer && node.Parent is FieldDeclaration)
 			{
 				node = node.Parent;
 				return true;
 			}
+
 			if (node is FixedVariableInitializer && node.Parent is FixedFieldDeclaration)
 			{
 				node = node.Parent;
 				return true;
 			}
+
 			return false;
 		}
 	}

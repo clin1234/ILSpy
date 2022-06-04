@@ -19,7 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.IL.Patterns;
@@ -66,15 +65,15 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicInstruction
 	{
-		public CSharpBinderFlags BinderFlags { get; }
-		public IType? CallingContext { get; }
-
 		protected DynamicInstruction(OpCode opCode, CSharpBinderFlags binderFlags, IType? context)
 			: base(opCode)
 		{
 			BinderFlags = binderFlags;
 			CallingContext = context;
 		}
+
+		public CSharpBinderFlags BinderFlags { get; }
+		public IType? CallingContext { get; }
 
 		protected void WriteBinderFlags(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -105,16 +104,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		public abstract CSharpArgumentInfo GetArgumentInfoOfChild(int index);
 
-		internal static void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, params (ILInstruction, CSharpArgumentInfo)[] arguments)
+		internal static void WriteArgumentList(ITextOutput output, ILAstWritingOptions options,
+			params (ILInstruction, CSharpArgumentInfo)[] arguments)
 		{
 			WriteArgumentList(output, options, (IEnumerable<(ILInstruction, CSharpArgumentInfo)>)arguments);
 		}
 
-		internal static void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, IEnumerable<(ILInstruction, CSharpArgumentInfo)> arguments)
+		internal static void WriteArgumentList(ITextOutput output, ILAstWritingOptions options,
+			IEnumerable<(ILInstruction, CSharpArgumentInfo)> arguments)
 		{
 			output.Write('(');
 			int j = 0;
-			foreach (var (arg, info) in arguments)
+			foreach ((ILInstruction? arg, CSharpArgumentInfo info) in arguments)
 			{
 				if (j > 0)
 					output.Write(", ");
@@ -124,12 +125,27 @@ namespace ICSharpCode.Decompiler.IL
 				arg.WriteTo(output, options);
 				j++;
 			}
+
 			output.Write(')');
 		}
 	}
 
 	partial class DynamicConvertInstruction
 	{
+		public DynamicConvertInstruction(CSharpBinderFlags binderFlags, IType type, IType? context,
+			ILInstruction argument)
+			: base(OpCode.DynamicConvertInstruction, binderFlags, context)
+		{
+			this.type = type;
+			Argument = argument;
+		}
+
+		public override StackType ResultType => type.GetStackType();
+
+		public bool IsChecked => (BinderFlags & CSharpBinderFlags.CheckedContext) != 0;
+
+		public bool IsExplicit => (BinderFlags & CSharpBinderFlags.ConvertExplicit) != 0;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -142,23 +158,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		public DynamicConvertInstruction(CSharpBinderFlags binderFlags, IType type, IType? context, ILInstruction argument)
-			: base(OpCode.DynamicConvertInstruction, binderFlags, context)
-		{
-			this.type = type;
-			Argument = argument;
-		}
-
 		protected internal override bool PerformMatch(ref ListMatch listMatch, ref Match match)
 		{
 			return base.PerformMatch(ref listMatch, ref match);
 		}
-
-		public override StackType ResultType => type.GetStackType();
-
-		public bool IsChecked => (BinderFlags & CSharpBinderFlags.CheckedContext) != 0;
-
-		public bool IsExplicit => (BinderFlags & CSharpBinderFlags.ConvertExplicit) != 0;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -168,11 +171,8 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicInvokeMemberInstruction
 	{
-		public string Name { get; }
-		public IReadOnlyList<IType> TypeArguments { get; }
-		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
-
-		public DynamicInvokeMemberInstruction(CSharpBinderFlags binderFlags, string name, IType[]? typeArguments, IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
+		public DynamicInvokeMemberInstruction(CSharpBinderFlags binderFlags, string name, IType[]? typeArguments,
+			IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicInvokeMemberInstruction, binderFlags, context)
 		{
 			Name = name;
@@ -181,6 +181,12 @@ namespace ICSharpCode.Decompiler.IL
 			Arguments = new InstructionCollection<ILInstruction>(this, 0);
 			Arguments.AddRange(arguments);
 		}
+
+		public string Name { get; }
+		public IReadOnlyList<IType> TypeArguments { get; }
+		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
+
+		public override StackType ResultType => StackType.O;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -200,12 +206,12 @@ namespace ICSharpCode.Decompiler.IL
 					typeArg.WriteTo(output);
 					i++;
 				}
+
 				output.Write('>');
 			}
+
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
-
-		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -217,16 +223,19 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicGetMemberInstruction
 	{
-		public string? Name { get; }
-		public CSharpArgumentInfo TargetArgumentInfo { get; }
-
-		public DynamicGetMemberInstruction(CSharpBinderFlags binderFlags, string? name, IType? context, CSharpArgumentInfo targetArgumentInfo, ILInstruction target)
+		public DynamicGetMemberInstruction(CSharpBinderFlags binderFlags, string? name, IType? context,
+			CSharpArgumentInfo targetArgumentInfo, ILInstruction target)
 			: base(OpCode.DynamicGetMemberInstruction, binderFlags, context)
 		{
 			Name = name;
 			TargetArgumentInfo = targetArgumentInfo;
 			Target = target;
 		}
+
+		public string? Name { get; }
+		public CSharpArgumentInfo TargetArgumentInfo { get; }
+
+		public override StackType ResultType => StackType.O;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -238,8 +247,6 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Target, TargetArgumentInfo));
 		}
 
-		public override StackType ResultType => StackType.O;
-
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
 			if (index != 0)
@@ -250,11 +257,9 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicSetMemberInstruction
 	{
-		public string? Name { get; }
-		public CSharpArgumentInfo TargetArgumentInfo { get; }
-		public CSharpArgumentInfo ValueArgumentInfo { get; }
-
-		public DynamicSetMemberInstruction(CSharpBinderFlags binderFlags, string? name, IType? context, CSharpArgumentInfo targetArgumentInfo, ILInstruction target, CSharpArgumentInfo valueArgumentInfo, ILInstruction value)
+		public DynamicSetMemberInstruction(CSharpBinderFlags binderFlags, string? name, IType? context,
+			CSharpArgumentInfo targetArgumentInfo, ILInstruction target, CSharpArgumentInfo valueArgumentInfo,
+			ILInstruction value)
 			: base(OpCode.DynamicSetMemberInstruction, binderFlags, context)
 		{
 			Name = name;
@@ -263,6 +268,12 @@ namespace ICSharpCode.Decompiler.IL
 			ValueArgumentInfo = valueArgumentInfo;
 			Value = value;
 		}
+
+		public string? Name { get; }
+		public CSharpArgumentInfo TargetArgumentInfo { get; }
+		public CSharpArgumentInfo ValueArgumentInfo { get; }
+
+		public override StackType ResultType => StackType.O;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -274,33 +285,30 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
 		}
 
-		public override StackType ResultType => StackType.O;
-
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetArgumentInfo;
-				case 1:
-					return ValueArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => TargetArgumentInfo,
+				1 => ValueArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
 	partial class DynamicGetIndexInstruction
 	{
-		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
-
-		public DynamicGetIndexInstruction(CSharpBinderFlags binderFlags, IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
+		public DynamicGetIndexInstruction(CSharpBinderFlags binderFlags, IType? context,
+			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicGetIndexInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
 			Arguments = new InstructionCollection<ILInstruction>(this, 0);
 			Arguments.AddRange(arguments);
 		}
+
+		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
+
+		public override StackType ResultType => StackType.O;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -312,8 +320,6 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => StackType.O;
-
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
 			if (index < 0 || index >= ArgumentInfo.Count)
@@ -324,15 +330,18 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicSetIndexInstruction
 	{
-		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
-
-		public DynamicSetIndexInstruction(CSharpBinderFlags binderFlags, IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
+		public DynamicSetIndexInstruction(CSharpBinderFlags binderFlags, IType? context,
+			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicSetIndexInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
 			Arguments = new InstructionCollection<ILInstruction>(this, 0);
 			Arguments.AddRange(arguments);
 		}
+
+		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
+
+		public override StackType ResultType => StackType.O;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -343,8 +352,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("set_Item");
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
-
-		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -358,9 +365,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		readonly IType? resultType;
 
-		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
-
-		public DynamicInvokeConstructorInstruction(CSharpBinderFlags binderFlags, IType? type, IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
+		public DynamicInvokeConstructorInstruction(CSharpBinderFlags binderFlags, IType? type, IType? context,
+			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicInvokeConstructorInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
@@ -368,6 +374,10 @@ namespace ICSharpCode.Decompiler.IL
 			Arguments.AddRange(arguments);
 			this.resultType = type;
 		}
+
+		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
+
+		public override StackType ResultType => resultType?.GetStackType() ?? StackType.Unknown;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -380,8 +390,6 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => resultType?.GetStackType() ?? StackType.Unknown;
-
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
 			if (index < 0 || index >= ArgumentInfo.Count)
@@ -392,11 +400,9 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicBinaryOperatorInstruction
 	{
-		public CSharpArgumentInfo LeftArgumentInfo { get; }
-		public CSharpArgumentInfo RightArgumentInfo { get; }
-		public ExpressionType Operation { get; }
-
-		public DynamicBinaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context, CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo, ILInstruction right)
+		public DynamicBinaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context,
+			CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo,
+			ILInstruction right)
 			: base(OpCode.DynamicBinaryOperatorInstruction, binderFlags, context)
 		{
 			Operation = operation;
@@ -406,6 +412,12 @@ namespace ICSharpCode.Decompiler.IL
 			Right = right;
 		}
 
+		public CSharpArgumentInfo LeftArgumentInfo { get; }
+		public CSharpArgumentInfo RightArgumentInfo { get; }
+		public ExpressionType Operation { get; }
+
+		public override StackType ResultType => StackType.O;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -416,29 +428,21 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
 		}
 
-		public override StackType ResultType => StackType.O;
-
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftArgumentInfo;
-				case 1:
-					return RightArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => LeftArgumentInfo,
+				1 => RightArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
 	partial class DynamicLogicOperatorInstruction
 	{
-		public CSharpArgumentInfo LeftArgumentInfo { get; }
-		public CSharpArgumentInfo RightArgumentInfo { get; }
-		public ExpressionType Operation { get; }
-
-		public DynamicLogicOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context, CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo, ILInstruction right)
+		public DynamicLogicOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context,
+			CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo,
+			ILInstruction right)
 			: base(OpCode.DynamicLogicOperatorInstruction, binderFlags, context)
 		{
 			Operation = operation;
@@ -448,6 +452,15 @@ namespace ICSharpCode.Decompiler.IL
 			Right = right;
 		}
 
+		public CSharpArgumentInfo LeftArgumentInfo { get; }
+		public CSharpArgumentInfo RightArgumentInfo { get; }
+		public ExpressionType Operation { get; }
+
+		public override StackType ResultType => StackType.O;
+
+		public override InstructionFlags DirectFlags =>
+			InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -458,36 +471,26 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
 		}
 
-		public override StackType ResultType => StackType.O;
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			return DirectFlags | Left.Flags
-				| SemanticHelper.CombineBranches(Right.Flags, InstructionFlags.None);
+			                   | SemanticHelper.CombineBranches(Right.Flags, InstructionFlags.None);
 		}
-
-		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftArgumentInfo;
-				case 1:
-					return RightArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => LeftArgumentInfo,
+				1 => RightArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
 	partial class DynamicUnaryOperatorInstruction
 	{
-		public CSharpArgumentInfo OperandArgumentInfo { get; }
-		public ExpressionType Operation { get; }
-
-		public DynamicUnaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context, CSharpArgumentInfo operandArgumentInfo, ILInstruction operand)
+		public DynamicUnaryOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType? context,
+			CSharpArgumentInfo operandArgumentInfo, ILInstruction operand)
 			: base(OpCode.DynamicUnaryOperatorInstruction, binderFlags, context)
 		{
 			Operation = operation;
@@ -495,15 +498,8 @@ namespace ICSharpCode.Decompiler.IL
 			Operand = operand;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
-		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Operation.ToString());
-			WriteArgumentList(output, options, (Operand, OperandArgumentInfo));
-		}
+		public CSharpArgumentInfo OperandArgumentInfo { get; }
+		public ExpressionType Operation { get; }
 
 		public override StackType ResultType {
 			get {
@@ -518,29 +514,39 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			WriteBinderFlags(output, options);
+			output.Write(' ');
+			output.Write(Operation.ToString());
+			WriteArgumentList(output, options, (Operand, OperandArgumentInfo));
+		}
+
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return OperandArgumentInfo;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(index));
-			}
+			return index switch {
+				0 => OperandArgumentInfo,
+				_ => throw new ArgumentOutOfRangeException(nameof(index))
+			};
 		}
 	}
 
 	partial class DynamicInvokeInstruction
 	{
-		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
-
-		public DynamicInvokeInstruction(CSharpBinderFlags binderFlags, IType? context, CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
+		public DynamicInvokeInstruction(CSharpBinderFlags binderFlags, IType? context,
+			CSharpArgumentInfo[] argumentInfo, ILInstruction[] arguments)
 			: base(OpCode.DynamicInvokeInstruction, binderFlags, context)
 		{
 			ArgumentInfo = argumentInfo;
 			Arguments = new InstructionCollection<ILInstruction>(this, 0);
 			Arguments.AddRange(arguments);
 		}
+
+		public IReadOnlyList<CSharpArgumentInfo> ArgumentInfo { get; }
+
+		public override StackType ResultType => StackType.O;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -550,8 +556,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
-
-		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -563,14 +567,17 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class DynamicIsEventInstruction
 	{
-		public string? Name { get; }
-
-		public DynamicIsEventInstruction(CSharpBinderFlags binderFlags, string? name, IType? context, ILInstruction argument)
+		public DynamicIsEventInstruction(CSharpBinderFlags binderFlags, string? name, IType? context,
+			ILInstruction argument)
 			: base(OpCode.DynamicIsEventInstruction, binderFlags, context)
 		{
 			Name = name;
 			Argument = argument;
 		}
+
+		public string? Name { get; }
+
+		public override StackType ResultType => StackType.I4;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -582,8 +589,6 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output, options);
 			output.Write(')');
 		}
-
-		public override StackType ResultType => StackType.I4;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{

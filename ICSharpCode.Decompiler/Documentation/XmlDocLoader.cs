@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 
@@ -30,36 +31,39 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// </summary>
 	public static class XmlDocLoader
 	{
-		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
-		static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider> cache = new ConditionalWeakTable<PEFile, XmlDocumentationProvider>();
+		private static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new(LoadMscorlibDocumentation);
+		private static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider> cache = new();
+
+		static readonly string referenceAssembliesPath =
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+				@"Reference Assemblies\Microsoft\\Framework");
+
+		static readonly string frameworkPath =
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"Microsoft.NET\Framework");
+
+		public static XmlDocumentationProvider MscorlibDocumentation {
+			get { return mscorlibDocumentation.Value; }
+		}
 
 		static XmlDocumentationProvider LoadMscorlibDocumentation()
 		{
 			string xmlDocFile = FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_4_0)
-				?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
+			                    ?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
 			if (xmlDocFile != null)
 				return new XmlDocumentationProvider(xmlDocFile);
 			else
 				return null;
 		}
 
-		public static XmlDocumentationProvider MscorlibDocumentation {
-			get { return mscorlibDocumentation.Value; }
-		}
-
 		public static XmlDocumentationProvider LoadDocumentation(PEFile module)
 		{
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
+			ArgumentNullException.ThrowIfNull(module);
 			lock (cache)
 			{
 				if (!cache.TryGetValue(module, out XmlDocumentationProvider xmlDoc))
 				{
-					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
-					if (xmlDocFile == null)
-					{
-						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FileName), module.GetRuntime());
-					}
+					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName) ??
+					                    FindXmlDocumentation(Path.GetFileName(module.FileName), module.GetRuntime());
 					if (xmlDocFile != null)
 					{
 						xmlDoc = new XmlDocumentationProvider(xmlDocFile);
@@ -71,12 +75,10 @@ namespace ICSharpCode.Decompiler.Documentation
 						xmlDoc = null;
 					}
 				}
+
 				return xmlDoc;
 			}
 		}
-
-		static readonly string referenceAssembliesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Reference Assemblies\Microsoft\\Framework");
-		static readonly string frameworkPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"Microsoft.NET\Framework");
 
 		static string FindXmlDocumentation(string assemblyFileName, TargetRuntime runtime)
 		{
@@ -91,16 +93,19 @@ namespace ICSharpCode.Decompiler.Documentation
 					break;
 				case TargetRuntime.Net_2_0:
 					fileName = LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v2.0.50727", assemblyFileName))
-						?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.5"))
-						?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.0"))
-						?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v3.5\Profile\Client"));
+					           ?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.5"))
+					           ?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.0"))
+					           ?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath,
+						           @".NETFramework\v3.5\Profile\Client"));
 					break;
 				case TargetRuntime.Net_4_0:
 				default:
-					fileName = LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v4.0", assemblyFileName))
-						?? LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v4.0.30319", assemblyFileName));
+					fileName = LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v4.0",
+						           assemblyFileName))
+					           ?? LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v4.0.30319", assemblyFileName));
 					break;
 			}
+
 			return fileName;
 		}
 
@@ -110,7 +115,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				return null;
 
 			string xmlFileName = Path.ChangeExtension(fileName, ".xml");
-			string currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+			string currentCulture = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
 			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
 
 			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
@@ -118,11 +123,13 @@ namespace ICSharpCode.Decompiler.Documentation
 			{
 				return localizedXmlDocFile;
 			}
+
 			Debug.WriteLine("Try find XMLDoc @" + xmlFileName);
 			if (File.Exists(xmlFileName))
 			{
 				return xmlFileName;
 			}
+
 			if (currentCulture != "en")
 			{
 				string englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
@@ -132,6 +139,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					return englishXmlDocFile;
 				}
 			}
+
 			return null;
 		}
 

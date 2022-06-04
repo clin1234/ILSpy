@@ -33,29 +33,38 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public sealed class SimpleTypeOrNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
-		readonly string identifier;
-		readonly IList<ITypeReference> typeArguments;
-		readonly NameLookupMode lookupMode;
-
-		public SimpleTypeOrNamespaceReference(string identifier, IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
+		public SimpleTypeOrNamespaceReference(string identifier, IList<ITypeReference> typeArguments,
+			NameLookupMode lookupMode = NameLookupMode.Type)
 		{
-			if (identifier == null)
-				throw new ArgumentNullException(nameof(identifier));
-			this.identifier = identifier;
-			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
-			this.lookupMode = lookupMode;
+			this.Identifier = identifier ?? throw new ArgumentNullException(nameof(identifier));
+			this.TypeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
+			this.LookupMode = lookupMode;
 		}
 
-		public string Identifier {
-			get { return identifier; }
+		public string Identifier { get; }
+
+		public IList<ITypeReference> TypeArguments { get; }
+
+		public NameLookupMode LookupMode { get; }
+
+		int ISupportsInterning.GetHashCodeForInterning()
+		{
+			int hashCode = 0;
+			unchecked
+			{
+				hashCode += 1000000021 * Identifier.GetHashCode();
+				hashCode += 1000000033 * TypeArguments.GetHashCode();
+				hashCode += 1000000087 * (int)LookupMode;
+			}
+
+			return hashCode;
 		}
 
-		public IList<ITypeReference> TypeArguments {
-			get { return typeArguments; }
-		}
-
-		public NameLookupMode LookupMode {
-			get { return lookupMode; }
+		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+		{
+			return other is SimpleTypeOrNamespaceReference o && this.Identifier == o.Identifier
+			                                                 && this.TypeArguments == o.TypeArguments &&
+			                                                 this.LookupMode == o.LookupMode;
 		}
 
 		/// <summary>
@@ -64,46 +73,28 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public SimpleTypeOrNamespaceReference AddSuffix(string suffix)
 		{
-			return new SimpleTypeOrNamespaceReference(identifier + suffix, typeArguments, lookupMode);
+			return new SimpleTypeOrNamespaceReference(Identifier + suffix, TypeArguments, LookupMode);
 		}
 
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			var typeArgs = typeArguments.Resolve(resolver.CurrentTypeResolveContext);
-			return resolver.LookupSimpleNameOrTypeName(identifier, typeArgs, lookupMode);
+			var typeArgs = TypeArguments.Resolve(resolver.CurrentTypeResolveContext);
+			return resolver.LookupSimpleNameOrTypeName(Identifier, typeArgs, LookupMode);
 		}
 
 		public override IType ResolveType(CSharpResolver resolver)
 		{
-			TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
-			return trr != null ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
+			return Resolve(resolver) is TypeResolveResult trr
+				? trr.Type
+				: new UnknownType(null, Identifier, TypeArguments.Count);
 		}
 
 		public override string ToString()
 		{
-			if (typeArguments.Count == 0)
-				return identifier;
+			if (TypeArguments.Count == 0)
+				return Identifier;
 			else
-				return identifier + "<" + string.Join(",", typeArguments) + ">";
-		}
-
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			int hashCode = 0;
-			unchecked
-			{
-				hashCode += 1000000021 * identifier.GetHashCode();
-				hashCode += 1000000033 * typeArguments.GetHashCode();
-				hashCode += 1000000087 * (int)lookupMode;
-			}
-			return hashCode;
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			SimpleTypeOrNamespaceReference o = other as SimpleTypeOrNamespaceReference;
-			return o != null && this.identifier == o.identifier
-				&& this.typeArguments == o.typeArguments && this.lookupMode == o.lookupMode;
+				return Identifier + "<" + string.Join(",", TypeArguments) + ">";
 		}
 	}
 }

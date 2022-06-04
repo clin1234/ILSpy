@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UnsafeStatement : Statement
 	{
-		public static readonly TokenRole UnsafeKeywordRole = new TokenRole("unsafe");
+		public static readonly TokenRole UnsafeKeywordRole = new("unsafe");
 
 		public CSharpTokenNode UnsafeToken {
 			get { return GetChildByRole(UnsafeKeywordRole); }
@@ -60,8 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UnsafeStatement o = other as UnsafeStatement;
-			return o != null && this.Body.DoMatch(o.Body, match);
+			return other is UnsafeStatement o && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

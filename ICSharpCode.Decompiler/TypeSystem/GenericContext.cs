@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -34,7 +33,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.MethodTypeParameters = null;
 		}
 
-		public GenericContext(IReadOnlyList<ITypeParameter> classTypeParameters, IReadOnlyList<ITypeParameter> methodTypeParameters)
+		public GenericContext(IReadOnlyList<ITypeParameter> classTypeParameters,
+			IReadOnlyList<ITypeParameter> methodTypeParameters)
 		{
 			this.ClassTypeParameters = classTypeParameters;
 			this.MethodTypeParameters = methodTypeParameters;

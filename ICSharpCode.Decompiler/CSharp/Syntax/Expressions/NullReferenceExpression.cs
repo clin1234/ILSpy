@@ -33,23 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class NullReferenceExpression : Expression
 	{
 		TextLocation location;
-		public override TextLocation StartLocation {
-			get {
-				return location;
-			}
-		}
-
-		internal void SetStartLocation(TextLocation value)
-		{
-			ThrowIfFrozen();
-			this.location = value;
-		}
-
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation(location.Line, location.Column + "null".Length);
-			}
-		}
 
 		public NullReferenceExpression()
 		{
@@ -58,6 +41,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public NullReferenceExpression(TextLocation location)
 		{
 			this.location = location;
+		}
+
+		public override TextLocation StartLocation {
+			get {
+				return location;
+			}
+		}
+
+		public override TextLocation EndLocation {
+			get {
+				return new TextLocation(location.Line, location.Column + "null".Length);
+			}
+		}
+
+		internal void SetStartLocation(TextLocation value)
+		{
+			ThrowIfFrozen();
+			this.location = value;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -77,8 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			NullReferenceExpression o = other as NullReferenceExpression;
-			return o != null;
+			return other is NullReferenceExpression o;
 		}
 	}
 }

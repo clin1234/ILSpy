@@ -32,7 +32,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class WhileStatement : Statement
 	{
-		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+		public static readonly TokenRole WhileKeywordRole = new("while");
+
+		public WhileStatement()
+		{
+		}
+
+		public WhileStatement(Expression condition, Statement embeddedStatement)
+		{
+			this.Condition = condition;
+			this.EmbeddedStatement = embeddedStatement;
+		}
 
 		public CSharpTokenNode WhileToken {
 			get { return GetChildByRole(WhileKeywordRole); }
@@ -73,18 +83,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			WhileStatement o = other as WhileStatement;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
-		}
-
-		public WhileStatement()
-		{
-		}
-
-		public WhileStatement(Expression condition, Statement embeddedStatement)
-		{
-			this.Condition = condition;
-			this.EmbeddedStatement = embeddedStatement;
+			return other is WhileStatement o && this.Condition.DoMatch(o.Condition, match) &&
+			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

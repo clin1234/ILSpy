@@ -1,17 +1,17 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
 namespace LightJson
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Diagnostics.CodeAnalysis;
-
 	/// <summary>
 	/// Represents an ordered collection of JsonValues.
 	/// </summary>
-	[DebuggerDisplay("Count = {Count}")]
+	[DebuggerDisplay("Count = {" + nameof(Count) + "}")]
 	[DebuggerTypeProxy(typeof(JsonArrayDebugView))]
 	internal sealed class JsonArray : IEnumerable<JsonValue>
 	{
@@ -32,10 +32,7 @@ namespace LightJson
 		public JsonArray(params JsonValue[] values)
 			: this()
 		{
-			if (values == null)
-			{
-				throw new ArgumentNullException(nameof(values));
-			}
+			ArgumentNullException.ThrowIfNull(values);
 
 			foreach (var value in values)
 			{
@@ -75,6 +72,24 @@ namespace LightJson
 			set {
 				this.items[index] = value;
 			}
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through the collection.
+		/// </summary>
+		/// <returns>The enumerator that iterates through the collection.</returns>
+		public IEnumerator<JsonValue> GetEnumerator()
+		{
+			return this.items.GetEnumerator();
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through the collection.
+		/// </summary>
+		/// <returns>The enumerator that iterates through the collection.</returns>
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
 		}
 
 		/// <summary>
@@ -139,24 +154,6 @@ namespace LightJson
 		public int IndexOf(JsonValue item)
 		{
 			return this.items.IndexOf(item);
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through the collection.
-		/// </summary>
-		/// <returns>The enumerator that iterates through the collection.</returns>
-		public IEnumerator<JsonValue> GetEnumerator()
-		{
-			return this.items.GetEnumerator();
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through the collection.
-		/// </summary>
-		/// <returns>The enumerator that iterates through the collection.</returns>
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
 		}
 
 		[ExcludeFromCodeCoverage]

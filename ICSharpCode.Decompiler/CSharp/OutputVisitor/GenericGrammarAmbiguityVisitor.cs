@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Diagnostics;
 using System.Linq;
 
@@ -29,6 +28,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// </summary>
 	class GenericGrammarAmbiguityVisitor : DepthFirstAstVisitor<bool>
 	{
+		bool ambiguityFound;
+
+		int genericNestingLevel;
+
 		/// <summary>
 		/// Resolves ambiguities in the specified syntax tree.
 		/// This method must be called after the InsertParenthesesVisitor, because the ambiguity depends on whether the
@@ -50,19 +53,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (binaryOperatorExpression.Operator != BinaryOperatorType.LessThan)
 				return false;
 
-			var v = new GenericGrammarAmbiguityVisitor();
-			v.genericNestingLevel = 1;
+			var v = new GenericGrammarAmbiguityVisitor {
+				genericNestingLevel = 1
+			};
 
 			for (AstNode node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
 			{
 				if (node.AcceptVisitor(v))
 					return v.ambiguityFound;
 			}
+
 			return false;
 		}
-
-		int genericNestingLevel;
-		bool ambiguityFound;
 
 		protected override bool VisitChildren(AstNode node)
 		{
@@ -95,6 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				default:
 					return true; // stop visiting, no ambiguity found
 			}
+
 			if (genericNestingLevel == 0)
 			{
 				// Of the all tokens that might follow `>` and trigger the ambiguity to be resolved in favor of generics,
@@ -102,6 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				ambiguityFound = binaryOperatorExpression.Right is ParenthesizedExpression;
 				return true; // stop visiting
 			}
+
 			return binaryOperatorExpression.Right.AcceptVisitor(this);
 		}
 
@@ -121,6 +125,5 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// MRE could also be valid in a type argument
 			return memberReferenceExpression.Target.AcceptVisitor(this);
 		}
-
 	}
 }

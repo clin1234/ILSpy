@@ -42,6 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return Location;
 			}
 		}
+
 		public override TextLocation EndLocation {
 			get {
 				return new TextLocation(Location.Line, Location.Column + "base".Length);
@@ -65,8 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BaseReferenceExpression o = other as BaseReferenceExpression;
-			return o != null;
+			return other is BaseReferenceExpression o;
 		}
 	}
 }

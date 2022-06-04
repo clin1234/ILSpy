@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -30,7 +29,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public BlobBuilder BuildBlob(MethodDefinitionHandle moveNext)
 		{
-			BlobBuilder blob = new BlobBuilder();
+			BlobBuilder blob = new();
 			blob.WriteUInt32((uint)CatchHandlerOffset);
 			foreach (var await in Awaits)
 			{
@@ -38,6 +37,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				blob.WriteUInt32((uint)await.ResumeOffset);
 				blob.WriteCompressedInteger(MetadataTokens.GetToken(moveNext));
 			}
+
 			return blob;
 		}
 	}

@@ -30,12 +30,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class PropertyDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole GetKeywordRole = new TokenRole("get");
-		public static readonly TokenRole SetKeywordRole = new TokenRole("set");
-		public static readonly TokenRole InitKeywordRole = new TokenRole("init");
-		public static readonly Role<Accessor> GetterRole = new Role<Accessor>("Getter", Accessor.Null);
-		public static readonly Role<Accessor> SetterRole = new Role<Accessor>("Setter", Accessor.Null);
-		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", Expression.Null);
+		public static readonly TokenRole GetKeywordRole = new("get");
+		public static readonly TokenRole SetKeywordRole = new("set");
+		public static readonly TokenRole InitKeywordRole = new("init");
+		public static readonly Role<Accessor> GetterRole = new("Getter", Accessor.Null);
+		public static readonly Role<Accessor> SetterRole = new("Setter", Accessor.Null);
+		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Property; }
@@ -99,13 +99,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PropertyDeclaration o = other as PropertyDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
-				&& this.Initializer.DoMatch(o.Initializer, match)
-				&& this.ExpressionBody.DoMatch(o.ExpressionBody, match);
+			return other is PropertyDeclaration o && MatchString(this.Name, o.Name)
+			                                      && this.MatchAttributesAndModifiers(o, match) &&
+			                                      this.ReturnType.DoMatch(o.ReturnType, match)
+			                                      && this.PrivateImplementationType.DoMatch(o.PrivateImplementationType,
+				                                      match)
+			                                      && this.Getter.DoMatch(o.Getter, match) &&
+			                                      this.Setter.DoMatch(o.Setter, match)
+			                                      && this.Initializer.DoMatch(o.Initializer, match)
+			                                      && this.ExpressionBody.DoMatch(o.ExpressionBody, match);
 		}
 	}
 }

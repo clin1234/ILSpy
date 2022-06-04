@@ -35,30 +35,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class MetadataTypeDefinition : ITypeDefinition
 	{
-		readonly MetadataModule module;
-		readonly TypeDefinitionHandle handle;
+		readonly TypeAttributes attributes;
 
 		// eagerly loaded:
 		readonly FullTypeName fullTypeName;
-		readonly TypeAttributes attributes;
-		public TypeKind Kind { get; }
-		public bool IsByRefLike { get; }
-		public bool IsReadOnly { get; }
-		public ITypeDefinition DeclaringTypeDefinition { get; }
-		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
-		public KnownTypeCode KnownTypeCode { get; }
-		public IType EnumUnderlyingType { get; }
-		public bool HasExtensionMethods { get; }
-		public Nullability NullableContext { get; }
+		readonly TypeDefinitionHandle handle;
+		readonly MetadataModule module;
+		string defaultMemberName;
+		List<IType> directBaseTypes;
+		IEvent[] events;
+		IField[] fields;
 
 		// lazy-loaded:
 		IMember[] members;
-		IField[] fields;
-		IProperty[] properties;
-		IEvent[] events;
 		IMethod[] methods;
-		List<IType> directBaseTypes;
-		string defaultMemberName;
+
+		ITypeDefinition[] nestedTypes;
+		IProperty[] properties;
 
 		internal MetadataTypeDefinition(MetadataModule module, TypeDefinitionHandle handle)
 		{
@@ -77,9 +70,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.DeclaringTypeDefinition = module.GetDefinition(td.GetDeclaringType());
 
 				// Create type parameters:
-				this.TypeParameters = MetadataTypeParameter.Create(module, this.DeclaringTypeDefinition, this, td.GetGenericParameters());
+				this.TypeParameters = MetadataTypeParameter.Create(module, this.DeclaringTypeDefinition, this,
+					td.GetGenericParameters());
 
-				this.NullableContext = td.GetCustomAttributes().GetNullableContext(metadata) ?? this.DeclaringTypeDefinition.NullableContext;
+				this.NullableContext = td.GetCustomAttributes().GetNullableContext(metadata) ??
+				                       this.DeclaringTypeDefinition.NullableContext;
 			}
 			else
 			{
@@ -99,6 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 				}
 			}
+
 			// Find type kind:
 			if ((attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
 			{
@@ -118,10 +114,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else
 				{
 					this.Kind = TypeKind.Struct;
-					this.IsByRefLike = (module.TypeSystemOptions & TypeSystemOptions.RefStructs) == TypeSystemOptions.RefStructs
-						&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsByRefLike);
-					this.IsReadOnly = (module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == TypeSystemOptions.ReadOnlyStructsAndParameters
-						&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+					this.IsByRefLike = (module.TypeSystemOptions & TypeSystemOptions.RefStructs) ==
+					                   TypeSystemOptions.RefStructs
+					                   && td.GetCustomAttributes()
+						                   .HasKnownAttribute(metadata, KnownAttribute.IsByRefLike);
+					this.IsReadOnly = (module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) ==
+					                  TypeSystemOptions.ReadOnlyStructsAndParameters
+					                  && td.GetCustomAttributes()
+						                  .HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
 				}
 			}
 			else if (td.IsDelegate(metadata))
@@ -132,17 +132,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				this.Kind = TypeKind.Class;
 				this.HasExtensionMethods = this.IsStatic
-					&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
-					&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
+				                           && (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) ==
+				                           TypeSystemOptions.ExtensionMethods
+				                           && td.GetCustomAttributes()
+					                           .HasKnownAttribute(metadata, KnownAttribute.Extension);
 			}
 		}
 
-		public override string ToString()
-		{
-			return $"{MetadataTokens.GetToken(handle):X8} {fullTypeName}";
-		}
-
-		ITypeDefinition[] nestedTypes;
+		public TypeKind Kind { get; }
+		public bool IsByRefLike { get; }
+		public bool IsReadOnly { get; }
+		public ITypeDefinition DeclaringTypeDefinition { get; }
+		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
+		public KnownTypeCode KnownTypeCode { get; }
+		public IType EnumUnderlyingType { get; }
+		public bool HasExtensionMethods { get; }
+		public Nullability NullableContext { get; }
 
 		public IReadOnlyList<ITypeDefinition> NestedTypes {
 			get {
@@ -156,126 +161,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					nestedTypeList.Add(module.GetDefinition(h));
 				}
+
 				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
 					return nestedTypeList;
 				return LazyInit.GetOrSet(ref this.nestedTypes, nestedTypeList.ToArray());
 			}
 		}
-
-		#region Members
-		public IReadOnlyList<IMember> Members {
-			get {
-				var members = LazyInit.VolatileRead(ref this.members);
-				if (members != null)
-					return members;
-				members = this.Fields.Concat<IMember>(this.Methods).Concat(this.Properties).Concat(this.Events).ToArray();
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return members;
-				return LazyInit.GetOrSet(ref this.members, members);
-			}
-		}
-
-		public IEnumerable<IField> Fields {
-			get {
-				var fields = LazyInit.VolatileRead(ref this.fields);
-				if (fields != null)
-					return fields;
-				var metadata = module.metadata;
-				var fieldCollection = metadata.GetTypeDefinition(handle).GetFields();
-				var fieldList = new List<IField>(fieldCollection.Count);
-				foreach (FieldDefinitionHandle h in fieldCollection)
-				{
-					var field = metadata.GetFieldDefinition(h);
-					var attr = field.Attributes;
-					if (module.IsVisible(attr))
-					{
-						fieldList.Add(module.GetDefinition(h));
-					}
-				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return fieldList;
-				return LazyInit.GetOrSet(ref this.fields, fieldList.ToArray());
-			}
-		}
-
-		public IEnumerable<IProperty> Properties {
-			get {
-				var properties = LazyInit.VolatileRead(ref this.properties);
-				if (properties != null)
-					return properties;
-				var metadata = module.metadata;
-				var propertyCollection = metadata.GetTypeDefinition(handle).GetProperties();
-				var propertyList = new List<IProperty>(propertyCollection.Count);
-				foreach (PropertyDefinitionHandle h in propertyCollection)
-				{
-					var property = metadata.GetPropertyDefinition(h);
-					var accessors = property.GetAccessors();
-					bool getterVisible = !accessors.Getter.IsNil && module.IsVisible(metadata.GetMethodDefinition(accessors.Getter).Attributes);
-					bool setterVisible = !accessors.Setter.IsNil && module.IsVisible(metadata.GetMethodDefinition(accessors.Setter).Attributes);
-					if (getterVisible || setterVisible)
-					{
-						propertyList.Add(module.GetDefinition(h));
-					}
-				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return propertyList;
-				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
-			}
-		}
-
-		public IEnumerable<IEvent> Events {
-			get {
-				var events = LazyInit.VolatileRead(ref this.events);
-				if (events != null)
-					return events;
-				var metadata = module.metadata;
-				var eventCollection = metadata.GetTypeDefinition(handle).GetEvents();
-				var eventList = new List<IEvent>(eventCollection.Count);
-				foreach (EventDefinitionHandle h in eventCollection)
-				{
-					var ev = metadata.GetEventDefinition(h);
-					var accessors = ev.GetAccessors();
-					if (accessors.Adder.IsNil)
-						continue;
-					var addMethod = metadata.GetMethodDefinition(accessors.Adder);
-					if (module.IsVisible(addMethod.Attributes))
-					{
-						eventList.Add(module.GetDefinition(h));
-					}
-				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return eventList;
-				return LazyInit.GetOrSet(ref this.events, eventList.ToArray());
-			}
-		}
-
-		public IEnumerable<IMethod> Methods {
-			get {
-				var methods = LazyInit.VolatileRead(ref this.methods);
-				if (methods != null)
-					return methods;
-				var metadata = module.metadata;
-				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
-				var methodsList = new List<IMethod>(methodsCollection.Count);
-				var methodSemantics = module.PEFile.MethodSemanticsLookup;
-				foreach (MethodDefinitionHandle h in methodsCollection)
-				{
-					var md = metadata.GetMethodDefinition(h);
-					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes))
-					{
-						methodsList.Add(module.GetDefinition(h));
-					}
-				}
-				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum)
-				{
-					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
-				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return methodsList;
-				return LazyInit.GetOrSet(ref this.methods, methodsList.ToArray());
-			}
-		}
-		#endregion
 
 		public IType DeclaringType => DeclaringTypeDefinition;
 
@@ -330,6 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					baseType = SpecialType.UnknownType;
 				}
+
 				if (baseType != null)
 				{
 					baseTypes.Add(baseType);
@@ -340,11 +232,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					// but the type system expects every interface to derive from System.Object as well.
 					baseTypes.Add(Compilation.FindType(KnownTypeCode.Object));
 				}
+
 				foreach (var h in interfaceImplCollection)
 				{
 					var iface = metadata.GetInterfaceImplementation(h);
-					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(), Nullability.Oblivious));
+					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes(),
+						Nullability.Oblivious));
 				}
+
 				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
 			}
 		}
@@ -355,106 +250,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Name => fullTypeName.Name;
 
 		public IModule ParentModule => module;
-
-		#region Type Attributes
-		public IEnumerable<IAttribute> GetAttributes()
-		{
-			var b = new AttributeListBuilder(module);
-			var metadata = module.metadata;
-			var typeDefinition = metadata.GetTypeDefinition(handle);
-
-			// SerializableAttribute
-			if ((typeDefinition.Attributes & TypeAttributes.Serializable) != 0)
-				b.Add(KnownAttribute.Serializable);
-
-			// ComImportAttribute
-			if ((typeDefinition.Attributes & TypeAttributes.Import) != 0)
-				b.Add(KnownAttribute.ComImport);
-
-			// SpecialName
-			if ((typeDefinition.Attributes & (TypeAttributes.SpecialName | TypeAttributes.RTSpecialName)) == TypeAttributes.SpecialName)
-			{
-				b.Add(KnownAttribute.SpecialName);
-			}
-
-			#region StructLayoutAttribute
-			LayoutKind layoutKind = LayoutKind.Auto;
-			switch (typeDefinition.Attributes & TypeAttributes.LayoutMask)
-			{
-				case TypeAttributes.SequentialLayout:
-					layoutKind = LayoutKind.Sequential;
-					break;
-				case TypeAttributes.ExplicitLayout:
-					layoutKind = LayoutKind.Explicit;
-					break;
-			}
-			CharSet charSet = CharSet.None;
-			switch (typeDefinition.Attributes & TypeAttributes.StringFormatMask)
-			{
-				case TypeAttributes.AnsiClass:
-					charSet = CharSet.Ansi;
-					break;
-				case TypeAttributes.AutoClass:
-					charSet = CharSet.Auto;
-					break;
-				case TypeAttributes.UnicodeClass:
-					charSet = CharSet.Unicode;
-					break;
-			}
-			var layout = typeDefinition.GetLayout();
-			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
-			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0)
-			{
-				var structLayout = new AttributeBuilder(module, KnownAttribute.StructLayout);
-				structLayout.AddFixedArg(
-					new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"),
-					(int)layoutKind);
-				if (charSet != CharSet.Ansi)
-				{
-					var charSetType = Compilation.FindType(new TopLevelTypeName("System.Runtime.InteropServices", "CharSet"));
-					structLayout.AddNamedArg("CharSet", charSetType, (int)charSet);
-				}
-				if (layout.PackingSize > 0)
-				{
-					structLayout.AddNamedArg("Pack", KnownTypeCode.Int32, (int)layout.PackingSize);
-				}
-				if (layout.Size > 0)
-				{
-					structLayout.AddNamedArg("Size", KnownTypeCode.Int32, (int)layout.Size);
-				}
-				b.Add(structLayout.Build());
-			}
-			#endregion
-
-			b.Add(typeDefinition.GetCustomAttributes(), SymbolKind.TypeDefinition);
-			b.AddSecurityAttributes(typeDefinition.GetDeclarativeSecurityAttributes());
-
-			return b.Build();
-		}
-
-		public string DefaultMemberName {
-			get {
-				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
-				if (defaultMemberName != null)
-					return defaultMemberName;
-				var metadata = module.metadata;
-				var typeDefinition = metadata.GetTypeDefinition(handle);
-				foreach (var h in typeDefinition.GetCustomAttributes())
-				{
-					var a = metadata.GetCustomAttribute(h);
-					if (!a.IsKnownAttribute(metadata, KnownAttribute.DefaultMember))
-						continue;
-					var value = a.DecodeValue(module.TypeProvider);
-					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name)
-					{
-						defaultMemberName = name;
-						break;
-					}
-				}
-				return LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName ?? "Item");
-			}
-		}
-		#endregion
 
 		public Accessibility Accessibility {
 			get {
@@ -480,7 +275,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public bool IsStatic => (attributes & (TypeAttributes.Abstract | TypeAttributes.Sealed)) == (TypeAttributes.Abstract | TypeAttributes.Sealed);
+		public bool IsStatic => (attributes & (TypeAttributes.Abstract | TypeAttributes.Sealed)) ==
+		                        (TypeAttributes.Abstract | TypeAttributes.Sealed);
+
 		public bool IsAbstract => (attributes & TypeAttributes.Abstract) != 0;
 		public bool IsSealed => (attributes & TypeAttributes.Sealed) != 0;
 
@@ -515,12 +312,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 
+		bool IEquatable<IType>.Equals(IType other)
+		{
+			return Equals(other);
+		}
+
+		public override string ToString()
+		{
+			return $"{MetadataTokens.GetToken(handle):X8} {fullTypeName}";
+		}
+
 		public override bool Equals(object obj)
 		{
 			if (obj is MetadataTypeDefinition td)
 			{
 				return handle == td.handle && module.PEFile == td.module.PEFile;
 			}
+
 			return false;
 		}
 
@@ -529,15 +337,237 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x2e0520f2 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
-		bool IEquatable<IType>.Equals(IType other)
-		{
-			return Equals(other);
+		#region Members
+
+		public IReadOnlyList<IMember> Members {
+			get {
+				var members = LazyInit.VolatileRead(ref this.members);
+				if (members != null)
+					return members;
+				members = this.Fields.Concat<IMember>(this.Methods).Concat(this.Properties).Concat(this.Events)
+					.ToArray();
+				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
+					return members;
+				return LazyInit.GetOrSet(ref this.members, members);
+			}
 		}
 
-		#region GetNestedTypes
-		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IField> Fields {
+			get {
+				var fields = LazyInit.VolatileRead(ref this.fields);
+				if (fields != null)
+					return fields;
+				var metadata = module.metadata;
+				var fieldCollection = metadata.GetTypeDefinition(handle).GetFields();
+				var fieldList = new List<IField>(fieldCollection.Count);
+				foreach (FieldDefinitionHandle h in fieldCollection)
+				{
+					var field = metadata.GetFieldDefinition(h);
+					var attr = field.Attributes;
+					if (module.IsVisible(attr))
+					{
+						fieldList.Add(module.GetDefinition(h));
+					}
+				}
+
+				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
+					return fieldList;
+				return LazyInit.GetOrSet(ref this.fields, fieldList.ToArray());
+			}
+		}
+
+		public IEnumerable<IProperty> Properties {
+			get {
+				var properties = LazyInit.VolatileRead(ref this.properties);
+				if (properties != null)
+					return properties;
+				var metadata = module.metadata;
+				var propertyCollection = metadata.GetTypeDefinition(handle).GetProperties();
+				var propertyList = new List<IProperty>(propertyCollection.Count);
+				foreach (PropertyDefinitionHandle h in propertyCollection)
+				{
+					var property = metadata.GetPropertyDefinition(h);
+					var accessors = property.GetAccessors();
+					bool getterVisible = !accessors.Getter.IsNil &&
+					                     module.IsVisible(metadata.GetMethodDefinition(accessors.Getter).Attributes);
+					bool setterVisible = !accessors.Setter.IsNil &&
+					                     module.IsVisible(metadata.GetMethodDefinition(accessors.Setter).Attributes);
+					if (getterVisible || setterVisible)
+					{
+						propertyList.Add(module.GetDefinition(h));
+					}
+				}
+
+				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
+					return propertyList;
+				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
+			}
+		}
+
+		public IEnumerable<IEvent> Events {
+			get {
+				var events = LazyInit.VolatileRead(ref this.events);
+				if (events != null)
+					return events;
+				var metadata = module.metadata;
+				var eventCollection = metadata.GetTypeDefinition(handle).GetEvents();
+				var eventList = new List<IEvent>(eventCollection.Count);
+				foreach (EventDefinitionHandle h in eventCollection)
+				{
+					var ev = metadata.GetEventDefinition(h);
+					var accessors = ev.GetAccessors();
+					if (accessors.Adder.IsNil)
+						continue;
+					var addMethod = metadata.GetMethodDefinition(accessors.Adder);
+					if (module.IsVisible(addMethod.Attributes))
+					{
+						eventList.Add(module.GetDefinition(h));
+					}
+				}
+
+				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
+					return eventList;
+				return LazyInit.GetOrSet(ref this.events, eventList.ToArray());
+			}
+		}
+
+		public IEnumerable<IMethod> Methods {
+			get {
+				var methods = LazyInit.VolatileRead(ref this.methods);
+				if (methods != null)
+					return methods;
+				var metadata = module.metadata;
+				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
+				var methodsList = new List<IMethod>(methodsCollection.Count);
+				var methodSemantics = module.PEFile.MethodSemanticsLookup;
+				foreach (MethodDefinitionHandle h in methodsCollection)
+				{
+					var md = metadata.GetMethodDefinition(h);
+					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes))
+					{
+						methodsList.Add(module.GetDefinition(h));
+					}
+				}
+
+				if (this.Kind is TypeKind.Struct or TypeKind.Enum)
+				{
+					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this,
+						IsAbstract ? Accessibility.Protected : Accessibility.Public));
+				}
+
+				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
+					return methodsList;
+				return LazyInit.GetOrSet(ref this.methods, methodsList.ToArray());
+			}
+		}
+
+		#endregion
+
+		#region Type Attributes
+
+		public IEnumerable<IAttribute> GetAttributes()
 		{
-			const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
+			var typeDefinition = metadata.GetTypeDefinition(handle);
+
+			// SerializableAttribute
+			if ((typeDefinition.Attributes & TypeAttributes.Serializable) != 0)
+				b.Add(KnownAttribute.Serializable);
+
+			// ComImportAttribute
+			if ((typeDefinition.Attributes & TypeAttributes.Import) != 0)
+				b.Add(KnownAttribute.ComImport);
+
+			// SpecialName
+			if ((typeDefinition.Attributes & (TypeAttributes.SpecialName | TypeAttributes.RTSpecialName)) ==
+			    TypeAttributes.SpecialName)
+			{
+				b.Add(KnownAttribute.SpecialName);
+			}
+
+			#region StructLayoutAttribute
+
+			LayoutKind layoutKind = (typeDefinition.Attributes & TypeAttributes.LayoutMask) switch {
+				TypeAttributes.SequentialLayout => LayoutKind.Sequential,
+				TypeAttributes.ExplicitLayout => LayoutKind.Explicit,
+				_ => LayoutKind.Auto
+			};
+			CharSet charSet = (typeDefinition.Attributes & TypeAttributes.StringFormatMask) switch {
+				TypeAttributes.AnsiClass => CharSet.Ansi,
+				TypeAttributes.AutoClass => CharSet.Auto,
+				TypeAttributes.UnicodeClass => CharSet.Unicode,
+				_ => CharSet.None
+			};
+			var layout = typeDefinition.GetLayout();
+			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
+			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0)
+			{
+				var structLayout = new AttributeBuilder(module, KnownAttribute.StructLayout);
+				structLayout.AddFixedArg(
+					new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"),
+					(int)layoutKind);
+				if (charSet != CharSet.Ansi)
+				{
+					var charSetType =
+						Compilation.FindType(new TopLevelTypeName("System.Runtime.InteropServices", "CharSet"));
+					structLayout.AddNamedArg("CharSet", charSetType, (int)charSet);
+				}
+
+				if (layout.PackingSize > 0)
+				{
+					structLayout.AddNamedArg("Pack", KnownTypeCode.Int32, layout.PackingSize);
+				}
+
+				if (layout.Size > 0)
+				{
+					structLayout.AddNamedArg("Size", KnownTypeCode.Int32, layout.Size);
+				}
+
+				b.Add(structLayout.Build());
+			}
+
+			#endregion
+
+			b.Add(typeDefinition.GetCustomAttributes(), SymbolKind.TypeDefinition);
+			b.AddSecurityAttributes(typeDefinition.GetDeclarativeSecurityAttributes());
+
+			return b.Build();
+		}
+
+		public string DefaultMemberName {
+			get {
+				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
+				if (defaultMemberName != null)
+					return defaultMemberName;
+				var metadata = module.metadata;
+				var typeDefinition = metadata.GetTypeDefinition(handle);
+				foreach (var h in typeDefinition.GetCustomAttributes())
+				{
+					var a = metadata.GetCustomAttribute(h);
+					if (!a.IsKnownAttribute(metadata, KnownAttribute.DefaultMember))
+						continue;
+					var value = a.DecodeValue(module.TypeProvider);
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name)
+					{
+						defaultMemberName = name;
+						break;
+					}
+				}
+
+				return LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName ?? "Item");
+			}
+		}
+
+		#endregion
+
+		#region GetNestedTypes
+
+		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
+		{
+			const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers |
+			                             GetMemberOptions.ReturnMemberDefinitions;
 			if ((options & opt) == opt)
 			{
 				return GetFiltered(this.NestedTypes, filter);
@@ -548,13 +578,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments,
+			Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
 		}
+
 		#endregion
 
 		#region GetMembers()
+
 		IEnumerable<T> GetFiltered<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
 		{
 			if (filter == null)
@@ -572,7 +605,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
@@ -586,30 +620,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
 
-		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
 			if (ComHelper.IsComImport(this))
 			{
 				IType coClass = ComHelper.GetCoClass(this);
-				using (var busyLock = BusyManager.Enter(this))
+				using var busyLock = BusyManager.Enter(this);
+				if (busyLock.Success)
 				{
-					if (busyLock.Success)
-					{
-						return coClass.GetConstructors(filter, options)
-							.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
-					}
+					return coClass.GetConstructors(filter, options)
+						.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
 				}
+
 				return EmptyList<IMethod>.Instance;
 			}
+
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 			{
 				return GetFiltered(this.Methods, ExtensionMethods.And(m => m.IsConstructor && !m.IsStatic, filter));
@@ -620,7 +656,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IProperty>.Instance;
@@ -634,7 +671,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IField> GetFields(Predicate<IField> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IField>.Instance;
@@ -648,7 +686,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IEvent>.Instance;
@@ -662,7 +701,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
@@ -676,7 +716,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
 				return EmptyList<IMethod>.Instance;
@@ -701,6 +742,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (setter != null && (filter == null || filter(setter)))
 					yield return setter;
 			}
+
 			foreach (var ev in this.Events)
 			{
 				var adder = ev.AddAccessor;
@@ -714,9 +756,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					yield return remover;
 			}
 		}
+
 		#endregion
 
 		#region GetOverrides
+
 		internal IEnumerable<IMethod> GetOverrides(MethodDefinitionHandle method)
 		{
 			var metadata = module.metadata;
@@ -739,11 +783,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (impl.MethodBody == method)
 					return true;
 			}
+
 			return false;
 		}
+
 		#endregion
 
 		#region IsRecord
+
 		byte isRecord = ThreeState.Unknown;
 
 		public bool IsRecord {
@@ -752,6 +799,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					isRecord = ThreeState.From(ComputeIsRecord());
 				}
+
 				return isRecord == ThreeState.True;
 			}
 		}
@@ -791,8 +839,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				opInequality |= metadata.StringComparer.Equals(method.Name, "op_Inequality");
 				clone |= metadata.StringComparer.Equals(method.Name, "<Clone>$");
 			}
-			return getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality & clone;
+
+			return getEqualityContract & toString & printMembers & getHashCode & equals & opEquality & opInequality &
+			       clone;
 		}
+
 		#endregion
 	}
 }

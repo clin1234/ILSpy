@@ -30,14 +30,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	public class AwaitResolveResult : ResolveResult
 	{
 		/// <summary>
+		/// Awaiter type. Will not be null (but can be UnknownType).
+		/// </summary>
+		public readonly IType AwaiterType;
+
+		/// <summary>
 		/// The method representing the GetAwaiter() call. Can be an <see cref="InvocationResolveResult"/> or a <see cref="DynamicInvocationResolveResult"/>.
 		/// </summary>
 		public readonly ResolveResult GetAwaiterInvocation;
 
 		/// <summary>
-		/// Awaiter type. Will not be null (but can be UnknownType).
+		/// Method representing the GetResult method on the awaiter type. Can be null if the awaiter type or the method was not found, or when awaiting a dynamic expression.
 		/// </summary>
-		public readonly IType AwaiterType;
+		public readonly IMethod GetResultMethod;
 
 		/// <summary>
 		/// Property representing the IsCompleted property on the awaiter type. Can be null if the awaiter type or the property was not found, or when awaiting a dynamic expression.
@@ -50,27 +55,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly IMethod OnCompletedMethod;
 
-		/// <summary>
-		/// Method representing the GetResult method on the awaiter type. Can be null if the awaiter type or the method was not found, or when awaiting a dynamic expression.
-		/// </summary>
-		public readonly IMethod GetResultMethod;
-
-		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType, IProperty isCompletedProperty, IMethod onCompletedMethod, IMethod getResultMethod)
+		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType,
+			IProperty isCompletedProperty, IMethod onCompletedMethod, IMethod getResultMethod)
 			: base(resultType)
 		{
-			if (awaiterType == null)
-				throw new ArgumentNullException(nameof(awaiterType));
-			if (getAwaiterInvocation == null)
-				throw new ArgumentNullException(nameof(getAwaiterInvocation));
-			this.GetAwaiterInvocation = getAwaiterInvocation;
-			this.AwaiterType = awaiterType;
+			this.GetAwaiterInvocation =
+				getAwaiterInvocation ?? throw new ArgumentNullException(nameof(getAwaiterInvocation));
+			this.AwaiterType = awaiterType ?? throw new ArgumentNullException(nameof(awaiterType));
 			this.IsCompletedProperty = isCompletedProperty;
 			this.OnCompletedMethod = onCompletedMethod;
 			this.GetResultMethod = getResultMethod;
 		}
 
 		public override bool IsError {
-			get { return this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic && (this.IsCompletedProperty == null || this.OnCompletedMethod == null || this.GetResultMethod == null)); }
+			get {
+				return this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic &&
+				                                             (this.IsCompletedProperty == null ||
+				                                              this.OnCompletedMethod == null ||
+				                                              this.GetResultMethod == null));
+			}
 		}
 
 		public override IEnumerable<ResolveResult> GetChildResults()

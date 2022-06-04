@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 #nullable enable
 
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace ICSharpCode.Decompiler.Util
 {
 	public sealed class ReferenceComparer : IEqualityComparer<object?>
 	{
-		public readonly static ReferenceComparer Instance = new ReferenceComparer();
+		public static readonly ReferenceComparer Instance = new();
 
 		public new bool Equals(object? x, object? y)
 		{

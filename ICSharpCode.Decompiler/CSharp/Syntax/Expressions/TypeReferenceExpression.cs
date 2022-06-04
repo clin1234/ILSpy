@@ -25,6 +25,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeReferenceExpression : Expression
 	{
+		public TypeReferenceExpression()
+		{
+		}
+
+		public TypeReferenceExpression(AstType type)
+		{
+			AddChild(type, Roles.Type);
+		}
+
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
@@ -45,19 +54,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitTypeReferenceExpression(this, data);
 		}
 
-		public TypeReferenceExpression()
-		{
-		}
-
-		public TypeReferenceExpression(AstType type)
-		{
-			AddChild(type, Roles.Type);
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeReferenceExpression o = other as TypeReferenceExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is TypeReferenceExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

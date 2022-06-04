@@ -32,51 +32,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class AttributeSection : AstNode
 	{
-		#region PatternPlaceholder
-		public static implicit operator AttributeSection(PatternMatching.Pattern pattern)
+		public AttributeSection()
 		{
-			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : AttributeSection, PatternMatching.INode
+		public AttributeSection(Attribute attr)
 		{
-			readonly PatternMatching.Pattern child;
-
-			public PatternPlaceholder(PatternMatching.Pattern child)
-			{
-				this.child = child;
-			}
-
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitPatternPlaceholder(this, child);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitPatternPlaceholder(this, child, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return child.DoMatch(other, match);
-			}
-
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
-			{
-				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
-			}
+			this.Attributes.Add(attr);
 		}
-		#endregion
 
 		public override NodeType NodeType {
 			get {
@@ -131,18 +94,58 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AttributeSection o = other as AttributeSection;
-			return o != null && MatchString(this.AttributeTarget, o.AttributeTarget) && this.Attributes.DoMatch(o.Attributes, match);
+			return other is AttributeSection o && MatchString(this.AttributeTarget, o.AttributeTarget) &&
+			       this.Attributes.DoMatch(o.Attributes, match);
 		}
 
-		public AttributeSection()
+		#region PatternPlaceholder
+
+		public static implicit operator AttributeSection(PatternMatching.Pattern pattern)
 		{
+			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		public AttributeSection(Attribute attr)
+		sealed class PatternPlaceholder : AttributeSection, PatternMatching.INode
 		{
-			this.Attributes.Add(attr);
+			readonly PatternMatching.Pattern child;
+
+			public PatternPlaceholder(PatternMatching.Pattern child)
+			{
+				this.child = child;
+			}
+
+			public override NodeType NodeType {
+				get { return NodeType.Pattern; }
+			}
+
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
+				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			{
+				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+			}
+
+			public override void AcceptVisitor(IAstVisitor visitor)
+			{
+				visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+			{
+				return visitor.VisitPatternPlaceholder(this, child);
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return visitor.VisitPatternPlaceholder(this, child, data);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return child.DoMatch(other, match);
+			}
 		}
+
+		#endregion
 
 		//		public static string GetAttributeTargetName(AttributeTarget attributeTarget)
 		//		{

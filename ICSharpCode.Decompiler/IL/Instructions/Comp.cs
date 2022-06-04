@@ -39,49 +39,33 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static bool IsEqualityOrInequality(this ComparisonKind kind)
 		{
-			return kind == ComparisonKind.Equality || kind == ComparisonKind.Inequality;
+			return kind is ComparisonKind.Equality or ComparisonKind.Inequality;
 		}
 
 		public static ComparisonKind Negate(this ComparisonKind kind)
 		{
-			switch (kind)
-			{
-				case ComparisonKind.Equality:
-					return ComparisonKind.Inequality;
-				case ComparisonKind.Inequality:
-					return ComparisonKind.Equality;
-				case ComparisonKind.LessThan:
-					return ComparisonKind.GreaterThanOrEqual;
-				case ComparisonKind.LessThanOrEqual:
-					return ComparisonKind.GreaterThan;
-				case ComparisonKind.GreaterThan:
-					return ComparisonKind.LessThanOrEqual;
-				case ComparisonKind.GreaterThanOrEqual:
-					return ComparisonKind.LessThan;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return kind switch {
+				ComparisonKind.Equality => ComparisonKind.Inequality,
+				ComparisonKind.Inequality => ComparisonKind.Equality,
+				ComparisonKind.LessThan => ComparisonKind.GreaterThanOrEqual,
+				ComparisonKind.LessThanOrEqual => ComparisonKind.GreaterThan,
+				ComparisonKind.GreaterThan => ComparisonKind.LessThanOrEqual,
+				ComparisonKind.GreaterThanOrEqual => ComparisonKind.LessThan,
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public static BinaryOperatorType ToBinaryOperatorType(this ComparisonKind kind)
 		{
-			switch (kind)
-			{
-				case ComparisonKind.Equality:
-					return BinaryOperatorType.Equality;
-				case ComparisonKind.Inequality:
-					return BinaryOperatorType.InEquality;
-				case ComparisonKind.LessThan:
-					return BinaryOperatorType.LessThan;
-				case ComparisonKind.LessThanOrEqual:
-					return BinaryOperatorType.LessThanOrEqual;
-				case ComparisonKind.GreaterThan:
-					return BinaryOperatorType.GreaterThan;
-				case ComparisonKind.GreaterThanOrEqual:
-					return BinaryOperatorType.GreaterThanOrEqual;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return kind switch {
+				ComparisonKind.Equality => BinaryOperatorType.Equality,
+				ComparisonKind.Inequality => BinaryOperatorType.InEquality,
+				ComparisonKind.LessThan => BinaryOperatorType.LessThan,
+				ComparisonKind.LessThanOrEqual => BinaryOperatorType.LessThanOrEqual,
+				ComparisonKind.GreaterThan => BinaryOperatorType.GreaterThan,
+				ComparisonKind.GreaterThanOrEqual => BinaryOperatorType.GreaterThanOrEqual,
+				_ => throw new ArgumentOutOfRangeException()
+			};
 		}
 
 		public static string GetToken(this ComparisonKind kind)
@@ -96,6 +80,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Not a lifted comparison.
 		/// </summary>
 		None,
+
 		/// <summary>
 		/// C#-style lifted comparison:
 		/// * operands that have a ResultType != this.InputType are expected to return a value of
@@ -108,6 +93,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// the ResultType remains I4 as with normal comparisons.
 		/// </summary>
 		CSharp,
+
 		/// <summary>
 		/// SQL-style lifted comparison: works like a lifted binary numeric instruction,
 		/// that is, if any input operand is <c>null</c>, the comparison evaluates to <c>null</c>.
@@ -120,7 +106,39 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class Comp : ILiftableInstruction
 	{
+		public readonly ComparisonLiftingKind LiftingKind;
+
+		/// <summary>
+		/// If this is an integer comparison, specifies the sign used to interpret the integers.
+		/// </summary>
+		public readonly Sign Sign;
+
+		/// <summary>
+		/// Gets the stack type of the comparison inputs.
+		/// For lifted comparisons, this is the underlying input type.
+		/// </summary>
+		public StackType InputType;
+
 		ComparisonKind kind;
+
+		public Comp(ComparisonKind kind, Sign sign, ILInstruction left, ILInstruction right) : base(OpCode.Comp, left,
+			right)
+		{
+			this.kind = kind;
+			this.LiftingKind = ComparisonLiftingKind.None;
+			this.InputType = left.ResultType;
+			this.Sign = sign;
+			Debug.Assert(left.ResultType == right.ResultType);
+		}
+
+		public Comp(ComparisonKind kind, ComparisonLiftingKind lifting, StackType inputType, Sign sign,
+			ILInstruction left, ILInstruction right) : base(OpCode.Comp, left, right)
+		{
+			this.kind = kind;
+			this.LiftingKind = lifting;
+			this.InputType = inputType;
+			this.Sign = sign;
+		}
 
 		public ComparisonKind Kind {
 			get { return kind; }
@@ -130,37 +148,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public readonly ComparisonLiftingKind LiftingKind;
+		public override StackType ResultType =>
+			LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.O : StackType.I4;
 
-		/// <summary>
-		/// Gets the stack type of the comparison inputs.
-		/// For lifted comparisons, this is the underlying input type.
-		/// </summary>
-		public StackType InputType;
-
-		/// <summary>
-		/// If this is an integer comparison, specifies the sign used to interpret the integers.
-		/// </summary>
-		public readonly Sign Sign;
-
-		public Comp(ComparisonKind kind, Sign sign, ILInstruction left, ILInstruction right) : base(OpCode.Comp, left, right)
-		{
-			this.kind = kind;
-			this.LiftingKind = ComparisonLiftingKind.None;
-			this.InputType = left.ResultType;
-			this.Sign = sign;
-			Debug.Assert(left.ResultType == right.ResultType);
-		}
-
-		public Comp(ComparisonKind kind, ComparisonLiftingKind lifting, StackType inputType, Sign sign, ILInstruction left, ILInstruction right) : base(OpCode.Comp, left, right)
-		{
-			this.kind = kind;
-			this.LiftingKind = lifting;
-			this.InputType = inputType;
-			this.Sign = sign;
-		}
-
-		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.O : StackType.I4;
 		public bool IsLifted => LiftingKind != ComparisonLiftingKind.None;
 		public StackType UnderlyingResultType => StackType.I4;
 
@@ -189,6 +179,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(')');
 				return;
 			}
+
 			output.Write(OpCode);
 			output.Write('.');
 			output.Write(InputType.ToString().ToLower());
@@ -201,6 +192,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(".unsigned");
 					break;
 			}
+
 			switch (LiftingKind)
 			{
 				case ComparisonLiftingKind.CSharp:
@@ -210,6 +202,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(".lifted[3VL]");
 					break;
 			}
+
 			output.Write('(');
 			Left.WriteTo(output, options);
 			output.Write(' ');

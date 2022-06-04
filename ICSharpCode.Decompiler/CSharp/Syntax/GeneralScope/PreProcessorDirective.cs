@@ -23,6 +23,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -48,6 +49,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class LinePreprocessorDirective : PreProcessorDirective
 	{
+		public LinePreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(
+			PreProcessorDirectiveType.Line, startLocation, endLocation)
+		{
+		}
+
+		public LinePreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Line, argument)
+		{
+		}
+
 		public int LineNumber {
 			get;
 			set;
@@ -57,24 +67,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			set;
 		}
-
-		public LinePreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(PreProcessorDirectiveType.Line, startLocation, endLocation)
-		{
-		}
-
-		public LinePreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Line, argument)
-		{
-		}
 	}
 
 	public class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
-		public static readonly Role<PrimitiveExpression> WarningRole = new Role<PrimitiveExpression>("Warning", null);
+		public static readonly Role<PrimitiveExpression> WarningRole = new("Warning", null);
 
-		public static readonly TokenRole PragmaKeywordRole = new TokenRole("#pragma");
-		public static readonly TokenRole WarningKeywordRole = new TokenRole("warning");
-		public static readonly TokenRole DisableKeywordRole = new TokenRole("disable");
-		public static readonly TokenRole RestoreKeywordRole = new TokenRole("restore");
+		public static readonly TokenRole PragmaKeywordRole = new("#pragma");
+		public static readonly TokenRole WarningKeywordRole = new("warning");
+		public static readonly TokenRole DisableKeywordRole = new("disable");
+		public static readonly TokenRole RestoreKeywordRole = new("restore");
+
+		public PragmaWarningPreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(
+			PreProcessorDirectiveType.Pragma, startLocation, endLocation)
+		{
+		}
+
+		public PragmaWarningPreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Pragma,
+			argument)
+		{
+		}
 
 		public bool Disable {
 			get {
@@ -111,14 +123,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public PragmaWarningPreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(PreProcessorDirectiveType.Pragma, startLocation, endLocation)
-		{
-		}
-
-		public PragmaWarningPreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Pragma, argument)
-		{
-		}
-
 		public bool IsDefined(int pragmaWarning)
 		{
 			return Warnings.Select(w => (int)w.Value).Any(n => n == pragmaWarning);
@@ -127,6 +131,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class PreProcessorDirective : AstNode
 	{
+		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation,
+			TextLocation endLocation)
+		{
+			this.Type = type;
+			this.StartLocation = startLocation;
+			this.EndLocation = endLocation;
+		}
+
+		public PreProcessorDirective(PreProcessorDirectiveType type, string argument = null)
+		{
+			this.Type = type;
+			this.Argument = argument;
+		}
+
 		public override NodeType NodeType {
 			get {
 				return NodeType.Whitespace;
@@ -151,32 +169,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
+		public override TextLocation StartLocation { get; }
 
-		TextLocation endLocation;
-		public override TextLocation EndLocation {
-			get {
-				return endLocation;
-			}
-		}
-
-		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation)
-		{
-			this.Type = type;
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
-		}
-
-		public PreProcessorDirective(PreProcessorDirectiveType type, string argument = null)
-		{
-			this.Type = type;
-			this.Argument = argument;
-		}
+		public override TextLocation EndLocation { get; }
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -195,8 +190,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PreProcessorDirective o = other as PreProcessorDirective;
-			return o != null && Type == o.Type && MatchString(Argument, o.Argument);
+			return other is PreProcessorDirective o && Type == o.Type && MatchString(Argument, o.Argument);
 		}
 	}
 }

@@ -86,14 +86,14 @@ namespace ICSharpCode.Decompiler
 		{
 			public bool ContainsAnonType;
 
-			public override IType VisitOtherType(IType type)
+			internal override IType VisitOtherType(IType type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
 				return base.VisitOtherType(type);
 			}
 
-			public override IType VisitTypeDefinition(ITypeDefinition type)
+			internal override IType VisitTypeDefinition(ITypeDefinition type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;

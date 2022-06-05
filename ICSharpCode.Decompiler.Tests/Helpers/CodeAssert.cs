@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 	}
 
-	public static class CodeComparer
+	internal static class CodeComparer
 	{
 		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine,
 			string[] definedSymbols = null)

@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpyX
 					{
 						if (metadata.IsAssembly)
 						{
-							versionOrInfo = metadata.GetAssemblyDefinition().Version?.ToString();
+							versionOrInfo = metadata.GetAssemblyDefinition().Version.ToString();
 							var tfId = GetTargetFrameworkIdAsync().Result;
 							if (!string.IsNullOrEmpty(tfId))
 								versionOrInfo += ", " + tfId.Replace("Version=", " ");
@@ -139,10 +139,8 @@ namespace ICSharpCode.ILSpyX
 						return ShortName;
 					return $"{ShortName} ({versionOrInfo})";
 				}
-				else
-				{
-					return ShortName;
-				}
+
+				return ShortName;
 			}
 		}
 
@@ -222,8 +220,7 @@ namespace ICSharpCode.ILSpyX
 			var loadResult = await loadingTask.ConfigureAwait(false);
 			if (loadResult.PEFile != null)
 				return loadResult.PEFile;
-			else
-				throw loadResult.PEFileLoadException!;
+			throw loadResult.PEFileLoadException!;
 		}
 
 		/// <summary>
@@ -248,7 +245,7 @@ namespace ICSharpCode.ILSpyX
 		/// Gets the <see cref="PEFile"/>.
 		/// Returns null in case of load errors.
 		/// </summary>
-		public async Task<PEFile?> GetPEFileOrNullAsync()
+		internal async Task<PEFile?> GetPEFileOrNullAsync()
 		{
 			try
 			{
@@ -269,7 +266,7 @@ namespace ICSharpCode.ILSpyX
 		/// <remarks>
 		/// This is an uncached type system.
 		/// </remarks>
-		public ICompilation? GetTypeSystemOrNull()
+		public ICompilation GetTypeSystemOrNull()
 		{
 			return LazyInitializer.EnsureInitialized(ref this.typeSystem, () => {
 				var module = GetPEFileOrNull();
@@ -511,9 +508,9 @@ namespace ICSharpCode.ILSpyX
 				this.Package = package ?? throw new ArgumentNullException(nameof(package));
 			}
 
-			public PEFile? PEFile { get; }
-			public Exception? PEFileLoadException { get; }
-			public LoadedPackage? Package { get; }
+			internal PEFile? PEFile { get; }
+			internal Exception? PEFileLoadException { get; }
+			internal LoadedPackage? Package { get; }
 		}
 
 		sealed class MyAssemblyResolver : IAssemblyResolver
@@ -603,23 +600,21 @@ namespace ICSharpCode.ILSpyX
 
 					return null;
 				}
+
+				// Assembly not found; try to find a similar-enough already-loaded assembly
+				module = await alreadyLoadedAssemblies.TryGetSimilarModuleAsync(reference).ConfigureAwait(false);
+				if (module == null)
+				{
+					referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Error,
+						"Could not find reference: " + reference.FullName);
+				}
 				else
 				{
-					// Assembly not found; try to find a similar-enough already-loaded assembly
-					module = await alreadyLoadedAssemblies.TryGetSimilarModuleAsync(reference).ConfigureAwait(false);
-					if (module == null)
-					{
-						referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Error,
-							"Could not find reference: " + reference.FullName);
-					}
-					else
-					{
-						referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Info,
-							"Success - Found in Assembly List with different TFM or version: " + module.FileName);
-					}
-
-					return module;
+					referenceLoadInfo.AddMessageOnce(reference.FullName, MessageKind.Info,
+						"Success - Found in Assembly List with different TFM or version: " + module.FileName);
 				}
+
+				return module;
 			}
 
 			public PEFile? ResolveModule(PEFile mainModule, string moduleName)

@@ -4194,8 +4194,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(destAddress.ResultType == StackType.I || destAddress.ResultType == StackType.Ref);
-			DebugAssert(sourceAddress.ResultType == StackType.I || sourceAddress.ResultType == StackType.Ref);
+			DebugAssert(destAddress.ResultType is StackType.I or StackType.Ref);
+			DebugAssert(sourceAddress.ResultType is StackType.I or StackType.Ref);
 			DebugAssert(size.ResultType == StackType.I4);
 		}
 	}
@@ -4368,7 +4368,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(address.ResultType == StackType.I || address.ResultType == StackType.Ref);
+			DebugAssert(address.ResultType is StackType.I or StackType.Ref);
 			DebugAssert(value.ResultType == StackType.I4);
 			DebugAssert(size.ResultType == StackType.I4);
 		}
@@ -4813,7 +4813,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+			DebugAssert(target.ResultType is StackType.Ref or StackType.I);
 		}
 	}
 }
@@ -4980,7 +4980,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+			DebugAssert(target.ResultType is StackType.Ref or StackType.I);
 			DebugAssert(value.ResultType == type.GetStackType());
 			CheckTargetSlot();
 		}

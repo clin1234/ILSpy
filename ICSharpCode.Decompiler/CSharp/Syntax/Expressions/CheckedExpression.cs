@@ -34,30 +34,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole CheckedKeywordRole = new("checked");
 
-		public CheckedExpression()
-		{
-		}
-
-		public CheckedExpression(Expression expression)
-		{
-			AddChild(expression, Roles.Expression);
-		}
-
-		public CSharpTokenNode CheckedToken {
-			get { return GetChildByRole(CheckedKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
-		}
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

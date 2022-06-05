@@ -54,8 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			Match match = PatternMatching.Match.CreateNew();
 			if (pattern.DoMatch(other, match))
 				return match;
-			else
-				return default(Match);
+			return default(Match);
 		}
 
 		public static bool IsMatch(this INode pattern, INode other)

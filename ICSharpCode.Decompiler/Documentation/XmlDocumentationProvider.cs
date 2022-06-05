@@ -222,8 +222,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			if (dir.EndsWith("\\", StringComparison.Ordinal) || dir.EndsWith("/", StringComparison.Ordinal))
 				return dir;
-			else
-				return dir + Path.DirectorySeparatorChar;
+			return dir + Path.DirectorySeparatorChar;
 		}
 
 		/// <summary>

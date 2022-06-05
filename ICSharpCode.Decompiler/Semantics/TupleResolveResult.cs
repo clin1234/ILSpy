@@ -50,9 +50,8 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			if (elements.Any(e => e.Type.Kind is TypeKind.None or TypeKind.Null))
 				return SpecialType.NoType;
-			else
-				return new TupleType(compilation, elements.Select(e => e.Type).ToImmutableArray(), elementNames,
-					valueTupleAssembly);
+			return new TupleType(compilation, elements.Select(e => e.Type).ToImmutableArray(), elementNames,
+				valueTupleAssembly);
 		}
 	}
 }

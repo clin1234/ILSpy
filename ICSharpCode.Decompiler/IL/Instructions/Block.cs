@@ -294,8 +294,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (index == Instructions.Count)
 				return FinalInstructionSlot;
-			else
-				return InstructionSlot;
+			return InstructionSlot;
 		}
 
 		protected override InstructionFlags ComputeFlags()
@@ -351,10 +350,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return block.Instructions[inst.ChildIndex - 1];
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>

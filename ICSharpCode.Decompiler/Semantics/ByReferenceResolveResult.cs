@@ -59,8 +59,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			if (ElementResult != null)
 				return new[] { ElementResult };
-			else
-				return Enumerable.Empty<ResolveResult>();
+			return Enumerable.Empty<ResolveResult>();
 		}
 
 		public override string ToString()

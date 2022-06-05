@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// Implements C# 4.0 Type Inference (§7.5.2).
 	/// </summary>
-	public sealed class TypeInference
+	internal sealed class TypeInference
 	{
 		// determines the maximum generic nesting level; necessary to avoid infinite recursion in 'Improved' mode.
 		const int maxNestingLevel = 5;
@@ -116,7 +116,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
 			}
-			else if (arrV != null && IsGenericInterfaceImplementedByArray(pU) && arrV.Dimensions == 1)
+
+			if (arrV != null && IsGenericInterfaceImplementedByArray(pU) && arrV.Dimensions == 1)
 			{
 				MakeUpperBoundInference(pU.GetTypeArgument(0), arrV.ElementType);
 				return;
@@ -174,19 +175,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 
-			// Handle pointer types:
-			if (U is PointerType ptrU && V is PointerType ptrV)
+			switch (U)
 			{
-				MakeExactInference(ptrU.ElementType, ptrV.ElementType);
-				return;
-			}
-
-			if (U is FunctionPointerType fnPtrU && V is FunctionPointerType fnPtrV)
-			{
-				MakeUpperBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-				foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+				// Handle pointer types:
+				case PointerType ptrU when V is PointerType ptrV:
+					MakeExactInference(ptrU.ElementType, ptrV.ElementType);
+					return;
+				case FunctionPointerType fnPtrU when V is FunctionPointerType fnPtrV:
 				{
-					MakeLowerBoundInference(ptU, ptV);
+					MakeUpperBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
+					foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+					{
+						MakeLowerBoundInference(ptU, ptV);
+					}
+
+					break;
 				}
 			}
 		}
@@ -220,13 +223,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				              tp.FixedTo);
 				return types.Count >= 1;
 			}
-			else
-			{
-				tp.FixedTo = GetFirstTypePreferNonInterfaces(types);
-				Log.WriteLine("  T was fixed " + (types.Count == 1 ? "successfully" : "(with errors)") + " to " +
-				              tp.FixedTo);
-				return types.Count == 1;
-			}
+
+			tp.FixedTo = GetFirstTypePreferNonInterfaces(types);
+			Log.WriteLine("  T was fixed " + (types.Count == 1 ? "successfully" : "(with errors)") + " to " +
+			              tp.FixedTo);
+			return types.Count == 1;
 		}
 
 		#endregion
@@ -315,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.Occurs = new bool[tp.Length];
 			}
 
-			public override IType VisitTypeParameter(ITypeParameter type)
+			internal override IType VisitTypeParameter(ITypeParameter type)
 			{
 				int index = type.Index;
 				if (index < tp.Length && tp[index].TypeParameter == type)
@@ -576,31 +577,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				Log.WriteLine("Type inference fails: there are still unfixed TPs remaining");
 				return false;
 			}
-			else if (!unfixedTypeVariablesExist)
+
+			if (!unfixedTypeVariablesExist)
 			{
 				// Otherwise, if no further unfixed type variables exist, type inference succeeds.
 				return true;
 			}
-			else
-			{
-				// Otherwise, for all arguments ei with corresponding parameter type Ti
-				for (int i = 0; i < arguments.Length; i++)
-				{
-					ResolveResult Ei = arguments[i];
-					IType Ti = parameterTypes[i];
-					// where the output types (§7.4.2.4) contain unfixed type variables Xj
-					// but the input types (§7.4.2.3) do not
-					if (OutputTypeContainsUnfixed(Ei, Ti) && !InputTypesContainsUnfixed(Ei, Ti))
-					{
-						// an output type inference (§7.4.2.6) is made for ei with type Ti.
-						Log.WriteLine("MakeOutputTypeInference for argument #" + i);
-						MakeOutputTypeInference(Ei, Ti);
-					}
-				}
 
-				// Then the second phase is repeated.
-				return PhaseTwo();
+			// Otherwise, for all arguments ei with corresponding parameter type Ti
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				ResolveResult Ei = arguments[i];
+				IType Ti = parameterTypes[i];
+				// where the output types (§7.4.2.4) contain unfixed type variables Xj
+				// but the input types (§7.4.2.3) do not
+				if (OutputTypeContainsUnfixed(Ei, Ti) && !InputTypesContainsUnfixed(Ei, Ti))
+				{
+					// an output type inference (§7.4.2.6) is made for ei with type Ti.
+					Log.WriteLine("MakeOutputTypeInference for argument #" + i);
+					MakeOutputTypeInference(Ei, Ti);
+				}
 			}
+
+			// Then the second phase is repeated.
+			return PhaseTwo();
 		}
 
 		#endregion
@@ -631,7 +631,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		IType[] OutputTypes(ResolveResult e, IType t)
 		{
 			// C# 4.0 spec: §7.5.2.4 Output types
-			if (e is LambdaResolveResult || e is MethodGroupResolveResult)
+			if (e is LambdaResolveResult or MethodGroupResolveResult)
 			{
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null)
@@ -746,78 +746,83 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MakeOutputTypeInference(ResolveResult e, IType t)
 		{
 			Log.WriteLine(" MakeOutputTypeInference from " + e + " to " + t);
-			// If E is an anonymous function with inferred return type  U (§7.5.2.12) and T is a delegate type or expression
-			// tree type with return type Tb, then a lower-bound inference (§7.5.2.9) is made from U to Tb.
-			if (e is LambdaResolveResult lrr)
+			switch (e)
 			{
-				IMethod m = GetDelegateOrExpressionTreeSignature(t);
-				if (m != null)
+				// If E is an anonymous function with inferred return type  U (§7.5.2.12) and T is a delegate type or expression
+				// tree type with return type Tb, then a lower-bound inference (§7.5.2.9) is made from U to Tb.
+				case LambdaResolveResult lrr:
 				{
-					IType inferredReturnType;
-					if (lrr.IsImplicitlyTyped)
+					IMethod m = GetDelegateOrExpressionTreeSignature(t);
+					if (m != null)
 					{
-						if (m.Parameters.Count != lrr.Parameters.Count)
-							return; // cannot infer due to mismatched parameter lists
-						TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
-						IType[] inferredParameterTypes = new IType[m.Parameters.Count];
-						for (int i = 0; i < inferredParameterTypes.Length; i++)
+						IType inferredReturnType;
+						if (lrr.IsImplicitlyTyped)
 						{
-							IType parameterType = m.Parameters[i].Type;
-							inferredParameterTypes[i] = parameterType.AcceptVisitor(substitution);
-						}
+							if (m.Parameters.Count != lrr.Parameters.Count)
+								return; // cannot infer due to mismatched parameter lists
+							TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
+							IType[] inferredParameterTypes = new IType[m.Parameters.Count];
+							for (int i = 0; i < inferredParameterTypes.Length; i++)
+							{
+								IType parameterType = m.Parameters[i].Type;
+								inferredParameterTypes[i] = parameterType.AcceptVisitor(substitution);
+							}
 
-						inferredReturnType = lrr.GetInferredReturnType(inferredParameterTypes);
-					}
-					else
-					{
-						inferredReturnType = lrr.GetInferredReturnType(null);
-					}
-
-					MakeLowerBoundInference(inferredReturnType, m.ReturnType);
-					return;
-				}
-			}
-
-			// Otherwise, if E is a method group and T is a delegate type or expression tree type
-			// with parameter types T1…Tk and return type Tb, and overload resolution
-			// of E with the types T1…Tk yields a single method with return type U, then a lower­-bound
-			// inference is made from U to Tb.
-			if (e is MethodGroupResolveResult mgrr)
-			{
-				IMethod m = GetDelegateOrExpressionTreeSignature(t);
-				if (m != null)
-				{
-					ResolveResult[] args = new ResolveResult[m.Parameters.Count];
-					TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
-					for (int i = 0; i < args.Length; i++)
-					{
-						IParameter param = m.Parameters[i];
-						IType parameterType = param.Type.AcceptVisitor(substitution);
-						if ((param.ReferenceKind != ReferenceKind.None) && parameterType.Kind == TypeKind.ByReference)
-						{
-							parameterType = ((ByReferenceType)parameterType).ElementType;
-							args[i] = new ByReferenceResolveResult(parameterType, param.ReferenceKind);
+							inferredReturnType = lrr.GetInferredReturnType(inferredParameterTypes);
 						}
 						else
 						{
-							args[i] = new ResolveResult(parameterType);
+							inferredReturnType = lrr.GetInferredReturnType(null);
+						}
+
+						MakeLowerBoundInference(inferredReturnType, m.ReturnType);
+						return;
+					}
+
+					break;
+				}
+				// Otherwise, if E is a method group and T is a delegate type or expression tree type
+				// with parameter types T1…Tk and return type Tb, and overload resolution
+				// of E with the types T1…Tk yields a single method with return type U, then a lower­-bound
+				// inference is made from U to Tb.
+				case MethodGroupResolveResult mgrr:
+				{
+					IMethod m = GetDelegateOrExpressionTreeSignature(t);
+					if (m != null)
+					{
+						ResolveResult[] args = new ResolveResult[m.Parameters.Count];
+						TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
+						for (int i = 0; i < args.Length; i++)
+						{
+							IParameter param = m.Parameters[i];
+							IType parameterType = param.Type.AcceptVisitor(substitution);
+							if ((param.ReferenceKind != ReferenceKind.None) &&
+							    parameterType.Kind == TypeKind.ByReference)
+							{
+								parameterType = ((ByReferenceType)parameterType).ElementType;
+								args[i] = new ByReferenceResolveResult(parameterType, param.ReferenceKind);
+							}
+							else
+							{
+								args[i] = new ResolveResult(parameterType);
+							}
+						}
+
+						var or = mgrr.PerformOverloadResolution(
+							compilation, args,
+							allowExpandingParams: false,
+							allowOptionalParameters: false,
+							allowImplicitIn: false
+						);
+						if (or.FoundApplicableCandidate && or.BestCandidateAmbiguousWith == null)
+						{
+							IType returnType = or.GetBestCandidateWithSubstitutedTypeArguments().ReturnType;
+							MakeLowerBoundInference(returnType, m.ReturnType);
 						}
 					}
 
-					var or = mgrr.PerformOverloadResolution(
-						compilation, args,
-						allowExpandingParams: false,
-						allowOptionalParameters: false,
-						allowImplicitIn: false
-					);
-					if (or.FoundApplicableCandidate && or.BestCandidateAmbiguousWith == null)
-					{
-						IType returnType = or.GetBestCandidateWithSubstitutedTypeArguments().ReturnType;
-						MakeLowerBoundInference(returnType, m.ReturnType);
-					}
+					return;
 				}
-
-				return;
 			}
 
 			// Otherwise, if E is an expression with type U, then a lower-bound inference is made from U to T.
@@ -865,18 +870,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 
-			// Handle by reference types:
-			if (U is ByReferenceType brU && V is ByReferenceType brV)
+			switch (U)
 			{
-				MakeExactInference(brU.ElementType, brV.ElementType);
-				return;
-			}
-
-			// Handle array types:
-			if (U is ArrayType arrU && V is ArrayType arrV && arrU.Dimensions == arrV.Dimensions)
-			{
-				MakeExactInference(arrU.ElementType, arrV.ElementType);
-				return;
+				// Handle by reference types:
+				case ByReferenceType brU when V is ByReferenceType brV:
+					MakeExactInference(brU.ElementType, brV.ElementType);
+					return;
+				// Handle array types:
+				case ArrayType arrU when V is ArrayType arrV && arrU.Dimensions == arrV.Dimensions:
+					MakeExactInference(arrU.ElementType, arrV.ElementType);
+					return;
 			}
 
 			// Handle parameterized type:
@@ -896,19 +899,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 
-			// Handle pointer types:
-			if (U is PointerType ptrU && V is PointerType ptrV)
+			switch (U)
 			{
-				MakeExactInference(ptrU.ElementType, ptrV.ElementType);
-				return;
-			}
-
-			if (U is FunctionPointerType fnPtrU && V is FunctionPointerType fnPtrV)
-			{
-				MakeExactInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-				foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+				// Handle pointer types:
+				case PointerType ptrU when V is PointerType ptrV:
+					MakeExactInference(ptrU.ElementType, ptrV.ElementType);
+					return;
+				case FunctionPointerType fnPtrU when V is FunctionPointerType fnPtrV:
 				{
-					MakeExactInference(ptU, ptV);
+					MakeExactInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
+					foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+					{
+						MakeExactInference(ptU, ptV);
+					}
+
+					break;
 				}
 			}
 		}
@@ -979,7 +984,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
 			}
-			else if (arrU != null && IsGenericInterfaceImplementedByArray(pV) && arrU.Dimensions == 1)
+
+			if (arrU != null && IsGenericInterfaceImplementedByArray(pV) && arrU.Dimensions == 1)
 			{
 				MakeLowerBoundInference(arrU.ElementType, pV.GetTypeArgument(0));
 				return;
@@ -1037,19 +1043,21 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 
-			// Handle pointer types:
-			if (U is PointerType ptrU && V is PointerType ptrV)
+			switch (U)
 			{
-				MakeExactInference(ptrU.ElementType, ptrV.ElementType);
-				return;
-			}
-
-			if (U is FunctionPointerType fnPtrU && V is FunctionPointerType fnPtrV)
-			{
-				MakeLowerBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-				foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+				// Handle pointer types:
+				case PointerType ptrU when V is PointerType ptrV:
+					MakeExactInference(ptrU.ElementType, ptrV.ElementType);
+					return;
+				case FunctionPointerType fnPtrU when V is FunctionPointerType fnPtrV:
 				{
-					MakeUpperBoundInference(ptU, ptV);
+					MakeLowerBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
+					foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+					{
+						MakeUpperBoundInference(ptU, ptV);
+					}
+
+					break;
 				}
 			}
 		}
@@ -1089,11 +1097,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				return IntersectionType.Create(result);
 			}
-			else
-			{
-				// return any of the candidates (prefer non-interfaces)
-				return GetFirstTypePreferNonInterfaces(result);
-			}
+
+			// return any of the candidates (prefer non-interfaces)
+			return GetFirstTypePreferNonInterfaces(result);
 		}
 
 		static IType GetFirstTypePreferNonInterfaces(IReadOnlyList<IType> result)

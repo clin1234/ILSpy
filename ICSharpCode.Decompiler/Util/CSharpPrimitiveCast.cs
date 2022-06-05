@@ -40,8 +40,7 @@ namespace ICSharpCode.Decompiler.Util
 				return null;
 			if (checkForOverflow)
 				return CSharpPrimitiveCastChecked(targetType, input);
-			else
-				return CSharpPrimitiveCastUnchecked(targetType, input);
+			return CSharpPrimitiveCastUnchecked(targetType, input);
 		}
 
 		static object CSharpPrimitiveCastChecked(TypeCode targetType, object input)

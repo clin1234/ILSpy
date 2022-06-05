@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// Represents the result of an await expression.
 	/// </summary>
-	public sealed class AwaitResolveResult : ResolveResult
+	internal sealed class AwaitResolveResult : ResolveResult
 	{
 		/// <summary>
 		/// Awaiter type. Will not be null (but can be UnknownType).

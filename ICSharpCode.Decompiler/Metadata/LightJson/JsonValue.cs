@@ -309,10 +309,8 @@ namespace LightJson
 						{
 							return number;
 						}
-						else
-						{
-							goto default;
-						}
+
+						goto default;
 
 					default:
 						return 0;
@@ -369,10 +367,8 @@ namespace LightJson
 				{
 					return value;
 				}
-				else
-				{
-					return null;
-				}
+
+				return null;
 			}
 		}
 
@@ -412,10 +408,8 @@ namespace LightJson
 				{
 					return ((JsonObject)this.reference)[key];
 				}
-				else
-				{
-					throw new InvalidOperationException("This value does not represent a JsonObject.");
-				}
+
+				throw new InvalidOperationException("This value does not represent a JsonObject.");
 			}
 
 			set {
@@ -443,10 +437,8 @@ namespace LightJson
 				{
 					return ((JsonArray)this.reference)[index];
 				}
-				else
-				{
-					throw new InvalidOperationException("This value does not represent a JsonArray.");
-				}
+
+				throw new InvalidOperationException("This value does not represent a JsonArray.");
 			}
 
 			set {
@@ -534,10 +526,8 @@ namespace LightJson
 			{
 				return jsonValue.AsInteger;
 			}
-			else
-			{
-				return 0;
-			}
+
+			return 0;
 		}
 
 		/// <summary>
@@ -554,10 +544,8 @@ namespace LightJson
 			{
 				return null;
 			}
-			else
-			{
-				return (int)jsonValue;
-			}
+
+			return (int)jsonValue;
 		}
 
 		/// <summary>
@@ -570,10 +558,8 @@ namespace LightJson
 			{
 				return jsonValue.value == 1;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -590,10 +576,8 @@ namespace LightJson
 			{
 				return null;
 			}
-			else
-			{
-				return (bool)jsonValue;
-			}
+
+			return (bool)jsonValue;
 		}
 
 		/// <summary>
@@ -606,10 +590,8 @@ namespace LightJson
 			{
 				return jsonValue.value;
 			}
-			else
-			{
-				return double.NaN;
-			}
+
+			return double.NaN;
 		}
 
 		/// <summary>
@@ -626,10 +608,8 @@ namespace LightJson
 			{
 				return null;
 			}
-			else
-			{
-				return (double)jsonValue;
-			}
+
+			return (double)jsonValue;
 		}
 
 		/// <summary>
@@ -642,10 +622,8 @@ namespace LightJson
 			{
 				return jsonValue.reference as string;
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -658,10 +636,8 @@ namespace LightJson
 			{
 				return jsonValue.reference as JsonObject;
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -674,10 +650,8 @@ namespace LightJson
 			{
 				return jsonValue.reference as JsonArray;
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -692,10 +666,8 @@ namespace LightJson
 			{
 				return dateTime.Value;
 			}
-			else
-			{
-				return DateTime.MinValue;
-			}
+
+			return DateTime.MinValue;
 		}
 
 		/// <summary>
@@ -708,10 +680,8 @@ namespace LightJson
 			{
 				return jsonValue.AsDateTime;
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -758,10 +728,8 @@ namespace LightJson
 			{
 				return false;
 			}
-			else
-			{
-				return this == jsonValue;
-			}
+
+			return this == jsonValue;
 		}
 
 		/// <inheritdoc/>
@@ -771,12 +739,10 @@ namespace LightJson
 			{
 				return this.Type.GetHashCode();
 			}
-			else
-			{
-				return this.Type.GetHashCode()
-				       ^ this.value.GetHashCode()
-				       ^ EqualityComparer<object>.Default.GetHashCode(this.reference);
-			}
+
+			return this.Type.GetHashCode()
+			       ^ this.value.GetHashCode()
+			       ^ EqualityComparer<object>.Default.GetHashCode(this.reference);
 		}
 
 		[ExcludeFromCodeCoverage]
@@ -796,10 +762,8 @@ namespace LightJson
 					{
 						return (JsonObject)this.jsonValue.reference;
 					}
-					else
-					{
-						return null;
-					}
+
+					return null;
 				}
 			}
 
@@ -810,10 +774,8 @@ namespace LightJson
 					{
 						return (JsonArray)this.jsonValue.reference;
 					}
-					else
-					{
-						return null;
-					}
+
+					return null;
 				}
 			}
 
@@ -829,14 +791,13 @@ namespace LightJson
 					{
 						return (JsonObject)this.jsonValue.reference;
 					}
-					else if (this.jsonValue.IsJsonArray)
+
+					if (this.jsonValue.IsJsonArray)
 					{
 						return (JsonArray)this.jsonValue.reference;
 					}
-					else
-					{
-						return this.jsonValue;
-					}
+
+					return this.jsonValue;
 				}
 			}
 		}

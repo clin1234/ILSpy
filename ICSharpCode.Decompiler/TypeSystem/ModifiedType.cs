@@ -50,8 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IType newElementType = elementType.ChangeNullability(nullability);
 			if (newElementType == elementType)
 				return this;
-			else
-				return new ModifiedType(Modifier, newElementType, kind == TypeKind.ModReq);
+			return new ModifiedType(Modifier, newElementType, kind == TypeKind.ModReq);
 		}
 
 		public override ITypeDefinition GetDefinition()
@@ -135,8 +134,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (kind == TypeKind.ModReq)
 				return visitor.VisitModReq(this);
-			else
-				return visitor.VisitModOpt(this);
+			return visitor.VisitModOpt(this);
 		}
 
 		public override bool Equals(IType other)

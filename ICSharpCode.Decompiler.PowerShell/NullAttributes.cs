@@ -1,21 +1,9 @@
-﻿#if !NETCORE
-
+﻿#if !NET
 #nullable enable
 
 namespace System.Diagnostics.CodeAnalysis
 {
-	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = true)]
-	internal sealed class NotNullIfNotNullAttribute : Attribute
-	{
-		public string ParameterName { get; }
-
-		public NotNullIfNotNullAttribute(string parameterName)
-		{
-			ParameterName = parameterName;
-		}
-	}
-
-	[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+	[AttributeUsage(AttributeTargets.Parameter)]
 	internal sealed class NotNullWhenAttribute : Attribute
 	{
 		public NotNullWhenAttribute(bool returnValue)
@@ -24,14 +12,6 @@ namespace System.Diagnostics.CodeAnalysis
 		}
 
 		public bool ReturnValue { get; }
-	}
-
-	[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
-	internal sealed class DoesNotReturnIfAttribute : Attribute
-	{
-		public DoesNotReturnIfAttribute(bool parameterValue) => ParameterValue = parameterValue;
-
-		public bool ParameterValue { get; }
 	}
 }
 #endif

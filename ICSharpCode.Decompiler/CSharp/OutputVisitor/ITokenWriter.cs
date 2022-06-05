@@ -89,13 +89,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 	}
 
-	public interface ILocatable
+	internal interface ILocatable
 	{
 		TextLocation Location { get; }
 		int Length { get; }
 	}
 
-	public abstract class DecoratingTokenWriter : TokenWriter
+	internal abstract class DecoratingTokenWriter : TokenWriter
 	{
 		readonly TokenWriter decoratedWriter;
 

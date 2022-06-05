@@ -135,10 +135,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return false;
 				return ParameterListComparer.Instance.Equals(px.Parameters, py.Parameters);
 			}
-			else
-			{
-				return true;
-			}
+
+			return true;
 		}
 
 		public int GetHashCode(IMember obj)

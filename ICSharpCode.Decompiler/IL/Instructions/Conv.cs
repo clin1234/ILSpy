@@ -32,37 +32,44 @@ namespace ICSharpCode.Decompiler.IL
 		/// Invalid conversion.
 		/// </summary>
 		Invalid,
+
 		/// <summary>
 		/// Conversion between two types of same size.
 		/// Can be used to change the sign of integer types, which may involve overflow-checking.
 		/// </summary>
 		Nop,
+
 		/// <summary>
 		/// Integer-to-float conversion.
 		/// Uses <c>InputSign</c> to decide whether the integer should be treated as signed or unsigned.
 		/// </summary>
 		IntToFloat,
+
 		/// <summary>
 		/// Float-to-integer conversion.
 		/// Truncates toward zero; may perform overflow-checking.
 		/// </summary>
 		FloatToInt,
+
 		/// <summary>
 		/// Converts from the current precision available on the evaluation stack to the precision specified by
 		/// the <c>TargetType</c>.
 		/// Uses "round-to-nearest" mode if the precision is reduced.
 		/// </summary>
 		FloatPrecisionChange,
+
 		/// <summary>
 		/// Conversion of integer type to larger signed integer type.
 		/// May involve overflow checking (when converting from U4 to I on 32-bit).
 		/// </summary>
 		SignExtend,
+
 		/// <summary>
 		/// Conversion of integer type to larger unsigned integer type.
 		/// May involve overflow checking (when converting from a signed type).
 		/// </summary>
 		ZeroExtend,
+
 		/// <summary>
 		/// Conversion to smaller integer type.
 		/// 
@@ -74,14 +81,17 @@ namespace ICSharpCode.Decompiler.IL
 		/// or sign-extended (if the target type is signed).
 		/// </remarks>
 		Truncate,
+
 		/// <summary>
 		/// Used to convert managed references/objects to unmanaged pointers.
 		/// </summary>
 		StopGCTracking,
+
 		/// <summary>
 		/// Used to convert unmanaged pointers to managed references.
 		/// </summary>
 		StartGCTracking,
+
 		/// <summary>
 		/// Converts from an object reference (O) to an interior pointer (Ref) pointing to the start of the object.
 		/// </summary>
@@ -95,38 +105,9 @@ namespace ICSharpCode.Decompiler.IL
 	partial class Conv : UnaryInstruction, ILiftableInstruction
 	{
 		/// <summary>
-		/// Gets the conversion kind.
-		/// </summary>
-		public readonly ConversionKind Kind;
-
-		/// <summary>
 		/// Gets whether the conversion performs overflow-checking.
 		/// </summary>
 		public readonly bool CheckForOverflow;
-
-		/// <summary>
-		/// Gets whether this conversion is a lifted nullable conversion.
-		/// </summary>
-		/// <remarks>
-		/// A lifted conversion expects its argument to be a value of type Nullable{T}, where
-		/// T.GetStackType() == conv.InputType.
-		/// If the value is non-null:
-		///  * it is sign/zero-extended to InputType (based on T's sign)
-		///  * the underlying conversion is performed
-		///  * the result is wrapped in a Nullable{TargetType}.
-		/// If the value is null, the conversion evaluates to default(TargetType?).
-		/// (this result type is underspecified, since there may be multiple C# types for the TargetType)
-		/// </remarks>
-		public bool IsLifted { get; }
-
-		/// <summary>
-		/// Gets the stack type of the input type.
-		/// </summary>
-		/// <remarks>
-		/// For non-lifted conversions, this is equal to <c>Argument.ResultType</c>.
-		/// For lifted conversions, corresponds to the underlying type of the argument.
-		/// </remarks>
-		public readonly StackType InputType;
 
 		/// <summary>
 		/// Gets the sign of the input type.
@@ -139,6 +120,20 @@ namespace ICSharpCode.Decompiler.IL
 		/// that is purely determined by the <c>TargetType</c>.
 		/// </remarks>
 		public readonly Sign InputSign;
+
+		/// <summary>
+		/// Gets the stack type of the input type.
+		/// </summary>
+		/// <remarks>
+		/// For non-lifted conversions, this is equal to <c>Argument.ResultType</c>.
+		/// For lifted conversions, corresponds to the underlying type of the argument.
+		/// </remarks>
+		public readonly StackType InputType;
+
+		/// <summary>
+		/// Gets the conversion kind.
+		/// </summary>
+		public readonly ConversionKind Kind;
 
 		/// <summary>
 		/// The target type of the conversion.
@@ -155,7 +150,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
-		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
+		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType,
+			bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
 			bool needsSign = checkForOverflow || (!inputType.IsFloatType() && targetType.IsFloatType());
@@ -167,6 +163,29 @@ namespace ICSharpCode.Decompiler.IL
 			this.Kind = GetConversionKind(targetType, this.InputType, this.InputSign);
 			// Debug.Assert(Kind != ConversionKind.Invalid); // invalid conversion can happen with invalid IL/missing references
 			this.IsLifted = isLifted;
+		}
+
+		public override StackType ResultType {
+			get => IsLifted ? StackType.O : TargetType.GetStackType();
+		}
+
+		/// <summary>
+		/// Gets whether this conversion is a lifted nullable conversion.
+		/// </summary>
+		/// <remarks>
+		/// A lifted conversion expects its argument to be a value of type Nullable{T}, where
+		/// T.GetStackType() == conv.InputType.
+		/// If the value is non-null:
+		///  * it is sign/zero-extended to InputType (based on T's sign)
+		///  * the underlying conversion is performed
+		///  * the result is wrapped in a Nullable{TargetType}.
+		/// If the value is null, the conversion evaluates to default(TargetType?).
+		/// (this result type is underspecified, since there may be multiple C# types for the TargetType)
+		/// </remarks>
+		public bool IsLifted { get; }
+
+		public StackType UnderlyingResultType {
+			get => TargetType.GetStackType();
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
@@ -222,9 +241,10 @@ namespace ICSharpCode.Decompiler.IL
 						case StackType.I4:
 						case StackType.I:
 							if (inputSign == Sign.None)
-								return targetType == PrimitiveType.I8 ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
-							else
-								return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
+								return targetType == PrimitiveType.I8
+									? ConversionKind.SignExtend
+									: ConversionKind.ZeroExtend;
+							return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
 						case StackType.I8:
 							return ConversionKind.Nop;
 						case StackType.F4:
@@ -242,9 +262,10 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						case StackType.I4:
 							if (inputSign == Sign.None)
-								return targetType == PrimitiveType.I ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
-							else
-								return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
+								return targetType == PrimitiveType.I
+									? ConversionKind.SignExtend
+									: ConversionKind.ZeroExtend;
+							return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
 						case StackType.I:
 							return ConversionKind.Nop;
 						case StackType.I8:
@@ -306,14 +327,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override StackType ResultType {
-			get => IsLifted ? StackType.O : TargetType.GetStackType();
-		}
-
-		public StackType UnderlyingResultType {
-			get => TargetType.GetStackType();
-		}
-
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -322,6 +335,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".ovf");
 			}
+
 			if (InputSign == Sign.Unsigned)
 			{
 				output.Write(".unsigned");
@@ -330,10 +344,12 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write(".signed");
 			}
+
 			if (IsLifted)
 			{
 				output.Write(".lifted");
 			}
+
 			output.Write(' ');
 			output.Write(InputType);
 			output.Write("->");
@@ -351,6 +367,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write("<invalid>");
 					break;
 			}
+
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -368,8 +385,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (this.Kind == kind && !IsLifted)
 				return Argument.UnwrapConv(kind);
-			else
-				return this;
+			return this;
 		}
 	}
 }

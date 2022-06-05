@@ -186,11 +186,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return base.MakePointerType();
 			}
-			else
-			{
-				this.PointerRank++;
-				return this;
-			}
+
+			this.PointerRank++;
+			return this;
 		}
 
 		public override AstType MakeArrayType(int dimensions = 1)

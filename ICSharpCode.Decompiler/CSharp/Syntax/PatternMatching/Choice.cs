@@ -58,8 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			{
 				if (alt.DoMatch(other, match))
 					return true;
-				else
-					match.RestoreCheckPoint(checkPoint);
+				match.RestoreCheckPoint(checkPoint);
 			}
 
 			return false;

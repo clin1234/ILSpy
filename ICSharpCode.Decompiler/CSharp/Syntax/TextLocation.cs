@@ -130,10 +130,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (left.Line < right.Line)
 				return true;
-			else if (left.Line == right.Line)
+			if (left.Line == right.Line)
 				return left.Column < right.Column;
-			else
-				return false;
+			return false;
 		}
 
 		/// <summary>
@@ -143,10 +142,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (left.Line > right.Line)
 				return true;
-			else if (left.Line == right.Line)
+			if (left.Line == right.Line)
 				return left.Column > right.Column;
-			else
-				return false;
+			return false;
 		}
 
 		/// <summary>
@@ -174,8 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return 0;
 			if (this < other)
 				return -1;
-			else
-				return 1;
+			return 1;
 		}
 	}
 

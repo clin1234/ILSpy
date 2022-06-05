@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// Represents the result of an invocation of a member of a dynamic object.
 	/// </summary>
-	public sealed class DynamicInvocationResolveResult : ResolveResult
+	internal sealed class DynamicInvocationResolveResult : ResolveResult
 	{
 		/// <summary>
 		/// Arguments for the call. Named arguments will be instances of <see cref="NamedArgumentResolveResult"/>.

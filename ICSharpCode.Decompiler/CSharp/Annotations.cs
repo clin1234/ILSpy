@@ -182,8 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (expr.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
-			else
-				return null;
+			return null;
 		}
 
 		/// <summary>
@@ -194,8 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (vi.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
-			else
-				return null;
+			return null;
 		}
 
 		/// <summary>
@@ -206,8 +204,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (loop.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
-			else
-				return null;
+			return null;
 		}
 
 		/// <summary>

@@ -20,6 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
 	/// <summary>

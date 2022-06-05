@@ -132,12 +132,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return retVal.MatchLdsFld(out field);
 				}
-				else
-				{
-					if (!retVal.MatchLdFld(out var target, out field))
-						return false;
-					return target.MatchLdThis();
-				}
+
+				if (!retVal.MatchLdFld(out var target, out field))
+					return false;
+				return target.MatchLdThis();
 			}
 
 			bool IsAutoSetter(IMethod method, out IField field)
@@ -290,22 +288,22 @@ namespace ICSharpCode.Decompiler.CSharp
 						// override bool Equals(object? obj): always generated
 						return true;
 					}
-					else if (IsRecordType(paramType))
+
+					if (IsRecordType(paramType))
 					{
 						// virtual bool Equals(R? other): generated unless user-declared
 						return IsGeneratedEquals(method);
 					}
-					else if (IsInheritedRecord &&
-					         NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, baseClass) &&
-					         method.IsOverride)
+
+					if (IsInheritedRecord &&
+					    NormalizeTypeVisitor.TypeErasure.EquivalentTypes(paramType, baseClass) &&
+					    method.IsOverride)
 					{
 						// override bool Equals(BaseClass? obj): always generated
 						return true;
 					}
-					else
-					{
-						return false;
-					}
+
+					return false;
 				}
 				case "GetHashCode":
 					return IsGeneratedGetHashCode(method);
@@ -923,10 +921,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return !IsInheritedRecord;
 				return autoPropertyToBackingField.ContainsKey(property);
 			}
-			else
-			{
-				return member is IField;
-			}
+
+			return member is IField;
 		}
 
 		bool IsGeneratedGetHashCode(IMethod method)
@@ -981,10 +977,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					return ProcessIndividualHashCode(right);
 				}
-				else
-				{
-					return ProcessIndividualHashCode(inst);
-				}
+
+				return ProcessIndividualHashCode(inst);
 			}
 
 			bool ProcessIndividualHashCode(ILInstruction inst)
@@ -1093,7 +1087,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				member = property;
 				return true;
 			}
-			else if (inst.MatchLdFld(out target, out IField field))
+
+			if (inst.MatchLdFld(out target, out IField field))
 			{
 				if (backingFieldToAutoProperty.TryGetValue(field, out property))
 					member = property;
@@ -1101,10 +1096,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					member = field;
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		Block DecompileBody(IMethod method)

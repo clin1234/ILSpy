@@ -296,10 +296,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				rhsUnary.Operand = logicInst;
 				return rhsUnary;
 			}
-			else
-			{
-				return logicInst;
-			}
+
+			return logicInst;
 		}
 	}
 }

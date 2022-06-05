@@ -226,7 +226,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					version = 300;
 					continue;
 				}
-				else if (dotNet35Assemblies.Contains(reference.FullName))
+
+				if (dotNet35Assemblies.Contains(reference.FullName))
 				{
 					version = 350;
 					break;

@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								case "System.Runtime.CompilerServices.CompilationRelaxationsAttribute":
 								{
 									if (arguments.Count == 1 && arguments.First() is PrimitiveExpression {
-										    Value: int and 8
+										    Value: 8
 									    })
 										attribute.Remove();
 									break;

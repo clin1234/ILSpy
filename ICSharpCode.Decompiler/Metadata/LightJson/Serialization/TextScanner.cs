@@ -56,10 +56,8 @@ namespace LightJson.Serialization
 					JsonParseException.ErrorType.IncompleteMessage,
 					this.position);
 			}
-			else
-			{
-				return next;
-			}
+
+			return next;
 		}
 
 		/// <summary>
@@ -76,20 +74,18 @@ namespace LightJson.Serialization
 					JsonParseException.ErrorType.IncompleteMessage,
 					this.position);
 			}
+
+			if (next == '\n')
+			{
+				this.position.Line += 1;
+				this.position.Column = 0;
+			}
 			else
 			{
-				if (next == '\n')
-				{
-					this.position.Line += 1;
-					this.position.Column = 0;
-				}
-				else
-				{
-					this.position.Column += 1;
-				}
-
-				return (char)next;
+				this.position.Column += 1;
 			}
+
+			return (char)next;
 		}
 
 		/// <summary>
@@ -213,11 +209,9 @@ namespace LightJson.Serialization
 						{
 							return;
 						}
-						else
-						{
-							foundStar = false;
-							continue;
-						}
+
+						foundStar = false;
+						continue;
 
 					case -1:
 						// Reached the end of the file

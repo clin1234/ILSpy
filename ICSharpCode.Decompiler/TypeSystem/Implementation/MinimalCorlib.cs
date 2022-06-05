@@ -208,8 +208,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				if (nullability == Nullability.Oblivious)
 					return this;
-				else
-					return new NullabilityAnnotatedType(this, nullability);
+				return new NullabilityAnnotatedType(this, nullability);
 			}
 
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
@@ -225,8 +224,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					var baseType = KnownTypeReference.Get(typeCode).baseType;
 					if (baseType != KnownTypeCode.None)
 						return new[] { corlib.Compilation.FindType(baseType) };
-					else
-						return EmptyList<IType>.Instance;
+					return EmptyList<IType>.Instance;
 				}
 			}
 

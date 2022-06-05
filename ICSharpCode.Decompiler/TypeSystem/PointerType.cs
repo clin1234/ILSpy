@@ -62,8 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
-			else
-				return new PointerType(e);
+			return new PointerType(e);
 		}
 	}
 

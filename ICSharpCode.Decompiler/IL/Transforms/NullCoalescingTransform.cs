@@ -150,14 +150,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.RemoveRange(pos, 2); // remove store(s) and if instruction
 				return true;
 			}
-			else
-			{
-				// reset the primary position (see remarks on ILInstruction.Parent)
-				stloc.Value = stloc.Value;
-				var children = throwInstParent.Children;
-				children[throwInstChildIndex] = throwInst;
-				return false;
-			}
+
+			// reset the primary position (see remarks on ILInstruction.Parent)
+			stloc.Value = stloc.Value;
+			var children = throwInstParent.Children;
+			children[throwInstChildIndex] = throwInst;
+			return false;
 		}
 	}
 }

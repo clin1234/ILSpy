@@ -69,8 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// or stack slots handled by the infeasible path transform
 					if (v.Function.IsAsync || v.RemoveIfRedundant)
 						goto case VariableKind.Local;
-					else
-						return false;
+					return false;
 				default:
 					// parameters: avoid splitting parameters
 					// pinned locals: must not split (doing so would extend the life of the pin to the end of the method)

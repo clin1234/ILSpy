@@ -90,8 +90,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType newGenericType = GenericType.ChangeNullability(nullability);
 			if (newGenericType == GenericType)
 				return this;
-			else
-				return new ParameterizedType(newGenericType, typeArguments);
+			return new ParameterizedType(newGenericType, typeArguments);
 		}
 
 		public IType DeclaringType {
@@ -177,8 +176,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetNestedTypes(filter, options);
-			else
-				return GetMembersHelper.GetNestedTypes(this, filter, options);
+			return GetMembersHelper.GetNestedTypes(this, filter, options);
 		}
 
 		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments,
@@ -186,8 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetNestedTypes(typeArguments, filter, options);
-			else
-				return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
+			return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null,
@@ -195,8 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetConstructors(filter, options);
-			else
-				return GetMembersHelper.GetConstructors(this, filter, options);
+			return GetMembersHelper.GetConstructors(this, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
@@ -204,8 +200,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetMethods(filter, options);
-			else
-				return GetMembersHelper.GetMethods(this, filter, options);
+			return GetMembersHelper.GetMethods(this, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null,
@@ -213,8 +208,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetMethods(typeArguments, filter, options);
-			else
-				return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
+			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
 
 		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
@@ -222,8 +216,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetProperties(filter, options);
-			else
-				return GetMembersHelper.GetProperties(this, filter, options);
+			return GetMembersHelper.GetProperties(this, filter, options);
 		}
 
 		public IEnumerable<IField> GetFields(Predicate<IField> filter = null,
@@ -231,8 +224,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetFields(filter, options);
-			else
-				return GetMembersHelper.GetFields(this, filter, options);
+			return GetMembersHelper.GetFields(this, filter, options);
 		}
 
 		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
@@ -240,8 +232,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetEvents(filter, options);
-			else
-				return GetMembersHelper.GetEvents(this, filter, options);
+			return GetMembersHelper.GetEvents(this, filter, options);
 		}
 
 		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
@@ -249,8 +240,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetMembers(filter, options);
-			else
-				return GetMembersHelper.GetMembers(this, filter, options);
+			return GetMembersHelper.GetMembers(this, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
@@ -258,8 +248,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return GenericType.GetAccessors(filter, options);
-			else
-				return GetMembersHelper.GetAccessors(this, filter, options);
+			return GetMembersHelper.GetAccessors(this, filter, options);
 		}
 
 		public bool Equals(IType other)
@@ -309,8 +298,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (ta == null)
 				return this;
-			else
-				return new ParameterizedType(g, ta);
+			return new ParameterizedType(g, ta);
 		}
 
 		public override string ToString()

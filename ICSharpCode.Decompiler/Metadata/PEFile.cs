@@ -137,8 +137,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				var r = LazyInit.VolatileRead(ref methodSemanticsLookup);
 				if (r != null)
 					return r;
-				else
-					return LazyInit.GetOrSet(ref methodSemanticsLookup, new MethodSemanticsLookup(Metadata));
+				return LazyInit.GetOrSet(ref methodSemanticsLookup, new MethodSemanticsLookup(Metadata));
 			}
 		}
 
@@ -164,8 +163,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						return TargetRuntime.Unknown;
 					if (version[3] == 1)
 						return TargetRuntime.Net_1_0;
-					else
-						return TargetRuntime.Net_1_1;
+					return TargetRuntime.Net_1_1;
 				case '2':
 					return TargetRuntime.Net_2_0;
 				case '4':
@@ -210,8 +208,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (lookup.TryGetValue(typeName, out var resultHandle))
 				return resultHandle;
-			else
-				return default;
+			return default;
 		}
 
 		/// <summary>
@@ -234,8 +231,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (lookup.TryGetValue(typeName, out var resultHandle))
 				return resultHandle;
-			else
-				return default;
+			return default;
 		}
 
 		public IModuleReference WithOptions(TypeSystemOptions options)

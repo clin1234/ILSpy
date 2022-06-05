@@ -204,7 +204,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return false; // avoid introducing a potentially-incorrect compound assignment
 			}
-			else if (type.Kind == TypeKind.Enum)
+
+			if (type.Kind == TypeKind.Enum)
 			{
 				switch (binary.Operator)
 				{

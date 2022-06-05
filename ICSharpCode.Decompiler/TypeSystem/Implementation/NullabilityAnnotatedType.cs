@@ -42,8 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (nullability == this.Nullability)
 				return this;
-			else
-				return baseType.ChangeNullability(nullability);
+			return baseType.ChangeNullability(nullability);
 		}
 
 		public override IType VisitChildren(TypeVisitor visitor)
@@ -62,16 +61,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return newBase.ChangeNullability(Nullability);
 				}
-				else
-				{
-					// `T!` with substitution T=`int` becomes `int`, not `int!`
-					return newBase;
-				}
+
+				// `T!` with substitution T=`int` becomes `int`, not `int!`
+				return newBase;
 			}
-			else
-			{
-				return this;
-			}
+
+			return this;
 		}
 
 		public override string ToString()

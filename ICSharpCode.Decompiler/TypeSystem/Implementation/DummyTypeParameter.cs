@@ -104,10 +104,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return this;
 			}
-			else
-			{
-				return new NullabilityAnnotatedTypeParameter(this, nullability);
-			}
+
+			return new NullabilityAnnotatedTypeParameter(this, nullability);
 		}
 
 		public static ITypeParameter GetMethodTypeParameter(int index)

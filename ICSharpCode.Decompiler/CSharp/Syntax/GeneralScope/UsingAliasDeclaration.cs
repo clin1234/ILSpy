@@ -36,30 +36,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Identifier> AliasRole = new("Alias", Identifier.Null);
 		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
 
-		public UsingAliasDeclaration()
-		{
-		}
-
-		public UsingAliasDeclaration(string alias, string nameSpace)
-		{
-			AddChild(Identifier.Create(alias), AliasRole);
-			AddChild(new SimpleType(nameSpace), ImportRole);
-		}
-
-		public UsingAliasDeclaration(string alias, AstType import)
-		{
-			AddChild(Identifier.Create(alias), AliasRole);
-			AddChild(import, ImportRole);
-		}
 
 		public override NodeType NodeType {
 			get {
 				return NodeType.Unknown;
 			}
-		}
-
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole(UsingKeywordRole); }
 		}
 
 		public string Alias {
@@ -71,17 +52,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
-
 		public AstType Import {
 			get { return GetChildByRole(ImportRole); }
 			set { SetChildByRole(ImportRole, value); }
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

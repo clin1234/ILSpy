@@ -281,10 +281,8 @@ namespace ICSharpCode.Decompiler
 			{
 				return knownType.Namespace.Length == 0;
 			}
-			else
-			{
-				return reader.StringComparer.Equals(namespaceHandle, knownType.Namespace);
-			}
+
+			return reader.StringComparer.Equals(namespaceHandle, knownType.Namespace);
 		}
 
 		private static bool SignatureIsKnownType(SRM.MetadataReader reader, TopLevelTypeName knownType,
@@ -406,10 +404,8 @@ namespace ICSharpCode.Decompiler
 
 				return new FullTypeName(new TopLevelTypeName(ns, name, typeParameterCount));
 			}
-			else
-			{
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
-			}
+
+			return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
 		}
 
 		public static FullTypeName GetFullTypeName(this SRM.TypeDefinitionHandle handle, SRM.MetadataReader reader)
@@ -429,10 +425,8 @@ namespace ICSharpCode.Decompiler
 				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
 				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			}
-			else
-			{
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
-			}
+
+			return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
 		}
 
 		public static FullTypeName GetFullTypeName(this SRM.ExportedType type, SRM.MetadataReader metadata)
@@ -444,11 +438,9 @@ namespace ICSharpCode.Decompiler
 				var outerType = metadata.GetExportedType((SRM.ExportedTypeHandle)type.Implementation);
 				return outerType.GetFullTypeName(metadata).NestedType(name, typeParameterCount);
 			}
-			else
-			{
-				string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
-				return new TopLevelTypeName(ns, name, typeParameterCount);
-			}
+
+			string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
+			return new TopLevelTypeName(ns, name, typeParameterCount);
 		}
 
 		public static bool IsAnonymousType(this SRM.TypeDefinition type, SRM.MetadataReader metadata)

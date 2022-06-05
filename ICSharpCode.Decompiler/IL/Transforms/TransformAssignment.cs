@@ -157,7 +157,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// note: our caller will trigger a re-run, which will call HandleStObjCompoundAssign if applicable
 				return true;
 			}
-			else if (block.Instructions[nextPos] is CallInstruction call)
+
+			if (block.Instructions[nextPos] is CallInstruction call)
 			{
 				// call must be a setter call:
 				if (call.OpCode is not (OpCode.Call or OpCode.CallVirt))
@@ -210,10 +211,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, out Conv conv)
@@ -224,10 +223,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// for compound assignments to small integers, the compiler emits a "conv" instruction
 				return conv.Argument;
 			}
-			else
-			{
-				return inst;
-			}
+
+			return inst;
 		}
 
 		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv conv, IType targetType,
@@ -662,7 +659,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = stobj.Value;
 				return SemanticHelper.IsPure(stobj.Target.Flags);
 			}
-			else if (inst is CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call)
+
+			if (inst is CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call)
 			{
 				if (call.Method.Parameters.Count == 0)
 				{
@@ -686,16 +684,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = call.Arguments.Last();
 				return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
 			}
-			else if (inst is StLoc stloc && stloc.Variable.Kind is VariableKind.Local or VariableKind.Parameter)
+
+			if (inst is StLoc stloc && stloc.Variable.Kind is VariableKind.Local or VariableKind.Parameter)
 			{
 				storeType = stloc.Variable.Type;
 				value = stloc.Value;
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -736,19 +733,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return true;
 				}
-				else if (IsDuplicatedAddressComputation(stobj.Target, ldobj.Target))
+
+				if (IsDuplicatedAddressComputation(stobj.Target, ldobj.Target))
 				{
 					// Use S_0 as target, so that S_0 can later be eliminated by inlining.
 					// (we can't eliminate previousInstruction right now, because it's before the transform's starting instruction)
 					target = stobj.Target;
 					return true;
 				}
-				else
-				{
-					return false;
-				}
+
+				return false;
 			}
-			else if (MatchingGetterAndSetterCalls(load as CallInstruction, store as CallInstruction, out finalizeMatch))
+
+			if (MatchingGetterAndSetterCalls(load as CallInstruction, store as CallInstruction, out finalizeMatch))
 			{
 				if (forbiddenVariable != null && forbiddenVariable.IsUsedWithin(load))
 					return false;
@@ -756,8 +753,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				targetKind = CompoundTargetKind.Property;
 				return true;
 			}
-			else if (load is LdLoc ldloc && store is StLoc stloc &&
-			         ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, stloc.Variable))
+
+			if (load is LdLoc ldloc && store is StLoc stloc &&
+			    ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, stloc.Variable))
 			{
 				if (ILVariableEqualityComparer.Instance.Equals(ldloc.Variable, forbiddenVariable))
 					return false;
@@ -766,10 +764,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				finalizeMatch = context => context.Function.RecombineVariables(ldloc.Variable, stloc.Variable);
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 
 			bool IsDuplicatedAddressComputation(ILInstruction storeTarget, ILInstruction loadTarget)
 			{

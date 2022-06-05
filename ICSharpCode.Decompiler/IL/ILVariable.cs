@@ -676,10 +676,9 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (x.Index != null)
 				return x.Index == y.Index;
-			else if (x.StateMachineField != null)
+			if (x.StateMachineField != null)
 				return x.StateMachineField.Equals(y.StateMachineField);
-			else
-				return false;
+			return false;
 		}
 
 		public int GetHashCode(ILVariable obj)

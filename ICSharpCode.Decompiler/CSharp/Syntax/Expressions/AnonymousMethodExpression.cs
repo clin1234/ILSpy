@@ -37,10 +37,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole DelegateKeywordRole = new("delegate");
 		public static readonly TokenRole AsyncModifierRole = LambdaExpression.AsyncModifierRole;
 
+		readonly bool isAsync;
+
 		// used to tell the difference between delegate {} and delegate () {}
 		bool hasParameterList;
-
-		bool isAsync;
 
 		public AnonymousMethodExpression()
 		{

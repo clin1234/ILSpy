@@ -341,12 +341,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			{
 				return s;
 			}
-			else
-			{
-				s = bottomState.Clone();
-				stateOnBranch.Add(block, s);
-				return s;
-			}
+
+			s = bottomState.Clone();
+			stateOnBranch.Add(block, s);
+			return s;
 		}
 
 		protected internal override void VisitBlockContainer(BlockContainer container)

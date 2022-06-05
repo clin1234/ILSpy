@@ -105,8 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (nullability == Nullability.Oblivious)
 				return this;
-			else
-				return new NullabilityAnnotatedType(this, nullability);
+			return new NullabilityAnnotatedType(this, nullability);
 		}
 
 		public override int GetHashCode()

@@ -119,8 +119,7 @@ namespace ICSharpCode.Decompiler.Util
 
 				if (count == 0 && !Intervals.IsEmpty)
 					return ulong.MaxValue;
-				else
-					return count;
+				return count;
 			}
 		}
 

@@ -155,8 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 				case NewArr newArr:
 					if (compilation != null)
 						return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
-					else
-						return SpecialType.UnknownType;
+					return SpecialType.UnknownType;
 				case Call call:
 					return call.Method.ReturnType;
 				case CallVirt callVirt:
@@ -187,6 +186,7 @@ namespace ICSharpCode.Decompiler.IL
 							return new ByReferenceType(arrayType.ElementType);
 						}
 					}
+
 					return new ByReferenceType(ldelema.Type);
 				case Comp comp:
 					if (compilation == null)
@@ -211,10 +211,11 @@ namespace ICSharpCode.Decompiler.IL
 						case BinaryNumericOperator.BitXor:
 							var left = bni.Left.InferType(compilation);
 							var right = bni.Right.InferType(compilation);
-							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() || left.IsCSharpNativeIntegerType() || left.IsKnownType(KnownTypeCode.Boolean)))
+							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() ||
+							                           left.IsCSharpNativeIntegerType() ||
+							                           left.IsKnownType(KnownTypeCode.Boolean)))
 								return left;
-							else
-								return SpecialType.UnknownType;
+							return SpecialType.UnknownType;
 						default:
 							return SpecialType.UnknownType;
 					}

@@ -72,8 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (AdditionalTypeParameterCount == 0)
 				return DeclaringTypeReference + "+" + Name;
-			else
-				return DeclaringTypeReference + "+" + Name + "`" + AdditionalTypeParameterCount;
+			return DeclaringTypeReference + "+" + Name + "`" + AdditionalTypeParameterCount;
 		}
 
 		public int GetHashCodeForInterning()

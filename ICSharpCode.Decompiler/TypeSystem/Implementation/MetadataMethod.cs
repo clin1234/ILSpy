@@ -169,12 +169,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return declType;
 				}
-				else
-				{
-					var def = module.metadata.GetMethodDefinition(handle);
-					return LazyInit.GetOrSet(ref this.declaringType,
-						module.GetDefinition(def.GetDeclaringType()));
-				}
+
+				var def = module.metadata.GetMethodDefinition(handle);
+				return LazyInit.GetOrSet(ref this.declaringType,
+					module.GetDefinition(def.GetDeclaringType()));
 			}
 		}
 

@@ -63,10 +63,8 @@ namespace LightJson
 				{
 					return this.items[index];
 				}
-				else
-				{
-					return JsonValue.Null;
-				}
+
+				return JsonValue.Null;
 			}
 
 			set {

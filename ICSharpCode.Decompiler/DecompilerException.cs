@@ -92,10 +92,8 @@ namespace ICSharpCode.Decompiler
 			{
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";
 			}
-			else
-			{
-				return type;
-			}
+
+			return type;
 		}
 
 		static string GetStackTrace(Exception exception)

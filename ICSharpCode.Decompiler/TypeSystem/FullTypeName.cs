@@ -138,8 +138,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get {
 				if (nestedTypes != null)
 					return nestedTypes[^1].Name;
-				else
-					return topLevelType.Name;
+				return topLevelType.Name;
 			}
 		}
 

@@ -391,14 +391,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (currentIsIterator)
 					return new YieldBreakStatement().WithILInstruction(inst);
-				else if (!inst.Value.MatchNop())
+				if (!inst.Value.MatchNop())
 				{
 					var expr = exprBuilder.Translate(inst.Value, typeHint: currentResultType)
 						.ConvertTo(currentResultType, exprBuilder, allowImplicitConversion: true);
 					return new ReturnStatement(expr).WithILInstruction(inst);
 				}
-				else
-					return new ReturnStatement().WithILInstruction(inst);
+
+				return new ReturnStatement().WithILInstruction(inst);
 			}
 
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string label))
@@ -627,16 +627,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				breakTarget = oldBreakTarget;
 				return loop.WithILInstruction(container);
 			}
-			else if (container.EntryPoint.Instructions.Count == 1 &&
-			         container.EntryPoint.Instructions[0] is SwitchInstruction switchInst)
+
+			if (container.EntryPoint.Instructions.Count == 1 &&
+			    container.EntryPoint.Instructions[0] is SwitchInstruction switchInst)
 			{
 				return TranslateSwitch(container, switchInst).WithILInstruction(container);
 			}
-			else
-			{
-				var blockStmt = ConvertBlockContainer(container, false);
-				return blockStmt.WithILInstruction(container);
-			}
+
+			var blockStmt = ConvertBlockContainer(container, false);
+			return blockStmt.WithILInstruction(container);
 		}
 
 		Statement ConvertLoop(BlockContainer container)
@@ -1013,24 +1012,22 @@ namespace ICSharpCode.Decompiler.CSharp
 					},
 				}.WithILInstruction(inst);
 			}
-			else
-			{
-				if (var.LoadCount > 0 || var.AddressCount > 0)
-				{
-					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType()
-						? new SimpleType("var")
-						: exprBuilder.ConvertType(var.Type);
-					var vds = new VariableDeclarationStatement(type, var.Name, resource);
-					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
-					usingInit = vds;
-				}
 
-				return new UsingStatement {
-					ResourceAcquisition = usingInit,
-					IsAsync = inst.IsAsync,
-					EmbeddedStatement = ConvertAsBlock(inst.Body)
-				}.WithILInstruction(inst);
+			if (var.LoadCount > 0 || var.AddressCount > 0)
+			{
+				var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType()
+					? new SimpleType("var")
+					: exprBuilder.ConvertType(var.Type);
+				var vds = new VariableDeclarationStatement(type, var.Name, resource);
+				vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
+				usingInit = vds;
 			}
+
+			return new UsingStatement {
+				ResourceAcquisition = usingInit,
+				IsAsync = inst.IsAsync,
+				EmbeddedStatement = ConvertAsBlock(inst.Body)
+			}.WithILInstruction(inst);
 
 			bool IsValidInCSharp(UsingInstruction inst, KnownTypeCode code)
 			{

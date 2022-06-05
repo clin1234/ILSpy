@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using ICSharpCode.Decompiler.Util;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -106,41 +104,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitPrimitiveExpression(this, data);
-		}
-
-		static unsafe TextLocation AdvanceLocation(TextLocation startLocation, string str)
-		{
-			int line = startLocation.Line;
-			int col = startLocation.Column;
-			fixed (char* start = str)
-			{
-				char* p = start;
-				char* endPtr = start + str.Length;
-				while (p < endPtr)
-				{
-					var nl = NewLine.GetDelimiterLength(*p, () => {
-						char* nextp = p + 1;
-						if (nextp < endPtr)
-							return *nextp;
-						return '\0';
-					});
-					if (nl > 0)
-					{
-						line++;
-						col = 1;
-						if (nl == 2)
-							p++;
-					}
-					else
-					{
-						col++;
-					}
-
-					p++;
-				}
-			}
-
-			return new TextLocation(line, col);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

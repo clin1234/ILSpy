@@ -83,30 +83,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 
 			base.WriteToken(role, token);
-			if (token == "+")
-			{
-				lastWritten = LastWritten.Plus;
-			}
-			else if (token == "-")
-			{
-				lastWritten = LastWritten.Minus;
-			}
-			else if (token == "&")
-			{
-				lastWritten = LastWritten.Ampersand;
-			}
-			else if (token == "?")
-			{
-				lastWritten = LastWritten.QuestionMark;
-			}
-			else if (token == "/")
-			{
-				lastWritten = LastWritten.Division;
-			}
-			else
-			{
-				lastWritten = LastWritten.Other;
-			}
+			lastWritten = token switch {
+				"+" => LastWritten.Plus,
+				"-" => LastWritten.Minus,
+				"&" => LastWritten.Ampersand,
+				"?" => LastWritten.QuestionMark,
+				"/" => LastWritten.Division,
+				_ => LastWritten.Other
+			};
 		}
 
 		public override void Space()
@@ -148,43 +132,33 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 
 			base.WritePrimitiveValue(value, format);
-			if (value is null or bool)
-				return;
-			if (value is string)
+			switch (value)
 			{
-				lastWritten = LastWritten.Other;
-			}
-			else if (value is char)
-			{
-				lastWritten = LastWritten.Other;
-			}
-			else if (value is decimal)
-			{
-				lastWritten = LastWritten.Other;
-			}
-			else if (value is float f1)
-			{
-				if (float.IsInfinity(f1) || float.IsNaN(f1))
+				case null or bool:
 					return;
-				lastWritten = LastWritten.Other;
-			}
-			else if (value is double d)
-			{
-				if (double.IsInfinity(d) || double.IsNaN(d))
+				case string:
+				case char:
+				case decimal:
+					lastWritten = LastWritten.Other;
+					break;
+				case float f1 when float.IsInfinity(f1) || float.IsNaN(f1):
+					return;
+				case float:
+					lastWritten = LastWritten.Other;
+					break;
+				case double d when double.IsInfinity(d) || double.IsNaN(d):
 					return;
 				// needs space if identifier follows number;
 				// this avoids mistaking the following identifier as type suffix
-				lastWritten = LastWritten.KeywordOrIdentifier;
-			}
-			else if (value is IFormattable)
-			{
+				case double:
 				// needs space if identifier follows number;
 				// this avoids mistaking the following identifier as type suffix
-				lastWritten = LastWritten.KeywordOrIdentifier;
-			}
-			else
-			{
-				lastWritten = LastWritten.Other;
+				case IFormattable:
+					lastWritten = LastWritten.KeywordOrIdentifier;
+					break;
+				default:
+					lastWritten = LastWritten.Other;
+					break;
 			}
 		}
 
@@ -196,14 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 
 			base.WritePrimitiveType(type);
-			if (type == "new")
-			{
-				lastWritten = LastWritten.Other;
-			}
-			else
-			{
-				lastWritten = LastWritten.KeywordOrIdentifier;
-			}
+			lastWritten = type == "new" ? LastWritten.Other : LastWritten.KeywordOrIdentifier;
 		}
 
 		enum LastWritten

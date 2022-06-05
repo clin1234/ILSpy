@@ -34,10 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole UnsafeKeywordRole = new("unsafe");
 
-		public CSharpTokenNode UnsafeToken {
-			get { return GetChildByRole(UnsafeKeywordRole); }
-		}
-
 		public BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }

@@ -176,8 +176,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (filter == null)
 				return static member => !member.IsStatic;
-			else
-				return member => !member.IsStatic && filter(member);
+			return member => !member.IsStatic && filter(member);
 		}
 	}
 }

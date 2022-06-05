@@ -166,10 +166,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			{
 				return ParseTypeName(idString[2..]).Resolve(context).GetDefinition();
 			}
-			else
-			{
-				return ParseMemberIdString(idString).Resolve(context);
-			}
+
+			return ParseMemberIdString(idString).Resolve(context);
 		}
 
 		#endregion

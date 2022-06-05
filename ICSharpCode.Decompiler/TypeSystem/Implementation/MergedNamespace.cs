@@ -95,8 +95,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (GetChildNamespaces().TryGetValue(name, out INamespace ns))
 				return ns;
-			else
-				return null;
+			return null;
 		}
 
 		public ITypeDefinition GetTypeDefinition(string name, int typeParameterCount)
@@ -131,17 +130,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return result;
 			}
-			else
-			{
-				result = new Dictionary<string, INamespace>(Compilation.NameComparer);
-				foreach (var g in namespaces.SelectMany(static ns => ns.ChildNamespaces)
-					         .GroupBy(static ns => ns.Name, Compilation.NameComparer))
-				{
-					result.Add(g.Key, new MergedNamespace(this, g.ToArray()));
-				}
 
-				return LazyInit.GetOrSet(ref this.childNamespaces, result);
+			result = new Dictionary<string, INamespace>(Compilation.NameComparer);
+			foreach (var g in namespaces.SelectMany(static ns => ns.ChildNamespaces)
+				         .GroupBy(static ns => ns.Name, Compilation.NameComparer))
+			{
+				result.Add(g.Key, new MergedNamespace(this, g.ToArray()));
 			}
+
+			return LazyInit.GetOrSet(ref this.childNamespaces, result);
 		}
 
 		public override string ToString()

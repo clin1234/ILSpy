@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Single elements in array initializers are represented with this special class.
 		/// </summary>
-		class SingleArrayInitializerExpression : ArrayInitializerExpression
+		sealed class SingleArrayInitializerExpression : ArrayInitializerExpression
 		{
 			public override bool IsSingleElement {
 				get {

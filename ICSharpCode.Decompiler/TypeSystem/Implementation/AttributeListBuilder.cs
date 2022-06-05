@@ -362,8 +362,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (attributes.Count == 0)
 				return Empty<IAttribute>.Array;
-			else
-				return attributes.ToArray();
+			return attributes.ToArray();
 		}
 	}
 

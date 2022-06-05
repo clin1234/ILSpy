@@ -57,11 +57,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						index++;
 						continue;
 					}
-					else
-					{
-						// abort
-						break;
-					}
+
+					// abort
+					break;
 				}
 
 				// remove the call to ThrowIfNull

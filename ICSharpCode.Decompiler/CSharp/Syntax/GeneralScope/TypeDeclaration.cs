@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class TypeDeclaration : EntityDeclaration
 	{
-		ClassType classType;
+		readonly ClassType classType;
 
 		public override NodeType NodeType {
 			get { return NodeType.TypeDeclaration; }
@@ -59,27 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.TypeDefinition; }
-		}
-
-		public CSharpTokenNode TypeKeyword {
-			get {
-				switch (classType)
-				{
-					case ClassType.Class:
-						return GetChildByRole(Roles.ClassKeyword);
-					case ClassType.Struct:
-					case ClassType.RecordStruct:
-						return GetChildByRole(Roles.StructKeyword);
-					case ClassType.Interface:
-						return GetChildByRole(Roles.InterfaceKeyword);
-					case ClassType.Enum:
-						return GetChildByRole(Roles.EnumKeyword);
-					case ClassType.RecordClass:
-						return GetChildByRole(Roles.RecordKeyword);
-					default:
-						return CSharpTokenNode.Null;
-				}
-			}
 		}
 
 		public ClassType ClassType {
@@ -90,24 +69,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole(Roles.LChevron); }
-		}
-
 		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
 			get { return GetChildrenByRole(Roles.TypeParameter); }
 		}
 
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole(Roles.RChevron); }
-		}
-
-
-		public CSharpTokenNode ColonToken {
-			get {
-				return GetChildByRole(Roles.Colon);
-			}
-		}
 
 		public AstNodeCollection<AstType> BaseTypes {
 			get { return GetChildrenByRole(Roles.BaseType); }
@@ -121,16 +86,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildrenByRole(Roles.Constraint); }
 		}
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		public AstNodeCollection<EntityDeclaration> Members {
 			get { return GetChildrenByRole(Roles.TypeMemberRole); }
-		}
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

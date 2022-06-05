@@ -47,10 +47,8 @@ namespace LightJson
 				{
 					return value;
 				}
-				else
-				{
-					return JsonValue.Null;
-				}
+
+				return JsonValue.Null;
 			}
 
 			set {
@@ -225,14 +223,13 @@ namespace LightJson
 						{
 							return (JsonObject)this.value;
 						}
-						else if (this.value.IsJsonArray)
+
+						if (this.value.IsJsonArray)
 						{
 							return (JsonArray)this.value;
 						}
-						else
-						{
-							return this.value;
-						}
+
+						return this.value;
 					}
 				}
 

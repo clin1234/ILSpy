@@ -75,8 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (composedType.PointerRank > 0)
 				return true;
-			else
-				return base.VisitComposedType(composedType);
+			return base.VisitComposedType(composedType);
 		}
 
 		public override bool VisitFunctionPointerType(FunctionPointerAstType functionPointerType)

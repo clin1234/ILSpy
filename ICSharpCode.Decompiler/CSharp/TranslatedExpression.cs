@@ -456,7 +456,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this.ConvertTo(type.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
-			else if (targetUType.Kind == TypeKind.Enum && type.Kind.IsAnyPointer())
+
+			if (targetUType.Kind == TypeKind.Enum && type.Kind.IsAnyPointer())
 			{
 				// pointer to enum: C# doesn't allow such casts
 				// -> convert via underlying type
@@ -578,7 +579,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				return convertedResult;
 			}
-			else if (rr.IsError && targetType.IsReferenceType == true && type.IsReferenceType == true)
+
+			if (rr.IsError && targetType.IsReferenceType == true && type.IsReferenceType == true)
 			{
 				// Conversion between two reference types, but no direct cast allowed? cast via object
 				// Just make sure we avoid infinite recursion even if the resolver falsely claims we can't cast directly:
@@ -656,10 +658,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var inst = dirExpr.Expression.Annotation<ILInstruction>();
 				return inst != null && PointerArithmeticOffset.IsFixedVariable(inst);
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -742,10 +742,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return expressionBuilder.LogicNot(this).WithoutILInstruction();
 				}
-				else
-				{
-					return this;
-				}
+
+				return this;
 			}
 
 			Debug.Assert(Type.GetStackType().IsIntegerType());

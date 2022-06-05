@@ -304,14 +304,15 @@ namespace ICSharpCode.Decompiler.IL
 
 				return output;
 			}
-			else if (a.Count() != b.Count())
+
 			{
-				// Let's not try to merge mismatched stacks.
-				Warn("Incompatible stack heights: " + a.Count() + " vs " + b.Count());
-				return a;
-			}
-			else
-			{
+				if (a.Count() != b.Count())
+				{
+					// Let's not try to merge mismatched stacks.
+					Warn("Incompatible stack heights: " + a.Count() + " vs " + b.Count());
+					return a;
+				}
+
 				// The more complex case where the stacks don't match exactly.
 				var output = new List<ILVariable>();
 				while (!a.IsEmpty && !b.IsEmpty)
@@ -503,10 +504,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		void InsertStackAdjustments()
@@ -641,8 +640,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (inst.MatchStLoc(out ILVariable v, out ILInstruction inner) && v.Kind == VariableKind.StackSlot)
 				return inner;
-			else
-				return inst;
+			return inst;
 		}
 
 		ILInstruction Neg()
@@ -1154,8 +1152,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (currentStack.IsEmpty)
 				return StackType.Unknown;
-			else
-				return currentStack.Peek().StackType;
+			return currentStack.Peek().StackType;
 		}
 
 		ILInstruction Push(ILInstruction inst)
@@ -1308,8 +1305,7 @@ namespace ICSharpCode.Decompiler.IL
 					var stackType = PeekStackType();
 					if (stackType is StackType.O or StackType.Unknown)
 						return Pop();
-					else
-						return PopPointer();
+					return PopPointer();
 			}
 		}
 
@@ -1326,14 +1322,12 @@ namespace ICSharpCode.Decompiler.IL
 					// field of value type: ldfld can handle temporaries
 					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
 						return new AddressOf(Pop(), field.DeclaringType);
-					else
-						return PopPointer();
+					return PopPointer();
 				default:
 					// field in unresolved type
 					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
 						return Pop();
-					else
-						return PopPointer();
+					return PopPointer();
 			}
 		}
 
@@ -1341,8 +1335,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (methodReturnStackType == StackType.Void)
 				return new Leave(mainContainer);
-			else
-				return new Leave(mainContainer, Pop(methodReturnStackType));
+			return new Leave(mainContainer, Pop(methodReturnStackType));
 		}
 
 		private ILInstruction DecodeLdstr()
@@ -1356,10 +1349,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return new LdLoc(parameterVariables[v]);
 			}
-			else
-			{
-				return new InvalidExpression($"ldarg {v} (out-of-bounds)");
-			}
+
+			return new InvalidExpression($"ldarg {v} (out-of-bounds)");
 		}
 
 		private ILInstruction Ldarga(int v)
@@ -1368,10 +1359,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return new LdLoca(parameterVariables[v]);
 			}
-			else
-			{
-				return new InvalidExpression($"ldarga {v} (out-of-bounds)");
-			}
+
+			return new InvalidExpression($"ldarga {v} (out-of-bounds)");
 		}
 
 		private ILInstruction Starg(int v)
@@ -1380,11 +1369,9 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return new StLoc(parameterVariables[v], Pop(parameterVariables[v].StackType));
 			}
-			else
-			{
-				Pop();
-				return new InvalidExpression($"starg {v} (out-of-bounds)");
-			}
+
+			Pop();
+			return new InvalidExpression($"starg {v} (out-of-bounds)");
 		}
 
 		private ILInstruction Ldloc(int v)
@@ -1393,10 +1380,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return new LdLoc(localVariables[v]);
 			}
-			else
-			{
-				return new InvalidExpression($"ldloc {v} (out-of-bounds)");
-			}
+
+			return new InvalidExpression($"ldloc {v} (out-of-bounds)");
 		}
 
 		private ILInstruction Ldloca(int v)
@@ -1405,10 +1390,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return new LdLoca(localVariables[v]);
 			}
-			else
-			{
-				return new InvalidExpression($"ldloca {v} (out-of-bounds)");
-			}
+
+			return new InvalidExpression($"ldloca {v} (out-of-bounds)");
 		}
 
 		private ILInstruction Stloc(int v)
@@ -1419,11 +1402,9 @@ namespace ICSharpCode.Decompiler.IL
 					ILStackWasEmpty = currentStack.IsEmpty
 				};
 			}
-			else
-			{
-				Pop();
-				return new InvalidExpression($"stloc {v} (out-of-bounds)");
-			}
+
+			Pop();
+			return new InvalidExpression($"stloc {v} (out-of-bounds)");
 		}
 
 		private ILInstruction LdElem(IType type)
@@ -1604,8 +1585,7 @@ namespace ICSharpCode.Decompiler.IL
 			);
 			if (call.ResultType != StackType.Void)
 				return Push(call);
-			else
-				return call;
+			return call;
 		}
 
 		ILInstruction Comparison(ComparisonKind kind, bool un = false)
@@ -1655,37 +1635,35 @@ namespace ICSharpCode.Decompiler.IL
 					// for floats, 'un' means 'unordered'
 					return Comp.LogicNot(new Comp(kind.Negate(), Sign.None, left, right));
 				}
-				else
-				{
-					return new Comp(kind, Sign.None, left, right);
-				}
+
+				return new Comp(kind, Sign.None, left, right);
 			}
-			else if (left.ResultType.IsIntegerType() && right.ResultType.IsIntegerType() &&
-			         !kind.IsEqualityOrInequality())
+
+			if (left.ResultType.IsIntegerType() && right.ResultType.IsIntegerType() &&
+			    !kind.IsEqualityOrInequality())
 			{
 				// integer comparison where the sign matters
 				Debug.Assert(right.ResultType.IsIntegerType());
 				return new Comp(kind, un ? Sign.Unsigned : Sign.Signed, left, right);
 			}
-			else if (left.ResultType == right.ResultType)
+
+			if (left.ResultType == right.ResultType)
 			{
 				// integer equality, object reference or managed reference comparison
 				return new Comp(kind, Sign.None, left, right);
 			}
+
+			Warn($"Invalid comparison between {left.ResultType} and {right.ResultType}");
+			if (left.ResultType < right.ResultType)
+			{
+				left = new Conv(left, right.ResultType.ToPrimitiveType(), false, Sign.Signed);
+			}
 			else
 			{
-				Warn($"Invalid comparison between {left.ResultType} and {right.ResultType}");
-				if (left.ResultType < right.ResultType)
-				{
-					left = new Conv(left, right.ResultType.ToPrimitiveType(), false, Sign.Signed);
-				}
-				else
-				{
-					right = new Conv(right, left.ResultType.ToPrimitiveType(), false, Sign.Signed);
-				}
-
-				return new Comp(kind, Sign.None, left, right);
+				right = new Conv(right, left.ResultType.ToPrimitiveType(), false, Sign.Signed);
 			}
+
+			return new Comp(kind, Sign.None, left, right);
 
 			void MakeExplicitConversion(StackType sourceType, StackType targetType, PrimitiveType conversionType)
 			{
@@ -1713,10 +1691,8 @@ namespace ICSharpCode.Decompiler.IL
 				MarkBranchTarget(target);
 				return new IfInstruction(condition, new Branch(target));
 			}
-			else
-			{
-				return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
-			}
+
+			return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
 		}
 
 		ILInstruction DecodeConditionalBranch(ILOpCode opCode, bool negate)
@@ -1772,10 +1748,8 @@ namespace ICSharpCode.Decompiler.IL
 				MarkBranchTarget(target);
 				return new IfInstruction(condition, new Branch(target));
 			}
-			else
-			{
-				return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
-			}
+
+			return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
 		}
 
 		ILInstruction DecodeUnconditionalBranch(ILOpCode opCode, bool isLeave = false)
@@ -1791,10 +1765,8 @@ namespace ICSharpCode.Decompiler.IL
 				MarkBranchTarget(target);
 				return new Branch(target);
 			}
-			else
-			{
-				return new InvalidBranch("Invalid branch target");
-			}
+
+			return new InvalidBranch("Invalid branch target");
 		}
 
 		void MarkBranchTarget(int targetILOffset)

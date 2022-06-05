@@ -51,7 +51,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return byteOffsetInst;
 			}
-			else if (byteOffsetInst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Mul } mul)
+
+			if (byteOffsetInst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Mul } mul)
 			{
 				if (mul.IsLifted)
 					return null;

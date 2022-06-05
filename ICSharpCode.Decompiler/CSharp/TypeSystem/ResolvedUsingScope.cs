@@ -71,23 +71,21 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				{
 					return result;
 				}
+
+				if (parentContext.CurrentUsingScope != null)
+				{
+					result = parentContext.CurrentUsingScope.Namespace.GetChildNamespace(UnresolvedUsingScope
+						         .ShortNamespaceName) ??
+					         new DummyNamespace(parentContext.CurrentUsingScope.Namespace,
+						         UnresolvedUsingScope.ShortNamespaceName);
+				}
 				else
 				{
-					if (parentContext.CurrentUsingScope != null)
-					{
-						result = parentContext.CurrentUsingScope.Namespace.GetChildNamespace(UnresolvedUsingScope
-							         .ShortNamespaceName) ??
-						         new DummyNamespace(parentContext.CurrentUsingScope.Namespace,
-							         UnresolvedUsingScope.ShortNamespaceName);
-					}
-					else
-					{
-						result = parentContext.Compilation.RootNamespace;
-					}
-
-					Debug.Assert(result != null);
-					return LazyInit.GetOrSet(ref this.@namespace, result);
+					result = parentContext.Compilation.RootNamespace;
 				}
+
+				Debug.Assert(result != null);
+				return LazyInit.GetOrSet(ref this.@namespace, result);
 			}
 		}
 
@@ -102,19 +100,17 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				{
 					return result;
 				}
-				else
-				{
-					result = new List<INamespace>();
-					CSharpResolver resolver = new(parentContext.WithUsingScope(this));
-					foreach (var u in UnresolvedUsingScope.Usings)
-					{
-						INamespace ns = u.ResolveNamespace(resolver);
-						if (ns != null && !result.Contains(ns))
-							result.Add(ns);
-					}
 
-					return LazyInit.GetOrSet(ref this.usings, new ReadOnlyCollection<INamespace>(result));
+				result = new List<INamespace>();
+				CSharpResolver resolver = new(parentContext.WithUsingScope(this));
+				foreach (var u in UnresolvedUsingScope.Usings)
+				{
+					INamespace ns = u.ResolveNamespace(resolver);
+					if (ns != null && !result.Contains(ns))
+						result.Add(ns);
 				}
+
+				return LazyInit.GetOrSet(ref this.usings, new ReadOnlyCollection<INamespace>(result));
 			}
 		}
 
@@ -125,33 +121,29 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				{
 					return result;
 				}
-				else
-				{
-					CSharpResolver resolver = new(parentContext.WithUsingScope(this));
-					result = new KeyValuePair<string, ResolveResult>[UnresolvedUsingScope.UsingAliases.Count];
-					for (int i = 0; i < result.Count; i++)
-					{
-						var rr = UnresolvedUsingScope.UsingAliases[i].Value.Resolve(resolver);
-						switch (rr)
-						{
-							case TypeResolveResult resolveResult:
-								rr = new AliasTypeResolveResult(UnresolvedUsingScope.UsingAliases[i].Key,
-									resolveResult);
-								break;
-							case NamespaceResolveResult namespaceResolveResult:
-								rr = new AliasNamespaceResolveResult(UnresolvedUsingScope.UsingAliases[i].Key,
-									namespaceResolveResult);
-								break;
-						}
 
-						result[i] = new KeyValuePair<string, ResolveResult>(
-							UnresolvedUsingScope.UsingAliases[i].Key,
-							rr
-						);
+				CSharpResolver resolver = new(parentContext.WithUsingScope(this));
+				result = new KeyValuePair<string, ResolveResult>[UnresolvedUsingScope.UsingAliases.Count];
+				for (int i = 0; i < result.Count; i++)
+				{
+					var rr = UnresolvedUsingScope.UsingAliases[i].Value.Resolve(resolver);
+					switch (rr)
+					{
+						case TypeResolveResult resolveResult:
+							rr = new AliasTypeResolveResult(resolveResult);
+							break;
+						case NamespaceResolveResult namespaceResolveResult:
+							rr = new AliasNamespaceResolveResult(namespaceResolveResult);
+							break;
 					}
 
-					return LazyInit.GetOrSet(ref this.usingAliases, result);
+					result[i] = new KeyValuePair<string, ResolveResult>(
+						UnresolvedUsingScope.UsingAliases[i].Key,
+						rr
+					);
 				}
+
+				return LazyInit.GetOrSet(ref this.usingAliases, result);
 			}
 		}
 

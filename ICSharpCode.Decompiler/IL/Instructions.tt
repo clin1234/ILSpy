@@ -806,10 +806,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return "[NotNullWhen(true)] out " + TypeName + "? " + Name;
 			}
-			else
-			{
-				return "out " + TypeName + " " + Name;
-			}
+			return "out " + TypeName + " " + Name;
 		}
 	}
 

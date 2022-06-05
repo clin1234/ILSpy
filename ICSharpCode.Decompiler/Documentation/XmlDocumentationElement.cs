@@ -262,8 +262,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			if (element != null)
 				return "<" + element.Name + ">";
-			else
-				return this.TextContent;
+			return this.TextContent;
 		}
 	}
 }

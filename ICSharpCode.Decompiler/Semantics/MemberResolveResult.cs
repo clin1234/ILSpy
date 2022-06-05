@@ -116,8 +116,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			if (TargetResult != null)
 				return new[] { TargetResult };
-			else
-				return Enumerable.Empty<ResolveResult>();
+			return Enumerable.Empty<ResolveResult>();
 		}
 
 		public override string ToString()

@@ -129,12 +129,10 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(op == BinaryNumericOperator.Sub);
 					return StackType.I;
 				}
-				else
-				{
-					// add/sub with I or I4 and &
-					Debug.Assert(op is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
-					return StackType.Ref;
-				}
+
+				// add/sub with I or I4 and &
+				Debug.Assert(op is BinaryNumericOperator.Add or BinaryNumericOperator.Sub);
+				return StackType.Ref;
 			}
 
 			return StackType.Unknown;

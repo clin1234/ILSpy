@@ -214,10 +214,8 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return y.HasName && string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) == 0;
 			}
-			else
-			{
-				return y.HasId && x.Id == y.Id;
-			}
+
+			return y.HasId && x.Id == y.Id;
 		}
 
 		public static bool operator !=(Win32ResourceName x, Win32ResourceName y)

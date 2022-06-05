@@ -103,10 +103,9 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				if (IsDeconstructCall)
 					return Method!.Parameters.Count - (Method.IsStatic ? 1 : 0);
-				else if (IsDeconstructTuple)
+				if (IsDeconstructTuple)
 					return TupleType.GetTupleElementTypes(variable.Type).Length;
-				else
-					return 0;
+				return 0;
 			}
 		}
 
@@ -131,11 +130,9 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						return IsPatternMatch(operand, out testedOperand);
 					}
-					else
-					{
-						testedOperand = comp.Left;
-						return IsConstant(comp.Right);
-					}
+
+					testedOperand = comp.Left;
+					return IsConstant(comp.Right);
 				default:
 					testedOperand = null;
 					return false;

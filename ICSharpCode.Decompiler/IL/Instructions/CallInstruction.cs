@@ -172,8 +172,7 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				if (Method is ILiftedOperator liftedOp)
 					return liftedOp.NonLiftedReturnType.GetStackType();
-				else
-					return Method.ReturnType.GetStackType();
+				return Method.ReturnType.GetStackType();
 			}
 		}
 	}

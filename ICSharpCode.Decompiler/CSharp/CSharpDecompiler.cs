@@ -1380,7 +1380,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// If all values are powers of 2 and greater 8, display all enum values, but use hex.
 					return EnumValueDisplayMode.AllHex;
 				}
-				else if (!allConsecutive)
+
+				if (!allConsecutive)
 				{
 					// If all values are powers of 2, display all enum values.
 					return EnumValueDisplayMode.All;

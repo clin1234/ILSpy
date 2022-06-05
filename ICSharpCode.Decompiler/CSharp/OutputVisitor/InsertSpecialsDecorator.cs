@@ -113,16 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		/// <summary>
-		/// Writes all specials between the current position (in the positionStack) and the next
-		/// node with the specified role. Advances the current position.
-		/// </summary>
-		void WriteSpecialsUpToRole(Role role)
-		{
-			WriteSpecialsUpToRole(role, null);
-		}
-
-		void WriteSpecialsUpToRole(Role role, AstNode nextNode)
+		void WriteSpecialsUpToRole(Role role, AstNode nextNode = null)
 		{
 			if (positionStack.Count == 0)
 			{

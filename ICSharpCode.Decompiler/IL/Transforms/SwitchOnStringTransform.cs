@@ -566,15 +566,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// success
 				return nextBlock;
 			}
-			else if (nextBlockBranch.MatchLeave(out BlockContainer blockContainer))
+
+			if (nextBlockBranch.MatchLeave(out BlockContainer blockContainer))
 			{
 				// success
 				return blockContainer;
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -788,7 +787,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var possibleConflicts = sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
 			if (possibleConflicts.Length > 1)
 				return false;
-			else if (possibleConflicts.Length == 1)
+			if (possibleConflicts.Length == 1)
 			{
 				if (possibleConflicts[0].Labels.Count() == 1)
 					return false; // cannot remove only label
@@ -1480,15 +1479,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				return left.MatchLdLoc(out variable) && right.MatchLdStr(out stringValue);
 			}
-			else if (condition.MatchCompEqualsNull(out var arg))
+
+			if (condition.MatchCompEqualsNull(out var arg))
 			{
 				stringValue = null;
 				return arg.MatchLdLoc(out variable);
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 	}
 }

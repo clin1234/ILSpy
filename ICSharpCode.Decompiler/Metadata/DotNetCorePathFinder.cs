@@ -122,7 +122,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					return Path.Combine(basePath, name.Name + ".dll");
 				}
-				else if (File.Exists(Path.Combine(basePath, name.Name + ".exe")))
+
+				if (File.Exists(Path.Combine(basePath, name.Name + ".exe")))
 				{
 					return Path.Combine(basePath, name.Name + ".exe");
 				}
@@ -212,7 +213,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				{
 					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
 				}
-				else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
+
+				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
 				{
 					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
 				}

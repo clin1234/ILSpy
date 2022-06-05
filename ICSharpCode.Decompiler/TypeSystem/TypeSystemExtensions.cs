@@ -65,8 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type.Kind == TypeKind.Delegate)
 				return type.GetMethods(m => m.Name == "Invoke", GetMemberOptions.IgnoreInheritedMembers)
 					.FirstOrDefault();
-			else
-				return null;
+			return null;
 		}
 
 		#endregion
@@ -103,9 +102,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ArgumentNullException.ThrowIfNull(typeReferences);
 			if (typeReferences.Count == 0)
 				return EmptyList<IType>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences,
-					(c, t) => t.Resolve(c));
+			return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences,
+				(c, t) => t.Resolve(c));
 		}
 
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
@@ -245,10 +243,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return td;
 			}
-			else
-			{
-				return new ParameterizedType(td, td.TypeArguments);
-			}
+
+			return new ParameterizedType(td, td.TypeArguments);
 		}
 
 		#region GetAllBaseTypes
@@ -343,7 +339,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			internal bool isOpen;
 			int typeParameterOwnerNestingLevel;
 
-			public override IType VisitTypeParameter(ITypeParameter type)
+			internal override IType VisitTypeParameter(ITypeParameter type)
 			{
 				isOpen = true;
 				// If both classes and methods, or different classes (nested types)
@@ -681,10 +677,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					_ => throw new NotSupportedException("Unknown entity type")
 				};
 			}
-			else
-			{
-				return entity.GetAttributes();
-			}
+
+			return entity.GetAttributes();
 		}
 
 		#endregion

@@ -107,8 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (name[0] == '@')
 				return new Identifier(name[1..], new TextLocation(location.Line, location.Column + 1))
 					{ IsVerbatim = true };
-			else
-				return new Identifier(name, location);
+			return new Identifier(name, location);
 		}
 
 		public static Identifier Create(string name, TextLocation location, bool isVerbatim)

@@ -136,14 +136,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return result;
 				}
-				else
-				{
-					var ownerDefinition = methodDefinition.AccessorOwner;
-					if (ownerDefinition == null)
-						return null;
-					result = ownerDefinition.Specialize(this.Substitution);
-					return LazyInit.GetOrSet(ref accessorOwner, result);
-				}
+
+				var ownerDefinition = methodDefinition.AccessorOwner;
+				if (ownerDefinition == null)
+					return null;
+				result = ownerDefinition.Specialize(this.Substitution);
+				return LazyInit.GetOrSet(ref accessorOwner, result);
 			}
 			internal set {
 				accessorOwner = value;

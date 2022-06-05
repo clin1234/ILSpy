@@ -99,18 +99,16 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return (words[startWordIndex] & (startMask & endMask)) == (startMask & endMask);
 			}
-			else
-			{
-				if ((words[startWordIndex] & startMask) != startMask)
-					return false;
-				for (int i = startWordIndex + 1; i < endWordIndex; i++)
-				{
-					if (words[i] != ulong.MaxValue)
-						return false;
-				}
 
-				return (words[endWordIndex] & endMask) == endMask;
+			if ((words[startWordIndex] & startMask) != startMask)
+				return false;
+			for (int i = startWordIndex + 1; i < endWordIndex; i++)
+			{
+				if (words[i] != ulong.MaxValue)
+					return false;
 			}
+
+			return (words[endWordIndex] & endMask) == endMask;
 		}
 
 		/// <summary>

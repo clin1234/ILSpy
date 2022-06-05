@@ -78,10 +78,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				return (entries[pos].Association, entries[pos].Semantics);
 			}
-			else
-			{
-				return (default(EntityHandle), 0);
-			}
+
+			return (default(EntityHandle), 0);
 		}
 
 		readonly struct Entry : IComparable<Entry>

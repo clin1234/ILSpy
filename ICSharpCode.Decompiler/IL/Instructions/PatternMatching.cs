@@ -59,7 +59,8 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					return conv.Argument.MatchLdcI(out val);
 				}
-				else if (conv.Kind == ConversionKind.ZeroExtend && conv.InputType == StackType.I4)
+
+				if (conv.Kind == ConversionKind.ZeroExtend && conv.InputType == StackType.I4)
 				{
 					if (conv.Argument.MatchLdcI(out val))
 					{
@@ -369,12 +370,10 @@ namespace ICSharpCode.Decompiler.IL
 				right = comp.Right;
 				return true;
 			}
-			else
-			{
-				left = null;
-				right = null;
-				return false;
-			}
+
+			left = null;
+			right = null;
+			return false;
 		}
 
 		/// <summary>
@@ -393,16 +392,15 @@ namespace ICSharpCode.Decompiler.IL
 				arg = left;
 				return true;
 			}
-			else if (left.MatchLdNull())
+
+			if (left.MatchLdNull())
 			{
 				arg = right;
 				return true;
 			}
-			else
-			{
-				arg = null;
-				return false;
-			}
+
+			arg = null;
+			return false;
 		}
 
 		/// <summary>
@@ -421,16 +419,15 @@ namespace ICSharpCode.Decompiler.IL
 				arg = left;
 				return true;
 			}
-			else if (left.MatchLdNull())
+
+			if (left.MatchLdNull())
 			{
 				arg = right;
 				return true;
 			}
-			else
-			{
-				arg = null;
-				return false;
-			}
+
+			arg = null;
+			return false;
 		}
 
 		/// <summary>
@@ -453,12 +450,10 @@ namespace ICSharpCode.Decompiler.IL
 				right = comp.Right;
 				return true;
 			}
-			else
-			{
-				left = null;
-				right = null;
-				return false;
-			}
+
+			left = null;
+			right = null;
+			return false;
 		}
 
 		public bool MatchLdFld([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? field)

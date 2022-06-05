@@ -106,8 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (nullability == base.Nullability)
 				return this;
-			else
-				return new NullabilityAnnotatedType(this, nullability);
+			return new NullabilityAnnotatedType(this, nullability);
 		}
 	}
 }

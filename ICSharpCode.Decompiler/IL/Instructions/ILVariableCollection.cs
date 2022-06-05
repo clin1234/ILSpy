@@ -104,8 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				if (item.Function == scope)
 					return false;
-				else
-					throw new ArgumentException("Variable already belongs to another scope");
+				throw new ArgumentException("Variable already belongs to another scope");
 			}
 
 			item.Function = scope;

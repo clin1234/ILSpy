@@ -1,14 +1,14 @@
-<html>
+<html lang="en">
 <head><title>NRefactory Pattern Matching</title></head>
 <body>
-    The pattern matching API for the C# AST is similar to how regular
-    expressions work in .NET, except that it's working with AstNodes
-    instead of characters.<br>
-    First you declare a pattern, for example: "X a = new X(...);".<br>
-    <span style="color: #000080; ">var</span>&nbsp;pattern =&nbsp;<span
-      style="color: #008b8b; font-weight: bold; ">new</span>&nbsp;VariableDeclarationStatement&nbsp;<span
-      style="color: #235100; font-weight: normal; font-style: normal; ">{</span><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;Type =&nbsp;<span style="color: #008b8b; font-weight: bold; ">new</span>&nbsp;<span
+The pattern matching API for the C# AST is similar to how regular
+expressions work in .NET, except that it's working with AstNodes
+instead of characters.<br>
+First you declare a pattern, for example: "X a = new X(...);".<br>
+<span style="color: #000080; ">var</span>&nbsp;pattern =&nbsp;<span
+	style="color: #008b8b; font-weight: bold; ">new</span>&nbsp;VariableDeclarationStatement&nbsp;<span
+	style="color: #235100; font-weight: normal; font-style: normal; ">{</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Type =&nbsp;<span style="color: #008b8b; font-weight: bold; ">new</span>&nbsp;<span
       style="color: #191970; font-weight: bold; ">AnyNode</span><span
       style="color: #235100; font-weight: normal; font-style: normal; ">(</span><span
       style="color: #0000ff; ">"type"</span><span style="color: #235100;

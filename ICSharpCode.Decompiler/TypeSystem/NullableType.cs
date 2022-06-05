@@ -50,8 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
 			    pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
 				return pt.GetTypeArgument(0);
-			else
-				return type;
+			return type;
 		}
 
 		/// <summary>
@@ -66,8 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ITypeDefinition nullableTypeDef = nullableType.GetDefinition();
 			if (nullableTypeDef != null)
 				return new ParameterizedType(nullableTypeDef, new[] { elementType });
-			else
-				return nullableType;
+			return nullableType;
 		}
 
 		/// <summary>

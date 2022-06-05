@@ -79,18 +79,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					                                new TypeParameterReference(ownerType, index));
 				return result;
 			}
-			else
-			{
-				return new TypeParameterReference(ownerType, index);
-			}
+
+			return new TypeParameterReference(ownerType, index);
 		}
 
 		public override string ToString()
 		{
 			if (ownerType == SymbolKind.Method)
 				return "!!" + Index.ToString(CultureInfo.InvariantCulture);
-			else
-				return "!" + Index.ToString(CultureInfo.InvariantCulture);
+			return "!" + Index.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 }

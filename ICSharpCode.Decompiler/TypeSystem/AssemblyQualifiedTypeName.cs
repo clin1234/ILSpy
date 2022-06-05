@@ -41,8 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (string.IsNullOrEmpty(AssemblyName))
 				return TypeName.ToString();
-			else
-				return TypeName + ", " + AssemblyName;
+			return TypeName + ", " + AssemblyName;
 		}
 
 		public override bool Equals(object obj)

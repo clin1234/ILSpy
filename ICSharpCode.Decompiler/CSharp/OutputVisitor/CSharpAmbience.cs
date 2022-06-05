@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return astNode.ToString().TrimEnd(';', '\r', '\n', (char)8232);
 		}
 
-		public void ConvertType(IType type, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		private void ConvertType(IType type, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) !=
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return writer.ToString();
 		}
 
-		public void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		private void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			ArgumentNullException.ThrowIfNull(symbol);
 			ArgumentNullException.ThrowIfNull(writer);
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				outputVisitor.WriteTypeParameters(typeParameters);
 			}
 
-			TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
+			static TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
 			{
 				decl.Variance = VarianceModifier.Invariant;
 				return decl;

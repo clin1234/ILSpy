@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (node.NodeType != NodeType.Whitespace)
 			{
 				System.Diagnostics.Debug.Assert(currentList != null);
-				foreach (var removable in node.Children.Where(n => n is CSharpTokenNode))
+				foreach (var removable in node.Children.Where(static n => n is CSharpTokenNode))
 				{
 					removable.Remove();
 				}
@@ -117,16 +117,22 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				t = new CSharpTokenNode(start, tokenRole);
 			else if (role == EntityDeclaration.ModifierRole)
 				t = new CSharpModifierToken(start, CSharpModifierToken.GetModifierValue(keyword));
-			else if (keyword == "this")
-			{
-				if (nodes.Peek().LastOrDefault() is ThisReferenceExpression node)
-					node.Location = start;
-			}
-			else if (keyword == "base")
-			{
-				if (nodes.Peek().LastOrDefault() is BaseReferenceExpression node)
-					node.Location = start;
-			}
+			else
+				switch (keyword)
+				{
+					case "this":
+					{
+						if (nodes.Peek().LastOrDefault() is ThisReferenceExpression node)
+							node.Location = start;
+						break;
+					}
+					case "base":
+					{
+						if (nodes.Peek().LastOrDefault() is BaseReferenceExpression node)
+							node.Location = start;
+						break;
+					}
+				}
 
 			if (t != null)
 			{
@@ -150,14 +156,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Expression node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
 			base.WritePrimitiveValue(value, format);
-			if (node is PrimitiveExpression expression)
+			switch (node)
 			{
-				expression.SetLocation(startLocation, locationProvider.Location);
-			}
-
-			if (node is NullReferenceExpression referenceExpression)
-			{
-				referenceExpression.SetStartLocation(startLocation);
+				case PrimitiveExpression expression:
+					expression.SetLocation(startLocation, locationProvider.Location);
+					break;
+				case NullReferenceExpression referenceExpression:
+					referenceExpression.SetStartLocation(startLocation);
+					break;
 			}
 		}
 

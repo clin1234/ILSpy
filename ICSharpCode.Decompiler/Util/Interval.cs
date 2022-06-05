@@ -99,16 +99,14 @@ namespace ICSharpCode.Decompiler.Util
 			int inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
 			if (start <= inclusiveEnd)
 				return new Interval(start, unchecked(inclusiveEnd + 1));
-			else
-				return default(Interval);
+			return default(Interval);
 		}
 
 		public override string ToString()
 		{
 			if (End == int.MinValue)
 				return $"[{Start}..int.MaxValue]";
-			else
-				return $"[{Start}..{End})";
+			return $"[{Start}..{End})";
 		}
 
 		#region Equals and GetHashCode implementation
@@ -237,8 +235,7 @@ namespace ICSharpCode.Decompiler.Util
 			long inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
 			if (start <= inclusiveEnd)
 				return new LongInterval(start, unchecked(inclusiveEnd + 1));
-			else
-				return default(LongInterval);
+			return default(LongInterval);
 		}
 
 		/// <summary>
@@ -270,17 +267,15 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				if (Start == long.MinValue)
 					return "[long.MinValue..long.MaxValue]";
-				else
-					return $"[{Start}..long.MaxValue]";
+				return $"[{Start}..long.MaxValue]";
 			}
-			else if (Start == long.MinValue)
+
+			if (Start == long.MinValue)
 			{
 				return $"[long.MinValue..{End})";
 			}
-			else
-			{
-				return $"[{Start}..{End})";
-			}
+
+			return $"[{Start}..{End})";
 		}
 
 		#region Equals and GetHashCode implementation

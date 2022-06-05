@@ -51,8 +51,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			                    ?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
 			if (xmlDocFile != null)
 				return new XmlDocumentationProvider(xmlDocFile);
-			else
-				return null;
+			return null;
 		}
 
 		public static XmlDocumentationProvider LoadDocumentation(PEFile module)

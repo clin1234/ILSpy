@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public sealed class ArrayType : TypeWithElementType, ICompilationProvider
 	{
-		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1,
+		internal ArrayType(ICompilation compilation, IType elementType, int dimensions = 1,
 			Nullability nullability = Nullability.Oblivious) : base(elementType)
 		{
 			if (dimensions <= 0)
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return TypeKind.Array; }
 		}
 
-		public int Dimensions { get; }
+		internal int Dimensions { get; }
 
 		public override Nullability Nullability { get; }
 
@@ -88,8 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (nullability == this.Nullability)
 				return this;
-			else
-				return new ArrayType(Compilation, elementType, Dimensions, nullability);
+			return new ArrayType(Compilation, elementType, Dimensions, nullability);
 		}
 
 		public override int GetHashCode()
@@ -117,8 +116,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
-			else
-				return Compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
+			return Compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
 		}
 
 		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments,
@@ -126,8 +124,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
-			else
-				return Compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
+			return Compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
 
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
@@ -135,8 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
-			else
-				return Compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
+			return Compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
 		}
 
 		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
@@ -144,8 +140,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IProperty>.Instance;
-			else
-				return Compilation.FindType(KnownTypeCode.Array).GetProperties(filter, options);
+			return Compilation.FindType(KnownTypeCode.Array).GetProperties(filter, options);
 		}
 
 		// NestedTypes, Events, Fields: System.Array doesn't have any; so we can use the AbstractType default implementation
@@ -159,10 +154,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			IType e = elementType.AcceptVisitor(visitor);
-			if (e == elementType)
-				return this;
-			else
-				return new ArrayType(Compilation, e, Dimensions, Nullability);
+			return e == elementType ? this : new ArrayType(Compilation, e, Dimensions, Nullability);
 		}
 	}
 

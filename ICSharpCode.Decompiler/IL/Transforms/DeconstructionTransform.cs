@@ -472,7 +472,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				};
 				return true;
 			}
-			else if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out targetType, out valueInst))
+
+			if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out targetType, out valueInst))
 			{
 				// OK - use the assignment as is
 				addAssignment = deconstructInst => {
@@ -480,10 +481,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				};
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		bool IsCompatibleImplicitConversion(IType targetType, ConversionInfo conversionInfo)

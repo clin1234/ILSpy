@@ -30,25 +30,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class DestructorDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole TildeRole = new("~");
-
-		public CSharpTokenNode TildeToken {
-			get { return GetChildByRole(TildeRole); }
-		}
+		internal static readonly TokenRole TildeRole = new("~");
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Destructor; }
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public BlockStatement Body {
+		internal BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}

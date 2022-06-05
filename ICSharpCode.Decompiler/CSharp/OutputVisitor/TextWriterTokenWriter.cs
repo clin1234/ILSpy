@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Writes C# code into a TextWriter.
 	/// </summary>
-	public sealed class TextWriterTokenWriter : TokenWriter, ILocatable
+	internal sealed class TextWriterTokenWriter : TokenWriter, ILocatable
 	{
 		readonly TextWriter textWriter;
 		bool isAtStartOfLine = true;
@@ -237,61 +237,60 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
-			if (value == null)
+			switch (value)
 			{
-				// usually NullReferenceExpression should be used for this, but we'll handle it anyways
-				textWriter.Write("null");
-				column += 4;
-				Length += 4;
-				return;
-			}
-
-			if (value is bool value1)
-			{
-				if (value1)
-				{
-					textWriter.Write("true");
+				case null:
+					// usually NullReferenceExpression should be used for this, but we'll handle it anyways
+					textWriter.Write("null");
 					column += 4;
 					Length += 4;
-				}
-				else
+					return;
+				case bool value1:
 				{
-					textWriter.Write("false");
-					column += 5;
-					Length += 5;
+					if (value1)
+					{
+						textWriter.Write("true");
+						column += 4;
+						Length += 4;
+					}
+					else
+					{
+						textWriter.Write("false");
+						column += 5;
+						Length += 5;
+					}
+
+					return;
 				}
-
-				return;
-			}
-
-			if (value is string)
-			{
-				string tmp = ConvertString(value.ToString());
-				column += tmp.Length + 2;
-				Length += tmp.Length + 2;
-				textWriter.Write('"');
-				textWriter.Write(tmp);
-				textWriter.Write('"');
-			}
-			else if (value is char c)
-			{
-				string tmp = ConvertCharLiteral(c);
-				column += tmp.Length + 2;
-				Length += tmp.Length + 2;
-				textWriter.Write('\'');
-				textWriter.Write(tmp);
-				textWriter.Write('\'');
-			}
-			else if (value is decimal value2)
-			{
-				string str = value2.ToString(NumberFormatInfo.InvariantInfo) + "m";
-				column += str.Length;
-				Length += str.Length;
-				textWriter.Write(str);
-			}
-			else if (value is float f1)
-			{
-				if (float.IsInfinity(f1) || float.IsNaN(f1))
+				case string:
+				{
+					string tmp = ConvertString(value.ToString());
+					column += tmp.Length + 2;
+					Length += tmp.Length + 2;
+					textWriter.Write('"');
+					textWriter.Write(tmp);
+					textWriter.Write('"');
+					break;
+				}
+				case char c:
+				{
+					string tmp = ConvertCharLiteral(c);
+					column += tmp.Length + 2;
+					Length += tmp.Length + 2;
+					textWriter.Write('\'');
+					textWriter.Write(tmp);
+					textWriter.Write('\'');
+					break;
+				}
+				case decimal value2:
+				{
+					string str = value2.ToString(NumberFormatInfo.InvariantInfo) + "m";
+					column += str.Length;
+					Length += str.Length;
+					textWriter.Write(str);
+					break;
+				}
+				case float f1 when float.IsInfinity(f1) || float.IsNaN(f1):
 				{
 					// Strictly speaking, these aren't PrimitiveExpressions;
 					// but we still support writing these to make life easier for code generators.
@@ -320,23 +319,23 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 					return;
 				}
-
-				var str = f1.ToString("R", NumberFormatInfo.InvariantInfo) + "f";
-				if (f1 == 0 && 1 / f1 == float.NegativeInfinity && str[0] != '-')
+				case float f1:
 				{
-					// negative zero is a special case
-					// (again, not a primitive expression, but it's better to handle
-					// the special case here than to do it in all code generators)
-					str = '-' + str;
-				}
+					var str = f1.ToString("R", NumberFormatInfo.InvariantInfo) + "f";
+					if (f1 == 0 && float.IsNegativeInfinity(1 / f1) && str[0] != '-')
+					{
+						// negative zero is a special case
+						// (again, not a primitive expression, but it's better to handle
+						// the special case here than to do it in all code generators)
+						str = '-' + str;
+					}
 
-				column += str.Length;
-				Length += str.Length;
-				textWriter.Write(str);
-			}
-			else if (value is double d)
-			{
-				if (double.IsInfinity(d) || double.IsNaN(d))
+					column += str.Length;
+					Length += str.Length;
+					textWriter.Write(str);
+					break;
+				}
+				case double d when double.IsInfinity(d) || double.IsNaN(d):
 				{
 					// Strictly speaking, these aren't PrimitiveExpressions;
 					// but we still support writing these to make life easier for code generators.
@@ -365,58 +364,63 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 					return;
 				}
-
-				string number = d.ToString("R", NumberFormatInfo.InvariantInfo);
-				if (d == 0 && 1 / d == double.NegativeInfinity && number[0] != '-')
+				case double d:
 				{
-					// negative zero is a special case
-					// (again, not a primitive expression, but it's better to handle
-					// the special case here than to do it in all code generators)
-					number = '-' + number;
-				}
+					string number = d.ToString("R", NumberFormatInfo.InvariantInfo);
+					if (d == 0 && double.IsNegativeInfinity(1 / d) && number[0] != '-')
+					{
+						// negative zero is a special case
+						// (again, not a primitive expression, but it's better to handle
+						// the special case here than to do it in all code generators)
+						number = '-' + number;
+					}
 
-				if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0)
-				{
-					number += ".0";
-				}
+					if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0)
+					{
+						number += ".0";
+					}
 
-				textWriter.Write(number);
-				column += number.Length;
-				Length += number.Length;
-			}
-			else if (value is IFormattable formattable)
-			{
-				StringBuilder b = new();
-				if (format == LiteralFormat.HexadecimalNumber)
-				{
-					b.Append("0x");
-					b.Append(formattable.ToString("X", NumberFormatInfo.InvariantInfo));
+					textWriter.Write(number);
+					column += number.Length;
+					Length += number.Length;
+					break;
 				}
-				else
+				case IFormattable formattable:
 				{
-					b.Append(formattable.ToString(null, NumberFormatInfo.InvariantInfo));
-				}
+					StringBuilder b = new();
+					if (format == LiteralFormat.HexadecimalNumber)
+					{
+						b.Append("0x");
+						b.Append(formattable.ToString("X", NumberFormatInfo.InvariantInfo));
+					}
+					else
+					{
+						b.Append(formattable.ToString(null, NumberFormatInfo.InvariantInfo));
+					}
 
-				if (formattable is uint or ulong)
-				{
-					b.Append("u");
-				}
+					if (formattable is uint or ulong)
+					{
+						b.Append("u");
+					}
 
-				if (formattable is long or ulong)
-				{
-					b.Append("L");
-				}
+					if (formattable is long or ulong)
+					{
+						b.Append("L");
+					}
 
-				textWriter.Write(b.ToString());
-				column += b.Length;
-				Length += b.Length;
-			}
-			else
-			{
-				textWriter.Write(value.ToString());
-				int length = value.ToString().Length;
-				column += length;
-				Length += length;
+					textWriter.Write(b.ToString());
+					column += b.Length;
+					Length += b.Length;
+					break;
+				}
+				default:
+				{
+					textWriter.Write(value.ToString());
+					int length = value.ToString().Length;
+					column += length;
+					Length += length;
+					break;
+				}
 			}
 		}
 

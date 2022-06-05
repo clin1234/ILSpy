@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// The MethodGroupResolveResult has no type.
 	/// To retrieve the delegate type or the chosen overload, look at the method group conversion.
 	/// </summary>
-	public sealed class MethodGroupResolveResult : ResolveResult
+	internal sealed class MethodGroupResolveResult : ResolveResult
 	{
 		readonly IReadOnlyList<MethodListWithDeclaringType> methodLists;
 
@@ -302,8 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (TargetResult != null)
 				return new[] { TargetResult };
-			else
-				return Enumerable.Empty<ResolveResult>();
+			return Enumerable.Empty<ResolveResult>();
 		}
 	}
 }

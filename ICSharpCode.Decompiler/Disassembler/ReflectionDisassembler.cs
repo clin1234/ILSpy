@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public bool ExpandMemberDefinitions { get; set; } = false;
 
-		public IAssemblyResolver AssemblyResolver { get; set; }
+		public IAssemblyResolver AssemblyResolver { get; init; }
 
 		public void DisassembleNamespace(string nameSpace, PEFile module, IEnumerable<TypeDefinitionHandle> types)
 		{

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// The formatting options factory creates pre defined formatting option styles.
 	/// </summary>
-	public static class FormattingOptionsFactory
+	internal static class FormattingOptionsFactory
 	{
 		/// <summary>
 		/// Creates empty CSharpFormatting options.
@@ -442,4 +442,3 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 	}
 }
-

@@ -164,12 +164,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (pt == null)
 				return this;
-			else
-				return new FunctionPointerType(
-					module, CallingConvention, CustomCallingConventions,
-					r, ReturnIsRefReadOnly,
-					pt.ToImmutableArray(),
-					ParameterReferenceKinds);
+			return new FunctionPointerType(
+				module, CallingConvention, CustomCallingConventions,
+				r, ReturnIsRefReadOnly,
+				pt.ToImmutableArray(),
+				ParameterReferenceKinds);
 		}
 
 		public override bool Equals(IType other)

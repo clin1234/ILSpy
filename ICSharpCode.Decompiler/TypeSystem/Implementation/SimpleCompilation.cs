@@ -80,12 +80,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return ns;
 				}
-				else
-				{
-					if (!initialized)
-						throw new InvalidOperationException("Compilation isn't initialized yet");
-					return LazyInit.GetOrSet(ref this.rootNamespace, CreateRootNamespace());
-				}
+
+				if (!initialized)
+					throw new InvalidOperationException("Compilation isn't initialized yet");
+				return LazyInit.GetOrSet(ref this.rootNamespace, CreateRootNamespace());
 			}
 		}
 

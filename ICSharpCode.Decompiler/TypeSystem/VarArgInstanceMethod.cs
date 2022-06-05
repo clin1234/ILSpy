@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Used when calling a vararg method. Stores the actual parameter types being passed.
 	/// </summary>
-	public sealed class VarArgInstanceMethod : IMethod
+	internal sealed class VarArgInstanceMethod : IMethod
 	{
 		readonly IParameter[] parameters;
 

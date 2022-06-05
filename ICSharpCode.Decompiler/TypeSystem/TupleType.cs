@@ -164,10 +164,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					valueTupleAssembly: type.GetDefinition()?.ParentModule
 				);
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -180,10 +178,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return output.ToImmutableArray();
 			}
-			else
-			{
-				return default(ImmutableArray<IType>);
-			}
+
+			return default(ImmutableArray<IType>);
 
 			bool Collect(IType type)
 			{
@@ -286,10 +282,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new TupleType(this.Compilation, newElementTypes.ToImmutableArray(), this.ElementNames,
 					this.GetDefinition()?.ParentModule);
 			}
-			else
-			{
-				return this;
-			}
+
+			return this;
 		}
 
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,

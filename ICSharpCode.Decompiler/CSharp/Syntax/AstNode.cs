@@ -258,17 +258,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return role.NullObject;
 		}
 
-		public T? GetParent<T>() where T : AstNode
-		{
-			return Ancestors.OfType<T>().FirstOrDefault();
-		}
-
-		public AstNode? GetParent(Func<AstNode, bool>? pred)
+		internal AstNode? GetParent(Func<AstNode, bool>? pred)
 		{
 			return pred != null ? Ancestors.FirstOrDefault(pred) : Ancestors.FirstOrDefault();
 		}
 
-		public AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
+		internal AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
 		{
 			return new AstNodeCollection<T>(this, role);
 		}
@@ -773,8 +768,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			text = text.TrimEnd().Replace("\t", "").Replace(Environment.NewLine, " ");
 			if (text.Length > 100)
 				return text[..97] + "...";
-			else
-				return text;
+			return text;
 		}
 
 		#region Null

@@ -98,8 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var result = LazyInit.VolatileRead(ref this.returnType);
 				if (result != null)
 					return result;
-				else
-					return LazyInit.GetOrSet(ref this.returnType, baseMember.ReturnType.AcceptVisitor(Substitution));
+				return LazyInit.GetOrSet(ref this.returnType, baseMember.ReturnType.AcceptVisitor(Substitution));
 			}
 			protected init {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
@@ -219,12 +218,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return result;
 			}
-			else
-			{
-				var sm = accessorDefinition.Specialize(Substitution);
-				//sm.AccessorOwner = this;
-				return LazyInit.GetOrSet(ref cachingField, sm);
-			}
+
+			var sm = accessorDefinition.Specialize(Substitution);
+			//sm.AccessorOwner = this;
+			return LazyInit.GetOrSet(ref cachingField, sm);
 		}
 
 		public override bool Equals(object obj)
@@ -271,9 +268,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var result = LazyInit.VolatileRead(ref this.parameters);
 				if (result != null)
 					return result;
-				else
-					return LazyInit.GetOrSet(ref this.parameters,
-						CreateParameters(t => t.AcceptVisitor(this.Substitution)));
+				return LazyInit.GetOrSet(ref this.parameters,
+					CreateParameters(t => t.AcceptVisitor(this.Substitution)));
 			}
 			protected init {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
@@ -292,18 +288,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return Empty<IParameter>.Array;
 			}
-			else
-			{
-				var parameters = new IParameter[paramDefs.Count];
-				for (int i = 0; i < parameters.Length; i++)
-				{
-					var p = paramDefs[i];
-					IType newType = substitution(p.Type);
-					parameters[i] = new SpecializedParameter(p, newType, this);
-				}
 
-				return parameters;
+			var parameters = new IParameter[paramDefs.Count];
+			for (int i = 0; i < parameters.Length; i++)
+			{
+				var p = paramDefs[i];
+				IType newType = substitution(p.Type);
+				parameters[i] = new SpecializedParameter(p, newType, this);
 			}
+
+			return parameters;
 		}
 
 		public override string ToString()

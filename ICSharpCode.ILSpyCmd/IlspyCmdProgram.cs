@@ -192,7 +192,8 @@ Examples:
 
 					return ListContent(fileName, output, kinds);
 				}
-				else if (ShowILCodeFlag || ShowILSequencePointsFlag)
+
+				if (ShowILCodeFlag || ShowILSequencePointsFlag)
 				{
 					if (outputDirectorySpecified)
 					{
@@ -202,7 +203,8 @@ Examples:
 
 					return ShowIL(fileName, output);
 				}
-				else if (CreateDebugInfoFlag)
+
+				if (CreateDebugInfoFlag)
 				{
 					string pdbFileName;
 					if (outputDirectorySpecified)
@@ -217,21 +219,20 @@ Examples:
 
 					return GeneratePdbForAssembly(fileName, pdbFileName, app);
 				}
-				else if (DumpPackageFlag)
+
+				if (DumpPackageFlag)
 				{
 					return DumpPackageAssemblies(fileName, OutputDirectory, app);
 				}
-				else
-				{
-					if (outputDirectorySpecified)
-					{
-						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(OutputDirectory,
-							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
-					}
 
-					return Decompile(fileName, output, TypeName);
+				if (outputDirectorySpecified)
+				{
+					string outputName = Path.GetFileNameWithoutExtension(fileName);
+					output = File.CreateText(Path.Combine(OutputDirectory,
+						(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
 				}
+
+				return Decompile(fileName, output, TypeName);
 			}
 		}
 

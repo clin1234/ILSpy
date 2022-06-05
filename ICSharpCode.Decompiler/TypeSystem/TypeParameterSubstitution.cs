@@ -64,30 +64,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		internal IReadOnlyList<IType> MethodTypeArguments { get; }
 
-		public override IType VisitTypeParameter(ITypeParameter type)
+		internal override IType VisitTypeParameter(ITypeParameter type)
 		{
 			int index = type.Index;
 			if (ClassTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition)
 			{
 				if (index >= 0 && index < ClassTypeArguments.Count)
 					return ClassTypeArguments[index];
-				else
-					return SpecialType.UnknownType;
+				return SpecialType.UnknownType;
 			}
-			else if (MethodTypeArguments != null && type.OwnerType == SymbolKind.Method)
+
+			if (MethodTypeArguments != null && type.OwnerType == SymbolKind.Method)
 			{
 				if (index >= 0 && index < MethodTypeArguments.Count)
 					return MethodTypeArguments[index];
-				else
-					return SpecialType.UnknownType;
+				return SpecialType.UnknownType;
 			}
-			else
-			{
-				return base.VisitTypeParameter(type);
-			}
+
+			return base.VisitTypeParameter(type);
 		}
 
-		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		internal override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (type is NullabilityAnnotatedTypeParameter tp)
 			{
@@ -95,16 +92,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					return VisitTypeParameter(tp).ChangeNullability(Nullability.Nullable);
 				}
-				else
-				{
-					// T! substituted with T=oblivious string should result in oblivious string
-					return VisitTypeParameter(tp);
-				}
+
+				// T! substituted with T=oblivious string should result in oblivious string
+				return VisitTypeParameter(tp);
 			}
-			else
-			{
-				return base.VisitNullabilityAnnotatedType(type);
-			}
+
+			return base.VisitNullabilityAnnotatedType(type);
 		}
 
 		public override string ToString()

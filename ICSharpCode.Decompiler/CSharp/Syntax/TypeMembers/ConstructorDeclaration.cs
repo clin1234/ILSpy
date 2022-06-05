@@ -115,8 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				if (ConstructorInitializerType == ConstructorInitializerType.Base)
 					return GetChildByRole(BaseKeywordRole);
-				else
-					return GetChildByRole(ThisKeywordRole);
+				return GetChildByRole(ThisKeywordRole);
 			}
 		}
 

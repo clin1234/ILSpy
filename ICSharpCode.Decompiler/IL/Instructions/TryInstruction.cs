@@ -108,8 +108,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (index == 0)
 				return TryBlock;
-			else
-				return Handlers[index - 1];
+			return Handlers[index - 1];
 		}
 
 		protected override void SetChild(int index, ILInstruction value)
@@ -124,8 +123,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (index == 0)
 				return TryBlockSlot;
-			else
-				return HandlerSlot;
+			return HandlerSlot;
 		}
 	}
 

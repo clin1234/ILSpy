@@ -113,11 +113,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				ushort largeHeader = (ushort)((bodyBlockReader.ReadByte() << 8) | header);
 				return (byte)(largeHeader >> 12) * 4;
 			}
-			else
-			{
-				// tiny
-				return 1;
-			}
+
+			// tiny
+			return 1;
 		}
 	}
 }

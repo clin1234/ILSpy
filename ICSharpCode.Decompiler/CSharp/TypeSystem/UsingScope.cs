@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -63,8 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			get {
 				if (Parent != null)
 					return NamespaceDeclaration.BuildQualifiedName(Parent.NamespaceName, ShortNamespaceName);
-				else
-					return ShortNamespaceName;
+				return ShortNamespaceName;
 			}
 			//			set {
 			//				if (value == null)
@@ -99,28 +99,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			base.FreezeInternal();
 		}
 
-		protected override void FreezeInternal()
-		{
-			usings = FreezableHelper.FreezeList(usings);
-			usingAliases = FreezableHelper.FreezeList(usingAliases);
-			externAliases = FreezableHelper.FreezeList(externAliases);
-
-			// In current model (no child scopes), it makes sense to freeze the parent as well
-			// to ensure the whole lookup chain is immutable.
-			if (Parent != null)
-				Parent.Freeze();
-
-			base.FreezeInternal();
-		}
-
-		//		public IList<UsingScope> ChildScopes {
-		//			get {
-		//				if (childScopes == null)
-		//					childScopes = new List<UsingScope>();
-		//				return childScopes;
-		//			}
-		//		}
-
 		/// <summary>
 		/// Gets whether this using scope has an alias (either using or extern)
 		/// with the specified name.
@@ -129,10 +107,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			if (usingAliases != null)
 			{
-				foreach (var pair in usingAliases)
+				if (usingAliases.Any(pair => pair.Key == identifier))
 				{
-					if (pair.Key == identifier)
-						return true;
+					return true;
 				}
 			}
 

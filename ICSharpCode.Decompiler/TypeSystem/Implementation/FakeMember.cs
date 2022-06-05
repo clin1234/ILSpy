@@ -76,8 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (DeclaringType != null)
 					return DeclaringType.FullName + "." + Name;
-				else
-					return Name;
+				return Name;
 			}
 		}
 
@@ -85,8 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (DeclaringType != null)
 					return DeclaringType.ReflectionName + "." + Name;
-				else
-					return Name;
+				return Name;
 			}
 		}
 

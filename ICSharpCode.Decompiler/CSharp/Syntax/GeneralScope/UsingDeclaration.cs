@@ -81,14 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				stack.Push(mt.MemberName);
 				type = mt.Target;
-				if (mt.IsDoubleColon)
-				{
-					stack.Push("::");
-				}
-				else
-				{
-					stack.Push(".");
-				}
+				stack.Push(mt.IsDoubleColon ? "::" : ".");
 			}
 
 			if (type is SimpleType simpleType)

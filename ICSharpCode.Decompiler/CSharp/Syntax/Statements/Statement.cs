@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Null
 
-		public new static readonly Statement Null = new NullStatement();
+		internal new static readonly Statement Null = new NullStatement();
 
 		sealed class NullStatement : Statement
 		{

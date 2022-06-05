@@ -86,7 +86,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// testedVar == null ? trueInst : falseInst
 					return TryNullPropagation(testedVar, falseInst, trueInst, Mode.ReferenceType);
 				}
-				else if (comp.Kind == ComparisonKind.Inequality)
+
+				if (comp.Kind == ComparisonKind.Inequality)
 				{
 					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.ReferenceType);
 				}
@@ -98,7 +99,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByValue);
 				}
-				else if (loadInst.MatchLdLoc(out testedVar))
+
+				if (loadInst.MatchLdLoc(out testedVar))
 				{
 					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByReference);
 				}
@@ -137,7 +139,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullableRewrap(nonNullInst);
 			}
-			else if (nullInst.MatchDefaultValue(out var type) && type.IsKnownType(KnownTypeCode.NullableOfT))
+
+			if (nullInst.MatchDefaultValue(out var type) && type.IsKnownType(KnownTypeCode.NullableOfT))
 			{
 				context.Step($"Null propagation (mode={mode}, output=value type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : default(T?)
@@ -145,7 +148,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullableRewrap(nonNullInst);
 			}
-			else if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType))
+
+			if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType))
 			{
 				context.Step($"Null propagation (mode={mode}, output=null coalescing)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : nullInst
@@ -260,7 +264,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					finalLoad = inst;
 					return chainLength >= 1;
 				}
-				else if (inst.MatchLdFld(out var target, out _))
+
+				if (inst.MatchLdFld(out var target, out _))
 				{
 					inst = target;
 				}

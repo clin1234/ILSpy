@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (node == loop)
 							return true;
-						else if (node is IL.BlockContainer)
+						if (node is IL.BlockContainer)
 							break;
 					}
 				}

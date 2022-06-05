@@ -34,10 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole SizeofKeywordRole = new("sizeof");
 
-		public SizeOfExpression()
-		{
-		}
-
 		public SizeOfExpression(AstType type)
 		{
 			AddChild(type, Roles.Type);

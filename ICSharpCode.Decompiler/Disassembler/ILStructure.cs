@@ -198,7 +198,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				{
 					return child.AddNestedStructure(newStructure);
 				}
-				else if (!(child.EndOffset <= newStructure.StartOffset || newStructure.EndOffset <= child.StartOffset))
+
+				if (!(child.EndOffset <= newStructure.StartOffset || newStructure.EndOffset <= child.StartOffset))
 				{
 					// child and newStructure overlap
 					if (!(newStructure.StartOffset <= child.StartOffset && child.EndOffset <= newStructure.EndOffset))

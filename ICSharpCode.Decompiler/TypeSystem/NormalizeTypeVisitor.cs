@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return a.Equals(b);
 		}
 
-		public override IType VisitTypeParameter(ITypeParameter type)
+		internal override IType VisitTypeParameter(ITypeParameter type)
 		{
 			switch (type.OwnerType)
 			{
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public override IType VisitTypeDefinition(ITypeDefinition type)
+		internal override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			switch (type.KnownTypeCode)
 			{
@@ -76,8 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					// we do this the opposite direction, so that we don't need a compilation to find the object type.
 					if (RemoveNullability)
 						return SpecialType.Dynamic;
-					else
-						return SpecialType.Dynamic.ChangeNullability(type.Nullability);
+					return SpecialType.Dynamic.ChangeNullability(type.Nullability);
 				case KnownTypeCode.IntPtr when IntPtrToNInt:
 					return SpecialType.NInt;
 				case KnownTypeCode.UIntPtr when IntPtrToNInt:
@@ -87,56 +86,48 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitTypeDefinition(type);
 		}
 
-		public override IType VisitTupleType(TupleType type)
+		internal override IType VisitTupleType(TupleType type)
 		{
 			if (TupleToUnderlyingType)
 			{
 				return type.UnderlyingType.AcceptVisitor(this);
 			}
-			else
-			{
-				return base.VisitTupleType(type);
-			}
+
+			return base.VisitTupleType(type);
 		}
 
-		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		internal override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (RemoveNullability)
 				return type.TypeWithoutAnnotation.AcceptVisitor(this);
-			else
-				return base.VisitNullabilityAnnotatedType(type);
+			return base.VisitNullabilityAnnotatedType(type);
 		}
 
-		public override IType VisitArrayType(ArrayType type)
+		internal override IType VisitArrayType(ArrayType type)
 		{
 			if (RemoveNullability)
 				return base.VisitArrayType(type).ChangeNullability(Nullability.Oblivious);
-			else
-				return base.VisitArrayType(type);
+			return base.VisitArrayType(type);
 		}
 
-		public override IType VisitModOpt(ModifiedType type)
+		internal override IType VisitModOpt(ModifiedType type)
 		{
 			if (RemoveModOpt)
 			{
 				return type.ElementType.AcceptVisitor(this);
 			}
-			else
-			{
-				return base.VisitModOpt(type);
-			}
+
+			return base.VisitModOpt(type);
 		}
 
-		public override IType VisitModReq(ModifiedType type)
+		internal override IType VisitModReq(ModifiedType type)
 		{
 			if (RemoveModReq)
 			{
 				return type.ElementType.AcceptVisitor(this);
 			}
-			else
-			{
-				return base.VisitModReq(type);
-			}
+
+			return base.VisitModReq(type);
 		}
 	}
 }

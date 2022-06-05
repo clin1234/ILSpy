@@ -278,13 +278,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					return new Cost(Blocks, 1);
 				}
-				else
-				{
-					// hack: penalize multiple layers of nested expressions
-					// This doesn't really fit into the original idea of minimizing the number of block+expressions;
-					// but tends to produce better-looking results due to less nesting.
-					return new Cost(Blocks, Expressions + 2);
-				}
+
+				// hack: penalize multiple layers of nested expressions
+				// This doesn't really fit into the original idea of minimizing the number of block+expressions;
+				// but tends to produce better-looking results due to less nesting.
+				return new Cost(Blocks, Expressions + 2);
 			}
 		}
 

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class LabelStatement : Statement
 	{
-		public string Label {
+		internal string Label {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}

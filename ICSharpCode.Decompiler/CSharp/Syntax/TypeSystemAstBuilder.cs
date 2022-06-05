@@ -389,8 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						.MakeArrayType(((ArrayType)type).Dimensions);
 					if (type.Nullability == Nullability.Nullable)
 						return astType.MakeNullableType();
-					else
-						return astType;
+					return astType;
 				}
 				case TypeWithElementType typeWithElementType and ByReferenceType:
 					return ConvertType(typeWithElementType.ElementType).MakeRefType();
@@ -495,10 +494,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						result.AddChild(new Comment(astType.ToString(), CommentType.MultiLine), Roles.Comment);
 						return result;
 					}
-					else
-					{
-						return astType;
-					}
+
+					return astType;
 				}
 				default:
 				{
@@ -678,24 +675,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return TypeDefMatches(typeDef, type);
 			}
-			else
+
+			if (!TypeDefMatches(typeDef, type.GetDefinition()))
+				return false;
+			if (type is not ParameterizedType pt)
 			{
-				if (!TypeDefMatches(typeDef, type.GetDefinition()))
-					return false;
-				if (type is not ParameterizedType pt)
-				{
-					return typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument);
-				}
-
-				var ta = pt.TypeArguments;
-				for (int i = 0; i < ta.Count; i++)
-				{
-					if (!ta[i].Equals(typeArguments[i]))
-						return false;
-				}
-
-				return true;
+				return typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument);
 			}
+
+			var ta = pt.TypeArguments;
+			for (int i = 0; i < ta.Count; i++)
+			{
+				if (!ta[i].Equals(typeArguments[i]))
+					return false;
+			}
+
+			return true;
 		}
 
 		bool TypeDefMatches(ITypeDefinition typeDef, IType type)
@@ -707,8 +702,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			bool typeIsNested = type.DeclaringType != null;
 			if (defIsNested && typeIsNested)
 				return TypeDefMatches(typeDef.DeclaringTypeDefinition, type.DeclaringType);
-			else
-				return defIsNested == typeIsNested;
+			return defIsNested == typeIsNested;
 		}
 
 		/// <summary>
@@ -807,7 +801,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ns;
 				}
 			}
-			else
+
 			{
 				string parentNamespace = namespaceName[..pos];
 				string localNamespace = namespaceName[(pos + 1)..];
@@ -1126,10 +1120,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 						return expr;
 					}
-					else
-					{
-						return new ErrorExpression();
-					}
+
+					return new ErrorExpression();
 				}
 			}
 		}
@@ -1205,48 +1197,46 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						return ConvertEnumValue(underlyingType,
 							(long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 					}
-					else
+
+					if (!(PrintIntegralValuesAsHex && underlyingType.IsCSharpPrimitiveIntegerType())
+					    && IsSpecialConstant(underlyingType, constantValue, out var expr))
 					{
-						if (!(PrintIntegralValuesAsHex && underlyingType.IsCSharpPrimitiveIntegerType())
-						    && IsSpecialConstant(underlyingType, constantValue, out var expr))
-						{
-							return expr;
-						}
-
-						if (underlyingType.IsKnownType(KnownTypeCode.Double) ||
-						    underlyingType.IsKnownType(KnownTypeCode.Single))
-							return ConvertFloatingPointLiteral(underlyingType, constantValue);
-						IType literalType = underlyingType;
-						bool integerTypeMismatch = underlyingType.IsCSharpSmallIntegerType() ||
-						                           underlyingType.IsCSharpNativeIntegerType();
-						if (integerTypeMismatch)
-						{
-							// C# does not have integer literals of small integer types,
-							// use `int` literal instead.
-							// It also doesn't have native integer literals, those also use `int` (or `uint` for `nuint`).
-							bool unsigned = underlyingType.Kind == TypeKind.NUInt;
-							constantValue = CSharpPrimitiveCast.Cast(unsigned ? TypeCode.UInt32 : TypeCode.Int32,
-								constantValue, false);
-							var compilation = resolver?.Compilation ?? expectedType.GetDefinition()?.Compilation;
-							literalType = compilation?.FindType(unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
-						}
-
-						LiteralFormat format = LiteralFormat.None;
-						if (PrintIntegralValuesAsHex)
-						{
-							format = LiteralFormat.HexadecimalNumber;
-						}
-
-						expr = new PrimitiveExpression(constantValue, format);
-						if (AddResolveResultAnnotations && literalType != null)
-							expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
-						if (integerTypeMismatch && !type.Equals(expectedType))
-						{
-							expr = new CastExpression(ConvertType(type), expr);
-						}
-
 						return expr;
 					}
+
+					if (underlyingType.IsKnownType(KnownTypeCode.Double) ||
+					    underlyingType.IsKnownType(KnownTypeCode.Single))
+						return ConvertFloatingPointLiteral(underlyingType, constantValue);
+					IType literalType = underlyingType;
+					bool integerTypeMismatch = underlyingType.IsCSharpSmallIntegerType() ||
+					                           underlyingType.IsCSharpNativeIntegerType();
+					if (integerTypeMismatch)
+					{
+						// C# does not have integer literals of small integer types,
+						// use `int` literal instead.
+						// It also doesn't have native integer literals, those also use `int` (or `uint` for `nuint`).
+						bool unsigned = underlyingType.Kind == TypeKind.NUInt;
+						constantValue = CSharpPrimitiveCast.Cast(unsigned ? TypeCode.UInt32 : TypeCode.Int32,
+							constantValue, false);
+						var compilation = resolver?.Compilation ?? expectedType.GetDefinition()?.Compilation;
+						literalType = compilation?.FindType(unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
+					}
+
+					LiteralFormat format = LiteralFormat.None;
+					if (PrintIntegralValuesAsHex)
+					{
+						format = LiteralFormat.HexadecimalNumber;
+					}
+
+					expr = new PrimitiveExpression(constantValue, format);
+					if (AddResolveResultAnnotations && literalType != null)
+						expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
+					if (integerTypeMismatch && !type.Equals(expectedType))
+					{
+						expr = new CastExpression(ConvertType(type), expr);
+					}
+
+					return expr;
 				}
 			}
 		}
@@ -1551,10 +1541,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return EqualDoubles((double)constantValue, num / (double)den);
 			}
-			else
-			{
-				return EqualFloats((float)constantValue, num / (float)den);
-			}
+
+			return EqualFloats((float)constantValue, num / (float)den);
 		}
 
 		const int MAX_DENOMINATOR_DOUBLE = 1000;
@@ -1966,10 +1954,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					{
 						return ConvertDelegate(invoke, modifiers);
 					}
-					else
-					{
-						goto default;
-					}
+
+					goto default;
 				default:
 					classType = ClassType.Class;
 					if (SupportRecordClasses && typeDefinition.IsRecord)
@@ -2180,10 +2166,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 							ConvertType(new TopLevelTypeName("System", "NotImplementedException"))))
 				};
 			}
-			else
-			{
-				return BlockStatement.Null;
-			}
+
+			return BlockStatement.Null;
 		}
 
 		Accessor ConvertAccessor(IMethod accessor, MethodSemanticsAttributes kind, Accessibility ownerAccessibility,

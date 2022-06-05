@@ -384,10 +384,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return nameWithDigits;
 			}
-			else
-			{
-				return nameWithoutDigits;
-			}
+
+			return nameWithoutDigits;
 		}
 
 		HashSet<ILVariable> CollectLoopCounters(ILFunction function)
@@ -500,10 +498,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return proposedName + count;
 			}
-			else
-			{
-				return proposedName;
-			}
+
+			return proposedName;
 		}
 
 		static string GetNameFromInstruction(ILInstruction inst)
@@ -527,8 +523,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// use name from properties, but not from indexers
 						return CleanUpVariableName(m.Name[4..]);
 					}
-					else if (m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 &&
-					         char.IsUpper(m.Name[3]))
+
+					if (m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 &&
+					    char.IsUpper(m.Name[3]))
 					{
 						// use name from Get-methods
 						return CleanUpVariableName(m.Name[3..]);
@@ -573,8 +570,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							return CleanUpVariableName(m.Name[4..]);
 						}
-						else if (m.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 &&
-						         char.IsUpper(m.Name[3]))
+
+						if (m.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 &&
+						    char.IsUpper(m.Name[3]))
 						{
 							return CleanUpVariableName(m.Name[3..]);
 						}
@@ -704,8 +702,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (name.Length == 0)
 				return "obj";
-			else
-				return char.ToLower(name[0]) + name[1..];
+			return char.ToLower(name[0]) + name[1..];
 		}
 
 		internal static IType GuessType(IType variableType, ILInstruction inst, ILTransformContext context)
@@ -716,8 +713,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IType inferredType = inst.InferType(context.TypeSystem);
 			if (inferredType.Kind != TypeKind.Unknown)
 				return inferredType;
-			else
-				return variableType;
+			return variableType;
 		}
 
 		static Dictionary<string, int> CollectReservedVariableNames(ILFunction function,
@@ -805,10 +801,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return proposedName + count;
 			}
-			else
-			{
-				return proposedName;
-			}
+
+			return proposedName;
 		}
 
 		internal static string GenerateVariableName(ILFunction function, IType type,
@@ -860,10 +854,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return proposedName + count;
 			}
-			else
-			{
-				return proposedName;
-			}
+
+			return proposedName;
 		}
 
 		private static bool IsPlural(string baseName, ref string proposedName)

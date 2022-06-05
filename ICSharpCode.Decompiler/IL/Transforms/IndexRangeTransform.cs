@@ -270,18 +270,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return rangeVarInit;
 				}
-				else if (startIndexKind == IndexKind.TheStart && endIndexKind == IndexKind.TheEnd &&
-				         specialMethods.RangeGetAll != null)
+
+				if (startIndexKind == IndexKind.TheStart && endIndexKind == IndexKind.TheEnd &&
+				    specialMethods.RangeGetAll != null)
 				{
 					return new Call(specialMethods.RangeGetAll);
 				}
-				else if (startIndexKind == IndexKind.TheStart && specialMethods.RangeEndAt != null)
+
+				if (startIndexKind == IndexKind.TheStart && specialMethods.RangeEndAt != null)
 				{
 					var rangeCtorCall = new Call(specialMethods.RangeEndAt);
 					rangeCtorCall.Arguments.Add(MakeIndex(endIndexKind, endIndexLoad, specialMethods));
 					return rangeCtorCall;
 				}
-				else if (endIndexKind == IndexKind.TheEnd && specialMethods.RangeStartAt != null)
+
+				if (endIndexKind == IndexKind.TheEnd && specialMethods.RangeStartAt != null)
 				{
 					var rangeCtorCall = new Call(specialMethods.RangeStartAt);
 					rangeCtorCall.Arguments.Add(MakeIndex(startIndexKind, startIndexLoad, specialMethods));
@@ -408,9 +411,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ldelema.Indices[0] = new LdObj(call.Arguments[0], call.Method.DeclaringType);
 				return true;
 			}
-			else if (index is BinaryNumericInstruction {
-				         Operator: BinaryNumericOperator.Sub, IsLifted: false, CheckForOverflow: false
-			         } bni)
+
+			if (index is BinaryNumericInstruction {
+				    Operator: BinaryNumericOperator.Sub, IsLifted: false, CheckForOverflow: false
+			    } bni)
 			{
 				// ldelema T(ldloc array, binary.sub.i4(ldlen.i4(ldloc array), ...))
 				// -> withsystemindex.ldelema T(ldloc array, newobj System.Index(..., fromEnd: true))
@@ -474,10 +478,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return containerLengthVar.LoadCount == expectedUses;
 			}
-			else
-			{
-				return expectedUses <= 1; // can have one inline use
-			}
+
+			return expectedUses <= 1; // can have one inline use
 		}
 
 		/// <summary>
@@ -514,7 +516,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//  complex_expr(call get_Item(ldloc container, ldobj startIndexLoad))
 				return new LdObj(indexLoad, specialMethods.IndexType);
 			}
-			else if (indexKind is IndexKind.FromEnd or IndexKind.TheEnd)
+
+			if (indexKind is IndexKind.FromEnd or IndexKind.TheEnd)
 			{
 				//  stloc offsetVar(binary.sub.i4(call get_Length/get_Count(ldloc container), startIndexLoad))
 				//  complex_expr(call get_Item(ldloc container, ldloc startOffsetVar))
@@ -522,11 +525,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				//  complex_expr(call get_Item(ldloc container, newobj System.Index(startIndexLoad, fromEnd: true)))
 				return new NewObj(specialMethods.IndexCtor) { Arguments = { indexLoad, new LdcI4(1) } };
 			}
-			else
-			{
-				Debug.Assert(indexKind is IndexKind.FromStart or IndexKind.TheStart);
-				return new Call(specialMethods.IndexImplicitConv) { Arguments = { indexLoad } };
-			}
+
+			Debug.Assert(indexKind is IndexKind.FromStart or IndexKind.TheStart);
+			return new Call(specialMethods.IndexImplicitConv) { Arguments = { indexLoad } };
 		}
 
 		/// <summary>
@@ -566,10 +567,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return /* foundSlicingMethod && */ foundCountProperty && !foundRangeOverload;
 			}
-			else
-			{
-				return foundInt32Overload && foundCountProperty && !foundIndexOverload;
-			}
+
+			return foundInt32Overload && foundCountProperty && !foundIndexOverload;
 		}
 
 		/// <summary>
@@ -634,10 +633,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return inst.MatchLdLoc(containerVar) || inst.MatchLdLoca(containerVar);
 			}
-			else
-			{
-				return inst.MatchLdLoc(out containerVar) || inst.MatchLdLoca(out containerVar);
-			}
+
+			return inst.MatchLdLoc(out containerVar) || inst.MatchLdLoca(out containerVar);
 		}
 
 		/// <summary>
@@ -657,7 +654,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				indexLoad = new LdcI4(0);
 				return IndexKind.TheEnd;
 			}
-			else if (inst is CallInstruction call)
+
+			if (inst is CallInstruction call)
 			{
 				// call System.Index.GetOffset(indexLoad, ldloc containerLengthVar)
 				if (call.Method.Name != "GetOffset")
@@ -671,7 +669,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				indexLoad = call.Arguments[0];
 				return IndexKind.RefSystemIndex;
 			}
-			else if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } bni)
+
+			if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } bni)
 			{
 				if (bni.CheckForOverflow || bni.ResultType != StackType.I4 || bni.IsLifted)
 					return IndexKind.FromStart;
@@ -681,10 +680,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				indexLoad = bni.Right;
 				return IndexKind.FromEnd;
 			}
-			else
-			{
-				return IndexKind.FromStart;
-			}
+
+			return IndexKind.FromStart;
 		}
 
 		/// <summary>
@@ -715,16 +712,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				endIndexKind = MatchGetOffset(bni.Left, out endIndexLoad, containerLengthVar, ref containerVar);
 				return true;
 			}
-			else if (startOffsetVar == null)
+
+			if (startOffsetVar == null)
 			{
 				// When slicing without explicit start point: `a[..endIndex]`, the compiler doesn't always emit the "- 0".
 				endIndexKind = MatchGetOffset(inst, out endIndexLoad, containerLengthVar, ref containerVar);
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		sealed class IndexMethods

@@ -50,11 +50,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetNestedTypesImpl(type, nestedTypeArguments, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes()
-					.SelectMany(t => GetNestedTypesImpl(t, nestedTypeArguments, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes()
+				.SelectMany(t => GetNestedTypesImpl(t, nestedTypeArguments, filter, options));
 		}
 
 		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType> nestedTypeArguments,
@@ -126,11 +124,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetMethodsImpl(type, typeArguments, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes()
-					.SelectMany(t => GetMethodsImpl(t, typeArguments, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes()
+				.SelectMany(t => GetMethodsImpl(t, typeArguments, filter, options));
 		}
 
 		static Predicate<IMethod> FilterTypeParameterCount(int expectedTypeParameterCount)
@@ -184,10 +180,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetAccessorsImpl(type, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetAccessorsImpl(t, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes().SelectMany(t => GetAccessorsImpl(t, filter, options));
 		}
 
 		static IEnumerable<IMethod> GetAccessorsImpl(IType baseType, Predicate<IMethod> filter,
@@ -208,10 +202,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetConstructorsImpl(type, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetConstructorsImpl(t, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes().SelectMany(t => GetConstructorsImpl(t, filter, options));
 		}
 
 		static IEnumerable<IMethod> GetConstructorsImpl(IType baseType, Predicate<IMethod> filter,
@@ -234,10 +226,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var substitution = pt.GetSubstitution();
 				return declaredMembers.Select(m => new SpecializedMethod(m, substitution) { DeclaringType = pt });
 			}
-			else
-			{
-				return declaredMembers;
-			}
+
+			return declaredMembers;
 		}
 
 		#endregion
@@ -266,10 +256,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var substitution = pt.GetSubstitution();
 				return declaredProperties.Select(m => new SpecializedProperty(m, substitution) { DeclaringType = pt });
 			}
-			else
-			{
-				return declaredProperties;
-			}
+
+			return declaredProperties;
 		}
 
 		#endregion
@@ -282,10 +270,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFieldsImpl(type, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetFieldsImpl(t, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes().SelectMany(t => GetFieldsImpl(t, filter, options));
 		}
 
 		static IEnumerable<IField> GetFieldsImpl(IType baseType, Predicate<IField> filter, GetMemberOptions options)
@@ -301,10 +287,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var substitution = pt.GetSubstitution();
 				return declaredFields.Select(m => new SpecializedField(m, substitution) { DeclaringType = pt });
 			}
-			else
-			{
-				return declaredFields;
-			}
+
+			return declaredFields;
 		}
 
 		#endregion
@@ -317,10 +301,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetEventsImpl(type, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetEventsImpl(t, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes().SelectMany(t => GetEventsImpl(t, filter, options));
 		}
 
 		static IEnumerable<IEvent> GetEventsImpl(IType baseType, Predicate<IEvent> filter, GetMemberOptions options)
@@ -336,10 +318,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var substitution = pt.GetSubstitution();
 				return declaredEvents.Select(m => new SpecializedEvent(m, substitution) { DeclaringType = pt });
 			}
-			else
-			{
-				return declaredEvents;
-			}
+
+			return declaredEvents;
 		}
 
 		#endregion
@@ -352,10 +332,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetMembersImpl(type, filter, options);
 			}
-			else
-			{
-				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetMembersImpl(t, filter, options));
-			}
+
+			return type.GetNonInterfaceBaseTypes().SelectMany(t => GetMembersImpl(t, filter, options));
 		}
 
 		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IMember> filter, GetMemberOptions options)

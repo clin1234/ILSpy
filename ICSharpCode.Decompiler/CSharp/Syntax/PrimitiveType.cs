@@ -120,10 +120,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return SpecialType.ArgList;
 				return new UnknownType(null, this.Keyword);
 			}
-			else
-			{
-				return KnownTypeReference.Get(typeCode);
-			}
+
+			return KnownTypeReference.Get(typeCode);
 		}
 
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)

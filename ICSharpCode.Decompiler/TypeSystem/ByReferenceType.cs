@@ -64,8 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
-			else
-				return new ByReferenceType(e);
+			return new ByReferenceType(e);
 		}
 	}
 

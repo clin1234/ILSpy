@@ -167,13 +167,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static void WriteDesktopExtensions(XmlTextWriter xml, ProjectType projectType)
 		{
-			if (projectType == ProjectType.Wpf)
+			switch (projectType)
 			{
-				xml.WriteElementString("UseWPF", TrueString);
-			}
-			else if (projectType == ProjectType.WinForms)
-			{
-				xml.WriteElementString("UseWindowsForms", TrueString);
+				case ProjectType.Wpf:
+					xml.WriteElementString("UseWPF", TrueString);
+					break;
+				case ProjectType.WinForms:
+					xml.WriteElementString("UseWindowsForms", TrueString);
+					break;
 			}
 		}
 
@@ -190,14 +191,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteMiscellaneousPropertyGroup(XmlTextWriter xml,
+		static void WriteMiscellaneousPropertyGroup(XmlWriter xml,
 			IEnumerable<(string itemType, string fileName)> files)
 		{
-			(string itemType, string fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
+			(string _, string fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationIcon");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationIcon", fileName);
 
-			(itemType, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationManifest");
+			(_, fileName) = files.FirstOrDefault(t => t.itemType == "ApplicationManifest");
 			if (fileName != null)
 				xml.WriteElementString("ApplicationManifest", fileName);
 
@@ -303,14 +304,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					return ProjectType.Web;
 				}
 
-				if (referenceName == PresentationFrameworkName)
+				switch (referenceName)
 				{
-					return ProjectType.Wpf;
-				}
-
-				if (referenceName == WindowsFormsName)
-				{
-					return ProjectType.WinForms;
+					case PresentationFrameworkName:
+						return ProjectType.Wpf;
+					case WindowsFormsName:
+						return ProjectType.WinForms;
 				}
 			}
 

@@ -38,8 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return type;
 			if (type.TypeParameterCount == 0)
 				return compilation.FindType(KnownTypeCode.Void);
-			else
-				return type.TypeArguments[0];
+			return type.TypeArguments[0];
 		}
 
 		/// <summary>
@@ -144,8 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ITypeDefinition taskTypeDef = taskType.GetDefinition();
 			if (taskTypeDef != null)
 				return new ParameterizedType(taskTypeDef, new[] { elementType });
-			else
-				return taskType;
+			return taskType;
 		}
 	}
 }

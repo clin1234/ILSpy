@@ -45,17 +45,15 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				{
 					return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
 				}
-				else
+
+				// search for pdb in same directory as dll
+				pdbFileName = Path.Combine(
+					Path.GetDirectoryName(module.FileName)!,
+					Path.GetFileNameWithoutExtension(module.FileName) + ".pdb"
+				);
+				if (File.Exists(pdbFileName))
 				{
-					// search for pdb in same directory as dll
-					pdbFileName = Path.Combine(
-						Path.GetDirectoryName(module.FileName)!,
-						Path.GetFileNameWithoutExtension(module.FileName) + ".pdb"
-					);
-					if (File.Exists(pdbFileName))
-					{
-						return new MonoCecilDebugInfoProvider(module, pdbFileName);
-					}
+					return new MonoCecilDebugInfoProvider(module, pdbFileName);
 				}
 			}
 			catch (Exception ex) when (ex is BadImageFormatException or COMException)
@@ -81,12 +79,10 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				stream.Position = 0;
 				return new MonoCecilDebugInfoProvider(module, pdbFileName);
 			}
-			else
-			{
-				stream.Position = 0;
-				var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
-				return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
-			}
+
+			stream.Position = 0;
+			var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
+			return new PortableDebugInfoProvider(module.FileName, provider, pdbFileName);
 		}
 
 		static bool TryOpenPortablePdb(PEFile module,

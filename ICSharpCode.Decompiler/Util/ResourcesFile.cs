@@ -274,10 +274,8 @@ namespace ICSharpCode.Decompiler.Util
 					{
 						return LoadObjectV1(dataOffset);
 					}
-					else
-					{
-						return LoadObjectV2(dataOffset);
-					}
+
+					return LoadObjectV2(dataOffset);
 				}
 			}
 			catch (EndOfStreamException e)

@@ -31,19 +31,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// <summary>
 	/// Represents a type resolve result that's resolved using an alias.
 	/// </summary>
-	public sealed class AliasTypeResolveResult : TypeResolveResult
+	internal sealed class AliasTypeResolveResult : TypeResolveResult
 	{
-		public AliasTypeResolveResult(string alias, TypeResolveResult underlyingResult) : base(underlyingResult.Type)
+		public AliasTypeResolveResult(TypeResolveResult underlyingResult) : base(underlyingResult.Type)
 		{
-			this.Alias = alias;
-		}
-
-		/// <summary>
-		/// The alias used.
-		/// </summary>
-		public string Alias {
-			get;
-			private set;
 		}
 	}
 }

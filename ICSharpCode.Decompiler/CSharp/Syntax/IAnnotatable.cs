@@ -185,10 +185,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return null;
 				}
 			}
-			else
-			{
-				return annotations as T;
-			}
+
+			return annotations as T;
 		}
 
 		public object Annotation(Type type)
@@ -228,13 +226,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						return list.ToArray();
 					}
 				}
-				else
-				{
-					if (annotations != null)
-						return new[] { annotations };
-					else
-						return Enumerable.Empty<object>();
-				}
+
+				if (annotations != null)
+					return new[] { annotations };
+				return Enumerable.Empty<object>();
 			}
 		}
 

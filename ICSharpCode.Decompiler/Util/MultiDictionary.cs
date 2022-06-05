@@ -38,8 +38,7 @@ namespace ICSharpCode.Decompiler.Util
 			get {
 				if (dict.TryGetValue(key, out var list))
 					return list;
-				else
-					return EmptyList<TValue>.Instance;
+				return EmptyList<TValue>.Instance;
 			}
 		}
 

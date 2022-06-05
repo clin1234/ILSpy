@@ -79,8 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			if (TypeArguments.Count == 0)
 				return Target + "." + Identifier;
-			else
-				return Target + "." + Identifier + "<" + string.Join(",", TypeArguments) + ">";
+			return Target + "." + Identifier + "<" + string.Join(",", TypeArguments) + ">";
 		}
 
 		public int GetHashCodeForInterning()

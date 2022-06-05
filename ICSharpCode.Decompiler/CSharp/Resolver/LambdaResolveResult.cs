@@ -162,10 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 							// it's possible that different parameter types also lead to a valid conversion
 							return LambdaConversion.Instance;
 						}
-						else
-						{
-							return Conversion.None;
-						}
+
+						return Conversion.None;
 					}
 				}
 			}
@@ -175,10 +173,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				return LambdaConversion.Instance;
 			}
-			else
-			{
-				return Conversion.None;
-			}
+
+			return Conversion.None;
 		}
 	}
 

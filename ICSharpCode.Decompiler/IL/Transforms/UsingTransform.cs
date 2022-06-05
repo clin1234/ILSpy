@@ -304,102 +304,98 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					       || (innerArg2 is NullableUnwrap unwrap
 					           && unwrap.Argument.MatchLdLoc(objVar));
 				}
-				else
+
+				if (!(innerArg1.MatchBox(out firstArg, out var boxType) &&
+				      boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
+				      NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
+					return false;
+				return firstArg.MatchLdLoc(objVar);
+			}
+
+			ILInstruction target;
+			bool boxedValue = false;
+			if (isReference && checkInst is NullableRewrap rewrap)
+			{
+				// the null check of reference types might have been transformed into "objVar?.Dispose();"
+				if (rewrap.Argument is not CallVirt cv)
+					return false;
+				if (cv.Arguments.FirstOrDefault() is not NullableUnwrap unwrap)
+					return false;
+				numObjVarLoadsInCheck = 1;
+				disposeCall = cv;
+				target = unwrap.Argument;
+			}
+			else if (isReference)
+			{
+				// reference types have a null check.
+				if (!checkInst.MatchIfInstruction(out var condition, out var disposeInst))
+					return false;
+				if (!MatchNullCheckOrTypeCheck(condition, ref objVar, disposeTypeCode))
+					return false;
+				if (disposeInst is not Block disposeBlock || disposeBlock.Instructions.Count != 1)
+					return false;
+				disposeInvocation = disposeBlock.Instructions[0];
+				if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
 				{
-					if (!(innerArg1.MatchBox(out firstArg, out var boxType) &&
-					      boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
-					      NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
+					if (!UnwrapAwait(ref disposeInvocation))
 						return false;
-					return firstArg.MatchLdLoc(objVar);
 				}
+
+				if (disposeInvocation is not CallVirt cv)
+					return false;
+				target = cv.Arguments.FirstOrDefault();
+				if (target == null)
+					return false;
+				if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
+					target = newTarget;
+				disposeCall = cv;
+			}
+			else if (objVar.Type.Kind == TypeKind.Struct && objVar.Type.IsByRefLike)
+			{
+				if (!(checkInst is Call call && call.Method.DeclaringType == objVar.Type))
+					return false;
+				target = call.Arguments.FirstOrDefault();
+				if (target == null)
+					return false;
+				if (call.Method.Name != "Dispose")
+					return false;
+				disposeMethodFullName = call.Method.FullName;
+				disposeCall = call;
 			}
 			else
 			{
-				ILInstruction target;
-				bool boxedValue = false;
-				if (isReference && checkInst is NullableRewrap rewrap)
+				if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
 				{
-					// the null check of reference types might have been transformed into "objVar?.Dispose();"
-					if (rewrap.Argument is not CallVirt cv)
+					if (!UnwrapAwait(ref checkInst))
 						return false;
-					if (cv.Arguments.FirstOrDefault() is not NullableUnwrap unwrap)
-						return false;
-					numObjVarLoadsInCheck = 1;
-					disposeCall = cv;
-					target = unwrap.Argument;
-				}
-				else if (isReference)
-				{
-					// reference types have a null check.
-					if (!checkInst.MatchIfInstruction(out var condition, out var disposeInst))
-						return false;
-					if (!MatchNullCheckOrTypeCheck(condition, ref objVar, disposeTypeCode))
-						return false;
-					if (disposeInst is not Block disposeBlock || disposeBlock.Instructions.Count != 1)
-						return false;
-					disposeInvocation = disposeBlock.Instructions[0];
-					if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
-					{
-						if (!UnwrapAwait(ref disposeInvocation))
-							return false;
-					}
-
-					if (disposeInvocation is not CallVirt cv)
-						return false;
-					target = cv.Arguments.FirstOrDefault();
-					if (target == null)
-						return false;
-					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
-						target = newTarget;
-					disposeCall = cv;
-				}
-				else if (objVar.Type.Kind == TypeKind.Struct && objVar.Type.IsByRefLike)
-				{
-					if (!(checkInst is Call call && call.Method.DeclaringType == objVar.Type))
-						return false;
-					target = call.Arguments.FirstOrDefault();
-					if (target == null)
-						return false;
-					if (call.Method.Name != "Dispose")
-						return false;
-					disposeMethodFullName = call.Method.FullName;
-					disposeCall = call;
-				}
-				else
-				{
-					if (disposeTypeCode == KnownTypeCode.IAsyncDisposable)
-					{
-						if (!UnwrapAwait(ref checkInst))
-							return false;
-					}
-
-					if (checkInst is not CallInstruction cv)
-						return false;
-					target = cv.Arguments.FirstOrDefault();
-					if (target == null)
-						return false;
-					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
-					{
-						boxedValue = type.IsReferenceType != true;
-						target = newTarget;
-					}
-
-					disposeCall = cv;
 				}
 
-				if (disposeCall.Method.FullName != disposeMethodFullName)
+				if (checkInst is not CallInstruction cv)
 					return false;
-				if (disposeCall.Method.Parameters.Count > 0)
+				target = cv.Arguments.FirstOrDefault();
+				if (target == null)
 					return false;
-				if (disposeCall.Arguments.Count != 1)
-					return false;
-				return target.MatchLdLocRef(objVar)
-				       || (boxedValue && target.MatchLdLoc(objVar))
-				       || (usingNull && disposeCall.Arguments[0].MatchLdNull())
-				       || (isReference && checkInst is NullableRewrap
-				                       && target.MatchIsInst(out var arg, out var type2)
-				                       && arg.MatchLdLoc(objVar) && type2.IsKnownType(disposeTypeCode));
+				if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
+				{
+					boxedValue = type.IsReferenceType != true;
+					target = newTarget;
+				}
+
+				disposeCall = cv;
 			}
+
+			if (disposeCall.Method.FullName != disposeMethodFullName)
+				return false;
+			if (disposeCall.Method.Parameters.Count > 0)
+				return false;
+			if (disposeCall.Arguments.Count != 1)
+				return false;
+			return target.MatchLdLocRef(objVar)
+			       || (boxedValue && target.MatchLdLoc(objVar))
+			       || (usingNull && disposeCall.Arguments[0].MatchLdNull())
+			       || (isReference && checkInst is NullableRewrap
+			                       && target.MatchIsInst(out var arg, out var type2)
+			                       && arg.MatchLdLoc(objVar) && type2.IsKnownType(disposeTypeCode));
 		}
 
 		bool MatchNullCheckOrTypeCheck(ILInstruction condition, ref ILVariable objVar, KnownTypeCode disposeType)

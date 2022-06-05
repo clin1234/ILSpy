@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType NamespaceName {
 			get { return GetChildByRole(NamespaceNameRole) ?? AstType.Null; }
-			set { SetChildByRole(NamespaceNameRole, value); }
+			init { SetChildByRole(NamespaceNameRole, value); }
 		}
 
 		public string Name {

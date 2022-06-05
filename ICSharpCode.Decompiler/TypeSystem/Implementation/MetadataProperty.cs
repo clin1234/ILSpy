@@ -272,8 +272,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var acc = cachedAccessiblity;
 				if (acc == InvalidAccessibility)
 					return cachedAccessiblity = ComputeAccessibility();
-				else
-					return acc;
+				return acc;
 			}
 		}
 
@@ -295,10 +294,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						{
 							return Accessibility.Protected;
 						}
-						else
-						{
-							return baseMember.Accessibility;
-						}
+
+						return baseMember.Accessibility;
 					}
 				}
 			}

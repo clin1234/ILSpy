@@ -132,11 +132,9 @@ namespace ICSharpCode.Decompiler.Util
 
 								break;
 							}
-							else
-							{
-								// append normal segment
-								goto default;
-							}
+
+							// append normal segment
+							goto default;
 						default:
 							if (result.Length > 0)
 								result.Append(outputSeparator);
@@ -214,8 +212,7 @@ namespace ICSharpCode.Decompiler.Util
 				return input;
 			if (input[^1] == Path.DirectorySeparatorChar || input[^1] == Path.AltDirectorySeparatorChar)
 				return input;
-			else
-				return input + GetSeparatorForPath(input);
+			return input + GetSeparatorForPath(input);
 		}
 
 		static char GetSeparatorForPath(string input)

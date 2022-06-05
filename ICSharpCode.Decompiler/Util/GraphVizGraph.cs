@@ -18,6 +18,13 @@
 
 #nullable enable
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Text.RegularExpressions;
+
 namespace ICSharpCode.Decompiler.Util
 {
 #if DEBUG
@@ -71,11 +78,9 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				return text;
 			}
-			else
-			{
-				return "\"" + text.Replace("\\", "\\\\").Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"") +
-				       "\"";
-			}
+
+			return "\"" + text.Replace("\\", "\\\\").Replace("\r", "").Replace("\n", "\\n").Replace("\"", "\\\"") +
+			       "\"";
 		}
 
 		static void WriteGraphAttribute(TextWriter writer, string name, string? value)

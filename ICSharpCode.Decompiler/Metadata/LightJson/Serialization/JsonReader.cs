@@ -228,10 +228,8 @@ namespace LightJson.Serialization
 							JsonParseException.ErrorType.InvalidOrUnexpectedCharacter,
 							errorPosition);
 					}
-					else
-					{
-						builder.Append(c);
-					}
+
+					builder.Append(c);
 				}
 			}
 
@@ -334,7 +332,8 @@ namespace LightJson.Serialization
 					{
 						break;
 					}
-					else if (next == ',')
+
+					if (next == ',')
 					{
 					}
 					else
@@ -392,7 +391,8 @@ namespace LightJson.Serialization
 					{
 						break;
 					}
-					else if (next == ',')
+
+					if (next == ',')
 					{
 					}
 					else

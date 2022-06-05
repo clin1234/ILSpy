@@ -43,8 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		{
 			if (other == null || other.IsNull)
 				return true;
-			else
-				return ChildNode.DoMatch(other, match);
+			return ChildNode.DoMatch(other, match);
 		}
 	}
 }

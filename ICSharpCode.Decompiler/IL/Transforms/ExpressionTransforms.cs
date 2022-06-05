@@ -96,10 +96,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				VisitLogicNot(inst, arg);
 				return;
 			}
-			else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
-			                                                && inst.Right.MatchLdcI4(0) &&
-			                                                (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp)
-			        )
+
+			if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
+			                                           && inst.Right.MatchLdcI4(0) &&
+			                                           (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp)
+			   )
 			{
 				// if (comp(x != 0)) ==> if (x)
 				// comp(comp(...) != 0) => comp(...)

@@ -51,12 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
 			}
-			init {
-				if (string.IsNullOrEmpty(value))
-					SetChildByRole(Roles.Identifier, null);
-				else
-					SetChildByRole(Roles.Identifier, Identifier.Create(value));
-			}
+			init { SetChildByRole(Roles.Identifier, string.IsNullOrEmpty(value) ? null : Identifier.Create(value)); }
 		}
 
 		public CSharpTokenNode SemicolonToken {

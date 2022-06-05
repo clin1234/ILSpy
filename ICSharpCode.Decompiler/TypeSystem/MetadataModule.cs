@@ -209,8 +209,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			int pos = fullAssemblyName.IndexOf(',');
 			if (pos < 0)
 				return fullAssemblyName;
-			else
-				return fullAssemblyName[..pos];
+			return fullAssemblyName[..pos];
 		}
 
 		#endregion

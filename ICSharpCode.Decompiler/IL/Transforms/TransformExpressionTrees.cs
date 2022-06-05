@@ -220,23 +220,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return (() => function, function.DelegateType);
 			}
-			else
+
+			(Func<ILInstruction> converted, IType type) = ConvertInstruction(argument);
+			if (converted == null)
+				return (converted, type);
+			return (BuildQuote, type);
+
+			ILInstruction BuildQuote()
 			{
-				(Func<ILInstruction> converted, IType type) = ConvertInstruction(argument);
-				if (converted == null)
-					return (converted, type);
-				return (BuildQuote, type);
-
-				ILInstruction BuildQuote()
+				var f = converted();
+				if (f is ILFunction lambda && argument is CallInstruction call)
 				{
-					var f = converted();
-					if (f is ILFunction lambda && argument is CallInstruction call)
-					{
-						SetExpressionTreeFlag(lambda, call);
-					}
-
-					return f;
+					SetExpressionTreeFlag(lambda, call);
 				}
+
+				return f;
 			}
 		}
 
@@ -598,10 +596,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return (
 							targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } },
 							method.ReturnType);
-					else
-						return (
-							targetVariable => new CallVirt(method)
-								{ Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
+					return (
+						targetVariable => new CallVirt(method)
+							{ Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
 				case IField field:
 					return (
 						targetVariable =>
@@ -690,17 +687,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case StackType.Ref:
 					if (target.ResultType == StackType.Ref)
 						return target;
-					else
-						return new AddressOf(target, expectedType);
+					return new AddressOf(target, expectedType);
 				case StackType.O:
 					if (targetType.IsReferenceType == false)
 					{
 						return new Box(target, targetType);
 					}
-					else
-					{
-						return target;
-					}
+
+					return target;
 				default:
 					if (expectedType.Kind == TypeKind.Unknown && target.ResultType != StackType.Unknown)
 					{
@@ -1479,7 +1473,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return new LdLoca(v).WithILRange(ldloc);
 						return null;
 					}
-					else if (IsClosureReference(ldloc.Variable))
+
+					if (IsClosureReference(ldloc.Variable))
 					{
 						if (ldloc.Variable.Kind == VariableKind.Local)
 						{
@@ -1495,10 +1490,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 						return ldloc;
 					}
-					else
-					{
-						return ldloc;
-					}
+
+					return ldloc;
 				default:
 					return value.Clone();
 			}

@@ -54,12 +54,10 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 						return "Error while loading the PDB stream embedded in this assembly";
 					return "Embedded in this assembly";
 				}
-				else
-				{
-					if (hasError)
-						return $"Error while loading portable PDB: {pdbFileName}";
-					return $"Loaded from portable PDB: {pdbFileName}";
-				}
+
+				if (hasError)
+					return $"Error while loading portable PDB: {pdbFileName}";
+				return $"Loaded from portable PDB: {pdbFileName}";
 			}
 		}
 

@@ -782,8 +782,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				if (type.Kind == TypeKind.Struct)
 					return GetStatement(variable.AddressInstructions.OrderBy(i => i.StartILOffset).First());
-				else
-					return (StLoc)variable.StoreInstructions[0];
+				return (StLoc)variable.StoreInstructions[0];
 			}
 		}
 

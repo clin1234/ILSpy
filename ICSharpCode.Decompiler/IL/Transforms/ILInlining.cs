@@ -204,7 +204,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.RemoveAt(pos);
 				return true;
 			}
-			else if (v.LoadCount == 0 && v.AddressCount == 0)
+
+			if (v.LoadCount == 0 && v.AddressCount == 0)
 			{
 				// The variable is never loaded
 				if (SemanticHelper.IsPure(stloc.Value.Flags))
@@ -215,7 +216,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					block.Instructions.RemoveAt(pos);
 					return true;
 				}
-				else if (v.Kind == VariableKind.StackSlot)
+
+				if (v.Kind == VariableKind.StackSlot)
 				{
 					context.Step("Remove dead store, but keep expression", stloc);
 					// Assign the ranges of the stloc instruction:
@@ -315,15 +317,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					_ => throw new InvalidOperationException("invalid expression classification")
 				};
 			}
-			else if (IsUsedAsThisPointerInFieldRead(loadInst))
+
+			if (IsUsedAsThisPointerInFieldRead(loadInst))
 			{
 				// mcs generated temporaries for field reads on rvalues (#1555)
 				return ClassifyExpression(inlinedExpression) == ExpressionClassification.RValue;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		internal static bool MethodRequiresCopyForReadonlyLValue(IMethod method)
@@ -370,11 +371,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								TargetKind: CompoundTargetKind.Property
 							} cai && cai.Target == inst.Parent);
 						}
-						else
-						{
-							// C# doesn't allow calling setters on temporary structs
-							return false;
-						}
+
+						// C# doesn't allow calling setters on temporary structs
+						return false;
 					}
 
 					return !method.IsStatic;
@@ -420,10 +419,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return ExpressionClassification.ReadonlyLValue;
 					}
-					else
-					{
-						return ExpressionClassification.MutableLValue;
-					}
+
+					return ExpressionClassification.MutableLValue;
 				case OpCode.LdObj:
 					// ldobj typically refers to a storage location,
 					// but readonly fields are an exception.
@@ -431,20 +428,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return ExpressionClassification.ReadonlyLValue;
 					}
-					else
-					{
-						return ExpressionClassification.MutableLValue;
-					}
+
+					return ExpressionClassification.MutableLValue;
 				case OpCode.StObj:
 					// stobj is the same as ldobj.
 					if (IsReadonlyReference(((StObj)inst).Target))
 					{
 						return ExpressionClassification.ReadonlyLValue;
 					}
-					else
-					{
-						return ExpressionClassification.MutableLValue;
-					}
+
+					return ExpressionClassification.MutableLValue;
 				case OpCode.Call:
 					var m = ((CallInstruction)inst).Method;
 					// multi-dimensional array getters are lvalues,
@@ -453,10 +446,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return ExpressionClassification.MutableLValue;
 					}
-					else
-					{
-						return ExpressionClassification.RValue;
-					}
+
+					return ExpressionClassification.RValue;
 				default:
 					return ExpressionClassification.RValue; // most instructions result in an rvalue
 			}
@@ -659,7 +650,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				return FindResult.Found(expr);
 			}
-			else if (expr is Block block)
+
+			if (expr is Block block)
 			{
 				// Inlining into inline-blocks?
 				switch (block.Kind)
@@ -681,7 +673,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return FindResult.Stop;
 				}
 			}
-			else if (options.HasFlag(InliningOptions.FindDeconstruction) && expr is DeconstructInstruction di)
+
+			if (options.HasFlag(InliningOptions.FindDeconstruction) && expr is DeconstructInstruction di)
 			{
 				return FindResult.Deconstruction(di);
 			}
@@ -704,16 +697,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (IsSafeForInlineOver(expr, expressionBeingMoved))
 				return FindResult.Continue; // continue searching
-			else
-				return FindResult.Stop; // abort, inlining not possible
+			return FindResult.Stop; // abort, inlining not possible
 		}
 
 		private static FindResult NoContinue(FindResult findResult)
 		{
 			if (findResult.Type == FindResultType.Continue)
 				return FindResult.Stop;
-			else
-				return findResult;
+			return findResult;
 		}
 
 		/// <summary>

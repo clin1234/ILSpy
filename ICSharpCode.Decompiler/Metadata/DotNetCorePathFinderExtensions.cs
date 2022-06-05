@@ -116,10 +116,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 								return $".NETCoreApp,Version=v{version}";
 							}
-							else
-							{
-								continue;
-							}
+
+							continue;
 						case "mscorlib":
 							version = r.Version.ToString(2);
 							return $".NETFramework,Version=v{version}";
@@ -158,11 +156,13 @@ namespace ICSharpCode.Decompiler.Metadata
 					{
 						return $".NETFramework,Version=v{version[..Math.Min(3, version.Length)]}";
 					}
-					else if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0)
+
+					if (type.IndexOf("netcore", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						return $".NETCoreApp,Version=v{version}";
 					}
-					else if (type.IndexOf("netstandard", StringComparison.OrdinalIgnoreCase) >= 0)
+
+					if (type.IndexOf("netstandard", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						return $".NETStandard,Version=v{version}";
 					}

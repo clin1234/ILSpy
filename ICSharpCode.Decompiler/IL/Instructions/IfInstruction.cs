@@ -48,8 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				if (trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
 					return falseInst.ResultType;
-				else
-					return trueInst.ResultType;
+				return trueInst.ResultType;
 			}
 		}
 

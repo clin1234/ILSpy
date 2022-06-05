@@ -194,8 +194,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (nullability == Nullability.Oblivious)
 				return this;
-			else
-				return new NullabilityAnnotatedType(this, nullability);
+			return new NullabilityAnnotatedType(this, nullability);
 		}
 
 		public IEnumerable<IType> DirectBaseTypes {
@@ -288,10 +287,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (DeclaringType != null)
 					return DeclaringType.FullName + "." + Name;
-				else if (!string.IsNullOrEmpty(this.Namespace))
+				if (!string.IsNullOrEmpty(this.Namespace))
 					return this.Namespace + "." + Name;
-				else
-					return Name;
+				return Name;
 			}
 		}
 
@@ -571,10 +569,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFiltered(this.NestedTypes, filter);
 			}
-			else
-			{
-				return GetMembersHelper.GetNestedTypes(this, filter, options);
-			}
+
+			return GetMembersHelper.GetNestedTypes(this, filter, options);
 		}
 
 		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments,
@@ -591,8 +587,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (filter == null)
 				return input;
-			else
-				return ApplyFilter(input, filter);
+			return ApplyFilter(input, filter);
 		}
 
 		IEnumerable<T> ApplyFilter<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
@@ -661,10 +656,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFiltered(this.Properties, filter);
 			}
-			else
-			{
-				return GetMembersHelper.GetProperties(this, filter, options);
-			}
+
+			return GetMembersHelper.GetProperties(this, filter, options);
 		}
 
 		public IEnumerable<IField> GetFields(Predicate<IField> filter = null,
@@ -676,10 +669,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFiltered(this.Fields, filter);
 			}
-			else
-			{
-				return GetMembersHelper.GetFields(this, filter, options);
-			}
+
+			return GetMembersHelper.GetFields(this, filter, options);
 		}
 
 		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
@@ -691,10 +682,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFiltered(this.Events, filter);
 			}
-			else
-			{
-				return GetMembersHelper.GetEvents(this, filter, options);
-			}
+
+			return GetMembersHelper.GetEvents(this, filter, options);
 		}
 
 		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
@@ -706,10 +695,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFiltered(this.Members, filter);
 			}
-			else
-			{
-				return GetMembersHelper.GetMembers(this, filter, options);
-			}
+
+			return GetMembersHelper.GetMembers(this, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
@@ -721,10 +708,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return GetFilteredAccessors(filter);
 			}
-			else
-			{
-				return GetMembersHelper.GetAccessors(this, filter, options);
-			}
+
+			return GetMembersHelper.GetAccessors(this, filter, options);
 		}
 
 		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IMethod> filter)

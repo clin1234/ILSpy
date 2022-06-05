@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		readonly AstNode node;
 		readonly Role<T> role;
 
-		public AstNodeCollection(AstNode node, Role<T> role)
+		internal AstNodeCollection(AstNode node, Role<T> role)
 		{
 			this.node = node ?? throw new ArgumentNullException(nameof(node));
 			this.role = role ?? throw new ArgumentNullException(nameof(role));
@@ -72,10 +72,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				element.Remove();
 				return true;
 			}
-			else
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		public void CopyTo(T[] array, int arrayIndex)
@@ -114,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return GetEnumerator();
 		}
 
-		public void AddRange(IEnumerable<T> nodes)
+		internal void AddRange(IEnumerable<T> nodes)
 		{
 			// Evaluate 'nodes' first, since it might change when we add the new children
 			// Example: collection.AddRange(collection);
@@ -125,7 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public void AddRange(T[] nodes)
+		internal void AddRange(T[] nodes)
 		{
 			// Fast overload for arrays - we don't need to create a copy
 			if (nodes != null)
@@ -135,20 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public void ReplaceWith(IEnumerable<T> nodes)
-		{
-			// Evaluate 'nodes' first, since it might change when we call Clear()
-			// Example: collection.ReplaceWith(collection);
-			nodes = nodes?.ToList();
-			Clear();
-			if (nodes != null)
-			{
-				foreach (T node in nodes)
-					Add(node);
-			}
-		}
-
-		public void MoveTo(ICollection<T> targetCollection)
+		internal void MoveTo(ICollection<T> targetCollection)
 		{
 			ArgumentNullException.ThrowIfNull(targetCollection);
 			foreach (T node in this)
@@ -158,7 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IEnumerable<T> Detach()
+		internal IEnumerable<T> Detach()
 		{
 			foreach (T item in this)
 				yield return item.Detach();
@@ -168,25 +153,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Returns the first element for which the predicate returns true,
 		/// or the null node (AstNode with IsNull=true) if no such object is found.
 		/// </summary>
-		public T FirstOrNullObject(Func<T, bool> predicate = null)
+		internal T FirstOrNullObject(Func<T, bool> predicate = null)
 		{
-			foreach (T item in this)
-				if (predicate == null || predicate(item))
-					return item;
+			foreach (T item in this.Where(item => predicate == null || predicate(item)))
+				return item;
 			return role.NullObject;
-		}
-
-		/// <summary>
-		/// Returns the last element for which the predicate returns true,
-		/// or the null node (AstNode with IsNull=true) if no such object is found.
-		/// </summary>
-		public T LastOrNullObject(Func<T, bool> predicate = null)
-		{
-			T result = role.NullObject;
-			foreach (T item in this)
-				if (predicate == null || predicate(item))
-					result = item;
-			return result;
 		}
 
 		internal bool DoMatch(AstNodeCollection<T> other, Match match)
@@ -194,32 +165,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Pattern.DoMatchCollection(role, node.FirstChild, other.node.FirstChild, match);
 		}
 
-		public void InsertAfter(T existingItem, T newItem)
+		internal void InsertAfter(T existingItem, T newItem)
 		{
 			node.InsertChildAfter(existingItem, newItem, role);
-		}
-
-		public void InsertBefore(T existingItem, T newItem)
-		{
-			node.InsertChildBefore(existingItem, newItem, role);
-		}
-
-		/// <summary>
-		/// Applies the <paramref name="visitor"/> to all nodes in this collection.
-		/// </summary>
-		public void AcceptVisitor(IAstVisitor visitor)
-		{
-			uint roleIndex = role.Index;
-			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next)
-			{
-				Debug.Assert(cur.Parent == node);
-				// Remember next before yielding cur.
-				// This allows removing/replacing nodes while iterating through the list.
-				next = cur.NextSibling;
-				if (cur.RoleIndex == roleIndex)
-					cur.AcceptVisitor(visitor);
-			}
 		}
 
 		#region Equals and GetHashCode implementation

@@ -43,12 +43,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				if (CausesAmbiguityWithGenerics(node))
 				{
-					node.ReplaceWith(n => new ParenthesizedExpression(n));
+					node.ReplaceWith(static n => new ParenthesizedExpression(n));
 				}
 			}
 		}
 
-		public static bool CausesAmbiguityWithGenerics(BinaryOperatorExpression binaryOperatorExpression)
+		private static bool CausesAmbiguityWithGenerics(BinaryOperatorExpression binaryOperatorExpression)
 		{
 			if (binaryOperatorExpression.Operator != BinaryOperatorType.LessThan)
 				return false;

@@ -103,11 +103,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return Accessibility.ProtectedAndInternal;
 			}
-			else
-			{
-				Debug.Assert(!(a == Accessibility.Internal && b == Accessibility.Protected));
-				return a;
-			}
+
+			Debug.Assert(!(a == Accessibility.Internal && b == Accessibility.Protected));
+			return a;
 		}
 
 		/// <summary>
@@ -126,11 +124,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return Accessibility.ProtectedOrInternal;
 			}
-			else
-			{
-				Debug.Assert(!(a == Accessibility.Internal && b == Accessibility.Protected));
-				return b;
-			}
+
+			Debug.Assert(!(a == Accessibility.Internal && b == Accessibility.Protected));
+			return b;
 		}
 
 		/// <summary>

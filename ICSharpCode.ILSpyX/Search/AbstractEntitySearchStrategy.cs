@@ -75,7 +75,8 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					return entity.Namespace.Length == 0;
 				}
-				else if (!entity.Namespace.Contains(searchRequest.InNamespace))
+
+				if (!entity.Namespace.Contains(searchRequest.InNamespace))
 				{
 					return false;
 				}

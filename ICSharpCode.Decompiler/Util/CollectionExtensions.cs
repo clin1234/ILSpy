@@ -8,36 +8,12 @@ namespace ICSharpCode.Decompiler.Util
 {
 	static class CollectionExtensions
 	{
-		public static void Deconstruct<K, V>(this KeyValuePair<K, V> pair, out K key, out V value)
-		{
-			key = pair.Key;
-			value = pair.Value;
-		}
-
 #if !NET40_OR_GREATER && !NETSTANDARD && !NET
 		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
 		{
 			return input1.Zip(input2, static (a, b) => (a, b));
 		}
 #endif
-
-		public static IEnumerable<(A?, B?)> ZipLongest<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
-		{
-			using var it1 = input1.GetEnumerator();
-			using var it2 = input2.GetEnumerator();
-			bool hasElements1 = true;
-			bool hasElements2 = true;
-			while (true)
-			{
-				if (hasElements1)
-					hasElements1 = it1.MoveNext();
-				if (hasElements2)
-					hasElements2 = it2.MoveNext();
-				if (!(hasElements1 || hasElements2))
-					break;
-				yield return ((hasElements1 ? it1.Current : default), (hasElements2 ? it2.Current : default));
-			}
-		}
 
 		public static IEnumerable<T> Slice<T>(this IReadOnlyList<T> input, int offset, int length)
 		{
@@ -73,31 +49,11 @@ namespace ICSharpCode.Decompiler.Util
 			return input.Skip(input.Count - count);
 		}
 
-		public static T? PopOrDefault<T>(this Stack<T> stack)
-		{
-			if (stack.Count == 0)
-				return default(T);
-			return stack.Pop();
-		}
-
 		public static T? PeekOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
 				return default(T);
 			return stack.Peek();
-		}
-
-		public static int MaxOrDefault<T>(this IEnumerable<T> input, Func<T, int> selector, int defaultValue = 0)
-		{
-			int max = defaultValue;
-			foreach (var element in input)
-			{
-				int value = selector(element);
-				if (value > max)
-					max = value;
-			}
-
-			return max;
 		}
 
 		public static int IndexOf<T>(this IReadOnlyList<T> collection, T value)
@@ -285,7 +241,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// Returns the minimum element.
 		/// </summary>
 		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
-		public static T MinBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K>? keyComparer)
+		private static T MinBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K>? keyComparer)
 		{
 			ArgumentNullException.ThrowIfNull(source);
 			ArgumentNullException.ThrowIfNull(keySelector);
@@ -319,33 +275,6 @@ namespace ICSharpCode.Decompiler.Util
 			return source.MaxBy(keySelector, Comparer<K>.Default);
 		}
 #endif
-		/// <summary>
-		/// Returns the maximum element.
-		/// </summary>
-		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
-		public static T MaxBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K>? keyComparer)
-		{
-			ArgumentNullException.ThrowIfNull(source);
-			ArgumentNullException.ThrowIfNull(keySelector);
-			keyComparer ??= Comparer<K>.Default;
-			using var enumerator = source.GetEnumerator();
-			if (!enumerator.MoveNext())
-				throw new InvalidOperationException("Sequence contains no elements");
-			T maxElement = enumerator.Current;
-			K maxKey = keySelector(maxElement);
-			while (enumerator.MoveNext())
-			{
-				T element = enumerator.Current;
-				K key = keySelector(element);
-				if (keyComparer.Compare(key, maxKey) > 0)
-				{
-					maxElement = element;
-					maxKey = key;
-				}
-			}
-
-			return maxElement;
-		}
 
 		public static void RemoveLast<T>(this IList<T> list)
 		{
@@ -356,7 +285,7 @@ namespace ICSharpCode.Decompiler.Util
 		public static T? OnlyOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate) =>
 			OnlyOrDefault(source.Where(predicate));
 
-		public static T? OnlyOrDefault<T>(this IEnumerable<T> source)
+		private static T? OnlyOrDefault<T>(this IEnumerable<T> source)
 		{
 			bool any = false;
 			T? first = default;
@@ -380,7 +309,6 @@ namespace ICSharpCode.Decompiler.Util
 		public static bool All<T>(this T[] array, Predicate<T> match) => Array.TrueForAll(array, match);
 		public static bool All<T>(this List<T> list, Predicate<T> match) => list.TrueForAll(match);
 
-		public static T? FirstOrDefault<T>(this T[] array, Predicate<T> predicate) => Array.Find(array, predicate);
 		public static T? FirstOrDefault<T>(this List<T> list, Predicate<T> predicate) => list.Find(predicate);
 
 		public static T Last<T>(this IList<T> list) => list[^1];

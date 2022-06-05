@@ -26,7 +26,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public sealed class ErrorExpression : Expression
+	internal sealed class ErrorExpression : Expression
 	{
 		public ErrorExpression()
 		{

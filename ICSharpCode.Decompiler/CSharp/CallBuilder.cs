@@ -115,17 +115,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => AddAnnotations(arg.Expression));
 				}
-				else
-				{
-					Debug.Assert(skipCount == 0);
-					return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
-						(arg, name) => {
-							if (name == null)
-								return AddAnnotations(arg.Expression);
-							else
-								return new NamedArgumentExpression(name, AddAnnotations(arg.Expression));
-						});
-				}
+
+				Debug.Assert(skipCount == 0);
+				return Arguments.Take(argumentCount).Zip(ArgumentNames.Take(argumentCount),
+					(arg, name) => {
+						if (name == null)
+							return AddAnnotations(arg.Expression);
+						return new NamedArgumentExpression(name, AddAnnotations(arg.Expression));
+					});
 
 				Expression AddAnnotations(Expression expression)
 				{
@@ -1463,24 +1460,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new AssignmentExpression(expr, op, value.Expression).WithRR(
 					new TypeResolveResult(method.AccessorOwner.ReturnType));
 			}
-			else
+
+			if (arguments.Count != 0)
 			{
-				if (arguments.Count != 0)
-				{
-					return new IndexerExpression(target.Expression, arguments.Select(static a => a.Expression))
-						.WithoutILInstruction().WithRR(rr);
-				}
-				else if (requireTarget)
-				{
-					return new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name)
-						.WithoutILInstruction().WithRR(rr);
-				}
-				else
-				{
-					return new IdentifierExpression(method.AccessorOwner.Name)
-						.WithoutILInstruction().WithRR(rr);
-				}
+				return new IndexerExpression(target.Expression, arguments.Select(static a => a.Expression))
+					.WithoutILInstruction().WithRR(rr);
 			}
+
+			if (requireTarget)
+			{
+				return new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name)
+					.WithoutILInstruction().WithRR(rr);
+			}
+
+			return new IdentifierExpression(method.AccessorOwner.Name)
+				.WithoutILInstruction().WithRR(rr);
 		}
 
 		bool IsAppropriateCallTarget(ExpectedTargetDetails expectedTargetDetails, IMember expectedTarget,
@@ -1536,33 +1530,31 @@ namespace ICSharpCode.Decompiler.CSharp
 					argumentToParameterMap: argumentList.ArgumentToParameterMap
 				));
 			}
-			else
-			{
-				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array,
-					       argumentList.GetArgumentResolveResults().ToArray(),
-					       argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _,
-					       out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None ||
-				       bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
-				{
-					if (argumentList.FirstOptionalArgumentIndex >= 0)
-					{
-						argumentList.FirstOptionalArgumentIndex = -1;
-						continue;
-					}
 
-					CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
-					break; // make sure that we don't not end up in an infinite loop
+			while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array,
+				       argumentList.GetArgumentResolveResults().ToArray(),
+				       argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _,
+				       out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None ||
+			       bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
+			{
+				if (argumentList.FirstOptionalArgumentIndex >= 0)
+				{
+					argumentList.FirstOptionalArgumentIndex = -1;
+					continue;
 				}
 
-				return new ObjectCreateExpression(
-					expressionBuilder.ConvertType(method.DeclaringType),
-					argumentList.GetArgumentExpressions()
-				).WithRR(new CSharpInvocationResolveResult(
-					target, method, argumentList.GetArgumentResolveResults().ToArray(),
-					isExpandedForm: argumentList.IsExpandedForm,
-					argumentToParameterMap: argumentList.ArgumentToParameterMap
-				));
+				CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
+				break; // make sure that we don't not end up in an infinite loop
 			}
+
+			return new ObjectCreateExpression(
+				expressionBuilder.ConvertType(method.DeclaringType),
+				argumentList.GetArgumentExpressions()
+			).WithRR(new CSharpInvocationResolveResult(
+				target, method, argumentList.GetArgumentResolveResults().ToArray(),
+				isExpandedForm: argumentList.IsExpandedForm,
+				argumentToParameterMap: argumentList.ArgumentToParameterMap
+			));
 		}
 
 		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
@@ -1590,13 +1582,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				return HandleDelegateConstruction(inst.Method.DeclaringType, method, expectedTargetDetails, thisArg,
 					inst);
 			}
-			else
-			{
-				var argumentList = BuildArgumentList(expectedTargetDetails, null, inst.Method,
-					0, inst.Arguments, null);
-				return HandleConstructorCall(new ExpectedTargetDetails { CallOpCode = OpCode.NewObj }, null,
-					inst.Method, argumentList).WithILInstruction(inst);
-			}
+
+			var argumentList = BuildArgumentList(expectedTargetDetails, null, inst.Method,
+				0, inst.Arguments, null);
+			return HandleConstructorCall(new ExpectedTargetDetails { CallOpCode = OpCode.NewObj }, null,
+				inst.Method, argumentList).WithILInstruction(inst);
 		}
 
 		private bool CanUseDelegateConstruction(IMethod targetMethod, ILInstruction thisArg, IMethod invokeMethod)
@@ -1615,29 +1605,24 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						return thisArg.MatchLdNull();
 					}
-					else if (targetMethod.IsExtensionMethod &&
-					         invokeMethod.Parameters.Count == targetMethod.Parameters.Count - 1)
+
+					if (targetMethod.IsExtensionMethod &&
+					    invokeMethod.Parameters.Count == targetMethod.Parameters.Count - 1)
 					{
 						return true;
 					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					// delegate type unknown:
-					return thisArg.MatchLdNull() || targetMethod.IsExtensionMethod;
-				}
-			}
-			else
-			{
-				// targetMethod is instance method
-				if (invokeMethod != null && invokeMethod.Parameters.Count != targetMethod.Parameters.Count)
+
 					return false;
-				return true;
+				}
+
+				// delegate type unknown:
+				return thisArg.MatchLdNull() || targetMethod.IsExtensionMethod;
 			}
+
+			// targetMethod is instance method
+			if (invokeMethod != null && invokeMethod.Parameters.Count != targetMethod.Parameters.Count)
+				return false;
+			return true;
 		}
 
 		internal TranslatedExpression Build(LdVirtDelegate inst)

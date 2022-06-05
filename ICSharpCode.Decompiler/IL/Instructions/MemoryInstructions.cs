@@ -52,7 +52,8 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(')');
 					return;
 				}
-				else if (this.MatchLdsFld(out field))
+
+				if (this.MatchLdsFld(out field))
 				{
 					WriteILRange(output, options);
 					output.Write("ldsfld ");
@@ -60,6 +61,7 @@ namespace ICSharpCode.Decompiler.IL
 					return;
 				}
 			}
+
 			OriginalWriteTo(output, options);
 		}
 	}
@@ -82,7 +84,8 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(')');
 					return;
 				}
-				else if (this.MatchStsFld(out field, out value))
+
+				if (this.MatchStsFld(out field, out value))
 				{
 					WriteILRange(output, options);
 					output.Write("stsfld ");
@@ -93,6 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 					return;
 				}
 			}
+
 			OriginalWriteTo(output, options);
 		}
 	}

@@ -49,6 +49,17 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public readonly bool RefInput;
 
+		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput = false)
+			: base(OpCode.NullableUnwrap, argument)
+		{
+			this.ResultType = unwrappedType;
+			this.RefInput = refInput;
+			if (unwrappedType == StackType.Ref)
+			{
+				Debug.Assert(refInput);
+			}
+		}
+
 		/// <summary>
 		/// Consider the following code generated for <code>t?.Method()</code> on a generic t:
 		/// <code>if (comp(box ``0(ldloc t) != ldnull)) newobj Nullable..ctor(constrained[``0].callvirt Method(ldloca t)) else default.value Nullable</code>
@@ -65,28 +76,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool RefOutput { get => ResultType == StackType.Ref; }
 
-		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput = false)
-			: base(OpCode.NullableUnwrap, argument)
-		{
-			this.ResultType = unwrappedType;
-			this.RefInput = refInput;
-			if (unwrappedType == StackType.Ref)
-			{
-				Debug.Assert(refInput);
-			}
-		}
+		public override StackType ResultType { get; }
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
 			if (this.RefInput)
 			{
-				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
+				Debug.Assert(Argument.ResultType == StackType.Ref,
+					"nullable.unwrap expects reference to nullable type as input");
 			}
 			else
 			{
 				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
 			}
+
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
 		}
 
@@ -97,47 +101,46 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				output.Write("refinput.");
 			}
+
 			output.Write(ResultType);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
 		}
-
-		public override StackType ResultType { get; }
 	}
 
 	partial class NullableRewrap
 	{
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
+
+		public override StackType ResultType {
+			get {
+				if (Argument.ResultType == StackType.Void)
+					return StackType.Void;
+				return StackType.O;
+			}
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(Argument.HasFlag(InstructionFlags.MayUnwrapNull));
 		}
 
-		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			// Convert MayUnwrapNull flag to ControlFlow flag.
 			// Also, remove EndpointUnreachable flag, because the end-point is reachable through
 			// the implicit nullable.unwrap branch.
-			const InstructionFlags flagsToRemove = InstructionFlags.MayUnwrapNull | InstructionFlags.EndPointUnreachable;
+			const InstructionFlags flagsToRemove =
+				InstructionFlags.MayUnwrapNull | InstructionFlags.EndPointUnreachable;
 			return (Argument.Flags & ~flagsToRemove) | InstructionFlags.ControlFlow;
-		}
-
-		public override StackType ResultType {
-			get {
-				if (Argument.ResultType == StackType.Void)
-					return StackType.Void;
-				else
-					return StackType.O;
-			}
 		}
 
 		internal override bool PrepareExtract(int childIndex, ExtractionContext ctx)
 		{
 			return base.PrepareExtract(childIndex, ctx)
-				&& (ctx.FlagsBeingMoved & InstructionFlags.MayUnwrapNull) == 0;
+			       && (ctx.FlagsBeingMoved & InstructionFlags.MayUnwrapNull) == 0;
 		}
 
 		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
@@ -145,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Inlining into nullable.rewrap is OK unless the expression being inlined
 			// contains a nullable.wrap that isn't being re-wrapped within the expression being inlined.
 			return base.CanInlineIntoSlot(childIndex, expressionBeingMoved)
-				&& !expressionBeingMoved.HasFlag(InstructionFlags.MayUnwrapNull);
+			       && !expressionBeingMoved.HasFlag(InstructionFlags.MayUnwrapNull);
 		}
 	}
 }

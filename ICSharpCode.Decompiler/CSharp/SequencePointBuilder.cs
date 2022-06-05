@@ -117,12 +117,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					current.Function = blockContainer.Ancestors.OfType<ILFunction>().FirstOrDefault();
 					EndSequencePoint(blockStatement.LBraceToken.StartLocation, blockStatement.LBraceToken.EndLocation);
 				}
-				else
-				{
-					// Ideally, we'd be able to address this case. Blocks that are not the top-level function
-					// block have no ILInstruction annotations. It isn't clear to me how to determine the il range.
-					// For now, do not add the opening brace sequence in this case.
-				}
 			}
 
 			foreach (var stmt in blockStatement.Statements)

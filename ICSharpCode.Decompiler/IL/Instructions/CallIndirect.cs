@@ -132,8 +132,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (index == 0)
 				return FunctionPointerSlot;
-			else
-				return ArgumentSlot;
+			return ArgumentSlot;
 		}
 
 		protected override InstructionFlags ComputeFlags()

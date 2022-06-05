@@ -54,10 +54,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// This is important, otherwise we might undo the effects of interning.
 				return list;
 			}
-			else
-			{
-				return new ReadOnlyCollection<T>(list.ToArray());
-			}
+
+			return new ReadOnlyCollection<T>(list.ToArray());
 		}
 
 		private static void Freeze(object item)

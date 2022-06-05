@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		List<KeyValuePair<string, INode>> results;
 
-		public bool Success {
+		public readonly bool Success {
 			get { return results != null; }
 		}
 
@@ -40,17 +40,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return m;
 		}
 
-		internal int CheckPoint()
+		internal readonly int CheckPoint()
 		{
 			return results.Count;
 		}
 
-		internal void RestoreCheckPoint(int checkPoint)
+		internal readonly void RestoreCheckPoint(int checkPoint)
 		{
 			results.RemoveRange(checkPoint, results.Count - checkPoint);
 		}
 
-		public IEnumerable<INode> Get(string groupName)
+		public readonly IEnumerable<INode> Get(string groupName)
 		{
 			if (results == null)
 				yield break;
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 
-		public IEnumerable<T> Get<T>(string groupName) where T : INode
+		public readonly IEnumerable<T> Get<T>(string groupName) where T : INode
 		{
 			if (results == null)
 				yield break;
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 
-		public bool Has(string groupName)
+		public readonly bool Has(string groupName)
 		{
 			if (results == null)
 				return false;
@@ -81,10 +81,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 				if (pair.Key == groupName)
 					return true;
 			}
+
 			return false;
 		}
 
-		public void Add(string groupName, INode node)
+		public readonly void Add(string groupName, INode node)
 		{
 			if (groupName != null && node != null)
 			{
@@ -92,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 
-		internal void AddNull(string groupName)
+		internal readonly void AddNull(string groupName)
 		{
 			if (groupName != null)
 			{

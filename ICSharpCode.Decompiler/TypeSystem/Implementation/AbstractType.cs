@@ -39,10 +39,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					return name;
 				}
-				else
-				{
-					return ns + "." + name;
-				}
+
+				return ns + "." + name;
 			}
 		}
 

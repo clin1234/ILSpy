@@ -64,16 +64,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (index < ClassTypeParameters?.Count)
 				return ClassTypeParameters[index];
-			else
-				return DummyTypeParameter.GetClassTypeParameter(index);
+			return DummyTypeParameter.GetClassTypeParameter(index);
 		}
 
 		public ITypeParameter GetMethodTypeParameter(int index)
 		{
 			if (index < MethodTypeParameters?.Count)
 				return MethodTypeParameters[index];
-			else
-				return DummyTypeParameter.GetMethodTypeParameter(index);
+			return DummyTypeParameter.GetMethodTypeParameter(index);
 		}
 
 		internal TypeParameterSubstitution ToSubstitution()

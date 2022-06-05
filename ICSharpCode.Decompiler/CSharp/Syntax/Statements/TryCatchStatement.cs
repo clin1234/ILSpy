@@ -114,12 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string VariableName {
 			get { return GetChildByRole(Roles.Identifier).Name; }
-			set {
-				if (string.IsNullOrEmpty(value))
-					SetChildByRole(Roles.Identifier, null);
-				else
-					SetChildByRole(Roles.Identifier, Identifier.Create(value));
-			}
+			set { SetChildByRole(Roles.Identifier, string.IsNullOrEmpty(value) ? null : Identifier.Create(value)); }
 		}
 
 		public Identifier VariableNameToken {

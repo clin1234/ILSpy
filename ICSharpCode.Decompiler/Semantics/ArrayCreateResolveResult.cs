@@ -52,8 +52,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			if (InitializerElements != null)
 				return SizeArguments.Concat(InitializerElements);
-			else
-				return SizeArguments;
+			return SizeArguments;
 		}
 	}
 }

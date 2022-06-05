@@ -144,9 +144,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							var arg = ctor.FixedArguments[0];
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-							    && values.All(v => v.Value is byte and <= 2))
+							    && values.All(static v => v.Value is byte and <= 2))
 							{
-								nullableAttributeData = values.SelectArray(v => (Nullability)(byte)v.Value);
+								nullableAttributeData = values.SelectArray(static v => (Nullability)(byte)v.Value);
 							}
 							else if (arg.Value is byte b and <= 2)
 							{
@@ -181,34 +181,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					return inputType.VisitChildren(visitor);
 				}
-				else
-				{
-					return inputType.AcceptVisitor(visitor);
-				}
+
+				return inputType.AcceptVisitor(visitor);
 			}
-			else
-			{
-				return inputType;
-			}
+
+			return inputType;
 		}
 
-		public override IType VisitModOpt(ModifiedType type)
+		internal override IType VisitModOpt(ModifiedType type)
 		{
 			if ((options & TypeSystemOptions.KeepModifiers) != 0)
 				return base.VisitModOpt(type);
-			else
-				return type.ElementType.AcceptVisitor(this);
+			return type.ElementType.AcceptVisitor(this);
 		}
 
-		public override IType VisitModReq(ModifiedType type)
+		internal override IType VisitModReq(ModifiedType type)
 		{
 			if ((options & TypeSystemOptions.KeepModifiers) != 0)
 				return base.VisitModReq(type);
-			else
-				return type.ElementType.AcceptVisitor(this);
+			return type.ElementType.AcceptVisitor(this);
 		}
 
-		public override IType VisitPointerType(PointerType type)
+		internal override IType VisitPointerType(PointerType type)
 		{
 			dynamicTypeIndex++;
 			return base.VisitPointerType(type);
@@ -218,8 +212,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (nullabilityTypeIndex < nullableAttributeData?.Length)
 				return nullableAttributeData[nullabilityTypeIndex++];
-			else
-				return defaultNullability;
+			return defaultNullability;
 		}
 
 		void ExpectDummyNullabilityForGenericValueType()
@@ -228,20 +221,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			Debug.Assert(n == Nullability.Oblivious);
 		}
 
-		public override IType VisitArrayType(ArrayType type)
+		internal override IType VisitArrayType(ArrayType type)
 		{
 			var nullability = GetNullability();
 			dynamicTypeIndex++;
 			return base.VisitArrayType(type).ChangeNullability(nullability);
 		}
 
-		public override IType VisitByReferenceType(ByReferenceType type)
+		internal override IType VisitByReferenceType(ByReferenceType type)
 		{
 			dynamicTypeIndex++;
 			return base.VisitByReferenceType(type);
 		}
 
-		public override IType VisitParameterizedType(ParameterizedType type)
+		internal override IType VisitParameterizedType(ParameterizedType type)
 		{
 			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality))
@@ -326,7 +319,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new ParameterizedType(genericType, arguments);
 		}
 
-		public override IType VisitFunctionPointerType(FunctionPointerType type)
+		internal override IType VisitFunctionPointerType(FunctionPointerType type)
 		{
 			dynamicTypeIndex++;
 			if (type.ReturnIsRefReadOnly)
@@ -355,7 +348,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type.WithSignature(returnType, parameters.ToImmutableArray());
 		}
 
-		public override IType VisitTypeDefinition(ITypeDefinition type)
+		internal override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			IType newType = type;
 			var ktc = type.KnownTypeCode;
@@ -386,13 +379,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				Nullability nullability = GetNullability();
 				return newType.ChangeNullability(nullability);
 			}
-			else
-			{
-				return newType;
-			}
+
+			return newType;
 		}
 
-		public override IType VisitOtherType(IType type)
+		internal override IType VisitOtherType(IType type)
 		{
 			type = base.VisitOtherType(type);
 			if (type.Kind == TypeKind.Unknown && type.IsReferenceType == true)
@@ -404,7 +395,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type;
 		}
 
-		public override IType VisitTypeParameter(ITypeParameter type)
+		internal override IType VisitTypeParameter(ITypeParameter type)
 		{
 			Nullability nullability = GetNullability();
 			return type.ChangeNullability(nullability);

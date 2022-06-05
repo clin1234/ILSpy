@@ -255,10 +255,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				name += extension;
 			if (IsReservedFileSystemName(name))
 				return name + "_";
-			else if (name == ".")
+			if (name == ".")
 				return "_";
-			else
-				return name;
+			return name;
 		}
 
 		/// <summary>
@@ -423,15 +422,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						{
 							return file;
 						}
-						else
-						{
-							string dir = Settings.UseNestedDirectoriesForNamespaces
-								? CleanUpPath(ns)
-								: CleanUpDirectoryName(ns);
-							if (directories.Add(dir))
-								Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
-							return Path.Combine(dir, file);
-						}
+
+						string dir = Settings.UseNestedDirectoriesForNamespaces
+							? CleanUpPath(ns)
+							: CleanUpDirectoryName(ns);
+						if (directories.Add(dir))
+							Directory.CreateDirectory(Path.Combine(TargetDirectory, dir));
+						return Path.Combine(dir, file);
 					}, StringComparer.OrdinalIgnoreCase).ToList();
 			int total = files.Count;
 			var progress = ProgressIndicator;

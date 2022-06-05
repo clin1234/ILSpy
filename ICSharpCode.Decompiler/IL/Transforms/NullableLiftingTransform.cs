@@ -134,7 +134,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				nullableVars.Add(v);
 				return true;
 			}
-			else if (condition is BinaryNumericInstruction bitand)
+
+			if (condition is BinaryNumericInstruction bitand)
 			{
 				if (!(bitand.Operator == BinaryNumericOperator.BitAnd && bitand.ResultType == StackType.I4))
 					return false;
@@ -206,14 +207,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Equality, trueInst)
 						       ?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Equality, trueInst);
 					}
-					else if (falseInst.MatchLdcI4(1))
+
+					if (falseInst.MatchLdcI4(1))
 					{
 						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue != b.HasValue) : true
 						// => a != b
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst)
 						       ?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
 					}
-					else if (IsGenericNewPattern(comp.Left, comp.Right, trueInst, falseInst))
+
+					if (IsGenericNewPattern(comp.Left, comp.Right, trueInst, falseInst))
 					{
 						// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
 						// => Activator.CreateInstance<T>()
@@ -273,7 +276,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						new LdcI4(1).WithILRange(falseInst)
 					).WithILRange(ifInst);
 				}
-				else if (trueInst.MatchLdcI4(0) && MatchHasValueCall(falseInst, v))
+
+				if (trueInst.MatchLdcI4(0) && MatchHasValueCall(falseInst, v))
 				{
 					// v.GetValueOrDefault() ? false : v.HasValue
 					// ==> v == false
@@ -284,7 +288,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						trueInst // LdcI4(0)
 					).WithILRange(ifInst);
 				}
-				else if (MatchNegatedHasValueCall(trueInst, v) && falseInst.MatchLdcI4(1))
+
+				if (MatchNegatedHasValueCall(trueInst, v) && falseInst.MatchLdcI4(1))
 				{
 					// v.GetValueOrDefault() ? !v.HasValue : true
 					// ==> v != true
@@ -295,7 +300,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						falseInst // LdcI4(1)
 					).WithILRange(ifInst);
 				}
-				else if (trueInst.MatchLdcI4(1) && MatchNegatedHasValueCall(falseInst, v))
+
+				if (trueInst.MatchLdcI4(1) && MatchNegatedHasValueCall(falseInst, v))
 				{
 					// v.GetValueOrDefault() ? true : !v.HasValue
 					// ==> v != false
@@ -331,7 +337,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							context.Step("NullableLiftingTransform: 3vl.bool.or(bool?, bool?)", ifInst);
 							return new ThreeValuedBoolOr(trueInst, falseInst).WithILRange(ifInst);
 						}
-						else if (v == nullable2 && v2 == nullable1)
+
+						if (v == nullable2 && v2 == nullable1)
 						{
 							context.Step("NullableLiftingTransform: 3vl.bool.and(bool?, bool?)", ifInst);
 							return new ThreeValuedBoolAnd(falseInst, trueInst).WithILRange(ifInst);
@@ -407,7 +414,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				result.Right = comp.Right;
 				return true;
 			}
-			else if (inst is Call call && call.Method.IsOperator && call.Arguments.Count == 2 && !call.IsLifted)
+
+			if (inst is Call call && call.Method.IsOperator && call.Arguments.Count == 2 && !call.IsLifted)
 			{
 				switch (call.Method.Name)
 				{
@@ -457,10 +465,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return call.Method.Parameters[0].Type;
 					}
-					else
-					{
-						return SpecialType.UnknownType;
-					}
+
+					return SpecialType.UnknownType;
 				}
 			}
 
@@ -470,10 +476,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return call.Method.Parameters[1].Type;
 					}
-					else
-					{
-						return SpecialType.UnknownType;
-					}
+
+					return SpecialType.UnknownType;
 				}
 			}
 
@@ -484,7 +488,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left,
 						right).WithILRange(Instruction);
 				}
-				else if (Instruction is Call call)
+
+				if (Instruction is Call call)
 				{
 					IMethod method;
 					if (newComparisonKind == Kind)
@@ -511,10 +516,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						IsTail = call.IsTail
 					}.WithILRange(call);
 				}
-				else
-				{
-					return null;
-				}
+
+				return null;
 			}
 		}
 
@@ -877,10 +880,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (foundIndices.Any())
 					return (new LdLoc(inputVar).WithILRange(inst), foundIndices);
-				else
-					return (null, null);
+				return (null, null);
 			}
-			else if (inst is Conv conv)
+
+			if (inst is Conv conv)
 			{
 				(ILInstruction arg, BitSet bits) = DoLift(conv.Argument);
 				if (arg != null)
@@ -1013,10 +1016,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					bits.UnionWith(rightBits);
 				return (left, right, bits);
 			}
-			else
-			{
-				return (null, null, null);
-			}
+
+			return (null, null, null);
 		}
 
 		private ILInstruction NewNullable(ILInstruction inst, IType underlyingType)
@@ -1030,10 +1031,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ctor = ctor.Specialize(new TypeParameterSubstitution(new[] { underlyingType }, null));
 				return new NewObj(ctor) { Arguments = { inst } };
 			}
-			else
-			{
-				return inst;
-			}
+
+			return inst;
 		}
 
 		#endregion

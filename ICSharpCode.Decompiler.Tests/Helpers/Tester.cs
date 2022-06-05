@@ -73,39 +73,88 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	}
 
 	[Flags]
-	public enum AssemblerOptions
+	internal enum AssemblerOptions
 	{
 		None,
 		UseDebug = 0x1,
 		Force32Bit = 0x2,
 		Library = 0x4,
+
 		/// Testing our own disassembler, or working around a bug in ildasm.
 		UseOwnDisassembler = 0x8,
+
 		/// Work around bug in .NET 5 ilasm (https://github.com/dotnet/runtime/issues/32400)
 		UseLegacyAssembler = 0x10,
 	}
 
-	public static partial class Tester
+	internal static partial class Tester
 	{
+		const string targetFrameworkAttributeSnippet = @"
+
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp,Version=v6.0"", FrameworkDisplayName = """")]
+
+";
+
 		public static readonly string TesterPath;
 		public static readonly string TestCasePath;
 
 		static readonly string testRunnerBasePath;
-		static readonly string packagesPropsFile;
 		static readonly string roslynLatestVersion;
 		static readonly RoslynToolset roslynToolset;
 		static readonly VsWhereToolset vswhereToolset;
+
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
+				new Version(6, 0), "Microsoft.NETCore.App")
+			.GetReferenceAssemblyPath(".NETCoreApp,Version=v6.0");
+
+		public static readonly string RefAsmPath = Path.Combine(
+			Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
+
+		static readonly string[] defaultReferences = new[] {
+			"System.dll",
+			"System.Core.dll",
+			"System.Xml.dll",
+			"Microsoft.CSharp.dll"
+		};
+
+		static readonly string[] coreDefaultReferences = new[] {
+			"netstandard.dll",
+			"mscorlib.dll",
+			"System.dll",
+			"System.Collections.dll",
+			"System.Console.dll",
+			"System.Core.dll",
+			"System.Linq.dll",
+			"System.Linq.Expressions.dll",
+			"System.Linq.Queryable.dll",
+			"System.IO.FileSystem.Watcher.dll",
+			"System.Threading.dll",
+			"System.Threading.Thread.dll",
+			"System.Runtime.dll",
+			"System.Runtime.InteropServices.dll",
+			"System.Xml.dll",
+			"System.Xml.ReaderWriter.dll",
+			"System.ValueTuple.dll",
+			"Microsoft.CSharp.dll",
+			"Microsoft.VisualBasic.dll",
+		};
+
+		static readonly Lazy<string> targetFrameworkAttributeSnippetFile =
+			new Lazy<string>(GetTargetFrameworkAttributeSnippetFile);
 
 		static Tester()
 		{
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			TestCasePath = Path.Combine(TesterPath, "../../../../TestCases");
 #if DEBUG
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net6.0-windows");
+			testRunnerBasePath = Path.Combine(TesterPath,
+				"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net6.0-windows");
 #else
-			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net6.0-windows");
+			testRunnerBasePath =
+ Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net6.0-windows");
 #endif
-			packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
+			string packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
 			roslynLatestVersion = XDocument.Load(packagesPropsFile).XPathSelectElement("//RoslynVersion").Value;
 			roslynToolset = new RoslynToolset();
 			vswhereToolset = new VsWhereToolset();
@@ -132,16 +181,23 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		static async Task BuildTestRunner(string runtime, string config)
 		{
 			await Cli.Wrap("dotnet.exe")
-				.WithArguments(new[] { "build", Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj"), "-r", runtime, "-c", config, "--self-contained" })
+				.WithArguments(new[] {
+					"build",
+					Path.Combine(TesterPath,
+						"../../../../../ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj"),
+					"-r", runtime, "-c", config, "--self-contained"
+				})
 				.ExecuteAsync();
 		}
 
-		public static async Task<string> AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
+		public static async Task<string> AssembleIL(string sourceFileName,
+			AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath;
 			if (options.HasFlag(AssemblerOptions.UseLegacyAssembler))
 			{
-				ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
+				ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"),
+					@"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
 			}
 			else
 			{
@@ -149,13 +205,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					Path.GetDirectoryName(typeof(Tester).Assembly.Location),
 					"ilasm.exe");
 			}
-			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
+
+			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName),
+				Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
 			if (options.HasFlag(AssemblerOptions.Force32Bit))
 			{
 				outputFile += ".32";
 				otherOptions += "/32BitPreferred ";
 			}
+
 			if (options.HasFlag(AssemblerOptions.Library))
 			{
 				outputFile += ".dll";
@@ -186,29 +245,29 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return outputFile;
 		}
 
-		public static async Task<string> Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
+		public static async Task<string> Disassemble(string sourceFileName, string outputFile,
+			AssemblerOptions asmOptions)
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler))
 			{
-				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
-				using (var peFile = new PEFile(sourceFileName, peFileStream))
-				using (var writer = new StringWriter())
-				{
-					var metadata = peFile.Metadata;
-					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
-					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null);
-					rd.DetectControlStructure = false;
-					rd.WriteAssemblyReferences(metadata);
-					if (metadata.IsAssembly)
-						rd.WriteAssemblyHeader(peFile);
-					output.WriteLine();
-					rd.WriteModuleHeader(peFile, skipMVID: true);
-					output.WriteLine();
-					rd.WriteModuleContents(peFile);
+				await using var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read);
+				using var peFile = new PEFile(sourceFileName, peFileStream);
+				await using var writer = new StringWriter();
+				var metadata = peFile.Metadata;
+				var output = new PlainTextOutput(writer);
+				ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None) {
+					AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null),
+					DetectControlStructure = false
+				};
+				rd.WriteAssemblyReferences(metadata);
+				if (metadata.IsAssembly)
+					rd.WriteAssemblyHeader(peFile);
+				output.WriteLine();
+				rd.WriteModuleHeader(peFile, skipMVID: true);
+				output.WriteLine();
+				rd.WriteModuleContents(peFile);
 
-					File.WriteAllText(outputFile, ReplacePrivImplDetails(writer.ToString()));
-				}
+				await File.WriteAllTextAsync(outputFile, ReplacePrivImplDetails(writer.ToString()));
 				return outputFile;
 			}
 
@@ -228,7 +287,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			// Unlike the .imagebase directive (which is a fixed value when compiling with /deterministic),
 			// the image base comment still varies... ildasm putting a random number here?
-			string il = File.ReadAllText(outputFile);
+			string il = await File.ReadAllTextAsync(outputFile);
 			il = Regex.Replace(il, @"^// Image base: 0x[0-9A-F]+\r?\n", "", RegexOptions.Multiline);
 			// and while we're at it, also remove the MVID
 			il = Regex.Replace(il, @"^// MVID: \{[0-9A-F-]+\}\r?\n", "", RegexOptions.Multiline);
@@ -239,60 +298,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			// filename may contain full path
 			il = Regex.Replace(il, @"^// WARNING: Created Win32 resource file.*\r?\n", "", RegexOptions.Multiline);
 			il = ReplacePrivImplDetails(il);
-			File.WriteAllText(outputFile, il);
+			await File.WriteAllTextAsync(outputFile, il);
 
 			return outputFile;
 		}
 
 		private static string ReplacePrivImplDetails(string il)
 		{
-			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'", "'<PrivateImplementationDetails>'");
+			return Regex.Replace(il, @"'<PrivateImplementationDetails>\{[0-9A-F-]+\}'",
+				"'<PrivateImplementationDetails>'");
 		}
-
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
-			new Version(6, 0), "Microsoft.NETCore.App")
-				.GetReferenceAssemblyPath(".NETCoreApp,Version=v6.0");
-
-		public static readonly string RefAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
-
-		static readonly string[] defaultReferences = new[] {
-			"System.dll",
-			"System.Core.dll",
-			"System.Xml.dll",
-			"Microsoft.CSharp.dll"
-		};
-
-		static readonly string[] coreDefaultReferences = new[]
-			{
-				"netstandard.dll",
-				"mscorlib.dll",
-				"System.dll",
-				"System.Collections.dll",
-				"System.Console.dll",
-				"System.Core.dll",
-				"System.Linq.dll",
-				"System.Linq.Expressions.dll",
-				"System.Linq.Queryable.dll",
-				"System.IO.FileSystem.Watcher.dll",
-				"System.Threading.dll",
-				"System.Threading.Thread.dll",
-				"System.Runtime.dll",
-				"System.Runtime.InteropServices.dll",
-				"System.Xml.dll",
-				"System.Xml.ReaderWriter.dll",
-				"System.ValueTuple.dll",
-				"Microsoft.CSharp.dll",
-				"Microsoft.VisualBasic.dll",
-			};
-
-		const string targetFrameworkAttributeSnippet = @"
-
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp,Version=v6.0"", FrameworkDisplayName = """")]
-
-";
-
-		static readonly Lazy<string> targetFrameworkAttributeSnippetFile = new Lazy<string>(GetTargetFrameworkAttributeSnippetFile);
 
 		static string GetTargetFrameworkAttributeSnippetFile()
 		{
@@ -308,27 +323,31 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				preprocessorSymbols.Add("DEBUG");
 			}
+
 			if (flags.HasFlag(CompilerOptions.Optimize))
 			{
 				preprocessorSymbols.Add("OPT");
 			}
+
 			if (flags.HasFlag(CompilerOptions.TargetNet40))
 			{
 				preprocessorSymbols.Add("NET40");
 			}
+
 			if ((flags & CompilerOptions.UseRoslynMask) != 0)
 			{
 				if (!flags.HasFlag(CompilerOptions.TargetNet40))
 				{
 					preprocessorSymbols.Add("NETCORE");
 				}
+
 				preprocessorSymbols.Add("ROSLYN");
 				preprocessorSymbols.Add("CS60");
 				preprocessorSymbols.Add("VB11");
 				preprocessorSymbols.Add("VB14");
 				if (flags.HasFlag(CompilerOptions.UseRoslyn2_10_0)
-					|| flags.HasFlag(CompilerOptions.UseRoslyn3_11_0)
-					|| flags.HasFlag(CompilerOptions.UseRoslynLatest))
+				    || flags.HasFlag(CompilerOptions.UseRoslyn3_11_0)
+				    || flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
 					preprocessorSymbols.Add("ROSLYN2");
 					preprocessorSymbols.Add("CS70");
@@ -337,14 +356,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					preprocessorSymbols.Add("CS73");
 					preprocessorSymbols.Add("VB15");
 				}
+
 				if (flags.HasFlag(CompilerOptions.UseRoslyn3_11_0)
-					|| flags.HasFlag(CompilerOptions.UseRoslynLatest))
+				    || flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
 					preprocessorSymbols.Add("ROSLYN3");
 					preprocessorSymbols.Add("CS80");
 					preprocessorSymbols.Add("CS90");
 					preprocessorSymbols.Add("VB16");
 				}
+
 				if (flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
 					preprocessorSymbols.Add("ROSLYN4");
@@ -362,6 +383,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					preprocessorSymbols.Add("MCS2");
 				}
+
 				if (flags.HasFlag(CompilerOptions.UseMcs5_23))
 				{
 					preprocessorSymbols.Add("MCS5");
@@ -372,16 +394,21 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				preprocessorSymbols.Add("LEGACY_CSC");
 				preprocessorSymbols.Add("LEGACY_VBC");
 			}
+
 			return preprocessorSymbols;
 		}
 
-		public static async Task<CompilerResults> CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
+		public static async Task<CompilerResults> CompileCSharp(string sourceFileName,
+			CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
-			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
+			foreach (Match match in Regex.Matches(await File.ReadAllTextAsync(sourceFileName),
+				         @"#include ""([\w\d./]+)"""))
 			{
-				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
+				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName),
+					match.Groups[1].Value)));
 			}
+
 			bool targetNet40 = (flags & CompilerOptions.TargetNet40) != 0;
 			bool useRoslyn = (flags & CompilerOptions.UseRoslynMask) != 0;
 			if (useRoslyn && !targetNet40)
@@ -393,8 +420,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new CompilerResults();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				CompilerResults results = new CompilerResults {
+					PathToAssembly = outputFileName ?? Path.GetTempFileName()
+				};
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
 					0 => ("legacy", "5"),
@@ -418,13 +446,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					libPath = "\"" + RefAsmPath + "\",\"" + Path.Combine(RefAsmPath, "Facades") + "\"";
 					references = defaultReferences.Select(r => "-r:\"" + Path.Combine(RefAsmPath, r) + "\"");
 				}
+
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
 					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
 				}
+
 				string otherOptions = $"-noconfig " +
-					$"-langversion:{languageVersion} " +
-					$"-unsafe -o{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
+				                      $"-langversion:{languageVersion} " +
+				                      $"-unsafe -o{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
 
 				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
 				// server to speed up testing
@@ -466,13 +496,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					otherOptions += "-platform:anycpu ";
 				}
+
 				if (preprocessorSymbols.Count > 0)
 				{
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
 				var command = Cli.Wrap(cscPath)
-					.WithArguments($"{otherOptions} -lib:{libPath} {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+					.WithArguments(
+						$"{otherOptions} -lib:{libPath} {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
@@ -486,14 +518,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			else
 			{
-				CompilerResults results = new CompilerResults();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				CompilerResults results = new CompilerResults {
+					PathToAssembly = outputFileName ?? Path.GetTempFileName()
+				};
 				string testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath))
 				{
-					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
-			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
+					Assert.Ignore(
+						$"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." +
+						Environment.NewLine +
+						$"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
+
 				string mcsPath = (flags & CompilerOptions.UseMcsMask) switch {
 					CompilerOptions.UseMcs5_23 => Path.Combine(testBasePath, @"mcs\5.23\bin\mcs.bat"),
 					_ => Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat")
@@ -522,13 +558,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					otherOptions += "-platform:anycpu ";
 				}
+
 				if (preprocessorSymbols.Count > 0)
 				{
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
 				var command = Cli.Wrap(mcsPath)
-					.WithArguments($"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+					.WithArguments(
+						$"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
@@ -550,7 +588,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					CompilerOptions.UseRoslyn1_3_2 => CSharp.LanguageVersion.CSharp6,
 					CompilerOptions.UseRoslyn2_10_0 => CSharp.LanguageVersion.CSharp7_3,
 					CompilerOptions.UseRoslyn3_11_0 => CSharp.LanguageVersion.CSharp9_0,
-					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp10_0,
+					_ => cscOptions.HasFlag(CompilerOptions.Preview)
+						? CSharp.LanguageVersion.Latest
+						: CSharp.LanguageVersion.CSharp10_0,
 				};
 				DecompilerSettings settings = new(langVersion) {
 					// Never use file-scoped namespaces
@@ -566,13 +606,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					// we don't recompile with mcs but with roslyn, so we can use ref locals
 					settings.UseRefLocalsForAccurateOrderOfEvaluation = true;
 				}
+
 				return settings;
 			}
 		}
 
 		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles)
 		{
-			var parseOptions = new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
+			var parseOptions =
+				new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 
 			List<EmbeddedText> embeddedTexts = new List<EmbeddedText>();
 			List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
@@ -585,7 +627,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 
 			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
-				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(coreRefAsmPath, r))),
+				syntaxTrees,
+				coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(coreRefAsmPath, r))),
 				new CSharpCompilationOptions(
 					OutputKind.DynamicallyLinkedLibrary,
 					platform: Platform.AnyCpu,
@@ -593,19 +636,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					allowUnsafe: true,
 					deterministic: true
 				));
-			using (FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
-			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			using FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			using FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			var emitResult = compilation.Emit(peStream, pdbStream,
+				options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb,
+					pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
+			if (!emitResult.Success)
 			{
-				var emitResult = compilation.Emit(peStream, pdbStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
-				if (!emitResult.Success)
+				StringBuilder b = new StringBuilder("Compiler error:");
+				foreach (var diag in emitResult.Diagnostics)
 				{
-					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var diag in emitResult.Diagnostics)
-					{
-						b.AppendLine(diag.ToString());
-					}
-					throw new Exception(b.ToString());
+					b.AppendLine(diag.ToString());
 				}
+
+				throw new Exception(b.ToString());
 			}
 		}
 
@@ -645,9 +689,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return (result.ExitCode, result.StandardOutput, result.StandardError);
 		}
 
-		public static async Task<(int ExitCode, string Output, string Error)> RunWithTestRunner(string assemblyFileName, bool force32Bit)
+		public static async Task<(int ExitCode, string Output, string Error)> RunWithTestRunner(string assemblyFileName,
+			bool force32Bit)
 		{
-			string testRunner = Path.Combine(testRunnerBasePath, force32Bit ? "win-x86" : "win-x64", "ICSharpCode.Decompiler.TestRunner.exe");
+			string testRunner = Path.Combine(testRunnerBasePath, force32Bit ? "win-x86" : "win-x64",
+				"ICSharpCode.Decompiler.TestRunner.exe");
 			var command = Cli.Wrap(testRunner)
 				.WithArguments(assemblyFileName)
 				.WithValidation(CommandResultValidation.None);
@@ -659,36 +705,33 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static Task<string> DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
-			if (settings == null)
-				settings = new DecompilerSettings();
-			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read))
-			{
-				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
-				string targetFramework = module.Metadata.DetectTargetFrameworkId();
-				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
-					targetFramework, null, PEStreamOptions.PrefetchMetadata);
-				resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
-				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
-				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
-				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
-				decompiler.AstTransforms.Insert(0, new RemoveNamespaceMy());
-				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-				var pdbFileName = Path.ChangeExtension(assemblyFileName, ".pdb");
-				if (File.Exists(pdbFileName))
-					decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
-				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
+			settings ??= new DecompilerSettings();
+			using var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
+			string targetFramework = module.Metadata.DetectTargetFrameworkId();
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
+				targetFramework, null, PEStreamOptions.PrefetchMetadata);
+			resolver.AddSearchDirectory(targetFramework.Contains(".NETFramework") ? RefAsmPath : coreRefAsmPath);
+			var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+			CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
+			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
+			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
+			decompiler.AstTransforms.Insert(0, new RemoveNamespaceMy());
+			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			var pdbFileName = Path.ChangeExtension(assemblyFileName, ".pdb");
+			if (File.Exists(pdbFileName))
+				decompiler.DebugInfoProvider = DebugInfoUtils.FromFile(module, pdbFileName);
+			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
-				StringWriter output = new StringWriter();
-				CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
-				var visitor = new CSharpOutputVisitor(output, formattingPolicy);
-				syntaxTree.AcceptVisitor(visitor);
+			StringWriter output = new StringWriter();
+			CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
+			var visitor = new CSharpOutputVisitor(output, formattingPolicy);
+			syntaxTree.AcceptVisitor(visitor);
 
-				string fileName = Path.GetTempFileName();
-				File.WriteAllText(fileName, output.ToString());
+			string fileName = Path.GetTempFileName();
+			File.WriteAllText(fileName, output.ToString());
 
-				return Task.FromResult(fileName);
-			}
+			return Task.FromResult(fileName);
 		}
 
 		private static CSharpFormattingOptions CreateFormattingPolicyForTests()
@@ -702,7 +745,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return formattingPolicy;
 		}
 
-		public static async Task RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null, bool useTestRunner = false, bool force32Bit = false)
+		public static async Task RunAndCompareOutput(string testFileName, string outputFile,
+			string decompiledOutputFile, string decompiledCodeFile = null, bool useTestRunner = false,
+			bool force32Bit = false)
 		{
 			string output1, output2, error1, error2;
 			int result1, result2;
@@ -710,7 +755,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if (useTestRunner)
 			{
 				(result1, output1, error1) = await RunWithTestRunner(outputFile, force32Bit).ConfigureAwait(false);
-				(result2, output2, error2) = await RunWithTestRunner(decompiledOutputFile, force32Bit).ConfigureAwait(false);
+				(result2, output2, error2) =
+					await RunWithTestRunner(decompiledOutputFile, force32Bit).ConfigureAwait(false);
 			}
 			else
 			{
@@ -719,7 +765,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 
 			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
-			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
+			Assert.AreEqual(0, result2,
+				"Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
 
 			if (output1 != output2 || error1 != error2)
 			{
@@ -729,6 +776,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					b.AppendLine($"Decompiled code in {decompiledCodeFile}:line 1");
 				}
+
 				if (error1 != error2)
 				{
 					b.AppendLine("Got different error output.");
@@ -739,15 +787,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					b.AppendLine(error2);
 					b.AppendLine();
 				}
+
 				if (output1 != output2)
 				{
-					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
-					File.WriteAllText(outputFileName + ".original.out", output1);
-					File.WriteAllText(outputFileName + ".decompiled.out", output2);
+					string outputFileName =
+						Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
+					await File.WriteAllTextAsync(outputFileName + ".original.out", output1);
+					await File.WriteAllTextAsync(outputFileName + ".decompiled.out", output2);
 					int diffLine = 0;
 					string lastHeader = null;
 					Tuple<string, string> errorItem = null;
-					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create))
+					foreach (var pair in output1.Replace("\r", "").Split('\n')
+						         .Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create))
 					{
 						diffLine++;
 						if (pair.Item1 != pair.Item2)
@@ -755,21 +806,25 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 							errorItem = pair;
 							break;
 						}
+
 						if (pair.Item1.EndsWith(":", StringComparison.Ordinal))
 						{
 							lastHeader = pair.Item1;
 						}
 					}
+
 					b.AppendLine($"Output differs; first difference in line {diffLine}");
 					if (lastHeader != null)
 					{
 						b.AppendLine(lastHeader);
 					}
+
 					b.AppendLine($"{outputFileName}.original.out:line {diffLine}");
 					b.AppendLine(errorItem.Item1);
 					b.AppendLine($"{outputFileName}.decompiled.out:line {diffLine}");
 					b.AppendLine(errorItem.Item2);
 				}
+
 				Assert.Fail(b.ToString());
 			}
 		}
@@ -790,8 +845,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					// potential virus scanner problem
 				}
+
 				Thread.Sleep(10);
 			}
+
 			// If the last try still fails, don't catch the exception
 			action();
 		}
@@ -825,13 +882,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 	}
 
-	public class CompilerResults
+	internal sealed class CompilerResults
 	{
-		public string PathToAssembly { get; set; }
+		public string PathToAssembly { get; init; }
 
 		public void DeleteTempFiles()
 		{
-
 		}
 	}
 }

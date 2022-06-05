@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -43,15 +41,14 @@ namespace ICSharpCode.Decompiler.Tests
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
 			{
-				if (file.Extension == ".txt" || file.Extension == ".exe" || file.Extension == ".config")
+				if (file.Extension is ".txt" or ".exe" or ".config")
 					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
 				Assert.Contains(testName, testNames);
 			}
 		}
 
-		static readonly CompilerOptions[] noMonoOptions =
-		{
+		static readonly CompilerOptions[] noMonoOptions = {
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
@@ -72,8 +69,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
-		static readonly CompilerOptions[] net40OnlyOptions =
-		{
+		static readonly CompilerOptions[] net40OnlyOptions = {
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
@@ -86,8 +82,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40
 		};
 
-		static readonly CompilerOptions[] defaultOptions =
-		{
+		static readonly CompilerOptions[] defaultOptions = {
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
@@ -112,8 +107,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseMcs5_23
 		};
 
-		static readonly CompilerOptions[] roslynOnlyOptions =
-		{
+		static readonly CompilerOptions[] roslynOnlyOptions = {
 			CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
@@ -132,8 +126,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
-		static readonly CompilerOptions[] roslyn2OrNewerOptions =
-		{
+		static readonly CompilerOptions[] roslyn2OrNewerOptions = {
 			CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.TargetNet40,
@@ -144,14 +137,6 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
-			CompilerOptions.UseRoslynLatest,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
-
-		static readonly CompilerOptions[] roslynLatestOnlyOptions =
-		{
-			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -169,7 +154,8 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task FloatingPointArithmetic([ValueSource(nameof(noMonoOptions))] CompilerOptions options, [Values(32, 64)] int bits)
+		public async Task FloatingPointArithmetic([ValueSource(nameof(noMonoOptions))] CompilerOptions options,
+			[Values(32, 64)] int bits)
 		{
 			// The behavior of the #1794 incorrect `(float)(double)val` cast only causes test failures
 			// for some runtime+compiler combinations.
@@ -304,6 +290,7 @@ namespace ICSharpCode.Decompiler.Tests
 				compiler |= CompilerOptions.Force32Bit;
 				asm |= AssemblerOptions.Force32Bit;
 			}
+
 			await RunIL("BitNot.il", compiler, asm);
 		}
 
@@ -330,6 +317,7 @@ namespace ICSharpCode.Decompiler.Tests
 				compiler |= CompilerOptions.Force32Bit;
 				asm |= AssemblerOptions.Force32Bit;
 			}
+
 			await RunIL("StackTypes.il", compiler, asm);
 		}
 
@@ -340,6 +328,7 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				Assert.Ignore("Decompiler bug with mono!");
 			}
+
 			await RunCS(options: options);
 		}
 
@@ -368,6 +357,7 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				Assert.Ignore("Decompiler bug with mono!");
 			}
+
 			await RunCS(options: options);
 		}
 
@@ -402,6 +392,7 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				Assert.Ignore("Decompiler bug with mono!");
 			}
+
 			await RunCS(options: options);
 		}
 
@@ -423,7 +414,8 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				outputFile = await Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName)).ConfigureAwait(false);
-				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
+				string decompiledCodeFile = await Tester
+					.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
 				if ((options & CompilerOptions.UseMcsMask) != 0)
 				{
 					// For second pass, use roslyn instead of mcs.
@@ -432,7 +424,8 @@ namespace ICSharpCode.Decompiler.Tests
 					options &= ~CompilerOptions.UseMcsMask;
 					options |= CompilerOptions.UseRoslynLatest;
 					// Also, add an .exe.config so that we consistently use the .NET 4.x runtime.
-					File.WriteAllText(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
+					await File.WriteAllTextAsync(outputFile.PathToAssembly + ".config",
+						@"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
 	<startup>
 		<supportedRuntime version=""v4.0"" sku="".NETFramework,Version=v4.0,Profile=Client"" />
@@ -440,19 +433,20 @@ namespace ICSharpCode.Decompiler.Tests
 </configuration>");
 					options |= CompilerOptions.TargetNet40;
 				}
+
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
-				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
+				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly,
+					decompiledOutputFile.PathToAssembly, decompiledCodeFile,
+					(options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
 
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			}
 			finally
 			{
-				if (outputFile != null)
-					outputFile.DeleteTempFiles();
-				if (decompiledOutputFile != null)
-					decompiledOutputFile.DeleteTempFiles();
+				outputFile?.DeleteTempFiles();
+				decompiledOutputFile?.DeleteTempFiles();
 			}
 		}
 
@@ -469,44 +463,48 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				outputFile = await Tester.CompileVB(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName)).ConfigureAwait(false);
-				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
+				string decompiledCodeFile = await Tester
+					.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
-				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
+				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly,
+					decompiledOutputFile.PathToAssembly, decompiledCodeFile,
+					(options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
 
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			}
 			finally
 			{
-				if (outputFile != null)
-					outputFile.DeleteTempFiles();
-				if (decompiledOutputFile != null)
-					decompiledOutputFile.DeleteTempFiles();
+				outputFile?.DeleteTempFiles();
+				decompiledOutputFile?.DeleteTempFiles();
 			}
 		}
 
-		async Task RunIL(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
+		static async Task RunIL(string testFileName, CompilerOptions options = CompilerOptions.UseDebug,
+			AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
-			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;
 
 			try
 			{
 				options |= CompilerOptions.UseTestRunner;
-				outputFile = await Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions).ConfigureAwait(false);
-				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile, Tester.GetSettings(options)).ConfigureAwait(false);
+				string outputFile = await Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions)
+					.ConfigureAwait(false);
+				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile, Tester.GetSettings(options))
+					.ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
-				await Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0).ConfigureAwait(false);
+				await Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly,
+					decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0,
+					(options & CompilerOptions.Force32Bit) != 0).ConfigureAwait(false);
 
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
 			}
 			finally
 			{
-				if (decompiledOutputFile != null)
-					decompiledOutputFile.DeleteTempFiles();
+				decompiledOutputFile?.DeleteTempFiles();
 			}
 		}
 	}

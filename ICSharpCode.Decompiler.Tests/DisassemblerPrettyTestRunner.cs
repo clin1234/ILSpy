@@ -17,11 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -64,7 +62,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var ilResultFile = Path.Combine(TestCasePath, testName + ".result.il");
 
 			var executable = await Tester.AssembleIL(ilExpectedFile, AssemblerOptions.Library).ConfigureAwait(false);
-			var disassembled = await Tester.Disassemble(executable, ilResultFile, AssemblerOptions.UseOwnDisassembler).ConfigureAwait(false);
+			await Tester.Disassemble(executable, ilResultFile, AssemblerOptions.UseOwnDisassembler)
+				.ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(ilExpectedFile, ilResultFile);
 		}

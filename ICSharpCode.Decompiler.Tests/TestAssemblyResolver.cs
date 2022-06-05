@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -13,9 +12,10 @@ namespace ICSharpCode.Decompiler.Tests
 		readonly HashSet<string> localAssemblies = new HashSet<string>();
 
 		public TestAssemblyResolver(string mainAssemblyFileName, string baseDir, string targetFramework)
-			: base(mainAssemblyFileName, false, targetFramework, null, PEStreamOptions.PrefetchMetadata, MetadataReaderOptions.ApplyWindowsRuntimeProjections)
+			: base(mainAssemblyFileName, false, targetFramework, null, PEStreamOptions.PrefetchMetadata)
 		{
-			var assemblyNames = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => Path.GetFileNameWithoutExtension(f.Name));
+			var assemblyNames = new DirectoryInfo(baseDir).EnumerateFiles("*.dll")
+				.Select(static f => Path.GetFileNameWithoutExtension(f.Name));
 			foreach (var name in assemblyNames)
 			{
 				localAssemblies.Add(name);

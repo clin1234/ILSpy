@@ -23,8 +23,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ICSharpCode.Decompiler.Util;
-
 using NuGet.Common;
 using NuGet.Packaging;
 using NuGet.Protocol;
@@ -35,15 +33,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	abstract class AbstractToolset
 	{
-		readonly SourceCacheContext cache;
-		readonly SourceRepository repository;
-		readonly FindPackageByIdResource resource;
 		protected readonly string baseDir;
+		readonly SourceCacheContext cache;
+		readonly FindPackageByIdResource resource;
 
-		public AbstractToolset(string baseDir)
+		protected AbstractToolset(string baseDir)
 		{
 			this.cache = new SourceCacheContext();
-			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+			SourceRepository repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
 			this.resource = repository.GetResource<FindPackageByIdResource>();
 			this.baseDir = baseDir;
 		}
@@ -63,12 +60,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				cancellationToken).ConfigureAwait(false);
 
 			using PackageArchiveReader packageReader = new PackageArchiveReader(packageStream);
-			NuspecReader nuspecReader = await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
+			await packageReader.GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
 			var files = await packageReader.GetFilesAsync(cancellationToken).ConfigureAwait(false);
-			files = files.Where(f => f.StartsWith("tools", StringComparison.OrdinalIgnoreCase));
-			await packageReader.CopyFilesAsync(outputPath, files,
-				(sourceFile, targetPath, fileStream) => {
+			files = files.Where(static f => f.StartsWith("tools", StringComparison.OrdinalIgnoreCase));
+			await packageReader.CopyFilesAsync(outputPath, files, static (sourceFile, targetPath, fileStream) => {
 					fileStream.CopyToFile(targetPath);
 					return targetPath;
 				},
@@ -76,7 +72,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 	}
 
-	class RoslynToolset : AbstractToolset
+	sealed class RoslynToolset : AbstractToolset
 	{
 		readonly Dictionary<string, string> installedCompilers = new Dictionary<string, string> {
 			{ "legacy", Environment.ExpandEnvironmentVariables(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319") }
@@ -92,7 +88,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string path = Path.Combine(baseDir, version, "tools");
 			if (!Directory.Exists(path))
 			{
-				await FetchPackage("Microsoft.Net.Compilers", version, Path.Combine(baseDir, version)).ConfigureAwait(false);
+				await FetchPackage("Microsoft.Net.Compilers", version, Path.Combine(baseDir, version))
+					.ConfigureAwait(false);
 			}
 
 			installedCompilers.Add(version, path);
@@ -116,7 +113,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 	}
 
-	class VsWhereToolset : AbstractToolset
+	sealed class VsWhereToolset : AbstractToolset
 	{
 		string vswherePath;
 
@@ -132,6 +129,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				await FetchPackage("vswhere", "2.8.4", baseDir).ConfigureAwait(false);
 			}
+
 			vswherePath = Path.Combine(path, "vswhere.exe");
 		}
 

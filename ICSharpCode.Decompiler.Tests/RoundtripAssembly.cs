@@ -38,7 +38,9 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class RoundtripAssembly
 	{
-		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
+		public static readonly string
+			TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
+
 		static readonly string nunit = Path.Combine(TestDir, "nunit", "nunit3-console.exe");
 
 		[Test]
@@ -58,7 +60,8 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			try
 			{
-				await RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll", useOldProjectFormat: true);
+				await RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll",
+					useOldProjectFormat: true);
 			}
 			catch (CompilationFailedException)
 			{
@@ -93,13 +96,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task ExplicitConversions()
 		{
-			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp8_0);
+			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe");
 		}
 
 		[Test]
 		public async Task ExplicitConversions_32()
 		{
-			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp8_0);
+			await RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
 		}
 
 		[Test]
@@ -117,11 +120,12 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task Random_TestCase_1()
 		{
-			await RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp8_0);
+			await RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
 		}
 
 		[Test]
-		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		[Ignore(
+			"See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
 		public async Task Random_TestCase_1_With_NativeInts()
 		{
 			await RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp9_0);
@@ -131,40 +135,52 @@ namespace ICSharpCode.Decompiler.Tests
 		// and the generated project doesn't build as-is.
 		const LanguageVersion defaultLanguageVersion = LanguageVersion.CSharp8_0;
 
-		async Task RunWithTest(string dir, string fileToRoundtrip, string fileToTest, LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null, bool useOldProjectFormat = false)
+		async Task RunWithTest(string dir, string fileToRoundtrip, string fileToTest,
+			LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null,
+			bool useOldProjectFormat = false)
 		{
-			await RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest).GetAwaiter().GetResult(), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
+			await RunInternal(dir, fileToRoundtrip,
+				outputDir => RunTest(outputDir, fileToTest).GetAwaiter().GetResult(), languageVersion,
+				snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
 		}
 
-		async Task RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
+		async Task RunWithOutput(string dir, string fileToRoundtrip,
+			LanguageVersion languageVersion = defaultLanguageVersion)
 		{
 			string inputDir = Path.Combine(TestDir, dir);
 			await RunInternal(dir, fileToRoundtrip,
-				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)).GetAwaiter().GetResult(),
+				outputDir =>
+					Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip),
+						Path.Combine(outputDir, fileToRoundtrip)).GetAwaiter().GetResult(),
 				languageVersion);
 		}
 
 		async Task RunOnly(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
-			await RunInternal(dir, fileToRoundtrip, outputDir => { }, languageVersion);
+			await RunInternal(dir, fileToRoundtrip, static outputDir => { }, languageVersion);
 		}
 
-		async Task RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
+		async Task RunInternal(string dir, string fileToRoundtrip, Action<string> testAction,
+			LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
 		{
 			if (!Directory.Exists(TestDir))
 			{
-				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
-							  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
+				Assert.Ignore(
+					$"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." +
+					Environment.NewLine +
+					$"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
 			}
+
 			string inputDir = Path.Combine(TestDir, dir);
 			string decompiledDir = inputDir + "-decompiled";
 			string outputDir = inputDir + "-output";
 			if (inputDir.EndsWith("TestCases"))
 			{
 				// make sure output dir names are unique so that we don't get trouble due to parallel test execution
-				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
-				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
+				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion;
+				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion;
 			}
+
 			ClearDirectory(decompiledDir);
 			ClearDirectory(outputDir);
 			string projectFile = null;
@@ -174,44 +190,45 @@ namespace ICSharpCode.Decompiler.Tests
 				{
 					Assert.Fail($"Unexpected file name: {file}");
 				}
-				string relFile = file.Substring(inputDir.Length + 1);
+
+				string relFile = file[(inputDir.Length + 1)..];
 				Directory.CreateDirectory(Path.Combine(outputDir, Path.GetDirectoryName(relFile)));
 				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase))
 				{
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
+					await using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+					PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
+					var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
+					resolver.AddSearchDirectory(inputDir);
+					resolver.RemoveSearchDirectory(".");
+
+					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+					var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+
+					var settings = new DecompilerSettings(languageVersion);
+					if (useOldProjectFormat)
 					{
-						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
-						var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
-						resolver.AddSearchDirectory(inputDir);
-						resolver.RemoveSearchDirectory(".");
-
-						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-						var projectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
-
-						var settings = new DecompilerSettings(languageVersion);
-						if (useOldProjectFormat)
-						{
-							settings.UseSdkStyleProjectFormat = false;
-						}
-
-						var decompiler = new TestProjectDecompiler(projectGuid, resolver, resolver, settings);
-
-						if (snkFilePath != null)
-						{
-							decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
-						}
-						decompiler.DecompileProject(module, decompiledDir);
-						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
-						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
+						settings.UseSdkStyleProjectFormat = false;
 					}
+
+					var decompiler = new TestProjectDecompiler(projectGuid, resolver, resolver, settings);
+
+					if (snkFilePath != null)
+					{
+						decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
+					}
+
+					decompiler.DecompileProject(module, decompiledDir);
+					Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
+					projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
 				}
 				else
 				{
 					File.Copy(file, Path.Combine(outputDir, relFile));
 				}
 			}
+
 			Assert.IsNotNull(projectFile, $"Could not find {fileToRoundtrip}");
 
 			await Compile(projectFile, outputDir);
@@ -223,7 +240,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Directory.CreateDirectory(dir);
 			foreach (string subdir in Directory.EnumerateDirectories(dir))
 			{
-				for (int attempt = 0; ; attempt++)
+				for (int attempt = 0;; attempt++)
 				{
 					try
 					{
@@ -238,6 +255,7 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 				}
 			}
+
 			foreach (string file in Directory.EnumerateFiles(dir))
 			{
 				File.Delete(file);
@@ -262,14 +280,16 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
 				{
-					line = line.Substring(0, line.Length - suffix.Length);
+					line = line[..^suffix.Length];
 				}
+
 				Match m = errorRegex.Match(line);
 				if (m.Success)
 				{
 					// Make path absolute so that it gets hyperlinked
 					line = Path.GetDirectoryName(projectFile) + Path.DirectorySeparatorChar + line;
 				}
+
 				Console.WriteLine(line);
 			}
 		}
@@ -287,22 +307,23 @@ namespace ICSharpCode.Decompiler.Tests
 				throw new TestRunFailedException($"Test execution of {Path.GetFileName(fileToTest)} failed");
 		}
 
-		class TestProjectDecompiler : WholeProjectDecompiler
+		sealed class TestProjectDecompiler : WholeProjectDecompiler
 		{
-			public TestProjectDecompiler(Guid projecGuid, IAssemblyResolver resolver, AssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
+			public TestProjectDecompiler(Guid projecGuid, IAssemblyResolver resolver,
+				AssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
 				: base(settings, projecGuid, resolver, assemblyReferenceClassifier, debugInfoProvider: null)
 			{
 			}
 		}
 
-		class CompilationFailedException : Exception
+		sealed class CompilationFailedException : Exception
 		{
 			public CompilationFailedException(string message) : base(message)
 			{
 			}
 		}
 
-		class TestRunFailedException : Exception
+		sealed class TestRunFailedException : Exception
 		{
 			public TestRunFailedException(string message) : base(message)
 			{

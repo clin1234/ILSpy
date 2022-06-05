@@ -15,13 +15,11 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -32,22 +30,27 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
-	partial class Tester
+	internal partial class Tester
 	{
-		public static async Task<CompilerResults> CompileVB(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
+		internal static async Task<CompilerResults> CompileVB(string sourceFileName,
+			CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
-			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
+			foreach (Match match in Regex.Matches(await File.ReadAllTextAsync(sourceFileName),
+				         @"#include ""([\w\d./]+)"""))
 			{
-				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
+				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName),
+					match.Groups[1].Value)));
 			}
 
-			var preprocessorSymbols = GetPreprocessorSymbols(flags).Select(symbol => new KeyValuePair<string, object>(symbol, 1)).ToList();
+			var preprocessorSymbols = GetPreprocessorSymbols(flags)
+				.Select(symbol => new KeyValuePair<string, object>(symbol, 1)).ToList();
 
 			if ((flags & CompilerOptions.UseMcsMask) == 0)
 			{
-				CompilerResults results = new CompilerResults();
-				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				CompilerResults results = new CompilerResults {
+					PathToAssembly = outputFileName ?? Path.GetTempFileName()
+				};
 
 				var (roslynVersion, languageVersion) = (flags & CompilerOptions.UseRoslynMask) switch {
 					0 => ("legacy", "11"),
@@ -68,14 +71,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					references = defaultReferences.Select(r => "-r:\"" + r + "\"");
 				}
+
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
 					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
 				}
+
 				string otherOptions = $"-noconfig " +
-					"-optioninfer+ -optionexplicit+ " +
-					$"-langversion:{languageVersion} " +
-					$"/optimize{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
+				                      "-optioninfer+ -optionexplicit+ " +
+				                      $"-langversion:{languageVersion} " +
+				                      $"/optimize{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
 
 				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
 				// server to speed up testing
@@ -110,13 +115,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					otherOptions += "-platform:anycpu ";
 				}
+
 				if (preprocessorSymbols.Count > 0)
 				{
-					otherOptions += " \"-d:" + string.Join(",", preprocessorSymbols.Select(kv => kv.Key + "=" + kv.Value)) + "\" ";
+					otherOptions += " \"-d:" +
+					                string.Join(",", preprocessorSymbols.Select(kv => kv.Key + "=" + kv.Value)) + "\" ";
 				}
 
 				var command = Cli.Wrap(vbcPath)
-					.WithArguments($"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+					.WithArguments(
+						$"{otherOptions}{string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
@@ -128,10 +136,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				return results;
 			}
-			else
-			{
-				throw new NotSupportedException("Cannot use mcs for VB");
-			}
+
+			throw new NotSupportedException("Cannot use mcs for VB");
 		}
 	}
 }

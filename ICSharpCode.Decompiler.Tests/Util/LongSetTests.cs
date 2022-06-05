@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		void TestAddTo(LongSet input, long constant)
 		{
 			Assert.AreEqual(
-				input.Values.Select(e => unchecked(e + constant)).OrderBy(e => e).ToList(),
+				input.Values.Select(e => unchecked(e + constant)).OrderBy(static e => e).ToList(),
 				input.AddOffset(constant).Values.ToList());
 		}
 

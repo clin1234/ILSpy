@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -9,13 +8,10 @@ using System.Text;
 using System.Xml.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
-using ICSharpCode.Decompiler.TypeSystem;
 
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.DiaSymReader.Tools;
 
 using NUnit.Framework;
@@ -51,56 +47,66 @@ namespace ICSharpCode.Decompiler.Tests
 		public void CustomPdbId()
 		{
 			// Generate a PDB for an assembly using a randomly-generated ID, then validate that the PDB uses the specified ID
-			(string peFileName, string pdbFileName) = CompileTestCase(nameof(CustomPdbId));
+			(string peFileName, string _) = CompileTestCase(nameof(CustomPdbId));
 
 			var moduleDefinition = new PEFile(peFileName);
-			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
 			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
 			var expectedPdbId = new BlobContentId(Guid.NewGuid(), (uint)Random.Shared.Next());
 
-			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
-			{
-				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, pdbId: expectedPdbId);
+			using FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"),
+				FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			pdbStream.SetLength(0);
+			PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true,
+				pdbId: expectedPdbId);
 
-				pdbStream.Position = 0;
-				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
-				var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
+			pdbStream.Position = 0;
+			var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
+			var generatedPdbId = new BlobContentId(metadataReader.DebugMetadataHeader.Id);
 
-				Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
-				Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
-			}
+			Assert.AreEqual(expectedPdbId.Guid, generatedPdbId.Guid);
+			Assert.AreEqual(expectedPdbId.Stamp, generatedPdbId.Stamp);
 		}
 
 		private void TestGeneratePdb([CallerMemberName] string testName = null)
 		{
-			const PdbToXmlOptions options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.ThrowOnError | PdbToXmlOptions.IncludeTokens | PdbToXmlOptions.ResolveTokens | PdbToXmlOptions.IncludeMethodSpans;
+			const PdbToXmlOptions options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.ThrowOnError |
+			                                PdbToXmlOptions.IncludeTokens | PdbToXmlOptions.ResolveTokens |
+			                                PdbToXmlOptions.IncludeMethodSpans;
 
 			string xmlFile = Path.Combine(TestCasePath, testName + ".xml");
 			(string peFileName, string pdbFileName) = CompileTestCase(testName);
 
 			var moduleDefinition = new PEFile(peFileName);
-			var resolver = new UniversalAssemblyResolver(peFileName, false, moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				moduleDefinition.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
 			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
-			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, testName + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, testName + ".pdb"),
+				       FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true);
+				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream,
+					noLogo: true);
 				pdbStream.Position = 0;
 				using (Stream peStream = File.OpenRead(peFileName))
 				using (Stream expectedPdbStream = File.OpenRead(pdbFileName))
 				{
-					using (StreamWriter writer = new StreamWriter(Path.ChangeExtension(pdbFileName, ".xml"), false, Encoding.UTF8))
+					using (StreamWriter writer =
+					       new StreamWriter(Path.ChangeExtension(pdbFileName, ".xml"), false, Encoding.UTF8))
 					{
 						PdbToXmlConverter.ToXml(writer, expectedPdbStream, peStream, options);
 					}
+
 					peStream.Position = 0;
-					using (StreamWriter writer = new StreamWriter(Path.ChangeExtension(xmlFile, ".generated.xml"), false, Encoding.UTF8))
+					using (StreamWriter writer = new StreamWriter(Path.ChangeExtension(xmlFile, ".generated.xml"),
+						       false, Encoding.UTF8))
 					{
 						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
 					}
 				}
 			}
+
 			string expectedFileName = Path.ChangeExtension(xmlFile, ".expected.xml");
 			ProcessXmlFile(expectedFileName);
 			string generatedFileName = Path.ChangeExtension(xmlFile, ".generated.xml");
@@ -131,6 +137,7 @@ namespace ICSharpCode.Decompiler.Tests
 				file.Attribute("embeddedSourceLength")?.Remove();
 				file.ReplaceNodes(new XCData(file.Value.Replace("\uFEFF", "")));
 			}
+
 			document.Save(fileName, SaveOptions.None);
 		}
 
@@ -142,13 +149,11 @@ namespace ICSharpCode.Decompiler.Tests
 
 	class StringWriterWithEncoding : StringWriter
 	{
-		readonly Encoding encoding;
-
 		public StringWriterWithEncoding(Encoding encoding)
 		{
-			this.encoding = encoding ?? throw new ArgumentNullException("encoding");
+			this.Encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 		}
 
-		public override Encoding Encoding => encoding;
+		public override Encoding Encoding { get; }
 	}
 }

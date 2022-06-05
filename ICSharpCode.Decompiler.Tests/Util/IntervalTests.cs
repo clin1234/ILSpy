@@ -32,10 +32,11 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.IsFalse(default(Interval).Contains(0));
 			Assert.IsFalse(default(Interval).Contains(1));
 		}
+
 		[Test]
 		public void EmptyAt1()
 		{
-			Interval i = new Interval(1, 1);
+			new Interval(1, 1);
 			Assert.IsTrue(default(Interval).IsEmpty);
 			Assert.IsFalse(default(Interval).Contains(-1));
 			Assert.IsFalse(default(Interval).Contains(0));
@@ -81,7 +82,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		public void Intersection()
 		{
 			Interval empty = new Interval(0, 0);
-			Interval emptyAtOne = new Interval(0, 0);
+			new Interval(0, 0);
 			Interval zero = new Interval(0, 1);
 			Interval full = new Interval(int.MinValue, int.MinValue);
 			Interval nonneg = new Interval(0, int.MinValue);

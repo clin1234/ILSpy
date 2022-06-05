@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
@@ -31,14 +30,11 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests.Semantics
 {
 	using C = Conversion;
-	using dynamic = ICSharpCode.Decompiler.TypeSystem.ReflectionHelper.Dynamic;
+	using dynamic = ReflectionHelper.Dynamic;
 
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class ExplicitConversionsTest
 	{
-		CSharpConversions conversions;
-		ICompilation compilation;
-
 		[OneTimeSetUp]
 		public void SetUp()
 		{
@@ -47,6 +43,9 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				TypeSystemLoaderTests.SystemCore);
 			conversions = new CSharpConversions(compilation);
 		}
+
+		CSharpConversions conversions;
+		ICompilation compilation;
 
 		Conversion ExplicitConversion(Type from, Type to)
 		{
@@ -74,8 +73,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.AreEqual(C.UnboxingConversion, ExplicitConversion(typeof(dynamic), typeof(int)));
 
 			var dynamicRR = new ResolveResult(SpecialType.Dynamic);
-			Assert.AreEqual(C.ExplicitDynamicConversion, conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(string))));
-			Assert.AreEqual(C.ExplicitDynamicConversion, conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(int))));
+			Assert.AreEqual(C.ExplicitDynamicConversion,
+				conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(string))));
+			Assert.AreEqual(C.ExplicitDynamicConversion,
+				conversions.ExplicitConversion(dynamicRR, compilation.FindType(typeof(int))));
 		}
 
 		[Test]
@@ -103,19 +104,25 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(sbyte), typeof(StringComparison)));
 			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(char), typeof(StringComparison)));
 			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(int), typeof(StringComparison)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(decimal), typeof(StringComparison)));
+			Assert.AreEqual(explicitEnumerationConversion,
+				ExplicitConversion(typeof(decimal), typeof(StringComparison)));
 			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(char)));
 			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(int)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(decimal)));
-			Assert.AreEqual(explicitEnumerationConversion, ExplicitConversion(typeof(StringComparison), typeof(StringSplitOptions)));
+			Assert.AreEqual(explicitEnumerationConversion,
+				ExplicitConversion(typeof(StringComparison), typeof(decimal)));
+			Assert.AreEqual(explicitEnumerationConversion,
+				ExplicitConversion(typeof(StringComparison), typeof(StringSplitOptions)));
 		}
 
 		[Test]
 		public void NullableConversion_BasedOnIdentityConversion()
 		{
-			Assert.AreEqual(C.IdentityConversion, ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ExplicitConversion(typeof(ArraySegment<dynamic>), typeof(ArraySegment<object>?)));
-			Assert.AreEqual(C.ExplicitNullableConversion, ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>)));
+			Assert.AreEqual(C.IdentityConversion,
+				ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>?)));
+			Assert.AreEqual(C.ImplicitNullableConversion,
+				ExplicitConversion(typeof(ArraySegment<dynamic>), typeof(ArraySegment<object>?)));
+			Assert.AreEqual(C.ExplicitNullableConversion,
+				ExplicitConversion(typeof(ArraySegment<dynamic>?), typeof(ArraySegment<object>)));
 		}
 
 		[Test]
@@ -131,8 +138,10 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			ResolveResult zero = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 0);
 			ResolveResult one = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1);
-			Assert.AreEqual(C.EnumerationConversion(true, true), conversions.ExplicitConversion(zero, compilation.FindType(typeof(StringComparison?))));
-			Assert.AreEqual(C.EnumerationConversion(false, true), conversions.ExplicitConversion(one, compilation.FindType(typeof(StringComparison?))));
+			Assert.AreEqual(C.EnumerationConversion(true, true),
+				conversions.ExplicitConversion(zero, compilation.FindType(typeof(StringComparison?))));
+			Assert.AreEqual(C.EnumerationConversion(false, true),
+				conversions.ExplicitConversion(one, compilation.FindType(typeof(StringComparison?))));
 		}
 
 		[Test]
@@ -164,10 +173,12 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void ExplicitReferenceConversion_SealedClass()
 		{
 			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object), typeof(string)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<char>), typeof(string)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<char>), typeof(string)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<int>), typeof(string)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<object>), typeof(string)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(string), typeof(IEnumerable<char>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(string), typeof(IEnumerable<char>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(string), typeof(IEnumerable<int>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(string), typeof(IEnumerable<object>)));
 		}
@@ -176,13 +187,19 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void ExplicitReferenceConversion_NonSealedClass()
 		{
 			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object), typeof(List<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(List<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(List<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<int>), typeof(List<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<object>), typeof(List<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<string>), typeof(List<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<int>), typeof(List<string>)));
 
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(List<string>), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(List<string>), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(List<string>), typeof(IEnumerable<int>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(List<string>), typeof(IEnumerable<object>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(List<string>), typeof(IEnumerable<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(List<string>), typeof(IEnumerable<int>)));
 
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(List<string>), typeof(List<object>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(List<string>), typeof(List<int>)));
@@ -191,11 +208,16 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void ExplicitReferenceConversion_Interfaces()
 		{
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<int>), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<int>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(IConvertible)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<string>), typeof(IEnumerable<object>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<int>), typeof(IEnumerable<object>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<object>), typeof(IEnumerable<int>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<object>), typeof(IConvertible)));
 		}
 
 		[Test]
@@ -213,10 +235,14 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void ExplicitReferenceConversion_InterfaceToArray()
 		{
 			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(ICloneable), typeof(int[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(string[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<object>), typeof(string[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(object[])));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<string>), typeof(dynamic[])));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<string>), typeof(string[])));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<object>), typeof(string[])));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<string>), typeof(object[])));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(IEnumerable<string>), typeof(dynamic[])));
 			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(IEnumerable<int>), typeof(int[])));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<string>), typeof(object[,])));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(IEnumerable<short>), typeof(object[])));
@@ -226,10 +252,14 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void ExplicitReferenceConversion_ArrayToInterface()
 		{
 			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(int[]), typeof(ICloneable)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(string[]), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(string[]), typeof(IEnumerable<object>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(object[]), typeof(IEnumerable<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(dynamic[]), typeof(IEnumerable<string>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(string[]), typeof(IEnumerable<string>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(string[]), typeof(IEnumerable<object>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(object[]), typeof(IEnumerable<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(dynamic[]), typeof(IEnumerable<string>)));
 			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(int[]), typeof(IEnumerable<int>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(object[,]), typeof(IEnumerable<string>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(object[]), typeof(IEnumerable<short>)));
@@ -238,7 +268,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void ExplicitReferenceConversion_Delegates()
 		{
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(MulticastDelegate), typeof(Action)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(MulticastDelegate), typeof(Action)));
 			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Delegate), typeof(Action)));
 			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(ICloneable), typeof(Action)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(System.Threading.ThreadStart), typeof(Action)));
@@ -247,17 +278,24 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void ExplicitReferenceConversion_GenericDelegates()
 		{
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(Action<object>), typeof(Action<string>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Action<string>), typeof(Action<object>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(Action<object>), typeof(Action<string>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(Action<string>), typeof(Action<object>)));
 
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Func<object>), typeof(Func<string>)));
-			Assert.AreEqual(C.ImplicitReferenceConversion, ExplicitConversion(typeof(Func<string>), typeof(Func<object>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(Func<object>), typeof(Func<string>)));
+			Assert.AreEqual(C.ImplicitReferenceConversion,
+				ExplicitConversion(typeof(Func<string>), typeof(Func<object>)));
 
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<IConvertible>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<IConvertible>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(Action<IFormattable>), typeof(Action<int>)));
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Action<string>), typeof(Action<IEnumerable<int>>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(Action<string>), typeof(Action<IEnumerable<int>>)));
 
-			Assert.AreEqual(C.ExplicitReferenceConversion, ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<IConvertible>)));
+			Assert.AreEqual(C.ExplicitReferenceConversion,
+				ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<IConvertible>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(Func<IFormattable>), typeof(Func<int>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(Func<string>), typeof(Func<IEnumerable<int>>)));
 			Assert.AreEqual(C.None, ExplicitConversion(typeof(Func<string>), typeof(Func<IEnumerable<int>>)));

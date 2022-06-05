@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -44,7 +43,7 @@ namespace ICSharpCode.Decompiler.Tests
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
 			{
 				if (file.Extension.Equals(".il", StringComparison.OrdinalIgnoreCase)
-					|| file.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
+				    || file.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
 				{
 					var testName = file.Name.Split('.')[0];
 					Assert.Contains(testName, testNames);
@@ -52,22 +51,14 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CompilerOptions[] noRoslynOptions =
-		{
-			CompilerOptions.None,
-			CompilerOptions.Optimize
-		};
-
-		static readonly CompilerOptions[] roslynOnlyOptions =
-		{
+		static readonly CompilerOptions[] roslynOnlyOptions = {
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
 
-		static readonly CompilerOptions[] defaultOptions =
-		{
+		static readonly CompilerOptions[] defaultOptions = {
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
@@ -79,65 +70,77 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
-				ArrayInitializers = false
-			});
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+					ArrayInitializers = false
+				});
 		}
 
 		[Test]
 		public async Task NoDecimalConstants([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
-				DecimalConstants = false
-			});
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+					DecimalConstants = false
+				});
 		}
 
 		[Test]
 		public async Task NoExtensionMethods([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp9_0) {
-				ExtensionMethods = false
-			});
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp9_0) {
+					ExtensionMethods = false
+				});
 		}
 
 		[Test]
 		public async Task NoForEachStatement([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
-				ForEachStatement = false,
-				UseEnhancedUsing = false,
-			});
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+					ForEachStatement = false,
+					UseEnhancedUsing = false,
+				});
 		}
 
 		[Test]
 		public async Task NoLocalFunctions([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
 		}
 
 		[Test]
 		public async Task NoPropertiesAndEvents([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
-				AutomaticEvents = false,
-				AutomaticProperties = false,
-			});
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1) {
+					AutomaticEvents = false,
+					AutomaticProperties = false,
+				});
 		}
 
 		[Test]
-		public async Task AggressiveScalarReplacementOfAggregates([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task AggressiveScalarReplacementOfAggregates(
+			[ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp3) {
-				AggressiveScalarReplacementOfAggregates = true
-			});
+			await RunForLibrary(cscOptions: cscOptions,
+				decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp3) {
+					AggressiveScalarReplacementOfAggregates = true
+				});
 		}
 
-		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task RunForLibrary([CallerMemberName] string testName = null,
+			AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None,
+			DecompilerSettings decompilerSettings = null)
 		{
-			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
+			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library,
+				decompilerSettings);
 		}
 
-		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None,
+			CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
@@ -154,8 +157,7 @@ namespace ICSharpCode.Decompiler.Tests
 				}
 				finally
 				{
-					if (output != null)
-						output.DeleteTempFiles();
+					output?.DeleteTempFiles();
 				}
 			}
 

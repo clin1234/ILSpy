@@ -17,11 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL;
@@ -34,11 +31,11 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	class DataFlowTest
 	{
-		class RDTest : ReachingDefinitionsVisitor
+		sealed class RDTest : ReachingDefinitionsVisitor
 		{
-			ILVariable v;
+			readonly ILVariable v;
 
-			public RDTest(ILFunction f, ILVariable v) : base(f, _ => true, CancellationToken.None)
+			public RDTest(ILFunction f, ILVariable v) : base(f, static _ => true, CancellationToken.None)
 			{
 				this.v = v;
 			}
@@ -59,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests
 			ILVariable v = new ILVariable(VariableKind.Local, SpecialType.UnknownType, 0);
 			ILFunction f = new ILFunction(
 				returnType: SpecialType.UnknownType,
-				parameters: new IParameter[0],
+				parameters: Array.Empty<IParameter>(),
 				genericContext: new GenericContext(),
 				body: new TryFinally(
 					new Nop(),

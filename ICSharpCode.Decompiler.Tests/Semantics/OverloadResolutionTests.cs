@@ -34,8 +34,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class OverloadResolutionTests
 	{
-		ICompilation compilation;
-
 		[OneTimeSetUp]
 		public void SetUp()
 		{
@@ -44,6 +42,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				TypeSystemLoaderTests.SystemCore);
 		}
 
+		ICompilation compilation;
+
 		ResolveResult[] MakeArgumentList(params Type[] argumentTypes)
 		{
 			return argumentTypes.Select(t => new ResolveResult(compilation.FindType(t))).ToArray();
@@ -51,21 +51,23 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		IMethod MakeMethod(params object[] parameterTypesOrDefaultValues)
 		{
-			var context = new SimpleTypeResolveContext(compilation.MainModule);
-			var m = new FakeMethod(compilation, SymbolKind.Method);
-			m.Name = "Method";
+			new SimpleTypeResolveContext(compilation.MainModule);
+			var m = new FakeMethod(compilation, SymbolKind.Method) {
+				Name = "Method"
+			};
 			var parameters = new List<IParameter>();
 			foreach (var typeOrDefaultValue in parameterTypesOrDefaultValues)
 			{
-				Type type = typeOrDefaultValue as Type;
-				if (type != null)
+				if (typeOrDefaultValue is Type type)
 					parameters.Add(new DefaultParameter(compilation.FindType(type), string.Empty, owner: m));
 				else if (Type.GetTypeCode(typeOrDefaultValue.GetType()) > TypeCode.Object)
-					parameters.Add(new DefaultParameter(compilation.FindType(typeOrDefaultValue.GetType()), string.Empty,
+					parameters.Add(new DefaultParameter(compilation.FindType(typeOrDefaultValue.GetType()),
+						string.Empty,
 						owner: m, isOptional: true, defaultValue: typeOrDefaultValue));
 				else
 					throw new ArgumentException(typeOrDefaultValue.ToString());
 			}
+
 			m.Parameters = parameters;
 			return m;
 		}
@@ -145,9 +147,11 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void LessArgumentsPassedToParamsIsBetter()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int), typeof(int), typeof(int)));
+			OverloadResolution r =
+				new OverloadResolution(compilation, MakeArgumentList(typeof(int), typeof(int), typeof(int)));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
-			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int), typeof(int[]))));
+			Assert.AreEqual(OverloadResolutionErrors.None,
+				r.AddCandidate(MakeParamsMethod(typeof(int), typeof(int[]))));
 			Assert.IsFalse(r.IsAmbiguous);
 			Assert.AreEqual(2, r.BestCandidate.Parameters.Count);
 		}
@@ -156,7 +160,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void CallInvalidParamsDeclaration()
 		{
 			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[,])));
-			Assert.AreEqual(OverloadResolutionErrors.ArgumentTypeMismatch, r.AddCandidate(MakeParamsMethod(typeof(int))));
+			Assert.AreEqual(OverloadResolutionErrors.ArgumentTypeMismatch,
+				r.AddCandidate(MakeParamsMethod(typeof(int))));
 			Assert.IsFalse(r.BestCandidateIsExpandedForm);
 		}
 
@@ -185,31 +190,41 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 			// Call: Foo<int>();
 			OverloadResolution o;
-			o = new OverloadResolution(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int)) });
+			o = new OverloadResolution(compilation, new ResolveResult[0],
+				typeArguments: new[] { compilation.FindType(typeof(int)) });
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM1));
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
+			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint,
+				o.AddCandidate(resolvedM2));
 			Assert.AreSame(resolvedM1, o.BestCandidate);
 
 			// Call: Foo<string>();
-			o = new OverloadResolution(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(string)) });
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
+			o = new OverloadResolution(compilation, new ResolveResult[0],
+				typeArguments: new[] { compilation.FindType(typeof(string)) });
+			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint,
+				o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM2));
 			Assert.AreSame(resolvedM2, o.BestCandidate);
 
 			// Call: Foo<int?>();
-			o = new OverloadResolution(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int?)) });
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
-			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
+			o = new OverloadResolution(compilation, new ResolveResult[0],
+				typeArguments: new[] { compilation.FindType(typeof(int?)) });
+			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint,
+				o.AddCandidate(resolvedM1));
+			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint,
+				o.AddCandidate(resolvedM2));
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM3));
 			Assert.AreSame(resolvedM3, o.BestCandidate);
 		}
 
 		class SkeetEvilOverloadResolutionTestCase
 		{
-			class ClassConstraint<T> where T : class { }
 			static void Foo<T>(T? ignored = default(T?)) where T : struct { }
 			static void Foo<T>(ClassConstraint<T> ignored = default(ClassConstraint<T>)) where T : class { }
 			static void Foo<T>() { }
+
+			class ClassConstraint<T> where T : class
+			{
+			}
 		}
 
 		/// <summary>
@@ -227,11 +242,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 			public override IReadOnlyList<IParameter> Parameters {
 				get { return parameters; }
-			}
-
-			public override Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions)
-			{
-				return conversions.ImplicitConversion(inferredReturnType, returnType);
 			}
 
 			public override bool IsImplicitlyTyped {
@@ -256,6 +266,11 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 			public override IType ReturnType {
 				get { throw new NotImplementedException(); }
+			}
+
+			public override Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions)
+			{
+				return conversions.ImplicitConversion(inferredReturnType, returnType);
 			}
 
 			public override IType GetInferredReturnType(IType[] parameterTypes)
@@ -323,7 +338,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var container = compilation.FindType(typeof(BetterFunctionMemberIsNotTransitiveTestCase)).GetDefinition();
 
 			var args = new ResolveResult[] {
-				new MockLambda(compilation.FindType(KnownTypeCode.String)) { parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } }
+				new MockLambda(compilation.FindType(KnownTypeCode.String))
+					{ parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } }
 			};
 
 			OverloadResolution r = new OverloadResolution(compilation, args);

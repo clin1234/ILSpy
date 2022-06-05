@@ -37,8 +37,8 @@ namespace ICSharpCode.Decompiler.Tests
 		public void AllFilesHaveTests()
 		{
 			var testNames = typeof(ILPrettyTestRunner).GetMethods()
-				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
-				.Select(m => m.Name)
+				.Where(static m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
+				.Select(static m => m.Name)
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
 			{
@@ -114,13 +114,15 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task FSharpUsing_Debug()
 		{
-			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings
+				{ RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
 		public async Task FSharpUsing_Release()
 		{
-			await Run(settings: new DecompilerSettings { RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
+			await Run(settings: new DecompilerSettings
+				{ RemoveDeadStores = true, UseEnhancedUsing = false, FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -266,11 +268,7 @@ namespace ICSharpCode.Decompiler.Tests
 		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
-			if (settings == null)
-			{
-				// never use file-scoped namespaces, unless explicitly specified
-				settings = new DecompilerSettings { FileScopedNamespaces = false };
-			}
+			settings ??= new DecompilerSettings { FileScopedNamespaces = false };
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 
@@ -290,7 +288,8 @@ namespace ICSharpCode.Decompiler.Tests
 					return;
 				string fsharpCoreDll = Path.Combine(TestCasePath, "..\\..\\..\\ILSpy-tests\\FSharp\\FSharp.Core.dll");
 				if (!File.Exists(fsharpCoreDll))
-					Assert.Ignore("Ignored because of missing ILSpy-tests repo. Must be checked out separately from https://github.com/icsharpcode/ILSpy-tests!");
+					Assert.Ignore(
+						"Ignored because of missing ILSpy-tests repo. Must be checked out separately from https://github.com/icsharpcode/ILSpy-tests!");
 				File.Copy(fsharpCoreDll, Path.Combine(TestCasePath, "FSharp.Core.dll"));
 			}
 		}

@@ -35,6 +35,9 @@ namespace ICSharpCode.Decompiler.Tests.Output
 	[TestFixture]
 	public class CSharpAmbienceTests
 	{
+		ICompilation compilation;
+		CSharpAmbience ambience;
+
 		[OneTimeSetUp]
 		public void FixtureSetUp()
 		{
@@ -43,9 +46,6 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			compilation = new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
 				TypeSystemLoaderTests.Mscorlib.WithOptions(TypeSystemOptions.Default));
 		}
-
-		ICompilation compilation;
-		CSharpAmbience ambience;
 
 		ITypeDefinition GetDefinition(Type type)
 		{
@@ -57,21 +57,17 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 
 		const ConversionFlags ILSpyMainTreeViewTypeFlags = ShowTypeParameterList | PlaceReturnTypeAfterParameterList;
+		const ConversionFlags ILSpyMainTreeViewMemberFlags = ILSpyMainTreeViewTypeFlags | ShowParameterList | ShowReturnType | ShowParameterModifiers;
 
-		const ConversionFlags ILSpyMainTreeViewMemberFlags =
-			ILSpyMainTreeViewTypeFlags | ShowParameterList | ShowReturnType | ShowParameterModifiers;
-
+		#region ITypeDefinition tests
 		[TestCase(None, "Dictionary")]
 		[TestCase(ShowDefinitionKeyword, "class Dictionary")]
 		[TestCase(ShowAccessibility, "public Dictionary")]
 		[TestCase(ShowDefinitionKeyword | ShowAccessibility, "public class Dictionary")]
 		[TestCase(ShowTypeParameterList, "Dictionary<TKey,TValue>")]
-		[TestCase(ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"public class Dictionary<TKey,TValue>")]
-		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList,
-			"System.Collections.Generic.Dictionary<TKey,TValue>")]
-		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"public class System.Collections.Generic.Dictionary<TKey,TValue>")]
+		[TestCase(ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public class Dictionary<TKey,TValue>")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList, "System.Collections.Generic.Dictionary<TKey,TValue>")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public class System.Collections.Generic.Dictionary<TKey,TValue>")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "Dictionary<TKey,TValue>")]
 		public void GenericType(ConversionFlags flags, string expectedOutput)
 		{
@@ -114,8 +110,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ShowDefinitionKeyword | ShowAccessibility, "public struct Enumerator")]
 		[TestCase(ShowTypeParameterList, "Enumerator")]
 		[TestCase(ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public struct Enumerator")]
-		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList,
-			"System.Collections.Generic.List<T>.Enumerator")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList, "System.Collections.Generic.List<T>.Enumerator")]
 		[TestCase(ShowDeclaringType | ShowTypeParameterList, "List<T>.Enumerator")]
 		[TestCase(All, "public struct System.Collections.Generic.List<T>.Enumerator")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "Enumerator")]
@@ -132,8 +127,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ShowModifiers | ShowAccessibility, "private static StaticClass")]
 		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private static class StaticClass")]
 		[TestCase(ShowModifiers | ShowTypeParameterList, "static StaticClass")]
-		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"private static class StaticClass")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private static class StaticClass")]
 		[TestCase(All, "private static class ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.StaticClass")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "StaticClass")]
 		public void StaticClassTest(ConversionFlags flags, string expectedOutput)
@@ -149,8 +143,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ShowModifiers | ShowAccessibility, "private sealed SealedClass")]
 		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private sealed class SealedClass")]
 		[TestCase(ShowModifiers | ShowTypeParameterList, "sealed SealedClass")]
-		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"private sealed class SealedClass")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private sealed class SealedClass")]
 		[TestCase(All, "private sealed class ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.SealedClass")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "SealedClass")]
 		public void SealedClassTest(ConversionFlags flags, string expectedOutput)
@@ -166,8 +159,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ShowModifiers | ShowAccessibility, "private ref RefStruct")]
 		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private ref struct RefStruct")]
 		[TestCase(ShowModifiers | ShowTypeParameterList, "ref RefStruct")]
-		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"private ref struct RefStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private ref struct RefStruct")]
 		[TestCase(All, "private ref struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.RefStruct")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "RefStruct")]
 		public void RefStructTest(ConversionFlags flags, string expectedOutput)
@@ -183,10 +175,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ShowModifiers | ShowAccessibility, "private readonly ReadonlyStruct")]
 		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private readonly struct ReadonlyStruct")]
 		[TestCase(ShowModifiers | ShowTypeParameterList, "readonly ReadonlyStruct")]
-		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"private readonly struct ReadonlyStruct")]
-		[TestCase(All,
-			"private readonly struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.ReadonlyStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private readonly struct ReadonlyStruct")]
+		[TestCase(All, "private readonly struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.ReadonlyStruct")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "ReadonlyStruct")]
 		public void ReadonlyStructTest(ConversionFlags flags, string expectedOutput)
 		{
@@ -199,13 +189,10 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ShowDefinitionKeyword, "struct ReadonlyRefStruct")]
 		[TestCase(ShowModifiers | ShowDefinitionKeyword, "readonly ref struct ReadonlyRefStruct")]
 		[TestCase(ShowModifiers | ShowAccessibility, "private readonly ref ReadonlyRefStruct")]
-		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility,
-			"private readonly ref struct ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private readonly ref struct ReadonlyRefStruct")]
 		[TestCase(ShowModifiers | ShowTypeParameterList, "readonly ref ReadonlyRefStruct")]
-		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility,
-			"private readonly ref struct ReadonlyRefStruct")]
-		[TestCase(All,
-			"private readonly ref struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private readonly ref struct ReadonlyRefStruct")]
+		[TestCase(All, "private readonly ref struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.ReadonlyRefStruct")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "ReadonlyRefStruct")]
 		public void ReadonlyRefStructTest(ConversionFlags flags, string expectedOutput)
 		{
@@ -213,18 +200,16 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			ambience.ConversionFlags = flags;
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
+		#endregion
 
+		#region Delegate tests
 		[TestCase(None, "Func")]
 		[TestCase(ShowTypeParameterList, "Func<T,TResult>")]
 		[TestCase(ShowTypeParameterList | ShowTypeParameterVarianceModifier, "Func<in T,out TResult>")]
-		[TestCase(ShowTypeParameterList | ShowReturnType | ShowTypeParameterVarianceModifier,
-			"TResult Func<in T,out TResult>")]
-		[TestCase(ShowTypeParameterList | ShowParameterList | ShowTypeParameterVarianceModifier,
-			"Func<in T,out TResult>(T)")]
-		[TestCase(ShowTypeParameterList | ShowParameterList | ShowReturnType | ShowTypeParameterVarianceModifier,
-			"TResult Func<in T,out TResult>(T)")]
-		[TestCase(All & ~PlaceReturnTypeAfterParameterList,
-			"public delegate TResult System.Func<in T,out TResult>(T arg);")]
+		[TestCase(ShowTypeParameterList | ShowReturnType | ShowTypeParameterVarianceModifier, "TResult Func<in T,out TResult>")]
+		[TestCase(ShowTypeParameterList | ShowParameterList | ShowTypeParameterVarianceModifier, "Func<in T,out TResult>(T)")]
+		[TestCase(ShowTypeParameterList | ShowParameterList | ShowReturnType | ShowTypeParameterVarianceModifier, "TResult Func<in T,out TResult>(T)")]
+		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "public delegate TResult System.Func<in T,out TResult>(T arg);")]
 		[TestCase(All, "public delegate System.Func<in T,out TResult>(T arg) : TResult;")]
 		[TestCase(ILSpyMainTreeViewTypeFlags, "Func<T,TResult>")]
 		public void FuncDelegate(ConversionFlags flags, string expectedOutput)
@@ -233,35 +218,36 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			ambience.ConversionFlags = flags;
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(func));
 		}
+		#endregion
 
-		[TestCase(All & ~PlaceReturnTypeAfterParameterList,
-			"private int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.test;")]
+		#region IField tests
+		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "private int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.test;")]
 		[TestCase(ILSpyMainTreeViewMemberFlags, "test : int")]
-		[TestCase(All & ~(ShowDeclaringType | ShowModifiers | ShowAccessibility | PlaceReturnTypeAfterParameterList),
-			"int test;")]
+		[TestCase(All & ~(ShowDeclaringType | ShowModifiers | ShowAccessibility | PlaceReturnTypeAfterParameterList), "int test;")]
 		public void SimpleField(ConversionFlags flags, string expectedOutput)
 		{
-			var field = GetDefinition(typeof(Program)).GetFields(f => f.Name == "test").Single();
+			var field = GetDefinition(typeof(Program)).GetFields(static f => f.Name == "test").Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
 		}
 
-		[TestCase(All & ~PlaceReturnTypeAfterParameterList,
-			"private const int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.TEST2;")]
+		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "private const int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.TEST2;")]
 		[TestCase(ILSpyMainTreeViewMemberFlags, "TEST2 : int")]
 		public void SimpleConstField(ConversionFlags flags, string expectedOutput)
 		{
-			var field = compilation.FindType(typeof(Program)).GetFields(f => f.Name == "TEST2").Single();
+			var field = compilation.FindType(typeof(Program)).GetFields(static f => f.Name == "TEST2").Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
 		}
+		#endregion
 
+		#region IEvent tests
 		[Test]
 		public void EventWithDeclaringType()
 		{
-			var ev = compilation.FindType(typeof(Program)).GetEvents(f => f.Name == "ProgramChanged").Single();
+			var ev = compilation.FindType(typeof(Program)).GetEvents(static f => f.Name == "ProgramChanged").Single();
 			ambience.ConversionFlags = StandardConversionFlags | ShowDeclaringType;
 			string result = ambience.ConvertSymbol(ev);
 
@@ -271,18 +257,20 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void CustomEvent()
 		{
-			var ev = compilation.FindType(typeof(Program)).GetEvents(f => f.Name == "SomeEvent").Single();
+			var ev = compilation.FindType(typeof(Program)).GetEvents(static f => f.Name == "SomeEvent").Single();
 			ambience.ConversionFlags = StandardConversionFlags;
 			string result = ambience.ConvertSymbol(ev);
 
 			Assert.AreEqual("public event EventHandler SomeEvent;", result);
 		}
+		#endregion
 
+		#region Property tests
 		[TestCase(StandardConversionFlags, "public int Test { get; set; }")]
 		[TestCase(ILSpyMainTreeViewMemberFlags, "Test : int")]
 		public void AutomaticProperty(ConversionFlags flags, string expectedOutput)
 		{
-			var prop = compilation.FindType(typeof(Program)).GetProperties(p => p.Name == "Test").Single();
+			var prop = compilation.FindType(typeof(Program)).GetProperties(static p => p.Name == "Test").Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
@@ -292,12 +280,14 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[TestCase(ILSpyMainTreeViewMemberFlags, "this[int] : int")]
 		public void Indexer(ConversionFlags flags, string expectedOutput)
 		{
-			var prop = compilation.FindType(typeof(Program)).GetProperties(p => p.IsIndexer).Single();
+			var prop = compilation.FindType(typeof(Program)).GetProperties(static p => p.IsIndexer).Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(prop));
 		}
+		#endregion
 
+		#region IMethod tests
 		[TestCase(StandardConversionFlags, "public Program(int x);")]
 		[TestCase(ILSpyMainTreeViewMemberFlags, "Program(int)")]
 		public void ConstructorTests(ConversionFlags flags, string expectedOutput)
@@ -313,46 +303,27 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		public void DestructorTests(ConversionFlags flags, string expectedOutput)
 		{
 			var dtor = compilation.FindType(typeof(Program))
-				.GetMembers(m => m.SymbolKind == SymbolKind.Destructor, GetMemberOptions.IgnoreInheritedMembers)
-				.Single();
+				.GetMembers(static m => m.SymbolKind == SymbolKind.Destructor, GetMemberOptions.IgnoreInheritedMembers).Single();
 			ambience.ConversionFlags = flags;
 
 			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(dtor));
 		}
+		#endregion
+
+		#region Test types
 #pragma warning disable 169, 67
 
-		class Test
-		{
-		}
-
-		static class StaticClass
-		{
-		}
-
-		sealed class SealedClass
-		{
-		}
-
-		ref struct RefStruct
-		{
-		}
-
-		readonly struct ReadonlyStruct
-		{
-		}
-
-		readonly ref struct ReadonlyRefStruct
-		{
-		}
+		class Test { }
+		static class StaticClass { }
+		sealed class SealedClass { }
+		ref struct RefStruct { }
+		readonly struct ReadonlyStruct { }
+		readonly ref struct ReadonlyRefStruct { }
 
 		sealed class Program
 		{
-			const int TEST2 = 2;
 			int test;
-
-			public Program(int x)
-			{
-			}
+			const int TEST2 = 2;
 
 			public int Test { get; set; }
 
@@ -384,8 +355,9 @@ namespace ICSharpCode.Decompiler.Tests.Output
 				throw new NotImplementedException();
 			}
 
-			~Program()
+			public Program(int x)
 			{
+
 			}
 
 			public static void Main(string[] args)
@@ -398,9 +370,9 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 			public static void InParameter(in int a)
 			{
+
 			}
 		}
-
 		#endregion
 	}
 }

@@ -3,14 +3,14 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
+    <LangVersion>latest</LangVersion>
 
     <Company>IC#Code</Company>
     <Description>ILSpy</Description>
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
-    <LangVersion>9.0</LangVersion>
 
     <EnableDefaultItems>False</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

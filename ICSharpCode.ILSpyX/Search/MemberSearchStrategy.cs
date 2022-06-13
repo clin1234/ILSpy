@@ -25,7 +25,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	class MemberSearchStrategy : AbstractEntitySearchStrategy
+	public class MemberSearchStrategy : AbstractEntitySearchStrategy
 	{
 		readonly MemberSearchKind searchKind;
 
@@ -120,7 +120,8 @@ namespace ICSharpCode.ILSpyX.Search
 			}
 		}
 	}
-	enum MemberSearchKind
+
+	public enum MemberSearchKind
 	{
 		All,
 		Type,

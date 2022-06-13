@@ -15,7 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	class AssemblySearchStrategy : AbstractSearchStrategy
+	public class AssemblySearchStrategy : AbstractSearchStrategy
 	{
 		readonly AssemblySearchKind searchKind;
 
@@ -95,7 +95,8 @@ namespace ICSharpCode.ILSpyX.Search
 			OnFoundResult(searchRequest.SearchResultFactory.Create(module));
 		}
 	}
-	enum AssemblySearchKind
+
+	public enum AssemblySearchKind
 	{
 		NameOrFileName,
 		Name,

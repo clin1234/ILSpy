@@ -25,7 +25,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	class ResourceSearchStrategy : AbstractSearchStrategy
+	public class ResourceSearchStrategy : AbstractSearchStrategy
 	{
 		protected readonly ApiVisibility apiVisibility;
 		protected readonly bool searchInside;

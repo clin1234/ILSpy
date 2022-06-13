@@ -120,12 +120,8 @@ namespace ICSharpCode.ILSpyX.Search
 			}
 		}
 	}
-<<<<<<< HEAD
 
 	public enum MemberSearchKind
-=======
-	enum MemberSearchKind
->>>>>>> 3e1532e0a (Fix as many nullability warnings as possible.)
 	{
 		All,
 		Type,

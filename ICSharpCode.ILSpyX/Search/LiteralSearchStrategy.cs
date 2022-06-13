@@ -32,11 +32,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-<<<<<<< HEAD
-	public class LiteralSearchStrategy : AbstractEntitySearchStrategy
-=======
-	class LiteralSearchStrategy : AbstractEntitySearchStrategy
->>>>>>> 3e1532e0a (Fix as many nullability warnings as possible.)
+	public class LiteralSearchStrategy : AbstractEntitySearchStrategy public)
 	{
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;

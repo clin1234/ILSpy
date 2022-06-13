@@ -23,6 +23,9 @@ using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
+	using ICSharpCode.Decompiler.TypeSystem;
+	using ICSharpCode.ILSpyX.Abstractions;
+
 	public abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
 		private readonly ApiVisibility apiVisibility;

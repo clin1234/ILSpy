@@ -182,8 +182,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case LockStatement:
 				case FixedStatement:
 					return false;
-				case UsingStatement:
-					return parent is UsingStatement;
+				case UsingStatement us:
+					return parent is UsingStatement && !us.IsEnhanced;
 				default:
 					return parent?.Parent is not IfElseStatement;
 			}

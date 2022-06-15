@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var loadInst = r.LoadInst;
 				if (loadInst.OpCode == OpCode.LdLoca)
 				{
-					if (!IsGeneratedValueTypeTemporary((LdLoca)loadInst, v, inlinedExpression))
+					if (!IsGeneratedValueTypeTemporary((LdLoca)loadInst, v, inlinedExpression, options))
 						return false;
 				}
 				else
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		/// <param name="loadInst">The load instruction (a descendant within 'next')</param>
 		/// <param name="v">The variable being inlined.</param>
-		static bool IsGeneratedValueTypeTemporary(LdLoca? loadInst, ILVariable v, ILInstruction inlinedExpression)
+		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
 		{
 			Debug.Assert(loadInst.Variable == v);
 			// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
@@ -303,8 +303,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
 			if (IsUsedAsThisPointerInCall(loadInst, out var method))
 			{
-				return ClassifyExpression(inlinedExpression) switch {
-					ExpressionClassification.RValue =>
+				if (options.HasFlag(InliningOptions.Aggressive))
+				{
+					// Inlining might be required in ctor initializers (see #2714).
+					// expressionBuilder.VisitAddressOf will handle creating the copy for us.
+					return true;
+				}
+
+				switch (ClassifyExpression(inlinedExpression))
+				{
+					case ExpressionClassification.RValue:
 						// For struct method calls on rvalues, the C# compiler always generates temporaries.
 						true,
 					ExpressionClassification.MutableLValue =>

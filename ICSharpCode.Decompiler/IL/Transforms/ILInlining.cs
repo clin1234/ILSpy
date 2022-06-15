@@ -293,7 +293,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		/// <param name="loadInst">The load instruction (a descendant within 'next')</param>
 		/// <param name="v">The variable being inlined.</param>
+<<<<<<< HEAD
 		static bool IsGeneratedValueTypeTemporary(LdLoca? loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options) possible.)
+=======
+		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
+>>>>>>> 235996025 (Fix #2714: Force inlining of call targets in ctor initializers.)
 		{
 			Debug.Assert(loadInst.Variable == v);
 			// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
@@ -312,7 +316,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				switch (ClassifyExpression(inlinedExpression))
 				{
+<<<<<<< HEAD
 					case ExpressionClassification.RValue =>
+=======
+					case ExpressionClassification.RValue:
+>>>>>>> 235996025 (Fix #2714: Force inlining of call targets in ctor initializers.)
 						// For struct method calls on rvalues, the C# compiler always generates temporaries.
 						true,
 					ExpressionClassification.MutableLValue =>

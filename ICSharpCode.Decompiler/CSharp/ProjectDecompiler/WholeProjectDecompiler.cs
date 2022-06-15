@@ -45,271 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// </summary>
 	public class WholeProjectDecompiler : IProjectInfoProvider
 	{
-		static readonly Lazy<(bool longPathsEnabled, int maxPathLength, int maxSegmentLength)> longPathSupport =
-			new(GetLongPathSupport, isThreadSafe: true);
-
-		// per-run members
-		readonly HashSet<string> directories = new(Platform.FileNameComparer);
-		readonly IProjectFileWriter projectWriter;
-
-		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
-			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null,
-				debugInfoProvider: null)
-		{
-		}
-
-		public WholeProjectDecompiler(
-			DecompilerSettings settings,
-			IAssemblyResolver assemblyResolver,
-			AssemblyReferenceClassifier? assemblyReferenceClassifier,
-			IDebugInfoProvider? debugInfoProvider)
-			: this(settings, Guid.NewGuid(), assemblyResolver, assemblyReferenceClassifier, debugInfoProvider)
-		{
-		}
-
-		protected WholeProjectDecompiler(
-			DecompilerSettings settings,
-			Guid projectGuid,
-			IAssemblyResolver assemblyResolver,
-			AssemblyReferenceClassifier? assemblyReferenceClassifier,
-			IDebugInfoProvider? debugInfoProvider)
-		{
-			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
-			ProjectGuid = projectGuid;
-			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
-			AssemblyReferenceClassifier = assemblyReferenceClassifier ?? new AssemblyReferenceClassifier();
-			DebugInfoProvider = debugInfoProvider;
-			projectWriter = Settings.UseSdkStyleProjectFormat
-				? ProjectFileWriterSdkStyle.Create()
-				: ProjectFileWriterDefault.Create();
-		}
-
-		public void DecompileProject(PEFile? moduleDefinition, string targetDirectory,
-			CancellationToken cancellationToken = default(CancellationToken))
-		{
-			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
-			using var writer = new StreamWriter(projectFileName);
-			DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
-		}
-
-		public ProjectId DecompileProject(PEFile? moduleDefinition, string targetDirectory, TextWriter projectFileWriter,
-			CancellationToken cancellationToken = default(CancellationToken))
-		{
-			if (string.IsNullOrEmpty(targetDirectory))
-			{
-				throw new InvalidOperationException("Must set TargetDirectory");
-			}
-
-			TargetDirectory = targetDirectory;
-			directories.Clear();
-			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
-			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
-			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
-			if (StrongNameKeyFile != null)
-			{
-				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)),
-					overwrite: true);
-			}
-
-			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
-
-			string platformName = TargetServices.GetPlatformName(moduleDefinition);
-			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
-		}
-
-		static (bool longPathsEnabled, int maxPathLength, int maxSegmentLength) GetLongPathSupport()
-		{
-			try
-			{
-				switch (Environment.OSVersion.Platform)
-				{
-					case PlatformID.MacOSX:
-					case PlatformID.Unix:
-						return (true, int.MaxValue, 255);
-					case PlatformID.Win32NT:
-						const string key = @"SYSTEM\CurrentControlSet\Control\FileSystem";
-						var fileSystem = Registry.LocalMachine.OpenSubKey(key);
-						var value = (int?)fileSystem.GetValue("LongPathsEnabled");
-						if (value == 1)
-						{
-							return (true, int.MaxValue, 255);
-						}
-
-						return (false, 200, 30);
-					default:
-						return (false, 200, 30);
-				}
-			}
-			catch
-			{
-				return (false, 200, 30);
-			}
-		}
-
-		/// <summary>
-		/// Cleans up a node name for use as a file name.
-		/// </summary>
-		public static string CleanUpFileName(string text)
-		{
-			return CleanUpName(text, separateAtDots: false, treatAsFileName: false);
-		}
-
-		/// <summary>
-		/// Removes invalid characters from file names and reduces their length,
-		/// but keeps file extensions and path structure intact.
-		/// </summary>
-		public static string SanitizeFileName(string fileName)
-		{
-			return CleanUpName(fileName, separateAtDots: false, treatAsFileName: true);
-		}
-
-		/// <summary>
-		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
-		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters.
-		/// (see <see cref="GetLongPathSupport"/>) If <paramref name="treatAsFileName"/> is active,
-		/// we check for file a extension and try to preserve it, if it's valid.
-		/// </summary>
-		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName)
-		{
-			int pos = text.IndexOf(':');
-			if (pos > 0)
-				text = text[..pos];
-			pos = text.IndexOf('`');
-			if (pos > 0)
-				text = text[..pos];
-			text = text.Trim();
-			string? extension = null;
-			int currentSegmentLength = 0;
-			(bool supportsLongPaths, int maxPathLength, int maxSegmentLength) = longPathSupport.Value;
-			if (treatAsFileName)
-			{
-				// Check if input is a file name, i.e., has a valid extension
-				// If yes, preserve extension and append it at the end.
-				// But only, if the extension length does not exceed maxSegmentLength,
-				// if that's the case we just give up and treat the extension no different
-				// from the file name.
-				int lastDot = text.LastIndexOf('.');
-				if (lastDot >= 0 && text.Length - lastDot < maxSegmentLength)
-				{
-					string? originalText = text;
-					extension = text[lastDot..];
-					text = text.Remove(lastDot);
-					foreach (var c in extension)
-					{
-						if (!(char.IsLetterOrDigit(c) || c is '-' or '_' or '.'))
-						{
-							// extension contains an invalid character, therefore cannot be a valid extension.
-							extension = null;
-							text = originalText;
-							break;
-						}
-					}
-				}
-			}
-
-			// Whitelist allowed characters, replace everything else:
-			StringBuilder b = new(text.Length + (extension?.Length ?? 0));
-			foreach (var c in text)
-			{
-				currentSegmentLength++;
-				if (char.IsLetterOrDigit(c) || c is '-' or '_')
-				{
-					// if the current segment exceeds maxSegmentLength characters,
-					// skip until the end of the segment.
-					if (currentSegmentLength <= maxSegmentLength)
-						b.Append(c);
-				}
-				else if (c == '.' && b.Length > 0 && b[^1] != '.')
-				{
-					// if the current segment exceeds maxSegmentLength characters,
-					// skip until the end of the segment.
-					if (separateAtDots || currentSegmentLength <= maxSegmentLength)
-						b.Append('.'); // allow dot, but never two in a row
-
-					// Reset length at end of segment.
-					if (separateAtDots)
-						currentSegmentLength = 0;
-				}
-				else if (treatAsFileName && c is '/' or '\\' && currentSegmentLength > 0)
-				{
-					// if we treat this as a file name, we've started a new segment
-					b.Append(c);
-					currentSegmentLength = 0;
-				}
-				else
-				{
-					// if the current segment exceeds maxSegmentLength characters,
-					// skip until the end of the segment.
-					if (currentSegmentLength <= maxSegmentLength)
-						b.Append('-');
-				}
-
-				if (b.Length >= maxPathLength && !supportsLongPaths)
-					break; // limit to 200 chars, if long paths are not supported.
-			}
-
-			if (b.Length == 0)
-				b.Append('-');
-			string? name = b.ToString();
-			if (extension != null)
-				name += extension;
-			if (IsReservedFileSystemName(name))
-				return name + "_";
-			if (name == ".")
-				return "_";
-			return name;
-		}
-
-		/// <summary>
-		/// Cleans up a node name for use as a directory name.
-		/// </summary>
-		public static string CleanUpDirectoryName(string text)
-		{
-			return CleanUpName(text, separateAtDots: false, treatAsFileName: false);
-		}
-
-		public static string CleanUpPath(string text)
-		{
-			return CleanUpName(text, separateAtDots: true, treatAsFileName: false)
-				.Replace('.', Path.DirectorySeparatorChar);
-		}
-
-		static bool IsReservedFileSystemName(string? name)
-		{
-			switch (name.ToUpperInvariant())
-			{
-				case "AUX":
-				case "COM1":
-				case "COM2":
-				case "COM3":
-				case "COM4":
-				case "COM5":
-				case "COM6":
-				case "COM7":
-				case "COM8":
-				case "COM9":
-				case "CON":
-				case "LPT1":
-				case "LPT2":
-				case "LPT3":
-				case "LPT4":
-				case "LPT5":
-				case "LPT6":
-				case "LPT7":
-				case "LPT8":
-				case "LPT9":
-				case "NUL":
-				case "PRN":
-					return true;
-				default:
-					return false;
-			}
-		}
-
-		public static bool CanUseSdkStyleProjectFormat(PEFile? module)
-		{
-			return TargetServices.DetectTargetFramework(module).Moniker != null;
-		}
+		const int maxSegmentLength = 255;
 
 		#region Settings
 
@@ -767,6 +503,166 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 
 		#endregion
+
+		/// <summary>
+		/// Cleans up a node name for use as a file name.
+		/// </summary>
+		public static string CleanUpFileName(string text)
+		{
+			return CleanUpName(text, separateAtDots: false, treatAsFileName: false);
+		}
+
+		/// <summary>
+		/// Removes invalid characters from file names and reduces their length,
+		/// but keeps file extensions and path structure intact.
+		/// </summary>
+		public static string SanitizeFileName(string fileName)
+		{
+			return CleanUpName(fileName, separateAtDots: false, treatAsFileName: true);
+		}
+
+		/// <summary>
+		/// Cleans up a node name for use as a file system name. If <paramref name="separateAtDots"/> is active,
+		/// dots are seen as segment separators. Each segment is limited to maxSegmentLength characters.
+		/// (see <see cref="GetLongPathSupport"/>) If <paramref name="treatAsFileName"/> is active,
+		/// we check for file a extension and try to preserve it, if it's valid.
+		/// </summary>
+		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName)
+		{
+			int pos = text.IndexOf(':');
+			if (pos > 0)
+				text = text.Substring(0, pos);
+			pos = text.IndexOf('`');
+			if (pos > 0)
+				text = text.Substring(0, pos);
+			text = text.Trim();
+			string extension = null;
+			int currentSegmentLength = 0;
+			if (treatAsFileName)
+			{
+				// Check if input is a file name, i.e., has a valid extension
+				// If yes, preserve extension and append it at the end.
+				// But only, if the extension length does not exceed maxSegmentLength,
+				// if that's the case we just give up and treat the extension no different
+				// from the file name.
+				int lastDot = text.LastIndexOf('.');
+				if (lastDot >= 0 && text.Length - lastDot < maxSegmentLength)
+				{
+					string originalText = text;
+					extension = text.Substring(lastDot);
+					text = text.Remove(lastDot);
+					foreach (var c in extension)
+					{
+						if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.'))
+						{
+							// extension contains an invalid character, therefore cannot be a valid extension.
+							extension = null;
+							text = originalText;
+							break;
+						}
+					}
+				}
+			}
+			// Whitelist allowed characters, replace everything else:
+			StringBuilder b = new StringBuilder(text.Length + (extension?.Length ?? 0));
+			foreach (var c in text)
+			{
+				currentSegmentLength++;
+				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
+				{
+					// if the current segment exceeds maxSegmentLength characters,
+					// skip until the end of the segment.
+					if (currentSegmentLength <= maxSegmentLength)
+						b.Append(c);
+				}
+				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
+				{
+					// if the current segment exceeds maxSegmentLength characters,
+					// skip until the end of the segment.
+					if (separateAtDots || currentSegmentLength <= maxSegmentLength)
+						b.Append('.'); // allow dot, but never two in a row
+
+					// Reset length at end of segment.
+					if (separateAtDots)
+						currentSegmentLength = 0;
+				}
+				else if (treatAsFileName && (c == '/' || c == '\\') && currentSegmentLength > 0)
+				{
+					// if we treat this as a file name, we've started a new segment
+					b.Append(c);
+					currentSegmentLength = 0;
+				}
+				else
+				{
+					// if the current segment exceeds maxSegmentLength characters,
+					// skip until the end of the segment.
+					if (currentSegmentLength <= maxSegmentLength)
+						b.Append('-');
+				}
+			}
+			if (b.Length == 0)
+				b.Append('-');
+			string name = b.ToString();
+			if (extension != null)
+				name += extension;
+			if (IsReservedFileSystemName(name))
+				return name + "_";
+			else if (name == ".")
+				return "_";
+			else
+				return name;
+		}
+
+		/// <summary>
+		/// Cleans up a node name for use as a directory name.
+		/// </summary>
+		public static string CleanUpDirectoryName(string text)
+		{
+			return CleanUpName(text, separateAtDots: false, treatAsFileName: false);
+		}
+
+		public static string CleanUpPath(string text)
+		{
+			return CleanUpName(text, separateAtDots: true, treatAsFileName: false)
+				.Replace('.', Path.DirectorySeparatorChar);
+		}
+
+		static bool IsReservedFileSystemName(string name)
+		{
+			switch (name.ToUpperInvariant())
+			{
+				case "AUX":
+				case "COM1":
+				case "COM2":
+				case "COM3":
+				case "COM4":
+				case "COM5":
+				case "COM6":
+				case "COM7":
+				case "COM8":
+				case "COM9":
+				case "CON":
+				case "LPT1":
+				case "LPT2":
+				case "LPT3":
+				case "LPT4":
+				case "LPT5":
+				case "LPT6":
+				case "LPT7":
+				case "LPT8":
+				case "LPT9":
+				case "NUL":
+				case "PRN":
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		public static bool CanUseSdkStyleProjectFormat(PEFile module)
+		{
+			return TargetServices.DetectTargetFramework(module).Moniker != null;
+		}
 	}
 
 	public readonly struct DecompilationProgress

@@ -686,8 +686,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				case StackType.Ref:
 					if (target.ResultType == StackType.Ref)
+					{
 						return target;
-					return new AddressOf(target, expectedType);
+					}
+					else if (target is LdLoc ldloc)
+					{
+						return new LdLoca(ldloc.Variable).WithILRange(ldloc);
+					}
+					else
+					{
+						return new AddressOf(target, expectedType);
+					}
 				case StackType.O:
 					if (targetType.IsReferenceType == false)
 					{

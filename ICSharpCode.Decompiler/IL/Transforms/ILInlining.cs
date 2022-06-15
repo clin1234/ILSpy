@@ -299,6 +299,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// expressionBuilder.VisitAddressOf will handle creating the copy for us.
 					return true;
 				}
+
+				switch (ClassifyExpression(inlinedExpression))
+				{
+					// Inlining might be required in ctor initializers (see #2714).
+					// expressionBuilder.VisitAddressOf will handle creating the copy for us.
+					return true;
+				}
 				return ClassifyExpression(inlinedExpression) switch {
 					ExpressionClassification.RValue =>
 						// For struct method calls on rvalues, the C# compiler always generates temporaries.
@@ -817,6 +824,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 	}
+	internal enum ExpressionClassification
+	{
+		RValue,
+		MutableLValue,
+		ReadonlyLValue,
+	}
+
 	internal enum ExpressionClassification
 	{
 		RValue,

@@ -3870,9 +3870,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// on a mutable lvalue, we would end up modifying the original lvalue, not just the copy.
 			// We solve this by introducing a "redundant" cast. Casts are classified as rvalue
 			// and ensure that the C# compiler will also create a copy.
-			if (classification == ExpressionClassification.MutableLValue
-				&& !CanIgnoreCopy()
-				&& value.Expression is not CastExpression)
+			if (classification == ExpressionClassification.MutableLValue && value.Expression is not CastExpression)
 			{
 				value = new CastExpression(ConvertType(inst.Type), value.Expression)
 					.WithoutILInstruction()

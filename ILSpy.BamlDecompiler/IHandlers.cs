@@ -79,7 +79,7 @@ namespace ILSpy.BamlDecompiler
 			return handlers.ContainsKey(type) ? handlers[type] : null;
 		}
 
-		public static void ProcessChildren(XamlContext ctx, BamlBlockNode node, BamlElement nodeElem)
+		public static void ProcessChildren(XamlContext ctx, BamlBlockNode node, BamlElement? nodeElem)
 		{
 			ctx.XmlNs.PushScope(nodeElem);
 			nodeElem.Xaml.Element?.AddAnnotation(ctx.XmlNs.CurrentScope);

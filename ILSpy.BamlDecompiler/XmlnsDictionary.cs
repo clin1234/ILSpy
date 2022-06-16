@@ -61,7 +61,7 @@ namespace ILSpy.BamlDecompiler
 
 		public void Add(NamespaceMap map) => CurrentScope?.Add(map);
 
-		public void SetPIMapping(string xmlNs, string clrNs, string fullAssemblyName)
+		public void SetPIMapping(string? xmlNs, string clrNs, string fullAssemblyName)
 		{
 			if (!piMappings.ContainsKey(xmlNs))
 			{
@@ -70,7 +70,7 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 
-		NamespaceMap PIFixup(NamespaceMap map)
+		NamespaceMap? PIFixup(NamespaceMap? map)
 		{
 			if (piMappings.TryGetValue(map.XMLNamespace, out var piMap))
 			{

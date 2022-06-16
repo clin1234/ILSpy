@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpyX.Search
 	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
 		private readonly ApiVisibility apiVisibility;
-		private readonly ILanguage language;
+		public readonly ILanguage language;
 
 		protected AbstractEntitySearchStrategy(ILanguage language, ApiVisibility apiVisibility,
 			SearchRequest searchRequest, IProducerConsumerCollection<SearchResult> resultQueue)

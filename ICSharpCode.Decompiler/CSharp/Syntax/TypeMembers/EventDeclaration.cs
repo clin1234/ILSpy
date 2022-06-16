@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(EventKeywordRole); }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
+		public AstNodeCollection<VariableInitializer?> Variables {
 			get { return GetChildrenByRole(Roles.Variable); }
 		}
 
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
-		public override Identifier NameToken {
+		public override Identifier? NameToken {
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitEventDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is EventDeclaration o && this.MatchAttributesAndModifiers(o, match)
 			                                   && this.ReturnType.DoMatch(o.ReturnType, match) &&
@@ -90,8 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole AddKeywordRole = new("add");
 		public static readonly TokenRole RemoveKeywordRole = new("remove");
 
-		public static readonly Role<Accessor> AddAccessorRole = new("AddAccessor", Accessor.Null);
-		public static readonly Role<Accessor> RemoveAccessorRole = new("RemoveAccessor", Accessor.Null);
+		public static readonly Role<Accessor?> AddAccessorRole = new("AddAccessor", Accessor.Null);
+		public static readonly Role<Accessor?> RemoveAccessorRole = new("RemoveAccessor", Accessor.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
+		public AstType? PrivateImplementationType {
 			get { return GetChildByRole(PrivateImplementationTypeRole); }
 			set { SetChildByRole(PrivateImplementationTypeRole, value); }
 		}
@@ -110,12 +110,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public Accessor AddAccessor {
+		public Accessor? AddAccessor {
 			get { return GetChildByRole(AddAccessorRole); }
 			set { SetChildByRole(AddAccessorRole, value); }
 		}
 
-		public Accessor RemoveAccessor {
+		public Accessor? RemoveAccessor {
 			get { return GetChildByRole(RemoveAccessorRole); }
 			set { SetChildByRole(RemoveAccessorRole, value); }
 		}
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCustomEventDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is CustomEventDeclaration o && MatchString(this.Name, o.Name)
 			                                         && this.MatchAttributesAndModifiers(o, match) &&

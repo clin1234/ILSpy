@@ -36,14 +36,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class ComposedType : AstType
 	{
-		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
+		public static readonly Role<AttributeSection?> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefRole = new("ref");
 		public static readonly TokenRole ReadonlyRole = new("readonly");
 		public static readonly TokenRole NullableRole = new("?");
 		public static readonly TokenRole PointerRole = new("*");
-		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new("ArraySpecifier", null);
+		public static readonly Role<ArraySpecifier?> ArraySpecifierRole = new("ArraySpecifier", null);
 
-		public AstNodeCollection<AttributeSection> Attributes {
+		public AstNodeCollection<AttributeSection?> Attributes {
 			get { return base.GetChildrenByRole(AttributeRole); }
 		}
 
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType BaseType {
+		public AstType? BaseType {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
@@ -125,11 +125,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<ArraySpecifier> ArraySpecifiers {
+		public AstNodeCollection<ArraySpecifier?> ArraySpecifiers {
 			get { return GetChildrenByRole(ArraySpecifierRole); }
 		}
 
-		public AstNodeCollection<CSharpTokenNode> PointerTokens {
+		public AstNodeCollection<CSharpTokenNode?> PointerTokens {
 			get { return GetChildrenByRole(PointerRole); }
 		}
 
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitComposedType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ComposedType o
 			       && this.HasNullableSpecifier == o.HasNullableSpecifier
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			       && this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			StringBuilder b = new();
 			if (this.HasRefSpecifier)
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return b.ToString();
 		}
 
-		public override AstType MakePointerType()
+		public override AstType? MakePointerType()
 		{
 			if (ArraySpecifiers.Any())
 			{
@@ -191,21 +191,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return this;
 		}
 
-		public override AstType MakeArrayType(int dimensions = 1)
+		public override AstType? MakeArrayType(int dimensions = 1)
 		{
 			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions),
 				ArraySpecifierRole);
 			return this;
 		}
 
-		public override AstType MakeRefType()
+		public override AstType? MakeRefType()
 		{
 			this.HasRefSpecifier = true;
 			return this;
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			interningProvider ??= InterningProvider.Dummy;
 			ITypeReference t = this.BaseType.ToTypeReference(lookupMode, interningProvider);
@@ -296,12 +296,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitArraySpecifier(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ArraySpecifier o && this.Dimensions == o.Dimensions;
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return "[" + new string(',', this.Dimensions - 1) + "]";
 		}

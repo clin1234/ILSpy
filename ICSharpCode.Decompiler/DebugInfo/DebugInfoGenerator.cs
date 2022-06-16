@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer =
 			new(static l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
 
-		readonly List<ILFunction> functions = new();
+		readonly List<ILFunction?> functions = new();
 		readonly ImportScopeInfo globalImportScope = new();
 		readonly List<ImportScopeInfo> importScopes = new();
 
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		/// <summary>
 		/// Gets all functions with bodies that were seen by the visitor so far.
 		/// </summary>
-		public IReadOnlyList<ILFunction> Functions {
+		public IReadOnlyList<ILFunction?> Functions {
 			get => functions;
 		}
 
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			return metadata.GetOrAddBlob(writer);
 		}
 
-		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
+		public override void VisitNamespaceDeclaration(NamespaceDeclaration? namespaceDeclaration)
 		{
 			var parentImportScope = currentImportScope;
 			currentImportScope = new ImportScopeInfo(parentImportScope);
@@ -97,47 +97,47 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			currentImportScope = parentImportScope;
 		}
 
-		public override void VisitUsingDeclaration(UsingDeclaration usingDeclaration)
+		public override void VisitUsingDeclaration(UsingDeclaration? usingDeclaration)
 		{
 			currentImportScope.Imports.Add(usingDeclaration.Namespace);
 		}
 
-		public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+		public override void VisitMethodDeclaration(MethodDeclaration? methodDeclaration)
 		{
 			HandleMethod(methodDeclaration);
 		}
 
-		public override void VisitAccessor(Accessor accessor)
+		public override void VisitAccessor(Accessor? accessor)
 		{
 			HandleMethod(accessor);
 		}
 
-		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
+		public override void VisitConstructorDeclaration(ConstructorDeclaration? constructorDeclaration)
 		{
 			HandleMethod(constructorDeclaration);
 		}
 
-		public override void VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+		public override void VisitDestructorDeclaration(DestructorDeclaration? destructorDeclaration)
 		{
 			HandleMethod(destructorDeclaration);
 		}
 
-		public override void VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration)
+		public override void VisitOperatorDeclaration(OperatorDeclaration? operatorDeclaration)
 		{
 			HandleMethod(operatorDeclaration);
 		}
 
-		public override void VisitLambdaExpression(LambdaExpression lambdaExpression)
+		public override void VisitLambdaExpression(LambdaExpression? lambdaExpression)
 		{
 			HandleMethod(lambdaExpression);
 		}
 
-		public override void VisitAnonymousMethodExpression(AnonymousMethodExpression anonymousMethodExpression)
+		public override void VisitAnonymousMethodExpression(AnonymousMethodExpression? anonymousMethodExpression)
 		{
 			HandleMethod(anonymousMethodExpression);
 		}
 
-		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
+		public override void VisitQueryFromClause(QueryFromClause? queryFromClause)
 		{
 			if (queryFromClause.Parent.FirstChild != queryFromClause)
 			{
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			}
 		}
 
-		public override void VisitQueryGroupClause(QueryGroupClause queryGroupClause)
+		public override void VisitQueryGroupClause(QueryGroupClause? queryGroupClause)
 		{
 			var annotation = queryGroupClause.Annotation<QueryGroupClauseAnnotation>();
 			if (annotation == null)
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			HandleMethod(queryGroupClause.Key, annotation.KeyLambda);
 		}
 
-		public override void VisitQueryJoinClause(QueryJoinClause queryJoinClause)
+		public override void VisitQueryJoinClause(QueryJoinClause? queryJoinClause)
 		{
 			var annotation = queryJoinClause.Annotation<QueryJoinClauseAnnotation>();
 			if (annotation == null)
@@ -175,32 +175,32 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			HandleMethod(queryJoinClause.EqualsExpression, annotation.EqualsLambda);
 		}
 
-		public override void VisitQueryLetClause(QueryLetClause queryLetClause)
+		public override void VisitQueryLetClause(QueryLetClause? queryLetClause)
 		{
 			HandleMethod(queryLetClause);
 		}
 
-		public override void VisitQueryOrdering(QueryOrdering queryOrdering)
+		public override void VisitQueryOrdering(QueryOrdering? queryOrdering)
 		{
 			HandleMethod(queryOrdering);
 		}
 
-		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
+		public override void VisitQuerySelectClause(QuerySelectClause? querySelectClause)
 		{
 			HandleMethod(querySelectClause);
 		}
 
-		public override void VisitQueryWhereClause(QueryWhereClause queryWhereClause)
+		public override void VisitQueryWhereClause(QueryWhereClause? queryWhereClause)
 		{
 			HandleMethod(queryWhereClause);
 		}
 
-		void HandleMethod(AstNode node)
+		void HandleMethod(AstNode? node)
 		{
 			HandleMethod(node, node.Annotation<ILFunction>());
 		}
 
-		void HandleMethod(AstNode node, ILFunction function)
+		void HandleMethod(AstNode? node, ILFunction? function)
 		{
 			// Look into method body, e.g. in order to find lambdas
 			VisitChildren(node);
@@ -218,9 +218,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			}
 		}
 
-		void HandleMethodBody(ILFunction function, MethodBodyBlock methodBody)
+		void HandleMethodBody(ILFunction? function, MethodBodyBlock methodBody)
 		{
-			var method = function.MoveNextMethod ?? function.Method;
+			var method = function?.MoveNextMethod ?? function?.Method;
 			var localVariables = new HashSet<ILVariable>(ILVariableKeyComparer);
 
 			if (!methodBody.LocalSignature.IsNil)

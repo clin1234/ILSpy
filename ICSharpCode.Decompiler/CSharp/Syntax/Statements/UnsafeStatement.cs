@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole UnsafeKeywordRole = new("unsafe");
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUnsafeStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is UnsafeStatement o && this.Body.DoMatch(o.Body, match);
 		}

@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// copy-propagate E_189 to replace all uses of S_30 and I_1
 		/// </summary>
-		static void PropagateExceptionVariable(ILTransformContext context, TryCatchHandler handler)
+		static void PropagateExceptionVariable(ILTransformContext context, TryCatchHandler? handler)
 		{
 			var exceptionVariable = handler.Variable;
 			if (!exceptionVariable.IsSingleDefinition)

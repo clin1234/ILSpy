@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </remarks>
 	internal sealed class EscapeInvalidIdentifiers : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			foreach (var ident in rootNode.DescendantsAndSelf.OfType<Identifier>())
 			{
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		string ReplaceInvalid(string s)
 		{
-			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : $"_{(int)ch:X4}"));
+			string? name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : $"_{(int)ch:X4}"));
 			if (name.Length >= 1 && !(char.IsLetter(name[0]) || name[0] == '_'))
 				name = "_" + name;
 			return name;
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <remarks>This transform is only enabled, when exporting a full assembly as project.</remarks>
 	internal sealed class RemoveCompilerGeneratedAssemblyAttributes : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			foreach (var section in rootNode.Children.OfType<AttributeSection>())
 			{

@@ -16,11 +16,11 @@ namespace ICSharpCode.Decompiler.Metadata
 		// This is a stripped-down copy of SRM's internal CustomAttributeDecoder.
 		// We need it to decode security declarations.
 
-		private readonly ICustomAttributeTypeProvider<TType> _provider;
+		private readonly ICustomAttributeTypeProvider<TType?> _provider;
 		private readonly MetadataReader _reader;
 		private readonly bool _provideBoxingTypeInfo;
 
-		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType> provider, MetadataReader reader,
+		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType?> provider, MetadataReader reader,
 			bool provideBoxingTypeInfo = false)
 		{
 			_reader = reader;
@@ -28,10 +28,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			_provideBoxingTypeInfo = provideBoxingTypeInfo;
 		}
 
-		public ImmutableArray<CustomAttributeNamedArgument<TType>> DecodeNamedArguments(ref BlobReader valueReader,
+		public ImmutableArray<CustomAttributeNamedArgument<TType?>> DecodeNamedArguments(ref BlobReader valueReader,
 			int count)
 		{
-			var arguments = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<TType>>(count);
+			ImmutableArray<CustomAttributeNamedArgument<TType?>>.Builder arguments = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<TType?>>(count);
 			for (int i = 0; i < count; i++)
 			{
 				CustomAttributeNamedArgumentKind kind =
@@ -42,9 +42,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 
 				ArgumentTypeInfo info = DecodeNamedArgumentType(ref valueReader);
-				string name = valueReader.ReadSerializedString();
-				CustomAttributeTypedArgument<TType> argument = DecodeArgument(ref valueReader, info);
-				arguments.Add(new CustomAttributeNamedArgument<TType>(name, kind, argument.Type, argument.Value));
+				string? name = valueReader.ReadSerializedString();
+				CustomAttributeTypedArgument<TType?> argument = DecodeArgument(ref valueReader, info);
+				arguments.Add(new CustomAttributeNamedArgument<TType?>(name, kind, argument.Type, argument.Value));
 			}
 
 			return arguments.MoveToImmutable();
@@ -52,15 +52,15 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		private struct ArgumentTypeInfo
 		{
-			public TType Type;
-			public TType ElementType;
+			public TType? Type;
+			public TType? ElementType;
 			public SerializationTypeCode TypeCode;
 			public SerializationTypeCode ElementTypeCode;
 		}
 
 		private ArgumentTypeInfo DecodeNamedArgumentType(ref BlobReader valueReader, bool isElementType = false)
 		{
-			var info = new ArgumentTypeInfo {
+			ArgumentTypeInfo info = new ArgumentTypeInfo {
 				TypeCode = valueReader.ReadSerializationTypeCode(),
 			};
 
@@ -97,15 +97,19 @@ namespace ICSharpCode.Decompiler.Metadata
 						throw new BadImageFormatException();
 					}
 
-					var elementInfo = DecodeNamedArgumentType(ref valueReader, isElementType: true);
+					ArgumentTypeInfo elementInfo = DecodeNamedArgumentType(ref valueReader, isElementType: true);
 					info.ElementType = elementInfo.Type;
 					info.ElementTypeCode = elementInfo.TypeCode;
 					info.Type = _provider.GetSZArrayType(info.ElementType);
 					break;
 
 				case SerializationTypeCode.Enum:
-					string typeName = valueReader.ReadSerializedString();
-					info.Type = _provider.GetTypeFromSerializedName(typeName);
+					string? typeName = valueReader.ReadSerializedString();
+					if (typeName != null)
+					{
+						info.Type = _provider.GetTypeFromSerializedName(typeName);
+					}
+
 					info.TypeCode = (SerializationTypeCode)_provider.GetUnderlyingEnumType(info.Type);
 					break;
 
@@ -116,9 +120,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			return info;
 		}
 
-		private CustomAttributeTypedArgument<TType> DecodeArgument(ref BlobReader valueReader, ArgumentTypeInfo info)
+		private CustomAttributeTypedArgument<TType?> DecodeArgument(ref BlobReader valueReader, ArgumentTypeInfo info)
 		{
-			var outer = info;
+			ArgumentTypeInfo outer = info;
 			if (info.TypeCode == SerializationTypeCode.TaggedObject)
 			{
 				info = DecodeNamedArgumentType(ref valueReader);
@@ -126,7 +130,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			// PERF_TODO: https://github.com/dotnet/corefx/issues/6533
 			//   Cache /reuse common arguments to avoid boxing (small integers, true, false).
-			object value;
+			object? value;
 			switch (info.TypeCode)
 			{
 				case SerializationTypeCode.Boolean:
@@ -182,7 +186,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					break;
 
 				case SerializationTypeCode.Type:
-					string typeName = valueReader.ReadSerializedString();
+					string? typeName = valueReader.ReadSerializedString();
 					value = _provider.GetTypeFromSerializedName(typeName);
 					break;
 
@@ -196,14 +200,14 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject)
 			{
-				return new CustomAttributeTypedArgument<TType>(outer.Type,
-					new CustomAttributeTypedArgument<TType>(info.Type, value));
+				return new CustomAttributeTypedArgument<TType?>(outer.Type,
+					new CustomAttributeTypedArgument<TType?>(info.Type, value));
 			}
 
-			return new CustomAttributeTypedArgument<TType>(info.Type, value);
+			return new CustomAttributeTypedArgument<TType?>(info.Type, value);
 		}
 
-		private ImmutableArray<CustomAttributeTypedArgument<TType>>? DecodeArrayArgument(ref BlobReader blobReader,
+		private ImmutableArray<CustomAttributeTypedArgument<TType?>>? DecodeArrayArgument(ref BlobReader blobReader,
 			ArgumentTypeInfo info)
 		{
 			int count = blobReader.ReadInt32();
@@ -212,17 +216,17 @@ namespace ICSharpCode.Decompiler.Metadata
 				case -1:
 					return null;
 				case 0:
-					return ImmutableArray<CustomAttributeTypedArgument<TType>>.Empty;
+					return ImmutableArray<CustomAttributeTypedArgument<TType?>>.Empty;
 				case < 0:
 					throw new BadImageFormatException();
 			}
 
-			var elementInfo = new ArgumentTypeInfo {
+			ArgumentTypeInfo elementInfo = new ArgumentTypeInfo {
 				Type = info.ElementType,
 				TypeCode = info.ElementTypeCode,
 			};
 
-			var array = ImmutableArray.CreateBuilder<CustomAttributeTypedArgument<TType>>(count);
+			ImmutableArray<CustomAttributeTypedArgument<TType?>>.Builder array = ImmutableArray.CreateBuilder<CustomAttributeTypedArgument<TType?>>(count);
 
 			for (int i = 0; i < count; i++)
 			{

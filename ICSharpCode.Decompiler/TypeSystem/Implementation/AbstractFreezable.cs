@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new InvalidOperationException("Cannot mutate frozen " + freezable.GetType().Name);
 		}
 
-		public static IList<T> FreezeListAndElements<T>(IList<T> list)
+		public static IList<T>? FreezeListAndElements<T>(IList<T>? list)
 		{
 			if (list != null)
 			{
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return FreezeList(list);
 		}
 
-		public static IList<T> FreezeList<T>(IList<T> list)
+		public static IList<T>? FreezeList<T>(IList<T>? list)
 		{
 			if (list == null || list.Count == 0)
 				return EmptyList<T>.Instance;

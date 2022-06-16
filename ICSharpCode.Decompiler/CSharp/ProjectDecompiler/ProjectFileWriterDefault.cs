@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			TextWriter target,
 			IProjectInfoProvider project,
 			IEnumerable<(string itemType, string fileName)> files,
-			PEFile module)
+			PEFile? module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName = TargetServices.GetPlatformName(module);

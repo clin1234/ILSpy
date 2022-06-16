@@ -51,20 +51,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				or BinaryOperatorType.ExclusiveOr;
 		}
 
-		public static Statement GetNextStatement(this Statement statement)
+		public static Statement? GetNextStatement(this Statement? statement)
 		{
-			AstNode next = statement.NextSibling;
+			AstNode? next = statement?.NextSibling;
 			while (next != null && next is not Statement)
 				next = next.NextSibling;
-			return (Statement)next;
+			return (Statement?)next;
 		}
 
-		public static bool IsArgList(this AstType type)
+		public static bool IsArgList(this AstType? type)
 		{
 			return type is SimpleType { Identifier: "__arglist" };
 		}
 
-		public static void AddNamedArgument(this Attribute attribute, string name, Expression argument)
+		public static void AddNamedArgument(this Attribute attribute, string name, Expression? argument)
 		{
 			attribute.Arguments.Add(new AssignmentExpression(new IdentifierExpression(name), argument));
 		}
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return node;
 		}
 
-		public static Expression UnwrapInDirectionExpression(this Expression expr)
+		public static Expression? UnwrapInDirectionExpression(this Expression? expr)
 		{
 			if (expr is not DirectionExpression { FieldDirection: FieldDirection.In } dir)
 				return expr;

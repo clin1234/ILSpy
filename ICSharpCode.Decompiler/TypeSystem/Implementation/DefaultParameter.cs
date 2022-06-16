@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	internal sealed class DefaultParameter : IParameter
 	{
-		readonly IReadOnlyList<IAttribute> attributes;
+		readonly IReadOnlyList<IAttribute?> attributes;
 		readonly object defaultValue;
 
 		internal DefaultParameter(IType type, string name)
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		internal DefaultParameter(IType type, string name, IParameterizedMember owner = null,
-			IReadOnlyList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute?> attributes = null,
 			ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false,
 			object defaultValue = null)
 		{
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IParameterizedMember Owner { get; }
 
-		public IEnumerable<IAttribute> GetAttributes() => attributes;
+		public IEnumerable<IAttribute?> GetAttributes() => attributes;
 
 		public ReferenceKind ReferenceKind { get; }
 

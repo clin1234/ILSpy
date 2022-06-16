@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			this.context = context;
 
-			Dictionary<IField, CallSiteInfo> callsites = new();
+			Dictionary<IField?, CallSiteInfo> callsites = new();
 			HashSet<BlockContainer> modifiedContainers = new();
 
 			foreach (var block in function.Descendants.OfType<Block>())
@@ -62,7 +62,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					continue;
 				if (!ifInst.TrueInst.MatchBranch(out var trueBlock))
 					continue;
-				Block callSiteInitBlock, targetBlockAfterInit;
+				Block callSiteInitBlock;
+				Block targetBlockAfterInit;
 				if (invertBranches)
 				{
 					callSiteInitBlock = branchAfterInit.TargetBlock;
@@ -108,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					continue;
 				context.Stepper.Step("Transform callsite for " + callsite.MemberName);
 				var deadArguments = new List<ILInstruction>();
-				ILInstruction replacement = MakeDynamicInstruction(callsite, invokeCall, deadArguments);
+				ILInstruction? replacement = MakeDynamicInstruction(callsite, invokeCall, deadArguments);
 				if (replacement == null)
 					continue;
 				invokeCall.ReplaceWith(replacement);
@@ -156,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall,
+		ILInstruction? MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall,
 			List<ILInstruction> deadArguments)
 		{
 			switch (callsite.Kind)
@@ -174,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					);
 				case BinderMethodKind.Convert:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
-					ILInstruction result = new DynamicConvertInstruction(
+					ILInstruction? result = new DynamicConvertInstruction(
 						binderFlags: callsite.Flags,
 						context: callsite.Context,
 						type: callsite.ConvertTargetType,
@@ -287,7 +288,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType,
+		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField? callSiteCacheField, IType callSiteDelegateType,
 			out CallSiteInfo callSiteInfo, out Block blockAfterInit)
 		{
 			callSiteInfo = default(CallSiteInfo);
@@ -592,7 +593,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField,
+		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField? callSiteCacheField,
 			out IType callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;
@@ -619,7 +620,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			public bool Inverted;
 			public ILInstruction BranchAfterInit;
-			public IfInstruction ConditionalJumpToInit;
+			public IfInstruction? ConditionalJumpToInit;
 			public Block InitBlock;
 			public IType DelegateType;
 			public BinderMethodKind Kind;

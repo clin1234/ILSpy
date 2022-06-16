@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public AnonymousTypeCreateExpression(IEnumerable<Expression> initializers)
+		public AnonymousTypeCreateExpression(IEnumerable<Expression?> initializers)
 		{
 			foreach (var ini in initializers)
 			{
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AnonymousTypeCreateExpression(params Expression[] initializer) : this(
-			(IEnumerable<Expression>)initializer)
+			(IEnumerable<Expression?>)initializer)
 		{
 		}
 
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Initializers {
+		public AstNodeCollection<Expression?> Initializers {
 			get { return GetChildrenByRole(Roles.Expression); }
 		}
 
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAnonymousTypeCreateExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is AnonymousTypeCreateExpression o && this.Initializers.DoMatch(o.Initializers, match);
 		}

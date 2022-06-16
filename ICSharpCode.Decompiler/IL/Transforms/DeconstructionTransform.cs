@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -94,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Get index of deconstruction result or tuple element
 		/// Returns -1 on failure.
 		/// </summary>
-		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction> delayedActions)
+		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction?> delayedActions)
 		{
 			delayedActions = null;
 			if (inst.MatchLdLoc(out var v))
@@ -189,7 +190,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformDeconstruction(Block block, int pos)
 		{
 			int startPos = pos;
-			Action<DeconstructInstruction> delayedActions = null;
+			Action<DeconstructInstruction?> delayedActions = null;
 			if (MatchDeconstruction(block.Instructions[pos], out IMethod deconstructMethod,
 				    out ILInstruction rootTestedOperand))
 			{
@@ -206,7 +207,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (deconstructionResults[0] == null)
 				return false;
 			context.Step("Deconstruction", block.Instructions[startPos]);
-			DeconstructInstruction replacement = new();
+			DeconstructInstruction? replacement = new();
 			IType deconstructedType;
 			if (deconstructMethod == null)
 			{
@@ -268,7 +269,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDeconstruction(ILInstruction inst, out IMethod deconstructMethod,
+		bool MatchDeconstruction(ILInstruction? inst, out IMethod deconstructMethod,
 			out ILInstruction testedOperand)
 		{
 			testedOperand = null;
@@ -311,11 +312,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchConversions(Block block, ref int pos,
 			out Dictionary<ILVariable, ConversionInfo> conversions,
-			out List<StLoc> conversionStLocs,
-			ref Action<DeconstructInstruction> delayedActions)
+			out List<StLoc?> conversionStLocs,
+			ref Action<DeconstructInstruction?> delayedActions)
 		{
 			conversions = new Dictionary<ILVariable, ConversionInfo>();
-			conversionStLocs = new List<StLoc>();
+			conversionStLocs = new List<StLoc?>();
 			int previousIndex = -1;
 			while (MatchConversion(
 				       block.Instructions.ElementAtOrDefault(pos), out var inputInstruction,
@@ -337,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchConversion(ILInstruction inst, out ILInstruction inputInstruction,
+		bool MatchConversion(ILInstruction? inst, out ILInstruction inputInstruction,
 			out ILVariable outputVariable, out ConversionInfo info)
 		{
 			info = default;
@@ -356,8 +357,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchAssignments(Block block, ref int pos,
 			Dictionary<ILVariable, ConversionInfo> conversions,
-			List<StLoc> conversionStLocs,
-			ref Action<DeconstructInstruction> delayedActions)
+			List<StLoc?> conversionStLocs,
+			ref Action<DeconstructInstruction?> delayedActions)
 		{
 			int previousIndex = -1;
 			int conversionStLocIndex = 0;
@@ -424,7 +425,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			return startPos != pos;
 
-			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction> delayedActions)
+			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction?> delayedActions)
 			{
 				while (conversionStLocIndex < conversionStLocs.Count)
 				{
@@ -450,8 +451,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst,
-			out Action<DeconstructInstruction> addAssignment)
+		bool MatchAssignment(ILInstruction? inst, out IType targetType, out ILInstruction valueInst,
+			out Action<DeconstructInstruction?> addAssignment)
 		{
 			targetType = null;
 			valueInst = null;

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public readonly ResolveResult Array;
 		public readonly IList<ResolveResult> Indexes;
 
-		public ArrayAccessResolveResult(IType elementType, ResolveResult array, IList<ResolveResult> indexes) : base(
+		public ArrayAccessResolveResult(IType elementType, ResolveResult? array, IList<ResolveResult>? indexes) : base(
 			elementType)
 		{
 			this.Array = array ?? throw new ArgumentNullException(nameof(array));

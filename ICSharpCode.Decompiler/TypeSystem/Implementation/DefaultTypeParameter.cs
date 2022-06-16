@@ -24,13 +24,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public sealed class DefaultTypeParameter : AbstractTypeParameter
 	{
-		readonly IReadOnlyList<IAttribute> attributes;
+		readonly IReadOnlyList<IAttribute?> attributes;
 
 		public DefaultTypeParameter(
-			IEntity owner,
+			IEntity? owner,
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
-			IReadOnlyList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute?> attributes = null,
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false,
 			bool hasDefaultConstructorConstraint = false,
 			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
@@ -46,9 +46,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public DefaultTypeParameter(
 			ICompilation compilation, SymbolKind ownerType,
-			int index, string name = null,
+			int index, string? name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
-			IReadOnlyList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute?> attributes = null,
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false,
 			bool hasDefaultConstructorConstraint = false,
 			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IReadOnlyList<TypeConstraint> TypeConstraints { get; }
 
-		public override IEnumerable<IAttribute> GetAttributes() => attributes;
+		public override IEnumerable<IAttribute?> GetAttributes() => attributes;
 
 		IReadOnlyList<TypeConstraint> MakeConstraints(IReadOnlyList<IType> constraints)
 		{

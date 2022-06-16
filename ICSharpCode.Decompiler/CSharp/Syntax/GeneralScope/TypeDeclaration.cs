@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitTypeDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is TypeDeclaration o && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
 			       && this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)

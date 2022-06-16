@@ -100,18 +100,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPrimitiveType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is PrimitiveType o && MatchString(this.Keyword, o.Keyword);
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return Keyword;
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
 			if (typeCode == KnownTypeCode.None)
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return new UnknownType(null, this.Keyword);
 			}
 
-			return KnownTypeReference.Get(typeCode);
+			return KnownTypeReference.Get(typeCode)!;
 		}
 
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)

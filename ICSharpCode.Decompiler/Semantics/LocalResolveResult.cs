@@ -28,13 +28,13 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	internal sealed class LocalResolveResult : ResolveResult
 	{
-		public LocalResolveResult(IVariable variable)
+		public LocalResolveResult(IVariable? variable)
 			: base(UnpackTypeIfByRefParameter(variable))
 		{
 			this.Variable = variable;
 		}
 
-		public IVariable Variable { get; }
+		public IVariable? Variable { get; }
 
 		public bool IsParameter {
 			get { return Variable is IParameter; }
@@ -44,11 +44,11 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return Variable.IsConst; }
 		}
 
-		public override object ConstantValue {
+		public override object? ConstantValue {
 			get { return IsParameter ? null : Variable.GetConstantValue(); }
 		}
 
-		static IType UnpackTypeIfByRefParameter(IVariable variable)
+		static IType UnpackTypeIfByRefParameter(IVariable? variable)
 		{
 			ArgumentNullException.ThrowIfNull(variable);
 			IType type = variable.Type;

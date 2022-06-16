@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
+		public AnonymousMethodExpression(BlockStatement? body, IEnumerable<ParameterDeclaration?>? parameters = null)
 		{
 			if (parameters != null)
 			{
@@ -60,8 +60,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(body, Roles.Body);
 		}
 
-		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body,
-			(IEnumerable<ParameterDeclaration>)parameters)
+		public AnonymousMethodExpression(BlockStatement? body, params ParameterDeclaration[] parameters) : this(body,
+			(IEnumerable<ParameterDeclaration?>)parameters)
 		{
 		}
 
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
+		public AstNodeCollection<ParameterDeclaration?> Parameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
 
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAnonymousMethodExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is AnonymousMethodExpression o && this.IsAsync == o.IsAsync &&
 			       this.HasParameterList == o.HasParameterList

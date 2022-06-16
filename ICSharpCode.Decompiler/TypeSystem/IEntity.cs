@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the short name of the entity.
 		/// </summary>
-		new string Name { get; }
+		new string? Name { get; }
 
 		/// <summary>
 		/// Gets the declaring class.
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the attributes on this entity.
 		/// Does not include inherited attributes.
 		/// </summary>
-		IEnumerable<IAttribute> GetAttributes();
+		IEnumerable<IAttribute?> GetAttributes();
 
 		/// <summary>
 		/// Gets the accessibility of this entity.

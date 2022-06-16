@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return NodeType.TypeReference; }
 		}
 
-		public new AstType Clone()
+		public new AstType? Clone()
 		{
 			return (AstType)base.Clone();
 		}
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
-		public ITypeReference ToTypeReference(InterningProvider interningProvider = null)
+		public ITypeReference ToTypeReference(InterningProvider? interningProvider = null)
 		{
 			return ToTypeReference(GetNameLookupMode(), interningProvider);
 		}
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
 		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null);
+			InterningProvider? interningProvider = null);
 
 		/// <summary>
 		/// Gets the name lookup mode from the context (looking at the ancestors of this <see cref="AstType"/>).
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Creates a pointer type from this type by nesting it in a <see cref="ComposedType"/>.
 		/// If this type already is a pointer type, this method just increases the PointerRank of the existing pointer type.
 		/// </summary>
-		public virtual AstType MakePointerType()
+		public virtual AstType? MakePointerType()
 		{
 			return new ComposedType { BaseType = this }.MakePointerType();
 		}
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// If this type already is an array type, the additional rank is prepended to the existing array specifier list.
 		/// Thus, <c>new SimpleType("T").MakeArrayType(1).MakeArrayType(2)</c> will result in "T[,][]".
 		/// </summary>
-		public virtual AstType MakeArrayType(int rank = 1)
+		public virtual AstType? MakeArrayType(int rank = 1)
 		{
 			return new ComposedType { BaseType = this }.MakeArrayType(rank);
 		}
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Creates a nullable type from this type by nesting it in a <see cref="ComposedType"/>.
 		/// </summary>
-		public AstType MakeNullableType()
+		public AstType? MakeNullableType()
 		{
 			return new ComposedType { BaseType = this, HasNullableSpecifier = true };
 		}
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Creates a C# 7 ref type from this type by nesting it in a <see cref="ComposedType"/>.
 		/// </summary>
-		public virtual AstType MakeRefType()
+		public virtual AstType? MakeRefType()
 		{
 			return new ComposedType { BaseType = this, HasRefSpecifier = true };
 		}
@@ -162,10 +162,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Does not support generics, arrays, etc. - just simple dotted names,
 		/// e.g. namespace names.
 		/// </summary>
-		public static AstType Create(string dottedName)
+		public static AstType? Create(string dottedName)
 		{
 			string[] parts = dottedName.Split('.');
-			AstType type = new SimpleType(parts[0]);
+			AstType? type = new SimpleType(parts[0]);
 			for (int i = 1; i < parts.Length; i++)
 			{
 				type = new MemberType(type, parts[i]);
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Null
 
-		public new static readonly AstType Null = new NullAstType();
+		public new static readonly AstType? Null = new NullAstType();
 
 		sealed class NullAstType : AstType
 		{
@@ -201,13 +201,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider interningProvider = null)
+				InterningProvider? interningProvider = null)
 			{
 				return SpecialType.UnknownType;
 			}
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator AstType(Pattern pattern)
+		public static implicit operator AstType?(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool INode.DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -256,12 +256,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider interningProvider = null)
+				InterningProvider? interningProvider = null)
 			{
 				throw new NotSupportedException();
 			}
 
-			protected internal override bool DoMatch(AstNode other, Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}

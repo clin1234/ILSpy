@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		INamespace[] childNamespaces;
 
-		public MetadataNamespace(MetadataModule module, INamespace parent, string fullName, NamespaceDefinition ns)
+		public MetadataNamespace(MetadataModule module, INamespace? parent, string? fullName, NamespaceDefinition ns)
 		{
 			Debug.Assert(module != null);
 			Debug.Assert(fullName != null);
@@ -42,15 +42,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Name = module.GetString(ns.Name);
 		}
 
-		public INamespace ParentNamespace { get; }
+		public INamespace? ParentNamespace { get; }
 		public string FullName { get; }
 		public string Name { get; }
 
-		string INamespace.ExternAlias => string.Empty;
+		string? INamespace.ExternAlias => string.Empty;
 
-		public IEnumerable<INamespace> ChildNamespaces {
+		public IEnumerable<INamespace?> ChildNamespaces {
 			get {
-				var children = LazyInit.VolatileRead(ref childNamespaces);
+				INamespace?[]? children = LazyInit.VolatileRead(ref childNamespaces);
 				if (children != null)
 				{
 					return children;
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				for (int i = 0; i < children.Length; i++)
 				{
 					var nsHandle = nsDefs[i];
-					string fullName = module.metadata.GetString(nsHandle);
+					string? fullName = module.metadata.GetString(nsHandle);
 					children[i] = new MetadataNamespace(module, this, fullName,
 						module.metadata.GetNamespaceDefinition(nsHandle));
 				}
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		ICompilation ICompilationProvider.Compilation => module.Compilation;
 
-		INamespace INamespace.GetChildNamespace(string name)
+		INamespace? INamespace.GetChildNamespace(string name)
 		{
 			foreach (var ns in ChildNamespaces)
 			{

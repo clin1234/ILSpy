@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int Length { get; private set; }
 
-		public override void WriteIdentifier(Identifier identifier)
+		public override void WriteIdentifier(Identifier? identifier)
 		{
 			WriteIndentation();
 			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier))
@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			NewLine();
 		}
 
-		public static string PrintPrimitiveValue(object value)
+		public static string? PrintPrimitiveValue(object value)
 		{
 			TextWriter writer = new StringWriter();
 			TextWriterTokenWriter tokenWriter = new(writer);
@@ -447,7 +447,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// Gets the escape sequence for the specified character.
 		/// </summary>
 		/// <remarks>This method does not convert ' or ".</remarks>
-		static string ConvertChar(char ch)
+		static string? ConvertChar(char ch)
 		{
 			switch (ch)
 			{
@@ -509,7 +509,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StringBuilder sb = new();
 			foreach (char ch in str)
 			{
-				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
+				string? s = ch == '"' ? "\\\"" : ConvertChar(ch);
 				if (s != null)
 					sb.Append(s);
 				else
@@ -618,7 +618,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		public override void StartNode(AstNode node)
+		public override void StartNode(AstNode? node)
 		{
 			// Write out the indentation, so that overrides of this method
 			// can rely use the current output length to identify the position of the node
@@ -626,7 +626,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIndentation();
 		}
 
-		public override void EndNode(AstNode node)
+		public override void EndNode(AstNode? node)
 		{
 		}
 	}

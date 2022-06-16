@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private DisplayClass AnalyzeVariable(ILVariable v)
+		private DisplayClass AnalyzeVariable(ILVariable? v)
 		{
 			switch (v.Kind)
 			{
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		DisplayClass DetectDisplayClass(ILVariable v)
+		DisplayClass DetectDisplayClass(ILVariable? v)
 		{
 			ITypeDefinition definition;
 			if (v.Kind != VariableKind.StackSlot)
@@ -294,7 +294,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private Block FindDisplayStructInitBlock(ILVariable v)
+		private Block FindDisplayStructInitBlock(ILVariable? v)
 		{
 			var root = v.Function.Body;
 			return Visit(root)?.Ancestors.OfType<Block>().FirstOrDefault();
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		DisplayClass DetectDisplayClassInitializer(ILVariable v)
+		DisplayClass DetectDisplayClassInitializer(ILVariable? v)
 		{
 			if (v.StoreInstructions.Count != 1 || v.StoreInstructions[0] is not StLoc {
 				    Parent: Block { Kind: BlockKind.ObjectInitializer } initializerBlock
@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// mcs likes to optimize closures in yield state machines away by moving the captured variables' fields into the state machine type,
 		/// We construct a <see cref="DisplayClass"/> that spans the whole method body.
 		/// </summary>
-		DisplayClass HandleMonoStateMachine(ILFunction function, ILVariable thisVariable)
+		DisplayClass HandleMonoStateMachine(ILFunction function, ILVariable? thisVariable)
 		{
 			if (!(function.StateMachineCompiledWithMono && thisVariable.IsThis()))
 				return null;
@@ -900,7 +900,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public bool CanPropagate { get; private set; }
 			public bool UsesInitialValue { get; set; }
 
-			public HashSet<ILInstruction> Initializers { get; } = new();
+			public HashSet<ILInstruction?> Initializers { get; } = new();
 
 			public void Propagate(ILVariable variable)
 			{

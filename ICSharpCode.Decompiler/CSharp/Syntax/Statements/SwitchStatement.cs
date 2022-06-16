@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -33,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class SwitchStatement : Statement
 	{
 		public static readonly TokenRole SwitchKeywordRole = new("switch");
-		public static readonly Role<SwitchSection> SwitchSectionRole = new("SwitchSection", null);
+		public static readonly Role<SwitchSection?> SwitchSectionRole = new("SwitchSection", null);
 
 		public CSharpTokenNode SwitchToken {
 			get { return GetChildByRole(SwitchKeywordRole); }
@@ -43,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -56,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<SwitchSection> SwitchSections {
+		public AstNodeCollection<SwitchSection?> SwitchSections {
 			get { return GetChildrenByRole(SwitchSectionRole); }
 		}
 
@@ -79,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSwitchStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is SwitchStatement o && this.Expression.DoMatch(o.Expression, match) &&
 			       this.SwitchSections.DoMatch(o.SwitchSections, match);
@@ -88,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class SwitchSection : AstNode
 	{
-		public static readonly Role<CaseLabel> CaseLabelRole = new("CaseLabel", null);
+		public static readonly Role<CaseLabel?> CaseLabelRole = new("CaseLabel", null);
 
 		public override NodeType NodeType {
 			get {
@@ -96,11 +98,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<CaseLabel> CaseLabels {
+		public AstNodeCollection<CaseLabel?> CaseLabels {
 			get { return GetChildrenByRole(CaseLabelRole); }
 		}
 
-		public AstNodeCollection<Statement> Statements {
+		public AstNodeCollection<Statement?> Statements {
 			get { return GetChildrenByRole(Roles.EmbeddedStatement); }
 		}
 
@@ -119,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSwitchSection(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is SwitchSection o && this.CaseLabels.DoMatch(o.CaseLabels, match) &&
 			       this.Statements.DoMatch(o.Statements, match);
@@ -127,16 +129,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator SwitchSection(PatternMatching.Pattern pattern)
+		public static implicit operator SwitchSection(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : SwitchSection, PatternMatching.INode
+		sealed class PatternPlaceholder : SwitchSection, INode
 		{
-			readonly PatternMatching.Pattern child;
+			readonly Pattern child;
 
-			public PatternPlaceholder(PatternMatching.Pattern child)
+			public PatternPlaceholder(Pattern child)
 			{
 				this.child = child;
 			}
@@ -145,8 +147,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
-				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode? pos,
+				Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -166,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}
@@ -184,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public CaseLabel(Expression expression)
+		public CaseLabel(Expression? expression)
 		{
 			this.Expression = expression;
 		}
@@ -198,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.
 		/// </summary>
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -222,7 +224,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCaseLabel(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is CaseLabel o && this.Expression.DoMatch(o.Expression, match);
 		}

@@ -157,18 +157,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
+		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver)
 			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
 		{
 		}
 
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 			: this(mainModule, assemblyResolver,
 				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))))
 		{
 		}
 
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver,
+		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver,
 			TypeSystemOptions typeSystemOptions)
 		{
 			ArgumentNullException.ThrowIfNull(mainModule);
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
 		}
 
-		public new MetadataModule MainModule { get; private set; }
+		public new MetadataModule? MainModule { get; private set; }
 
 		public static TypeSystemOptions GetOptions(DecompilerSettings settings)
 		{
@@ -206,19 +206,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return typeSystemOptions;
 		}
 
-		public static Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver)
+		public static Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver)
 		{
 			return CreateAsync(mainModule, assemblyResolver, TypeSystemOptions.Default);
 		}
 
-		public static Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule, IAssemblyResolver assemblyResolver,
+		public static Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver,
 			DecompilerSettings settings)
 		{
 			return CreateAsync(mainModule, assemblyResolver,
 				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))));
 		}
 
-		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile mainModule,
+		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule,
 			IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
 		{
 			ArgumentNullException.ThrowIfNull(mainModule);
@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ts;
 		}
 
-		private async Task InitializeAsync(PEFile mainModule, IAssemblyResolver assemblyResolver,
+		private async Task InitializeAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver,
 			TypeSystemOptions typeSystemOptions)
 		{
 			// Load referenced assemblies and type-forwarder references.
@@ -344,7 +344,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			this.MainModule = (MetadataModule)base.MainModule;
 
-			void AddToQueue(bool isAssembly, PEFile mainModule, object reference)
+			void AddToQueue(bool isAssembly, PEFile? mainModule, object reference)
 			{
 				if (assemblyReferencesInQueue.Add((isAssembly, mainModule, reference)))
 				{

@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the name of the field.
 		/// </summary>
-		new string Name { get; } // solve ambiguity between IMember.Name and IVariable.Name
+		new string? Name { get; } // solve ambiguity between IMember.Name and IVariable.Name
 
 		/// <summary>
 		/// Gets whether this field is readonly.

@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class Await
 	{
-		public IMethod? GetAwaiterMethod;
-		public IMethod? GetResultMethod;
+		public IMethod GetAwaiterMethod;
+		public IMethod GetResultMethod;
 	}
 }

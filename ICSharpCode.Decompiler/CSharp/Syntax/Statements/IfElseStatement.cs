@@ -33,16 +33,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class IfElseStatement : Statement
 	{
 		public static readonly TokenRole IfKeywordRole = new("if");
-		public static readonly Role<Expression> ConditionRole = Roles.Condition;
-		public static readonly Role<Statement> TrueRole = new("True", Null);
+		public static readonly Role<Expression?> ConditionRole = Roles.Condition;
+		public static readonly Role<Statement?> TrueRole = new("True", Null);
 		public static readonly TokenRole ElseKeywordRole = new("else");
-		public static readonly Role<Statement> FalseRole = new("False", Null);
+		public static readonly Role<Statement?> FalseRole = new("False", Null);
 
 		public IfElseStatement()
 		{
 		}
 
-		public IfElseStatement(Expression condition, Statement trueStatement, Statement falseStatement = null)
+		public IfElseStatement(Expression? condition, Statement? trueStatement, Statement? falseStatement = null)
 		{
 			this.Condition = condition;
 			this.TrueStatement = trueStatement;
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Condition {
+		public Expression? Condition {
 			get { return GetChildByRole(ConditionRole); }
 			init { SetChildByRole(ConditionRole, value); }
 		}
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement TrueStatement {
+		public Statement? TrueStatement {
 			get { return GetChildByRole(TrueRole); }
 			init { SetChildByRole(TrueRole, value); }
 		}
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(ElseKeywordRole); }
 		}
 
-		public Statement FalseStatement {
+		public Statement? FalseStatement {
 			get { return GetChildByRole(FalseRole); }
 			set { SetChildByRole(FalseRole, value); }
 		}
@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIfElseStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is IfElseStatement o && this.Condition.DoMatch(o.Condition, match) &&
 			       this.TrueStatement.DoMatch(o.TrueStatement, match) &&

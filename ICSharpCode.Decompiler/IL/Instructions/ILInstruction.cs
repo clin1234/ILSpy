@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IEnumerable<ILInstruction> Ancestors {
 			get {
-				for (ILInstruction? node = this; node != null; node = node.Parent)
+				for (ILInstruction node = this; node != null; node = node.Parent)
 				{
 					yield return node;
 				}
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		protected void ValidateChild(ILInstruction? inst)
+		protected void ValidateChild(ILInstruction inst)
 		{
 			ArgumentNullException.ThrowIfNull(inst);
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public bool IsDescendantOf(ILInstruction possibleAncestor)
 		{
-			for (ILInstruction? ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent)
 			{
 				if (ancestor == possibleAncestor)
 					return true;
@@ -321,32 +321,32 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
-		public ILInstruction? GetCommonParent(ILInstruction other)
+		public ILInstruction GetCommonParent(ILInstruction other)
 		{
 			ArgumentNullException.ThrowIfNull(other);
 
-			ILInstruction? a = this;
-			ILInstruction? b = other;
+			ILInstruction a = this;
+			ILInstruction b = other;
 
 			int levelA = a.CountAncestors();
 			int levelB = b.CountAncestors();
 
 			while (levelA > levelB)
 			{
-				a = a!.Parent;
+				a = a.Parent;
 				levelA--;
 			}
 
 			while (levelB > levelA)
 			{
-				b = b!.Parent;
+				b = b.Parent;
 				levelB--;
 			}
 
 			while (a != b)
 			{
-				a = a!.Parent;
-				b = b!.Parent;
+				a = a.Parent;
+				b = b.Parent;
 			}
 
 			return a;
@@ -360,7 +360,7 @@ namespace ICSharpCode.Decompiler.IL
 			ArgumentNullException.ThrowIfNull(other);
 
 			ILInstruction a = this;
-			ILInstruction b = other;
+			ILInstruction? b = other;
 
 			int levelA = a.CountAncestors();
 			int levelB = b.CountAncestors();
@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.IL
 		private int CountAncestors()
 		{
 			int level = 0;
-			for (ILInstruction? ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent)
 			{
 				level++;
 			}
@@ -434,7 +434,7 @@ namespace ICSharpCode.Decompiler.IL
 		private protected void MakeDirty()
 		{
 #if DEBUG
-			for (ILInstruction? inst = this; inst is { IsDirty: false }; inst = inst.Parent)
+			for (ILInstruction inst = this; inst is { IsDirty: false }; inst = inst.Parent)
 			{
 				inst.IsDirty = true;
 			}
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void InvalidateFlags()
 		{
-			for (ILInstruction? inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
+			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
 				inst.flags = invalidFlags;
 		}
 
@@ -527,7 +527,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public abstract void WriteTo(ITextOutput output, ILAstWritingOptions options);
 
-		public override string ToString()
+		public override string? ToString()
 		{
 			var output = new PlainTextOutput();
 			WriteTo(output, new ILAstWritingOptions());
@@ -742,7 +742,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the method returns true, it adds the capture groups (if any) to the match.
 		/// If the method returns false, the match object may remain in a partially-updated state and
 		/// needs to be restored before it can be reused.</returns>
-		protected internal abstract bool PerformMatch(ILInstruction? other, ref Match match);
+		protected internal abstract bool PerformMatch(ILInstruction other, ref Match match);
 
 		/// <summary>
 		/// Attempts matching this instruction against a list of other instructions (or a part of said list).
@@ -845,10 +845,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			readonly ILInstruction inst;
 
-			internal ChildrenCollection(ILInstruction inst)
+			internal ChildrenCollection(ILInstruction? inst)
 			{
 				Debug.Assert(inst != null);
-				this.inst = inst!;
+				this.inst = inst;
 			}
 
 			public int Count {
@@ -917,7 +917,7 @@ namespace ICSharpCode.Decompiler.IL
 				DebugAssert(inst != null);
 				this.inst = inst;
 				this.pos = -1;
-				this.end = inst!.GetChildCount();
+				this.end = inst.GetChildCount();
 #if DEBUG
 				inst.StartEnumerator();
 #endif
@@ -925,7 +925,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			public ILInstruction Current {
 				get {
-					return inst!.GetChild(pos);
+					return inst.GetChild(pos);
 				}
 			}
 
@@ -970,7 +970,7 @@ namespace ICSharpCode.Decompiler.IL
 
 	public interface IInstructionWithMethodOperand
 	{
-		IMethod? Method { get; }
+		IMethod Method { get; }
 	}
 
 	public interface ILiftableInstruction

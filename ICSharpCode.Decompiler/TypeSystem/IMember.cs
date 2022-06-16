@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <returns>
 		/// Returns the resolved member, or <c>null</c> if the member could not be found.
 		/// </returns>
-		IMember? Resolve(ITypeResolveContext context);
+		IMember Resolve(ITypeResolveContext context);
 	}
 
 	/// <summary>
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the substitution belonging to this specialized member.
 		/// Returns TypeParameterSubstitution.Identity for not specialized members.
 		/// </summary>
-		TypeParameterSubstitution Substitution {
+		TypeParameterSubstitution? Substitution {
 			get;
 		}
 
@@ -121,11 +121,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Specializes this member with the given substitution.
 		/// If this member is already specialized, the new substitution is composed with the existing substition.
 		/// </summary>
-		IMember Specialize(TypeParameterSubstitution substitution);
+		IMember Specialize(TypeParameterSubstitution? substitution);
 
 		/// <summary>
 		/// Gets whether the members are considered equal when applying the specified type normalization.
 		/// </summary>
-		bool Equals(IMember? obj, TypeVisitor typeNormalization);
+		bool Equals(IMember obj, TypeVisitor? typeNormalization);
 	}
 }

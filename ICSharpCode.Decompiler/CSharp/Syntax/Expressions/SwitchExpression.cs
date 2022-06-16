@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSwitchExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is SwitchExpression o && this.Expression.DoMatch(o.Expression, match) &&
 			       this.SwitchSections.DoMatch(o.SwitchSections, match);
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSwitchExpressionSection(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is SwitchExpressionSection o && this.Pattern.DoMatch(o.Pattern, match) &&
 			       this.Body.DoMatch(o.Body, match);

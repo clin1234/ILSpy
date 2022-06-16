@@ -29,10 +29,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 		DisassemblerSignatureTypeProvider : ISignatureTypeProvider<Action<ILNameSyntax>, MetadataGenericContext>
 	{
 		readonly MetadataReader metadata;
-		readonly PEFile module;
+		readonly PEFile? module;
 		readonly ITextOutput output;
 
-		public DisassemblerSignatureTypeProvider(PEFile module, ITextOutput output)
+		public DisassemblerSignatureTypeProvider(PEFile? module, ITextOutput output)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.output = output ?? throw new ArgumentNullException(nameof(output));

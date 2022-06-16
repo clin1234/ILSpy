@@ -40,6 +40,7 @@ namespace ICSharpCode.ILSpyX
 	{
 		private LoadedPackage(PackageKind kind, IEnumerable<PackageEntry> entries)
 		{
+			this.Kind = kind;
 			this.Entries = entries.ToArray();
 			var folders = new Dictionary<string, PackageFolder>();
 			var rootFolder = new PackageFolder(this, null, "");
@@ -76,12 +77,13 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal LoadedAssembly? LoadedAssembly { get; set; }
 
-		private SingleFileBundle.Header BundleHeader { get; init; }
+		public SingleFileBundle.Header BundleHeader { get; init; }
+		public PackageKind Kind { get; }
 
 		/// <summary>
 		/// List of all entries, including those in sub-directories within the package.
 		/// </summary>
-		private IReadOnlyList<PackageEntry> Entries { get; }
+		public IReadOnlyList<PackageEntry> Entries { get; }
 
 		internal PackageFolder RootFolder { get; }
 
@@ -119,7 +121,7 @@ namespace ICSharpCode.ILSpyX
 			}
 		}
 
-		private enum PackageKind
+		public enum PackageKind
 		{
 			Zip,
 			Bundle,
@@ -219,7 +221,7 @@ namespace ICSharpCode.ILSpyX
 		}
 	}
 
-	internal abstract class PackageEntry : Resource
+	public abstract class PackageEntry : Resource
 	{
 		/// <summary>
 		/// Gets the file name of the entry (may include path components, relative to the package root).
@@ -242,7 +244,13 @@ namespace ICSharpCode.ILSpyX
 		{
 			this.package = package;
 			this.parent = parent;
+			this.Name = name;
 		}
+		
+		/// <summary>
+		/// Gets the short name of the folder.
+		/// </summary>
+		public string Name { get; }
 
 		public List<PackageFolder> Folders { get; } = new();
 		public List<PackageEntry> Entries { get; } = new();
@@ -269,7 +277,7 @@ namespace ICSharpCode.ILSpyX
 			return Task.FromResult<PEFile?>(null);
 		}
 
-		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
+		public PEFile? ResolveModule(PEFile? mainModule, string? moduleName)
 		{
 			var asm = ResolveFileName(moduleName + ".dll");
 			if (asm != null)
@@ -280,7 +288,7 @@ namespace ICSharpCode.ILSpyX
 			return parent?.ResolveModule(mainModule, moduleName);
 		}
 
-		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		public Task<PEFile?> ResolveModuleAsync(PEFile? mainModule, string? moduleName)
 		{
 			var asm = ResolveFileName(moduleName + ".dll");
 			if (asm != null)

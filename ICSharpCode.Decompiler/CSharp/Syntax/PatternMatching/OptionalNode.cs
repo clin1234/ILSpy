@@ -22,24 +22,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	public sealed class OptionalNode : Pattern
 	{
-		public OptionalNode(INode childNode)
+		public OptionalNode(INode? childNode)
 		{
 			this.ChildNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
 		}
 
-		public OptionalNode(string groupName, INode childNode) : this(new NamedNode(groupName, childNode))
+		public OptionalNode(string groupName, INode? childNode) : this(new NamedNode(groupName, childNode))
 		{
 		}
 
 		public INode ChildNode { get; }
 
-		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+		public override bool DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
 			backtrackingInfo.backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
 			return ChildNode.DoMatch(pos, match);
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			if (other == null || other.IsNull)
 				return true;

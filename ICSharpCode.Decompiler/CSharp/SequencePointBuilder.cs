@@ -25,6 +25,8 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
 
+using SwitchSection = ICSharpCode.Decompiler.CSharp.Syntax.SwitchSection;
+
 namespace ICSharpCode.Decompiler.CSharp
 {
 	/// <summary>
@@ -64,12 +66,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		// Stack holding information for outer statements.
 		readonly Stack<StatePerSequencePoint> outerStates = new();
 
-		readonly List<(ILFunction, SequencePoint)> sequencePoints = new();
+		readonly List<(ILFunction?, SequencePoint)> sequencePoints = new();
 
 		// Collects information for the current sequence point.
 		StatePerSequencePoint current;
 
-		void VisitAsSequencePoint(AstNode node)
+		void VisitAsSequencePoint(AstNode? node)
 		{
 			if (node.IsNull)
 				return;
@@ -78,13 +80,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(node.StartLocation, node.EndLocation);
 		}
 
-		protected override void VisitChildren(AstNode node)
+		protected override void VisitChildren(AstNode? node)
 		{
 			base.VisitChildren(node);
 			AddToSequencePoint(node);
 		}
 
-		public override void VisitBlockStatement(BlockStatement blockStatement)
+		public override void VisitBlockStatement(BlockStatement? blockStatement)
 		{
 			// enhanced using variables need special-casing here, because we omit the block syntax from the
 			// text output, so we cannot use positions of opening/closing braces here.
@@ -133,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public override void VisitForStatement(ForStatement forStatement)
+		public override void VisitForStatement(ForStatement? forStatement)
 		{
 			// Every element of a for-statement is its own sequence point.
 			foreach (var init in forStatement.Initializers)
@@ -150,7 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(forStatement.EmbeddedStatement);
 		}
 
-		public override void VisitSwitchStatement(SwitchStatement switchStatement)
+		public override void VisitSwitchStatement(SwitchStatement? switchStatement)
 		{
 			StartSequencePoint(switchStatement);
 			switchStatement.Expression.AcceptVisitor(this);
@@ -166,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(switchStatement.StartLocation, switchStatement.RParToken.EndLocation);
 		}
 
-		public override void VisitSwitchSection(Syntax.SwitchSection switchSection)
+		public override void VisitSwitchSection(SwitchSection? switchSection)
 		{
 			// every statement in the switch section is its own sequence point
 			foreach (var stmt in switchSection.Statements)
@@ -175,19 +177,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public override void VisitLambdaExpression(LambdaExpression lambdaExpression)
+		public override void VisitLambdaExpression(LambdaExpression? lambdaExpression)
 		{
 			AddToSequencePoint(lambdaExpression);
 			VisitAsSequencePoint(lambdaExpression.Body);
 		}
 
-		public override void VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause)
+		public override void VisitQueryContinuationClause(QueryContinuationClause? queryContinuationClause)
 		{
 			AddToSequencePoint(queryContinuationClause);
 			VisitAsSequencePoint(queryContinuationClause.PrecedingQuery);
 		}
 
-		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
+		public override void VisitQueryFromClause(QueryFromClause? queryFromClause)
 		{
 			if (queryFromClause.Parent.FirstChild != queryFromClause)
 			{
@@ -200,57 +202,57 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public override void VisitQueryGroupClause(QueryGroupClause queryGroupClause)
+		public override void VisitQueryGroupClause(QueryGroupClause? queryGroupClause)
 		{
 			AddToSequencePoint(queryGroupClause);
 			VisitAsSequencePoint(queryGroupClause.Projection);
 			VisitAsSequencePoint(queryGroupClause.Key);
 		}
 
-		public override void VisitQueryJoinClause(QueryJoinClause queryJoinClause)
+		public override void VisitQueryJoinClause(QueryJoinClause? queryJoinClause)
 		{
 			AddToSequencePoint(queryJoinClause);
 			VisitAsSequencePoint(queryJoinClause.OnExpression);
 			VisitAsSequencePoint(queryJoinClause.EqualsExpression);
 		}
 
-		public override void VisitQueryLetClause(QueryLetClause queryLetClause)
+		public override void VisitQueryLetClause(QueryLetClause? queryLetClause)
 		{
 			AddToSequencePoint(queryLetClause);
 			VisitAsSequencePoint(queryLetClause.Expression);
 		}
 
-		public override void VisitQueryOrdering(QueryOrdering queryOrdering)
+		public override void VisitQueryOrdering(QueryOrdering? queryOrdering)
 		{
 			AddToSequencePoint(queryOrdering);
 			VisitAsSequencePoint(queryOrdering.Expression);
 		}
 
-		public override void VisitQuerySelectClause(QuerySelectClause querySelectClause)
+		public override void VisitQuerySelectClause(QuerySelectClause? querySelectClause)
 		{
 			AddToSequencePoint(querySelectClause);
 			VisitAsSequencePoint(querySelectClause.Expression);
 		}
 
-		public override void VisitQueryWhereClause(QueryWhereClause queryWhereClause)
+		public override void VisitQueryWhereClause(QueryWhereClause? queryWhereClause)
 		{
 			AddToSequencePoint(queryWhereClause);
 			VisitAsSequencePoint(queryWhereClause.Condition);
 		}
 
-		public override void VisitUsingStatement(UsingStatement usingStatement)
+		public override void VisitUsingStatement(UsingStatement? usingStatement)
 		{
 			StartSequencePoint(usingStatement);
 			usingStatement.ResourceAcquisition.AcceptVisitor(this);
 			VisitAsSequencePoint(usingStatement.EmbeddedStatement);
 			AddToSequencePoint(usingStatement);
-			if (usingStatement.IsEnhanced)
-				EndSequencePoint(usingStatement.StartLocation, usingStatement.ResourceAcquisition.EndLocation);
-			else
-				EndSequencePoint(usingStatement.StartLocation, usingStatement.RParToken.EndLocation);
+			EndSequencePoint(usingStatement.StartLocation,
+				usingStatement.IsEnhanced
+					? usingStatement.ResourceAcquisition.EndLocation
+					: usingStatement.RParToken.EndLocation);
 		}
 
-		public override void VisitForeachStatement(ForeachStatement foreachStatement)
+		public override void VisitForeachStatement(ForeachStatement? foreachStatement)
 		{
 			var foreachInfo = foreachStatement.Annotation<ForeachAnnotation>();
 			if (foreachInfo == null)
@@ -277,7 +279,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(foreachStatement.EmbeddedStatement);
 		}
 
-		public override void VisitLockStatement(LockStatement lockStatement)
+		public override void VisitLockStatement(LockStatement? lockStatement)
 		{
 			StartSequencePoint(lockStatement);
 			lockStatement.Expression.AcceptVisitor(this);
@@ -286,7 +288,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(lockStatement.StartLocation, lockStatement.RParToken.EndLocation);
 		}
 
-		public override void VisitIfElseStatement(IfElseStatement ifElseStatement)
+		public override void VisitIfElseStatement(IfElseStatement? ifElseStatement)
 		{
 			StartSequencePoint(ifElseStatement);
 			ifElseStatement.Condition.AcceptVisitor(this);
@@ -296,7 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(ifElseStatement.StartLocation, ifElseStatement.RParToken.EndLocation);
 		}
 
-		public override void VisitWhileStatement(WhileStatement whileStatement)
+		public override void VisitWhileStatement(WhileStatement? whileStatement)
 		{
 			StartSequencePoint(whileStatement);
 			whileStatement.Condition.AcceptVisitor(this);
@@ -305,7 +307,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(whileStatement.StartLocation, whileStatement.RParToken.EndLocation);
 		}
 
-		public override void VisitDoWhileStatement(DoWhileStatement doWhileStatement)
+		public override void VisitDoWhileStatement(DoWhileStatement? doWhileStatement)
 		{
 			StartSequencePoint(doWhileStatement);
 			VisitAsSequencePoint(doWhileStatement.EmbeddedStatement);
@@ -314,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(doWhileStatement.WhileToken.StartLocation, doWhileStatement.RParToken.EndLocation);
 		}
 
-		public override void VisitFixedStatement(FixedStatement fixedStatement)
+		public override void VisitFixedStatement(FixedStatement? fixedStatement)
 		{
 			foreach (var v in fixedStatement.Variables)
 			{
@@ -324,7 +326,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(fixedStatement.EmbeddedStatement);
 		}
 
-		public override void VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
+		public override void VisitTryCatchStatement(TryCatchStatement? tryCatchStatement)
 		{
 			VisitAsSequencePoint(tryCatchStatement.TryBlock);
 			foreach (var c in tryCatchStatement.CatchClauses)
@@ -335,7 +337,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(tryCatchStatement.FinallyBlock);
 		}
 
-		public override void VisitCatchClause(CatchClause catchClause)
+		public override void VisitCatchClause(CatchClause? catchClause)
 		{
 			if (catchClause.Condition.IsNull)
 			{
@@ -364,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
-		void StartSequencePoint(AstNode primaryNode)
+		void StartSequencePoint(AstNode? primaryNode)
 		{
 			outerStates.Push(current);
 			current = new StatePerSequencePoint(primaryNode);
@@ -403,7 +405,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Add the ILAst instruction associated with the AstNode to the sequence point.
 		/// Also add all its ILAst sub-instructions (unless they were already added to another sequence point).
 		/// </summary>
-		void AddToSequencePoint(AstNode node)
+		void AddToSequencePoint(AstNode? node)
 		{
 			foreach (var inst in node.Annotations.OfType<ILInstruction>())
 			{
@@ -455,7 +457,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal Dictionary<ILFunction, List<SequencePoint>> GetSequencePoints()
 		{
 			var dict = new Dictionary<ILFunction, List<SequencePoint>>();
-			foreach ((ILFunction function, SequencePoint sequencePoint) in this.sequencePoints)
+			foreach ((ILFunction? function, SequencePoint sequencePoint) in this.sequencePoints)
 			{
 				if (!dict.TryGetValue(function, out var list))
 				{
@@ -465,7 +467,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				list.Add(sequencePoint);
 			}
 
-			foreach ((ILFunction function, List<SequencePoint> list) in dict.ToList())
+			foreach ((ILFunction? function, List<SequencePoint> list) in dict.ToList())
 			{
 				// For each function, sort sequence points and fix overlaps
 				var newList = new List<SequencePoint>();
@@ -569,7 +571,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// Main AST node associated with this sequence point.
 			/// </summary>
-			private readonly AstNode PrimaryNode;
+			private readonly AstNode? PrimaryNode;
 
 			/// <summary>
 			/// List of IL intervals that are associated with this sequence point.
@@ -579,9 +581,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// The function containing this sequence point.
 			/// </summary>
-			internal ILFunction Function;
+			internal ILFunction? Function;
 
-			public StatePerSequencePoint(AstNode primaryNode)
+			public StatePerSequencePoint(AstNode? primaryNode)
 			{
 				this.PrimaryNode = primaryNode;
 				this.Intervals = new List<Interval>();

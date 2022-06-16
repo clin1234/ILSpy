@@ -36,9 +36,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	internal sealed class DeclareVariables : IAstTransform
 	{
 		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new();
-		TransformContext context;
+		TransformContext? context;
 
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			try
 			{
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// for where those variables would be declared by this transform.
 		/// Analysis does not modify the AST.
 		/// </summary>
-		public void Analyze(AstNode rootNode)
+		public void Analyze(AstNode? rootNode)
 		{
 			variableDict.Clear();
 			FindInsertionPoints(rootNode, 0);
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Get the position where the declaration for the variable will be inserted.
 		/// </summary>
-		public AstNode GetDeclarationPoint(ILVariable variable)
+		public AstNode? GetDeclarationPoint(ILVariable variable)
 		{
 			VariableToDeclare v = variableDict[variable];
 			while (v.ReplacementDueToCollision != null)
@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				    IsMatchingAssignment(v, out AssignmentExpression assignment))
 				{
 					// 'int v; v = expr;' can be combined to 'int v = expr;'
-					AstType type;
+					AstType? type;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
 					{
 						type = new SimpleType("var");
@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();
-					init.AddAnnotation(assignment.Left.GetResolveResult());
+					init?.AddAnnotation(assignment.Left.GetResolveResult());
 					foreach (object annotation in assignment.Left.Annotations.Concat(assignment.Annotations))
 					{
 						if (annotation is not ResolveResult)
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				else if (CanBeDeclaredAsOutVariable(v, out var dirExpr))
 				{
 					// 'T v; SomeCall(out v);' can be combined to 'SomeCall(out T v);'
-					AstType type;
+					AstType? type;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
 					{
 						type = new SimpleType("var");
@@ -354,8 +354,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				else
 				{
 					// Insert a separate declaration statement.
-					Expression initializer = null;
-					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
+					Expression? initializer = null;
+					AstType? type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					if (v.DefaultInitialization == VariableInitKind.NeedsDefaultValue)
 					{
 						initializer = new DefaultValueExpression(type.Clone());
@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Debug.Assert(v.InsertionPoint.nextNode.Role == BlockStatement.StatementRole);
 					if (v.DefaultInitialization == VariableInitKind.NeedsSkipInit)
 					{
-						AstType unsafeType = context.TypeSystemAstBuilder.ConvertType(
+						AstType? unsafeType = context.TypeSystemAstBuilder.ConvertType(
 							context.TypeSystem.FindType(KnownTypeCode.Unsafe));
 						if (context.Settings.OutVariables)
 						{
@@ -430,7 +430,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, out DirectionExpression dirExpr)
+		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, out DirectionExpression? dirExpr)
 		{
 			dirExpr = v.FirstUse.Parent as DirectionExpression;
 			if (dirExpr is not { FieldDirection: FieldDirection.Out })
@@ -463,11 +463,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Update ILVariableResolveResult annotations of all ILVariables that have been replaced by ResolveCollisions.
 		/// </summary>
-		void UpdateAnnotations(AstNode rootNode)
+		void UpdateAnnotations(AstNode? rootNode)
 		{
 			foreach (var node in rootNode.Descendants)
 			{
-				ILVariable ilVar;
+				ILVariable? ilVar;
 				switch (node)
 				{
 					case IdentifierExpression id:
@@ -508,7 +508,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			/// </summary>
 			internal int level;
 
-			internal AstNode nextNode;
+			internal AstNode? nextNode;
 
 			/// <summary>Go up one level</summary>
 			internal InsertionPoint Up()
@@ -563,7 +563,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public bool InvolvedInCollision;
 
-			public VariableToDeclare ReplacementDueToCollision;
+			public VariableToDeclare? ReplacementDueToCollision;
 
 			/// <summary>
 			/// Integer value that can be used to compare to VariableToDeclare instances
@@ -601,7 +601,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region EnsureExpressionStatementsAreValid
 
-		void EnsureExpressionStatementsAreValid(AstNode rootNode)
+		void EnsureExpressionStatementsAreValid(AstNode? rootNode)
 		{
 			foreach (var stmt in rootNode.DescendantsAndSelf.OfType<ExpressionStatement>())
 			{
@@ -637,7 +637,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		private static bool IsValidInStatementExpression(Expression expr)
+		private static bool IsValidInStatementExpression(Expression? expr)
 		{
 			switch (expr)
 			{
@@ -681,9 +681,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Insertion point for a variable = common parent of all uses of that variable
 		/// = smallest possible scope that contains all the uses of the variable
 		/// </remarks>
-		void FindInsertionPoints(AstNode node, int nodeLevel)
+		void FindInsertionPoints(AstNode? node, int nodeLevel)
 		{
-			BlockContainer scope = node.Annotation<BlockContainer>();
+			BlockContainer? scope = node.Annotation<BlockContainer>();
 			if (scope != null && (scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction))
 			{
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
@@ -696,7 +696,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			try
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					FindInsertionPoints(child, nodeLevel + 1);
 				}

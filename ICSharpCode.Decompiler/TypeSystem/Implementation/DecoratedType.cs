@@ -25,9 +25,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		int IType.TypeParameterCount => baseType.TypeParameterCount;
 
-		IReadOnlyList<ITypeParameter> IType.TypeParameters => baseType.TypeParameters;
+		IReadOnlyList<ITypeParameter>? IType.TypeParameters => baseType.TypeParameters;
 
-		IReadOnlyList<IType> IType.TypeArguments => baseType.TypeArguments;
+		IReadOnlyList<IType>? IType.TypeArguments => baseType.TypeArguments;
 
 		IEnumerable<IType> IType.DirectBaseTypes => baseType.DirectBaseTypes;
 
@@ -39,16 +39,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		string INamedElement.Namespace => baseType.Namespace;
 
-		public abstract IType AcceptVisitor(TypeVisitor visitor);
+		public abstract IType AcceptVisitor(TypeVisitor? visitor);
 
 		public abstract bool Equals(IType other);
 
-		IEnumerable<IMethod> IType.GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
+		IEnumerable<IMethod> IType.GetAccessors(Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			return baseType.GetAccessors(filter, options);
 		}
 
-		IEnumerable<IMethod> IType.GetConstructors(Predicate<IMethod> filter, GetMemberOptions options)
+		IEnumerable<IMethod> IType.GetConstructors(Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			return baseType.GetConstructors(filter, options);
 		}
@@ -58,53 +58,53 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseType.GetDefinition();
 		}
 
-		IEnumerable<IEvent> IType.GetEvents(Predicate<IEvent> filter, GetMemberOptions options)
+		IEnumerable<IEvent> IType.GetEvents(Predicate<IEvent>? filter, GetMemberOptions options)
 		{
 			return baseType.GetEvents(filter, options);
 		}
 
-		IEnumerable<IField> IType.GetFields(Predicate<IField> filter, GetMemberOptions options)
+		IEnumerable<IField> IType.GetFields(Predicate<IField>? filter, GetMemberOptions options)
 		{
 			return baseType.GetFields(filter, options);
 		}
 
-		IEnumerable<IMember> IType.GetMembers(Predicate<IMember> filter, GetMemberOptions options)
+		IEnumerable<IMember> IType.GetMembers(Predicate<IMember>? filter, GetMemberOptions options)
 		{
 			return baseType.GetMembers(filter, options);
 		}
 
-		IEnumerable<IMethod> IType.GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
+		IEnumerable<IMethod> IType.GetMethods(Predicate<IMethod>? filter, GetMemberOptions options)
 		{
 			return baseType.GetMethods(filter, options);
 		}
 
-		IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+		IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter,
 			GetMemberOptions options)
 		{
 			return baseType.GetMethods(typeArguments, filter, options);
 		}
 
-		IEnumerable<IType> IType.GetNestedTypes(Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		IEnumerable<IType> IType.GetNestedTypes(Predicate<ITypeDefinition>? filter, GetMemberOptions options)
 		{
 			return baseType.GetNestedTypes(filter, options);
 		}
 
-		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter,
+		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType?>? typeArguments, Predicate<ITypeDefinition>? filter,
 			GetMemberOptions options)
 		{
 			return baseType.GetNestedTypes(typeArguments, filter, options);
 		}
 
-		IEnumerable<IProperty> IType.GetProperties(Predicate<IProperty> filter, GetMemberOptions options)
+		IEnumerable<IProperty> IType.GetProperties(Predicate<IProperty>? filter, GetMemberOptions options)
 		{
 			return baseType.GetProperties(filter, options);
 		}
 
-		TypeParameterSubstitution IType.GetSubstitution()
+		TypeParameterSubstitution? IType.GetSubstitution()
 		{
 			return baseType.GetSubstitution();
 		}
 
-		public abstract IType VisitChildren(TypeVisitor visitor);
+		public abstract IType VisitChildren(TypeVisitor? visitor);
 	}
 }

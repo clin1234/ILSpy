@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool DoTransform(Block body, int pos)
 		{
-			ILInstruction inst = body.Instructions[pos];
+			ILInstruction? inst = body.Instructions[pos];
 			// Match stloc(v, newobj)
 			if (!inst.MatchStLoc(out var v, out var initInst) ||
 			    v.Kind != VariableKind.Local && v.Kind != VariableKind.StackSlot)
@@ -568,7 +568,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public static readonly ILInstructionMatchComparer Instance = new();
 
-		public bool Equals(ILInstruction x, ILInstruction y)
+		public bool Equals(ILInstruction x, ILInstruction? y)
 		{
 			if (x == y)
 				return true;

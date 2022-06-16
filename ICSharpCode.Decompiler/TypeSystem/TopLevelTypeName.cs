@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return this.ReflectionName;
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return (obj is TopLevelTypeName typeName) && Equals(typeName);
 		}

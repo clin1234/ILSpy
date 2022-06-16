@@ -319,7 +319,7 @@ namespace ICSharpCode.ILSpyX
 
 			return list;
 
-			void AddToListFromGAC(string fullName)
+			void AddToListFromGAC(string? fullName)
 			{
 				AssemblyNameReference reference = AssemblyNameReference.Parse(fullName);
 				string? file = UniversalAssemblyResolver.GetAssemblyInGac(reference);
@@ -327,13 +327,13 @@ namespace ICSharpCode.ILSpyX
 					list.OpenAssembly(file);
 			}
 
-			void AddToListFromDirectory(string file)
+			void AddToListFromDirectory(string? file)
 			{
 				if (File.Exists(file))
 					list.OpenAssembly(file);
 			}
 
-			bool DoIncludeFile(string fileName)
+			static bool DoIncludeFile(string fileName)
 			{
 				if (fileName == "Microsoft.DiaSymReader.Native.amd64.dll")
 					return false;

@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public UnaryOperatorExpression(UnaryOperatorType op, Expression expression)
+		public UnaryOperatorExpression(UnaryOperatorType op, Expression? expression)
 		{
 			this.Operator = op;
 			this.Expression = expression;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(GetOperatorRole(Operator)); }
 		}
 
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -86,14 +86,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUnaryOperatorExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is UnaryOperatorExpression o && (this.Operator == UnaryOperatorType.Any ||
 			                                              this.Operator == o.Operator)
 			                                          && this.Expression.DoMatch(o.Expression, match);
 		}
 
-		public static TokenRole GetOperatorRole(UnaryOperatorType op)
+		public static TokenRole? GetOperatorRole(UnaryOperatorType op)
 		{
 			switch (op)
 			{

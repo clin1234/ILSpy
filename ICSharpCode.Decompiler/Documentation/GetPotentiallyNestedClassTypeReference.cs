@@ -50,14 +50,14 @@ namespace ICSharpCode.Decompiler.Documentation
 			var assemblies = new[] { context.CurrentModule }.Concat(context.Compilation.Modules);
 			for (int i = parts.Length - 1; i >= 0; i--)
 			{
-				string ns = string.Join(".", parts, 0, i);
+				string? ns = string.Join(".", parts, 0, i);
 				string name = parts[i];
 				int topLevelTPC = (i == parts.Length - 1 ? typeParameterCount : 0);
 				foreach (var asm in assemblies)
 				{
 					if (asm == null)
 						continue;
-					ITypeDefinition typeDef = asm.GetTypeDefinition(new TopLevelTypeName(ns, name, topLevelTPC));
+					ITypeDefinition? typeDef = asm.GetTypeDefinition(new TopLevelTypeName(ns, name, topLevelTPC));
 					for (int j = i + 1; j < parts.Length && typeDef != null; j++)
 					{
 						int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			string[] parts = typeName.Split('.');
 			for (int i = parts.Length - 1; i >= 0; i--)
 			{
-				string ns = string.Join(".", parts, 0, i);
+				string? ns = string.Join(".", parts, 0, i);
 				string name = parts[i];
 				int topLevelTPC = (i == parts.Length - 1 ? typeParameterCount : 0);
 				var topLevelName = new TopLevelTypeName(ns, name, topLevelTPC);
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			return default;
 
-			bool IsEqualShortName(TypeDefinitionHandle h, MetadataReader metadata, string name)
+			static bool IsEqualShortName(TypeDefinitionHandle h, MetadataReader metadata, string name)
 			{
 				var nestedType = metadata.GetTypeDefinition(h);
 				return metadata.StringComparer.Equals(nestedType.Name, name);

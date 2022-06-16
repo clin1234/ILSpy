@@ -95,6 +95,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the short name of the symbol.
 		/// </summary>
-		string Name { get; }
+		string? Name { get; }
 	}
 }

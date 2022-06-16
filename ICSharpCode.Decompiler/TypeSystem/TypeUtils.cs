@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return type.SkipModifiers().GetSize();
 			}
 
-			var typeDef = type.GetDefinition();
+			var typeDef = type?.GetDefinition();
 			if (typeDef == null)
 				return 0;
 			switch (typeDef.KnownTypeCode)
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsCSharpPrimitiveIntegerType(this IType type)
 		{
-			switch (type.GetDefinition()?.KnownTypeCode)
+			switch (type?.GetDefinition()?.KnownTypeCode)
 			{
 				case KnownTypeCode.Byte:
 				case KnownTypeCode.SByte:
@@ -239,13 +239,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public static bool IsCompatibleTypeForMemoryAccess(IType memoryType, IType accessType)
 		{
-			memoryType = memoryType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
-			accessType = accessType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			memoryType = memoryType?.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			accessType = accessType?.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
 			if (memoryType.Equals(accessType))
 				return true;
 			// If the types are not equal, the access still might produce equal results in some cases:
 			// 1) Both types are reference types
-			if (memoryType.IsReferenceType == true && accessType.IsReferenceType == true)
+			if (memoryType.IsReferenceType == true && accessType?.IsReferenceType == true)
 				return true;
 			// 2) Both types are integer types of equal size
 			StackType memoryStackType = memoryType.GetStackType();
@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return type.SkipModifiers().GetStackType();
 			}
 
-			ITypeDefinition typeDef = type.GetEnumUnderlyingType().GetDefinition();
+			ITypeDefinition typeDef = type.GetEnumUnderlyingType()?.GetDefinition();
 			if (typeDef == null)
 				return StackType.O;
 			switch (typeDef.KnownTypeCode)
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType GetEnumUnderlyingType(this IType type)
 		{
 			type = type.SkipModifiers();
-			return (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
+			return (type.Kind == TypeKind.Enum) ? type.GetDefinition()?.EnumUnderlyingType : type;
 		}
 
 		/// <summary>
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return Sign.Signed;
 			}
 
-			var typeDef = type.GetEnumUnderlyingType().GetDefinition();
+			ITypeDefinition typeDef = type.GetEnumUnderlyingType()?.GetDefinition();
 			if (typeDef == null)
 				return Sign.None;
 			switch (typeDef.KnownTypeCode)
@@ -434,7 +434,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return PrimitiveType.U;
 			}
 
-			var def = type.GetEnumUnderlyingType().GetDefinition();
+			ITypeDefinition def = type.GetEnumUnderlyingType()?.GetDefinition();
 			return def != null ? def.KnownTypeCode.ToPrimitiveType() : PrimitiveType.None;
 		}
 

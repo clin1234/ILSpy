@@ -22,17 +22,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	static class DecimalConstantHelper
 	{
-		public static bool AllowsDecimalConstants(MetadataModule module)
+		public static bool AllowsDecimalConstants(MetadataModule? module)
 		{
 			return ((module.TypeSystemOptions & TypeSystemOptions.DecimalConstants) == TypeSystemOptions.DecimalConstants);
 		}
 
-		public static bool IsDecimalConstant(MetadataModule module, CustomAttributeHandleCollection attributeHandles)
+		public static bool IsDecimalConstant(MetadataModule? module, CustomAttributeHandleCollection attributeHandles)
 		{
 			return attributeHandles.HasKnownAttribute(module.metadata, KnownAttribute.DecimalConstant);
 		}
 
-		public static object GetDecimalConstantValue(MetadataModule module, CustomAttributeHandleCollection attributeHandles)
+		public static object? GetDecimalConstantValue(MetadataModule? module, CustomAttributeHandleCollection attributeHandles)
 		{
 			var metadata = module.metadata;
 			foreach (var attributeHandle in attributeHandles)
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return null;
 		}
 
-		static decimal? TryDecodeDecimalConstantAttribute(MetadataModule module, System.Reflection.Metadata.CustomAttribute attribute)
+		static decimal? TryDecodeDecimalConstantAttribute(MetadataModule? module, System.Reflection.Metadata.CustomAttribute attribute)
 		{
 			var attrValue = attribute.DecodeValue(module.TypeProvider);
 			if (attrValue.FixedArguments.Length != 5)

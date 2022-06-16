@@ -32,17 +32,17 @@ namespace ICSharpCode.ILSpyX
 {
 	sealed class AssemblyListSnapshot
 	{
-		readonly ImmutableArray<LoadedAssembly> assemblies;
+		readonly ImmutableArray<LoadedAssembly?> assemblies;
 		Dictionary<string, PEFile>? asmLookupByFullName;
 		Dictionary<string, PEFile>? asmLookupByShortName;
 		Dictionary<string, List<(PEFile module, Version version)>>? asmLookupByShortNameGrouped;
 
-		public AssemblyListSnapshot(ImmutableArray<LoadedAssembly> assemblies)
+		public AssemblyListSnapshot(ImmutableArray<LoadedAssembly?> assemblies)
 		{
 			this.assemblies = assemblies;
 		}
 
-		public ImmutableArray<LoadedAssembly> Assemblies => assemblies;
+		public ImmutableArray<LoadedAssembly?> Assemblies => assemblies;
 
 		public async Task<PEFile?> TryGetModuleAsync(IAssemblyReference reference, string tfm)
 		{
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpyX
 		private async Task<Dictionary<string, PEFile>> CreateLoadedAssemblyLookupAsync(bool shortNames)
 		{
 			var result = new Dictionary<string, PEFile>(StringComparer.OrdinalIgnoreCase);
-			foreach (LoadedAssembly loaded in assemblies)
+			foreach (LoadedAssembly? loaded in assemblies)
 			{
 				try
 				{
@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpyX
 			var result =
 				new Dictionary<string, List<(PEFile module, Version version)>>(StringComparer.OrdinalIgnoreCase);
 
-			foreach (LoadedAssembly loaded in assemblies)
+			foreach (LoadedAssembly? loaded in assemblies)
 			{
 				try
 				{
@@ -153,9 +153,9 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Gets all loaded assemblies recursively, including assemblies found in bundles or packages.
 		/// </summary>
-		public async Task<IList<LoadedAssembly>> GetAllAssembliesAsync()
+		public async Task<IList<LoadedAssembly?>> GetAllAssembliesAsync()
 		{
-			var results = new List<LoadedAssembly>(assemblies.Length);
+			var results = new List<LoadedAssembly?>(assemblies.Length);
 
 			foreach (var asm in assemblies)
 			{

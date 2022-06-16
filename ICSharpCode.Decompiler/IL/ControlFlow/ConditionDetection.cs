@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// After a block was processed, it should use structured control flow
 		/// and have just a single 'regular' exit point (last branch instruction in the block)
 		/// </remarks>
-		public void Run(Block block, BlockTransformContext context)
+		public void Run(Block? block, BlockTransformContext context)
 		{
 			this.context = context;
 			currentContainer = (BlockContainer)block.Parent;
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Repeatedly inlines and simplifies, maintaining a good block exit and then attempting to match IL order
 		/// </summary>
-		private void HandleIfInstruction(Block block, IfInstruction ifInst)
+		private void HandleIfInstruction(Block block, IfInstruction? ifInst)
 		{
 			while (InlineTrueBranch(block, ifInst) || InlineExitBranch(block))
 			{
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Only inlines branches that are strictly dominated by this block (incoming edge count == 1)
 		/// </summary>
-		private bool InlineTrueBranch(Block block, IfInstruction ifInst)
+		private bool InlineTrueBranch(Block block, IfInstruction? ifInst)
 		{
 			if (!CanInline(ifInst.TrueInst))
 			{
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// and performs inversions and simplifications to merge them provided they don't 
 		/// isolate a higher priority block exit
 		/// </summary>
-		private void MergeCommonBranches(Block block, IfInstruction ifInst)
+		private void MergeCommonBranches(Block block, IfInstruction? ifInst)
 		{
 			var thenExits = new List<ILInstruction>();
 			AddExits(ifInst.TrueInst, 0, thenExits);
@@ -327,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private bool WillShortCircuit(Block block, IfInstruction ifInst, ILInstruction elseExit)
 		{
-			bool ThenInstIsSingleExit(ILInstruction inst) =>
+			static bool ThenInstIsSingleExit(ILInstruction inst) =>
 				inst.MatchIfInstruction(out var _, out var trueInst)
 				&& (trueInst is not Block trueBlock || trueBlock.Instructions.Count == 1)
 				&& TryGetExit(trueInst, out var _);
@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			       && ThenInstIsSingleExit(elseIfInst);
 		}
 
-		private void InvertIf(Block block, IfInstruction ifInst) => InvertIf(block, ifInst, context);
+		private void InvertIf(Block block, IfInstruction? ifInst) => InvertIf(block, ifInst, context);
 
 		/// <summary>
 		///   if (cond) { then... }
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Assumes ifInst does not have an else block
 		/// </summary>
-		internal static void InvertIf(Block block, IfInstruction ifInst, ILTransformContext context)
+		internal static void InvertIf(Block block, IfInstruction? ifInst, ILTransformContext context)
 		{
 			Debug.Assert(ifInst.Parent == block);
 
@@ -404,7 +404,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// ->
 		///   if (!cond) { ... }
 		/// </summary>
-		private void SwapEmptyThen(IfInstruction ifInst)
+		private void SwapEmptyThen(IfInstruction? ifInst)
 		{
 			if (!IsEmpty(ifInst.TrueInst))
 				return;
@@ -421,7 +421,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// ->
 		///   if (cond &amp;&amp; nestedCond) { nestedThen... }
 		/// </summary>
-		private void IntroduceShortCircuit(IfInstruction ifInst)
+		private void IntroduceShortCircuit(IfInstruction? ifInst)
 		{
 			if (IsEmpty(ifInst.FalseInst)
 			    && ifInst.TrueInst is Block trueBlock
@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// ->
 		///   if (!cond) { earlyBlock... } else { lateBlock... }
 		/// </summary>
-		private void OrderIfBlocks(IfInstruction ifInst)
+		private void OrderIfBlocks(IfInstruction? ifInst)
 		{
 			if (IsEmpty(ifInst.FalseInst) ||
 			    GetStartILOffset(ifInst.TrueInst, out _) <= GetStartILOffset(ifInst.FalseInst, out _))
@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Does nothing when ifInst has an else block (because inverting wouldn't affect the block exit)
 		/// </summary>
-		private void PickBetterBlockExit(Block block, IfInstruction ifInst)
+		private void PickBetterBlockExit(Block block, IfInstruction? ifInst)
 		{
 			var exitInst = GetExit(block);
 			if (IsEmpty(ifInst.FalseInst)

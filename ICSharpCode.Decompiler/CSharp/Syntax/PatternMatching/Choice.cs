@@ -27,9 +27,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public sealed class Choice : Pattern, IEnumerable<INode>
 	{
-		readonly List<INode> alternatives = new();
+		readonly List<INode?> alternatives = new();
 
-		IEnumerator<INode> IEnumerable<INode>.GetEnumerator()
+		IEnumerator<INode?> IEnumerable<INode>.GetEnumerator()
 		{
 			return alternatives.GetEnumerator();
 		}
@@ -39,22 +39,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return alternatives.GetEnumerator();
 		}
 
-		public void Add(string name, INode alternative)
+		public void Add(string name, INode? alternative)
 		{
 			ArgumentNullException.ThrowIfNull(alternative);
 			alternatives.Add(new NamedNode(name, alternative));
 		}
 
-		public void Add(INode alternative)
+		public void Add(INode? alternative)
 		{
 			ArgumentNullException.ThrowIfNull(alternative);
 			alternatives.Add(alternative);
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			var checkPoint = match.CheckPoint();
-			foreach (INode alt in alternatives)
+			foreach (INode? alt in alternatives)
 			{
 				if (alt.DoMatch(other, match))
 					return true;

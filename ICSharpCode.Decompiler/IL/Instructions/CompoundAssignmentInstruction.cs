@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		Dynamic
 	}
 
-	public abstract partial class CompoundAssignmentInstruction : ILInstruction
+	public abstract partial class CompoundAssignmentInstruction
 	{
 		public readonly CompoundEvalMode EvalMode;
 
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	public partial class NumericCompoundAssign : CompoundAssignmentInstruction, ILiftableInstruction
+	public partial class NumericCompoundAssign : ILiftableInstruction
 	{
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly Sign Sign;
 
-		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target,
+		public NumericCompoundAssign(BinaryNumericInstruction? binary, ILInstruction target,
 			CompoundTargetKind targetKind, ILInstruction value, IType type, CompoundEvalMode evalMode)
 			: base(OpCode.NumericCompoundAssign, evalMode, target, targetKind, value)
 		{
@@ -190,71 +190,85 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
 		/// </summary>
-		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type,
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction? binary, IType type,
 			DecompilerSettings? settings)
 		{
-			if (binary.IsLifted)
+			if (binary is { IsLifted: true })
 			{
 				if (!NullableType.IsNullable(type))
 					return false;
 				type = NullableType.GetUnderlyingType(type);
 			}
 
-			if (type.Kind == TypeKind.Unknown)
+			switch (type.Kind)
 			{
-				return false; // avoid introducing a potentially-incorrect compound assignment
+				case TypeKind.Unknown:
+					return false; // avoid introducing a potentially-incorrect compound assignment
+				case TypeKind.Enum:
+					if (binary != null)
+					{
+						switch (binary.Operator)
+						{
+							case BinaryNumericOperator.Add:
+							case BinaryNumericOperator.Sub:
+							case BinaryNumericOperator.BitAnd:
+							case BinaryNumericOperator.BitOr:
+							case BinaryNumericOperator.BitXor:
+								break; // OK
+							default:
+								return false; // operator not supported on enum types
+						}
+					}
+
+					break;
+				case TypeKind.Pointer:
+					if (binary != null)
+					{
+						switch (binary.Operator)
+						{
+							case BinaryNumericOperator.Add:
+							case BinaryNumericOperator.Sub:
+								// ensure that the byte offset is a multiple of the pointer size
+								return PointerArithmeticOffset.Detect(
+									binary.Right,
+									((PointerType)type).ElementType,
+									checkForOverflow: binary.CheckForOverflow
+								) != null;
+							default:
+								return false; // operator not supported on pointer types
+						}
+					}
+
+					break;
+				default:
+				{
+					if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
+					{
+						// "target.intptr *= 2;" is compiler error, but
+						// "target.intptr *= (nint)2;" works
+						if (settings is { NativeIntegers: false })
+						{
+							// But if native integers are not available, we cannot use compound assignment.
+							return false;
+						}
+
+						// The trick with casting the RHS to n(u)int doesn't work for shifts:
+						if (binary != null)
+						{
+							switch (binary.Operator)
+							{
+								case BinaryNumericOperator.ShiftLeft:
+								case BinaryNumericOperator.ShiftRight:
+									return false;
+							}
+						}
+					}
+
+					break;
+				}
 			}
 
-			if (type.Kind == TypeKind.Enum)
-			{
-				switch (binary.Operator)
-				{
-					case BinaryNumericOperator.Add:
-					case BinaryNumericOperator.Sub:
-					case BinaryNumericOperator.BitAnd:
-					case BinaryNumericOperator.BitOr:
-					case BinaryNumericOperator.BitXor:
-						break; // OK
-					default:
-						return false; // operator not supported on enum types
-				}
-			}
-			else if (type.Kind == TypeKind.Pointer)
-			{
-				switch (binary.Operator)
-				{
-					case BinaryNumericOperator.Add:
-					case BinaryNumericOperator.Sub:
-						// ensure that the byte offset is a multiple of the pointer size
-						return PointerArithmeticOffset.Detect(
-							binary.Right,
-							((PointerType)type).ElementType,
-							checkForOverflow: binary.CheckForOverflow
-						) != null;
-					default:
-						return false; // operator not supported on pointer types
-				}
-			}
-			else if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
-			{
-				// "target.intptr *= 2;" is compiler error, but
-				// "target.intptr *= (nint)2;" works
-				if (settings is { NativeIntegers: false })
-				{
-					// But if native integers are not available, we cannot use compound assignment.
-					return false;
-				}
-
-				// The trick with casting the RHS to n(u)int doesn't work for shifts:
-				switch (binary.Operator)
-				{
-					case BinaryNumericOperator.ShiftLeft:
-					case BinaryNumericOperator.ShiftRight:
-						return false;
-				}
-			}
-
-			if (binary.Sign != Sign.None)
+			if (binary != null && binary.Sign != Sign.None)
 			{
 				if (type.IsCSharpSmallIntegerType())
 				{
@@ -294,13 +308,14 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(".ovf");
 			}
 
-			if (Sign == Sign.Unsigned)
+			switch (Sign)
 			{
-				output.Write(".unsigned");
-			}
-			else if (Sign == Sign.Signed)
-			{
-				output.Write(".signed");
+				case Sign.Unsigned:
+					output.Write(".unsigned");
+					break;
+				case Sign.Signed:
+					output.Write(".signed");
+					break;
 			}
 
 			output.Write('.');
@@ -319,7 +334,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
+	public partial class UserDefinedCompoundAssign
 	{
 		public readonly IMethod Method;
 
@@ -357,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	public partial class DynamicCompoundAssign : CompoundAssignmentInstruction
+	public partial class DynamicCompoundAssign
 	{
 		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags,
 			ILInstruction target, CSharpArgumentInfo targetArgumentInfo,

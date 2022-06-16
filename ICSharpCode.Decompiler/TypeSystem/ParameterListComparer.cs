@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		internal static readonly ParameterListComparer Instance = new();
 
-		static readonly NormalizeTypeVisitor normalizationVisitor = new() {
+		static readonly NormalizeTypeVisitor? normalizationVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = true,
 			DynamicAndObject = true,
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool includeModifiers;
 
-		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
+		public bool Equals(IReadOnlyList<IParameter?>? x, IReadOnlyList<IParameter?>? y)
 		{
 			if (x == y)
 				return true;
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.nameComparer = nameComparer ?? throw new ArgumentNullException(nameof(nameComparer));
 		}
 
-		public bool Equals(IMember x, IMember y)
+		public bool Equals(IMember? x, IMember? y)
 		{
 			if (x == y)
 				return true;

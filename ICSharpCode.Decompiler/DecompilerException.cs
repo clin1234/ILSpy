@@ -33,28 +33,28 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// Description of DecompilerException.
 	/// </summary>
-	internal sealed class DecompilerException : Exception
+	public sealed class DecompilerException : Exception
 	{
-		public DecompilerException(MetadataModule module, IEntity decompiledEntity,
-			Exception innerException, string message = null)
+		public DecompilerException(MetadataModule? module, IEntity decompiledEntity,
+			Exception innerException, string? message = null)
 			: base(message ?? GetDefaultMessage(decompiledEntity), innerException)
 		{
-			this.File = module.PEFile;
+			this.File = module?.PEFile;
 		}
 
-		public DecompilerException(PEFile file, string message, Exception innerException)
+		public DecompilerException(PEFile? file, string message, Exception innerException)
 			: base(message, innerException)
 		{
 			this.File = file;
 		}
 
-		private string FileName => File.FileName;
+		private string FileName => File?.FileName;
 
-		private PEFile File { get; }
+		private PEFile? File { get; }
 
 		public override string StackTrace => GetStackTrace(this);
 
-		static string GetDefaultMessage(IEntity entity)
+		static string GetDefaultMessage(IEntity? entity)
 		{
 			if (entity == null)
 				return "Error decompiling";
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler
 		string ToString(Exception exception)
 		{
 			ArgumentNullException.ThrowIfNull(exception);
-			string exceptionType = GetTypeName(exception);
+			string? exceptionType = GetTypeName(exception);
 			string stacktrace = GetStackTrace(exception);
 			while (exception.InnerException != null)
 			{
@@ -85,9 +85,9 @@ namespace ICSharpCode.Decompiler
 			                    + stacktrace;
 		}
 
-		static string GetTypeName(Exception exception)
+		static string? GetTypeName(Exception exception)
 		{
-			string type = exception.GetType().FullName;
+			string? type = exception.GetType().FullName;
 			if (exception is ExternalException or IOException)
 			{
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";
@@ -105,8 +105,8 @@ namespace ICSharpCode.Decompiler
 			StringBuilder b = new();
 			for (int i = 0; i < stackTrace.FrameCount; i++)
 			{
-				StackFrame frame = stackTrace.GetFrame(i);
-				MethodBase method = frame.GetMethod();
+				StackFrame? frame = stackTrace.GetFrame(i);
+				MethodBase? method = frame?.GetMethod();
 				if (method == null)
 					continue;
 
@@ -114,10 +114,10 @@ namespace ICSharpCode.Decompiler
 					b.AppendLine();
 
 				b.Append("   at ");
-				Type declaringType = method.DeclaringType;
+				Type? declaringType = method.DeclaringType;
 				if (declaringType != null)
 				{
-					b.Append(declaringType.FullName.Replace('+', '.'));
+					b.Append(declaringType.FullName?.Replace('+', '.'));
 					b.Append('.');
 				}
 
@@ -165,10 +165,10 @@ namespace ICSharpCode.Decompiler
 				// source location
 				if (frame.GetILOffset() >= 0)
 				{
-					string filename = null;
+					string? filename = null;
 					try
 					{
-						string fullpath = frame.GetFileName();
+						string? fullpath = frame.GetFileName();
 						if (fullpath != null)
 							filename = Path.GetFileName(fullpath);
 					}

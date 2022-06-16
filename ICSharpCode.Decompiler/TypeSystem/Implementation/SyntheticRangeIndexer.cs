@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	sealed class SyntheticRangeIndexAccessor : IMethod
 	{
 		readonly IType indexOrRangeType;
-		readonly IReadOnlyList<IParameter> parameters;
+		readonly IReadOnlyList<IParameter?> parameters;
 
 		/// <summary>
 		/// The underlying method: `get_Item(int)`, `set_Item(int, T)` or `Slice(int, int)`.
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.underlyingMethod = underlyingMethod;
 			this.indexOrRangeType = indexOrRangeType;
 			this.IsSlicing = slicing;
-			var parameters = new List<IParameter> { new DefaultParameter(indexOrRangeType, "") };
+			var parameters = new List<IParameter?> { new DefaultParameter(indexOrRangeType, "") };
 			if (slicing)
 			{
 				Debug.Assert(underlyingMethod.Parameters.Count == 2);
@@ -80,8 +80,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMethod.IsAccessor => underlyingMethod.IsAccessor;
 		IMember IMethod.AccessorOwner => underlyingMethod.AccessorOwner;
 		MethodSemanticsAttributes IMethod.AccessorKind => underlyingMethod.AccessorKind;
-		IMethod IMethod.ReducedFrom => underlyingMethod.ReducedFrom;
-		IReadOnlyList<IParameter> IParameterizedMember.Parameters => parameters;
+		IMethod? IMethod.ReducedFrom => underlyingMethod.ReducedFrom;
+		IReadOnlyList<IParameter?> IParameterizedMember.Parameters => parameters;
 		IMember IMember.MemberDefinition => underlyingMethod.MemberDefinition;
 		IType IMember.ReturnType => underlyingMethod.ReturnType;
 		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
@@ -89,12 +89,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMember.IsVirtual => underlyingMethod.IsVirtual;
 		bool IMember.IsOverride => underlyingMethod.IsOverride;
 		bool IMember.IsOverridable => underlyingMethod.IsOverridable;
-		TypeParameterSubstitution IMember.Substitution => underlyingMethod.Substitution;
+		TypeParameterSubstitution? IMember.Substitution => underlyingMethod.Substitution;
 		EntityHandle IEntity.MetadataToken => underlyingMethod.MetadataToken;
 		public string Name => underlyingMethod.Name;
 		public IType DeclaringType => underlyingMethod.DeclaringType;
 		ITypeDefinition IEntity.DeclaringTypeDefinition => underlyingMethod.DeclaringTypeDefinition;
-		IModule IEntity.ParentModule => underlyingMethod.ParentModule;
+		IModule? IEntity.ParentModule => underlyingMethod.ParentModule;
 		Accessibility IEntity.Accessibility => underlyingMethod.Accessibility;
 		bool IEntity.IsStatic => underlyingMethod.IsStatic;
 		bool IEntity.IsAbstract => underlyingMethod.IsAbstract;
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string INamedElement.ReflectionName => underlyingMethod.ReflectionName;
 		string INamedElement.Namespace => underlyingMethod.Namespace;
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			return obj is SyntheticRangeIndexAccessor g
 			       && this.underlyingMethod.Equals(g.underlyingMethod, typeNormalization)
@@ -113,23 +113,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				       .Equals(g.indexOrRangeType.AcceptVisitor(typeNormalization));
 		}
 
-		IEnumerable<IAttribute> IEntity.GetAttributes() => underlyingMethod.GetAttributes();
+		IEnumerable<IAttribute?> IEntity.GetAttributes() => underlyingMethod.GetAttributes();
 
-		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => underlyingMethod.GetReturnTypeAttributes();
+		IEnumerable<IAttribute?> IMethod.GetReturnTypeAttributes() => underlyingMethod.GetReturnTypeAttributes();
 
-		IMethod IMethod.Specialize(TypeParameterSubstitution substitution)
+		IMethod IMethod.Specialize(TypeParameterSubstitution? substitution)
 		{
 			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType,
 				IsSlicing);
 		}
 
-		IMember IMember.Specialize(TypeParameterSubstitution substitution)
+		IMember IMember.Specialize(TypeParameterSubstitution? substitution)
 		{
 			return new SyntheticRangeIndexAccessor(underlyingMethod.Specialize(substitution), indexOrRangeType,
 				IsSlicing);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is SyntheticRangeIndexAccessor g
 			       && this.underlyingMethod.Equals(g.underlyingMethod)

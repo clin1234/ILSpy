@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					info.Definition);
 				try
 				{
-					foreach ((int index, List<ILInstruction> arguments) in info.LocalFunctionArguments)
+					foreach ((int index, List<ILInstruction?> arguments) in info.LocalFunctionArguments)
 					{
 						var targetVariable = info.Definition.Variables.SingleOrDefault(p =>
 							p.Kind == VariableKind.Parameter && p.Index == index);
@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.StepEndGroup(keepIfEmpty: true);
 				}
 
-				void AddAsArgument(int index, ILInstruction argument)
+				void AddAsArgument(int index, ILInstruction? argument)
 				{
 					switch (argument)
 					{
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private ILInstruction FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction> arguments,
+		private ILInstruction? FindCompatibleArgument(LocalFunctionInfo info, IList<ILInstruction?> arguments,
 			bool ignoreStructure = false)
 		{
 			foreach (var arg in arguments)
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private ILVariable ResolveAncestorScopeReference(ILInstruction inst)
+		private ILVariable ResolveAncestorScopeReference(ILInstruction? inst)
 		{
 			if (!inst.MatchLdFld(out ILInstruction _, out var field))
 				return null;
@@ -544,8 +544,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var skippedTA in skippedTypeArguments)
 			{
 				int curIdx;
-				List<ITypeParameter> curParameters;
-				IReadOnlyList<IType> curArgs;
+				List<ITypeParameter?>? curParameters;
+				IReadOnlyList<IType>? curArgs;
 				if (idx < classTypeParameters.Count)
 				{
 					curIdx = idx;
@@ -581,7 +581,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return a.Ancestors.OfType<T>().FirstOrDefault(ancestorsOfB.Contains);
 		}
 
-		internal static bool IsClosureParameter(IParameter parameter, ITypeResolveContext context)
+		internal static bool IsClosureParameter(IParameter? parameter, ITypeResolveContext context)
 		{
 			if (!parameter.IsRef)
 				return false;
@@ -648,7 +648,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static void TransformToLocalFunctionReference(ILFunction function, CallInstruction useSite)
 		{
-			ILInstruction target = useSite.Arguments[0];
+			ILInstruction? target = useSite.Arguments[0];
 			target.ReplaceWith(new LdNull().WithILRange(target));
 			if (target is IInstructionWithVariableOperand withVar && withVar.Variable.Kind == VariableKind.Local)
 			{
@@ -661,7 +661,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			useSite.Arguments[1].ReplaceWith(replacement);
 		}
 
-		void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
+		void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction? useSite)
 		{
 			var specializeMethod = reducedMethod.Specialize(useSite.Method.Substitution);
 			bool wasInstanceCall = !useSite.Method.IsStatic;
@@ -724,7 +724,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, int parameterIndex, ILInstruction arg)
+		bool DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, int parameterIndex, ILInstruction? arg)
 		{
 			ILFunction function = info.Definition;
 			if (parameterIndex >= 0)
@@ -773,7 +773,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
 			return true;
 
-			ILInstruction GetClosureInitializer(ILVariable variable)
+			static ILInstruction GetClosureInitializer(ILVariable variable)
 			{
 				var type = UnwrapByRef(variable.Type).GetDefinition();
 				if (type == null)
@@ -810,7 +810,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context);
 		}
 
-		public static bool IsLocalFunctionMethod(PEFile module, MethodDefinitionHandle methodHandle,
+		public static bool IsLocalFunctionMethod(PEFile? module, MethodDefinitionHandle methodHandle,
 			ILTransformContext context = null)
 		{
 			if (context != null && context.PEFile != module)
@@ -830,7 +830,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		public static bool LocalFunctionNeedsAccessibilityChange(PEFile module, MethodDefinitionHandle methodHandle)
+		public static bool LocalFunctionNeedsAccessibilityChange(PEFile? module, MethodDefinitionHandle methodHandle)
 		{
 			if (!IsLocalFunctionMethod(module, methodHandle))
 				return false;
@@ -851,7 +851,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		public static bool IsLocalFunctionDisplayClass(PEFile module, TypeDefinitionHandle typeHandle,
+		public static bool IsLocalFunctionDisplayClass(PEFile? module, TypeDefinitionHandle typeHandle,
 			ILTransformContext context = null)
 		{
 			if (context != null && context.PEFile != module)
@@ -903,7 +903,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			/// We use a dictionary instead of a simple array, because -1 is used for the this parameter
 			/// and there might be many non-synthesized arguments in between.
 			/// </summary>
-			public Dictionary<int, List<ILInstruction>> LocalFunctionArguments;
+			public Dictionary<int, List<ILInstruction?>> LocalFunctionArguments;
 		}
 
 		sealed class FindRefStructParameters : ISignatureTypeProvider<TypeDefinitionHandle, Unit>

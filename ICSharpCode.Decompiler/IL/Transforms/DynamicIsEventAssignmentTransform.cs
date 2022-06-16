@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V_2(dynamic.getmember B(target))
 		/// }
 		/// </summary>
-		static bool MatchLhsCacheIfInstruction(ILInstruction ifInst, ILVariable flagVar, out StLoc cacheStore)
+		static bool MatchLhsCacheIfInstruction(ILInstruction? ifInst, ILVariable flagVar, out StLoc cacheStore)
 		{
 			cacheStore = null;
 			if (!ifInst.MatchIfInstruction(out var condition, out var trueInst))

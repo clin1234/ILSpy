@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Gets the substitution belonging to this specialized member.
 		/// </summary>
-		public TypeParameterSubstitution Substitution { get; private set; }
+		public TypeParameterSubstitution? Substitution { get; private set; }
 
 		public IType DeclaringType {
 			get {
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
 
-		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMember.GetAttributes();
+		IEnumerable<IAttribute?> IEntity.GetAttributes() => baseMember.GetAttributes();
 
 		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {
@@ -182,16 +182,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.Compilation; }
 		}
 
-		public IModule ParentModule {
+		public IModule? ParentModule {
 			get { return baseMember.ParentModule; }
 		}
 
-		public virtual IMember Specialize(TypeParameterSubstitution newSubstitution)
+		public virtual IMember Specialize(TypeParameterSubstitution? newSubstitution)
 		{
 			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.Substitution));
 		}
 
-		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public virtual bool Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			if (obj is not SpecializedMember other)
 				return false;
@@ -202,14 +202,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Performs a substitution. This method may only be called by constructors in derived classes.
 		/// </summary>
-		protected void AddSubstitution(TypeParameterSubstitution newSubstitution)
+		protected void AddSubstitution(TypeParameterSubstitution? newSubstitution)
 		{
 			Debug.Assert(declaringType == null);
 			Debug.Assert(returnType == null);
 			this.Substitution = TypeParameterSubstitution.Compose(newSubstitution, this.Substitution);
 		}
 
-		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
+		internal IMethod WrapAccessor(ref IMethod? cachingField, IMethod accessorDefinition)
 		{
 			if (accessorDefinition == null)
 				return null;
@@ -256,14 +256,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 	public abstract class SpecializedParameterizedMember : SpecializedMember, IParameterizedMember
 	{
-		IReadOnlyList<IParameter> parameters;
+		IReadOnlyList<IParameter?> parameters;
 
 		protected SpecializedParameterizedMember(IParameterizedMember memberDefinition)
 			: base(memberDefinition)
 		{
 		}
 
-		public IReadOnlyList<IParameter> Parameters {
+		public IReadOnlyList<IParameter?> Parameters {
 			get {
 				var result = LazyInit.VolatileRead(ref this.parameters);
 				if (result != null)
@@ -281,7 +281,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		protected IParameter[] CreateParameters(Func<IType, IType> substitution)
+		protected IParameter?[] CreateParameters(Func<IType, IType> substitution)
 		{
 			var paramDefs = ((IParameterizedMember)this.baseMember).Parameters;
 			if (paramDefs.Count == 0)
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return Empty<IParameter>.Array;
 			}
 
-			var parameters = new IParameter[paramDefs.Count];
+			var parameters = new IParameter?[paramDefs.Count];
 			for (int i = 0; i < parameters.Length; i++)
 			{
 				var p = paramDefs[i];

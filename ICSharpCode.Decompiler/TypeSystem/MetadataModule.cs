@@ -37,19 +37,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[DebuggerDisplay("<MetadataModule: {" + nameof(AssemblyName) + "}>")]
 	public sealed class MetadataModule : IModule
 	{
-		readonly MetadataEvent[] eventDefs;
-		readonly MetadataField[] fieldDefs;
+		readonly MetadataEvent?[]? eventDefs;
+		readonly MetadataField?[]? fieldDefs;
 		internal readonly MetadataReader metadata;
-		readonly MetadataMethod[] methodDefs;
+		readonly MetadataMethod?[]? methodDefs;
 		internal readonly Nullability NullableContext;
-		readonly MetadataProperty[] propertyDefs;
-		readonly IModule[] referencedAssemblies;
+		readonly MetadataProperty?[]? propertyDefs;
+		readonly IModule?[]? referencedAssemblies;
 
-		readonly MetadataNamespace rootNamespace;
-		readonly MetadataTypeDefinition[] typeDefs;
+		readonly MetadataNamespace? rootNamespace;
+		readonly MetadataTypeDefinition[]? typeDefs;
 		internal readonly TypeProvider TypeProvider;
 
-		internal MetadataModule(ICompilation compilation, PEFile peFile, TypeSystemOptions options)
+		internal MetadataModule(ICompilation compilation, PEFile? peFile, TypeSystemOptions options)
 		{
 			this.Compilation = compilation;
 			this.PEFile = peFile;
@@ -97,15 +97,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				// create arrays for resolved entities, indexed by row index
 				this.typeDefs = new MetadataTypeDefinition[metadata.TypeDefinitions.Count + 1];
-				this.fieldDefs = new MetadataField[metadata.FieldDefinitions.Count + 1];
-				this.methodDefs = new MetadataMethod[metadata.MethodDefinitions.Count + 1];
-				this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
-				this.eventDefs = new MetadataEvent[metadata.EventDefinitions.Count + 1];
-				this.referencedAssemblies = new IModule[metadata.AssemblyReferences.Count + 1];
+				this.fieldDefs = new MetadataField?[metadata.FieldDefinitions.Count + 1];
+				this.methodDefs = new MetadataMethod?[metadata.MethodDefinitions.Count + 1];
+				this.propertyDefs = new MetadataProperty?[metadata.PropertyDefinitions.Count + 1];
+				this.eventDefs = new MetadataEvent?[metadata.EventDefinitions.Count + 1];
+				this.referencedAssemblies = new IModule?[metadata.AssemblyReferences.Count + 1];
 			}
 		}
 
-		internal TypeSystemOptions TypeSystemOptions { get; }
+		public TypeSystemOptions TypeSystemOptions { get; }
 		public ICompilation Compilation { get; }
 
 		internal string GetString(StringHandle name)
@@ -115,17 +115,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region IAssembly interface
 
-		public PEFile PEFile { get; }
+		public PEFile? PEFile { get; }
 
 		public bool IsMainModule => this == Compilation.MainModule;
 
 		public string AssemblyName { get; }
-		public Version AssemblyVersion { get; }
+		public Version? AssemblyVersion { get; }
 		public string FullAssemblyName { get; }
 		string ISymbol.Name => AssemblyName;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
-		public INamespace RootNamespace => rootNamespace;
+		public INamespace? RootNamespace => rootNamespace;
 
 		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions =>
 			TypeDefinitions.Where(static td => td.DeclaringTypeDefinition == null);
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region InternalsVisibleTo
 
-		public bool InternalsVisibleTo(IModule module)
+		public bool InternalsVisibleTo(IModule? module)
 		{
 			if (this == module)
 				return true;
@@ -163,9 +163,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		string[] internalsVisibleTo;
+		string[]? internalsVisibleTo;
 
-		string[] GetInternalsVisibleTo()
+		string[]? GetInternalsVisibleTo()
 		{
 			var result = LazyInit.VolatileRead(ref this.internalsVisibleTo);
 			if (result != null)
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (metadata.IsAssembly)
 			{
-				var list = new List<string>();
+				var list = new List<string?>();
 				foreach (var attrHandle in metadata.GetAssemblyDefinition().GetCustomAttributes())
 				{
 					var attr = metadata.GetCustomAttribute(attrHandle);
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref this.internalsVisibleTo, result);
 		}
 
-		static string GetShortName(string fullAssemblyName)
+		static string? GetShortName(string? fullAssemblyName)
 		{
 			if (fullAssemblyName == null)
 				return null;
@@ -320,7 +320,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Resolve Module
 
-		public IModule ResolveModule(AssemblyReferenceHandle handle)
+		public IModule? ResolveModule(AssemblyReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -338,13 +338,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref referencedAssemblies[row], module);
 		}
 
-		IModule ResolveModuleUncached(AssemblyReferenceHandle handle)
+		IModule? ResolveModuleUncached(AssemblyReferenceHandle handle)
 		{
 			var asmRef = new Metadata.AssemblyReference(metadata, handle);
 			return Compilation.FindModuleByReference(asmRef);
 		}
 
-		public IModule ResolveModule(ModuleReferenceHandle handle)
+		public IModule? ResolveModule(ModuleReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			string name = metadata.GetString(modRef.Name);
 			foreach (var mod in Compilation.Modules)
 			{
-				if (mod.Name == name)
+				if (mod?.Name == name)
 				{
 					return mod;
 				}
@@ -361,7 +361,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 
-		public IModule GetDeclaringModule(TypeReferenceHandle handle)
+		public IModule? GetDeclaringModule(TypeReferenceHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -455,7 +455,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveMethodDefinition(MethodDefinitionHandle methodDefHandle, bool expandVarArgs)
 		{
 			var method = GetDefinition(methodDefHandle);
-			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList)
+			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type?.Kind == TypeKind.ArgList)
 			{
 				method = new VarArgInstanceMethod(method, EmptyList<IType>.Instance);
 			}
@@ -474,7 +474,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				// generic instance of a methoddef (=generic method in non-generic class in current assembly)
 				method = ResolveMethodDefinition((MethodDefinitionHandle)methodSpec.Method, expandVarArgs);
-				method = method.Specialize(new TypeParameterSubstitution(null, methodTypeArgs));
+				method = method?.Specialize(new TypeParameterSubstitution(null, methodTypeArgs));
 			}
 			else
 			{
@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Method type arguments are provided by the caller.
 		/// </remarks>
 		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context,
-			IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
+			IReadOnlyList<IType>? methodTypeArguments = null, bool expandVarArgs = true)
 		{
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
 			if (memberRef.GetKind() != MemberReferenceKind.Method)
@@ -502,7 +502,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 
 			MethodSignature<IType> signature;
-			IReadOnlyList<IType> classTypeArguments = null;
+			IReadOnlyList<IType>? classTypeArguments = null;
 			IMethod method;
 			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
 			{
@@ -584,7 +584,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method;
 		}
 
-		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new() {
+		static readonly NormalizeTypeVisitor? normalizeTypeVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = true,
 			ReplaceMethodTypeParametersWithDummy = true,
 		};
@@ -624,10 +624,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				IsStatic = !signature.Header.IsInstance
 			};
 
-			TypeParameterSubstitution substitution = null;
+			TypeParameterSubstitution? substitution = null;
 			if (signature.GenericParameterCount > 0)
 			{
-				var typeParameters = new List<ITypeParameter>();
+				var typeParameters = new List<ITypeParameter?>();
 				for (int i = 0; i < signature.GenericParameterCount; i++)
 				{
 					typeParameters.Add(new DefaultTypeParameter(m, i));
@@ -641,7 +641,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				substitution = declaringType.GetSubstitution();
 			}
 
-			var parameters = new List<IParameter>();
+			var parameters = new List<IParameter?>();
 			for (int i = 0; i < signature.RequiredParameterCount; i++)
 			{
 				var type = signature.ParameterTypes[i];
@@ -662,7 +662,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		private void GuessFakeMethodAccessor(IType declaringType, string name, MethodSignature<IType> signature,
-			FakeMethod m, List<IParameter> parameters)
+			FakeMethod? m, List<IParameter?> parameters)
 		{
 			if (signature.GenericParameterCount > 0)
 				return;
@@ -845,15 +845,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Decode Standalone Signature
 
-		public (SignatureHeader, FunctionPointerType) DecodeMethodSignature(StandaloneSignatureHandle handle,
+		public (SignatureHeader, FunctionPointerType?) DecodeMethodSignature(StandaloneSignatureHandle handle,
 			GenericContext genericContext)
 		{
 			var standaloneSignature = metadata.GetStandaloneSignature(handle);
 			if (standaloneSignature.GetKind() != StandaloneSignatureKind.Method)
 				throw new BadImageFormatException("Expected Method signature");
-			var sig = standaloneSignature.DecodeMethodSignature(TypeProvider, genericContext);
+			MethodSignature<IType> sig = standaloneSignature.DecodeMethodSignature(TypeProvider, genericContext);
 			var fpt = FunctionPointerType.FromSignature(sig, this);
-			return (sig.Header, (FunctionPointerType)IntroduceTupleTypes(fpt));
+			return (sig.Header, (FunctionPointerType?)IntroduceTupleTypes(fpt));
 		}
 
 		public ImmutableArray<IType> DecodeLocalSignature(StandaloneSignatureHandle handle,
@@ -873,7 +873,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the list of all assembly attributes in the project.
 		/// </summary>
-		public IEnumerable<IAttribute> GetAssemblyAttributes()
+		public IEnumerable<IAttribute?> GetAssemblyAttributes()
 		{
 			var b = new AttributeListBuilder(this);
 			if (metadata.IsAssembly)
@@ -897,7 +897,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the list of all module attributes in the project.
 		/// </summary>
-		public IEnumerable<IAttribute> GetModuleAttributes()
+		public IEnumerable<IAttribute?> GetModuleAttributes()
 		{
 			var b = new AttributeListBuilder(this);
 			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition), SymbolKind.Module);
@@ -923,7 +923,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IType ResolveForwardedType(ExportedType forwarder)
 		{
-			IModule module = ResolveModule(forwarder);
+			IModule? module = ResolveModule(forwarder);
 			var typeName = forwarder.GetFullTypeName(metadata);
 			if (module == null)
 				return new UnknownType(typeName);
@@ -941,7 +941,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			return new UnknownType(typeName);
 
-			IModule ResolveModule(ExportedType type)
+			IModule? ResolveModule(ExportedType type)
 			{
 				switch (type.Implementation.Kind)
 				{
@@ -956,7 +956,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						string shortName = metadata.GetString(asmRef.Name);
 						foreach (var asm in Compilation.Modules)
 						{
-							if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
+							if (string.Equals(asm?.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
 							{
 								return asm;
 							}
@@ -1066,7 +1066,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Accessibility.None;
 		}
 
-		internal bool ShouldDecodeNullableAttributes(IEntity entity)
+		internal bool ShouldDecodeNullableAttributes(IEntity? entity)
 		{
 			if ((TypeSystemOptions & TypeSystemOptions.NullabilityAnnotations) == 0)
 				return false;

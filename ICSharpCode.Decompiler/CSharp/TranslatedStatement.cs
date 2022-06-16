@@ -10,19 +10,19 @@ namespace ICSharpCode.Decompiler.CSharp
 	[DebuggerDisplay("{" + nameof(Statement) + "}")]
 	readonly struct TranslatedStatement
 	{
-		public readonly Statement Statement;
+		public readonly Statement? Statement;
 
 		public IEnumerable<ILInstruction> ILInstructions {
 			get { return Statement.Annotations.OfType<ILInstruction>(); }
 		}
 
-		internal TranslatedStatement(Statement statement)
+		internal TranslatedStatement(Statement? statement)
 		{
 			Debug.Assert(statement != null);
 			this.Statement = statement;
 		}
 
-		public static implicit operator Statement(TranslatedStatement statement)
+		public static implicit operator Statement?(TranslatedStatement statement)
 		{
 			return statement.Statement;
 		}

@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -65,12 +65,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class SingleVariableDesignation : VariableDesignation
 	{
-		public string Identifier {
-			get { return GetChildByRole(Roles.Identifier).Name; }
+		public string? Identifier {
+			get { return GetChildByRole(Roles.Identifier)?.Name; }
 			set { SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value)); }
 		}
 
-		public Identifier IdentifierToken {
+		public Identifier? IdentifierToken {
 			get { return GetChildByRole(Roles.Identifier); }
 			set { SetChildByRole(Roles.Identifier, value); }
 		}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSingleVariableDesignation(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is SingleVariableDesignation o && MatchString(this.Identifier, o.Identifier);
 		}
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<VariableDesignation> VariableDesignations {
+		public AstNodeCollection<VariableDesignation?> VariableDesignations {
 			get { return GetChildrenByRole(Roles.VariableDesignationRole); }
 		}
 
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitParenthesizedVariableDesignation(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is ParenthesizedVariableDesignation o &&
 			       VariableDesignations.DoMatch(o.VariableDesignations, match);

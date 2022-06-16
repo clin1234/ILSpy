@@ -15,7 +15,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[Parameter(Position = 0, Mandatory = true, HelpMessage = "Path to the assembly you want to decompile")]
 		[Alias("PSPath")]
 		[ValidateNotNullOrEmpty]
-		public string LiteralPath { get; set; }
+		public string? LiteralPath { get; set; }
 
 		[Parameter(HelpMessage = "C# Language version to be used by the decompiler")]
 		public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[Parameter(HelpMessage = "Remove dead code")]
 		public bool RemoveDeadCode { get; set; }
 
-		[Parameter(HelpMessage = "Use PDB")] public string PDBFilePath { get; set; }
+		[Parameter(HelpMessage = "Use PDB")] public string? PDBFilePath { get; set; }
 
 		protected override void ProcessRecord()
 		{

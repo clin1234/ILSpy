@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	sealed class FlattenSwitchBlocks : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			foreach (var switchSection in rootNode.Descendants.OfType<SwitchSection>())
 			{
@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				blockStatement.Statements.MoveTo(switchSection.Statements);
 			}
 
-			bool ContainsLocalDeclaration(AstNode node)
+			static bool ContainsLocalDeclaration(AstNode node)
 			{
 				switch (node)
 				{

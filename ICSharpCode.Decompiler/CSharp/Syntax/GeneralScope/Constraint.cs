@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.WhereKeyword); }
 		}
 
-		public SimpleType TypeParameter {
+		public SimpleType? TypeParameter {
 			get {
 				return GetChildByRole(Roles.ConstraintTypeParameter);
 			}
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> BaseTypes {
+		public AstNodeCollection<AstType?> BaseTypes {
 			get {
 				return GetChildrenByRole(Roles.BaseType);
 			}
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitConstraint(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is Constraint o && this.TypeParameter.DoMatch(o.TypeParameter, match) &&
 			       this.BaseTypes.DoMatch(o.BaseTypes, match);

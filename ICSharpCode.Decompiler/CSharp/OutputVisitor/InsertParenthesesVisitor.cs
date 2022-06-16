@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Gets the row number in the C# 4.0 spec operator precedence table.
 		/// </summary>
-		static PrecedenceLevel GetPrecedence(Expression expr)
+		static PrecedenceLevel GetPrecedence(Expression? expr)
 		{
 			switch (expr)
 			{
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Parenthesizes the expression if it does not have the minimum required precedence.
 		/// </summary>
-		static void ParenthesizeIfRequired(Expression expr, PrecedenceLevel minimumPrecedence)
+		static void ParenthesizeIfRequired(Expression? expr, PrecedenceLevel minimumPrecedence)
 		{
 			if (GetPrecedence(expr) < minimumPrecedence)
 			{
@@ -140,31 +140,31 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		static void Parenthesize(Expression expr)
+		static void Parenthesize(Expression? expr)
 		{
 			expr.ReplaceWith(static e => new ParenthesizedExpression { Expression = e });
 		}
 
 		// Primary expressions
-		public override void VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
+		public override void VisitMemberReferenceExpression(MemberReferenceExpression? memberReferenceExpression)
 		{
 			ParenthesizeIfRequired(memberReferenceExpression.Target, PrecedenceLevel.Primary);
 			base.VisitMemberReferenceExpression(memberReferenceExpression);
 		}
 
-		public override void VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression)
+		public override void VisitPointerReferenceExpression(PointerReferenceExpression? pointerReferenceExpression)
 		{
 			ParenthesizeIfRequired(pointerReferenceExpression.Target, PrecedenceLevel.Primary);
 			base.VisitPointerReferenceExpression(pointerReferenceExpression);
 		}
 
-		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
+		public override void VisitInvocationExpression(InvocationExpression? invocationExpression)
 		{
 			ParenthesizeIfRequired(invocationExpression.Target, PrecedenceLevel.Primary);
 			base.VisitInvocationExpression(invocationExpression);
 		}
 
-		public override void VisitIndexerExpression(IndexerExpression indexerExpression)
+		public override void VisitIndexerExpression(IndexerExpression? indexerExpression)
 		{
 			ParenthesizeIfRequired(indexerExpression.Target, PrecedenceLevel.Primary);
 			switch (indexerExpression.Target)
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		// Unary expressions
-		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
+		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression? unaryOperatorExpression)
 		{
 			ParenthesizeIfRequired(unaryOperatorExpression.Expression, GetPrecedence(unaryOperatorExpression));
 			if (unaryOperatorExpression.Expression is UnaryOperatorExpression child && InsertParenthesesForReadability)
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 		}
 
-		public override void VisitCastExpression(CastExpression castExpression)
+		public override void VisitCastExpression(CastExpression? castExpression)
 		{
 			// Even in readability mode, don't parenthesize casts of casts.
 			if (castExpression.Expression is not CastExpression)
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitCastExpression(castExpression);
 		}
 
-		static bool TypeCanBeMisinterpretedAsExpression(AstType type)
+		static bool TypeCanBeMisinterpretedAsExpression(AstType? type)
 		{
 			// SimpleTypes can always be misinterpreted as IdentifierExpressions
 			// MemberTypes can be misinterpreted as MemberReferenceExpressions if they don't use double colon
@@ -270,7 +270,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		// Binary Operators
-		public override void VisitBinaryOperatorExpression(BinaryOperatorExpression binaryOperatorExpression)
+		public override void VisitBinaryOperatorExpression(BinaryOperatorExpression? binaryOperatorExpression)
 		{
 			PrecedenceLevel precedence = GetPrecedence(binaryOperatorExpression);
 			if (binaryOperatorExpression.Operator == BinaryOperatorType.NullCoalescing)
@@ -323,14 +323,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				or BinaryOperatorType.ExclusiveOr;
 		}
 
-		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
+		BinaryOperatorType? GetBinaryOperatorType(Expression? expr)
 		{
 			if (expr is BinaryOperatorExpression boe)
 				return boe.Operator;
 			return null;
 		}
 
-		public override void VisitIsExpression(IsExpression isExpression)
+		public override void VisitIsExpression(IsExpression? isExpression)
 		{
 			ParenthesizeIfRequired(isExpression.Expression,
 				InsertParenthesesForReadability
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitIsExpression(isExpression);
 		}
 
-		public override void VisitAsExpression(AsExpression asExpression)
+		public override void VisitAsExpression(AsExpression? asExpression)
 		{
 			ParenthesizeIfRequired(asExpression.Expression,
 				InsertParenthesesForReadability
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		// Conditional operator
-		public override void VisitConditionalExpression(ConditionalExpression conditionalExpression)
+		public override void VisitConditionalExpression(ConditionalExpression? conditionalExpression)
 		{
 			// Inside of string interpolation ?: always needs parentheses.
 			if (conditionalExpression.Parent is Interpolation)
@@ -380,13 +380,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitConditionalExpression(conditionalExpression);
 		}
 
-		private bool IsConditionalRefExpression(ConditionalExpression conditionalExpression)
+		private bool IsConditionalRefExpression(ConditionalExpression? conditionalExpression)
 		{
 			return conditionalExpression.TrueExpression is DirectionExpression
 			       || conditionalExpression.FalseExpression is DirectionExpression;
 		}
 
-		public override void VisitAssignmentExpression(AssignmentExpression assignmentExpression)
+		public override void VisitAssignmentExpression(AssignmentExpression? assignmentExpression)
 		{
 			// assignment is right-associative
 			ParenthesizeIfRequired(assignmentExpression.Left, PrecedenceLevel.Assignment + 1);
@@ -394,7 +394,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitAssignmentExpression(assignmentExpression);
 		}
 
-		private void HandleAssignmentRHS(Expression right)
+		private void HandleAssignmentRHS(Expression? right)
 		{
 			if (InsertParenthesesForReadability && right is not DirectionExpression)
 			{
@@ -406,7 +406,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		public override void VisitVariableInitializer(VariableInitializer variableInitializer)
+		public override void VisitVariableInitializer(VariableInitializer? variableInitializer)
 		{
 			if (!variableInitializer.Initializer.IsNull)
 				HandleAssignmentRHS(variableInitializer.Initializer);
@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		// don't need to handle lambdas, they have lowest precedence and unambiguous associativity
-		public override void VisitQueryExpression(QueryExpression queryExpression)
+		public override void VisitQueryExpression(QueryExpression? queryExpression)
 		{
 			// Query expressions are strange beasts:
 			// "var a = -from b in c select d;" is valid, so queries bind stricter than unary expressions.
@@ -425,14 +425,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitQueryExpression(queryExpression);
 		}
 
-		public override void VisitLambdaExpression(LambdaExpression lambdaExpression)
+		public override void VisitLambdaExpression(LambdaExpression? lambdaExpression)
 		{
 			// Lambdas are greedy in the same way as query expressions.
 			HandleLambdaOrQuery(lambdaExpression);
 			base.VisitLambdaExpression(lambdaExpression);
 		}
 
-		void HandleLambdaOrQuery(Expression expr)
+		void HandleLambdaOrQuery(Expression? expr)
 		{
 			if (expr.Role == BinaryOperatorExpression.LeftRole)
 				Parenthesize(expr);
@@ -446,7 +446,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		public override void VisitNamedExpression(NamedExpression namedExpression)
+		public override void VisitNamedExpression(NamedExpression? namedExpression)
 		{
 			if (InsertParenthesesForReadability)
 			{
@@ -456,7 +456,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitNamedExpression(namedExpression);
 		}
 
-		public override void VisitSwitchExpression(SwitchExpression switchExpression)
+		public override void VisitSwitchExpression(SwitchExpression? switchExpression)
 		{
 			ParenthesizeIfRequired(switchExpression.Expression, PrecedenceLevel.Switch + 1);
 			base.VisitSwitchExpression(switchExpression);

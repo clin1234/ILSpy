@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCastExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is CastExpression o && this.Type.DoMatch(o.Type, match) &&
 			       this.Expression.DoMatch(o.Expression, match);

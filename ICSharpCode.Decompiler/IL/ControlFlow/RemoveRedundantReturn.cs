@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				    ((lambda.AsyncReturnType ?? lambda.ReturnType).Kind == TypeSystem.TypeKind.Void ||
 				     lambda.IsIterator))
 				{
-					Block lastBlock = c.Blocks.Last();
+					Block? lastBlock = c.Blocks.Last();
 					if (lastBlock.Instructions.Last() is Leave { IsLeavingFunction: true })
 					{
 						ConvertReturnToFallthrough(lastBlock.Instructions.SecondToLastOrDefault());
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private static bool ConvertReturnToFallthrough(ILInstruction? inst)
+		private static bool ConvertReturnToFallthrough(ILInstruction inst)
 		{
 			bool result = false;
 			switch (inst)
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				case BlockContainer { Kind: ContainerKind.Normal } c:
 					// body of try block, or similar: recurse into last instruction in container
 					// Note: no need to handle loops/switches here; those already were handled by DetectExitPoints
-					Block lastBlock = c.Blocks.Last();
+					Block? lastBlock = c.Blocks.Last();
 					if (lastBlock.Instructions.Last() is Leave { IsLeavingFunction: true, Value: Nop } leave)
 					{
 						leave.TargetContainer = c;

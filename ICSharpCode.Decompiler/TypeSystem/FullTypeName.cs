@@ -50,9 +50,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		readonly TopLevelTypeName topLevelType;
-		readonly NestedTypeName[] nestedTypes;
+		readonly NestedTypeName[]? nestedTypes;
 
-		FullTypeName(TopLevelTypeName topLevelTypeName, NestedTypeName[] nestedTypes)
+		FullTypeName(TopLevelTypeName topLevelTypeName, NestedTypeName[]? nestedTypes)
 		{
 			this.topLevelType = topLevelTypeName;
 			this.nestedTypes = nestedTypes;
@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new InvalidOperationException();
 			if (nestedTypes.Length == 1)
 				return topLevelType;
-			NestedTypeName[] outerNestedTypeNames = new NestedTypeName[nestedTypes.Length - 1];
+			NestedTypeName[]? outerNestedTypeNames = new NestedTypeName[nestedTypes.Length - 1];
 			Array.Copy(nestedTypes, 0, outerNestedTypeNames, 0, outerNestedTypeNames.Length);
 			return new FullTypeName(topLevelType, outerNestedTypeNames);
 		}
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var newNestedType = new NestedTypeName(name, additionalTypeParameterCount);
 			if (nestedTypes == null)
 				return new FullTypeName(topLevelType, new[] { newNestedType });
-			NestedTypeName[] newNestedTypeNames = new NestedTypeName[nestedTypes.Length + 1];
+			NestedTypeName[]? newNestedTypeNames = new NestedTypeName[nestedTypes.Length + 1];
 			nestedTypes.CopyTo(newNestedTypeNames, 0);
 			newNestedTypeNames[^1] = newNestedType;
 			return new FullTypeName(topLevelType, newNestedTypeNames);
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Equals and GetHashCode implementation
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is FullTypeName name && Equals(name);
 		}

@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 		}
 
-		public CastResolveResult(IType targetType, ResolveResult input, Conversion conversion, bool checkForOverflow)
+		public CastResolveResult(IType targetType, ResolveResult input, Conversion? conversion, bool checkForOverflow)
 			: base(targetType, input, conversion, checkForOverflow)
 		{
 		}

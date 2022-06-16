@@ -103,7 +103,9 @@ namespace ICSharpCode.ILSpyX
 			: this(bundle.AssemblyList, fileName, stream, assemblyResolver, null,
 				applyWinRTProjections, useDebugSymbols)
 		{
+			this.ParentBundle = bundle;
 		}
+		public LoadedAssembly? ParentBundle { get; }
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new();
 
@@ -164,7 +166,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public bool HasLoadError => loadingTask.IsFaulted;
 
-		internal bool IsAutoLoaded { get; init; }
+		internal bool IsAutoLoaded { get; set; }
 
 		/// <summary>
 		/// Gets the PDB file name or null, if no PDB was found or it's embedded.
@@ -617,12 +619,12 @@ namespace ICSharpCode.ILSpyX
 				return module;
 			}
 
-			public PEFile? ResolveModule(PEFile mainModule, string moduleName)
+			public PEFile? ResolveModule(PEFile? mainModule, string? moduleName)
 			{
 				return ResolveModuleAsync(mainModule, moduleName).GetAwaiter().GetResult();
 			}
 
-			public async Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
+			public async Task<PEFile?> ResolveModuleAsync(PEFile? mainModule, string? moduleName)
 			{
 				if (providedAssemblyResolver != null)
 				{
@@ -635,7 +637,7 @@ namespace ICSharpCode.ILSpyX
 				string? directory = Path.GetDirectoryName(mainModule.FileName);
 				if (directory != null)
 				{
-					string file = Path.Combine(directory, moduleName);
+					string? file = Path.Combine(directory, moduleName);
 					if (File.Exists(file))
 					{
 						// Load module from disk
@@ -650,7 +652,7 @@ namespace ICSharpCode.ILSpyX
 				}
 
 				// Module does not exist on disk, look for one with a matching name in the assemblylist:
-				foreach (LoadedAssembly loaded in alreadyLoadedAssemblies.Assemblies)
+				foreach (LoadedAssembly? loaded in alreadyLoadedAssemblies.Assemblies)
 				{
 					var module = await loaded.GetPEFileOrNullAsync().ConfigureAwait(false);
 					var reader = module?.Metadata;

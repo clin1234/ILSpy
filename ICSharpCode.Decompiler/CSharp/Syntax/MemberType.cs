@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class MemberType : AstType
 	{
-		public static readonly Role<AstType> TargetRole = new("Target", Null);
+		public static readonly Role<AstType?> TargetRole = new("Target", Null);
 
 		bool isDoubleColon;
 
@@ -42,13 +42,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public MemberType(AstType target, string memberName)
+		public MemberType(AstType? target, string memberName)
 		{
 			this.Target = target;
 			this.MemberName = memberName;
 		}
 
-		public MemberType(AstType target, string memberName, IEnumerable<AstType> typeArguments)
+		public MemberType(AstType? target, string memberName, IEnumerable<AstType?> typeArguments)
 		{
 			this.Target = target;
 			this.MemberName = memberName;
@@ -58,8 +58,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public MemberType(AstType target, string memberName, params AstType[] typeArguments) : this(target, memberName,
-			(IEnumerable<AstType>)typeArguments)
+		public MemberType(AstType? target, string memberName, params AstType[] typeArguments) : this(target, memberName,
+			(IEnumerable<AstType?>)typeArguments)
 		{
 		}
 
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Target {
+		public AstType? Target {
 			get { return GetChildByRole(TargetRole); }
 			set { SetChildByRole(TargetRole, value); }
 		}
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier MemberNameToken {
+		public Identifier? MemberNameToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
+		public AstNodeCollection<AstType?> TypeArguments {
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMemberType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is MemberType o && this.IsDoubleColon == o.IsDoubleColon
 			                             && MatchString(this.MemberName, o.MemberName) &&
@@ -122,16 +122,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			interningProvider ??= InterningProvider.Dummy;
 
-			TypeOrNamespaceReference t;
+			TypeOrNamespaceReference? t;
 			if (this.IsDoubleColon)
 			{
 				if (this.Target is SimpleType st)
 				{
-					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
+					t = interningProvider?.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
 				}
 				else
 				{
@@ -151,8 +151,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
 
-			string memberName = interningProvider.Intern(this.MemberName);
-			return interningProvider.Intern(new MemberTypeOrNamespaceReference(t, memberName,
+			string? memberName = interningProvider?.Intern(this.MemberName);
+			return interningProvider?.Intern(new MemberTypeOrNamespaceReference(t, memberName,
 				interningProvider.InternList(typeArguments), lookupMode));
 		}
 	}

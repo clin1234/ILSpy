@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public DoWhileStatement(Expression condition, Statement embeddedStatement)
+		public DoWhileStatement(Expression? condition, Statement? embeddedStatement)
 		{
 			this.Condition = condition;
 			this.EmbeddedStatement = embeddedStatement;
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(DoKeywordRole); }
 		}
 
-		public Statement EmbeddedStatement {
+		public Statement? EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Condition {
+		public Expression? Condition {
 			get { return GetChildByRole(Roles.Condition); }
 			init { SetChildByRole(Roles.Condition, value); }
 		}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitDoWhileStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is DoWhileStatement o && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match) &&
 			       this.Condition.DoMatch(o.Condition, match);

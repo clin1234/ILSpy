@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitComment(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is Comment o && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
 		}

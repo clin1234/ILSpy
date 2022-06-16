@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="pointerElementType">The target type of the pointer type.</param>
 		/// <param name="checkForOverflow">Whether the pointer arithmetic operation checks for overflow.</param>
 		/// <param name="unwrapZeroExtension">Whether to allow zero extensions in the mul argument.</param>
-		public static ILInstruction Detect(ILInstruction byteOffsetInst, IType pointerElementType,
+		public static ILInstruction? Detect(ILInstruction byteOffsetInst, IType? pointerElementType,
 			bool checkForOverflow,
 			bool unwrapZeroExtension = false)
 		{
@@ -58,25 +58,26 @@ namespace ICSharpCode.Decompiler.IL
 					return null;
 				if (mul.CheckForOverflow != checkForOverflow)
 					return null;
-				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
-				    || mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf &&
-				    NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType))
+				if (NormalizeTypeVisitor.TypeErasure != null &&
+				    (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
+				     || mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf &&
+				     NormalizeTypeVisitor.TypeErasure.EquivalentTypes(sizeOf.Type, pointerElementType)))
 				{
 					var countOffsetInst = mul.Left;
 					if (unwrapZeroExtension)
 					{
-						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);
+						countOffsetInst = countOffsetInst?.UnwrapConv(ConversionKind.ZeroExtend);
 					}
 
 					return countOffsetInst;
 				}
 			}
-			else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf &&
+			else if (byteOffsetInst?.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf &&
 			         sizeOf.Type.Equals(pointerElementType))
 			{
 				return new LdcI4(1).WithILRange(byteOffsetInst);
 			}
-			else if (byteOffsetInst.MatchLdcI(out long val))
+			else if (byteOffsetInst != null && byteOffsetInst.MatchLdcI(out long val))
 			{
 				// If the offset is a constant, it's possible that the compiler
 				// constant-folded the multiplication.
@@ -95,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static int? ComputeSizeOf(IType type)
 		{
-			switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode)
+			switch (type.GetEnumUnderlyingType()?.GetDefinition()?.KnownTypeCode)
 			{
 				case KnownTypeCode.Boolean:
 				case KnownTypeCode.SByte:
@@ -128,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal static bool IsFixedVariable(ILInstruction inst)
 		{
 			return inst switch {
-				LdLoca ldloca => ldloca.Variable.CaptureScope == null // locals are fixed if uncaptured
+				LdLoca ldloca => ldloca.Variable?.CaptureScope == null // locals are fixed if uncaptured
 				,
 				LdFlda ldflda => IsFixedVariable(ldflda.Target),
 				_ => inst.ResultType == StackType.I

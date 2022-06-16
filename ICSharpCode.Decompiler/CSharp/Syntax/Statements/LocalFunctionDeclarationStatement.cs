@@ -22,14 +22,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class LocalFunctionDeclarationStatement : Statement
 	{
-		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new("Method", null);
+		public static readonly Role<MethodDeclaration?> MethodDeclarationRole = new("Method", null);
 
-		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
+		public LocalFunctionDeclarationStatement(MethodDeclaration? methodDeclaration)
 		{
 			AddChild(methodDeclaration, MethodDeclarationRole);
 		}
 
-		public MethodDeclaration Declaration {
+		public MethodDeclaration? Declaration {
 			get { return GetChildByRole(MethodDeclarationRole); }
 			set { SetChildByRole(MethodDeclarationRole, value); }
 		}
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitLocalFunctionDeclarationStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is LocalFunctionDeclarationStatement o && Declaration.DoMatch(o.Declaration, match);
 		}

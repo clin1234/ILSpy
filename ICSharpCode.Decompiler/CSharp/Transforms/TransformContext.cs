@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Returns the current member; or null if a whole type or module is being decompiled.
 		/// </summary>
-		public IMember CurrentMember => decompilationContext.CurrentMember;
+		public IMember? CurrentMember => decompilationContext.CurrentMember;
 
 		/// <summary>
 		/// Returns the current type definition; or null if a module is being decompiled.
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Returns the module that is being decompiled.
 		/// </summary>
-		public IModule CurrentModule => decompilationContext.CurrentModule;
+		public IModule? CurrentModule => decompilationContext.CurrentModule;
 
 		/// <summary>
 		/// Returns the max possible set of namespaces that will be used during decompilation.

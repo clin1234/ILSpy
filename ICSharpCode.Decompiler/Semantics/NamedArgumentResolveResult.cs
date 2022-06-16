@@ -37,21 +37,21 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// Gets the member to which the parameter belongs.
 		/// This field can be null.
 		/// </summary>
-		public readonly IParameterizedMember Member;
+		public readonly IParameterizedMember? Member;
 
 		/// <summary>
 		/// Gets the parameter.
 		/// This field can be null.
 		/// </summary>
-		public readonly IParameter Parameter;
+		public readonly IParameter? Parameter;
 
 		/// <summary>
 		/// Gets the parameter name.
 		/// </summary>
 		public readonly string ParameterName;
 
-		public NamedArgumentResolveResult(IParameter parameter, ResolveResult argument,
-			IParameterizedMember member = null)
+		public NamedArgumentResolveResult(IParameter? parameter, ResolveResult argument,
+			IParameterizedMember? member = null)
 			: base(argument.Type)
 		{
 			this.Member = member;

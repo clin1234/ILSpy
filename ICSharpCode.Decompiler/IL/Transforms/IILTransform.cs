@@ -24,6 +24,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -51,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Stepper = new Stepper();
 		}
 
-		public ILTransformContext(ILTransformContext context, ILFunction? function = null)
+		public ILTransformContext(ILTransformContext context, ILFunction function = null)
 		{
 			this.Function = function ?? context.Function;
 			this.TypeSystem = context.TypeSystem;
@@ -68,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; init; }
 		public Stepper Stepper { get; set; }
-		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
+		public PEFile? PEFile => TypeSystem.MainModule.PEFile;
 
 		internal DecompileRun? DecompileRun { get; init; }
 		internal ResolvedUsingScope? UsingScope => DecompileRun?.UsingScope.Resolve(TypeSystem);
@@ -89,13 +90,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Unlike <c>context.Stepper.Step()</c>, calls to this method are only compiled in debug builds.
 		/// </summary>
 		[Conditional("STEP")]
-		internal void Step(string description, ILInstruction? near)
+		internal void Step(string description, ILInstruction near)
 		{
 			Stepper.Step(description, near);
 		}
 
 		[Conditional("STEP")]
-		internal void StepStartGroup(string description, ILInstruction? near = null)
+		internal void StepStartGroup(string description, ILInstruction near = null)
 		{
 			Stepper.StartGroup(description, near);
 		}

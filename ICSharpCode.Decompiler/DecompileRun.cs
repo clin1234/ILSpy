@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler
 		public HashSet<string> Namespaces { get; } = new();
 		public CancellationToken CancellationToken { get; init; }
 		public DecompilerSettings Settings { get; }
-		public IDocumentationProvider DocumentationProvider { get; init; }
+		public IDocumentationProvider? DocumentationProvider { get; init; }
 		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new();
 
 		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();

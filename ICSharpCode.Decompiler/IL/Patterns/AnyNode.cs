@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			this.group = group;
 		}
 
-		protected internal override bool PerformMatch(ILInstruction? other, ref Match match)
+		protected internal override bool PerformMatch(ILInstruction other, ref Match match)
 		{
 			if (other == null)
 				return false;

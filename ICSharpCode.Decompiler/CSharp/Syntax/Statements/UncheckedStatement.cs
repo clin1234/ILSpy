@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public UncheckedStatement(BlockStatement body)
+		public UncheckedStatement(BlockStatement? body)
 		{
 			AddChild(body, Roles.Body);
 		}
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(UncheckedKeywordRole); }
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			init { SetChildByRole(Roles.Body, value); }
 		}
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUncheckedStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is UncheckedStatement o && this.Body.DoMatch(o.Body, match);
 		}

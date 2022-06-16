@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 
-			foreach (BlockContainer loop in function.Descendants.OfType<BlockContainer>())
+			foreach (BlockContainer? loop in function.Descendants.OfType<BlockContainer>())
 			{
 				if (loop.Kind != ContainerKind.Loop)
 					continue;
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchWhileLoop(BlockContainer loop, out IfInstruction condition, out Block loopBody)
+		bool MatchWhileLoop(BlockContainer? loop, out IfInstruction condition, out Block loopBody)
 		{
 			// ConditionDetection favours leave inside if and branch at end of block
 			// while-loop:
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			return loop.Parent?.Parent?.Parent is UsingInstruction;
 
-			bool IsGetCurrentCall(ILInstruction inst)
+			static bool IsGetCurrentCall(ILInstruction inst)
 			{
 				return inst is CallInstruction getterCall
 				       && getterCall.Method.IsAccessor
@@ -151,15 +151,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// - combine all compatible conditions into one IfInstruction.
 		/// - extract conditions into a condition block, or move the existing condition block to the end.
 		/// </summary>
-		bool MatchDoWhileLoop(BlockContainer loop)
+		bool MatchDoWhileLoop(BlockContainer? loop)
 		{
-			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap) =
+			(List<IfInstruction> conditions, ILInstruction? exit, bool swap, bool split, bool unwrap) =
 				AnalyzeDoWhileConditions(loop);
 			// not a do-while loop, exit.
 			if (conditions == null || conditions.Count == 0)
 				return false;
 			context.Step("Transform to do-while loop: " + loop.EntryPoint.Label, loop);
-			Block conditionBlock;
+			Block? conditionBlock;
 			// first we remove all extracted instructions from the original block.
 			var originalBlock = (Block)exit.Parent;
 			if (unwrap)
@@ -243,8 +243,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static (List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap)
-			AnalyzeDoWhileConditions(BlockContainer loop)
+		static (List<IfInstruction> conditions, ILInstruction? exit, bool swap, bool split, bool unwrap)
+			AnalyzeDoWhileConditions(BlockContainer? loop)
 		{
 			// we iterate over all blocks from the bottom, because the entry-point
 			// should only be considered as condition block, if there are no other blocks.
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool MatchDoWhileConditionBlock(BlockContainer loop, Block block, out bool swapBranches,
+		static bool MatchDoWhileConditionBlock(BlockContainer? loop, Block block, out bool swapBranches,
 			out bool unwrapCondtionBlock, out Block conditionBlock)
 		{
 			// match the end of the block:
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.Last().MatchBranch(out loopHead)
 			&& block.Instructions.SkipLast(1).All(IsSimpleStatement);
 
-		bool MatchForLoop(BlockContainer loop, IfInstruction whileCondition, Block whileLoopBody)
+		bool MatchForLoop(BlockContainer? loop, IfInstruction whileCondition, Block whileLoopBody)
 		{
 			// for loops have exactly two incoming edges at the entry point.
 			if (loop.EntryPoint.IncomingEdgeCount != 2)
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ExpressionTransforms.RunOnSingleStatement(forCondition, context);
 				for (int i = conditions.Count - 1; i >= numberOfConditions; i--)
 				{
-					IfInstruction inst;
+					IfInstruction? inst;
 					whileLoopBody.Instructions.Insert(0,
 						inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
 					ExpressionTransforms.RunOnSingleStatement(inst, context);
@@ -497,7 +497,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Returns true if the instruction is stloc v(add(ldloc v, arg))
 		/// or compound.assign(ldloca v, arg)
 		/// </summary>
-		public static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
+		public static bool MatchIncrement(ILInstruction? inst, out ILVariable variable)
 		{
 			if (inst.MatchStLoc(out variable, out var value))
 			{

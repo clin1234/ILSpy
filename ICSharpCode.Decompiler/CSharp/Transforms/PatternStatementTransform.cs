@@ -23,8 +23,11 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+
+using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -55,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		readonly DeclareVariables declareVariables = new();
 		TransformContext context;
 
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			if (this.context != null)
 				throw new InvalidOperationException("Reentrancy in PatternStatementTransform.Run?");
@@ -74,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override AstNode VisitIdentifier(Identifier identifier)
+		public override AstNode VisitIdentifier(Identifier? identifier)
 		{
 			if (context.Settings.AutomaticProperties)
 			{
@@ -96,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
-		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
+		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty? property)
 		{
 			property = null;
 			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out string propertyName))
@@ -119,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		Identifier ReplaceBackingFieldUsage(Identifier identifier)
+		Identifier? ReplaceBackingFieldUsage(Identifier? identifier)
 		{
 			if (NameCouldBeBackingFieldOfAutomaticProperty(identifier.Name, out _))
 			{
@@ -141,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		Identifier ReplaceEventFieldAnnotation(Identifier identifier)
+		Identifier? ReplaceEventFieldAnnotation(Identifier? identifier)
 		{
 			var parent = identifier.Parent;
 			var mrr = parent.Annotation<MemberResolveResult>();
@@ -161,7 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region C# 8.0 Using variables
 
-		public override AstNode VisitUsingStatement(UsingStatement usingStatement)
+		public override AstNode? VisitUsingStatement(UsingStatement? usingStatement)
 		{
 			usingStatement = (UsingStatement)base.VisitUsingStatement(usingStatement);
 			if (!context.Settings.UseEnhancedUsing)
@@ -181,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region Visitor Overrides
 
-		protected override AstNode VisitChildren(AstNode node)
+		protected override AstNode? VisitChildren(AstNode? node)
 		{
 			// Go through the children, and keep visiting a node as long as it changes.
 			// Because some transforms delete/replace nodes before and after the node being transformed, we rely
@@ -200,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return node;
 		}
 
-		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement)
+		public override AstNode VisitExpressionStatement(ExpressionStatement? expressionStatement)
 		{
 			AstNode result = TransformForeachOnMultiDimArray(expressionStatement);
 			if (result != null)
@@ -211,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitExpressionStatement(expressionStatement);
 		}
 
-		public override AstNode VisitForStatement(ForStatement forStatement)
+		public override AstNode VisitForStatement(ForStatement? forStatement)
 		{
 			AstNode result = TransformForeachOnArray(forStatement);
 			if (result != null)
@@ -219,7 +222,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitForStatement(forStatement);
 		}
 
-		public override AstNode VisitIfElseStatement(IfElseStatement ifElseStatement)
+		public override AstNode VisitIfElseStatement(IfElseStatement? ifElseStatement)
 		{
 			AstNode simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
 			if (simplifiedIfElse != null)
@@ -227,7 +230,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIfElseStatement(ifElseStatement);
 		}
 
-		public override AstNode VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		public override AstNode VisitPropertyDeclaration(PropertyDeclaration? propertyDeclaration)
 		{
 			if (context.Settings.AutomaticProperties
 			    && (!propertyDeclaration.Setter.IsNull || context.Settings.GetterOnlyAutomaticProperties))
@@ -240,13 +243,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitPropertyDeclaration(propertyDeclaration);
 		}
 
-		public override AstNode VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration)
+		public override AstNode? VisitCustomEventDeclaration(CustomEventDeclaration? eventDeclaration)
 		{
 			// first apply transforms to the accessor bodies
 			base.VisitCustomEventDeclaration(eventDeclaration);
 			if (context.Settings.AutomaticEvents)
 			{
-				AstNode result = TransformAutomaticEvents(eventDeclaration);
+				AstNode? result = TransformAutomaticEvents(eventDeclaration);
 				if (result != null)
 					return result;
 			}
@@ -254,18 +257,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return eventDeclaration;
 		}
 
-		public override AstNode VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+		public override AstNode VisitMethodDeclaration(MethodDeclaration? methodDeclaration)
 		{
 			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration);
 		}
 
-		public override AstNode VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+		public override AstNode VisitDestructorDeclaration(DestructorDeclaration? destructorDeclaration)
 		{
 			return TransformDestructorBody(destructorDeclaration) ??
 			       base.VisitDestructorDeclaration(destructorDeclaration);
 		}
 
-		public override AstNode VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
+		public override AstNode VisitTryCatchStatement(TryCatchStatement? tryCatchStatement)
 		{
 			return TransformTryCatchFinally(tryCatchStatement) ?? base.VisitTryCatchStatement(tryCatchStatement);
 		}
@@ -295,7 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		public ForStatement TransformFor(ExpressionStatement node)
+		public ForStatement TransformFor(ExpressionStatement? node)
 		{
 			if (!context.Settings.ForStatement)
 				return null;
@@ -303,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m1.Success)
 				return null;
 			var variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();
-			AstNode next = node.NextSibling;
+			AstNode? next = node.NextSibling;
 			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable))
 			{
 				node.Remove();
@@ -317,7 +320,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// ensure the variable in the for pattern is the same as in the declaration
 			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
-			WhileStatement loop = (WhileStatement)next;
+			WhileStatement? loop = (WhileStatement)next;
 			// Cannot convert to for loop, if any variable that is used in the "iterator" part of the pattern,
 			// will be declared in the body of the while-loop.
 			var iteratorStatement = m3.Get<Statement>("iterator").Single();
@@ -329,7 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (loop.DescendantNodes(DescendIntoStatement).OfType<Statement>().Any(s => s is ContinueStatement))
 				return null;
 			node.Remove();
-			BlockStatement newBody = new();
+			BlockStatement? newBody = new();
 			foreach (Statement stmt in m3.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
 			forStatement = new ForStatement();
@@ -350,7 +353,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
+		bool ForStatementUsesVariable(ForStatement statement, ILVariable variable)
 		{
 			if (statement.Condition.DescendantsAndSelf.OfType<IdentifierExpression>()
 			    .Any(ie => ie.GetILVariable() == variable))
@@ -413,15 +416,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool VariableCanBeUsedAsForeachLocal(IL.ILVariable itemVar, Statement loop)
+		bool VariableCanBeUsedAsForeachLocal(ILVariable itemVar, Statement? loop)
 		{
-			if (itemVar is not { Kind: (IL.VariableKind.Local or IL.VariableKind.StackSlot) })
+			if (itemVar is not { Kind: (VariableKind.Local or VariableKind.StackSlot) })
 			{
 				// only locals/temporaries can be converted into foreach loop variable
 				return false;
 			}
 
-			var blockContainer = loop.Annotation<IL.BlockContainer>();
+			var blockContainer = loop.Annotation<BlockContainer>();
 
 			if (!itemVar.IsSingleDefinition)
 			{
@@ -441,15 +444,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			}
 
-			AstNode declPoint = declareVariables.GetDeclarationPoint(itemVar);
+			AstNode? declPoint = declareVariables.GetDeclarationPoint(itemVar);
 			return declPoint.Ancestors.Contains(loop) && !declareVariables.WasMerged(itemVar);
 		}
 
-		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer loop)
+		static bool AddressUsedForSingleCall(ILVariable v, BlockContainer? loop)
 		{
 			if (v.StoreCount == 1 && v.AddressCount == 1 && v.LoadCount == 0 && v.Type.IsReferenceType == false)
 			{
-				if (v.AddressInstructions[0].Parent is IL.Call call
+				if (v.AddressInstructions[0].Parent is Call call
 				    && v.AddressInstructions[0].ChildIndex == 0
 				    && !call.Method.IsStatic)
 				{
@@ -459,7 +462,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (node == loop)
 							return true;
-						if (node is IL.BlockContainer)
+						if (node is BlockContainer)
 							break;
 					}
 				}
@@ -468,7 +471,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return false;
 		}
 
-		Statement TransformForeachOnArray(ForStatement forStatement)
+		Statement TransformForeachOnArray(ForStatement? forStatement)
 		{
 			if (!context.Settings.ForEachStatement)
 				return null;
@@ -498,7 +501,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				EmbeddedStatement = body
 			};
 			foreachStmt.CopyAnnotationsFrom(forStatement);
-			itemVariable.Kind = IL.VariableKind.ForeachLocal;
+			itemVariable.Kind = VariableKind.ForeachLocal;
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
 			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
@@ -564,7 +567,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					)
 				)));
 
-		bool MatchLowerBound(int indexNum, out IL.ILVariable index, IL.ILVariable collection, Statement statement)
+		bool MatchLowerBound(int indexNum, out ILVariable index, ILVariable collection, Statement? statement)
 		{
 			index = null;
 			var m = variableAssignLowerBoundPattern.Match(statement);
@@ -577,17 +580,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return m.Get<IdentifierExpression>("collection").Single().GetILVariable() == collection;
 		}
 
-		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection,
-			Statement firstInitializerStatement, out IdentifierExpression foreachVariable,
-			out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
+		bool MatchForeachOnMultiDimArray(ILVariable[] upperBounds, ILVariable collection,
+			Statement? firstInitializerStatement, out IdentifierExpression foreachVariable,
+			out IList<Statement> statements, out ILVariable[] lowerBounds)
 		{
 			int i = 0;
 			foreachVariable = null;
 			statements = null;
-			lowerBounds = new IL.ILVariable[upperBounds.Length];
-			Statement stmt = firstInitializerStatement;
+			lowerBounds = new ILVariable[upperBounds.Length];
+			Statement? stmt = firstInitializerStatement;
 			Match m = default(Match);
-			while (i < upperBounds.Length && MatchLowerBound(i, out IL.ILVariable indexVariable, collection, stmt))
+			while (i < upperBounds.Length && MatchLowerBound(i, out ILVariable indexVariable, collection, stmt))
 			{
 				m = forOnArrayMultiDimPattern.Match(stmt.GetNextStatement());
 				if (!m.Success)
@@ -613,15 +616,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		Statement TransformForeachOnMultiDimArray(ExpressionStatement expressionStatement)
+		Statement TransformForeachOnMultiDimArray(ExpressionStatement? expressionStatement)
 		{
 			if (!context.Settings.ForEachStatement)
 				return null;
 			Match m;
-			Statement stmt = expressionStatement;
-			IL.ILVariable collection = null;
-			IL.ILVariable[] upperBounds = null;
-			List<Statement> statementsToDelete = new();
+			Statement? stmt = expressionStatement;
+			ILVariable collection = null;
+			ILVariable[] upperBounds = null;
+			List<Statement?> statementsToDelete = new();
 			int i = 0;
 			// first we look for all the upper bound initializations
 			do
@@ -634,7 +637,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
 					if (collection?.Type is not ArrayType arrayType)
 						break;
-					upperBounds = new IL.ILVariable[arrayType.Dimensions];
+					upperBounds = new ILVariable[arrayType.Dimensions];
 				}
 				else
 				{
@@ -661,7 +664,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable is not { IsSingleDefinition: true } ||
-			    (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot) ||
+			    (itemVariable.Kind != VariableKind.Local && itemVariable.Kind != VariableKind.StackSlot) ||
 			    !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1) || !lowerBounds.All(lb =>
 				    lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
@@ -679,7 +682,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (var statement in statementsToDelete)
 				statement.Detach();
 			//foreachStmt.CopyAnnotationsFrom(forStatement);
-			itemVariable.Kind = IL.VariableKind.ForeachLocal;
+			itemVariable.Kind = VariableKind.ForeachLocal;
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
 			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
@@ -735,7 +738,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool CanTransformToAutomaticProperty(IProperty property, bool accessorsMustBeCompilerGenerated)
+		bool CanTransformToAutomaticProperty(IProperty? property, bool accessorsMustBeCompilerGenerated)
 		{
 			if (!property.CanGet)
 				return false;
@@ -752,9 +755,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
+		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration? propertyDeclaration)
 		{
-			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
+			IProperty? property = propertyDeclaration.GetSymbol() as IProperty;
 			if (!CanTransformToAutomaticProperty(property,
 				    !property.DeclaringTypeDefinition.Fields.Any(f =>
 					    f.Name == "_" + property.Name && f.IsCompilerGenerated())))
@@ -808,16 +811,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
+		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection?> attributeSections)
 		{
 			RemoveCompilerGeneratedAttribute(attributeSections,
 				"System.Runtime.CompilerServices.CompilerGeneratedAttribute");
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections,
+		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection?> attributeSections,
 			params string[] attributesToRemove)
 		{
-			foreach (AttributeSection section in attributeSections)
+			foreach (AttributeSection? section in attributeSections)
 			{
 				foreach (var attr in section.Attributes)
 				{
@@ -836,7 +839,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region Automatic Events
 
-		static readonly Expression fieldReferencePattern = new Choice {
+		static readonly Expression? fieldReferencePattern = new Choice {
 			new IdentifierExpression(Pattern.AnyString),
 			new MemberReferenceExpression {
 				Target = new Choice
@@ -885,7 +888,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked))
 										.ToType()),
 									"CompareExchange"),
-								new Expression[] {
+								new Expression?[] {
 									// arguments
 									new DirectionExpression {
 										FieldDirection = FieldDirection.Ref, Expression = new Backreference("field")
@@ -924,7 +927,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked))
 										.ToType()),
 									"CompareExchange"),
-								new Expression[] {
+								new Expression?[] {
 									// arguments
 									new NamedArgumentExpression("value",
 										new CastExpression(new AnyNode("type"),
@@ -977,7 +980,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										.ToType()),
 									"CompareExchange",
 									new AstType[] { new Repeat(new AnyNode()) }), // optional type arguments
-								new Expression[] {
+								new Expression?[] {
 									// arguments
 									new DirectionExpression {
 										FieldDirection = FieldDirection.Ref, Expression = new Backreference("field")
@@ -1001,7 +1004,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration ev, bool isAddAccessor)
+		bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration? ev, bool isAddAccessor)
 		{
 			if (!m.Success)
 				return false;
@@ -1043,7 +1046,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
-		bool CheckAutomaticEventV4(CustomEventDeclaration ev)
+		bool CheckAutomaticEventV4(CustomEventDeclaration? ev)
 		{
 			Match addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
@@ -1054,7 +1057,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool CheckAutomaticEventV4AggressivelyInlined(CustomEventDeclaration ev)
+		bool CheckAutomaticEventV4AggressivelyInlined(CustomEventDeclaration? ev)
 		{
 			if (!context.Settings.AggressiveInlining)
 				return false;
@@ -1067,7 +1070,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool CheckAutomaticEventV2(CustomEventDeclaration ev)
+		bool CheckAutomaticEventV2(CustomEventDeclaration? ev)
 		{
 			Match addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
@@ -1078,7 +1081,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev)
+		bool CheckAutomaticEventV4MCS(CustomEventDeclaration? ev)
 		{
 			Match addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
@@ -1089,7 +1092,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
+		EventDeclaration? TransformAutomaticEvents(CustomEventDeclaration? ev)
 		{
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
@@ -1102,7 +1105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
-			EventDeclaration ed = new();
+			EventDeclaration? ed = new();
 			ev.Attributes.MoveTo(ed.Attributes);
 			foreach (var attr in ev.AddAccessor.Attributes)
 			{
@@ -1154,7 +1157,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Body = destructorBodyPattern
 		};
 
-		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
+		DestructorDeclaration TransformDestructor(MethodDeclaration? methodDef)
 		{
 			Match m = destructorPattern.Match(methodDef);
 			if (m.Success)
@@ -1172,7 +1175,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
+		DestructorDeclaration? TransformDestructorBody(DestructorDeclaration? dtorDef)
 		{
 			Match m = destructorBodyPattern.Match(dtorDef.Body);
 			if (m.Success)
@@ -1202,7 +1205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Simplify nested 'try { try {} catch {} } finally {}'.
 		/// This transformation must run after the using/lock tranformations.
 		/// </summary>
-		TryCatchStatement TransformTryCatchFinally(TryCatchStatement tryFinally)
+		TryCatchStatement TransformTryCatchFinally(TryCatchStatement? tryFinally)
 		{
 			if (tryCatchFinallyPattern.IsMatch(tryFinally))
 			{
@@ -1236,7 +1239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		AstNode SimplifyCascadingIfElseStatements(IfElseStatement node)
+		AstNode SimplifyCascadingIfElseStatements(IfElseStatement? node)
 		{
 			Match m = cascadingIfElsePattern.Match(node);
 			if (m.Success)
@@ -1251,7 +1254,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Use associativity of logic operators to avoid parentheses.
 		/// </summary>
-		public override AstNode VisitBinaryOperatorExpression(BinaryOperatorExpression expr)
+		public override AstNode VisitBinaryOperatorExpression(BinaryOperatorExpression? expr)
 		{
 			switch (expr.Operator)
 			{
@@ -1288,7 +1291,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		public override AstNode VisitFixedStatement(FixedStatement fixedStatement)
+		public override AstNode VisitFixedStatement(FixedStatement? fixedStatement)
 		{
 			if (context.Settings.PatternBasedFixedStatement)
 			{

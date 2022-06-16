@@ -35,14 +35,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	{
 		public ConversionFlags ConversionFlags { get; set; }
 
-		public string ConvertType(IType type)
+		public string ConvertType(IType? type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) !=
 			                                     ConversionFlags.UseFullyQualifiedEntityNames;
-			AstType astType = astBuilder.ConvertType(type);
+			AstType? astType = astBuilder.ConvertType(type);
 			return astType.ToString();
 		}
 
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public string ConvertVariable(IVariable v)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
-			AstNode astNode = astBuilder.ConvertVariable(v);
+			AstNode? astNode = astBuilder.ConvertVariable(v);
 			return astNode.ToString().TrimEnd(';', '\r', '\n', (char)8232);
 		}
 
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) !=
 			                                     ConversionFlags.UseFullyQualifiedEntityNames;
-			AstType astType = astBuilder.ConvertType(type);
+			AstType? astType = astBuilder.ConvertType(type);
 			astType.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
 		}
 
@@ -83,14 +83,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return writer.ToString();
 		}
 
-		private void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		public void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			ArgumentNullException.ThrowIfNull(symbol);
 			ArgumentNullException.ThrowIfNull(writer);
 			ArgumentNullException.ThrowIfNull(formattingPolicy);
 
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
-			AstNode node = astBuilder.ConvertSymbol(symbol);
+			AstNode? node = astBuilder.ConvertSymbol(symbol);
 			writer.StartNode(node);
 			if (node is EntityDeclaration entityDecl)
 				PrintModifiers(entityDecl.Modifiers, writer);
@@ -297,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
-			EntityDeclaration node = astBuilder.ConvertEntity(typeDef);
+			EntityDeclaration? node = astBuilder.ConvertEntity(typeDef);
 			if (typeDef.DeclaringTypeDefinition != null &&
 			    ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType ||
 			     (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) ==
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		void WriteMemberDeclarationName(IMember member, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
-			EntityDeclaration node = astBuilder.ConvertEntity(member);
+			EntityDeclaration? node = astBuilder.ConvertEntity(member);
 			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType &&
 			    member is not LocalFunctionMethod)
 			{
@@ -381,12 +381,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteTypeParameters(node, writer, formattingPolicy);
 		}
 
-		void WriteTypeParameters(EntityDeclaration node, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		void WriteTypeParameters(EntityDeclaration? node, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList)
 			{
 				var outputVisitor = new CSharpOutputVisitor(writer, formattingPolicy);
-				IEnumerable<TypeParameterDeclaration> typeParameters = node.GetChildrenByRole(Roles.TypeParameter);
+				IEnumerable<TypeParameterDeclaration?> typeParameters = node.GetChildrenByRole(Roles.TypeParameter);
 				if ((ConversionFlags & ConversionFlags.ShowTypeParameterVarianceModifier) == 0)
 				{
 					typeParameters = typeParameters.Select(RemoveVarianceModifier);
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				outputVisitor.WriteTypeParameters(typeParameters);
 			}
 
-			static TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
+			static TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration? decl)
 			{
 				decl.Variance = VarianceModifier.Invariant;
 				return decl;

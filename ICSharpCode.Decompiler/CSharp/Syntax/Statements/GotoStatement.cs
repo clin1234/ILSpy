@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitGotoStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is GotoStatement o && MatchString(this.Label, o.Label);
 		}
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Used for "goto case LabelExpression;"
 		/// </summary>
-		public Expression LabelExpression {
+		public Expression? LabelExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitGotoCaseStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is GotoCaseStatement o && this.LabelExpression.DoMatch(o.LabelExpression, match);
 		}
@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitGotoDefaultStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is GotoDefaultStatement;
 		}

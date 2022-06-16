@@ -23,6 +23,7 @@ using System.Reflection;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using SRM = System.Reflection.Metadata;
@@ -53,9 +54,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"),
 				new Repeat(new AnyNode())));
 
-		TransformContext context;
+		TransformContext? context;
 
-		public void Run(AstNode node, TransformContext context)
+		public void Run(AstNode? node, TransformContext context)
 		{
 			this.context = context;
 
@@ -79,8 +80,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
 			var currentCtor = (IMethod)constructorDeclaration.GetSymbol();
-			ConstructorInitializer ci = null;
-			if (constructorDeclaration.Body.Statements.FirstOrDefault() is ExpressionStatement stmt)
+			ConstructorInitializer? ci = null;
+			if (constructorDeclaration.Body?.Statements.FirstOrDefault() is ExpressionStatement stmt)
 			{
 				switch (stmt.Expression)
 				{
@@ -140,12 +141,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 
-			if (context.DecompileRun.RecordDecompilers.TryGetValue(currentCtor.DeclaringTypeDefinition, out var record)
+			if (context != null
+			    && context.DecompileRun.RecordDecompilers.TryGetValue(currentCtor.DeclaringTypeDefinition, out var record) 
 			    && currentCtor.Equals(record.PrimaryConstructor))
 			{
 				if (record.IsInheritedRecord &&
 				    ci?.ConstructorInitializerType == ConstructorInitializerType.Base &&
-				    constructorDeclaration.Parent is TypeDeclaration { BaseTypes: { Count: >= 1 } } typeDecl)
+				    constructorDeclaration.Parent is TypeDeclaration { BaseTypes.Count: >= 1 } typeDecl)
 				{
 					var baseType = typeDecl.BaseTypes.First();
 					var newBaseType = new InvocationAstType();
@@ -158,7 +160,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
+		public override void VisitTypeDeclaration(TypeDeclaration? typeDeclaration)
 		{
 			// Handle initializers on instance fields
 			HandleInstanceFieldInitializers(typeDeclaration.Members);
@@ -173,7 +175,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			HandleStaticFieldInitializers(typeDeclaration.Members);
 		}
 
-		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members)
+		void HandleInstanceFieldInitializers(IEnumerable<AstNode?> members)
 		{
 			var instanceCtors = members.OfType<ConstructorDeclaration>()
 				.Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
@@ -219,7 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						break;
 
 
-					Expression initializer = m.Get<Expression>("initializer").Single();
+					Expression? initializer = m.Get<Expression>("initializer").Single();
 					// 'this'/'base' cannot be used in initializers
 					if (initializer.DescendantsAndSelf.Any(n =>
 						    n is ThisReferenceExpression or BaseReferenceExpression))
@@ -287,20 +289,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsPropertyDeclaredByPrimaryCtor(IProperty p, RecordDecompiler record)
+		bool IsPropertyDeclaredByPrimaryCtor(IProperty? p, RecordDecompiler? record)
 		{
 			if (p == null || record == null)
 				return false;
 			return record.IsPropertyDeclaredByPrimaryConstructor(p);
 		}
 
-		void RemoveSingleEmptyConstructor(IEnumerable<AstNode> members, ITypeDefinition contextTypeDefinition)
+		void RemoveSingleEmptyConstructor(IEnumerable<AstNode?> members, ITypeDefinition? contextTypeDefinition)
 		{
 			// if we're outside of a type definition skip this altogether
 			if (contextTypeDefinition == null)
 				return;
 			// first get non-static constructor declarations from the AST
-			var instanceCtors = members.OfType<ConstructorDeclaration>()
+			ConstructorDeclaration?[] instanceCtors = members.OfType<ConstructorDeclaration>()
 				.Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			// if there's exactly one ctor and it's part of a type declaration or there's more than one member in the current selection
 			// we can remove the constructor. (We do not want to hide the constructor if the user explicitly selected it in the tree view.) 
@@ -327,11 +329,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		void HandleStaticFieldInitializers(IEnumerable<AstNode> members)
+		void HandleStaticFieldInitializers(IEnumerable<AstNode?> members)
 		{
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>()
-				.FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
+				.FirstOrDefault(static c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null)
 			{
 				bool ctorIsUnsafe = staticCtor.HasModifier(Modifiers.Unsafe);
@@ -412,7 +414,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Evaluates a call to the decimal-ctor.
 		/// </summary>
-		private bool TryEvaluateDecimalConstant(Semantics.ResolveResult expression, out decimal value)
+		private bool TryEvaluateDecimalConstant(ResolveResult expression, out decimal value)
 		{
 			value = 0;
 			if (!expression.Type.IsKnownType(KnownTypeCode.Decimal))

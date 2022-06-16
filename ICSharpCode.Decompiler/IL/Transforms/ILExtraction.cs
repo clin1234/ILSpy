@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
+		public static ILVariable Extract(ILInstruction? instToExtract, ILTransformContext context)
 		{
 			var function = instToExtract.Ancestors.OfType<ILFunction>().First();
 			ExtractionContext ctx = new(function, context) {
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// this context doesn't support extraction, but maybe we can create a block here?
 					if (ifInst.ResultType == StackType.Void)
 					{
-						Block newBlock = new();
+						Block? newBlock = new();
 						inst.ReplaceWith(newBlock);
 						newBlock.Instructions.Add(inst);
 					}

@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				{
 					ControlFlowNode b = nodes[i];
 					// Compute new immediate dominator:
-					ControlFlowNode newIdom = null;
+					ControlFlowNode? newIdom = null;
 					foreach (var p in b.Predecessors)
 					{
 						// Ignore predecessors that were not processed yet
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			foreach (ControlFlowNode node in nodes)
 			{
 				// Create list of children in dominator tree
-				node.ImmediateDominator?.DominatorTreeChildren.Add(node);
+				node.ImmediateDominator?.DominatorTreeChildren?.Add(node);
 				// Also reset the visited flag
 				node.Visited = false;
 			}

@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <typeparam name='T'>
 		/// The type of the annotation.
 		/// </typeparam>
-		T Annotation<T>() where T : class;
+		T? Annotation<T>() where T : class;
 
 		/// <summary>
 		/// Gets the first annotation of the specified type.
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <param name='type'>
 		/// The type of the annotation.
 		/// </param>
-		object Annotation(Type type);
+		object? Annotation(Type type);
 
 		/// <summary>
 		/// Adds an annotation to this instance.
@@ -89,13 +89,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// or to an AnnotationList.
 		// Once it is pointed at an AnnotationList, it will never change (this allows thread-safety support by locking the list)
 
-		object annotations;
+		object? annotations;
 
 		public virtual void AddAnnotation(object annotation)
 		{
 			ArgumentNullException.ThrowIfNull(annotation);
 			retry: // Retry until successful
-			object oldAnnotation = Interlocked.CompareExchange(ref this.annotations, annotation, null);
+			object? oldAnnotation = Interlocked.CompareExchange(ref this.annotations, annotation, null);
 			if (oldAnnotation == null)
 			{
 				return; // we successfully added a single annotation
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual void RemoveAnnotations<T>() where T : class
 		{
 			retry: // Retry until successful
-			object oldAnnotations = this.annotations;
+			object? oldAnnotations = this.annotations;
 			switch (oldAnnotations)
 			{
 				case AnnotationList list:
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			retry: // Retry until successful
-			object oldAnnotations = this.annotations;
+			object? oldAnnotations = this.annotations;
 			if (oldAnnotations is AnnotationList list)
 			{
 				lock (list)
@@ -169,9 +169,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public T Annotation<T>() where T : class
+		public T? Annotation<T>() where T : class
 		{
-			object annotations = this.annotations;
+			object? annotations = this.annotations;
 			if (annotations is AnnotationList list)
 			{
 				lock (list)
@@ -189,15 +189,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return annotations as T;
 		}
 
-		public object Annotation(Type type)
+		public object? Annotation(Type type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
-			object annotations = this.annotations;
+			object? annotations = this.annotations;
 			if (annotations is AnnotationList list)
 			{
 				lock (list)
 				{
-					foreach (object obj in list)
+					foreach (object? obj in list)
 					{
 						if (type.IsInstanceOfType(obj))
 							return obj;
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<object> Annotations {
 			get {
-				object annotations = this.annotations;
+				object? annotations = this.annotations;
 				if (annotations is AnnotationList list)
 				{
 					lock (list)

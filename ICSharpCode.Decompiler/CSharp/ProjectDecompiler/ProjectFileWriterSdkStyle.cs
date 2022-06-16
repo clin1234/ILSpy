@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			TextWriter target,
 			IProjectInfoProvider project,
 			IEnumerable<(string itemType, string fileName)> files,
-			PEFile module)
+			PEFile? module)
 		{
 			using XmlTextWriter xmlWriter = new(target);
 			xmlWriter.Formatting = Formatting.Indented;
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public static IProjectFileWriter Create() => new ProjectFileWriterSdkStyle();
 
 		static void Write(XmlTextWriter xml, IProjectInfoProvider project,
-			IEnumerable<(string itemType, string fileName)> files, PEFile module)
+			IEnumerable<(string itemType, string fileName)> files, PEFile? module)
 		{
 			xml.WriteStartElement("Project");
 
@@ -102,10 +102,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile module, IProjectInfoProvider project,
+		static void WriteAssemblyInfo(XmlTextWriter xml, PEFile? module, IProjectInfoProvider project,
 			ProjectType projectType)
 		{
-			xml.WriteElementString("AssemblyName", module.Name);
+			xml.WriteElementString("AssemblyName", module?.Name);
 
 			// Since we create AssemblyInfo.cs manually, we need to disable the auto-generation
 			xml.WriteElementString("GenerateAssemblyInfo", FalseString);
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, PEFile module, IProjectInfoProvider project,
+		static void WriteReferences(XmlTextWriter xml, PEFile? module, IProjectInfoProvider project,
 			ProjectType projectType)
 		{
 			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static ProjectType GetProjectType(PEFile module)
+		static ProjectType GetProjectType(PEFile? module)
 		{
 			foreach (var referenceName in module.AssemblyReferences.Select(r => r.Name))
 			{

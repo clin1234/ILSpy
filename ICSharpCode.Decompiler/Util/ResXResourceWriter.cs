@@ -1,5 +1,5 @@
 ﻿// Copyright (c) 2018 Daniel Grunwald
-//   This file is based on the Mono implementation of ResXResourceWriter.
+//   This file is based on the Mono implementation of ResXResourcewriter?.
 //   It is modified to add support for "ResourceSerializedObject" values.
 //
 // Permission is hereby granted, free of charge, to any person obtaining
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Util
 		const string WinFormsAssemblyName =
 			", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 
-		const string ResXNullRefTypeName = "System.Resources.ResXNullRef" + WinFormsAssemblyName;
+		const string? ResXNullRefTypeName = "System.Resources.ResXNullRef" + WinFormsAssemblyName;
 
 		static readonly string schema = @"
 	<xsd:schema id='root' xmlns='' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:msdata='urn:schemas-microsoft-com:xml-msdata'>
@@ -90,9 +90,9 @@ namespace ICSharpCode.Decompiler.Util
 
 			writer = new XmlTextWriter(textwriter);
 			writer.Formatting = Formatting.Indented;
-			writer.WriteStartDocument();
-			writer.WriteStartElement("root");
-			writer.WriteRaw(schema);
+			writer?.WriteStartDocument();
+			writer?.WriteStartElement("root");
+			writer?.WriteRaw(schema);
 			WriteHeader("resmimetype", "text/microsoft-resx");
 			WriteHeader("version", "1.3");
 			WriteHeader("reader", "System.Resources.ResXResourceReader" + WinFormsAssemblyName);
@@ -101,12 +101,12 @@ namespace ICSharpCode.Decompiler.Util
 
 		void WriteHeader(string name, string value)
 		{
-			writer.WriteStartElement("resheader");
-			writer.WriteAttributeString("name", name);
-			writer.WriteStartElement("value");
-			writer.WriteString(value);
-			writer.WriteEndElement();
-			writer.WriteEndElement();
+			writer?.WriteStartElement("resheader");
+			writer?.WriteAttributeString("name", name);
+			writer?.WriteStartElement("value");
+			writer?.WriteString(value);
+			writer?.WriteEndElement();
+			writer?.WriteEndElement();
 		}
 
 		void WriteNiceBase64(byte[] value, int offset, int length)
@@ -125,69 +125,69 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			sb.Insert(sb.Length, Environment.NewLine);
-			writer.WriteString(sb.ToString());
+			writer?.WriteString(sb.ToString());
 		}
 
-		void WriteBytes(string name, Type type, byte[] value, int offset, int length, string comment)
+		void WriteBytes(string name, Type? type, byte[] value, int offset, int length, string? comment)
 		{
-			writer.WriteStartElement("data");
-			writer.WriteAttributeString("name", name);
+			writer?.WriteStartElement("data");
+			writer?.WriteAttributeString("name", name);
 
 			if (type != null)
 			{
-				writer.WriteAttributeString("type", type.AssemblyQualifiedName);
+				writer?.WriteAttributeString("type", type.AssemblyQualifiedName);
 				// byte[] should never get a mimetype, otherwise MS.NET won't be able
 				// to parse the data.
 				if (type != typeof(byte[]))
-					writer.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
-				writer.WriteStartElement("value");
+					writer?.WriteAttributeString("mimetype", ByteArraySerializedObjectMimeType);
+				writer?.WriteStartElement("value");
 				WriteNiceBase64(value, offset, length);
 			}
 			else
 			{
-				writer.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
-				writer.WriteStartElement("value");
-				writer.WriteBase64(value, offset, length);
+				writer?.WriteAttributeString("mimetype", BinSerializedObjectMimeType);
+				writer?.WriteStartElement("value");
+				writer?.WriteBase64(value, offset, length);
 			}
 
-			writer.WriteEndElement();
+			writer?.WriteEndElement();
 
 			if (!(comment == null || comment.Equals(String.Empty)))
 			{
-				writer.WriteStartElement("comment");
-				writer.WriteString(comment);
-				writer.WriteEndElement();
+				writer?.WriteStartElement("comment");
+				writer?.WriteString(comment);
+				writer?.WriteEndElement();
 			}
 
-			writer.WriteEndElement();
+			writer?.WriteEndElement();
 		}
 
-		void WriteBytes(string name, Type type, byte[] value, string comment)
+		void WriteBytes(string name, Type? type, byte[] value, string? comment)
 		{
 			WriteBytes(name, type, value, 0, value.Length, comment);
 		}
 
-		void WriteString(string name, string value, string type, string comment)
+		void WriteString(string name, string? value, string? type, string? comment)
 		{
-			writer.WriteStartElement("data");
-			writer.WriteAttributeString("name", name);
+			writer?.WriteStartElement("data");
+			writer?.WriteAttributeString("name", name);
 			if (type != null)
-				writer.WriteAttributeString("type", type);
-			writer.WriteStartElement("value");
-			writer.WriteString(value);
-			writer.WriteEndElement();
+				writer?.WriteAttributeString("type", type);
+			writer?.WriteStartElement("value");
+			writer?.WriteString(value);
+			writer?.WriteEndElement();
 			if (!(comment == null || comment.Equals(String.Empty)))
 			{
-				writer.WriteStartElement("comment");
-				writer.WriteString(comment);
-				writer.WriteEndElement();
+				writer?.WriteStartElement("comment");
+				writer?.WriteString(comment);
+				writer?.WriteEndElement();
 			}
 
-			writer.WriteEndElement();
-			writer.WriteWhitespace("\n  ");
+			writer?.WriteEndElement();
+			writer?.WriteWhitespace("\n  ");
 		}
 
-		public void AddResource(string name, byte[] value)
+		public void AddResource(string name, byte[]? value)
 		{
 			ArgumentNullException.ThrowIfNull(name);
 
@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.Util
 			AddResource(name, value, String.Empty);
 		}
 
-		private void AddResource(string name, object value, string comment)
+		private void AddResource(string name, object value, string? comment)
 		{
 			if (value is string s)
 			{
@@ -248,14 +248,14 @@ namespace ICSharpCode.Decompiler.Util
 
 			if (converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
 			{
-				string str = converter.ConvertToInvariantString(value);
+				string? str = converter.ConvertToInvariantString(value);
 				WriteString(name, str, value.GetType().AssemblyQualifiedName, comment);
 				return;
 			}
 
 			if (converter.CanConvertTo(typeof(byte[])) && converter.CanConvertFrom(typeof(byte[])))
 			{
-				byte[] b = (byte[])converter.ConvertTo(value, typeof(byte[]));
+				byte[]? b = (byte[])converter.ConvertTo(value, typeof(byte[]));
 				WriteBytes(name, value.GetType(), b, comment);
 				return;
 			}
@@ -276,7 +276,7 @@ namespace ICSharpCode.Decompiler.Util
 			WriteBytes(name, null, ms.GetBuffer(), 0, (int)ms.Length, comment);
 		}
 
-		private void AddResource(string name, string value, string comment)
+		private void AddResource(string name, string? value, string? comment)
 		{
 			ArgumentNullException.ThrowIfNull(name);
 
@@ -300,9 +300,9 @@ namespace ICSharpCode.Decompiler.Util
 					Generate();
 				}
 
-				writer.Close();
+				writer?.Close();
 				stream.Dispose();
-				stream = null;
+				// stream = null;
 				filename = null;
 				textwriter = null;
 			}
@@ -314,8 +314,8 @@ namespace ICSharpCode.Decompiler.Util
 				throw new InvalidOperationException("The resource is already generated.");
 
 			written = true;
-			writer.WriteEndElement();
-			writer.Flush();
+			writer?.WriteEndElement();
+			writer?.Flush();
 		}
 
 		private void Dispose(bool disposing)
@@ -326,10 +326,10 @@ namespace ICSharpCode.Decompiler.Util
 
 		#region Local Variables
 
-		private string filename;
+		private string? filename;
 		private Stream stream;
-		private TextWriter textwriter;
-		private XmlTextWriter writer;
+		private TextWriter? textwriter;
+		private XmlTextWriter? writer;
 		private bool written;
 
 		#endregion // Local Variables
@@ -343,7 +343,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		#region Constructors & Destructor
 
-		public ResXResourceWriter(Stream stream)
+		public ResXResourceWriter(Stream? stream)
 		{
 			ArgumentNullException.ThrowIfNull(stream);
 
@@ -353,12 +353,12 @@ namespace ICSharpCode.Decompiler.Util
 			this.stream = stream;
 		}
 
-		public ResXResourceWriter(TextWriter textWriter)
+		public ResXResourceWriter(TextWriter? textWriter)
 		{
 			this.textwriter = textWriter ?? throw new ArgumentNullException(nameof(textWriter));
 		}
 
-		public ResXResourceWriter(string fileName)
+		public ResXResourceWriter(string? fileName)
 		{
 			this.filename = fileName ?? throw new ArgumentNullException(nameof(fileName));
 		}

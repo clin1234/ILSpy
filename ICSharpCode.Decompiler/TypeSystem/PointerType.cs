@@ -52,14 +52,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return other is PointerType a && elementType.Equals(a.elementType);
 		}
 
-		public override IType AcceptVisitor(TypeVisitor visitor)
+		public override IType AcceptVisitor(TypeVisitor? visitor)
 		{
 			return visitor.VisitPointerType(this);
 		}
 
-		public override IType VisitChildren(TypeVisitor visitor)
+		public override IType VisitChildren(TypeVisitor? visitor)
 		{
-			IType e = elementType.AcceptVisitor(visitor);
+			IType e = elementType?.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
 			return new PointerType(e);

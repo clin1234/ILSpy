@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Destructor; }
 		}
 
-		internal BlockStatement Body {
+		internal BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitDestructorDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is DestructorDeclaration o && this.MatchAttributesAndModifiers(o, match) &&
 			       this.Body.DoMatch(o.Body, match);

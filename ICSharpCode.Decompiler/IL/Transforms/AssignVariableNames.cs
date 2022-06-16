@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			int count = ++reservedVariableNames[nameWithoutDigits];
-			string nameWithDigits = nameWithoutDigits + count;
+			string? nameWithDigits = nameWithoutDigits + count;
 			if (oldVariableName == nameWithDigits)
 			{
 				return oldVariableName;
@@ -806,7 +806,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		internal static string GenerateVariableName(ILFunction function, IType type,
-			ILInstruction valueContext = null, ILVariable existingVariable = null,
+			ILInstruction? valueContext = null, ILVariable existingVariable = null,
 			bool mustResolveConflicts = false)
 		{
 			ArgumentNullException.ThrowIfNull(function);

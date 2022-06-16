@@ -25,13 +25,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public interface INode
 	{
-		Role Role { get; }
-		INode FirstChild { get; }
-		INode NextSibling { get; }
+		Role? Role { get; }
+		INode? FirstChild { get; }
+		INode? NextSibling { get; }
 		bool IsNull { get; }
 
-		bool DoMatch(INode other, Match match);
-		bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo);
+		bool DoMatch(INode? other, Match match);
+		bool DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo);
 	}
 
 	public static class PatternExtensions
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// However, it is also possible to match two ASTs without any pattern nodes -
 		/// doing so will produce a successful match if the two ASTs are structurally identical.
 		/// </remarks>
-		public static Match Match(this INode pattern, INode other)
+		public static Match Match(this INode pattern, INode? other)
 		{
 			ArgumentNullException.ThrowIfNull(pattern);
 			Match match = PatternMatching.Match.CreateNew();
@@ -57,18 +57,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return default(Match);
 		}
 
-		public static bool IsMatch(this INode pattern, INode other)
+		public static bool IsMatch(this INode? pattern, INode? other)
 		{
 			ArgumentNullException.ThrowIfNull(pattern);
 			return pattern.DoMatch(other, PatternMatching.Match.CreateNew());
 		}
 
-		public static AstType ToType(this Pattern pattern)
+		public static AstType? ToType(this Pattern pattern)
 		{
 			return pattern;
 		}
 
-		public static Expression ToExpression(this Pattern pattern)
+		public static Expression? ToExpression(this Pattern pattern)
 		{
 			return pattern;
 		}
@@ -78,12 +78,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return pattern;
 		}
 
-		public static Expression WithName(this Expression node, string patternGroupName)
+		public static Expression? WithName(this Expression? node, string patternGroupName)
 		{
 			return new NamedNode(patternGroupName, node);
 		}
 
-		public static Statement WithName(this Statement node, string patternGroupName)
+		public static Statement WithName(this Statement? node, string patternGroupName)
 		{
 			return new NamedNode(patternGroupName, node);
 		}

@@ -36,18 +36,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
-		static readonly string[] RuntimePacks = {
+		static readonly string?[] RuntimePacks = {
 			"Microsoft.NETCore.App",
 			"Microsoft.WindowsDesktop.App",
 			"Microsoft.AspNetCore.App",
 			"Microsoft.AspNetCore.All"
 		};
 
-		readonly string dotnetBasePath = FindDotNetExeDirectory();
+		readonly string? dotnetBasePath = FindDotNetExeDirectory();
 		readonly List<string> packageBasePaths = new();
-		readonly string preferredRuntimePack;
+		readonly string? preferredRuntimePack;
 
-		readonly List<string> searchPaths = new();
+		readonly List<string?> searchPaths = new();
 		readonly Version targetFrameworkVersion;
 
 		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
@@ -69,61 +69,62 @@ namespace ICSharpCode.Decompiler.Metadata
 		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString,
 			string preferredRuntimePack,
 			TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
-			ReferenceLoadInfo loadInfo = null)
+			ReferenceLoadInfo? loadInfo = null)
 			: this(targetFramework, targetFrameworkVersion, preferredRuntimePack)
 		{
 			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
-			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
+			string? basePath = Path.GetDirectoryName(parentAssemblyFileName);
 
 			searchPaths.Add(basePath);
 
-			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
-			if (File.Exists(depsJsonFileName))
+			if (basePath != null)
 			{
-				DotNetCorePackageInfo[] packages =
-					LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
-
-				foreach (var path in LookupPaths)
+				var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
+				if (File.Exists(depsJsonFileName))
 				{
-					foreach (var p in packages)
+					DotNetCorePackageInfo[] packages =
+						LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
+
+					foreach (var fullPath in from path in LookupPaths
+					         from p in packages
+					         from item in p.RuntimeComponents
+					         let itemPath = Path.GetDirectoryName(item)
+					         select Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant()
+					         into fullPath
+					         where Directory.Exists(fullPath)
+					         select fullPath)
 					{
-						foreach (var item in p.RuntimeComponents)
-						{
-							var itemPath = Path.GetDirectoryName(item);
-							var fullPath = Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant();
-							if (Directory.Exists(fullPath))
-								packageBasePaths.Add(fullPath);
-						}
+						packageBasePaths.Add(fullPath);
 					}
 				}
-			}
-			else
-			{
-				loadInfo?.AddMessage(assemblyName, MessageKind.Warning,
-					$"{assemblyName}.deps.json could not be found!");
+				else
+				{
+					loadInfo?.AddMessage(assemblyName, MessageKind.Warning,
+						$"{assemblyName}.deps.json could not be found!");
+				}
 			}
 		}
 
-		public void AddSearchDirectory(string path)
+		public void AddSearchDirectory(string? path)
 		{
 			this.searchPaths.Add(path);
 		}
 
-		public void RemoveSearchDirectory(string path)
+		public void RemoveSearchDirectory(string? path)
 		{
 			this.searchPaths.Remove(path);
 		}
 
-		public string TryResolveDotNetCore(IAssemblyReference name)
+		public string? TryResolveDotNetCore(IAssemblyReference name)
 		{
 			foreach (var basePath in searchPaths.Concat(packageBasePaths))
 			{
-				if (File.Exists(Path.Combine(basePath, name.Name + ".dll")))
+				if (basePath != null && File.Exists(Path.Combine(basePath, name.Name + ".dll")))
 				{
 					return Path.Combine(basePath, name.Name + ".dll");
 				}
 
-				if (File.Exists(Path.Combine(basePath, name.Name + ".exe")))
+				if (basePath != null && File.Exists(Path.Combine(basePath, name.Name + ".exe")))
 				{
 					return Path.Combine(basePath, name.Name + ".exe");
 				}
@@ -171,7 +172,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				var type = library.Value["type"].AsString;
 				var path = library.Value["path"].AsString;
-				var runtimeInfo = runtimeInfos[library.Key].AsJsonObject?["runtime"].AsJsonObject;
+				var runtimeInfo = runtimeInfos[library.Key].AsJsonObject["runtime"].AsJsonObject;
 				string[] components = new string[runtimeInfo?.Count ?? 0];
 				if (runtimeInfo != null)
 				{
@@ -187,7 +188,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack)
+		public string? TryResolveDotNetCoreShared(IAssemblyReference name, out string? runtimePack)
 		{
 			if (dotnetBasePath == null)
 			{
@@ -195,28 +196,31 @@ namespace ICSharpCode.Decompiler.Metadata
 				return null;
 			}
 
-			IEnumerable<string> runtimePacks = RuntimePacks;
+			IEnumerable<string?> runtimePacks = RuntimePacks;
 
 			if (preferredRuntimePack != null)
 			{
 				runtimePacks = new[] { preferredRuntimePack }.Concat(runtimePacks);
 			}
 
-			foreach (string pack in runtimePacks)
+			foreach (string? pack in runtimePacks)
 			{
 				runtimePack = pack;
-				string basePath = Path.Combine(dotnetBasePath, "shared", pack);
-				if (!Directory.Exists(basePath))
-					continue;
-				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
-				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll")))
+				if (pack != null)
 				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
-				}
+					string basePath = Path.Combine(dotnetBasePath, "shared", pack);
+					if (!Directory.Exists(basePath))
+						continue;
+					var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
+					if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll")))
+					{
+						return Path.Combine(basePath, closestVersion, name.Name + ".dll");
+					}
 
-				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
-				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+					if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
+					{
+						return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+					}
 				}
 			}
 
@@ -227,9 +231,9 @@ namespace ICSharpCode.Decompiler.Metadata
 		static string GetClosestVersionFolder(string basePath, Version version)
 		{
 			var foundVersions = new DirectoryInfo(basePath).GetDirectories()
-				.Select(d => ConvertToVersion(d.Name))
-				.Where(v => v.version != null);
-			foreach (var folder in foundVersions.OrderBy(v => v.version))
+				.Select(static d => ConvertToVersion(d.Name))
+				.Where(static v => v.version != null);
+			foreach (var folder in foundVersions.OrderBy(static v => v.version))
 			{
 				if (folder.version >= version)
 					return folder.directoryName;
@@ -238,7 +242,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return version.ToString();
 		}
 
-		internal static (Version version, string directoryName) ConvertToVersion(string name)
+		internal static (Version? version, string? directoryName) ConvertToVersion(string name)
 		{
 			string RemoveTrailingVersionInfo()
 			{
@@ -263,14 +267,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static string FindDotNetExeDirectory()
+		public static string? FindDotNetExeDirectory()
 		{
 			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
-			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator))
+			foreach (var item in Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator))
 			{
 				try
 				{
-					string fileName = Path.Combine(item, dotnetExeName);
+					string? fileName = Path.Combine(item, dotnetExeName);
 					if (!File.Exists(fileName))
 						continue;
 					if (Environment.OSVersion.Platform == PlatformID.Unix)
@@ -292,7 +296,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		static unsafe string GetRealPath(string path, Encoding encoding)
+		static unsafe string? GetRealPath(string path, Encoding encoding)
 		{
 			var bytes = encoding.GetBytes(path);
 			fixed (byte* input = bytes)
@@ -330,7 +334,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			public readonly string Type;
 			public readonly string Version;
 
-			public DotNetCorePackageInfo(string fullName, string type, string path, string[] runtimeComponents)
+			public DotNetCorePackageInfo(string fullName, string type, string path, string[]? runtimeComponents)
 			{
 				var parts = fullName.Split('/');
 				this.Name = parts[0];

@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpyX
 		/// Technically read accesses need locking when done on non-GUI threads... but whenever possible, use the
 		/// thread-safe <see cref="GetAssemblies()"/> method.
 		/// </remarks>
-		private readonly ObservableCollection<LoadedAssembly> assemblies = new();
+		private readonly ObservableCollection<LoadedAssembly?> assemblies = new();
 
 		/// <summary>
 		/// Assembly lookup by filename.
@@ -133,7 +133,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public string ListName { get; }
 
-		public event NotifyCollectionChangedEventHandler CollectionChanged {
+		public event NotifyCollectionChangedEventHandler? CollectionChanged {
 			add {
 				VerifyAccess();
 				this.assemblies.CollectionChanged += value;
@@ -147,7 +147,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Gets the loaded assemblies. This method is thread-safe.
 		/// </summary>
-		public LoadedAssembly[] GetAssemblies()
+		public LoadedAssembly?[] GetAssemblies()
 		{
 			lock (lockObj)
 			{
@@ -166,7 +166,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Gets all loaded assemblies recursively, including assemblies found in bundles or packages.
 		/// </summary>
-		public Task<IList<LoadedAssembly>> GetAllAssemblies()
+		public Task<IList<LoadedAssembly?>> GetAllAssemblies()
 		{
 			return GetSnapshot().GetAllAssembliesAsync();
 		}
@@ -250,7 +250,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Find an assembly that was previously opened.
 		/// </summary>
-		public LoadedAssembly? FindAssembly(string file)
+		public LoadedAssembly? FindAssembly(string? file)
 		{
 			file = Path.GetFullPath(file);
 			lock (lockObj)
@@ -262,7 +262,7 @@ namespace ICSharpCode.ILSpyX
 			return null;
 		}
 
-		public LoadedAssembly Open(string assemblyUri, bool isAutoLoaded = false)
+		public LoadedAssembly Open(string? assemblyUri, bool isAutoLoaded = false)
 		{
 			return OpenAssembly(assemblyUri, isAutoLoaded);
 		}
@@ -276,7 +276,7 @@ namespace ICSharpCode.ILSpyX
 		/// If called on another thread, the newly opened assembly won't be returned by GetAssemblies()
 		/// until the UI thread gets around to adding the assembly.
 		/// </remarks>
-		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded = false)
+		public LoadedAssembly OpenAssembly(string? file, bool isAutoLoaded = false)
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
@@ -291,7 +291,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Opens an assembly from a stream.
 		/// </summary>
-		public LoadedAssembly OpenAssembly(string file, Stream? stream, bool isAutoLoaded = false)
+		public LoadedAssembly OpenAssembly(string? file, Stream? stream, bool isAutoLoaded = false)
 		{
 			file = Path.GetFullPath(file);
 			return OpenAssembly(file, () => {
@@ -306,7 +306,7 @@ namespace ICSharpCode.ILSpyX
 		LoadedAssembly OpenAssembly(string file, Func<LoadedAssembly> load)
 		{
 			bool isUIThread = ownerThread == Thread.CurrentThread;
-			LoadedAssembly? asm;
+			LoadedAssembly asm;
 			lock (lockObj)
 			{
 				if (byFilename.TryGetValue(file, out asm))
@@ -338,13 +338,13 @@ namespace ICSharpCode.ILSpyX
 		/// Replace the assembly object model from a crafted stream, without disk I/O
 		/// Returns null if it is not already loaded.
 		/// </summary>
-		public LoadedAssembly? HotReplaceAssembly(string file, Stream stream)
+		public LoadedAssembly? HotReplaceAssembly(string? file, Stream stream)
 		{
 			VerifyAccess();
 			file = Path.GetFullPath(file);
 			lock (lockObj)
 			{
-				if (!byFilename.TryGetValue(file, out LoadedAssembly? target))
+				if (!byFilename.TryGetValue(file, out LoadedAssembly target))
 					return null;
 				int index = this.assemblies.IndexOf(target);
 				if (index < 0)

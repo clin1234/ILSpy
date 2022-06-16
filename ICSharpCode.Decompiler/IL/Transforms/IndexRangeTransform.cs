@@ -435,7 +435,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
+		private bool MatchIndexImplicitConv(ILInstruction? inst, out ILInstruction offsetInst)
 		{
 			offsetInst = null;
 			if (inst is not CallInstruction call)
@@ -505,7 +505,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return call.Arguments[0].MatchLdLoca(rangeVar);
 		}
 
-		static ILInstruction MakeIndex(IndexKind indexKind, ILInstruction indexLoad, IndexMethods specialMethods)
+		static ILInstruction? MakeIndex(IndexKind indexKind, ILInstruction indexLoad, IndexMethods specialMethods)
 		{
 			if (indexKind == IndexKind.RefSystemIndex)
 			{
@@ -575,7 +575,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches the instruction:
 		///    stloc containerLengthVar(call get_Length/get_Count(ldloc containerVar))
 		/// </summary>
-		static bool MatchContainerLengthStore(ILInstruction inst, out ILVariable lengthVar, ref ILVariable containerVar)
+		static bool MatchContainerLengthStore(ILInstruction? inst, out ILVariable lengthVar, ref ILVariable containerVar)
 		{
 			if (!inst.MatchStLoc(out lengthVar, out var init))
 				return false;
@@ -627,7 +627,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchContainerVar(call.Arguments[0], ref containerVar);
 		}
 
-		static bool MatchContainerVar(ILInstruction inst, ref ILVariable containerVar)
+		static bool MatchContainerVar(ILInstruction? inst, ref ILVariable containerVar)
 		{
 			if (containerVar != null)
 			{

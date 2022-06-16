@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class LambdaExpression : Expression
 	{
 		public static readonly TokenRole AsyncModifierRole = new("async");
-		public static readonly Role<AstNode> BodyRole = new("Body", AstNode.Null);
+		public static readonly Role<AstNode?> BodyRole = new("Body", AstNode.Null);
 
 		bool isAsync;
 
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
+		public AstNodeCollection<ParameterDeclaration?> Parameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
 
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Arrow); }
 		}
 
-		public AstNode Body {
+		public AstNode? Body {
 			get { return GetChildByRole(BodyRole); }
 			set { SetChildByRole(BodyRole, value); }
 		}
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitLambdaExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is LambdaExpression o && this.IsAsync == o.IsAsync &&
 			       this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);

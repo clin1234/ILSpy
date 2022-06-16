@@ -49,18 +49,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMember.IsOverride => false;
 		bool IMember.IsOverridable => false;
 
-		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
+		TypeParameterSubstitution? IMember.Substitution => TypeParameterSubstitution.Identity;
 		EntityHandle IEntity.MetadataToken => default;
 
-		public string Name { get; set; }
+		public string? Name { get; set; }
 
-		ITypeDefinition IEntity.DeclaringTypeDefinition => DeclaringType?.GetDefinition();
+		ITypeDefinition? IEntity.DeclaringTypeDefinition => DeclaringType?.GetDefinition();
 
-		public IType DeclaringType { get; init; }
+		public IType? DeclaringType { get; init; }
 
-		IModule IEntity.ParentModule => DeclaringType?.GetDefinition()?.ParentModule;
+		IModule? IEntity.ParentModule => DeclaringType?.GetDefinition().ParentModule;
 
-		IEnumerable<IAttribute> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute?> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
 
 		public Accessibility Accessibility { get; protected init; } = Accessibility.Public;
 
@@ -90,12 +90,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		string INamedElement.Namespace => DeclaringType?.Namespace;
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public abstract IMember Specialize(TypeParameterSubstitution substitution);
+		public abstract IMember Specialize(TypeParameterSubstitution? substitution);
 	}
 
 	sealed class FakeField : FakeMember, IField
@@ -108,12 +108,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IField.IsVolatile => false;
 
 		bool IVariable.IsConst => false;
-		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
+		object? IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
 		IType IVariable.Type => ReturnType;
 
 		public override SymbolKind SymbolKind => SymbolKind.Field;
 
-		public override IMember Specialize(TypeParameterSubstitution substitution)
+		public override IMember Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedField.Create(this, substitution);
 		}
@@ -130,14 +130,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override SymbolKind SymbolKind => symbolKind;
 
-		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute?> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
 		bool IMethod.ReturnTypeIsRefReadOnly => false;
 		bool IMethod.ThisIsRefReadOnly => false;
 		bool IMethod.IsInitOnly => false;
 
-		public IReadOnlyList<ITypeParameter> TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;
+		public IReadOnlyList<ITypeParameter>? TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;
 
-		IReadOnlyList<IType> IMethod.TypeArguments => TypeParameters;
+		IReadOnlyList<IType>? IMethod.TypeArguments => TypeParameters;
 
 		bool IMethod.IsExtensionMethod => false;
 		bool IMethod.IsLocalFunction => false;
@@ -147,19 +147,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IMethod.HasBody => false;
 		public bool IsAccessor => AccessorOwner is not null;
-		public IMember AccessorOwner { get; set; }
+		public IMember? AccessorOwner { get; set; }
 		public MethodSemanticsAttributes AccessorKind { get; set; }
 
-		IMethod IMethod.ReducedFrom => null;
+		IMethod? IMethod.ReducedFrom => null;
 
-		public IReadOnlyList<IParameter> Parameters { get; set; } = EmptyList<IParameter>.Instance;
+		public IReadOnlyList<IParameter?> Parameters { get; set; } = EmptyList<IParameter>.Instance;
 
-		public override IMember Specialize(TypeParameterSubstitution substitution)
+		public override IMember Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);
 		}
 
-		IMethod IMethod.Specialize(TypeParameterSubstitution substitution)
+		IMethod IMethod.Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);
 		}
@@ -186,16 +186,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override SymbolKind SymbolKind
 			=> IsIndexer ? SymbolKind.Indexer : SymbolKind.Property;
 
-		public override IMember Specialize(TypeParameterSubstitution substitution)
+		public override IMember Specialize(TypeParameterSubstitution? substitution)
 			=> SpecializedProperty.Create(this, substitution);
 
 		public bool CanGet => Getter is not null;
 		public bool CanSet => Setter is not null;
-		public IMethod Getter { get; set; }
-		public IMethod Setter { get; set; }
+		public IMethod? Getter { get; set; }
+		public IMethod? Setter { get; set; }
 		public bool IsIndexer { get; set; }
 		public bool ReturnTypeIsRefReadOnly => false;
-		public IReadOnlyList<IParameter> Parameters { get; set; }
+		public IReadOnlyList<IParameter?> Parameters { get; set; }
 	}
 
 	sealed class FakeEvent : FakeMember, IEvent
@@ -207,14 +207,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override SymbolKind SymbolKind => SymbolKind.Event;
 
-		public override IMember Specialize(TypeParameterSubstitution substitution)
+		public override IMember Specialize(TypeParameterSubstitution? substitution)
 			=> SpecializedEvent.Create(this, substitution);
 
 		public bool CanAdd => AddAccessor is not null;
 		public bool CanRemove => RemoveAccessor is not null;
 		public bool CanInvoke => InvokeAccessor is not null;
-		public IMethod AddAccessor { get; set; }
-		public IMethod RemoveAccessor { get; set; }
-		public IMethod InvokeAccessor { get; set; }
+		public IMethod? AddAccessor { get; set; }
+		public IMethod? RemoveAccessor { get; set; }
+		public IMethod? InvokeAccessor { get; set; }
 	}
 }

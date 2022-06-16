@@ -42,13 +42,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return Expression.Annotations.OfType<ILInstruction>(); }
 		}
 
-		internal ExpressionWithILInstruction(Expression expression)
+		internal ExpressionWithILInstruction(Expression? expression)
 		{
 			Debug.Assert(expression != null);
 			this.Expression = expression;
 		}
 
-		public static implicit operator Expression(ExpressionWithILInstruction expression)
+		public static implicit operator Expression?(ExpressionWithILInstruction expression)
 		{
 			return expression.Expression;
 		}
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	readonly struct ExpressionWithResolveResult
 	{
-		public readonly Expression Expression;
+		public readonly Expression? Expression;
 
 		// Because ResolveResult is frequently accessed within the ExpressionBuilder, we put it directly
 		// in this struct instead of accessing it through the list of annotations.
@@ -70,14 +70,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return ResolveResult.Type; }
 		}
 
-		internal ExpressionWithResolveResult(Expression expression)
+		internal ExpressionWithResolveResult(Expression? expression)
 		{
 			Debug.Assert(expression != null);
 			this.Expression = expression;
 			this.ResolveResult = expression.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
 		}
 
-		internal ExpressionWithResolveResult(Expression expression, ResolveResult resolveResult)
+		internal ExpressionWithResolveResult(Expression? expression, ResolveResult? resolveResult)
 		{
 			Debug.Assert(expression != null && resolveResult != null);
 			Debug.Assert(expression.Annotation<ResolveResult>() == resolveResult);
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.ResolveResult = resolveResult;
 		}
 
-		public static implicit operator Expression(ExpressionWithResolveResult expression)
+		public static implicit operator Expression?(ExpressionWithResolveResult expression)
 		{
 			return expression.Expression;
 		}
@@ -116,14 +116,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return ResolveResult.Type; }
 		}
 
-		internal TranslatedExpression(Expression expression)
+		internal TranslatedExpression(Expression? expression)
 		{
 			Debug.Assert(expression != null);
 			this.Expression = expression;
 			this.ResolveResult = expression.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
 		}
 
-		internal TranslatedExpression(Expression expression, ResolveResult resolveResult)
+		internal TranslatedExpression(Expression? expression, ResolveResult? resolveResult)
 		{
 			Debug.Assert(expression != null && resolveResult != null);
 			Debug.Assert(expression.Annotation<ResolveResult>() == resolveResult);
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.Expression = expression;
 		}
 
-		public static implicit operator Expression(TranslatedExpression expression)
+		public static implicit operator Expression?(TranslatedExpression expression)
 		{
 			return expression.Expression;
 		}
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// All ILInstruction annotations from the current expression are copied to the descendant expression.
 		/// The descendant expression is detached from the AST.
 		/// </summary>
-		public TranslatedExpression UnwrapChild(Expression descendant)
+		public TranslatedExpression UnwrapChild(Expression? descendant)
 		{
 			if (descendant == Expression)
 				return this;
@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return newTupleExpr.WithILInstruction(this.ILInstructions)
 						.WithRR(new TupleResolveResult(
 							expressionBuilder.compilation, newElementRRs.ToImmutableArray(),
-							valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
+							valueTupleAssembly: targetTupleType.GetDefinition().ParentModule
 						));
 				}
 			}
@@ -494,7 +494,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
 
-			Expression expr;
+			Expression? expr;
 			if (targetType.Kind == TypeKind.ByReference)
 			{
 				if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(targetType, this.Type))
@@ -505,7 +505,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var elementType = ((ByReferenceType)targetType).ElementType;
 				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(static i =>
 					                                                   i.OpCode == OpCode.AddressOf)
-				                                                   && thisDir.Expression.GetResolveResult()?.Type
+				                                                   && thisDir.Expression.GetResolveResult().Type
 					                                                   .GetStackType() == elementType.GetStackType())
 				{
 					// When converting a reference to a temporary to a different type,
@@ -667,7 +667,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
 		/// The existing cast is classified in 'conversion'.
 		/// </summary>
-		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType,
+		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion? conversion, IType inputType,
 			IType oldTargetType, IType newTargetType)
 		{
 			if (!conversion.IsImplicit)
@@ -708,7 +708,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// In conditional contexts, remove the bool-cast emitted when converting
 		/// an "implicit operator bool" invocation.
 		/// </summary>
-		public TranslatedExpression UnwrapImplicitBoolConversion(Func<IType, bool> typeFilter = null)
+		public TranslatedExpression UnwrapImplicitBoolConversion(Func<IType, bool>? typeFilter = null)
 		{
 			if (!this.Type.IsKnownType(KnownTypeCode.Boolean))
 				return this;

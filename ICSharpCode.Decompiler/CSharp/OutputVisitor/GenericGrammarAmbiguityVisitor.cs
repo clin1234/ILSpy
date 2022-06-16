@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				genericNestingLevel = 1
 			};
 
-			for (AstNode node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
+			for (AstNode? node = binaryOperatorExpression.Right; node != null; node = node.GetNextNode())
 			{
 				if (node.AcceptVisitor(v))
 					return v.ambiguityFound;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return false;
 		}
 
-		protected override bool VisitChildren(AstNode node)
+		protected override bool VisitChildren(AstNode? node)
 		{
 			// unhandled node: probably not syntactically valid in a typename
 
@@ -109,13 +109,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return binaryOperatorExpression.Right.AcceptVisitor(this);
 		}
 
-		public override bool VisitIdentifierExpression(IdentifierExpression identifierExpression)
+		public override bool VisitIdentifierExpression(IdentifierExpression? identifierExpression)
 		{
 			// identifier could also be valid in a type argument
 			return false; // keep visiting
 		}
 
-		public override bool VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression)
+		public override bool VisitTypeReferenceExpression(TypeReferenceExpression? typeReferenceExpression)
 		{
 			return false; // keep visiting
 		}

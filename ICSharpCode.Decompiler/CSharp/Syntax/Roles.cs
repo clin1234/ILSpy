@@ -30,22 +30,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	internal static class Roles
 	{
 		// some pre defined constants for common roles
-		public static readonly Role<Identifier> Identifier = new("Identifier", Syntax.Identifier.Null);
-		public static readonly Role<BlockStatement> Body = new("Body", BlockStatement.Null);
-		public static readonly Role<ParameterDeclaration> Parameter = new("Parameter", null);
-		public static readonly Role<Expression> Argument = new("Argument", Syntax.Expression.Null);
-		public static readonly Role<AstType> Type = new("Type", AstType.Null);
-		public static readonly Role<Expression> Expression = new("Expression", Syntax.Expression.Null);
-		public static readonly Role<Expression> TargetExpression = new("Target", Syntax.Expression.Null);
-		public static readonly Role<Expression> Condition = new("Condition", Syntax.Expression.Null);
-		public static readonly Role<TypeParameterDeclaration> TypeParameter = new("TypeParameter", null);
-		public static readonly Role<AstType> TypeArgument = new("TypeArgument", AstType.Null);
-		public static readonly Role<Constraint> Constraint = new("Constraint", null);
-		public static readonly Role<VariableInitializer> Variable = new("Variable", VariableInitializer.Null);
-		public static readonly Role<Statement> EmbeddedStatement = new("EmbeddedStatement", Statement.Null);
-		public static readonly Role<EntityDeclaration> TypeMemberRole = new("TypeMember", null);
+		public static readonly Role<Identifier?> Identifier = new("Identifier", Syntax.Identifier.Null);
+		public static readonly Role<BlockStatement?> Body = new("Body", BlockStatement.Null);
+		public static readonly Role<ParameterDeclaration?> Parameter = new("Parameter", null);
+		public static readonly Role<Expression?> Argument = new("Argument", Syntax.Expression.Null);
+		public static readonly Role<AstType?> Type = new("Type", AstType.Null);
+		public static readonly Role<Expression?> Expression = new("Expression", Syntax.Expression.Null);
+		public static readonly Role<Expression?> TargetExpression = new("Target", Syntax.Expression.Null);
+		public static readonly Role<Expression?> Condition = new("Condition", Syntax.Expression.Null);
+		public static readonly Role<TypeParameterDeclaration?> TypeParameter = new("TypeParameter", null);
+		public static readonly Role<AstType?> TypeArgument = new("TypeArgument", AstType.Null);
+		public static readonly Role<Constraint?> Constraint = new("Constraint", null);
+		public static readonly Role<VariableInitializer?> Variable = new("Variable", VariableInitializer.Null);
+		public static readonly Role<Statement?> EmbeddedStatement = new("EmbeddedStatement", Statement.Null);
+		public static readonly Role<EntityDeclaration?> TypeMemberRole = new("TypeMember", null);
 
-		public static readonly Role<VariableDesignation> VariableDesignationRole =
+		public static readonly Role<VariableDesignation?> VariableDesignationRole =
 			new("VariableDesignation", VariableDesignation.Null);
 
 		//			public static readonly TokenRole Keyword = new TokenRole ("Keyword", CSharpTokenNode.Null);
@@ -68,16 +68,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole DoubleColon = new("::");
 		public static readonly TokenRole Arrow = new("=>");
 		public static readonly TokenRole DoubleExclamation = new("!!");
-		public static readonly Role<Comment> Comment = new("Comment", null);
-		public static readonly Role<PreProcessorDirective> PreProcessorDirective = new("PreProcessorDirective", null);
+		public static readonly Role<Comment?> Comment = new("Comment", null);
+		public static readonly Role<PreProcessorDirective?> PreProcessorDirective = new("PreProcessorDirective", null);
 
-		public static readonly Role<AstType> BaseType = new("BaseType", AstType.Null);
+		public static readonly Role<AstType?> BaseType = new("BaseType", AstType.Null);
 
 		public static readonly Role<Attribute> Attribute = new("Attribute", null);
 		public static readonly Role<CSharpTokenNode> AttributeTargetRole = new("AttributeTarget", CSharpTokenNode.Null);
 
 		public static readonly TokenRole WhereKeyword = new("where");
-		public static readonly Role<SimpleType> ConstraintTypeParameter = new("TypeParameter", SimpleType.Null);
+		public static readonly Role<SimpleType?> ConstraintTypeParameter = new("TypeParameter", SimpleType.Null);
 		public static readonly TokenRole DelegateKeyword = new("delegate");
 		public static readonly TokenRole ExternKeyword = new("extern");
 		public static readonly TokenRole AliasKeyword = new("alias");

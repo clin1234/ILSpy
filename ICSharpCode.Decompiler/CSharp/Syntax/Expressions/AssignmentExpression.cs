@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class AssignmentExpression : Expression
 	{
 		// reuse roles from BinaryOperatorExpression
-		public static readonly Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;
-		public static readonly Role<Expression> RightRole = BinaryOperatorExpression.RightRole;
+		public static readonly Role<Expression?> LeftRole = BinaryOperatorExpression.LeftRole;
+		public static readonly Role<Expression?> RightRole = BinaryOperatorExpression.RightRole;
 
 		public static readonly TokenRole AssignRole = new("=");
 		public static readonly TokenRole AddRole = new("+=");
@@ -54,13 +54,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public AssignmentExpression(Expression left, Expression right)
+		public AssignmentExpression(Expression? left, Expression? right)
 		{
 			this.Left = left;
 			this.Right = right;
 		}
 
-		public AssignmentExpression(Expression left, AssignmentOperatorType op, Expression right)
+		public AssignmentExpression(Expression? left, AssignmentOperatorType op, Expression? right)
 		{
 			this.Left = left;
 			this.Operator = op;
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public Expression Left {
+		public Expression? Left {
 			get { return GetChildByRole(LeftRole); }
 			init { SetChildByRole(LeftRole, value); }
 		}
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(GetOperatorRole(Operator)); }
 		}
 
-		public Expression Right {
+		public Expression? Right {
 			get { return GetChildByRole(RightRole); }
 			set { SetChildByRole(RightRole, value); }
 		}
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAssignmentExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is AssignmentExpression o && (this.Operator == AssignmentOperatorType.Any ||
 			                                           this.Operator == o.Operator)

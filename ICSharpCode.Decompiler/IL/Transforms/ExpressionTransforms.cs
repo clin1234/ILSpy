@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void CleanUpArrayIndices(InstructionCollection<ILInstruction> indices)
 		{
-			foreach (ILInstruction index in indices)
+			foreach (ILInstruction? index in indices)
 			{
 				if (index is Conv { ResultType: StackType.I } conv &&
 				    (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
 				context.Step("push negation into logic.and", inst);
-				IfInstruction ifInst = (IfInstruction)arg;
+				IfInstruction? ifInst = (IfInstruction)arg;
 				var ldc0 = ifInst.FalseInst;
 				Debug.Assert(ldc0.MatchLdcI4(0));
 				ifInst.Condition = Comp.LogicNot(lhs).WithILRange(inst);
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// logic.not(if (lhs) ldc.i4 1 else rhs)
 				// ==> if (logic.not(lhs)) logic.not(rhs) else ldc.i4 0)
 				context.Step("push negation into logic.or", inst);
-				IfInstruction ifInst = (IfInstruction)arg;
+				IfInstruction? ifInst = (IfInstruction)arg;
 				var ldc1 = ifInst.TrueInst;
 				Debug.Assert(ldc1.MatchLdcI4(1));
 				ifInst.Condition = Comp.LogicNot(lhs).WithILRange(inst);
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
 				foreach (var load in initializerVariable.LoadInstructions.ToArray())
 				{
-					ILInstruction newInst = new LdLoc(newVariable);
+					ILInstruction? newInst = new LdLoc(newVariable);
 					newInst.AddILRange(load);
 					if (load.Parent != initializer)
 						newInst = new Conv(newInst, PrimitiveType.I, false, Sign.None);
@@ -559,7 +559,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 			{
-				ILInstruction transformed = UserDefinedLogicTransform.Transform(condition, trueInst, falseInst);
+				ILInstruction? transformed = UserDefinedLogicTransform.Transform(condition, trueInst, falseInst);
 				if (transformed == null)
 				{
 					transformed = UserDefinedLogicTransform.TransformDynamic(condition, trueInst, falseInst);
@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		private void HandleSwitchExpression(BlockContainer container, SwitchInstruction switchInst)
+		private void HandleSwitchExpression(BlockContainer container, SwitchInstruction? switchInst)
 		{
 			if (!context.Settings.SwitchExpressions)
 				return;

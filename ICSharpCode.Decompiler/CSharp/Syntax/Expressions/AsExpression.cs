@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAsExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is AsExpression o && this.Expression.DoMatch(o.Expression, match) &&
 			       this.Type.DoMatch(o.Type, match);

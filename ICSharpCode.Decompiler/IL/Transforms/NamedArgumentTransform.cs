@@ -16,7 +16,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInlining.InlineOneIfPossible(block, pos, options, context: context);
 		}
 
-		internal static ILInlining.FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction child,
+		internal static ILInlining.FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction? child,
 			ILVariable v, ILInstruction expressionBeingMoved)
 		{
 			Debug.Assert(child.Parent == call);
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Introduce a named argument for 'arg' and evaluate it before the other arguments
 		/// (except for the "this" pointer)
 		/// </summary>
-		internal static void IntroduceNamedArgument(ILInstruction arg, ILTransformContext context)
+		internal static void IntroduceNamedArgument(ILInstruction? arg, ILTransformContext context)
 		{
 			var call = (CallInstruction)arg.Parent;
 			Debug.Assert(context.Function == call.Ancestors.OfType<ILFunction>().First());

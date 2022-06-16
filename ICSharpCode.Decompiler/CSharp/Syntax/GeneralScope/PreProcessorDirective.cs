@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public string FileName {
+		public string? FileName {
 			get;
 			set;
 		}
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
-		public static readonly Role<PrimitiveExpression> WarningRole = new("Warning", null);
+		public static readonly Role<PrimitiveExpression?> WarningRole = new("Warning", null);
 
 		public static readonly TokenRole PragmaKeywordRole = new("#pragma");
 		public static readonly TokenRole WarningKeywordRole = new("warning");
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(RestoreKeywordRole); }
 		}
 
-		public AstNodeCollection<PrimitiveExpression> Warnings {
+		public AstNodeCollection<PrimitiveExpression?> Warnings {
 			get { return GetChildrenByRole(WarningRole); }
 		}
 
@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPreProcessorDirective(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is PreProcessorDirective o && Type == o.Type && MatchString(Argument, o.Argument);
 		}

@@ -32,16 +32,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly ParameterAttributes attributes;
 		readonly ParameterHandle handle;
 
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 
 		// these can't be bool? as bool? is not thread-safe from torn reads
 		byte constantValueInSignatureState;
 		byte decimalConstantState;
 
 		// lazy-loaded:
-		string name;
+		string? name;
 
-		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type,
+		internal MetadataParameter(MetadataModule? module, IParameterizedMember owner, IType type,
 			ParameterHandle handle)
 		{
 			this.module = module;
@@ -49,8 +49,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Type = type;
 			this.handle = handle;
 
-			var param = module.metadata.GetParameter(handle);
-			this.attributes = param.Attributes;
+			if (module != null)
+			{
+				var param = module.metadata.GetParameter(handle);
+				this.attributes = param.Attributes;
+			}
+
 			if (!IsOptional)
 				decimalConstantState = ThreeState.False; // only optional parameters can be constants
 		}
@@ -61,10 +65,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (decimalConstantState == ThreeState.Unknown)
 				{
-					var parameterDef = module.metadata.GetParameter(handle);
-					decimalConstantState =
-						ThreeState.From(
-							DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
+					if (module != null)
+					{
+						var parameterDef = module.metadata.GetParameter(handle);
+						decimalConstantState =
+							ThreeState.From(
+								DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
+					}
 				}
 
 				return decimalConstantState == ThreeState.True;
@@ -76,25 +83,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region Attributes
 
-		public IEnumerable<IAttribute> GetAttributes()
+		public IEnumerable<IAttribute?> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
-			var metadata = module.metadata;
-			var parameter = metadata.GetParameter(handle);
-
-			if (IsOptional && !HasConstantValueInSignature)
-				b.Add(KnownAttribute.Optional);
-
-			if (!IsOut && !IsIn)
+			if (module != null)
 			{
-				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
-					b.Add(KnownAttribute.In);
-				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
-					b.Add(KnownAttribute.Out);
-			}
+				var metadata = module.metadata;
+				var parameter = metadata.GetParameter(handle);
 
-			b.Add(parameter.GetCustomAttributes(), SymbolKind.Parameter);
-			b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
+				if (IsOptional && !HasConstantValueInSignature)
+					b.Add(KnownAttribute.Optional);
+
+				if (!IsOut && !IsIn)
+				{
+					if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
+						b.Add(KnownAttribute.In);
+					if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
+						b.Add(KnownAttribute.Out);
+				}
+
+				b.Add(parameter.GetCustomAttributes(), SymbolKind.Parameter);
+				b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
+			}
 
 			return b.Build();
 		}
@@ -120,7 +130,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public string Name {
 			get {
-				string name = LazyInit.VolatileRead(ref this.name);
+				string? name = LazyInit.VolatileRead(ref this.name);
 				if (name != null)
 					return name;
 				var metadata = module.metadata;
@@ -131,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IVariable.IsConst => false;
 
-		public object GetConstantValue(bool throwOnInvalidMetadata)
+		public object? GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			try
 			{
@@ -167,7 +177,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				{
 					constantValueInSignatureState = IsDecimalConstant
 						? ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module))
-						: ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
+						: ThreeState.From(module != null && !module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
 				}
 
 				return constantValueInSignatureState == ThreeState.True;
@@ -182,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return ReferenceKind.None;
 			if ((attributes & inOut) == ParameterAttributes.Out)
 				return ReferenceKind.Out;
-			if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0)
+			if (module != null && (module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0)
 			{
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);

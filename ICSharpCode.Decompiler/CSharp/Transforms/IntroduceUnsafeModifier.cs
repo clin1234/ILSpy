@@ -26,17 +26,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	internal sealed class IntroduceUnsafeModifier : DepthFirstAstVisitor<bool>, IAstTransform
 	{
-		public void Run(AstNode compilationUnit, TransformContext context)
+		public void Run(AstNode? compilationUnit, TransformContext context)
 		{
 			compilationUnit.AcceptVisitor(this);
 		}
 
-		public static bool IsUnsafe(AstNode node)
+		public static bool IsUnsafe(AstNode? node)
 		{
 			return node.AcceptVisitor(new IntroduceUnsafeModifier());
 		}
 
-		protected override bool VisitChildren(AstNode node)
+		protected override bool VisitChildren(AstNode? node)
 		{
 			bool result = false;
 			AstNode next;
@@ -57,13 +57,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 
-		public override bool VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression)
+		public override bool VisitPointerReferenceExpression(PointerReferenceExpression? pointerReferenceExpression)
 		{
 			base.VisitPointerReferenceExpression(pointerReferenceExpression);
 			return true;
 		}
 
-		public override bool VisitSizeOfExpression(SizeOfExpression sizeOfExpression)
+		public override bool VisitSizeOfExpression(SizeOfExpression? sizeOfExpression)
 		{
 			// C# sizeof(MyStruct) requires unsafe{}
 			// (not for sizeof(int), but that gets constant-folded and thus decompiled to 4)
@@ -71,19 +71,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		public override bool VisitComposedType(ComposedType composedType)
+		public override bool VisitComposedType(ComposedType? composedType)
 		{
 			if (composedType.PointerRank > 0)
 				return true;
 			return base.VisitComposedType(composedType);
 		}
 
-		public override bool VisitFunctionPointerType(FunctionPointerAstType functionPointerType)
+		public override bool VisitFunctionPointerType(FunctionPointerAstType? functionPointerType)
 		{
 			return true;
 		}
 
-		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
+		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression? unaryOperatorExpression)
 		{
 			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 			switch (unaryOperatorExpression.Operator)
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
+		public override bool VisitMemberReferenceExpression(MemberReferenceExpression? memberReferenceExpression)
 		{
 			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
 			if (memberReferenceExpression.Target is UnaryOperatorExpression {
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 
-		public override bool VisitIdentifierExpression(IdentifierExpression identifierExpression)
+		public override bool VisitIdentifierExpression(IdentifierExpression? identifierExpression)
 		{
 			bool result = base.VisitIdentifierExpression(identifierExpression);
 			var rr = identifierExpression.GetResolveResult();
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 
-		public override bool VisitStackAllocExpression(StackAllocExpression stackAllocExpression)
+		public override bool VisitStackAllocExpression(StackAllocExpression? stackAllocExpression)
 		{
 			bool result = base.VisitStackAllocExpression(stackAllocExpression);
 			var rr = stackAllocExpression.GetResolveResult();
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 
-		public override bool VisitInvocationExpression(InvocationExpression invocationExpression)
+		public override bool VisitInvocationExpression(InvocationExpression? invocationExpression)
 		{
 			bool result = base.VisitInvocationExpression(invocationExpression);
 			var rr = invocationExpression.GetResolveResult();
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 
-		public override bool VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer)
+		public override bool VisitFixedVariableInitializer(FixedVariableInitializer? fixedVariableInitializer)
 		{
 			base.VisitFixedVariableInitializer(fixedVariableInitializer);
 			return true;

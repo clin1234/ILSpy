@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -41,6 +42,7 @@ using InvocationExpression = ICSharpCode.Decompiler.CSharp.Syntax.InvocationExpr
 using LambdaExpression = ICSharpCode.Decompiler.CSharp.Syntax.LambdaExpression;
 using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
 using SwitchExpression = ICSharpCode.Decompiler.CSharp.Syntax.SwitchExpression;
+using SwitchSection = ICSharpCode.Decompiler.IL.SwitchSection;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -112,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.typeInference = new TypeInference(compilation) { Algorithm = TypeInferenceAlgorithm.Improved };
 		}
 
-		public AstType ConvertType(IType type)
+		public AstType? ConvertType(IType type)
 		{
 			var astType = astBuilder.ConvertType(type);
 			Debug.Assert(astType.Annotation<TypeResolveResult>() != null);
@@ -166,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public TranslatedExpression Translate(ILInstruction inst, IType typeHint = null)
+		public TranslatedExpression Translate(ILInstruction inst, IType? typeHint = null)
 		{
 			Debug.Assert(inst != null);
 			cancellationToken.ThrowIfCancellationRequested();
@@ -233,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal ExpressionWithResolveResult ConvertVariable(ILVariable variable)
 		{
-			Expression expr;
+			Expression? expr;
 			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
 				expr = new ThisReferenceExpression();
 			else
@@ -283,7 +285,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal ILFunction ResolveLocalFunction(IMethod method)
+		internal ILFunction? ResolveLocalFunction(IMethod method)
 		{
 			Debug.Assert(method.IsLocalFunction);
 			method = (IMethod)((IMethod)method.MemberDefinition).ReducedFrom.MemberDefinition;
@@ -334,7 +336,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool targetCasted = false;
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
-			bool IsAmbiguousAccess(out MemberResolveResult result)
+			bool IsAmbiguousAccess(out MemberResolveResult? result)
 			{
 				if (targetResolveResult == null)
 				{
@@ -353,7 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				       !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure);
 			}
 
-			MemberResolveResult mrr;
+			MemberResolveResult? mrr;
 			while (IsAmbiguousAccess(out mrr))
 			{
 				if (!requireTarget)
@@ -389,7 +391,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(mrr);
 		}
 
-		TranslatedExpression IsType(IsInst inst)
+		TranslatedExpression IsType(IsInst? inst)
 		{
 			var arg = Translate(inst.Argument);
 			arg = UnwrapBoxingConversion(arg);
@@ -800,7 +802,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				       || AllStoresUseConsistentType(v.StoreInstructions, type);
 			}
 
-			bool IsOtherValueType(IType type)
+			static bool IsOtherValueType(IType type)
 			{
 				return type.IsReferenceType == false && type.GetStackType() == StackType.O;
 			}
@@ -864,7 +866,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				IType boolType = compilation.FindType(KnownTypeCode.Boolean);
 				TranslatedExpression expr = CallUnsafeIntrinsic(
 					name: methodName,
-					arguments: new Expression[] { left, right },
+					arguments: new Expression?[] { left, right },
 					returnType: boolType,
 					inst: inst
 				);
@@ -1240,7 +1242,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return null;
 			if (!(inst.LeftInputType == StackType.I && inst.RightInputType == StackType.I))
 				return null;
-			PointerType pointerType;
+			PointerType? pointerType;
 			ILInstruction byteOffsetInst;
 			TranslatedExpression byteOffsetExpr;
 			if (left.Type.Kind == TypeKind.Pointer)
@@ -1315,7 +1317,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			    inst.RightInputType == StackType.Ref)
 			{
 				// ref - ref => i
-				return CallUnsafeIntrinsic("ByteOffset", new Expression[] {
+				return CallUnsafeIntrinsic("ByteOffset", new Expression?[] {
 					// ByteOffset() expects the parameters the wrong way around, so order using named arguments
 					new NamedArgumentExpression("target", left.Expression),
 					new NamedArgumentExpression("origin", right.Expression)
@@ -1381,14 +1383,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					left = Translate(offsetInst);
 					left = ConvertArrayIndex(left, inst.LeftInputType, allowIntPtr: true);
-					return CallUnsafeIntrinsic("Add", new Expression[] {
+					return CallUnsafeIntrinsic("Add", new Expression?[] {
 						new NamedArgumentExpression("elementOffset", left),
 						new NamedArgumentExpression("source", right)
 					}, brt, inst);
 				}
 
 				left = ConvertArrayIndex(left, inst.LeftInputType, allowIntPtr: true);
-				return CallUnsafeIntrinsic("AddByteOffset", new Expression[] {
+				return CallUnsafeIntrinsic("AddByteOffset", new Expression?[] {
 					new NamedArgumentExpression("byteOffset", left.Expression),
 					new NamedArgumentExpression("source", right)
 				}, brt, inst);
@@ -1407,8 +1409,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType,
-			ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
+		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression?[] arguments, IType returnType,
+			ILInstruction? inst = null, IEnumerable<IType>? typeArguments = null)
 		{
 			var target = new MemberReferenceExpression {
 				Target =
@@ -2134,7 +2136,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 						// emit Unsafe.AsPointer() intrinsic:
 						return CallUnsafeIntrinsic("AsPointer",
-							arguments: new Expression[] { arg },
+							arguments: new Expression?[] { arg },
 							returnType: new PointerType(compilation.FindType(KnownTypeCode.Void)),
 							inst: inst);
 					}
@@ -2321,7 +2323,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
 			// Create AnonymousMethodExpression and prepare parameters
-			AnonymousMethodExpression ame = new() {
+			AnonymousMethodExpression? ame = new() {
 				IsAsync = function.IsAsync
 			};
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
@@ -2366,11 +2368,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				ame.HasParameterList = false;
 			}
 
-			Expression replacement;
+			Expression? replacement;
 			IType inferredReturnType;
 			if (isLambda)
 			{
-				LambdaExpression lambda = new() {
+				LambdaExpression? lambda = new() {
 					IsAsync = ame.IsAsync
 				};
 				lambda.CopyAnnotationsFrom(ame);
@@ -2418,7 +2420,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(function);
 		}
 
-		IType InferReturnType(BlockStatement body)
+		IType InferReturnType(BlockStatement? body)
 		{
 			var returnExpressions = new List<ResolveResult>();
 			CollectReturnExpressions(body);
@@ -2427,7 +2429,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Failure to infer a return type does not make the lambda invalid,
 			// so we can ignore the 'success' value
 
-			void CollectReturnExpressions(AstNode node)
+			void CollectReturnExpressions(AstNode? node)
 			{
 				switch (node)
 				{
@@ -2468,7 +2470,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return SpecialType.UnknownType;
 		}
 
-		IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
+		IEnumerable<ParameterDeclaration?> MakeParameters(IReadOnlyList<IParameter?> parameters, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 			int i = 0;
@@ -2513,7 +2515,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var blockReturnType = InferReturnType(body);
 				var delegateType = new ParameterizedType(systemFuncType, blockReturnType);
 				var invocationTarget = new CastExpression(ConvertType(delegateType), ame);
-				ResolveResult rr;
+				ResolveResult? rr;
 				// This might happen when trying to decompile an assembly built for a target framework
 				// where System.Func<T> does not exist yet.
 				if (systemFuncType.Kind == TypeKind.Unknown)
@@ -2541,7 +2543,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal TranslatedExpression TranslateTarget(ILInstruction target, bool nonVirtualInvocation,
+		internal TranslatedExpression TranslateTarget(ILInstruction? target, bool nonVirtualInvocation,
 			bool memberStatic, IType memberDeclaringType)
 		{
 			// If references are missing member.IsStatic might not be set correctly.
@@ -2691,7 +2693,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						allowImplicitConversion: true);
 				return CallUnsafeIntrinsic(
 					name: "ReadUnaligned",
-					arguments: new Expression[] { pointer },
+					arguments: new Expression?[] { pointer },
 					returnType: loadType,
 					inst: inst,
 					typeArguments: new[] { loadType }
@@ -2706,7 +2708,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult LdObj(ILInstruction address, IType loadType)
 		{
-			IType addressTypeHint = address.ResultType == StackType.Ref
+			IType? addressTypeHint = address.ResultType == StackType.Ref
 				? new ByReferenceType(loadType)
 				: new PointerType(loadType);
 			var target = Translate(address, typeHint: addressTypeHint);
@@ -2770,7 +2772,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return UnalignedStObj(inst);
 			}
 
-			IType pointerTypeHint = inst.Target.ResultType == StackType.Ref
+			IType? pointerTypeHint = inst.Target.ResultType == StackType.Ref
 				? new ByReferenceType(inst.Type)
 				: new PointerType(inst.Type);
 			var pointer = Translate(inst.Target, typeHint: pointerTypeHint);
@@ -2826,7 +2828,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return CallUnsafeIntrinsic(
 				name: "WriteUnaligned",
-				arguments: new Expression[] { pointer, value },
+				arguments: new Expression?[] { pointer, value },
 				returnType: compilation.FindType(KnownTypeCode.Void),
 				inst: inst
 			);
@@ -2842,7 +2844,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			arrayExpr = EnsureTargetNotNullable(arrayExpr, inst.Array);
-			string memberName;
+			string? memberName;
 			KnownTypeCode code;
 			if (inst.ResultType == StackType.I4)
 			{
@@ -2855,8 +2857,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				code = KnownTypeCode.Int64;
 			}
 
-			IProperty member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
-			ResolveResult rr = member == null
+			IProperty? member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
+			ResolveResult? rr = member == null
 				? new ResolveResult(compilation.FindType(code))
 				: new MemberResolveResult(arrayExpr.ResolveResult, member);
 			return new MemberReferenceExpression(arrayExpr.Expression, memberName)
@@ -3199,7 +3201,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			    stloc.Variable != final.Variable
 			    || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
-			InitializedObjectResolveResult initObjRR;
+			InitializedObjectResolveResult? initObjRR;
 			TranslatedExpression expr;
 			// Detect type of initializer
 			switch (stloc.Value)
@@ -3235,13 +3237,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.WithILInstruction(block);
 		}
 
-		private ArrayInitializerExpression BuildArrayInitializerExpression(Block block,
+		private ArrayInitializerExpression? BuildArrayInitializerExpression(Block block,
 			InitializedObjectResolveResult initObjRR)
 		{
 			var elementsStack = new Stack<List<TranslatedExpression>>();
 			var elements = new List<TranslatedExpression>(block.Instructions.Count);
 			elementsStack.Push(elements);
-			List<IL.Transforms.AccessPathElement> currentPath = null;
+			List<AccessPathElement> currentPath = null;
 			var indexVariables = new Dictionary<ILVariable, ILInstruction>();
 			foreach (var inst in block.Instructions.Skip(1))
 			{
@@ -3253,10 +3255,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 				// Get current path
-				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, settings: settings);
+				var info = AccessPathElement.GetAccessPath(inst, initObjRR.Type, settings: settings);
 				// This should not happen, because the IL transform should not create invalid access paths,
 				// but we leave it here as sanity check.
-				if (info.Kind == IL.Transforms.AccessPathKind.Invalid)
+				if (info.Kind == AccessPathKind.Invalid)
 					continue;
 				// Calculate "difference" to previous path
 				if (currentPath == null)
@@ -3289,7 +3291,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
 				switch (info.Kind)
 				{
-					case IL.Transforms.AccessPathKind.Adder:
+					case AccessPathKind.Adder:
 						Debug.Assert(lastElement.Member is IMethod);
 						elementsStack.Peek().Add(
 							new CallBuilder(this, typeSystem, settings)
@@ -3298,7 +3300,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								.WithILInstruction(inst)
 						);
 						break;
-					case IL.Transforms.AccessPathKind.Setter:
+					case AccessPathKind.Setter:
 						Debug.Assert(lastElement.Member is IProperty or IField);
 						if (lastElement.Indices?.Length > 0)
 						{
@@ -3351,8 +3353,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		TranslatedExpression MakeInitializerAssignment(InitializedObjectResolveResult rr,
-			IL.Transforms.AccessPathElement memberPath,
-			IL.Transforms.AccessPathElement valuePath, List<TranslatedExpression> values,
+			AccessPathElement memberPath,
+			AccessPathElement valuePath, List<TranslatedExpression> values,
 			Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
 			TranslatedExpression value;
@@ -3375,7 +3377,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			if (valuePath.Indices?.Length > 0)
 			{
-				Expression index = new IndexerExpression(null,
+				Expression? index = new IndexerExpression(null,
 					GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
 				return new AssignmentExpression(index, value)
 					.WithRR(new MemberResolveResult(rr, valuePath.Member))
@@ -3455,12 +3457,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			ArraySpecifier[] additionalSpecifiers;
-			AstType typeExpression;
+			ArraySpecifier?[] additionalSpecifiers;
+			AstType? typeExpression;
 			if (settings.AnonymousTypes && type.ContainsAnonymousType())
 			{
 				typeExpression = null;
-				additionalSpecifiers = new[] { new ArraySpecifier() };
+				additionalSpecifiers = new ArraySpecifier?[] { new ArraySpecifier() };
 			}
 			else
 			{
@@ -3536,7 +3538,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				while (expectedOffset < offset)
 				{
 					initializer.Elements.Add(Translate(
-						IL.Transforms.TransformArrayInitializers.GetNullExpression(elementType),
+						TransformArrayInitializers.GetNullExpression(elementType),
 						typeHint: elementType));
 					expectedOffset++;
 				}
@@ -3683,13 +3685,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			BinaryOperatorType op = BinaryOperatorType.Any;
 			TranslatedExpression rhs = default(TranslatedExpression);
 
-			if (inst.MatchLogicAnd(out var lhsInst, out var rhsInst) && !rhsInst.MatchLdcI4(1))
+			if (inst.MatchLogicAnd(out ILInstruction _, out var rhsInst) && !rhsInst.MatchLdcI4(1))
 			{
 				op = BinaryOperatorType.ConditionalAnd;
 				Debug.Assert(rhsInst == inst.TrueInst);
 				rhs = trueBranch;
 			}
-			else if (inst.MatchLogicOr(out lhsInst, out rhsInst) && !rhsInst.MatchLdcI4(0))
+			else if (inst.MatchLogicOr(out ILInstruction _, out rhsInst) && !rhsInst.MatchLdcI4(0))
 			{
 				op = BinaryOperatorType.ConditionalOr;
 				Debug.Assert(rhsInst == inst.FalseInst);
@@ -3809,7 +3811,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				type = value.Type;
 			}
 
-			IL.SwitchSection defaultSection = inst.GetDefaultSection();
+			SwitchSection? defaultSection = inst.GetDefaultSection();
 			SwitchExpression switchExpr = new() {
 				Expression = value
 			};
@@ -3852,7 +3854,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(resultType));
 
-			Expression TranslateSectionBody(IL.SwitchSection section)
+			Expression? TranslateSectionBody(SwitchSection? section)
 			{
 				var body = Translate(section.Body, resultType);
 				return body.ConvertTo(resultType, this, allowImplicitConversion: true);
@@ -3871,7 +3873,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitAwait(Await inst, TranslationContext context)
 		{
-			IType expectedType = null;
+			IType? expectedType = null;
 			if (inst.GetAwaiterMethod != null)
 			{
 				expectedType = inst.GetAwaiterMethod.IsStatic
@@ -3893,7 +3895,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(inst.GetResultMethod?.ReturnType ?? SpecialType.UnknownType));
+				.WithRR(new ResolveResult(inst.GetResultMethod.ReturnType ?? SpecialType.UnknownType));
 		}
 
 		protected internal override TranslatedExpression VisitNullableRewrap(NullableRewrap inst,
@@ -3965,7 +3967,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			DynamicInvokeConstructorInstruction inst, TranslationContext context)
 		{
 			if (!(inst.ArgumentInfo[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType) &&
-			      IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0],
+			      TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0],
 				      out var constructorType)))
 				return ErrorExpression("Could not detect static type for DynamicInvokeConstructorInstruction");
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
@@ -3977,7 +3979,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(
 			DynamicInvokeMemberInstruction inst, TranslationContext context)
 		{
-			Expression targetExpr;
+			Expression? targetExpr;
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSimpleName) &&
 			    target.Expression is ThisReferenceExpression)
@@ -4014,7 +4016,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsOut));
 
 			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsStaticType) &&
-			    IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType))
+			    TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType))
 			{
 				return new TypeReferenceExpression(ConvertType(callTargetType))
 					.WithoutILInstruction()
@@ -4367,7 +4369,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var invocation = new InvocationExpression {
 				Target = functionPointer
 			};
-			foreach ((ILInstruction argInst, (IType paramType, ReferenceKind paramRefKind)) in inst.Arguments.Zip(
+			foreach ((ILInstruction argInst, (IType? paramType, ReferenceKind paramRefKind)) in inst.Arguments.Zip(
 				         fpt.ParameterTypes.Zip(fpt.ParameterReferenceKinds)))
 			{
 				var arg = Translate(argInst, typeHint: paramType)
@@ -4403,7 +4405,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var inits = inst.Init;
 			int initPos = 0;
 
-			Dictionary<ILVariable, ILVariable> conversionMapping = new();
+			Dictionary<ILVariable?, ILVariable?> conversionMapping = new();
 
 			foreach (var conv in inst.Conversions.Instructions)
 			{
@@ -4418,7 +4420,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Void)));
 
-			TupleExpression ConstructTuple(MatchInstruction matchInstruction)
+			TupleExpression? ConstructTuple(MatchInstruction matchInstruction)
 			{
 				var expr = new TupleExpression();
 				foreach (var subPattern in matchInstruction.SubPatterns.Cast<MatchInstruction>())
@@ -4447,7 +4449,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return expr;
 			}
 
-			TranslatedExpression ConstructAssignmentTarget(ILInstruction assignment, ILVariable value)
+			TranslatedExpression ConstructAssignmentTarget(ILInstruction? assignment, ILVariable value)
 			{
 				switch (assignment)
 				{
@@ -4533,7 +4535,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst,
 			TranslationContext context)
 		{
-			string message = "Error";
+			string? message = "Error";
 			if (inst.StartILOffset != 0)
 			{
 				message += $" near IL_{inst.StartILOffset:x4}";

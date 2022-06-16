@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Creates a new documentation element.
 		/// </summary>
-		public XmlDocumentationElement(XElement element, IEntity? declaringEntity, Func<string, IEntity?>? crefResolver)
+		public XmlDocumentationElement(XElement element, IEntity declaringEntity, Func<string, IEntity?>? crefResolver)
 		{
 			this.element = element ?? throw new ArgumentNullException(nameof(element));
 			DeclaringEntity = declaringEntity;
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Creates a new documentation element.
 		/// </summary>
-		public XmlDocumentationElement(string text, IEntity? declaringEntity)
+		public XmlDocumentationElement(string text, IEntity declaringEntity)
 		{
 			DeclaringEntity = declaringEntity;
 			textContent = text ?? throw new ArgumentNullException(nameof(text));
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// Gets the entity on which this documentation was originally declared.
 		/// May return null.
 		/// </summary>
-		public IEntity? DeclaringEntity { get; }
+		public IEntity DeclaringEntity { get; }
 
 		/// <summary>
 		/// Gets the entity referenced by the 'cref' attribute.
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 
 		static List<XmlDocumentationElement> CreateElements(IEnumerable<XObject?> childObjects,
-			IEntity? declaringEntity, Func<string, IEntity?>? crefResolver, int nestingLevel)
+			IEntity declaringEntity, Func<string, IEntity?>? crefResolver, int nestingLevel)
 		{
 			List<XmlDocumentationElement> list = new();
 			foreach (var child in childObjects)

@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
+		public MemberReferenceExpression(Expression? target, string memberName, IEnumerable<AstType?>? arguments = null)
 		{
 			AddChild(target, Roles.TargetExpression);
 			MemberName = memberName;
@@ -50,12 +50,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(
+		public MemberReferenceExpression(Expression? target, string memberName, params AstType[] arguments) : this(
 			target, memberName, (IEnumerable<AstType>)arguments)
 		{
 		}
 
-		public Expression Target {
+		public Expression? Target {
 			get {
 				return GetChildByRole(Roles.TargetExpression);
 			}
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier MemberNameToken {
+		public Identifier? MemberNameToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LChevron); }
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
+		public AstNodeCollection<AstType?> TypeArguments {
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMemberReferenceExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is MemberReferenceExpression o && this.Target.DoMatch(o.Target, match) &&
 			       MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);

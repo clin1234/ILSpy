@@ -52,6 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets the name of the key file being used for strong name signing. Can be null if no file is available.
 		/// </summary>
-		string StrongNameKeyFile { get; }
+		string? StrongNameKeyFile { get; }
 	}
 }

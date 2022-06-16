@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.Solution
 
 				var referencesItemGroups = projectDoc.Root
 					.Elements(ProjectFileNamespace + "ItemGroup")
-					.Where(e => e.Elements(ProjectFileNamespace + "Reference").Any());
+					.Where(static e => e.Elements(ProjectFileNamespace + "Reference").Any());
 
 				foreach (var itemGroup in referencesItemGroups)
 				{

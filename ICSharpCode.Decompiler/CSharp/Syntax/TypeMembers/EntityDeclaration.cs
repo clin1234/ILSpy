@@ -25,10 +25,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class EntityDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = new("Attribute", null);
-		public static readonly Role<CSharpModifierToken> ModifierRole = new("Modifier", null);
+		public static readonly Role<AttributeSection?> AttributeRole = new("Attribute", null);
+		public static readonly Role<CSharpModifierToken?> ModifierRole = new("Modifier", null);
 
-		public static readonly Role<AstType> PrivateImplementationTypeRole =
+		public static readonly Role<AstType?> PrivateImplementationTypeRole =
 			new("PrivateImplementationType", AstType.Null);
 
 		public override NodeType NodeType {
@@ -46,25 +46,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetModifiers(this, value); }
 		}
 
-		public IEnumerable<CSharpModifierToken> ModifierTokens {
+		public IEnumerable<CSharpModifierToken?> ModifierTokens {
 			get { return GetChildrenByRole(ModifierRole); }
 		}
 
-		public virtual string Name {
+		public virtual string? Name {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier)?.Name;
 			}
 			set {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value, TextLocation.Empty));
 			}
 		}
 
-		public virtual Identifier NameToken {
+		public virtual Identifier? NameToken {
 			get { return GetChildByRole(Roles.Identifier); }
 			set { SetChildByRole(Roles.Identifier, value); }
 		}
 
-		public virtual AstType ReturnType {
+		public virtual AstType? ReturnType {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
@@ -81,9 +81,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal static Modifiers GetModifiers(AstNode node)
 		{
 			Modifiers m = 0;
-			foreach (CSharpModifierToken t in node.GetChildrenByRole(ModifierRole))
+			foreach (CSharpModifierToken? t in node.GetChildrenByRole(ModifierRole))
 			{
-				m |= t.Modifier;
+				if (t != null)
+				{
+					m |= t.Modifier;
+				}
 			}
 
 			return m;
@@ -92,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal static void SetModifiers(AstNode node, Modifiers newValue)
 		{
 			Modifiers oldValue = GetModifiers(node);
-			AstNode insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
+			AstNode? insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
 			foreach (Modifiers m in CSharpModifierToken.AllModifiers)
 			{
 				if ((m & newValue) != 0)
@@ -107,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					else
 					{
 						// Modifier already exists
-						insertionPos = node.GetChildrenByRole(ModifierRole).First(t => t.Modifier == m);
+						insertionPos = node.GetChildrenByRole(ModifierRole).First(t => t != null && t.Modifier == m);
 					}
 				}
 				else
@@ -115,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if ((m & oldValue) != 0)
 					{
 						// Modifier was removed
-						node.GetChildrenByRole(ModifierRole).First(t => t.Modifier == m).Remove();
+						node.GetChildrenByRole(ModifierRole).First(t => t != null && t.Modifier == m)?.Remove();
 					}
 				}
 			}

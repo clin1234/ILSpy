@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// (even if the pattern fails to match!).
 		/// The pattern matching instruction evaluates to 1 (as I4) if the pattern matches, or 0 otherwise.
 		/// </summary>
-		public static bool IsPatternMatch(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? testedOperand)
+		public static bool IsPatternMatch(ILInstruction inst, [NotNullWhen(true)] out ILInstruction testedOperand)
 		{
 			switch (inst)
 			{
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(SubPatterns.Count >= NumPositionalPatterns);
 			foreach (var subPattern in SubPatterns)
 			{
-				if (!IsPatternMatch(subPattern, out ILInstruction? operand))
+				if (!IsPatternMatch(subPattern, out ILInstruction operand))
 					throw new InvalidOperationException("Sub-Pattern must be a valid pattern");
 				// the first child is TestedOperand
 				int subPatternIndex = subPattern.ChildIndex - 1;
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal static bool IsDeconstructMethod(IMethod? method)
+		internal static bool IsDeconstructMethod(IMethod method)
 		{
 			if (method is not { Name: "Deconstruct" })
 				return false;

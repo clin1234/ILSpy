@@ -12,7 +12,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
-	internal static partial class SRMExtensions
+	public static partial class SRMExtensions
 	{
 		public static bool HasFlag(this SRM.TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler
 			       methodDefinition.RelativeVirtualAddress > 0;
 		}
 
-		public static int GetCodeSize(this SRM.MethodBodyBlock body)
+		public static int GetCodeSize(this SRM.MethodBodyBlock? body)
 		{
 			ArgumentNullException.ThrowIfNull(body);
 
@@ -392,7 +392,7 @@ namespace ICSharpCode.Decompiler
 
 			if (declaringTypeHandle.IsNil)
 			{
-				string ns;
+				string? ns;
 				try
 				{
 					ns = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler
 				reader.GetString(td.Name), out var typeParameterCount);
 			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil)
 			{
-				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
+				string? @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
 				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			}
 
@@ -439,7 +439,7 @@ namespace ICSharpCode.Decompiler
 				return outerType.GetFullTypeName(metadata).NestedType(name, typeParameterCount);
 			}
 
-			string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
+			string? ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
 			return new TopLevelTypeName(ns, name, typeParameterCount);
 		}
 
@@ -501,12 +501,12 @@ namespace ICSharpCode.Decompiler
 
 		sealed class FieldValueSizeDecoder : SRM.ISignatureTypeProvider<int, GenericContext>
 		{
-			readonly MetadataModule module;
+			readonly MetadataModule? module;
 			readonly int pointerSize;
 
-			public FieldValueSizeDecoder(ICompilation typeSystem = null)
+			public FieldValueSizeDecoder(ICompilation? typeSystem = null)
 			{
-				this.module = (MetadataModule)typeSystem?.MainModule;
+				this.module = typeSystem?.MainModule as MetadataModule;
 				if (module == null)
 					this.pointerSize = IntPtr.Size;
 				else
@@ -567,10 +567,10 @@ namespace ICSharpCode.Decompiler
 			public int GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle,
 				byte rawTypeKind)
 			{
-				var typeDef = module?.ResolveType(handle, new GenericContext()).GetDefinition();
+				var typeDef = module?.ResolveType(handle, new GenericContext())?.GetDefinition();
 				if (typeDef == null || typeDef.MetadataToken.IsNil)
 					return 0;
-				reader = typeDef.ParentModule.PEFile.Metadata;
+				reader = typeDef.ParentModule?.PEFile?.Metadata;
 				var td = reader.GetTypeDefinition((SRM.TypeDefinitionHandle)typeDef.MetadataToken);
 				return td.GetLayout().Size;
 			}

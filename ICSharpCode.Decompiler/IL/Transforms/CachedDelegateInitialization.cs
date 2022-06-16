@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		BlockTransformContext context;
 
-		public void Run(Block block, BlockTransformContext context)
+		public void Run(Block? block, BlockTransformContext context)
 		{
 			this.context = context;
 			if (!context.Settings.AnonymousMethods)

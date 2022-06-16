@@ -22,6 +22,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (beforeExceptionCaptureBlock == null)
 					continue;
 
-				(Block noThrowBlock, Block exceptionCaptureBlock, ILVariable objectVariableCopy) =
+				(Block? noThrowBlock, Block exceptionCaptureBlock, ILVariable objectVariableCopy) =
 					FindBlockAfterFinally(context, beforeExceptionCaptureBlock, objectVariable);
 				if (noThrowBlock == null || exceptionCaptureBlock == null)
 					continue;
@@ -128,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 
 				StateRangeAnalysis sra = new(StateRangeAnalysisMode.AwaitInFinally, null, stateVariable);
-				sra.AssignStateRanges(noThrowBlock, Util.LongSet.Universe);
+				sra.AssignStateRanges(noThrowBlock, LongSet.Universe);
 				var mapping = sra.GetBlockStateSetMapping((BlockContainer)noThrowBlock.Parent);
 				var mappingForLeave = sra.GetBlockStateSetMappingForLeave();
 
@@ -163,7 +164,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							value = 0;
 						}
 
-						if (mapping.TryGetValue(value, out Block targetBlock))
+						if (mapping.TryGetValue(value, out Block? targetBlock))
 						{
 							context.Step(
 								$"branch to finally with state {value} => branch to state target " + targetBlock.Label,
@@ -200,8 +201,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			((BlockContainer)function.Body).SortBlocks(deleteUnreachableBlocks: true);
 
-			void MoveDominatedBlocksToContainer(Block newEntryPoint, Block endBlock, ControlFlowGraph graph,
-				BlockContainer targetContainer)
+			void MoveDominatedBlocksToContainer(Block newEntryPoint, Block? endBlock, ControlFlowGraph graph,
+				BlockContainer? targetContainer)
 			{
 				var node = graph.GetNode(newEntryPoint);
 				var endNode = endBlock == null ? null : graph.GetNode(endBlock);
@@ -210,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				foreach (var n in graph.cfg)
 				{
-					Block block = (Block)n.UserData;
+					Block? block = (Block)n.UserData;
 
 					if (node.Dominates(n))
 					{
@@ -225,7 +226,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			void MoveBlock(Block block, BlockContainer target)
+			void MoveBlock(Block block, BlockContainer? target)
 			{
 				context.Step($"Move {block.Label} to container at IL_{target.StartILOffset:x4}", target);
 				block.Remove();
@@ -294,7 +295,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		static (Block, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block,
+		static (Block?, Block, ILVariable) FindBlockAfterFinally(ILTransformContext context, Block block,
 			ILVariable objectVariable)
 		{
 			// Block IL_0327 (incoming: 2) {

@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class ForStatement : Statement
 	{
 		public static readonly TokenRole ForKeywordRole = new("for");
-		public static readonly Role<Statement> InitializerRole = new("Initializer", Null);
-		public static readonly Role<Statement> IteratorRole = new("Iterator", Null);
+		public static readonly Role<Statement?> InitializerRole = new("Initializer", Null);
+		public static readonly Role<Statement?> IteratorRole = new("Iterator", Null);
 
 		public CSharpTokenNode ForToken {
 			get { return GetChildByRole(ForKeywordRole); }
@@ -49,16 +49,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Note: this contains multiple statements for "for (a = 2, b = 1; a > b; a--)", but contains
 		/// only a single statement for "for (int a = 2, b = 1; a > b; a--)" (a single VariableDeclarationStatement with two variables)
 		/// </summary>
-		public AstNodeCollection<Statement> Initializers {
+		public AstNodeCollection<Statement?> Initializers {
 			get { return GetChildrenByRole(InitializerRole); }
 		}
 
-		public Expression Condition {
+		public Expression? Condition {
 			get { return GetChildByRole(Roles.Condition); }
 			set { SetChildByRole(Roles.Condition, value); }
 		}
 
-		public AstNodeCollection<Statement> Iterators {
+		public AstNodeCollection<Statement?> Iterators {
 			get { return GetChildrenByRole(IteratorRole); }
 		}
 
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
+		public Statement? EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			set { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitForStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ForStatement o && this.Initializers.DoMatch(o.Initializers, match) &&
 			       this.Condition.DoMatch(o.Condition, match)

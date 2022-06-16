@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public UncheckedExpression(Expression expression)
+		public UncheckedExpression(Expression? expression)
 		{
 			AddChild(expression, Roles.Expression);
 		}
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUncheckedExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is UncheckedExpression o && this.Expression.DoMatch(o.Expression, match);
 		}

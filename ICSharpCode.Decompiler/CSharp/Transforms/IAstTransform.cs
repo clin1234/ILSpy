@@ -22,6 +22,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	public interface IAstTransform
 	{
-		void Run(AstNode rootNode, TransformContext context);
+		void Run(AstNode? rootNode, TransformContext context);
 	}
 }

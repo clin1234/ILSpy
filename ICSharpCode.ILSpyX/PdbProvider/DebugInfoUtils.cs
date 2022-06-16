@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return null;
 		}
 
-		public static IDebugInfoProvider? FromFile(PEFile module, string pdbFileName)
+		public static IDebugInfoProvider? FromFile(PEFile module, string? pdbFileName)
 		{
 			if (string.IsNullOrEmpty(pdbFileName))
 				return null;
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 			return false;
 		}
 
-		static Stream? OpenStream(string fileName)
+		static Stream? OpenStream(string? fileName)
 		{
 			if (!File.Exists(fileName))
 				return null;

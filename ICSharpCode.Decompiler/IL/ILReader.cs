@@ -26,6 +26,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -44,14 +45,14 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ICompilation compilation;
 		readonly MetadataReader metadata;
 		readonly MetadataModule module;
-		MethodBodyBlock body;
+		MethodBodyBlock? body;
 
 		IType constrainedPrefix;
 		int currentInstructionStart;
 		ImmutableStack<ILVariable> currentStack;
 
 		GenericContext genericContext;
-		List<ILInstruction> instructionBuilder;
+		List<ILInstruction?> instructionBuilder;
 		BitArray isBranchTarget;
 		ILVariable[] localVariables;
 		BlockContainer mainContainer;
@@ -65,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 		List<(ILVariable, ILVariable)> stackMismatchPairs;
 		IEnumerable<ILVariable> stackVariables;
 		UnionFind<ILVariable> unionFind;
-		Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
+		Dictionary<ExceptionRegion, ILVariable?> variableByExceptionHandler;
 
 		/// <summary>
 		/// Creates a new ILReader instance.
@@ -73,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="module">
 		/// The module used to resolve metadata tokens in the type system.
 		/// </param>
-		public ILReader(MetadataModule module)
+		public ILReader(MetadataModule? module)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.compilation = module.Compilation;
@@ -81,15 +82,15 @@ namespace ICSharpCode.Decompiler.IL
 			this.SequencePointCandidates = new List<int>();
 		}
 
-		public bool UseDebugSymbols { get; init; }
-		public DebugInfo.IDebugInfoProvider DebugInfo { get; init; }
+		public bool UseDebugSymbols { get; set; }
+		public IDebugInfoProvider? DebugInfo { get; init; }
 		public List<string> Warnings { get; } = new();
 
 		// List of candidate locations for sequence points. Includes empty il stack locations, any nop instructions, and the instruction following
 		// a call instruction. 
 		public List<int> SequencePointCandidates { get; private set; }
 
-		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body, GenericContext genericContext)
+		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock? body, GenericContext genericContext)
 		{
 			ArgumentNullException.ThrowIfNull(body);
 			if (methodDefinitionHandle.IsNil)
@@ -122,10 +123,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
-			this.instructionBuilder = new List<ILInstruction>();
+			this.instructionBuilder = new List<ILInstruction?>();
 			this.isBranchTarget = new BitArray(reader.Length);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
-			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable>();
+			this.variableByExceptionHandler = new Dictionary<ExceptionRegion, ILVariable?>();
 		}
 
 		EntityHandle ReadAndDecodeMetadataToken()
@@ -207,15 +208,15 @@ namespace ICSharpCode.Decompiler.IL
 					declaringType = new ParameterizedType(declaringType, declaringType.TypeParameters);
 				}
 
-				ILVariable ilVar = CreateILVariable(-1, declaringType, "this");
+				ILVariable? ilVar = CreateILVariable(-1, declaringType, "this");
 				ilVar.IsRefReadOnly = method.ThisIsRefReadOnly;
 				parameterVariables[paramIndex++] = ilVar;
 			}
 
 			while (paramIndex < parameterVariables.Length)
 			{
-				IParameter parameter = method.Parameters[paramIndex - offset];
-				ILVariable ilVar = CreateILVariable(paramIndex - offset, parameter.Type, parameter.Name);
+				IParameter? parameter = method.Parameters[paramIndex - offset];
+				ILVariable? ilVar = CreateILVariable(paramIndex - offset, parameter.Type, parameter.Name);
 				ilVar.IsRefReadOnly = parameter.IsIn;
 				parameterVariables[paramIndex] = ilVar;
 				paramIndex++;
@@ -237,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL
 				kind = VariableKind.Local;
 			}
 
-			ILVariable ilVar = new(kind, type, index);
+			ILVariable? ilVar = new(kind, type, index);
 			if (!UseDebugSymbols || DebugInfo == null ||
 			    !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name))
 			{
@@ -257,7 +258,7 @@ namespace ICSharpCode.Decompiler.IL
 			return ilVar;
 		}
 
-		ILVariable CreateILVariable(int index, IType parameterType, string name)
+		ILVariable? CreateILVariable(int index, IType parameterType, string name)
 		{
 			Debug.Assert(!parameterType.IsUnbound());
 			ITypeDefinition def = parameterType.GetDefinition();
@@ -453,7 +454,7 @@ namespace ICSharpCode.Decompiler.IL
 				StoreStackForOffset(start, ref currentStack);
 				currentInstructionStart = start;
 				bool startedWithEmptyStack = currentStack.IsEmpty;
-				ILInstruction decodedInstruction;
+				ILInstruction? decodedInstruction;
 				try
 				{
 					decodedInstruction = DecodeInstruction();
@@ -496,7 +497,7 @@ namespace ICSharpCode.Decompiler.IL
 			InsertStackAdjustments();
 		}
 
-		private bool IsSequencePointInstruction(ILInstruction instruction)
+		private bool IsSequencePointInstruction(ILInstruction? instruction)
 		{
 			if (instruction.OpCode == OpCode.Nop || this.instructionBuilder.Count > 0 &&
 			    this.instructionBuilder.Last().OpCode == OpCode.Call ||
@@ -523,7 +524,7 @@ namespace ICSharpCode.Decompiler.IL
 					dict.Add(a, b);
 			}
 
-			var newInstructions = new List<ILInstruction>();
+			var newInstructions = new List<ILInstruction?>();
 			foreach (var inst in instructionBuilder)
 			{
 				newInstructions.Add(inst);
@@ -531,7 +532,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					foreach (var additionalVar in dict[store.Variable])
 					{
-						ILInstruction value = new LdLoc(store.Variable);
+						ILInstruction? value = new LdLoc(store.Variable);
 						value = new Conv(value, additionalVar.StackType.ToPrimitiveType(), false, Sign.Signed);
 						newInstructions.Add(new StLoc(additionalVar, value) {
 							IsStackAdjustment = true,
@@ -546,7 +547,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Debugging helper: writes the decoded instruction stream interleaved with the inferred evaluation stack layout.
 		/// </summary>
-		public void WriteTypedIL(MethodDefinitionHandle method, MethodBodyBlock body,
+		public void WriteTypedIL(MethodDefinitionHandle method, MethodBodyBlock? body,
 			ITextOutput output, GenericContext genericContext = default, CancellationToken cancellationToken = default)
 		{
 			Init(method, body, genericContext);
@@ -594,7 +595,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Decodes the specified method body and returns an ILFunction.
 		/// </summary>
-		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body,
+		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock? body,
 			GenericContext genericContext = default, ILFunctionKind kind = ILFunctionKind.TopLevelFunction,
 			CancellationToken cancellationToken = default)
 		{
@@ -636,14 +637,14 @@ namespace ICSharpCode.Decompiler.IL
 			return function;
 		}
 
-		static ILInstruction UnpackPush(ILInstruction inst)
+		static ILInstruction UnpackPush(ILInstruction? inst)
 		{
 			if (inst.MatchStLoc(out ILVariable v, out ILInstruction inner) && v.Kind == VariableKind.StackSlot)
 				return inner;
 			return inst;
 		}
 
-		ILInstruction Neg()
+		ILInstruction? Neg()
 		{
 			switch (PeekStackType())
 			{
@@ -669,7 +670,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction DecodeInstruction()
+		ILInstruction? DecodeInstruction()
 		{
 			if (reader.RemainingBytes == 0)
 				return new InvalidBranch("Unexpected end of body");
@@ -1155,7 +1156,7 @@ namespace ICSharpCode.Decompiler.IL
 			return currentStack.Peek().StackType;
 		}
 
-		ILInstruction Push(ILInstruction inst)
+		ILInstruction? Push(ILInstruction inst)
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
 			IType type = compilation.FindType(inst.ResultType);
@@ -1331,7 +1332,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		private ILInstruction Return()
+		private ILInstruction? Return()
 		{
 			if (methodReturnStackType == StackType.Void)
 				return new Leave(mainContainer);
@@ -1363,7 +1364,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new InvalidExpression($"ldarga {v} (out-of-bounds)");
 		}
 
-		private ILInstruction Starg(int v)
+		private ILInstruction? Starg(int v)
 		{
 			if (v >= 0 && v < parameterVariables.Length)
 			{
@@ -1394,7 +1395,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new InvalidExpression($"ldloca {v} (out-of-bounds)");
 		}
 
-		private ILInstruction Stloc(int v)
+		private ILInstruction? Stloc(int v)
 		{
 			if (v >= 0 && v < localVariables.Length)
 			{
@@ -1407,13 +1408,13 @@ namespace ICSharpCode.Decompiler.IL
 			return new InvalidExpression($"stloc {v} (out-of-bounds)");
 		}
 
-		private ILInstruction LdElem(IType type)
+		private ILInstruction? LdElem(IType type)
 		{
 			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type) { DelayExceptions = true },
 				type));
 		}
 
-		private ILInstruction StElem(IType type)
+		private ILInstruction? StElem(IType type)
 		{
 			var value = Pop(type.GetStackType());
 			var index = Pop();
@@ -1421,7 +1422,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new StObj(new LdElema(type, array, index) { DelayExceptions = true }, value, type);
 		}
 
-		ILInstruction InitObj(ILInstruction target, IType type)
+		ILInstruction? InitObj(ILInstruction target, IType type)
 		{
 			var value = new DefaultValue(type) {
 				ILStackWasEmpty = currentStack.IsEmpty
@@ -1429,7 +1430,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new StObj(target, value, type);
 		}
 
-		private ILInstruction DecodeConstrainedCall()
+		private ILInstruction? DecodeConstrainedCall()
 		{
 			constrainedPrefix = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
@@ -1441,7 +1442,7 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeTailCall()
+		private ILInstruction? DecodeTailCall()
 		{
 			var inst = DecodeInstruction();
 			if (UnpackPush(inst) is CallInstruction call)
@@ -1451,7 +1452,7 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeUnaligned()
+		private ILInstruction? DecodeUnaligned()
 		{
 			byte alignment = reader.ReadByte();
 			var inst = DecodeInstruction();
@@ -1462,7 +1463,7 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeVolatile()
+		private ILInstruction? DecodeVolatile()
 		{
 			var inst = DecodeInstruction();
 			if (UnpackPush(inst) is ISupportsVolatilePrefix svp)
@@ -1472,7 +1473,7 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		private ILInstruction DecodeReadonly()
+		private ILInstruction? DecodeReadonly()
 		{
 			var inst = DecodeInstruction();
 			if (UnpackPush(inst) is LdElema ldelema)
@@ -1482,7 +1483,7 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 
-		ILInstruction DecodeCall(OpCode opCode)
+		ILInstruction? DecodeCall(OpCode opCode)
 		{
 			var method = ReadAndDecodeMethodReference();
 			int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
@@ -1558,10 +1559,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction DecodeCallIndirect()
+		ILInstruction? DecodeCallIndirect()
 		{
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
-			(SignatureHeader header, FunctionPointerType fpt) =
+			(SignatureHeader header, FunctionPointerType? fpt) =
 				module.DecodeMethodSignature(signatureHandle, genericContext);
 			var functionPointer = Pop(StackType.I);
 			int firstArgument = header.IsInstance ? 1 : 0;
@@ -1680,7 +1681,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		bool IsInvalidBranch(int target) => target < 0 || target >= reader.Length;
 
-		ILInstruction DecodeComparisonBranch(ILOpCode opCode, ComparisonKind kind, bool un = false)
+		ILInstruction? DecodeComparisonBranch(ILOpCode opCode, ComparisonKind kind, bool un = false)
 		{
 			int start = reader.Offset - 1; // opCode is always one byte in this case
 			int target = reader.DecodeBranchTarget(opCode);
@@ -1695,7 +1696,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
 		}
 
-		ILInstruction DecodeConditionalBranch(ILOpCode opCode, bool negate)
+		ILInstruction? DecodeConditionalBranch(ILOpCode opCode, bool negate)
 		{
 			int target = reader.DecodeBranchTarget(opCode);
 			ILInstruction condition = Pop();
@@ -1752,7 +1753,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
 		}
 
-		ILInstruction DecodeUnconditionalBranch(ILOpCode opCode, bool isLeave = false)
+		ILInstruction? DecodeUnconditionalBranch(ILOpCode opCode, bool isLeave = false)
 		{
 			int target = reader.DecodeBranchTarget(opCode);
 			if (isLeave)
@@ -1775,7 +1776,7 @@ namespace ICSharpCode.Decompiler.IL
 			StoreStackForOffset(targetILOffset, ref currentStack);
 		}
 
-		ILInstruction DecodeSwitch()
+		ILInstruction? DecodeSwitch()
 		{
 			var targets = reader.DecodeSwitchTargets();
 			var instr = new SwitchInstruction(Pop(StackType.I4));
@@ -1807,7 +1808,7 @@ namespace ICSharpCode.Decompiler.IL
 			return instr;
 		}
 
-		ILInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false,
+		ILInstruction? BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false,
 			Sign sign = Sign.None)
 		{
 			var right = Pop();
@@ -1857,7 +1858,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		ILInstruction DecodeJmp()
+		ILInstruction? DecodeJmp()
 		{
 			IMethod method = ReadAndDecodeMethodReference();
 			// Translate jmp into tail call:

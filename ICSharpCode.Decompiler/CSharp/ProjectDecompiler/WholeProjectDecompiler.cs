@@ -61,8 +61,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 			: this(settings, Guid.NewGuid(), assemblyResolver, assemblyReferenceClassifier, debugInfoProvider)
 		{
 		}
@@ -71,8 +71,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			DecompilerSettings settings,
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 		{
 			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			ProjectGuid = projectGuid;
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				: ProjectFileWriterDefault.Create();
 		}
 
-		public void DecompileProject(PEFile moduleDefinition, string targetDirectory,
+		public void DecompileProject(PEFile? moduleDefinition, string targetDirectory,
 			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 		}
 
-		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter,
+		public ProjectId DecompileProject(PEFile? moduleDefinition, string targetDirectory, TextWriter projectFileWriter,
 			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory))
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (pos > 0)
 				text = text[..pos];
 			text = text.Trim();
-			string extension = null;
+			string? extension = null;
 			int currentSegmentLength = 0;
 			(bool supportsLongPaths, int maxPathLength, int maxSegmentLength) = longPathSupport.Value;
 			if (treatAsFileName)
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				int lastDot = text.LastIndexOf('.');
 				if (lastDot >= 0 && text.Length - lastDot < maxSegmentLength)
 				{
-					string originalText = text;
+					string? originalText = text;
 					extension = text[lastDot..];
 					text = text.Remove(lastDot);
 					foreach (var c in extension)
@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			if (b.Length == 0)
 				b.Append('-');
-			string name = b.ToString();
+			string? name = b.ToString();
 			if (extension != null)
 				name += extension;
 			if (IsReservedFileSystemName(name))
@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				.Replace('.', Path.DirectorySeparatorChar);
 		}
 
-		static bool IsReservedFileSystemName(string name)
+		static bool IsReservedFileSystemName(string? name)
 		{
 			switch (name.ToUpperInvariant())
 			{
@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		public static bool CanUseSdkStyleProjectFormat(PEFile module)
+		public static bool CanUseSdkStyleProjectFormat(PEFile? module)
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
 
-		public IDebugInfoProvider DebugInfoProvider { get; }
+		public IDebugInfoProvider? DebugInfoProvider { get; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -355,7 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// Path to the snk file to use for signing.
 		/// <c>null</c> to not sign.
 		/// </summary>
-		public string StrongNameKeyFile { get; set; }
+		public string? StrongNameKeyFile { get; set; }
 
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 
@@ -365,7 +365,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		#region WriteCodeFilesInProject
 
-		protected bool IncludeTypeWhenDecompilingProject(PEFile module, TypeDefinitionHandle type)
+		protected bool IncludeTypeWhenDecompilingProject(PEFile? module, TypeDefinitionHandle type)
 		{
 			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
@@ -394,7 +394,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var decompiler = CreateDecompiler(ts);
 			decompiler.CancellationToken = cancellationToken;
 			decompiler.AstTransforms.Add(new RemoveCompilerGeneratedAssemblyAttributes());
-			SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
+			SyntaxTree? syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
 			const string prop = "Properties";
 			if (directories.Add(prop))
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return new[] { ("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(PEFile module,
+		IEnumerable<(string itemType, string fileName)> WriteCodeFilesInProject(PEFile? module,
 			CancellationToken cancellationToken)
 		{
 			var metadata = module.Metadata;
@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					delegate(TypeDefinitionHandle h) {
 						var type = metadata.GetTypeDefinition(h);
 						string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
-						string ns = metadata.GetString(type.Namespace);
+						string? ns = metadata.GetString(type.Namespace);
 						if (string.IsNullOrEmpty(ns))
 						{
 							return file;
@@ -466,7 +466,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		#region WriteResourceFilesInProject
 
-		protected IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(PEFile module)
+		protected IEnumerable<(string itemType, string fileName)> WriteResourceFilesInProject(PEFile? module)
 		{
 			foreach (var r in module.Resources.Where(static r => r.ResourceType == ResourceType.Embedded))
 			{
@@ -482,11 +482,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						var resourcesFile = new ResourcesFile(stream);
 						if (resourcesFile.AllEntriesAreStreams())
 						{
-							foreach ((string name, object value) in resourcesFile)
+							foreach ((string? name, object value) in resourcesFile)
 							{
 								string fileName = SanitizeFileName(name)
 									.Replace('/', Path.DirectorySeparatorChar);
-								string dirName = Path.GetDirectoryName(fileName);
+								string? dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
 									Directory.CreateDirectory(Path.Combine(TargetDirectory, dirName));
@@ -495,7 +495,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
 								individualResources.AddRange(
-									WriteResourceToFile(fileName, entryStream));
+									WriteResourceToFile(fileName, name, entryStream));
 							}
 
 							decodedIntoIndividualFiles = true;
@@ -525,7 +525,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					{
 						stream.Position = 0;
 						string fileName = GetFileNameForResource(r.Name);
-						foreach (var entry in WriteResourceToFile(fileName, stream))
+						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream))
 						{
 							yield return entry;
 						}
@@ -546,14 +546,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		private IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, Stream entryStream)
+		protected virtual IEnumerable<(string itemType, string fileName)> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
 			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
 			{
 				string resx = Path.ChangeExtension(fileName, ".resx");
 				try
 				{
-					using (FileStream fs = new(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
+					using (FileStream? fs = new(Path.Combine(TargetDirectory, resx), FileMode.Create, FileAccess.Write))
 					using (ResXResourceWriter writer = new(fs))
 					{
 						foreach (var entry in new ResourcesFile(entryStream))
@@ -597,7 +597,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			string separator = Path.DirectorySeparatorChar.ToString();
 			for (int i = splitName.Length - 1; i > 0; i--)
 			{
-				string ns = string.Join(separator, splitName, 0, i);
+				string? ns = string.Join(separator, splitName, 0, i);
 				if (directories.Contains(ns))
 				{
 					string name = string.Join(".", splitName, i, splitName.Length - i);
@@ -613,27 +613,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		#region WriteMiscellaneousFilesInProject
 
-		protected IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile module)
+		protected IEnumerable<(string itemType, string fileName)> WriteMiscellaneousFilesInProject(PEFile? module)
 		{
-			var resources = module.Reader.ReadWin32Resources();
+			var resources = module?.Reader.ReadWin32Resources();
 			if (resources == null)
 				yield break;
 
-			byte[] appIcon = CreateApplicationIcon(resources);
+			byte[]? appIcon = CreateApplicationIcon(resources);
 			if (appIcon != null)
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
 				yield return ("ApplicationIcon", "app.ico");
 			}
 
-			byte[] appManifest = CreateApplicationManifest(resources);
+			byte[]? appManifest = CreateApplicationManifest(resources);
 			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
 				yield return ("ApplicationManifest", "app.manifest");
 			}
 
-			var appConfig = module.FileName + ".config";
+			var appConfig = module?.FileName + ".config";
 			if (File.Exists(appConfig))
 			{
 				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
@@ -644,7 +644,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const int RT_ICON = 3;
 		const int RT_GROUP_ICON = 14;
 
-		static unsafe byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
+		static unsafe byte[]? CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
 			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
 			if (iconGroup == null)
@@ -725,7 +725,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		const int RT_MANIFEST = 24;
 
-		static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
+		static byte[]? CreateApplicationManifest(Win32ResourceDirectory resources)
 		{
 			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
 		}
@@ -774,7 +774,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public readonly int TotalNumberOfFiles;
 		public readonly string Status;
 
-		public DecompilationProgress(int total, string status = null)
+		public DecompilationProgress(int total, string? status = null)
 		{
 			this.TotalNumberOfFiles = total;
 			this.Status = status ?? "";

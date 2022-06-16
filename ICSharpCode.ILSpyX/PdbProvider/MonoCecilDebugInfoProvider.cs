@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 		readonly Dictionary<SRM.MethodDefinitionHandle, (IList<SequencePoint> SequencePoints, IList<Variable> Variables
 			)> debugInfo;
 
-		public unsafe MonoCecilDebugInfoProvider(PEFile module, string pdbFileName, string? description = null)
+		public unsafe MonoCecilDebugInfoProvider(PEFile module, string? pdbFileName, string? description = null)
 		{
 			ArgumentNullException.ThrowIfNull(module);
 

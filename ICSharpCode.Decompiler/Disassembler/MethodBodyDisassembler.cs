@@ -40,13 +40,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 		readonly CancellationToken cancellationToken;
 		readonly ITextOutput output;
 		MetadataGenericContext genericContext;
-		MetadataReader metadata;
+		MetadataReader? metadata;
 
 		// cache info
-		PEFile module;
+		PEFile? module;
 		int nextSequencePointIndex;
 
-		IList<SequencePoint> sequencePoints;
+		IList<SequencePoint>? sequencePoints;
 		DisassemblerSignatureTypeProvider signatureDecoder;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
@@ -83,9 +83,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// <summary>
 		/// Optional provider for sequence points.
 		/// </summary>
-		public IDebugInfoProvider DebugInfo { get; set; }
+		public IDebugInfoProvider? DebugInfo { get; set; }
 
-		public virtual void Disassemble(PEFile module, MethodDefinitionHandle handle)
+		public virtual void Disassemble(PEFile? module, MethodDefinitionHandle handle)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return;
 			}
 
-			MethodBodyBlock body;
+			MethodBodyBlock? body;
 			BlobReader bodyBlockReader;
 			try
 			{
@@ -479,7 +479,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						metadataToken = blob.ReadInt32();
 						output.Write(' ');
 						UserStringHandle? userString;
-						string text;
+						string? text;
 						try
 						{
 							userString = MetadataTokens.UserStringHandle(metadataToken);
@@ -493,7 +493,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 						if (userString != null)
 						{
-							DisassemblerHelpers.WriteOperand(output, text);
+							if (text != null)
+							{
+								DisassemblerHelpers.WriteOperand(output, text);
+							}
 						}
 
 						WriteMetadataToken(userString, metadataToken, spaceBefore: true);

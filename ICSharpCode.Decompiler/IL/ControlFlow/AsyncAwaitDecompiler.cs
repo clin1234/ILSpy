@@ -26,6 +26,7 @@ using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -43,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		readonly List<AsyncDebugInfo.Await> awaitDebugInfos = new();
 		readonly Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new();
 		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new();
-		readonly HashSet<Leave> moveNextLeaves = new();
+		readonly HashSet<Leave?> moveNextLeaves = new();
 		IField builderField;
 		IType builderType;
 		ILVariable cachedStateVar; // variable in MoveNext that caches the stateField.
@@ -65,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// These fields are set by AnalyzeMoveNext():
 		ILFunction moveNextFunction;
 		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
-		Block setResultReturnBlock; // block that is jumped to for return statements
+		Block? setResultReturnBlock; // block that is jumped to for return statements
 		Block setResultYieldBlock; // block that is jumped to for 'yield return' statements
 
 		// These fields are set by AnalyzeStateMachine():
@@ -154,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 
-		internal static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, MethodDefinitionHandle method)
+		internal static bool IsCompilerGeneratedMainMethod(PEFile? module, MethodDefinitionHandle method)
 		{
 			var metadata = module.Metadata;
 			var definition = metadata.GetMethodDefinition(method);
@@ -274,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void TranslateCachedFieldsToLocals()
 		{
-			foreach ((ILVariable cachedVar, ILVariable param) in cachedFieldToParameterMap)
+			foreach ((ILVariable cachedVar, ILVariable? param) in cachedFieldToParameterMap)
 			{
 				Debug.Assert(cachedVar.StoreCount <= 1);
 				foreach (var inst in cachedVar.LoadInstructions.ToArray())
@@ -378,7 +379,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			if (startCall.Arguments.Count != 2)
 				return false;
-			ILInstruction loadBuilderExpr = startCall.Arguments[0];
+			ILInstruction? loadBuilderExpr = startCall.Arguments[0];
 			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable stateMachineVar))
 				return false;
 			stateMachineType = stateMachineVar.Type.GetDefinition();
@@ -477,7 +478,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (field == builderField)
 				{
 					// stfld StateMachine.builder(ldloca stateMachine, call Create())
-					if (fieldInit is not Call { Method: { Name: "Create" }, Arguments: { Count: 0 } })
+					if (fieldInit is not Call { Method.Name: "Create", Arguments.Count: 0 })
 						return false;
 					builderFieldIsInitialized = true;
 				}
@@ -519,7 +520,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches a store to the state machine.
 		/// </summary>
-		static bool MatchStFld(ILInstruction stfld, ILVariable stateMachineVar, out IField field,
+		static bool MatchStFld(ILInstruction? stfld, ILVariable stateMachineVar, out IField field,
 			out ILInstruction value)
 		{
 			if (!stfld.MatchStFld(out var target, out field, out value))
@@ -837,7 +838,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[1].MatchLeave(blockContainer);
 		}
 
-		private Block CheckSetResultReturnBlock(BlockContainer blockContainer, int setResultReturnBlockIndex,
+		private Block? CheckSetResultReturnBlock(BlockContainer blockContainer, int setResultReturnBlockIndex,
 			bool[] blocksAnalyzed)
 		{
 			if (setResultReturnBlockIndex >= blockContainer.Blocks.Count)
@@ -916,7 +917,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			int pos = 0;
 			// callvirt Dispose(ldfld <>x__combinedTokens(ldloc this))
 			if (disposedCombinedTokensBlock.Instructions[pos] is not CallVirt {
-				    Method: { Name: "Dispose" }
+				    Method.Name: "Dispose"
 			    } disposeCall)
 				return false;
 			if (disposeCall.Arguments.Count != 1)
@@ -1093,7 +1094,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool IsBuilderFieldOnThis(ILInstruction inst)
+		bool IsBuilderFieldOnThis(ILInstruction? inst)
 		{
 			IField field;
 			ILInstruction target;
@@ -1113,7 +1114,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return target.MatchLdThis() && field.MemberDefinition == builderField;
 		}
 
-		bool IsBuilderOrPromiseFieldOnThis(ILInstruction inst)
+		bool IsBuilderOrPromiseFieldOnThis(ILInstruction? inst)
 		{
 			if (methodType is AsyncMethodType.AsyncEnumerable or AsyncMethodType.AsyncEnumerator)
 			{
@@ -1123,7 +1124,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return IsBuilderFieldOnThis(inst);
 		}
 
-		bool MatchStateAssignment(ILInstruction inst, out int newState)
+		bool MatchStateAssignment(ILInstruction? inst, out int newState)
 		{
 			// stfld(StateMachine::<>1__state, ldloc(this), ldc.i4(stateId))
 			if (inst.MatchStFld(out var target, out var field, out var value)
@@ -1276,7 +1277,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							    out int yieldOffset))
 						{
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
-							Block targetBlock = stateToBlockMap.GetOrDefault(state);
+							Block? targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null)
 							{
 								awaitDebugInfos.Add(new AsyncDebugInfo.Await(yieldOffset, targetBlock.StartILOffset));
@@ -1301,7 +1302,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						if (AnalyzeYieldReturn(block, out var yieldValue, out int state))
 						{
 							block.Instructions.Add(new YieldReturn(yieldValue));
-							Block targetBlock = stateToBlockMap.GetOrDefault(state);
+							Block? targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null)
 							{
 								block.Instructions.Add(new Branch(targetBlock));
@@ -1342,7 +1343,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepEndGroup();
 		}
 
-		private bool TransformYieldBreak(Block block)
+		private bool TransformYieldBreak(Block? block)
 		{
 			// stfld disposeMode(ldloc this, ldc.i4 1)
 			// br nextBlock
@@ -1386,7 +1387,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				for (int i = 0; i < block.Instructions.Count; i++)
 				{
-					ILInstruction inst = block.Instructions[i];
+					ILInstruction? inst = block.Instructions[i];
 					while (inst.MatchIfInstruction(out var condition, out var trueInst, out var falseInst))
 					{
 						var condVal = evalContext.Eval(condition).AsBool();
@@ -1431,7 +1432,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private bool SimplifyIfDisposeMode(Block block)
+		private bool SimplifyIfDisposeMode(Block? block)
 		{
 			// Occasionally Roslyn optimizes out an "if (disposeMode)", but keeps the
 			// disposeMode field access. Get rid of those field accesses:
@@ -1456,7 +1457,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state,
+		bool AnalyzeAwaitBlock(Block? block, out ILVariable awaiter, out IField awaiterField, out int state,
 			out int yieldOffset)
 		{
 			awaiter = null;
@@ -1578,7 +1579,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		private bool AnalyzeYieldReturn(Block block, out ILInstruction yieldValue, out int newState)
+		private bool AnalyzeYieldReturn(Block? block, out ILInstruction yieldValue, out int newState)
 		{
 			yieldValue = default;
 			newState = default;
@@ -1648,7 +1649,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepEndGroup(keepIfEmpty: true);
 		}
 
-		void DetectAwaitPattern(Block block)
+		void DetectAwaitPattern(Block? block)
 		{
 			// block:
 			//   stloc awaiterVar(callvirt GetAwaiter(...))
@@ -1717,7 +1718,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock =
 				completedBlock; // instead, directly jump to completed block
-			Await awaitInst = new(UnwrapConvUnknown(getAwaiterCall.Arguments.Single())) {
+			Await? awaitInst = new(UnwrapConvUnknown(getAwaiterCall.Arguments.Single())) {
 				GetResultMethod = getResultCall.Method,
 				GetAwaiterMethod = getAwaiterCall.Method
 			};

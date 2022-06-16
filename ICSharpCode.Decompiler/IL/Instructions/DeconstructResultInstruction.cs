@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		MatchInstruction? FindMatch()
 		{
-			for (ILInstruction? inst = this; inst != null; inst = inst.Parent)
+			for (ILInstruction inst = this; inst != null; inst = inst.Parent)
 			{
 				if (inst.Parent is MatchInstruction match && inst != match.TestedOperand)
 					return match;

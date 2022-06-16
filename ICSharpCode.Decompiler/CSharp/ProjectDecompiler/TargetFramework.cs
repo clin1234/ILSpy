@@ -52,17 +52,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets the target framework identifier. Can be null if not defined.
 		/// </summary>
-		public string Identifier { get; }
+		public string? Identifier { get; }
 
 		/// <summary>
 		/// Gets the target framework moniker. Can be null if not supported.
 		/// </summary>
-		public string Moniker { get; }
+		public string? Moniker { get; }
 
 		/// <summary>
 		/// Gets the target framework version, e.g. "v4.5".
 		/// </summary>
-		public string VersionString { get; }
+		public string? VersionString { get; }
 
 		/// <summary>
 		/// Gets the target framework version as integer (multiplied by 100), e.g. 450.
@@ -72,14 +72,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets the target framework profile. Can be null if not set or not available.
 		/// </summary>
-		public string Profile { get; }
+		public string? Profile { get; }
 
 		/// <summary>
 		/// Gets a value indicating whether the target is a portable class library (PCL).
 		/// </summary>
 		public bool IsPortableClassLibrary { get; }
 
-		static string GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
+		static string? GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
 		{
 			// Reference: https://docs.microsoft.com/en-us/dotnet/standard/frameworks
 			switch (frameworkIdentifier)

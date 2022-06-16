@@ -69,8 +69,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return result.ToArray();
 		}
 
-		readonly IParameter[] normalParameters = new IParameter[TypeCode.String + 1 - TypeCode.Object];
-		readonly IParameter[] nullableParameters = new IParameter[TypeCode.Decimal + 1 - TypeCode.Boolean];
+		readonly IParameter?[] normalParameters = new IParameter?[TypeCode.String + 1 - TypeCode.Object];
+		readonly IParameter?[] nullableParameters = new IParameter?[TypeCode.Decimal + 1 - TypeCode.Boolean];
 
 		void InitParameterArrays()
 		{
@@ -86,12 +86,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		IParameter MakeParameter(TypeCode code)
+		IParameter? MakeParameter(TypeCode code)
 		{
 			return normalParameters[code - TypeCode.Object];
 		}
 
-		IParameter MakeNullableParameter(IParameter normalParameter)
+		IParameter? MakeNullableParameter(IParameter? normalParameter)
 		{
 			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++)
 			{
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		internal class OperatorMethod : IParameterizedMember
 		{
-			internal readonly List<IParameter> parameters = new();
+			internal readonly List<IParameter?> parameters = new();
 
 			protected OperatorMethod(ICompilation compilation)
 			{
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return SymbolKind.Operator; }
 			}
 
-			IEnumerable<IAttribute> IEntity.GetAttributes()
+			IEnumerable<IAttribute?> IEntity.GetAttributes()
 			{
 				return EmptyList<IAttribute>.Instance;
 			}
@@ -176,17 +176,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return false; }
 			}
 
-			IModule IEntity.ParentModule {
+			IModule? IEntity.ParentModule {
 				get { return Compilation.MainModule; }
 			}
 
-			TypeParameterSubstitution IMember.Substitution {
+			TypeParameterSubstitution? IMember.Substitution {
 				get {
 					return TypeParameterSubstitution.Identity;
 				}
 			}
 
-			IMember IMember.Specialize(TypeParameterSubstitution substitution)
+			IMember IMember.Specialize(TypeParameterSubstitution? substitution)
 			{
 				if (TypeParameterSubstitution.Identity.Equals(substitution))
 					return this;
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return "operator"; }
 			}
 
-			bool IMember.Equals(IMember? obj, TypeVisitor? typeNormalization)
+			bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
 			{
 				return this == obj;
 			}
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 
-			public virtual object? Invoke(CSharpResolver resolver, object? input)
+			public virtual object? Invoke(CSharpResolver resolver, object input)
 			{
 				throw new NotSupportedException();
 			}
@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeNullableParameter(baseMethod.Parameters[0]));
 			}
 
-			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IReadOnlyList<IParameter?> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public BinaryOperatorMethod(ICompilation compilation) : base(compilation) { }
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 
-			public virtual object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
+			public virtual object? Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				throw new NotSupportedException();
 			}
@@ -473,7 +473,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeNullableParameter(baseMethod.Parameters[1]));
 			}
 
-			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IReadOnlyList<IParameter?> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 
@@ -599,7 +599,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override bool CanEvaluateAtCompileTime { get; }
 
-			public override object Invoke(CSharpResolver? resolver, object? lhs, object? rhs)
+			public override object Invoke(CSharpResolver? resolver, object lhs, object rhs)
 			{
 				return string.Concat(lhs, rhs);
 			}
@@ -728,7 +728,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				this.baseMethod = baseMethod;
 				this.ReturnType = baseMethod.ReturnType;
-				IParameter p = operators.MakeNullableParameter(baseMethod.Parameters[0]);
+				IParameter? p = operators.MakeNullableParameter(baseMethod.Parameters[0]);
 				parameters.Add(p);
 				parameters.Add(p);
 			}
@@ -737,10 +737,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return baseMethod.CanEvaluateAtCompileTime; }
 			}
 
-			public IReadOnlyList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IReadOnlyList<IParameter?> NonLiftedParameters => baseMethod.Parameters;
 			public IType NonLiftedReturnType => baseMethod.ReturnType;
 
-			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
+			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
 			}
@@ -1100,7 +1100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						nonLiftedMethod.ReturnType.AcceptVisitor(substitution));
 			}
 
-			public IReadOnlyList<IParameter> NonLiftedParameters => nonLiftedOperator.Parameters;
+			public IReadOnlyList<IParameter?> NonLiftedParameters => nonLiftedOperator.Parameters;
 			public IType NonLiftedReturnType => nonLiftedOperator.ReturnType;
 
 			public override bool Equals(object? obj)
@@ -1124,6 +1124,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	internal interface ILiftedOperator : IParameterizedMember
 	{
 		IType NonLiftedReturnType { get; }
-		IReadOnlyList<IParameter> NonLiftedParameters { get; }
+		IReadOnlyList<IParameter?> NonLiftedParameters { get; }
 	}
 }

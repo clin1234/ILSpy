@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
-			var callsToFix = new List<Call>();
+			var callsToFix = new List<Call?>();
 			foreach (var call in function.Descendants.OfType<Call>())
 			{
 				if (!(call.Method.IsOperator && call.Method.Name is "op_Increment" or "op_Decrement"))

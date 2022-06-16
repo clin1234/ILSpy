@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 
-		public OutVarDeclarationExpression(AstType type, string name)
+		public OutVarDeclarationExpression(AstType? type, string name)
 		{
 			this.Type = type;
 			this.Variable = new VariableInitializer(name);
@@ -35,12 +35,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(OutKeywordRole); }
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
 
-		public VariableInitializer Variable {
+		public VariableInitializer? Variable {
 			get { return GetChildByRole(Roles.Variable); }
 			init { SetChildByRole(Roles.Variable, value); }
 		}
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitOutVarDeclarationExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is OutVarDeclarationExpression o && this.Type.DoMatch(o.Type, match) &&
 			       this.Variable.DoMatch(o.Variable, match);

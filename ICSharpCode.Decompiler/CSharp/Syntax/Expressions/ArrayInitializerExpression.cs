@@ -26,6 +26,8 @@
 
 using System.Collections.Generic;
 
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -86,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitArrayInitializerExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			return other is ArrayInitializerExpression o && this.Elements.DoMatch(o.Elements, match);
 		}
@@ -135,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -145,16 +147,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator ArrayInitializerExpression(PatternMatching.Pattern pattern)
+		public static implicit operator ArrayInitializerExpression(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : ArrayInitializerExpression, PatternMatching.INode
+		sealed class PatternPlaceholder : ArrayInitializerExpression, INode
 		{
-			readonly PatternMatching.Pattern child;
+			readonly Pattern child;
 
-			public PatternPlaceholder(PatternMatching.Pattern child)
+			public PatternPlaceholder(Pattern child)
 			{
 				this.child = child;
 			}
@@ -163,8 +165,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
-				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode pos,
+				Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -184,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}

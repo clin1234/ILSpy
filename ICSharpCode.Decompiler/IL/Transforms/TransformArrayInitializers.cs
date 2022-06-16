@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILInstruction inst = body.Instructions[pos];
+			ILInstruction? inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) &&
 			    MatchNewArr(newarrExpr, out var elementType, out var arrayLength))
 			{
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.Add(new StLoc(tempStore,
 							new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) =>
-							StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
+							StElem(new LdLoc(tempStore), new LdcI4[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);
 						body.Instructions[pos] = new StLoc(finalStore, block);
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILInstruction inst = body.Instructions[pos];
+			ILInstruction? inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) &&
 			    MatchNewArr(newarrExpr, out var elementType, out var length))
 			{
@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILInstruction inst = body.Instructions[pos];
+			ILInstruction? inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var locallocExpr) && locallocExpr.MatchLocAlloc(out var lengthInst))
 			{
 				if (lengthInst.MatchLdcI(out var lengthInBytes) && HandleCpblkInitializer(body, pos + 1, v,
@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				elementType = ((PointerType)finalStore.Type).ElementType;
 			}
-			else if (value is NewObj { Arguments: { Count: 2 } } newObj
+			else if (value is NewObj { Arguments.Count: 2 } newObj
 			         && newObj.Method.DeclaringType.IsKnownType(KnownTypeCode.SpanOfT)
 			         && newObj.Arguments[0].MatchLdLoc(v)
 			         && newObj.Arguments[1].MatchLdcI4((int)length))
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
 		{
-			ILInstruction targetInst;
+			ILInstruction? targetInst;
 			if (storeInstruction.Target.MatchLdLoc(out _))
 				targetInst = new LdLoc(target);
 			else if (storeInstruction.Target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add,
@@ -412,7 +412,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return new StObj(targetInst, storeInstruction.Value, storeInstruction.Type);
 		}
 
-		ILInstruction StElemPtr(ILVariable target, int offset, LdcI4 value, IType type)
+		ILInstruction? StElemPtr(ILVariable target, int offset, LdcI4 value, IType type)
 		{
 			var targetInst = offset == 0
 				? (ILInstruction)new LdLoc(target)
@@ -500,7 +500,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				InstructionCollection<ILInstruction> indices;
 				// stobj elementType(ldelema elementType(ldloc store, indices), value)
-				if (block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type))
+				if (block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType _))
 				{
 					if (!(target is LdElema ldelem && ldelem.Array.MatchLdLoc(store)))
 						break;
@@ -517,7 +517,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					if (!(i + 1 < block.Instructions.Count))
 						break;
-					if (!block.Instructions[i + 1].MatchStObj(out target, out value, out type))
+					if (!block.Instructions[i + 1].MatchStObj(out target, out value, out IType _))
 						break;
 					if (!(target.MatchLdLoc(addressTemporary) && ldelem.Array.MatchLdLoc(store)))
 						break;
@@ -865,7 +865,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static ILInstruction StElem(ILInstruction array, ILInstruction[] indices, ILInstruction value, IType type)
+		static ILInstruction? StElem(ILInstruction array, ILInstruction[] indices, ILInstruction value, IType type)
 		{
 			if (type.GetStackType() != value.ResultType)
 			{

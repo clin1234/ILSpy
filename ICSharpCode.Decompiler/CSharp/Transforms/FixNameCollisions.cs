@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </remarks>
 	internal sealed class FixNameCollisions : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			var renamedSymbols = new Dictionary<ISymbol, string>();
 			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>())
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return "m_" + name;
 			for (int num = 2;; num++)
 			{
-				string newName = name + num;
+				string? newName = name + num;
 				if (!memberNames.Contains(newName))
 					return newName;
 			}

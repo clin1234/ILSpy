@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly List<T> list = new();
 		readonly ILInstruction parentInstruction;
 
-		public InstructionCollection(ILInstruction parentInstruction, int firstChildIndex)
+		public InstructionCollection(ILInstruction? parentInstruction, int firstChildIndex)
 		{
 			this.parentInstruction = parentInstruction ?? throw new ArgumentNullException(nameof(parentInstruction));
 			this.firstChildIndex = firstChildIndex;
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// This method searches the list.
 		/// Usually it's more efficient to test item.Parent instead!
 		/// </remarks>
-		public bool Contains(T? item)
+		public bool Contains(T item)
 		{
 			return IndexOf(item) >= 0;
 		}
@@ -424,7 +424,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		IEnumerator<T?> IEnumerable<T>.GetEnumerator()
 		{
 			return GetEnumerator();
 		}

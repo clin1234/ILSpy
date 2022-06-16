@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (IsNullSafeArrayToPointerPattern(block, out ILVariable v, out ILVariable p, out Block targetBlock))
 				{
 					context.Step("NullSafeArrayToPointerPattern", block);
-					ILInstruction arrayToPointer = new GetPinnableReference(new LdLoc(v), null);
+					ILInstruction? arrayToPointer = new GetPinnableReference(new LdLoc(v), null);
 					if (p.StackType != StackType.Ref)
 					{
 						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					         out targetBlock, out var nullBlock, out var notNullBlock))
 				{
 					context.Step("CustomRefPinPattern", block);
-					ILInstruction gpr;
+					ILInstruction? gpr;
 					if (context.Settings.PatternBasedFixedStatement)
 					{
 						gpr = new GetPinnableReference(ldlocMem, callGPR.Method);
@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		//      stloc ptr(conv ref->u (ldloc V_1))
 		//      br targetBlock
 		private bool IsCustomRefPinPattern(Block block, out ILInstruction ldlocMem, out CallInstruction callGPR,
-			out ILVariable v, out StLoc ptrAssign, out Block targetBlock, out Block nullBlock, out Block notNullBlock)
+			out ILVariable v, out StLoc? ptrAssign, out Block targetBlock, out Block nullBlock, out Block notNullBlock)
 		{
 			ldlocMem = null;
 			callGPR = null;
@@ -533,7 +533,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		#region CreatePinnedRegion
 
-		bool DetectPinnedRegion(Block block)
+		bool DetectPinnedRegion(Block? block)
 		{
 			// After SplitBlocksAtWritesToPinnedLocals(), only the second-to-last instruction in each block
 			// can be a write to a pinned local.
@@ -564,7 +564,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool CreatePinnedRegion(Block block, StLoc stLoc)
+		bool CreatePinnedRegion(Block? block, StLoc? stLoc)
 		{
 			// Collect the blocks to be moved into the region:
 			BlockContainer sourceContainer = (BlockContainer)block.Parent;
@@ -626,7 +626,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			context.Step("CreatePinnedRegion", block);
-			BlockContainer body = new();
+			BlockContainer? body = new();
 			Block[] clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++)
 			{
@@ -750,7 +750,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// After a pinned region was detected; process its body; replacing the pin variable
 		/// with a native pointer as far as possible.
 		/// </summary>
-		void ProcessPinnedRegion(PinnedRegion pinnedRegion)
+		void ProcessPinnedRegion(PinnedRegion? pinnedRegion)
 		{
 			if (pinnedRegion.Variable.Type.Kind == TypeKind.ByReference)
 			{
@@ -767,7 +767,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					elementType = ((PointerType)elementType).ElementType;
 				}
 
-				ILVariable newVar = new(
+				ILVariable? newVar = new(
 					VariableKind.PinnedRegionLocal,
 					new PointerType(elementType),
 					oldVar.Index) {
@@ -803,7 +803,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion pinnedRegion)
+		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion? pinnedRegion)
 		{
 			// Roslyn started marking the array variable as pinned,
 			// and then uses array.to.pointer immediately within the region.
@@ -830,7 +830,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			Debug.Assert(arrayToPointer.IsDescendantOf(pinnedRegion));
 			ILVariable oldVar = pinnedRegion.Variable;
-			ILVariable newVar = new(
+			ILVariable? newVar = new(
 				VariableKind.PinnedRegionLocal,
 				new PointerType(((ArrayType)oldVar.Type).ElementType),
 				oldVar.Index) {
@@ -844,7 +844,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 		}
 
-		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
+		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction? inst)
 		{
 			Debug.Assert(newVar.StackType == StackType.I);
 			if (inst is Conv { Kind: ConversionKind.StopGCTracking } conv && conv.Argument.MatchLdLoc(oldVar) &&
@@ -890,7 +890,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return slotInfo == Block.InstructionSlot || slotInfo == LdObj.TargetSlot || slotInfo == StObj.TargetSlot;
 		}
 
-		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, out Block targetBlock)
+		bool IsBranchOnNull(ILInstruction? condBranch, ILVariable nativeVar, out Block targetBlock)
 		{
 			targetBlock = null;
 			// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
@@ -900,7 +900,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			       && trueInst.MatchBranch(out targetBlock);
 		}
 
-		void HandleStringToPointer(PinnedRegion pinnedRegion)
+		void HandleStringToPointer(PinnedRegion? pinnedRegion)
 		{
 			Debug.Assert(pinnedRegion.Variable.Type.IsKnownType(KnownTypeCode.String));
 			BlockContainer body = (BlockContainer)pinnedRegion.Body;
@@ -1041,7 +1041,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Modifies a pinned region to eliminate an extra local variable that roslyn tends to generate.
 		/// </summary>
-		void UseExistingVariableForPinnedRegion(PinnedRegion pinnedRegion)
+		void UseExistingVariableForPinnedRegion(PinnedRegion? pinnedRegion)
 		{
 			// PinnedRegion V_1(..., BlockContainer {
 			// Block IL_0000(incoming: 1) {

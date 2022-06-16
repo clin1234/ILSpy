@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public ThrowStatement(Expression expression)
+		public ThrowStatement(Expression? expression)
 		{
 			AddChild(expression, Roles.Expression);
 		}
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(ThrowKeywordRole); }
 		}
 
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitThrowStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ThrowStatement o && this.Expression.DoMatch(o.Expression, match);
 		}

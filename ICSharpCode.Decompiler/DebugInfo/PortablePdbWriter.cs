@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			}
 		}
 
-		static BlobBuilder BuildStateMachineHoistedLocalScopes(ILFunction function)
+		static BlobBuilder BuildStateMachineHoistedLocalScopes(ILFunction? function)
 		{
 			var builder = new BlobBuilder();
 			foreach (var unused in function.Variables.Where(v => v.StateMachineField != null)
@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			return builder.MoveToImmutable();
 		}
 
-		static string SyntaxTreeToString(SyntaxTree syntaxTree, DecompilerSettings settings)
+		static string SyntaxTreeToString(SyntaxTree? syntaxTree, DecompilerSettings settings)
 		{
 			StringWriter w = new();
 			TokenWriter tokenWriter = new TextWriterTokenWriter(w);

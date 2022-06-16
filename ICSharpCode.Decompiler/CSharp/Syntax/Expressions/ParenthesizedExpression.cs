@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public ParenthesizedExpression(Expression expr)
+		public ParenthesizedExpression(Expression? expr)
 		{
 			Expression = expr;
 		}
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitParenthesizedExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ParenthesizedExpression o && this.Expression.DoMatch(o.Expression, match);
 		}

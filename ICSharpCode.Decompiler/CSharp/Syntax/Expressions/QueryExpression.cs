@@ -20,9 +20,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class QueryExpression : Expression
 	{
-		public static readonly Role<QueryClause> ClauseRole = new("Clause", null);
+		public static readonly Role<QueryClause?> ClauseRole = new("Clause", null);
 
-		public AstNodeCollection<QueryClause> Clauses {
+		public AstNodeCollection<QueryClause?> Clauses {
 			get { return GetChildrenByRole(ClauseRole); }
 		}
 
@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QueryExpression { IsNull: false } o && this.Clauses.DoMatch(o.Clauses, match);
 		}
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -123,14 +123,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string Identifier {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier)?.Name;
 			}
 			init {
 				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
 			}
 		}
 
-		public Identifier IdentifierToken {
+		public Identifier? IdentifierToken {
 			get { return GetChildByRole(Roles.Identifier); }
 		}
 
@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryWhereClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QueryWhereClause o && this.Condition.DoMatch(o.Condition, match);
 		}
@@ -404,7 +404,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryJoinClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QueryJoinClause o && this.IsGroupJoin == o.IsGroupJoin
 			                                  && this.Type.DoMatch(o.Type, match) &&
@@ -444,7 +444,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryOrderClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QueryOrderClause o && this.Orderings.DoMatch(o.Orderings, match);
 		}
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return NodeType.Unknown; }
 		}
 
-		public Expression Expression {
+		public Expression? Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -492,7 +492,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryOrdering(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QueryOrdering o && this.Direction == o.Direction &&
 			       this.Expression.DoMatch(o.Expression, match);
@@ -534,7 +534,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQuerySelectClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QuerySelectClause o && this.Expression.DoMatch(o.Expression, match);
 		}
@@ -580,7 +580,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitQueryGroupClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is QueryGroupClause o && this.Projection.DoMatch(o.Projection, match) &&
 			       this.Key.DoMatch(o.Key, match);

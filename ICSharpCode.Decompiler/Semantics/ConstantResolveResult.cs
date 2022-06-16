@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public sealed class ConstantResolveResult : ResolveResult
 	{
-		readonly object constantValue;
+		readonly object? constantValue;
 
-		public ConstantResolveResult(IType type, object constantValue) : base(type)
+		public ConstantResolveResult(IType type, object? constantValue) : base(type)
 		{
 			this.constantValue = constantValue;
 		}
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return true; }
 		}
 
-		public override object ConstantValue {
+		public override object? ConstantValue {
 			get { return constantValue; }
 		}
 

@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class UsingAliasDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new("using");
-		public static readonly Role<Identifier> AliasRole = new("Alias", Identifier.Null);
-		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
+		public static readonly Role<Identifier?> AliasRole = new("Alias", Identifier.Null);
+		public static readonly Role<AstType?> ImportRole = UsingDeclaration.ImportRole;
 
 
 		public override NodeType NodeType {
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Import {
+		public AstType? Import {
 			get { return GetChildByRole(ImportRole); }
 			set { SetChildByRole(ImportRole, value); }
 		}
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUsingAliasDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is UsingAliasDeclaration o && MatchString(this.Alias, o.Alias) &&
 			       this.Import.DoMatch(o.Import, match);

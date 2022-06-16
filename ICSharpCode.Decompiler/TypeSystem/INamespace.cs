@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the extern alias for this namespace.
 		/// Returns an empty string for normal namespaces.
 		/// </summary>
-		string ExternAlias { get; }
+		string? ExternAlias { get; }
 
 		/// <summary>
 		/// Gets the full name of this namespace. (e.g. "System.Collections")
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the child namespaces in this namespace.
 		/// </summary>
-		IEnumerable<INamespace> ChildNamespaces { get; }
+		IEnumerable<INamespace?> ChildNamespaces { get; }
 
 		/// <summary>
 		/// Gets the types in this namespace.

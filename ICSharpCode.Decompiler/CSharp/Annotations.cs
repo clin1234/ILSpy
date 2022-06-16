@@ -51,42 +51,42 @@ namespace ICSharpCode.Decompiler.CSharp
 
 	internal static class AnnotationExtensions
 	{
-		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression,
+		internal static ExpressionWithILInstruction WithILInstruction(this Expression? expression,
 			ILInstruction instruction)
 		{
-			expression.AddAnnotation(instruction);
+			expression?.AddAnnotation(instruction);
 			return new ExpressionWithILInstruction(expression);
 		}
 
-		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression,
+		internal static ExpressionWithILInstruction WithILInstruction(this Expression? expression,
 			IEnumerable<ILInstruction> instructions)
 		{
 			foreach (var inst in instructions)
-				expression.AddAnnotation(inst);
+				expression?.AddAnnotation(inst);
 			return new ExpressionWithILInstruction(expression);
 		}
 
-		internal static ExpressionWithILInstruction WithoutILInstruction(this Expression expression)
+		internal static ExpressionWithILInstruction WithoutILInstruction(this Expression? expression)
 		{
 			return new ExpressionWithILInstruction(expression);
 		}
 
-		internal static TranslatedStatement WithILInstruction(this Statement statement,
+		internal static TranslatedStatement WithILInstruction(this Statement? statement,
 			ILInstruction instruction)
 		{
-			statement.AddAnnotation(instruction);
+			statement?.AddAnnotation(instruction);
 			return new TranslatedStatement(statement);
 		}
 
-		internal static TranslatedStatement WithILInstruction(this Statement statement,
+		internal static TranslatedStatement WithILInstruction(this Statement? statement,
 			IEnumerable<ILInstruction> instructions)
 		{
 			foreach (var inst in instructions)
-				statement.AddAnnotation(inst);
+				statement?.AddAnnotation(inst);
 			return new TranslatedStatement(statement);
 		}
 
-		internal static TranslatedStatement WithoutILInstruction(this Statement statement)
+		internal static TranslatedStatement WithoutILInstruction(this Statement? statement)
 		{
 			return new TranslatedStatement(statement);
 		}
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression,
 			ILInstruction instruction)
 		{
-			expression.Expression.AddAnnotation(instruction);
+			expression.Expression?.AddAnnotation(instruction);
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 
@@ -102,14 +102,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			IEnumerable<ILInstruction> instructions)
 		{
 			foreach (var inst in instructions)
-				expression.Expression.AddAnnotation(inst);
+				expression.Expression?.AddAnnotation(inst);
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 
 		internal static TranslatedExpression WithILInstruction(this TranslatedExpression expression,
 			ILInstruction instruction)
 		{
-			expression.Expression.AddAnnotation(instruction);
+			expression.Expression?.AddAnnotation(instruction);
 			return expression;
 		}
 
@@ -118,17 +118,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 
-		internal static ExpressionWithResolveResult WithRR(this Expression expression,
+		internal static ExpressionWithResolveResult WithRR(this Expression? expression,
 			ResolveResult resolveResult)
 		{
-			expression.AddAnnotation(resolveResult);
+			expression?.AddAnnotation(resolveResult);
 			return new ExpressionWithResolveResult(expression, resolveResult);
 		}
 
 		internal static TranslatedExpression WithRR(this ExpressionWithILInstruction expression,
 			ResolveResult resolveResult)
 		{
-			expression.Expression.AddAnnotation(resolveResult);
+			expression.Expression?.AddAnnotation(resolveResult);
 			return new TranslatedExpression(expression, resolveResult);
 		}
 
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="IdentifierExpression"/>,
 		/// or <c>null</c> if no variable is associated with this identifier.
 		/// </summary>
-		public static ILVariable GetILVariable(this IdentifierExpression expr)
+		public static ILVariable? GetILVariable(this IdentifierExpression expr)
 		{
 			if (expr.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="VariableInitializer"/>,
 		/// or <c>null</c> if no variable is associated with this initializer.
 		/// </summary>
-		public static ILVariable GetILVariable(this VariableInitializer vi)
+		public static ILVariable? GetILVariable(this VariableInitializer vi)
 		{
 			if (vi.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ILVariable"/> associated with this <see cref="ForeachStatement"/>,
 		/// or <c>null</c> if no variable is associated with this foreach statement.
 		/// </summary>
-		public static ILVariable GetILVariable(this ForeachStatement loop)
+		public static ILVariable? GetILVariable(this ForeachStatement loop)
 		{
 			if (loop.Annotation<ResolveResult>() is ILVariableResolveResult rr)
 				return rr.Variable;
@@ -210,9 +210,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Adds an <see cref="ILVariable"/> to this initializer.
 		/// </summary>
-		public static VariableInitializer WithILVariable(this VariableInitializer vi, ILVariable v)
+		public static VariableInitializer? WithILVariable(this VariableInitializer? vi, ILVariable v)
 		{
-			vi.AddAnnotation(new ILVariableResolveResult(v, v.Type));
+			vi?.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 			return vi;
 		}
 
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
 		{
-			foreach (ILInstruction annotation in other.Annotations.OfType<ILInstruction>())
+			foreach (ILInstruction? annotation in other.Annotations.OfType<ILInstruction>())
 			{
 				node.AddAnnotation(annotation);
 			}
@@ -324,10 +324,10 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	internal sealed class QueryGroupClauseAnnotation
 	{
-		public readonly ILFunction KeyLambda;
-		public readonly ILFunction ProjectionLambda;
+		public readonly ILFunction? KeyLambda;
+		public readonly ILFunction? ProjectionLambda;
 
-		public QueryGroupClauseAnnotation(ILFunction key, ILFunction projection)
+		public QueryGroupClauseAnnotation(ILFunction? key, ILFunction? projection)
 		{
 			this.KeyLambda = key;
 			this.ProjectionLambda = projection;
@@ -339,10 +339,10 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	internal sealed class QueryJoinClauseAnnotation
 	{
-		public readonly ILFunction EqualsLambda;
-		public readonly ILFunction OnLambda;
+		public readonly ILFunction? EqualsLambda;
+		public readonly ILFunction? OnLambda;
 
-		public QueryJoinClauseAnnotation(ILFunction on, ILFunction equals)
+		public QueryJoinClauseAnnotation(ILFunction? on, ILFunction? equals)
 		{
 			this.OnLambda = on;
 			this.EqualsLambda = equals;

@@ -29,47 +29,47 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// <summary>
 		/// Gets the string that matches any string.
 		/// </summary>
-		public static readonly string AnyString = "$any$";
+		public const string AnyString = "$any$";
 
 		bool INode.IsNull {
 			get { return false; }
 		}
 
-		Role INode.Role {
+		Role? INode.Role {
 			get { return null; }
 		}
 
-		INode INode.NextSibling {
+		INode? INode.NextSibling {
 			get { return null; }
 		}
 
-		INode INode.FirstChild {
+		INode? INode.FirstChild {
 			get { return null; }
 		}
 
-		public abstract bool DoMatch(INode other, Match match);
+		public abstract bool DoMatch(INode? other, Match match);
 
-		public virtual bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+		public virtual bool DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
 			return DoMatch(pos, match);
 		}
 
-		public static bool MatchString(string pattern, string text)
+		public static bool MatchString(string? pattern, string? text)
 		{
 			return pattern == AnyString || pattern == text;
 		}
 
-		public static bool DoMatchCollection(Role role, INode firstPatternChild, INode firstOtherChild, Match match)
+		public static bool DoMatchCollection(Role role, INode? firstPatternChild, INode? firstOtherChild, Match match)
 		{
 			BacktrackingInfo backtrackingInfo = new();
-			Stack<INode> patternStack = new();
+			Stack<INode?> patternStack = new();
 			Stack<PossibleMatch> stack = backtrackingInfo.backtrackingStack;
 			patternStack.Push(firstPatternChild);
 			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
 			while (stack.Count > 0)
 			{
-				INode cur1 = patternStack.Pop();
-				INode cur2 = stack.Peek().NextOther;
+				INode? cur1 = patternStack.Pop();
+				INode? cur2 = stack.Peek().NextOther;
 				match.RestoreCheckPoint(stack.Pop().Checkpoint);
 				bool success = true;
 				while (cur1 != null && success)
@@ -102,10 +102,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		internal struct PossibleMatch
 		{
-			public readonly INode NextOther; // next node after the last matched node
+			public readonly INode? NextOther; // next node after the last matched node
 			public readonly int Checkpoint; // checkpoint
 
-			public PossibleMatch(INode nextOther, int checkpoint)
+			public PossibleMatch(INode? nextOther, int checkpoint)
 			{
 				this.NextOther = nextOther;
 				this.Checkpoint = checkpoint;

@@ -26,8 +26,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class TypeParameterReference : ITypeReference
 	{
-		static readonly TypeParameterReference[] classTypeParameterReferences = new TypeParameterReference[8];
-		static readonly TypeParameterReference[] methodTypeParameterReferences = new TypeParameterReference[8];
+		static readonly TypeParameterReference?[] classTypeParameterReferences = new TypeParameterReference?[8];
+		static readonly TypeParameterReference?[] methodTypeParameterReferences = new TypeParameterReference?[8];
 
 		readonly SymbolKind ownerType;
 
@@ -71,12 +71,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (index is >= 0 and < 8 && ownerType is SymbolKind.TypeDefinition or SymbolKind.Method)
 			{
-				TypeParameterReference[] arr = (ownerType == SymbolKind.TypeDefinition)
+				TypeParameterReference?[] arr = (ownerType == SymbolKind.TypeDefinition)
 					? classTypeParameterReferences
 					: methodTypeParameterReferences;
-				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]) ??
-				                                LazyInit.GetOrSet(ref arr[index],
-					                                new TypeParameterReference(ownerType, index));
+				TypeParameterReference? result = LazyInit.VolatileRead(ref arr[index]) ??
+				                                 LazyInit.GetOrSet(ref arr[index],
+					                                 new TypeParameterReference(ownerType, index));
 				return result;
 			}
 

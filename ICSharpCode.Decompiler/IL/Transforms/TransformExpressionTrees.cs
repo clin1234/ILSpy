@@ -37,11 +37,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	public sealed class TransformExpressionTrees : IStatementTransform
 	{
 		StatementTransformContext context;
-		CSharpConversions conversions;
-		List<ILInstruction> instructionsToRemove;
+		CSharpConversions? conversions;
+		List<ILInstruction?> instructionsToRemove;
 		Stack<ILFunction> lambdaStack;
 		Dictionary<ILVariable, ILVariable> parameterMapping;
-		Dictionary<ILVariable, (IType, string)> parameters;
+		Dictionary<ILVariable?, (IType, string)> parameters;
 		CSharpResolver resolver;
 
 		public void Run(Block block, int pos, StatementTransformContext context)
@@ -51,9 +51,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem);
 			this.resolver = new CSharpResolver(context.TypeSystem);
-			this.parameters = new Dictionary<ILVariable, (IType, string)>();
+			this.parameters = new Dictionary<ILVariable?, (IType, string)>();
 			this.parameterMapping = new Dictionary<ILVariable, ILVariable>();
-			this.instructionsToRemove = new List<ILInstruction>();
+			this.instructionsToRemove = new List<ILInstruction?>();
 			this.lambdaStack = new Stack<ILFunction>();
 			for (int i = pos; i < block.Instructions.Count; i++)
 			{
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Returns true if the instruction matches the pattern for Expression.Lambda calls.
 		/// </summary>
-		static bool MightBeExpressionTree(ILInstruction inst, ILInstruction stmt)
+		static bool MightBeExpressionTree(ILInstruction inst, ILInstruction? stmt)
 		{
 			if (!(inst is CallInstruction call
 			      && call.Method.FullNameIs("System.Linq.Expressions.Expression", "Lambda")
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool IsEmptyParameterList(ILInstruction inst)
+		static bool IsEmptyParameterList(ILInstruction? inst)
 		{
 			if (inst is CallInstruction emptyCall && emptyCall.Method.FullNameIs("System.Array", "Empty") &&
 			    emptyCall.Arguments.Count == 0)
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType type,
+		bool MatchParameterVariableAssignment(ILInstruction? expr, out ILVariable? parameterReferenceVar, out IType type,
 			out string name)
 		{
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return typeArg.Arguments[0].MatchLdTypeToken(out type) && initCall.Arguments[1].MatchLdStr(out name);
 		}
 
-		bool TryConvertExpressionTree(ILInstruction instruction, ILInstruction statement)
+		bool TryConvertExpressionTree(ILInstruction instruction, ILInstruction? statement)
 		{
 			if (MightBeExpressionTree(instruction, statement))
 			{
@@ -160,13 +160,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Converts a Expression.Lambda call into an ILFunction.
 		/// If the conversion fails, null is returned.
 		/// </summary>
-		(Func<ILInstruction>, IType) ConvertLambda(CallInstruction instruction)
+		(Func<ILInstruction>, IType) ConvertLambda(CallInstruction? instruction)
 		{
 			if (instruction.Method.Name != "Lambda" || instruction.Arguments.Count != 2 ||
 			    instruction.Method.ReturnType.FullName != "System.Linq.Expressions.Expression" ||
 			    instruction.Method.ReturnType.TypeArguments.Count != 1)
 				return (null, SpecialType.UnknownType);
-			var parameterList = new List<IParameter>();
+			var parameterList = new List<IParameter?>();
 			var parameterVariablesList = new List<ILVariable>();
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList,
 				    new SimpleTypeResolveContext(context.Function.Method)))
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void SetExpressionTreeFlag(ILFunction lambda, CallInstruction call)
+		void SetExpressionTreeFlag(ILFunction? lambda, CallInstruction call)
 		{
 			lambda.Kind = IsExpressionTree(call.Method.ReturnType)
 				? ILFunctionKind.ExpressionTree
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			lambda.DelegateType = call.Method.ReturnType;
 		}
 
-		bool ReadParameters(ILInstruction initializer, IList<IParameter> parameters,
+		bool ReadParameters(ILInstruction? initializer, IList<IParameter?> parameters,
 			IList<ILVariable> parameterVariables, ITypeResolveContext resolveContext)
 		{
 			switch (initializer)
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst == null)
 				return (null, type);
 
-			ILInstruction DoConvert()
+			ILInstruction? DoConvert()
 			{
 				var result = inst();
 				Debug.Assert(type != null, "IType must be non-null!");
@@ -615,7 +615,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			IList<ILInstruction> arguments = null;
 			Func<ILInstruction> targetConverter = null;
-			IType targetType = null;
+			IType? targetType = null;
 			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member))
 			{
 				// static method
@@ -680,7 +680,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (BuildCall, method.ReturnType);
 		}
 
-		ILInstruction PrepareCallTarget(IType expectedType, ILInstruction target, IType targetType)
+		ILInstruction PrepareCallTarget(IType expectedType, ILInstruction target, IType? targetType)
 		{
 			switch (CallInstruction.ExpectedTypeForThisPointer(expectedType))
 			{
@@ -811,7 +811,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (leftType.IsKnownType(KnownTypeCode.String) && rightType.IsKnownType(KnownTypeCode.String))
 			{
-				IMethod operatorMethod;
+				IMethod? operatorMethod;
 				switch (kind)
 				{
 					case ComparisonKind.Equality:
@@ -928,9 +928,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			return (BuildField, type);
 
-			ILInstruction BuildField()
+			ILInstruction? BuildField()
 			{
-				ILInstruction inst;
+				ILInstruction? inst;
 				if (targetConverter == null)
 				{
 					inst = new LdsFlda((IField)member);
@@ -1173,7 +1173,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
-			ArrayType arrayType = new(context.BlockContext.TypeSystem, type);
+			ArrayType? arrayType = new(context.BlockContext.TypeSystem, type);
 			if (arguments.Count == 0)
 				return (() => new NewArr(type, new LdcI4(0)), arrayType);
 			var convertedArguments = new Func<ILInstruction>[arguments.Count];
@@ -1280,7 +1280,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (() => BuildNewObj(method, convertedArguments), member.DeclaringType);
 			}
 
-			ILInstruction BuildNewObj(IMethod method, Func<ILInstruction>[] args)
+			static ILInstruction BuildNewObj(IMethod method, Func<ILInstruction>[] args)
 			{
 				var newObj = new NewObj(method);
 				newObj.Arguments.AddRange(args.Select(f => f()));
@@ -1321,7 +1321,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invocation.Arguments.Count < 2)
 				return (null, SpecialType.UnknownType);
 			Func<ILInstruction> targetConverter = null;
-			IType targetType = null;
+			IType? targetType = null;
 			if (!invocation.Arguments[0].MatchLdNull())
 			{
 				(targetConverter, targetType) = ConvertInstruction(invocation.Arguments[0]);
@@ -1375,9 +1375,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (converted == null)
 				return (null, SpecialType.UnknownType);
 
-			ILInstruction BuildTypeAs()
+			ILInstruction? BuildTypeAs()
 			{
-				ILInstruction inst = new IsInst(converted(), type);
+				ILInstruction? inst = new IsInst(converted(), type);
 				// We must follow ECMA-335, III.4.6:
 				// If typeTok is a nullable type, Nullable<T>, it is interpreted as "boxed" T.
 				if (type.IsKnownType(KnownTypeCode.NullableOfT))
@@ -1414,7 +1414,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (invocation.Arguments.Count)
 			{
 				case 1:
-					ILInstruction left;
+					ILInstruction? left;
 					var underlyingType = NullableType.GetUnderlyingType(argumentType);
 
 					switch (underlyingType.GetStackType())
@@ -1511,7 +1511,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return variable.Type.FullName == "System.Linq.Expressions.ParameterExpression";
 		}
 
-		bool MatchConstantCall(ILInstruction inst, out ILInstruction value, out IType type)
+		bool MatchConstantCall(ILInstruction inst, out ILInstruction? value, out IType type)
 		{
 			value = null;
 			type = null;
@@ -1550,7 +1550,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetConstructorFromHandle(ILInstruction? inst, out IMember member)
 		{
 			member = null;
 			//castclass System.Reflection.ConstructorInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
@@ -1564,7 +1564,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		bool MatchGetFieldFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetFieldFromHandle(ILInstruction? inst, out IMember member)
 		{
 			member = null;
 			if (!(inst is CallInstruction call &&
@@ -1595,7 +1595,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction> arguments)
+		bool MatchArgumentList(ILInstruction? inst, out IList<ILInstruction> arguments)
 		{
 			arguments = null;
 			if (inst is not Block { Kind: BlockKind.ArrayInitializer } block)

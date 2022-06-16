@@ -34,13 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class ObjectCreateExpression : Expression
 	{
 		public static readonly TokenRole NewKeywordRole = new("new");
-		public static readonly Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
+		public static readonly Role<ArrayInitializerExpression?> InitializerRole = ArrayCreateExpression.InitializerRole;
 
 		public ObjectCreateExpression()
 		{
 		}
 
-		public ObjectCreateExpression(AstType type, IEnumerable<Expression> arguments = null)
+		public ObjectCreateExpression(AstType? type, IEnumerable<Expression?> arguments = null)
 		{
 			AddChild(type, Roles.Type);
 			if (arguments != null)
@@ -52,8 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type,
-			(IEnumerable<Expression>)arguments)
+		public ObjectCreateExpression(AstType? type, params Expression[] arguments) : this(type,
+			(IEnumerable<Expression?>)arguments)
 		{
 		}
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(NewKeywordRole); }
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
+		public AstNodeCollection<Expression?> Arguments {
 			get { return GetChildrenByRole(Roles.Argument); }
 		}
 
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public ArrayInitializerExpression Initializer {
+		public ArrayInitializerExpression? Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
 		}
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitObjectCreateExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ObjectCreateExpression o && this.Type.DoMatch(o.Type, match) &&
 			       this.Arguments.DoMatch(o.Arguments, match) && this.Initializer.DoMatch(o.Initializer, match);

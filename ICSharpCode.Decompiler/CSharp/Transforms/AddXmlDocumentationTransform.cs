@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	internal sealed class AddXmlDocumentationTransform : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			if (!context.Settings.ShowXmlDocumentation || context.DecompileRun.DocumentationProvider == null)
 				return;
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					if (entityDecl.GetSymbol() is not IEntity entity)
 						continue;
-					string doc = provider.GetDocumentation(entity);
+					string? doc = provider.GetDocumentation(entity);
 					if (doc != null)
 					{
 						InsertXmlDocumentation(entityDecl, new StringReader(doc));
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static void InsertXmlDocumentation(AstNode node, StringReader r)
 		{
 			// Find the first non-empty line:
-			string firstLine;
+			string? firstLine;
 			do
 			{
 				firstLine = r.ReadLine();
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			} while (string.IsNullOrWhiteSpace(firstLine));
 
 			string indentation = firstLine[..^firstLine.TrimStart().Length];
-			string line = firstLine;
+			string? line = firstLine;
 			int skippedWhitespaceLines = 0;
 			// Copy all lines from input to output, except for empty lines at the end.
 			while (line != null)

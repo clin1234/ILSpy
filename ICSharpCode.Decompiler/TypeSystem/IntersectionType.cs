@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType Create(IEnumerable<IType> types)
 		{
 			IType[] arr = types.Distinct().ToArray();
-			foreach (IType type in arr)
+			foreach (IType? type in arr)
 			{
 				if (type == null)
 					throw new ArgumentNullException();
@@ -136,43 +136,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
-			GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter, GetMemberOptions options)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetProperties(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IField> GetFields(Predicate<IField> filter, GetMemberOptions options)
+		public override IEnumerable<IField> GetFields(Predicate<IField>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetFields(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter, GetMemberOptions options)
+		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetEvents(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IMember> GetMembers(Predicate<IMember> filter, GetMemberOptions options)
+		public override IEnumerable<IMember> GetMembers(Predicate<IMember>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMembers(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetAccessors(this, FilterNonStatic(filter), options);
 		}
 
-		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
+		static Predicate<T> FilterNonStatic<T>(Predicate<T>? filter) where T : class, IMember
 		{
 			if (filter == null)
 				return static member => !member.IsStatic;

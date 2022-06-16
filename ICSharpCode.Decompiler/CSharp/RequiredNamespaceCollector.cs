@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public static void CollectNamespaces(MetadataModule module, HashSet<string> namespaces)
+		public static void CollectNamespaces(MetadataModule? module, HashSet<string> namespaces)
 		{
 			var collector = new RequiredNamespaceCollector(namespaces);
 			foreach (var type in module.TypeDefinitions)
@@ -42,20 +42,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			collector.HandleAttributes(module.GetModuleAttributes());
 		}
 
-		public static void CollectAttributeNamespaces(MetadataModule module, HashSet<string> namespaces)
+		public static void CollectAttributeNamespaces(MetadataModule? module, HashSet<string> namespaces)
 		{
 			var collector = new RequiredNamespaceCollector(namespaces);
 			collector.HandleAttributes(module.GetAssemblyAttributes());
 			collector.HandleAttributes(module.GetModuleAttributes());
 		}
 
-		public static void CollectNamespaces(IEntity entity, MetadataModule module, HashSet<string> namespaces)
+		public static void CollectNamespaces(IEntity entity, MetadataModule? module, HashSet<string> namespaces)
 		{
 			var collector = new RequiredNamespaceCollector(namespaces);
 			collector.CollectNamespaces(entity, module);
 		}
 
-		void CollectNamespaces(IEntity entity, MetadataModule module, CodeMappingInfo mappingInfo = null)
+		void CollectNamespaces(IEntity? entity, MetadataModule? module, CodeMappingInfo? mappingInfo = null)
 		{
 			if (entity == null || entity.MetadataToken.IsNil)
 				return;
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void HandleOverrides(ImmutableArray<MethodImplementationHandle> immutableArray, MetadataModule module)
+		void HandleOverrides(ImmutableArray<MethodImplementationHandle> immutableArray, MetadataModule? module)
 		{
 			foreach (var h in immutableArray)
 			{
@@ -202,14 +202,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public static void CollectNamespaces(EntityHandle entity, MetadataModule module, HashSet<string> namespaces)
+		public static void CollectNamespaces(EntityHandle entity, MetadataModule? module, HashSet<string> namespaces)
 		{
 			if (entity.IsNil)
 				return;
 			CollectNamespaces(module.ResolveEntity(entity, genericContext), module, namespaces);
 		}
 
-		void HandleAttributes(IEnumerable<IAttribute> attributes)
+		void HandleAttributes(IEnumerable<IAttribute?> attributes)
 		{
 			foreach (var attr in attributes)
 			{
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void HandleTypeParameters(IEnumerable<ITypeParameter> typeParameters)
+		void HandleTypeParameters(IEnumerable<ITypeParameter>? typeParameters)
 		{
 			foreach (var typeParam in typeParameters)
 			{
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void CollectNamespacesFromMethodBody(MethodBodyBlock method, MetadataModule module)
+		void CollectNamespacesFromMethodBody(MethodBodyBlock method, MetadataModule? module)
 		{
 			var metadata = module.metadata;
 			var instructions = method.GetILReader();

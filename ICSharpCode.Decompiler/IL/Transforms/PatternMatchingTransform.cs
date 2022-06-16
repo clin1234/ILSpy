@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -81,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// 
 		/// All other uses of V are in blocks dominated by trueBlock.
-		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context,
+		private bool PatternMatchRefTypes(Block? block, BlockContainer container, ILTransformContext context,
 			ref ControlFlowGraph? cfg)
 		{
 			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
@@ -126,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (pos < 0)
 				return false;
 			// stloc V(isinst T(testedOperand))
-			ILInstruction storeToV = block.Instructions[pos];
+			ILInstruction? storeToV = block.Instructions[pos];
 			if (!storeToV.MatchStLoc(out var v, out var value))
 				return false;
 			if (value.MatchLdLoc(s))
@@ -146,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 
-			IType? unboxType;
+			IType unboxType;
 			if (value is UnboxAny unboxAny)
 			{
 				// stloc S(unbox.any T(isinst T(testedOperand)))
@@ -186,7 +187,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
-			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context,
+			ILInstruction? storeToV, ILInstruction loadInNullCheck, ILTransformContext context,
 			ref ControlFlowGraph? cfg)
 		{
 			var targetBlock = trueInst as Block;
@@ -201,14 +202,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			cfg ??= new ControlFlowGraph(container, context.CancellationToken);
 			var targetBlockNode = cfg.GetNode(targetBlock);
-			var uses = v.LoadInstructions.Concat<ILInstruction>(v.AddressInstructions)
+			IEnumerable<ILInstruction> uses = v.LoadInstructions.Concat<ILInstruction>(v.AddressInstructions)
 				.Concat(v.StoreInstructions.Cast<ILInstruction>());
 			foreach (var use in uses)
 			{
 				if (use == storeToV || use == loadInNullCheck)
 					continue;
 				Block? found = null;
-				for (ILInstruction? current = use; current != null; current = current.Parent)
+				for (ILInstruction current = use; current != null; current = current.Parent)
 				{
 					if (current.Parent == container)
 					{
@@ -244,7 +245,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (match.type[T].notnull(V = testedOperand)) br unboxBlock
 		///		br falseBlock
 		///	}
-		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context,
+		private bool PatternMatchValueTypes(Block? block, BlockContainer container, ILTransformContext context,
 			ref ControlFlowGraph? cfg)
 		{
 			if (!MatchIsInstBlock(block, out var type, out var testedOperand,
@@ -305,11 +306,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	...
 		/// if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
 		/// br unboxBlock
-		private bool MatchIsInstBlock(Block block,
-			[NotNullWhen(true)] out IType? type,
+		private bool MatchIsInstBlock(Block? block,
+			[NotNullWhen(true)] out IType type,
 			[NotNullWhen(true)] out LdLoc? testedOperand,
-			[NotNullWhen(true)] out Block? unboxBlock,
-			[NotNullWhen(true)] out Block? falseBlock)
+			[NotNullWhen(true)] out Block unboxBlock,
+			[NotNullWhen(true)] out Block falseBlock)
 		{
 			type = null;
 			testedOperand = null;
@@ -344,8 +345,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V(unbox.any T(ldloc testedOperand))
 		/// 	...
 		/// }
-		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedOperand,
-			[NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out ILInstruction? storeToV)
+		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable testedOperand,
+			[NotNullWhen(true)] out ILVariable v, [NotNullWhen(true)] out ILInstruction? storeToV)
 		{
 			v = null;
 			storeToV = null;

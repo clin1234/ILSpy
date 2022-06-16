@@ -590,7 +590,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		ILInstruction LiftCSharpComparison(CompOrDecimal comp, ComparisonKind newComparisonKind)
 		{
-			(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(comp.Left, comp.Right,
+			(ILInstruction? left, ILInstruction? right, BitSet bits) = DoLiftBinary(comp.Left, comp.Right,
 				comp.LeftExpectedType, comp.RightExpectedType);
 			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
 			// (we can't check this before lifting due to the calls to GetValueOrDefault())
@@ -717,7 +717,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 
 				context.Step("Lift user-defined comparison operator", trueInst);
-				(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(call.Arguments[0],
+				(ILInstruction? left, ILInstruction? right, BitSet bits) = DoLiftBinary(call.Arguments[0],
 					call.Arguments[1],
 					call.Method.Parameters[0].Type, call.Method.Parameters[1].Type);
 				if (left != null && right != null && bits.All(0, nullableVars.Count))
@@ -786,7 +786,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return result;
 			}
 
-			ILInstruction lifted;
+			ILInstruction? lifted;
 			if (nullableVars.Count == 1 && MatchGetValueOrDefault(exprToLift, nullableVars[0]))
 			{
 				// v.HasValue ? call GetValueOrDefault(ldloca v) : fallback
@@ -912,7 +912,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (inst is BinaryNumericInstruction binary)
 			{
-				(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(binary.Left, binary.Right,
+				(ILInstruction? left, ILInstruction? right, BitSet bits) = DoLiftBinary(binary.Left, binary.Right,
 					SpecialType.UnknownType, SpecialType.UnknownType);
 				if (left != null && right != null)
 				{
@@ -963,10 +963,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				else if (call.Arguments.Count == 2)
 				{
-					(ILInstruction left, ILInstruction right, BitSet bits) = DoLiftBinary(call.Arguments[0],
+					(ILInstruction? left, ILInstruction? right, BitSet bits) = DoLiftBinary(call.Arguments[0],
 						call.Arguments[1],
 						call.Method.Parameters[0].Type, call.Method.Parameters[1].Type);
-					newArgs = new[] { left, right };
+					newArgs = new ILInstruction[] { left, right };
 					newBits = bits;
 				}
 				else
@@ -992,7 +992,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (null, null);
 		}
 
-		(ILInstruction, ILInstruction, BitSet) DoLiftBinary(ILInstruction lhs, ILInstruction rhs,
+		(ILInstruction?, ILInstruction?, BitSet) DoLiftBinary(ILInstruction lhs, ILInstruction rhs,
 			IType leftExpectedType, IType rightExpectedType)
 		{
 			(ILInstruction left, BitSet leftBits) = DoLift(lhs);
@@ -1042,7 +1042,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(arg)'
 		/// </summary>
-		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction arg)
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction? arg)
 		{
 			arg = null;
 			if (inst is not Call call)
@@ -1062,7 +1062,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
 		{
-			if (MatchHasValueCall(inst, out ILInstruction arg))
+			if (MatchHasValueCall(inst, out ILInstruction? arg))
 			{
 				return arg.MatchLdLoca(out v);
 			}
@@ -1108,7 +1108,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(arg)'
 		/// </summary>
-		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction arg)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction? arg)
 		{
 			arg = null;
 			if (inst is not Call call)
@@ -1127,7 +1127,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable v)
 		{
 			v = null;
-			return MatchGetValueOrDefault(inst, out ILInstruction arg)
+			return MatchGetValueOrDefault(inst, out ILInstruction? arg)
 			       && arg.MatchLdLoca(out v);
 		}
 

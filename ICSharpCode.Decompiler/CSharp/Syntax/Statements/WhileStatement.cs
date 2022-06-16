@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public WhileStatement(Expression condition, Statement embeddedStatement)
+		public WhileStatement(Expression? condition, Statement? embeddedStatement)
 		{
 			this.Condition = condition;
 			this.EmbeddedStatement = embeddedStatement;
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Condition {
+		public Expression? Condition {
 			get { return GetChildByRole(Roles.Condition); }
 			init { SetChildByRole(Roles.Condition, value); }
 		}
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
+		public Statement? EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitWhileStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is WhileStatement o && this.Condition.DoMatch(o.Condition, match) &&
 			       this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);

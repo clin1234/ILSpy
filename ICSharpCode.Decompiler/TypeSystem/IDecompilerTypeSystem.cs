@@ -27,6 +27,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface IDecompilerTypeSystem : ICompilation
 	{
-		new MetadataModule MainModule { get; }
+		new MetadataModule? MainModule { get; }
 	}
 }

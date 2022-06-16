@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public FixedVariableInitializer(string name, Expression initializer = null)
+		public FixedVariableInitializer(string name, Expression? initializer = null)
 		{
 			this.Name = name;
 			this.CountExpression = initializer;
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier NameToken {
+		public Identifier? NameToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBracket); }
 		}
 
-		public Expression CountExpression {
+		public Expression? CountExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFixedVariableInitializer(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is FixedVariableInitializer o && MatchString(this.Name, o.Name) &&
 			       this.CountExpression.DoMatch(o.CountExpression, match);

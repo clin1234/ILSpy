@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		BlockTransformContext context;
 
-		void IBlockTransform.Run(Block block, BlockTransformContext context)
+		void IBlockTransform.Run(Block? block, BlockTransformContext context)
 		{
 			if (!context.Settings.LockStatement)
 				return;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		}
 		/// }
 		/// </summary>
-		bool TransformLockMCS(Block block, int i)
+		bool TransformLockMCS(Block? block, int i)
 		{
 			if (i < 2)
 				return false;
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		}
 		/// }
 		/// </summary>
-		bool TransformLockV2(Block block, int i)
+		bool TransformLockV2(Block? block, int i)
 		{
 			if (i < 2)
 				return false;
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		}
 		/// }
 		/// </summary>
-		bool TransformLockV4(Block block, int i)
+		bool TransformLockV4(Block? block, int i)
 		{
 			if (i < 1)
 				return false;
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!flagStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean) || !flagStore.Value.MatchLdcI4(0))
 				return false;
 			if (body.TryBlock is not BlockContainer tryContainer || !MatchLockEntryPoint(tryContainer.EntryPoint,
-				    flagStore.Variable, out StLoc objectStore))
+				    flagStore.Variable, out StLoc? objectStore))
 				return false;
 			if (body.FinallyBlock is not BlockContainer finallyContainer || !MatchExitBlock(finallyContainer.EntryPoint,
 				    flagStore.Variable, objectStore.Variable))
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		}
 		/// }
 		/// </summary>
-		bool TransformLockRoslyn(Block block, int i)
+		bool TransformLockRoslyn(Block? block, int i)
 		{
 			if (i < 2)
 				return false;
@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc obj)
+		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc? obj)
 		{
 			obj = null;
 			if (entryPoint.Instructions.Count == 0 || entryPoint.IncomingEdgeCount != 1)
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc obj)
+		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc? obj)
 		{
 			obj = null;
 			const string ThreadingMonitor = "System.Threading.Monitor";

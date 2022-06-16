@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public IndexerExpression(Expression target, IEnumerable<Expression> arguments)
+		public IndexerExpression(Expression? target, IEnumerable<Expression?> arguments)
 		{
 			AddChild(target, Roles.TargetExpression);
 			if (arguments != null)
@@ -49,12 +49,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IndexerExpression(Expression target, params Expression[] arguments) : this(target,
-			(IEnumerable<Expression>)arguments)
+		public IndexerExpression(Expression? target, params Expression?[] arguments) : this(target,
+			(IEnumerable<Expression?>)arguments)
 		{
 		}
 
-		public Expression Target {
+		public Expression? Target {
 			get { return GetChildByRole(Roles.TargetExpression); }
 			init { SetChildByRole(Roles.TargetExpression, value); }
 		}
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBracket); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
+		public AstNodeCollection<Expression?> Arguments {
 			get { return GetChildrenByRole(Roles.Argument); }
 		}
 
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIndexerExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is IndexerExpression o && this.Target.DoMatch(o.Target, match) &&
 			       this.Arguments.DoMatch(o.Arguments, match);

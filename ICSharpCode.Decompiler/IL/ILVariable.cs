@@ -475,22 +475,22 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal void AddLoadInstruction(LdLoc inst) =>
+		internal void AddLoadInstruction(LdLoc? inst) =>
 			inst.IndexInLoadInstructionList = AddInstruction(loadInstructions, inst);
 
 		internal void AddStoreInstruction(IStoreInstruction inst) =>
 			inst.IndexInStoreInstructionList = AddInstruction(storeInstructions, inst);
 
-		internal void AddAddressInstruction(LdLoca inst) =>
+		internal void AddAddressInstruction(LdLoca? inst) =>
 			inst.IndexInAddressInstructionList = AddInstruction(addressInstructions, inst);
 
-		internal void RemoveLoadInstruction(LdLoc inst) =>
+		internal void RemoveLoadInstruction(LdLoc? inst) =>
 			RemoveInstruction(loadInstructions, inst.IndexInLoadInstructionList, inst);
 
 		internal void RemoveStoreInstruction(IStoreInstruction inst) =>
 			RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList, inst);
 
-		internal void RemoveAddressInstruction(LdLoca inst) =>
+		internal void RemoveAddressInstruction(LdLoca? inst) =>
 			RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList, inst);
 
 		int AddInstruction<T>(List<T> list, T inst) where T : class, IInstructionWithVariableOperand
@@ -508,7 +508,7 @@ namespace ICSharpCode.Decompiler.IL
 			list.RemoveAt(indexToMove);
 		}
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			return Name;
 		}
@@ -581,29 +581,15 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);
 			if (Kind != VariableKind.Parameter)
 			{
-				if (initialValueIsInitialized)
-				{
-					output.Write(" init");
-				}
-				else
-				{
-					output.Write(" uninit");
-				}
+				output.Write(initialValueIsInitialized ? " init" : " uninit");
 
-				if (usesInitialValue)
-				{
-					output.Write(" used");
-				}
-				else
-				{
-					output.Write(" unused");
-				}
+				output.Write(usesInitialValue ? " used" : " unused");
 			}
 
 			if (CaptureScope != null)
 			{
 				output.Write(" captured in ");
-				output.WriteLocalReference(CaptureScope.EntryPoint?.Label, CaptureScope);
+				output.WriteLocalReference(CaptureScope.EntryPoint.Label, CaptureScope);
 			}
 
 			if (StateMachineField != null)

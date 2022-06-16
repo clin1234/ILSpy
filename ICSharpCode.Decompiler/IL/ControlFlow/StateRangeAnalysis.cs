@@ -60,10 +60,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		readonly IField? stateField;
 		public CancellationToken CancellationToken;
 
-		internal ILVariable? doFinallyBodies;
+		internal ILVariable doFinallyBodies;
 		internal ILVariable? skipFinallyBodies;
 
-		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField? stateField, ILVariable? cachedStateVar = null)
+		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField? stateField, ILVariable cachedStateVar = null)
 		{
 			this.mode = mode;
 			this.stateField = stateField;
@@ -257,14 +257,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// the mapping prefers the last block.
 		/// Blocks outside of the given container are preferred over blocks within the container.
 		/// </summary>
-		public LongDict<Block> GetBlockStateSetMapping(BlockContainer container)
+		public LongDict<Block?> GetBlockStateSetMapping(BlockContainer container)
 		{
 			return LongDict.Create(GetMapping());
 
-			IEnumerable<(LongSet, Block)> GetMapping()
+			IEnumerable<(LongSet, Block?)> GetMapping()
 			{
 				// First, consider container exits:
-				foreach ((Block? block, LongSet states) in ranges)
+				foreach ((Block block, LongSet states) in ranges)
 				{
 					if (block.Parent != container)
 						yield return (states, block);

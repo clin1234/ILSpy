@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 		}
 
-		public ErrorResolveResult(IType type, string message, TextLocation location) : base(type)
+		public ErrorResolveResult(IType type, string? message, TextLocation location) : base(type)
 		{
 			this.Message = message;
 			this.Location = location;
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return true; }
 		}
 
-		public string Message { get; private set; }
+		public string? Message { get; private set; }
 
 		public TextLocation Location { get; private set; }
 	}

@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpyX.Search
 			Search(module, root);
 		}
 
-		private void Search(PEFile module, INamespace ns)
+		private void Search(PEFile module, INamespace? ns)
 		{
 			if (ns.Types.Any())
 			{
@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpyX.Search
 				Search(module, child);
 		}
 
-		void OnFoundResult(PEFile module, INamespace ns)
+		void OnFoundResult(PEFile module, INamespace? ns)
 		{
 			OnFoundResult(searchRequest.SearchResultFactory.Create(module, ns));
 		}

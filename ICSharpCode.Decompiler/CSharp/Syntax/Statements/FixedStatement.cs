@@ -42,12 +42,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
+		public AstNodeCollection<VariableInitializer?> Variables {
 			get { return GetChildrenByRole(Roles.Variable); }
 		}
 
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
+		public Statement? EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			set { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFixedStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is FixedStatement o && this.Type.DoMatch(o.Type, match) &&
 			       this.Variables.DoMatch(o.Variables, match) &&

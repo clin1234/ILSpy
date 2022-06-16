@@ -28,29 +28,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		public static readonly IModuleReference CurrentAssembly = new CurrentModuleReference();
 
-		readonly string shortName;
+		readonly string? shortName;
 
-		public DefaultAssemblyReference(string assemblyName)
+		public DefaultAssemblyReference(string? assemblyName)
 		{
 			int pos = assemblyName?.IndexOf(',') ?? -1;
-			shortName = pos >= 0 ? assemblyName[..pos] : assemblyName;
+			shortName = pos >= 0 ? assemblyName?[..pos] : assemblyName;
 		}
 
-		public IModule Resolve(ITypeResolveContext context)
+		public IModule? Resolve(ITypeResolveContext context)
 		{
-			IModule current = context.CurrentModule;
+			IModule? current = context.CurrentModule;
 			if (current != null && string.Equals(shortName, current.AssemblyName, StringComparison.OrdinalIgnoreCase))
 				return current;
-			foreach (IModule asm in context.Compilation.Modules)
+			foreach (IModule? asm in context.Compilation.Modules)
 			{
-				if (string.Equals(shortName, asm.AssemblyName, StringComparison.OrdinalIgnoreCase))
+				if (string.Equals(shortName, asm?.AssemblyName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
 
 			return null;
 		}
 
-		public override string ToString()
+		public override string? ToString()
 		{
 			return shortName;
 		}
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			public IModule Resolve(ITypeResolveContext context)
 			{
-				IModule asm = context.CurrentModule;
+				IModule? asm = context.CurrentModule;
 				if (asm == null)
 					throw new ArgumentException(
 						"A reference to the current assembly cannot be resolved in the compilation's global type resolve context.");

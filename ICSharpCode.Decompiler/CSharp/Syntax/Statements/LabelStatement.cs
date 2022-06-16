@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier LabelToken {
+		public Identifier? LabelToken {
 			get { return GetChildByRole(Roles.Identifier); }
 			set { SetChildByRole(Roles.Identifier, value); }
 		}
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitLabelStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is LabelStatement o && MatchString(this.Label, o.Label);
 		}

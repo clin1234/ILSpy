@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly IField fieldDefinition;
 
-		public SpecializedField(IField fieldDefinition, TypeParameterSubstitution substitution)
+		public SpecializedField(IField fieldDefinition, TypeParameterSubstitution? substitution)
 			: base(fieldDefinition)
 		{
 			this.fieldDefinition = fieldDefinition;
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
 		}
 
-		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
+		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution? substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution) ||
 			    fieldDefinition.DeclaringType.TypeParameterCount == 0)

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	readonly struct NullPropagationTransform
 	{
-		internal static bool IsProtectedIfInst(IfInstruction ifInst)
+		internal static bool IsProtectedIfInst(IfInstruction? ifInst)
 		{
 			// We exclude logic.and to avoid turning
 			// "logic.and(comp(interfaces != ldnull), call get_Count(interfaces))"
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.ReferenceType);
 				}
 			}
-			else if (NullableLiftingTransform.MatchHasValueCall(condition, out ILInstruction loadInst))
+			else if (NullableLiftingTransform.MatchHasValueCall(condition, out ILInstruction? loadInst))
 			{
 				// loadInst.HasValue ? trueInst : falseInst
 				if (loadInst.MatchLdLoca(out testedVar))
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					TryNullPropForVoidCall(testedVar, Mode.ReferenceType, ifInst.TrueInst as Block, ifInst);
 				}
-				else if (NullableLiftingTransform.MatchHasValueCall(ifInst.Condition, out ILInstruction arg))
+				else if (NullableLiftingTransform.MatchHasValueCall(ifInst.Condition, out ILInstruction? arg))
 				{
 					if (arg.MatchLdLoca(out testedVar))
 					{
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void TryNullPropForVoidCall(ILVariable testedVar, Mode mode, Block body, IfInstruction ifInst)
+		void TryNullPropForVoidCall(ILVariable testedVar, Mode mode, Block body, IfInstruction? ifInst)
 		{
 			if (body == null || body.Instructions.Count != 1)
 				return;
@@ -359,7 +359,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				chainLength++;
 			}
 
-			bool ArgumentsAfterFirstMayUnwrapNull(InstructionCollection<ILInstruction> arguments)
+			static bool ArgumentsAfterFirstMayUnwrapNull(InstructionCollection<ILInstruction> arguments)
 			{
 				// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 				for (int i = 1; i < arguments.Count; ++i)
@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						inst.MatchLdLocRef(testedVar),
 					Mode.NullableByValue => NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar),
 					Mode.NullableByReference => NullableLiftingTransform.MatchGetValueOrDefault(inst,
-						out ILInstruction arg) && arg.MatchLdLoc(testedVar),
+						out ILInstruction? arg) && arg.MatchLdLoc(testedVar),
 					Mode.UnconstrainedType =>
 						// unconstrained generic type (expect: ldloc(testedVar))
 						inst.MatchLdLoc(testedVar),
@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				};
 			}
 
-			bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)
+			static bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)
 			{
 				return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(
 					call.Method, new CSharp.TypeSystem.CSharpTypeResolveContext(

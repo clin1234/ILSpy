@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 		}
 
-		public override void StartNode(AstNode node)
+		public override void StartNode(AstNode? node)
 		{
 			if (positionStack.Count > 0)
 			{
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.StartNode(node);
 		}
 
-		public override void EndNode(AstNode node)
+		public override void EndNode(AstNode? node)
 		{
 			base.EndNode(node);
 			AstNode pos = positionStack.Pop();
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteSpecials(pos, null);
 		}
 
-		public override void WriteKeyword(Role role, string keyword)
+		public override void WriteKeyword(Role? role, string keyword)
 		{
 			if (role != null)
 			{
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.WriteKeyword(role, keyword);
 		}
 
-		public override void WriteIdentifier(Identifier identifier)
+		public override void WriteIdentifier(Identifier? identifier)
 		{
 			WriteSpecialsUpToRole(identifier.Role ?? Roles.Identifier);
 			base.WriteIdentifier(identifier);
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes all specials from start to end (exclusive). Does not touch the positionStack.
 		/// </summary>
-		void WriteSpecials(AstNode start, AstNode end)
+		void WriteSpecials(AstNode start, AstNode? end)
 		{
 			for (AstNode pos = start; pos != end; pos = pos.NextSibling)
 			{
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// Writes all specials between the current position (in the positionStack) and the specified node.
 		/// Advances the current position.
 		/// </summary>
-		void WriteSpecialsUpToNode(AstNode node)
+		void WriteSpecialsUpToNode(AstNode? node)
 		{
 			if (positionStack.Count == 0)
 			{

@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// inner.TypeParameters[0].Owner will be the outer class, because the same
 		/// ITypeParameter instance is used both on Outer`1 and Outer`1+Inner.
 		/// </remarks>
-		IEntity? Owner { get; }
+		IEntity Owner { get; }
 
 		/// <summary>
 		/// Gets the index of the type parameter in the type parameter list of the owning method/class.
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the attributes declared on this type parameter.
 		/// </summary>
-		IEnumerable<IAttribute> GetAttributes();
+		IEnumerable<IAttribute?> GetAttributes();
 	}
 
 	public readonly struct TypeConstraint

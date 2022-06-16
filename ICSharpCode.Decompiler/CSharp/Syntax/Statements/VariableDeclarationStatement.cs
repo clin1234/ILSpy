@@ -29,13 +29,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class VariableDeclarationStatement : Statement
 	{
-		public static readonly Role<CSharpModifierToken> ModifierRole = EntityDeclaration.ModifierRole;
+		public static readonly Role<CSharpModifierToken?> ModifierRole = EntityDeclaration.ModifierRole;
 
 		public VariableDeclarationStatement()
 		{
 		}
 
-		public VariableDeclarationStatement(AstType type, string name, Expression initializer = null)
+		public VariableDeclarationStatement(AstType? type, string name, Expression? initializer = null)
 		{
 			this.Type = type;
 			this.Variables.Add(new VariableInitializer(name, initializer));
@@ -46,12 +46,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			init { EntityDeclaration.SetModifiers(this, value); }
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
+		public AstNodeCollection<VariableInitializer?> Variables {
 			get { return GetChildrenByRole(Roles.Variable); }
 		}
 
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public VariableInitializer GetVariable(string name)
+		public VariableInitializer? GetVariable(string name)
 		{
 			return Variables.FirstOrNullObject(vi => vi.Name == name);
 		}
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitVariableDeclarationStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is VariableDeclarationStatement o && this.Modifiers == o.Modifiers &&
 			       this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match);

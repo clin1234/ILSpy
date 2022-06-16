@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static void WriteTo(this IType type, ITextOutput output)
 		{
-			output.WriteReference(type, type.ReflectionName);
+			output.WriteReference(type, type?.ReflectionName);
 		}
 
 		public static void WriteTo(this IMember member, ITextOutput output)
@@ -56,20 +56,17 @@ namespace ICSharpCode.Decompiler.IL
 			if (member is IMethod { IsConstructor: true } method)
 				output.WriteReference(member, method.DeclaringType?.Name + "." + method.Name);
 			else
-				output.WriteReference(member, member.Name);
+				output.WriteReference(member, member?.Name);
 		}
 
 		public static void WriteTo(this Interval interval, ITextOutput output, ILAstWritingOptions options)
 		{
 			if (!options.ShowILRanges)
 				return;
-			if (interval.IsEmpty)
-				output.Write("[empty] ");
-			else
-				output.Write($"[{interval.Start:x4}..{interval.InclusiveEnd:x4}] ");
+			output.Write(interval.IsEmpty ? "[empty] " : $"[{interval.Start:x4}..{interval.InclusiveEnd:x4}] ");
 		}
 
-		public static void WriteTo(this EntityHandle entity, PEFile module, ITextOutput output,
+		public static void WriteTo(this EntityHandle entity, PEFile? module, ITextOutput output,
 			MetadataGenericContext genericContext, ILNameSyntax syntax = ILNameSyntax.Signature)
 		{
 			if (entity.IsNil)
@@ -82,7 +79,7 @@ namespace ICSharpCode.Decompiler.IL
 			var metadata = module.Metadata;
 			Action<ILNameSyntax> signature;
 			MethodSignature<Action<ILNameSyntax>> methodSignature;
-			string memberName;
+			string? memberName;
 			switch (entity.Kind)
 			{
 				case HandleKind.TypeDefinition:
@@ -407,7 +404,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		static void WriteParent(ITextOutput output, PEFile module, MetadataReader metadata, EntityHandle parentHandle,
+		static void WriteParent(ITextOutput output, PEFile? module, MetadataReader metadata, EntityHandle parentHandle,
 			MetadataGenericContext genericContext, ILNameSyntax syntax)
 		{
 			switch (parentHandle.Kind)

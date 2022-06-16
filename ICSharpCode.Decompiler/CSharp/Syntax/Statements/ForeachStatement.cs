@@ -53,12 +53,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstType VariableType {
+		public AstType? VariableType {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
 
-		public VariableDesignation VariableDesignation {
+		public VariableDesignation? VariableDesignation {
 			get { return GetChildByRole(Roles.VariableDesignationRole); }
 			init { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(InKeywordRole); }
 		}
 
-		public Expression InExpression {
+		public Expression? InExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			init { SetChildByRole(Roles.Expression, value); }
 		}
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
+		public Statement? EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitForeachStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ForeachStatement o && this.VariableType.DoMatch(o.VariableType, match) &&
 			       this.VariableDesignation.DoMatch(o.VariableDesignation, match)

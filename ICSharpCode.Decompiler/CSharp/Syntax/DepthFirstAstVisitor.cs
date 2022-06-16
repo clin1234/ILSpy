@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -692,7 +694,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(errorNode);
 		}
 
-		public virtual void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
+		public virtual void VisitPatternPlaceholder(AstNode placeholder, Pattern pattern)
 		{
 			VisitChildren(placeholder);
 		}
@@ -1195,7 +1197,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(outVarDeclarationExpression);
 		}
 
-		public virtual T VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression)
+		public virtual T VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression? anonymousTypeCreateExpression)
 		{
 			return VisitChildren(anonymousTypeCreateExpression);
 		}
@@ -1370,7 +1372,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(errorNode);
 		}
 
-		public virtual T VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
+		public virtual T VisitPatternPlaceholder(AstNode placeholder, Pattern pattern)
 		{
 			return VisitChildren(placeholder);
 		}
@@ -2048,7 +2050,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(errorNode, data);
 		}
 
-		public virtual S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern, T data)
+		public virtual S VisitPatternPlaceholder(AstNode placeholder, Pattern pattern, T data)
 		{
 			return VisitChildren(placeholder, data);
 		}

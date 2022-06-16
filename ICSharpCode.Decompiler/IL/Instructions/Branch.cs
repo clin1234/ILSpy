@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class Branch : SimpleInstruction, IBranchOrLeaveInstruction
 	{
 		readonly int targetILOffset;
-		Block? targetBlock;
+		Block targetBlock;
 
 		public Branch(int targetILOffset) : base(OpCode.Branch)
 		{
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL
 				targetBlock.IncomingEdgeCount--;
 		}
 
-		internal static bool GetExecutesFinallyBlock(ILInstruction? inst, BlockContainer? container)
+		internal static bool GetExecutesFinallyBlock(ILInstruction inst, BlockContainer container)
 		{
 			for (; inst != container && inst != null; inst = inst.Parent)
 			{

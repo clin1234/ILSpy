@@ -26,6 +26,8 @@
 
 using System.Collections.Generic;
 
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -33,17 +35,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BlockStatement : Statement, IEnumerable<Statement>
 	{
-		public static readonly Role<Statement> StatementRole = new("Statement", Statement.Null);
+		public static readonly Role<Statement?> StatementRole = new("Statement", Statement.Null);
 
-		public CSharpTokenNode LBraceToken {
+		public CSharpTokenNode? LBraceToken {
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<Statement> Statements {
+		public AstNodeCollection<Statement?> Statements {
 			get { return GetChildrenByRole(StatementRole); }
 		}
 
-		public CSharpTokenNode RBraceToken {
+		public CSharpTokenNode? RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
 		}
 
@@ -72,24 +74,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitBlockStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is BlockStatement { IsNull: false } o && this.Statements.DoMatch(o.Statements, match);
 		}
 
-		public void Add(Statement statement)
+		public void Add(Statement? statement)
 		{
 			AddChild(statement, StatementRole);
 		}
 
-		public void Add(Expression expression)
+		public void Add(Expression? expression)
 		{
 			AddChild(new ExpressionStatement(expression), StatementRole);
 		}
 
 		#region Null
 
-		public new static readonly BlockStatement Null = new NullBlockStatement();
+		public new static readonly BlockStatement? Null = new NullBlockStatement();
 
 		sealed class NullBlockStatement : BlockStatement
 		{
@@ -114,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -124,16 +126,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator BlockStatement(PatternMatching.Pattern pattern)
+		public static implicit operator BlockStatement?(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : BlockStatement, PatternMatching.INode
+		sealed class PatternPlaceholder : BlockStatement, INode
 		{
-			readonly PatternMatching.Pattern child;
+			readonly Pattern child;
 
-			public PatternPlaceholder(PatternMatching.Pattern child)
+			public PatternPlaceholder(Pattern child)
 			{
 				this.child = child;
 			}
@@ -142,8 +144,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
-				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode? pos,
+				Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -163,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}

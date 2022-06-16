@@ -32,12 +32,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	internal class SpecializedMethod : SpecializedParameterizedMember, IMethod
 	{
 		readonly IMethod methodDefinition;
-		readonly ITypeParameter[] specializedTypeParameters;
-		readonly TypeParameterSubstitution substitutionWithoutSpecializedTypeParameters;
+		readonly ITypeParameter[]? specializedTypeParameters;
+		readonly TypeParameterSubstitution? substitutionWithoutSpecializedTypeParameters;
 
-		IMember accessorOwner;
+		IMember? accessorOwner;
 
-		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution substitution)
+		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution? substitution)
 			: base(methodDefinition)
 		{
 			bool isParameterized = substitution.MethodTypeArguments != null;
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				// The method is generic, so we need to specialize the type parameters
 				// (for specializing the constraints, and also to set the correct Owner)
-				specializedTypeParameters = new ITypeParameter[methodDefinition.TypeParameters.Count];
+				specializedTypeParameters = new ITypeParameter?[methodDefinition.TypeParameters.Count];
 				for (int i = 0; i < specializedTypeParameters.Length; i++)
 				{
 					specializedTypeParameters[i] =
@@ -79,17 +79,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IReadOnlyList<IType> TypeArguments {
-			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
+		public IReadOnlyList<IType>? TypeArguments {
+			get { return this.Substitution?.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
 
-		public IEnumerable<IAttribute> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
+		public IEnumerable<IAttribute?> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
 		public bool ReturnTypeIsRefReadOnly => methodDefinition.ReturnTypeIsRefReadOnly;
 
 		bool IMethod.ThisIsRefReadOnly => methodDefinition.ThisIsRefReadOnly;
 		bool IMethod.IsInitOnly => methodDefinition.IsInitOnly;
 
-		public IReadOnlyList<ITypeParameter> TypeParameters {
+		public IReadOnlyList<ITypeParameter>? TypeParameters {
 			get {
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
 			}
@@ -125,11 +125,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public MethodSemanticsAttributes AccessorKind => methodDefinition.AccessorKind;
 
-		public IMethod ReducedFrom {
+		public IMethod? ReducedFrom {
 			get { return null; }
 		}
 
-		public IMember AccessorOwner {
+		public IMember? AccessorOwner {
 			get {
 				var result = LazyInit.VolatileRead(ref accessorOwner);
 				if (result != null)
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public override bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public override bool Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			if (obj is not SpecializedMethod other)
 				return false;
@@ -157,19 +157,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				       other.substitutionWithoutSpecializedTypeParameters, typeNormalization);
 		}
 
-		public override IMember Specialize(TypeParameterSubstitution newSubstitution)
+		public override IMember Specialize(TypeParameterSubstitution? newSubstitution)
 		{
 			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution,
 				substitutionWithoutSpecializedTypeParameters));
 		}
 
-		IMethod IMethod.Specialize(TypeParameterSubstitution newSubstitution)
+		IMethod IMethod.Specialize(TypeParameterSubstitution? newSubstitution)
 		{
 			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution,
 				substitutionWithoutSpecializedTypeParameters));
 		}
 
-		internal static IMethod Create(IMethod methodDefinition, TypeParameterSubstitution substitution)
+		internal static IMethod Create(IMethod methodDefinition, TypeParameterSubstitution? substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution))
 				return methodDefinition;
@@ -250,11 +250,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			readonly ITypeParameter baseTp;
 
 			// The substition is set at the end of SpecializedMethod constructor
-			internal TypeVisitor substitution;
+			internal TypeVisitor? substitution;
 
-			IReadOnlyList<TypeConstraint> typeConstraints;
+			IReadOnlyList<TypeConstraint>? typeConstraints;
 
-			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
+			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod? specializedOwner)
 				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance)
 			{
 				// We don't have to consider already-specialized baseTps because
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 
-			public override IEnumerable<IAttribute> GetAttributes() => baseTp.GetAttributes();
+			public override IEnumerable<IAttribute?> GetAttributes() => baseTp.GetAttributes();
 
 			public override int GetHashCode()
 			{

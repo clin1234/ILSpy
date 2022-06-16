@@ -33,9 +33,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class Leave : ILInstruction, IBranchOrLeaveInstruction
 	{
-		BlockContainer? targetContainer;
+		BlockContainer targetContainer;
 
-		public Leave(BlockContainer? targetContainer, ILInstruction? value = null) : base(OpCode.Leave)
+		public Leave(BlockContainer targetContainer, ILInstruction value = null) : base(OpCode.Leave)
 		{
 			// Note: ILReader will create Leave instructions with targetContainer==null to represent 'endfinally',
 			// the targetContainer will then be filled in by BlockBuilder

@@ -28,12 +28,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		IReadOnlyList<IModule> assemblies;
+		IReadOnlyList<IModule?> assemblies;
 		bool initialized;
 		KnownTypeCache knownTypeCache;
-		IModule mainModule;
-		IReadOnlyList<IModule> referencedAssemblies;
-		INamespace rootNamespace;
+		IModule? mainModule;
+		IReadOnlyList<IModule?> referencedAssemblies;
+		INamespace? rootNamespace;
 
 		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)
 		{
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 		}
 
-		public IModule MainModule {
+		public IModule? MainModule {
 			get {
 				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IReadOnlyList<IModule> Modules {
+		public IReadOnlyList<IModule?> Modules {
 			get {
 				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IReadOnlyList<IModule> ReferencedModules {
+		public IReadOnlyList<IModule?> ReferencedModules {
 			get {
 				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
@@ -73,9 +73,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public INamespace RootNamespace {
+		public INamespace? RootNamespace {
 			get {
-				INamespace ns = LazyInit.VolatileRead(ref this.rootNamespace);
+				INamespace? ns = LazyInit.VolatileRead(ref this.rootNamespace);
 				if (ns != null)
 				{
 					return ns;
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public CacheManager CacheManager { get; } = new();
 
-		public virtual INamespace GetNamespaceForExternAlias(string alias)
+		public virtual INamespace? GetNamespaceForExternAlias(string alias)
 		{
 			if (string.IsNullOrEmpty(alias))
 				return this.RootNamespace;
@@ -112,11 +112,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ArgumentNullException.ThrowIfNull(assemblyReferences);
 			var context = new SimpleTypeResolveContext(this);
 			this.mainModule = mainAssembly.Resolve(context);
-			List<IModule> assemblies = new() { this.mainModule };
-			List<IModule> referencedAssemblies = new();
+			List<IModule?> assemblies = new() { this.mainModule };
+			List<IModule?> referencedAssemblies = new();
 			foreach (var asmRef in assemblyReferences)
 			{
-				IModule asm;
+				IModule? asm;
 				try
 				{
 					asm = asmRef.Resolve(context);
@@ -139,11 +139,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.initialized = true;
 		}
 
-		protected virtual INamespace CreateRootNamespace()
+		protected virtual INamespace? CreateRootNamespace()
 		{
 			// SimpleCompilation does not support extern aliases; but derived classes might.
 			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
-			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
+			INamespace?[] namespaces = new INamespace?[referencedAssemblies.Count + 1];
 			namespaces[0] = mainModule.RootNamespace;
 			for (int i = 0; i < referencedAssemblies.Count; i++)
 			{

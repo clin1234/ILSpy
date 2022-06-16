@@ -29,11 +29,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class InvocationAstType : AstType
 	{
-		public AstNodeCollection<Expression> Arguments {
+		public AstNodeCollection<Expression?> Arguments {
 			get { return GetChildrenByRole(Roles.Expression); }
 		}
 
-		public AstType BaseType {
+		public AstType? BaseType {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInvocationType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is InvocationAstType o
 			       && this.BaseType.DoMatch(o.BaseType, match)
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			throw new NotImplementedException();
 		}

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole UsingKeywordRole = new("using");
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
-		public static readonly Role<AstNode> ResourceAcquisitionRole = new("ResourceAcquisition", AstNode.Null);
+		public static readonly Role<AstNode?> ResourceAcquisitionRole = new("ResourceAcquisition", AstNode.Null);
 
 		public CSharpTokenNode UsingToken {
 			get { return GetChildByRole(UsingKeywordRole); }
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Either a VariableDeclarationStatement, or an Expression.
 		/// </summary>
-		public AstNode ResourceAcquisition {
+		public AstNode? ResourceAcquisition {
 			get { return GetChildByRole(ResourceAcquisitionRole); }
 			init { SetChildByRole(ResourceAcquisitionRole, value); }
 		}
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
+		public Statement? EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			init { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitUsingStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is UsingStatement o && this.IsAsync == o.IsAsync &&
 			       this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) &&

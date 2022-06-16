@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
 		/// </summary>
-		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
+		public static IMember? GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
 		{
 			ArgumentNullException.ThrowIfNull(baseMember);
 			ArgumentNullException.ThrowIfNull(derivedType);
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the base member that has the same signature.
 		/// </summary>
-		public static IMember GetBaseMember(IMember member)
+		public static IMember? GetBaseMember(IMember member)
 		{
 			return GetBaseMembers(member, false).FirstOrDefault();
 		}
@@ -178,11 +178,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Attributes
 
-		internal static IEnumerable<IAttribute> GetAttributes(ITypeDefinition typeDef)
+		internal static IEnumerable<IAttribute?> GetAttributes(ITypeDefinition typeDef)
 		{
 			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
 			{
-				ITypeDefinition baseTypeDef = baseType.GetDefinition();
+				ITypeDefinition? baseTypeDef = baseType.GetDefinition();
 				if (baseTypeDef == null)
 					continue;
 				foreach (var attr in baseTypeDef.GetAttributes())
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		internal static IEnumerable<IAttribute> GetAttributes(IMember member)
+		internal static IEnumerable<IAttribute?> GetAttributes(IMember member)
 		{
 			HashSet<IMember> visitedMembers = new();
 			do

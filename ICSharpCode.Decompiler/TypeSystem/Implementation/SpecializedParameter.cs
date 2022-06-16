@@ -23,11 +23,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class SpecializedParameter : IParameter
 	{
-		readonly IParameter baseParameter;
+		readonly IParameter? baseParameter;
 		readonly IType newType;
 		readonly IParameterizedMember newOwner;
 
-		public SpecializedParameter(IParameter baseParameter, IType newType, IParameterizedMember newOwner)
+		public SpecializedParameter(IParameter? baseParameter, IType newType, IParameterizedMember newOwner)
 		{
 			Debug.Assert(baseParameter != null && newType != null);
 			this.baseParameter = baseParameter;
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.newOwner = newOwner;
 		}
 
-		IEnumerable<IAttribute> IParameter.GetAttributes() => baseParameter.GetAttributes();
+		IEnumerable<IAttribute?> IParameter.GetAttributes() => baseParameter.GetAttributes();
 		ReferenceKind IParameter.ReferenceKind => baseParameter.ReferenceKind;
 		bool IParameter.IsRef => baseParameter.IsRef;
 		bool IParameter.IsOut => baseParameter.IsOut;

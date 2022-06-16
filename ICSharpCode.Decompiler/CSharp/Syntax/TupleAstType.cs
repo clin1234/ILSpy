@@ -27,9 +27,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class TupleAstType : AstType
 	{
-		public static readonly Role<TupleTypeElement> ElementRole = new("Element", TupleTypeElement.Null);
+		public static readonly Role<TupleTypeElement?> ElementRole = new("Element", TupleTypeElement.Null);
 
-		public AstNodeCollection<TupleTypeElement> Elements {
+		public AstNodeCollection<TupleTypeElement?> Elements {
 			get { return GetChildrenByRole(ElementRole); }
 		}
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			return new TupleTypeReference(
 				this.Elements.Select(e => e.Type.ToTypeReference(lookupMode, interningProvider)).ToImmutableArray(),
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is TupleAstType o && Elements.DoMatch(o.Elements, match);
 		}
@@ -71,17 +71,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#endregion
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
 
-		public string Name {
-			get { return GetChildByRole(Roles.Identifier).Name; }
+		public string? Name {
+			get { return GetChildByRole(Roles.Identifier)?.Name; }
 			init { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
 
-		public Identifier NameToken {
+		public Identifier? NameToken {
 			get { return GetChildByRole(Roles.Identifier); }
 			set { SetChildByRole(Roles.Identifier, value); }
 		}
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitTupleTypeElement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is TupleTypeElement o
 			       && Type.DoMatch(o.Type, match)

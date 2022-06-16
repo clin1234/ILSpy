@@ -40,9 +40,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// eagerly loaded:
 		readonly FullTypeName fullTypeName;
 		readonly TypeDefinitionHandle handle;
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 		string defaultMemberName;
-		List<IType> directBaseTypes;
+		List<IType>? directBaseTypes;
 		IEvent[] events;
 		IField[] fields;
 
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		ITypeDefinition[] nestedTypes;
 		IProperty[] properties;
 
-		internal MetadataTypeDefinition(MetadataModule module, TypeDefinitionHandle handle)
+		internal MetadataTypeDefinition(MetadataModule? module, TypeDefinitionHandle handle)
 		{
 			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsByRefLike { get; }
 		public bool IsReadOnly { get; }
 		public ITypeDefinition DeclaringTypeDefinition { get; }
-		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
+		public IReadOnlyList<ITypeParameter>? TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
 		public IType EnumUnderlyingType { get; }
 		public bool HasExtensionMethods { get; }
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IReadOnlyList<ITypeDefinition> NestedTypes {
 			get {
-				var nestedTypes = LazyInit.VolatileRead(ref this.nestedTypes);
+				ITypeDefinition[]? nestedTypes = LazyInit.VolatileRead(ref this.nestedTypes);
 				if (nestedTypes != null)
 					return nestedTypes;
 				var metadata = module.metadata;
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public int TypeParameterCount => TypeParameters.Count;
 
-		IReadOnlyList<IType> IType.TypeArguments => TypeParameters;
+		IReadOnlyList<IType>? IType.TypeArguments => TypeParameters;
 
 		Nullability IType.Nullability => Nullability.Oblivious;
 
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IType> DirectBaseTypes {
 			get {
-				var baseTypes = LazyInit.VolatileRead(ref this.directBaseTypes);
+				List<IType>? baseTypes = LazyInit.VolatileRead(ref this.directBaseTypes);
 				if (baseTypes != null)
 					return baseTypes;
 				var metadata = module.metadata;
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public FullTypeName FullTypeName => fullTypeName;
 		public string Name => fullTypeName.Name;
 
-		public IModule ParentModule => module;
+		public IModule? ParentModule => module;
 
 		public Accessibility Accessibility {
 			get {
@@ -297,14 +297,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Namespace => fullTypeName.TopLevelTypeName.Namespace;
 
 		ITypeDefinition IType.GetDefinition() => this;
-		TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
+		TypeParameterSubstitution? IType.GetSubstitution() => TypeParameterSubstitution.Identity;
 
-		public IType AcceptVisitor(TypeVisitor visitor)
+		public IType AcceptVisitor(TypeVisitor? visitor)
 		{
 			return visitor.VisitTypeDefinition(this);
 		}
 
-		IType IType.VisitChildren(TypeVisitor visitor)
+		IType IType.VisitChildren(TypeVisitor? visitor)
 		{
 			return this;
 		}
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IField> Fields {
 			get {
-				var fields = LazyInit.VolatileRead(ref this.fields);
+				IField[]? fields = LazyInit.VolatileRead(ref this.fields);
 				if (fields != null)
 					return fields;
 				var metadata = module.metadata;
@@ -375,7 +375,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IProperty> Properties {
 			get {
-				var properties = LazyInit.VolatileRead(ref this.properties);
+				IProperty[]? properties = LazyInit.VolatileRead(ref this.properties);
 				if (properties != null)
 					return properties;
 				var metadata = module.metadata;
@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IEvent> Events {
 			get {
-				var events = LazyInit.VolatileRead(ref this.events);
+				IEvent[]? events = LazyInit.VolatileRead(ref this.events);
 				if (events != null)
 					return events;
 				var metadata = module.metadata;
@@ -430,7 +430,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IMethod> Methods {
 			get {
-				var methods = LazyInit.VolatileRead(ref this.methods);
+				IMethod[]? methods = LazyInit.VolatileRead(ref this.methods);
 				if (methods != null)
 					return methods;
 				var metadata = module.metadata;
@@ -462,7 +462,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region Type Attributes
 
-		public IEnumerable<IAttribute> GetAttributes()
+		public IEnumerable<IAttribute?> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
@@ -560,7 +560,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region GetNestedTypes
 
-		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null,
+		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers |
@@ -573,8 +573,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetNestedTypes(this, filter, options);
 		}
 
-		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments,
-			Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType?>? typeArguments,
+			Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
 		}
@@ -583,14 +583,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region GetMembers()
 
-		IEnumerable<T> GetFiltered<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
+		IEnumerable<T> GetFiltered<T>(IEnumerable<T> input, Predicate<T>? filter) where T : class
 		{
 			if (filter == null)
 				return input;
 			return ApplyFilter(input, filter);
 		}
 
-		IEnumerable<T> ApplyFilter<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
+		IEnumerable<T> ApplyFilter<T>(IEnumerable<T> input, Predicate<T>? filter) where T : class
 		{
 			foreach (var member in input)
 			{
@@ -599,7 +599,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
+		public IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -612,7 +612,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetMethods(this, filter, options);
 		}
 
-		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null,
+		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -620,7 +620,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
 
-		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null,
+		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod>? filter = null,
 			GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if (Kind == TypeKind.Void)
@@ -647,7 +647,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetConstructors(this, filter, options);
 		}
 
-		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
+		public IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -660,7 +660,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetProperties(this, filter, options);
 		}
 
-		public IEnumerable<IField> GetFields(Predicate<IField> filter = null,
+		public IEnumerable<IField> GetFields(Predicate<IField>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -673,7 +673,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetFields(this, filter, options);
 		}
 
-		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null,
+		public IEnumerable<IEvent> GetEvents(Predicate<IEvent>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -686,7 +686,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetEvents(this, filter, options);
 		}
 
-		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null,
+		public IEnumerable<IMember> GetMembers(Predicate<IMember>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -699,7 +699,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetMembers(this, filter, options);
 		}
 
-		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
+		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if (Kind == TypeKind.Void)
@@ -712,7 +712,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMembersHelper.GetAccessors(this, filter, options);
 		}
 
-		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IMethod> filter)
+		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IMethod>? filter)
 		{
 			foreach (var prop in this.Properties)
 			{

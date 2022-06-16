@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
+		public AstNodeCollection<ParameterDeclaration?> Parameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
 
@@ -171,18 +171,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
 
-		public override string Name {
+		public override string? Name {
 			get { return GetName(this.OperatorType); }
 			set { throw new NotSupportedException(); }
 		}
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
-		public override Identifier NameToken {
+		public override Identifier? NameToken {
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets the method name for the operator type. ("op_Addition", "op_Implicit", etc.)
 		/// </summary>
-		public static string GetName(OperatorType? type)
+		public static string? GetName(OperatorType? type)
 		{
 			if (type == null)
 				return null;
@@ -297,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitOperatorDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is OperatorDeclaration o && this.MatchAttributesAndModifiers(o, match) &&
 			       this.OperatorType == o.OperatorType

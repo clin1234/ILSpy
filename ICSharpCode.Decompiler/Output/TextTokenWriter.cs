@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler
 {
 	public class TextTokenWriter : TokenWriter
 	{
-		readonly Stack<AstNode> nodeStack = new();
+		readonly Stack<AstNode?> nodeStack = new();
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
 		int braceLevelWithinType = -1;
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler
 			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		}
 
-		public override void WriteIdentifier(Identifier identifier)
+		public override void WriteIdentifier(Identifier? identifier)
 		{
 			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier))
 			{
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler
 
 		ISymbol GetCurrentMemberReference()
 		{
-			AstNode node = nodeStack.Peek();
+			AstNode? node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression)
 			{
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler
 
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression &&
 			    node.Parent is InvocationExpression &&
-			    symbol is IMember { DeclaringType: { Kind: TypeKind.Delegate } }) return null;
+			    symbol is IMember { DeclaringType.Kind: TypeKind.Delegate }) return null;
 			return FilterMember(symbol);
 		}
 
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler
 
 		object GetCurrentLocalReference()
 		{
-			AstNode node = nodeStack.Peek();
+			AstNode? node = nodeStack.Peek();
 			ILVariable variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 			if (variable != null)
 				return variable;
@@ -155,9 +155,9 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		object GetCurrentLocalDefinition(Identifier id)
+		object GetCurrentLocalDefinition(Identifier? id)
 		{
-			AstNode node = nodeStack.Peek();
+			AstNode? node = nodeStack.Peek();
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
 
@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler
 			new TextWriterTokenWriter(new TextOutputWriter(output)).WritePrimitiveValue(value, format);
 		}
 
-		public override void WriteInterpolatedText(string text)
+		public override void WriteInterpolatedText(string? text)
 		{
 			output.Write(TextWriterTokenWriter.ConvertString(text));
 		}
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public override void StartNode(AstNode node)
+		public override void StartNode(AstNode? node)
 		{
 			if (nodeStack.Count == 0)
 			{
@@ -441,12 +441,12 @@ namespace ICSharpCode.Decompiler
 			nodeStack.Push(node);
 		}
 
-		private bool IsUsingDeclaration(AstNode node)
+		private bool IsUsingDeclaration(AstNode? node)
 		{
 			return node is UsingDeclaration or UsingAliasDeclaration;
 		}
 
-		public override void EndNode(AstNode node)
+		public override void EndNode(AstNode? node)
 		{
 			if (nodeStack.Pop() != node)
 				throw new InvalidOperationException();

@@ -38,15 +38,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		TransformContext context;
 		bool hasNamespace;
-		NamespaceDeclaration singleNamespaceDeclaration;
+		NamespaceDeclaration? singleNamespaceDeclaration;
 
-		void IAstTransform.Run(AstNode rootNode, TransformContext context)
+		void IAstTransform.Run(AstNode? rootNode, TransformContext context)
 		{
 			this.context = context;
 			rootNode.AcceptVisitor(this);
 		}
 
-		public override void VisitSyntaxTree(SyntaxTree syntaxTree)
+		public override void VisitSyntaxTree(SyntaxTree? syntaxTree)
 		{
 			singleNamespaceDeclaration = null;
 			hasNamespace = false;
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
+		public override void VisitNamespaceDeclaration(NamespaceDeclaration? namespaceDeclaration)
 		{
 			singleNamespaceDeclaration = null;
 			if (!hasNamespace)
@@ -69,56 +69,56 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitNamespaceDeclaration(namespaceDeclaration);
 		}
 
-		public override void VisitIfElseStatement(IfElseStatement ifElseStatement)
+		public override void VisitIfElseStatement(IfElseStatement? ifElseStatement)
 		{
 			base.VisitIfElseStatement(ifElseStatement);
 			DoTransform(ifElseStatement.TrueStatement, ifElseStatement);
 			DoTransform(ifElseStatement.FalseStatement, ifElseStatement);
 		}
 
-		public override void VisitWhileStatement(WhileStatement whileStatement)
+		public override void VisitWhileStatement(WhileStatement? whileStatement)
 		{
 			base.VisitWhileStatement(whileStatement);
 			InsertBlock(whileStatement.EmbeddedStatement);
 		}
 
-		public override void VisitDoWhileStatement(DoWhileStatement doWhileStatement)
+		public override void VisitDoWhileStatement(DoWhileStatement? doWhileStatement)
 		{
 			base.VisitDoWhileStatement(doWhileStatement);
 			InsertBlock(doWhileStatement.EmbeddedStatement);
 		}
 
-		public override void VisitForeachStatement(ForeachStatement foreachStatement)
+		public override void VisitForeachStatement(ForeachStatement? foreachStatement)
 		{
 			base.VisitForeachStatement(foreachStatement);
 			InsertBlock(foreachStatement.EmbeddedStatement);
 		}
 
-		public override void VisitForStatement(ForStatement forStatement)
+		public override void VisitForStatement(ForStatement? forStatement)
 		{
 			base.VisitForStatement(forStatement);
 			InsertBlock(forStatement.EmbeddedStatement);
 		}
 
-		public override void VisitFixedStatement(FixedStatement fixedStatement)
+		public override void VisitFixedStatement(FixedStatement? fixedStatement)
 		{
 			base.VisitFixedStatement(fixedStatement);
 			InsertBlock(fixedStatement.EmbeddedStatement);
 		}
 
-		public override void VisitLockStatement(LockStatement lockStatement)
+		public override void VisitLockStatement(LockStatement? lockStatement)
 		{
 			base.VisitLockStatement(lockStatement);
 			InsertBlock(lockStatement.EmbeddedStatement);
 		}
 
-		public override void VisitUsingStatement(UsingStatement usingStatement)
+		public override void VisitUsingStatement(UsingStatement? usingStatement)
 		{
 			base.VisitUsingStatement(usingStatement);
 			DoTransform(usingStatement.EmbeddedStatement, usingStatement);
 		}
 
-		void DoTransform(Statement statement, Statement parent)
+		void DoTransform(Statement? statement, Statement? parent)
 		{
 			if (statement.IsNull)
 				return;
@@ -143,12 +143,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsElseIf(Statement statement, Statement parent)
+		bool IsElseIf(Statement? statement, Statement? parent)
 		{
 			return parent is IfElseStatement && statement.Role == IfElseStatement.FalseRole;
 		}
 
-		static void InsertBlock(Statement statement)
+		static void InsertBlock(Statement? statement)
 		{
 			if (statement.IsNull)
 				return;
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsAllowedAsEmbeddedStatement(Statement statement, Statement parent)
+		bool IsAllowedAsEmbeddedStatement(Statement? statement, Statement? parent)
 		{
 			switch (statement)
 			{
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		public override void VisitPropertyDeclaration(PropertyDeclaration? propertyDeclaration)
 		{
 			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties)
 			{
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitPropertyDeclaration(propertyDeclaration);
 		}
 
-		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		public override void VisitIndexerDeclaration(IndexerDeclaration? indexerDeclaration)
 		{
 			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties)
 			{
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitIndexerDeclaration(indexerDeclaration);
 		}
 
-		void SimplifyPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		void SimplifyPropertyDeclaration(PropertyDeclaration? propertyDeclaration)
 		{
 			var m = CalculatedGetterOnlyPropertyPattern.Match(propertyDeclaration);
 			if (!m.Success)
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			propertyDeclaration.Getter.Remove();
 		}
 
-		void SimplifyIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		void SimplifyIndexerDeclaration(IndexerDeclaration? indexerDeclaration)
 		{
 			var m = CalculatedGetterOnlyIndexerPattern.Match(indexerDeclaration);
 			if (!m.Success)

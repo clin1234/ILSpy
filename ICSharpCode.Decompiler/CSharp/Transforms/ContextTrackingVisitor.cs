@@ -26,8 +26,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public abstract class ContextTrackingVisitor<TResult> : DepthFirstAstVisitor<TResult>
 	{
-		protected IMethod currentMethod;
-		protected ITypeDefinition currentTypeDefinition;
+		protected IMethod? currentMethod;
+		protected ITypeDefinition? currentTypeDefinition;
 
 		protected void Initialize(TransformContext context)
 		{
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override TResult VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			ITypeDefinition oldType = currentTypeDefinition;
+			ITypeDefinition? oldType = currentTypeDefinition;
 			try
 			{
 				currentTypeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;

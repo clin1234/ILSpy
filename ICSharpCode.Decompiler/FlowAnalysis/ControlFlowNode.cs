@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// User data.
 		/// </summary>
-		public object UserData;
+		public object? UserData;
 
 		/// <summary>
 		/// User index, can be used to look up additional information in an array.
@@ -73,13 +73,13 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// Gets the immediate dominator (the parent in the dominator tree).
 		/// Null if dominance has not been calculated; or if the node is unreachable.
 		/// </summary>
-		public ControlFlowNode ImmediateDominator { get; internal set; }
+		public ControlFlowNode? ImmediateDominator { get; internal set; }
 
 		/// <summary>
 		/// List of children in the dominator tree.
 		/// Null if dominance has not been calculated; or if the node is unreachable.
 		/// </summary>
-		public List<ControlFlowNode> DominatorTreeChildren { get; internal set; }
+		public List<ControlFlowNode>? DominatorTreeChildren { get; internal set; }
 
 		public void AddEdgeTo(ControlFlowNode target)
 		{
@@ -112,10 +112,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Gets whether <c>this</c> dominates <paramref name="node"/>.
 		/// </summary>
-		public bool Dominates(ControlFlowNode node)
+		public bool Dominates(ControlFlowNode? node)
 		{
 			// TODO: this can be made O(1) by numbering the dominator tree
-			ControlFlowNode tmp = node;
+			ControlFlowNode? tmp = node;
 			while (tmp != null)
 			{
 				if (tmp == this)
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 #if DEBUG
 		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes,
-			Func<ControlFlowNode, string> labelFunc
+			Func<ControlFlowNode, string>? labelFunc
 				= null)
 		{
 			labelFunc ??= static node => node.UserData is Block block ? block.Label : node.UserData?.ToString();

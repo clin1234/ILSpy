@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInterpolatedStringExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is InterpolatedStringExpression { IsNull: false } o && this.Content.DoMatch(o.Content, match);
 		}
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public Interpolation(Expression expression, string suffix = null)
+		public Interpolation(Expression expression, string? suffix = null)
 		{
 			Expression = expression;
 			Suffix = suffix;
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			init { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public string Suffix { get; }
+		public string? Suffix { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(RBrace); }
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInterpolation(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is Interpolation o && this.Expression.DoMatch(o.Expression, match);
 		}
@@ -133,12 +133,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public InterpolatedStringText(string text)
+		public InterpolatedStringText(string? text)
 		{
 			Text = text;
 		}
 
-		public string Text { get; set; }
+		public string? Text { get; set; }
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitInterpolatedStringText(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is InterpolatedStringText o && o.Text == this.Text;
 		}

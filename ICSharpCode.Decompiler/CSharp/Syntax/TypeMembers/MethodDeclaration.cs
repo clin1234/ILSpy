@@ -38,12 +38,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
+		public AstType? PrivateImplementationType {
 			get { return GetChildByRole(PrivateImplementationTypeRole); }
 			set { SetChildByRole(PrivateImplementationTypeRole, value); }
 		}
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
+		public AstNodeCollection<TypeParameterDeclaration?> TypeParameters {
 			get { return GetChildrenByRole(Roles.TypeParameter); }
 		}
 
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
+		public AstNodeCollection<ParameterDeclaration?> Parameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
 
@@ -59,18 +59,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public AstNodeCollection<Constraint> Constraints {
+		public AstNodeCollection<Constraint?> Constraints {
 			get { return GetChildrenByRole(Roles.Constraint); }
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
 
 		public bool IsExtensionMethod {
 			get {
-				ParameterDeclaration pd = GetChildByRole(Roles.Parameter);
+				ParameterDeclaration? pd = GetChildByRole(Roles.Parameter);
 				return pd is { HasThisModifier: true };
 			}
 		}
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMethodDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is MethodDeclaration o && MatchString(this.Name, o.Name)
 			                                    && this.MatchAttributesAndModifiers(o, match) &&

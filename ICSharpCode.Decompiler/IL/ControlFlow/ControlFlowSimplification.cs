@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			CleanUpEmptyBlocks(function, context);
 		}
 
-		private static void RemoveNopInstructions(Block block)
+		private static void RemoveNopInstructions(Block? block)
 		{
 			// Move ILRanges of special nop instructions to the previous non-nop instruction.
 			for (int i = block.Instructions.Count - 1; i > 0; i--)
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
 		}
 
-		private static void RemoveDeadStackStores(Block block, ILTransformContext context)
+		private static void RemoveDeadStackStores(Block? block, ILTransformContext context)
 		{
 			bool aggressive = context.Settings.RemoveDeadStores;
 			// Previously copy propagation did this;
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			bool IsSimple(ILInstruction inst)
+			static bool IsSimple(ILInstruction inst)
 			{
 				switch (inst.OpCode)
 				{
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		void InlineVariableInReturnBlock(Block block, ILTransformContext context)
+		void InlineVariableInReturnBlock(Block? block, ILTransformContext context)
 		{
 			// In debug mode, the C#-compiler generates 'return blocks' that
 			// unnecessarily store the return value to a local and then load it again:
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
-			List<(BlockContainer, Block)> blocksToAdd = new();
+			List<(BlockContainer, Block?)> blocksToAdd = new();
 			HashSet<Block> visitedBlocks = new();
 			foreach (var branch in function.Descendants.OfType<Branch>())
 			{
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					targetBlock.Instructions.Clear(); // mark the block for deletion
 			}
 
-			foreach ((BlockContainer container, Block block) in blocksToAdd)
+			foreach ((BlockContainer container, Block? block) in blocksToAdd)
 			{
 				container.Blocks.Add(block);
 			}
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool IsBranchToReturnBlock(Branch branch)
+		bool IsBranchToReturnBlock(Branch? branch)
 		{
 			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1)
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		static bool CombineBlockWithNextBlock(BlockContainer container, Block block, ILTransformContext context)
+		static bool CombineBlockWithNextBlock(BlockContainer container, Block? block, ILTransformContext context)
 		{
 			Debug.Assert(container == block.Parent);
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Returns true if the last two instructions before the branch are storing the value 'true' into an unused variable.
 		/// </summary>
-		private static bool IsDeadTrueStore(Block block)
+		private static bool IsDeadTrueStore(Block? block)
 		{
 			if (block.Instructions.Count < 3)
 				return false;

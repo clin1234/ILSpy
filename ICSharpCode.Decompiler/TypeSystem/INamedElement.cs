@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// "List" for List&lt;string&gt;
 		/// "SpecialFolder" for Environment.SpecialFolder
 		/// </returns>
-		string Name { get; }
+		string? Name { get; }
 
 		/// <summary>
 		/// Gets the full reflection name of the element.

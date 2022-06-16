@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
+		public AstNodeCollection<VariableInitializer?> Variables {
 			get { return GetChildrenByRole(Roles.Variable); }
 		}
 
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
-		public override Identifier NameToken {
+		public override Identifier? NameToken {
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFieldDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is FieldDeclaration o && this.MatchAttributesAndModifiers(o, match)
 			                                   && this.ReturnType.DoMatch(o.ReturnType, match) &&

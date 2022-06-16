@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			@"|(NuGetFallbackFolder[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)([/\\].*)?[/\\]ref[/\\])" +
 			@"|(packs[/\\](?<type>[^/\\]+)\\(?<version>[^/\\]+)\\ref([/\\].*)?[/\\])";
 
-		public static string DetectTargetFrameworkId(this PEFile assembly)
+		public static string DetectTargetFrameworkId(this PEFile? assembly)
 		{
 			return DetectTargetFrameworkId(assembly.Metadata, assembly.FileName);
 		}
@@ -196,11 +196,11 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			// Try to detect reference assembly through specific path pattern
 			var refPathMatch =
-				Regex.Match(assemblyPath, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+				Regex.Match(assemblyPath!, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			return refPathMatch.Success;
 		}
 
-		public static string DetectRuntimePack(this PEFile assembly)
+		public static string DetectRuntimePack(this PEFile? assembly)
 		{
 			ArgumentNullException.ThrowIfNull(assembly);
 

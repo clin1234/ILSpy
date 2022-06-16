@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the assembly version.
 		/// </summary>
-		Version AssemblyVersion { get; }
+		Version? AssemblyVersion { get; }
 
 		/// <summary>
 		/// Gets the full assembly name (including public key token etc.)
@@ -79,17 +79,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the list of all assembly attributes in the project.
 		/// </summary>
-		IEnumerable<IAttribute> GetAssemblyAttributes();
+		IEnumerable<IAttribute?> GetAssemblyAttributes();
 
 		/// <summary>
 		/// Gets the list of all module attributes in the project.
 		/// </summary>
-		IEnumerable<IAttribute> GetModuleAttributes();
+		IEnumerable<IAttribute?> GetModuleAttributes();
 
 		/// <summary>
 		/// Gets whether the internals of this assembly are visible in the specified assembly.
 		/// </summary>
-		bool InternalsVisibleTo(IModule module);
+		bool InternalsVisibleTo(IModule? module);
 
 		/// <summary>
 		/// Gets the root namespace for this module.
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// It contains only subnamespaces and types defined in this module -- use ICompilation.RootNamespace
 		/// to get the combined view of all referenced assemblies.
 		/// </remarks>
-		INamespace RootNamespace { get; }
+		INamespace? RootNamespace { get; }
 
 		/// <summary>
 		/// Gets the type definition for a top-level type.
@@ -110,11 +110,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets all non-nested types in the assembly.
 		/// </summary>
-		IEnumerable<ITypeDefinition> TopLevelTypeDefinitions { get; }
+		IEnumerable<ITypeDefinition?> TopLevelTypeDefinitions { get; }
 
 		/// <summary>
 		/// Gets all types in the assembly, including nested types.
 		/// </summary>
-		IEnumerable<ITypeDefinition> TypeDefinitions { get; }
+		IEnumerable<ITypeDefinition?> TypeDefinitions { get; }
 	}
 }

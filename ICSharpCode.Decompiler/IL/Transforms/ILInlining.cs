@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public sealed class ILInlining : IILTransform, IBlockTransform, IStatementTransform
 	{
-		public void Run(Block block, BlockTransformContext context)
+		public void Run(Block? block, BlockTransformContext context)
 		{
 			InlineAllInBlock(context.Function, block, context);
 		}
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			};
 		}
 
-		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)
+		public static bool InlineAllInBlock(ILFunction function, Block? block, ILTransformContext context)
 		{
 			bool modified = false;
 			var instructions = block.Instructions;
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return modified;
 		}
 
-		internal static bool IsInConstructorInitializer(ILFunction function, ILInstruction inst)
+		internal static bool IsInConstructorInitializer(ILFunction function, ILInstruction? inst)
 		{
 			int ctorCallStart = function.ChainedConstructorCallILOffset;
 			if (inst.EndILOffset > ctorCallStart)
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Inlines instructions before pos into block.Instructions[pos].
 		/// </summary>
 		/// <returns>The number of instructions that were inlined.</returns>
-		public static int InlineInto(Block block, int pos, InliningOptions options, ILTransformContext context)
+		public static int InlineInto(Block? block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			if (pos >= block.Instructions.Count)
 				return 0;
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Note that this method does not check whether 'v' has only one use;
 		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
 		/// </summary>
-		public static bool InlineOne(StLoc stloc, InliningOptions options, ILTransformContext context)
+		public static bool InlineOne(StLoc? stloc, InliningOptions options, ILTransformContext context)
 		{
 			ILVariable v = stloc.Variable;
 			Block block = (Block)stloc.Parent;
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		/// <param name="loadInst">The load instruction (a descendant within 'next')</param>
 		/// <param name="v">The variable being inlined.</param>
-		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression)
+		static bool IsGeneratedValueTypeTemporary(LdLoca? loadInst, ILVariable v, ILInstruction inlinedExpression)
 		{
 			Debug.Assert(loadInst.Variable == v);
 			// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
@@ -349,7 +349,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			method = null;
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
-			ILInstruction inst = ldloca;
+			ILInstruction? inst = ldloca;
 			while (inst.Parent is LdFlda ldflda)
 			{
 				inst = ldflda;
@@ -390,11 +390,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool IsUsedAsThisPointerInFieldRead(LdLoca ldloca)
+		static bool IsUsedAsThisPointerInFieldRead(LdLoca? ldloca)
 		{
 			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
-			ILInstruction inst = ldloca;
+			ILInstruction? inst = ldloca;
 			while (inst.Parent is LdFlda ldflda)
 			{
 				inst = ldflda;
@@ -718,7 +718,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Finds the first call instruction within the instructions that were inlined into inst.
 		/// </summary>
-		internal static CallInstruction FindFirstInlinedCall(ILInstruction inst)
+		internal static CallInstruction FindFirstInlinedCall(ILInstruction? inst)
 		{
 			foreach (var child in inst.Children)
 			{
@@ -812,10 +812,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public readonly FindResultType Type;
 			public readonly ILInstruction LoadInst; // ldloc or ldloca instruction that loads the variable to be inlined
 
-			public readonly ILInstruction
+			public readonly ILInstruction?
 				CallArgument; // argument of call that needs to be promoted to a named argument
 
-			private FindResult(FindResultType type, ILInstruction loadInst, ILInstruction callArg)
+			private FindResult(FindResultType type, ILInstruction loadInst, ILInstruction? callArg)
 			{
 				this.Type = type;
 				this.LoadInst = loadInst;
@@ -831,7 +831,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return new FindResult(FindResultType.Found, loadInst, null);
 			}
 
-			public static FindResult NamedArgument(ILInstruction loadInst, ILInstruction callArg)
+			public static FindResult NamedArgument(ILInstruction loadInst, ILInstruction? callArg)
 			{
 				Debug.Assert(loadInst.OpCode is OpCode.LdLoc or OpCode.LdLoca);
 				Debug.Assert(callArg.Parent is CallInstruction);

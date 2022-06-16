@@ -54,12 +54,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return other is ByReferenceType a && elementType.Equals(a.elementType);
 		}
 
-		public override IType AcceptVisitor(TypeVisitor visitor)
+		public override IType AcceptVisitor(TypeVisitor? visitor)
 		{
 			return visitor.VisitByReferenceType(this);
 		}
 
-		public override IType VisitChildren(TypeVisitor visitor)
+		public override IType VisitChildren(TypeVisitor? visitor)
 		{
 			IType e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)

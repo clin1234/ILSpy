@@ -65,10 +65,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else
 			{
-				Debug.WriteLine(text + (arr[0] != null ? arr[0].ToString() : "<null>"));
+				Debug.WriteLine(text + (arr[0] != null ? arr[0]?.ToString() : "<null>"));
 				for (int i = 1; i < arr.Length; i++)
 				{
-					Debug.WriteLine(new string(' ', text.Length) + (arr[i] != null ? arr[i].ToString() : "<null>"));
+					Debug.WriteLine(new string(' ', text.Length) + (arr[i] != null ? arr[i]?.ToString() : "<null>"));
 				}
 			}
 #endif

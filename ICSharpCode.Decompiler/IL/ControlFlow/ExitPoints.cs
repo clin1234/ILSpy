@@ -192,11 +192,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		static ILInstruction ChooseExit(IEnumerable<ILInstruction> potentialExits)
+		static ILInstruction? ChooseExit(IEnumerable<ILInstruction?> potentialExits)
 		{
 			using var enumerator = potentialExits.GetEnumerator();
 			enumerator.MoveNext();
-			ILInstruction first = enumerator.Current;
+			ILInstruction? first = enumerator.Current;
 			if (first is Leave { IsLeavingFunction: true })
 			{
 				while (enumerator.MoveNext())

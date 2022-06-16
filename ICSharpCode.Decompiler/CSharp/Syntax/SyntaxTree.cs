@@ -32,11 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class SyntaxTree : AstNode
 	{
-		public static readonly Role<AstNode> MemberRole = new("Member", Null);
+		public static readonly Role<AstNode?> MemberRole = new("Member", Null);
 
-		IList<string> conditionalSymbols;
+		IList<string>? conditionalSymbols;
 
-		string fileName;
+		string? fileName;
 
 		public override NodeType NodeType {
 			get {
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets/Sets the file name of this syntax tree.
 		/// </summary>
-		public string FileName {
+		public string? FileName {
 			get { return fileName; }
 			set {
 				ThrowIfFrozen();
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstNode> Members {
+		public AstNodeCollection<AstNode?> Members {
 			get { return GetChildrenByRole(MemberRole); }
 		}
 
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// 
 		/// This is used for code completion to 'get the expression before a token - like ., &lt;, ('.
 		/// </summary>
-		public AstNode TopExpression {
+		public AstNode? TopExpression {
 			get;
 			internal set;
 		}
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode> nodeStack = new();
+			Stack<AstNode?> nodeStack = new();
 			nodeStack.Push(this);
 			while (nodeStack.Count > 0)
 			{
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is SyntaxTree o && this.Members.DoMatch(o.Members, match);
 		}

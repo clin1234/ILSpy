@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (result.NextBlockOrExitContainer is Block { IncomingEdgeCount: 0 } nextBlock)
 					{
 						List<Block> dependentBlocks = new();
-						Block current = nextBlock;
+						Block? current = nextBlock;
 
 						do
 						{
@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			}
 
-			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable,
+			static bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable,
 				out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
 			{
 				realEntryPoint = null;
@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable,
+			static bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable,
 				out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
 			{
 				realEntryPoint = null;
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					if (jumpTableEntryBlock.Instructions.SecondToLastOrDefault() is not IfInstruction ifInst)
 						return false;
-					ILInstruction lastInst = jumpTableEntryBlock.Instructions.Last();
+					ILInstruction? lastInst = jumpTableEntryBlock.Instructions.Last();
 					if (ifInst.Condition.MatchCompEquals(out var left, out var right))
 					{
 						if (!ifInst.TrueInst.MatchBranch(out realEntryPoint))
@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ref ILVariable objectVariable, out StLoc typedExceptionVariableStore, out Block captureBlock,
 			out Block throwBlock)
 		{
-			bool DerivesFromException(IType t) =>
+			static bool DerivesFromException(IType t) =>
 				t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
 
 			captureBlock = null;
@@ -447,7 +447,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!block.Instructions[^2].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 
-			ILInstruction lastInstr = block.Instructions.Last();
+			ILInstruction? lastInstr = block.Instructions.Last();
 			if (!lastInstr.MatchBranch(out throwBlock))
 				return false;
 
@@ -479,7 +479,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			return true;
 
-			bool MatchCaptureThrowCalls(ILInstruction inst)
+			bool MatchCaptureThrowCalls(ILInstruction? inst)
 			{
 				var exceptionDispatchInfoType =
 					context.TypeSystem.FindType(typeof(System.Runtime.ExceptionServices.ExceptionDispatchInfo));

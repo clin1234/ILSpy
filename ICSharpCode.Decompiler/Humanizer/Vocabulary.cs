@@ -14,10 +14,6 @@ namespace Humanizer.Inflections
 		private readonly List<Rule> _singulars = new();
 		private readonly List<string> _uncountables = new();
 
-		internal Vocabulary()
-		{
-		}
-
 		/// <summary>
 		/// Adds a word to the vocabulary which cannot easily be pluralized/singularized by RegEx, e.g. "person" and "people".
 		/// </summary>
@@ -73,7 +69,7 @@ namespace Humanizer.Inflections
 		/// <param name="word">Word to be pluralized</param>
 		/// <param name="inputIsKnownToBeSingular">Normally you call Pluralize on singular words; but if you're unsure call it with false</param>
 		/// <returns></returns>
-		public string Pluralize(string word, bool inputIsKnownToBeSingular = true)
+		public string? Pluralize(string word, bool inputIsKnownToBeSingular = true)
 		{
 			var result = ApplyRules(_plurals, word, false);
 
@@ -120,7 +116,7 @@ namespace Humanizer.Inflections
 			return result ?? word;
 		}
 
-		private string ApplyRules(IList<Rule> rules, string word, bool skipFirstRule)
+		private string? ApplyRules(IList<Rule> rules, string? word, bool skipFirstRule)
 		{
 			if (word == null)
 			{
@@ -166,7 +162,7 @@ namespace Humanizer.Inflections
 				_replacement = replacement;
 			}
 
-			public string Apply(string word)
+			public string? Apply(string word)
 			{
 				if (!_regex.IsMatch(word))
 				{

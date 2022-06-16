@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <remarks>This transform is only enabled, when exporting a full assembly as project.</remarks>
 	public sealed class RemoveCLSCompliantAttribute : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			foreach (var section in rootNode.Children.OfType<AttributeSection>())
 			{

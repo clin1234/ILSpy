@@ -43,9 +43,9 @@ namespace ICSharpCode.Decompiler.Semantics
 		public readonly IList<ResolveResult> InitializerStatements;
 
 		public InvocationResolveResult(ResolveResult targetResult, IParameterizedMember member,
-									   IList<ResolveResult> arguments = null,
-									   IList<ResolveResult> initializerStatements = null,
-									   IType returnTypeOverride = null)
+									   IList<ResolveResult>? arguments = null,
+									   IList<ResolveResult>? initializerStatements = null,
+									   IType? returnTypeOverride = null)
 			: base(targetResult, member, returnTypeOverride)
 		{
 			this.Arguments = arguments ?? EmptyList<ResolveResult>.Instance;
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
 														 Justification = "Derived methods may be expensive and create new lists")]
-		public virtual IList<ResolveResult> GetArgumentsForCall()
+		public virtual IList<ResolveResult>? GetArgumentsForCall()
 		{
 			return Arguments;
 		}

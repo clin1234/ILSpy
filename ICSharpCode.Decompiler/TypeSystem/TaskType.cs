@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsTask(IType type)
 		{
-			ITypeDefinition def = type.GetDefinition();
+			ITypeDefinition? def = type?.GetDefinition();
 			if (def != null)
 			{
 				switch (def.KnownTypeCode)
@@ -64,10 +64,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the specified type is a Task-like type.
 		/// </summary>
-		public static bool IsCustomTask(IType type, out IType builderType)
+		public static bool IsCustomTask(IType type, out IType? builderType)
 		{
 			builderType = null;
-			ITypeDefinition def = type.GetDefinition();
+			ITypeDefinition def = type?.GetDefinition();
 			if (def != null)
 			{
 				if (def.TypeParameterCount > 1)
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (IsCustomTask(task, out var builderType))
 			{
-				builderTypeName = new FullTypeName(builderType.ReflectionName);
+				builderTypeName = new FullTypeName(builderType?.ReflectionName);
 				return builderTypeName.TypeParameterCount == 0;
 			}
 
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			if (IsCustomTask(task, out var builderType))
 			{
-				builderTypeName = new FullTypeName(builderType.ReflectionName);
+				builderTypeName = new FullTypeName(builderType?.ReflectionName);
 				return builderTypeName.TypeParameterCount == 1;
 			}
 
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Creates a task type.
 		/// </summary>
-		public static IType Create(ICompilation compilation, IType elementType)
+		public static IType Create(ICompilation compilation, IType? elementType)
 		{
 			ArgumentNullException.ThrowIfNull(compilation);
 			ArgumentNullException.ThrowIfNull(elementType);
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (elementType.Kind == TypeKind.Void)
 				return compilation.FindType(KnownTypeCode.Task);
 			IType taskType = compilation.FindType(KnownTypeCode.TaskOfT);
-			ITypeDefinition taskTypeDef = taskType.GetDefinition();
+			ITypeDefinition? taskTypeDef = taskType?.GetDefinition();
 			if (taskTypeDef != null)
 				return new ParameterizedType(taskTypeDef, new[] { elementType });
 			return taskType;

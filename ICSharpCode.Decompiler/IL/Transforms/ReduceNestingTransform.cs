@@ -17,12 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
+
+using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -84,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="block"></param>
 		/// <param name="continueTarget">Marks the target block of continue statements.</param>
 		/// <param name="nextInstruction">The instruction following the end point of the block. Can only be null if the end point is unreachable.</param>
-		private void Visit(Block block, Block continueTarget, ILInstruction nextInstruction = null)
+		private void Visit(Block? block, Block continueTarget, ILInstruction nextInstruction = null)
 		{
 			Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable) || nextInstruction != null);
 
@@ -158,7 +161,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		// search for child containers to reduce nesting in
-		private void VisitContainers(ILInstruction inst, Block continueTarget)
+		private void VisitContainers(ILInstruction? inst, Block continueTarget)
 		{
 			switch (inst)
 			{
@@ -178,7 +181,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// For an if statement with an unreachable end point and no else block,
 		/// inverts to match IL order of the first statement of each branch
 		/// </summary>
-		private void ImproveILOrdering(Block block, IfInstruction ifInst, Block continueTarget)
+		private void ImproveILOrdering(Block? block, IfInstruction? ifInst, Block continueTarget)
 		{
 			if (!block.HasFlag(InstructionFlags.EndPointUnreachable)
 			    || !ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable)
@@ -212,7 +215,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Reduce Nesting in if/else statements by duplicating an exit instruction.
 		/// Does not affect IL order
 		/// </summary>
-		private bool ReduceNesting(Block block, IfInstruction ifInst, ILInstruction exitInst)
+		private bool ReduceNesting(Block block, IfInstruction? ifInst, ILInstruction exitInst)
 		{
 			// start tallying stats for heuristics from then and else-if blocks
 			int maxStatements = 0, maxDepth = 0;
@@ -297,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Reduce Nesting in switch statements by replacing break; in cases with the block exit, and extracting the default case
 		/// Does not affect IL order
 		/// </summary>
-		private bool ReduceSwitchNesting(Block parentBlock, BlockContainer switchContainer, ILInstruction exitInst)
+		private bool ReduceSwitchNesting(Block? parentBlock, BlockContainer? switchContainer, ILInstruction exitInst)
 		{
 			// break; from outer container cannot be brought inside the switch as the meaning would change
 			if (exitInst is Leave { IsLeavingFunction: false })
@@ -355,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL
 			defaultSection.Body.ReplaceWith(new Leave(switchContainer));
 
 			// remove all default blocks from the switch container
-			var defaultBlocks = defaultTree.Select(c => (Block)c.UserData).ToList();
+			List<Block?> defaultBlocks = defaultTree.Select(c => (Block)c.UserData).ToList();
 			foreach (var block in defaultBlocks)
 				switchContainer.Blocks.Remove(block);
 
@@ -452,7 +455,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Removes a redundant block exit instruction.
 		/// </summary>
-		private void RemoveRedundantExit(Block block, ILInstruction implicitExit)
+		private void RemoveRedundantExit(Block? block, ILInstruction implicitExit)
 		{
 			if (block.Instructions.Last().Match(implicitExit).Success)
 			{
@@ -466,7 +469,7 @@ namespace ICSharpCode.Decompiler.IL
 		///
 		/// [else-]if (parent-cond) else { ifInst }
 		/// </summary>
-		private IfInstruction GetElseIfParent(IfInstruction ifInst)
+		private IfInstruction? GetElseIfParent(IfInstruction? ifInst)
 		{
 			Debug.Assert(ifInst.Parent is Block);
 			if (Block.Unwrap(ifInst.Parent) == ifInst && // only instruction in block
@@ -625,7 +628,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// ...;
 		/// </summary>
 		/// <param name="ifInst"></param>
-		private void ExtractElseBlock(IfInstruction ifInst)
+		private void ExtractElseBlock(IfInstruction? ifInst)
 		{
 			Debug.Assert(ifInst.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable));
 			var block = (Block)ifInst.Parent;

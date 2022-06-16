@@ -61,14 +61,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// Matches 'newobj TupleType(...)'.
 		/// Takes care of flattening long tuples.
 		/// </summary>
-		public static bool MatchTupleConstruction(NewObj newobj, out ILInstruction[] arguments)
+		public static bool MatchTupleConstruction(NewObj newobj, out ILInstruction?[] arguments)
 		{
 			arguments = null;
 			if (newobj == null)
 				return false;
 			if (!TupleType.IsTupleCompatible(newobj.Method.DeclaringType, out int elementCount))
 				return false;
-			arguments = new ILInstruction[elementCount];
+			arguments = new ILInstruction?[elementCount];
 			int outIndex = 0;
 			while (elementCount >= TupleType.RestPosition)
 			{

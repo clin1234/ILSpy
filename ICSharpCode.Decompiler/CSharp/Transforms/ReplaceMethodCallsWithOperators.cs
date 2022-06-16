@@ -68,9 +68,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					"TypeHandle"))
 			));
 
-		TransformContext context;
+		TransformContext? context;
 
-		void IAstTransform.Run(AstNode rootNode, TransformContext context)
+		void IAstTransform.Run(AstNode? rootNode, TransformContext context)
 		{
 			try
 			{
@@ -83,13 +83,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
+		public override void VisitInvocationExpression(InvocationExpression? invocationExpression)
 		{
 			base.VisitInvocationExpression(invocationExpression);
 			ProcessInvocationExpression(invocationExpression);
 		}
 
-		void ProcessInvocationExpression(InvocationExpression invocationExpression)
+		void ProcessInvocationExpression(InvocationExpression? invocationExpression)
 		{
 			if (invocationExpression.GetSymbol() is not IMethod method)
 				return;
@@ -100,8 +100,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
 					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
-				Expression arg0 = arguments[0].Detach();
-				Expression arg1 = arguments[1].Detach();
+				Expression? arg0 = arguments[0].Detach();
+				Expression? arg1 = arguments[1].Detach();
 				if (!isInExpressionTree)
 				{
 					arg1 = RemoveRedundantToStringInConcat(arg1, method, isLastArgument: arguments.Length == 2)
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0]))
 						{
-							Expression target = ((MemberReferenceExpression)arguments[0]).Target;
+							Expression? target = ((MemberReferenceExpression)arguments[0]).Target;
 							target.CopyInstructionsFrom(invocationExpression);
 							invocationExpression.ReplaceWith(target);
 							return;
@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return type is ITypeParameter { HasDefaultConstructorConstraint: true };
 		}
 
-		bool CheckArgumentsForStringConcat(Expression[] arguments)
+		bool CheckArgumentsForStringConcat(Expression?[] arguments)
 		{
 			if (arguments.Length < 2)
 				return false;
@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			       method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
 
-		internal static Expression RemoveRedundantToStringInConcat(Expression expr, IMethod concatMethod,
+		internal static Expression? RemoveRedundantToStringInConcat(Expression? expr, IMethod concatMethod,
 			bool isLastArgument)
 		{
 			var m = ToStringCallPattern.Match(expr);
@@ -433,7 +433,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			};
 		}
 
-		public override void VisitCastExpression(CastExpression castExpression)
+		public override void VisitCastExpression(CastExpression? castExpression)
 		{
 			base.VisitCastExpression(castExpression);
 			// Handle methodof
@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
 				if (m.Has("declaringType") && method != null)
 				{
-					Expression newNode = new MemberReferenceExpression(
+					Expression? newNode = new MemberReferenceExpression(
 						new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);
 					newNode = new InvocationExpression(newNode,
 						method.Parameters.Select(p =>

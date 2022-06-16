@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.children = children;
 		}
 
-		public void Run(Block block, BlockTransformContext context)
+		public void Run(Block? block, BlockTransformContext context)
 		{
 			var ctx = new StatementTransformContext(context);
 			int pos = 0;

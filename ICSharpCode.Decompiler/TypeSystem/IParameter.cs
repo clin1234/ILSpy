@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the attributes on this parameter.
 		/// </summary>
-		IEnumerable<IAttribute> GetAttributes();
+		IEnumerable<IAttribute?> GetAttributes();
 
 		/// <summary>
 		/// Gets the reference kind of this parameter.

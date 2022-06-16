@@ -172,10 +172,10 @@ namespace ICSharpCode.Decompiler.IL
 				: value.ResultType is StackType.I4 or StackType.I8);
 		}
 
-		public SwitchSection GetDefaultSection()
+		public SwitchSection? GetDefaultSection()
 		{
 			// Pick the section with the most labels as default section.
-			SwitchSection defaultSection = Sections.First();
+			SwitchSection? defaultSection = Sections.First();
 			foreach (var section in Sections)
 			{
 				if (section.Labels.Count() > defaultSection.Labels.Count())

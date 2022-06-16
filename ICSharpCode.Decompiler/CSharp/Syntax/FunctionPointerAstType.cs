@@ -34,19 +34,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class FunctionPointerAstType : AstType
 	{
 		public static readonly TokenRole PointerRole = new("*");
-		public static readonly Role<AstType> CallingConventionRole = new("CallConv", Null);
+		public static readonly Role<AstType?> CallingConventionRole = new("CallConv", Null);
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 
-		public AstNodeCollection<AstType> CallingConventions {
+		public AstNodeCollection<AstType?> CallingConventions {
 			get { return GetChildrenByRole(CallingConventionRole); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
+		public AstNodeCollection<ParameterDeclaration?> Parameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
 
-		public AstType ReturnType {
+		public AstType? ReturnType {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitFunctionPointerType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is FunctionPointerAstType o
 			       && this.CallingConventions.DoMatch(o.CallingConventions, match)
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			throw new NotImplementedException();
 		}

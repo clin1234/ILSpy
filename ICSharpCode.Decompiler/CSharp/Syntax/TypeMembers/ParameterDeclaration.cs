@@ -26,6 +26,8 @@
 
 #nullable enable
 
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public enum ParameterModifier
@@ -39,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class ParameterDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
+		public static readonly Role<AttributeSection?> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefModifierRole = new("ref");
 		public static readonly TokenRole OutModifierRole = new("out");
 		public static readonly TokenRole ParamsModifierRole = new("params");
@@ -56,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public ParameterDeclaration(AstType type, string name, ParameterModifier modifier = ParameterModifier.None)
+		public ParameterDeclaration(AstType? type, string name, ParameterModifier modifier = ParameterModifier.None)
 		{
 			Type = type;
 			Name = name;
@@ -75,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AttributeSection> Attributes {
+		public AstNodeCollection<AttributeSection?> Attributes {
 			get { return GetChildrenByRole(AttributeRole); }
 		}
 
@@ -106,21 +108,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public string Name {
+		public string? Name {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier)?.Name;
 			}
 			set {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value));
 			}
 		}
 
-		public Identifier NameToken {
+		public Identifier? NameToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -152,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression DefaultExpression {
+		public Expression? DefaultExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
@@ -172,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitParameterDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is ParameterDeclaration o && this.Attributes.DoMatch(o.Attributes, match) &&
 			       this.ParameterModifier == o.ParameterModifier
@@ -188,16 +190,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator ParameterDeclaration?(PatternMatching.Pattern pattern)
+		public static implicit operator ParameterDeclaration?(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : ParameterDeclaration, PatternMatching.INode
+		sealed class PatternPlaceholder : ParameterDeclaration, INode
 		{
-			readonly PatternMatching.Pattern child;
+			readonly Pattern child;
 
-			public PatternPlaceholder(PatternMatching.Pattern child)
+			public PatternPlaceholder(Pattern child)
 			{
 				this.child = child;
 			}
@@ -206,8 +208,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
-				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode? pos,
+				Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -227,7 +229,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}

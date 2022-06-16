@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public sealed class CSharpInvocationResolveResult : InvocationResolveResult
 	{
-		readonly IReadOnlyList<int> argumentToParameterMap;
+		readonly IReadOnlyList<int>? argumentToParameterMap;
 
 		/// <summary>
 		/// Gets whether this invocation is calling a delegate (without explicitly calling ".Invoke()").
@@ -52,14 +52,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public CSharpInvocationResolveResult(
 			ResolveResult targetResult, IParameterizedMember member,
-			IList<ResolveResult> arguments,
+			IList<ResolveResult>? arguments,
 			OverloadResolutionErrors overloadResolutionErrors = OverloadResolutionErrors.None,
 			bool isExtensionMethodInvocation = false,
 			bool isExpandedForm = false,
 			bool isDelegateInvocation = false,
-			IReadOnlyList<int> argumentToParameterMap = null,
-			IList<ResolveResult> initializerStatements = null,
-			IType returnTypeOverride = null
+			IReadOnlyList<int>? argumentToParameterMap = null,
+			IList<ResolveResult>? initializerStatements = null,
+			IType? returnTypeOverride = null
 		)
 			: base(targetResult, member, arguments, initializerStatements, returnTypeOverride)
 		{
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// 
 		/// parameterIndex = ArgumentToParameterMap[argumentIndex]
 		/// </summary>
-		public IReadOnlyList<int> GetArgumentToParameterMap()
+		public IReadOnlyList<int>? GetArgumentToParameterMap()
 		{
 			return argumentToParameterMap;
 		}
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public override IList<ResolveResult> GetArgumentsForCall()
 		{
 			ResolveResult[] results = new ResolveResult[Member.Parameters.Count];
-			List<ResolveResult> paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
+			List<ResolveResult>? paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
 			// map arguments to parameters:
 			for (int i = 0; i < Arguments.Count; i++)
 			{
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				{
 					if (IsExpandedForm && mappedTo == results.Length - 1)
 					{
-						paramsArguments.Add(Arguments[i]);
+						paramsArguments?.Add(Arguments[i]);
 					}
 					else
 					{
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				IType arrayType = Member.Parameters.Last().Type;
 				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
-				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
+				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments!.Count) };
 				results[^1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
 			}
 

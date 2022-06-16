@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier IdentifierToken {
+		public Identifier? IdentifierToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
+		public AstNodeCollection<AstType?> TypeArguments {
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIdentifierExpression(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is IdentifierExpression o && MatchString(this.Identifier, o.Identifier) &&
 			       this.TypeArguments.DoMatch(o.TypeArguments, match);

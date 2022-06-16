@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public Nullability Nullability { get; }
 
-		public override IType AcceptVisitor(TypeVisitor visitor)
+		public override IType AcceptVisitor(TypeVisitor? visitor)
 		{
 			return visitor.VisitNullabilityAnnotatedType(this);
 		}
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseType.ChangeNullability(nullability);
 		}
 
-		public override IType VisitChildren(TypeVisitor visitor)
+		public override IType VisitChildren(TypeVisitor? visitor)
 		{
 			IType newBase = baseType.AcceptVisitor(visitor);
 			if (newBase != baseType)
@@ -109,6 +109,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		Nullability ITypeParameter.NullabilityConstraint => OriginalTypeParameter.NullabilityConstraint;
 		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => OriginalTypeParameter.TypeConstraints;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
-		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => OriginalTypeParameter.GetAttributes();
+		IEnumerable<IAttribute?> ITypeParameter.GetAttributes() => OriginalTypeParameter.GetAttributes();
 	}
 }

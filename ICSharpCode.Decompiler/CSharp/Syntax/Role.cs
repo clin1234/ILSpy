@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets whether the specified node is valid in this role.
 		/// </summary>
-		public abstract bool IsValid(object node);
+		public abstract bool IsValid(object? node);
 
 		/// <summary>
 		/// Gets the role with the specified index.
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.NullObject = null!;
 		}
 
-		public Role(string name, T nullObject)
+		public Role(string name, T? nullObject)
 		{
 			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.NullObject = nullObject;
@@ -87,9 +87,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Roles used for non-collections should always have a null object, so that no AST property returns null.
 		/// However, if a role used for collections only, it may leave out the null object.
 		/// </remarks>
-		public T NullObject { get; }
+		public T? NullObject { get; }
 
-		public override bool IsValid(object node)
+		public override bool IsValid(object? node)
 		{
 			return node is T;
 		}

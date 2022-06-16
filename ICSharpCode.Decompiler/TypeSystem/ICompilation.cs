@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This is the module being (de)compiled; all other modules in the compilation are the other assemblies/modules
 		/// referenced by the main module.
 		/// </summary>
-		IModule MainModule { get; }
+		IModule? MainModule { get; }
 
 		/// <summary>
 		/// Gets the list of all modules in the compilation.
@@ -40,13 +40,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// This main module is the first entry in the list.
 		/// </remarks>
-		IReadOnlyList<IModule> Modules { get; }
+		IReadOnlyList<IModule?> Modules { get; }
 
 		/// <summary>
 		/// Gets the referenced modules.
 		/// This list does not include the main module.
 		/// </summary>
-		IReadOnlyList<IModule> ReferencedModules { get; }
+		IReadOnlyList<IModule?> ReferencedModules { get; }
 
 		/// <summary>
 		/// Gets the root namespace of this compilation.
@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// This always is the namespace without a name - it's unrelated to the 'root namespace' project setting.
 		/// </remarks>
-		INamespace RootNamespace { get; }
+		INamespace? RootNamespace { get; }
 
 		/// <summary>
 		/// Gets the root namespace for a given extern alias.
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// returns the global root namespace.
 		/// If no alias with the specified name exists, this method returns null.
 		/// </remarks>
-		INamespace? GetNamespaceForExternAlias(string? alias);
+		INamespace? GetNamespaceForExternAlias(string alias);
 
 		IType FindType(KnownTypeCode typeCode);
 

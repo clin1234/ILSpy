@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldEnd();
 		}
 
-		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable,
+		internal static bool IsConversionStLoc(ILInstruction? inst, out ILVariable? variable,
 			out ILVariable inputVariable)
 		{
 			inputVariable = null;
@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.IL
 			return input.MatchLdLoc(out inputVariable) || input.MatchLdLoca(out inputVariable);
 		}
 
-		internal static bool IsAssignment(ILInstruction inst, ICompilation typeSystem, out IType expectedType,
+		internal static bool IsAssignment(ILInstruction? inst, ICompilation typeSystem, out IType expectedType,
 			out ILInstruction value)
 		{
 			expectedType = null;
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.IL
 						return false;
 					for (int i = 0; i < call.Arguments.Count - 1; i++)
 					{
-						ILInstruction arg = call.Arguments[i];
+						ILInstruction? arg = call.Arguments[i];
 						if (arg.Flags == InstructionFlags.None)
 						{
 							// OK - we accept integer literals, etc.
@@ -271,9 +271,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			base.CheckInvariant(phase);
 			var patternVariables = new HashSet<ILVariable>();
-			var conversionVariables = new HashSet<ILVariable>();
+			var conversionVariables = new HashSet<ILVariable?>();
 
-			foreach (StLoc init in this.Init)
+			foreach (StLoc? init in this.Init)
 			{
 				Debug.Assert(init.Variable.IsSingleDefinition && init.Variable.LoadCount == 1);
 				Debug.Assert(init.Variable.LoadInstructions[0].IsDescendantOf(assignments));

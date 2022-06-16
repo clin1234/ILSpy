@@ -35,20 +35,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly FieldAttributes attributes;
 		readonly FieldDefinitionHandle handle;
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 
-		object constantValue;
+		object? constantValue;
 
 		// this can't be bool? as bool? is not thread-safe from torn reads
 		byte decimalConstantState;
 
 		// lazy-loaded fields:
-		ITypeDefinition declaringType;
+		ITypeDefinition? declaringType;
 		bool isVolatile; // initialized together with this.type
-		string name;
-		IType type;
+		string? name;
+		IType? type;
 
-		internal MetadataField(MetadataModule module, FieldDefinitionHandle handle)
+		internal MetadataField(MetadataModule? module, FieldDefinitionHandle handle)
 		{
 			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public string Name {
 			get {
-				string name = LazyInit.VolatileRead(ref this.name);
+				string? name = LazyInit.VolatileRead(ref this.name);
 				if (name != null)
 					return name;
 				var metadata = module.metadata;
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Field;
 		IMember IMember.MemberDefinition => this;
-		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
+		TypeParameterSubstitution? IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		// Fields can't implement interfaces:
 		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
@@ -133,10 +133,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public IType DeclaringType => DeclaringTypeDefinition;
-		public IModule ParentModule => module;
+		public IModule? ParentModule => module;
 		public ICompilation Compilation => module.Compilation;
 
-		public IEnumerable<IAttribute> GetAttributes()
+		public IEnumerable<IAttribute?> GetAttributes()
 		{
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
-			object val = LazyInit.VolatileRead(ref this.constantValue);
+			object? val = LazyInit.VolatileRead(ref this.constantValue);
 			if (val != null)
 				return val;
 			try
@@ -238,12 +238,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public IMember Specialize(TypeParameterSubstitution substitution)
+		public IMember Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedField.Create(this, substitution);
 		}

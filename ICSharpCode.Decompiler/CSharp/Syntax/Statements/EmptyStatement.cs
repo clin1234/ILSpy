@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitEmptyStatement(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is EmptyStatement;
 		}

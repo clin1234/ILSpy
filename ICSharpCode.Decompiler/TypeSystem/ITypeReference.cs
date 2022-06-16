@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IMember? CurrentMember { get; }
 
-		ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition? typeDefinition);
+		ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition);
 		ITypeResolveContext WithCurrentMember(IMember? member);
 	}
 }

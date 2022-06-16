@@ -26,17 +26,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	sealed class InsertMissingTokensDecorator : DecoratingTokenWriter
 	{
 		readonly ILocatable locationProvider;
-		readonly Stack<List<AstNode>> nodes = new();
-		List<AstNode> currentList;
+		readonly Stack<List<AstNode?>> nodes = new();
+		List<AstNode?> currentList;
 
 		public InsertMissingTokensDecorator(TokenWriter writer, ILocatable locationProvider)
 			: base(writer)
 		{
 			this.locationProvider = locationProvider;
-			currentList = new List<AstNode>();
+			currentList = new List<AstNode?>();
 		}
 
-		public override void StartNode(AstNode node)
+		public override void StartNode(AstNode? node)
 		{
 			// ignore whitespace: these don't need to be processed.
 			// StartNode/EndNode is only called for them to support folding of comments.
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				currentList.Add(node);
 				nodes.Push(currentList);
-				currentList = new List<AstNode>();
+				currentList = new List<AstNode?>();
 			}
 			else if (node is Comment comment)
 			{
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.StartNode(node);
 		}
 
-		public override void EndNode(AstNode node)
+		public override void EndNode(AstNode? node)
 		{
 			// ignore whitespace: these don't need to be processed.
 			// StartNode/EndNode is only called for them to support folding of comments.
@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.WriteKeyword(role, keyword);
 		}
 
-		public override void WriteIdentifier(Identifier identifier)
+		public override void WriteIdentifier(Identifier? identifier)
 		{
 			if (!identifier.IsNull)
 				identifier.SetStartLocation(locationProvider.Location);

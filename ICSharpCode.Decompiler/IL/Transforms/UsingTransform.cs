@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		BlockTransformContext context;
 
-		void IBlockTransform.Run(Block block, BlockTransformContext context)
+		void IBlockTransform.Run(Block? block, BlockTransformContext context)
 		{
 			if (!context.Settings.UsingStatement)
 				return;
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		}
 		/// }
 		/// </summary>
-		bool TransformUsing(Block block, int i)
+		bool TransformUsing(Block? block, int i)
 		{
 			if (i + 1 >= block.Instructions.Count)
 				return false;
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		}
 		/// }
 		/// </summary>
-		bool TransformUsingVB(Block block, int i)
+		bool TransformUsingVB(Block? block, int i)
 		{
 			if (i >= block.Instructions.Count)
 				return false;
@@ -446,7 +446,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// }
 		/// </summary>
-		private bool TransformAsyncUsing(Block block, int i)
+		private bool TransformAsyncUsing(Block? block, int i)
 		{
 			if (!context.Settings.AsyncUsingAndForEachStatement)
 				return false;

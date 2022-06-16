@@ -141,10 +141,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static GenericContext? GenericContextFromTypeArguments(TypeParameterSubstitution subst)
+		static GenericContext? GenericContextFromTypeArguments(TypeParameterSubstitution? subst)
 		{
-			var classTypeParameters = new List<ITypeParameter>();
-			var methodTypeParameters = new List<ITypeParameter>();
+			var classTypeParameters = new List<ITypeParameter?>();
+			var methodTypeParameters = new List<ITypeParameter?>();
 			if (subst.ClassTypeArguments != null)
 			{
 				foreach (var t in subst.ClassTypeArguments)

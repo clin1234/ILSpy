@@ -102,20 +102,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type parameters.
 		/// Returns an empty list if this type is not generic.
 		/// </summary>
-		IReadOnlyList<ITypeParameter> TypeParameters { get; }
+		IReadOnlyList<ITypeParameter>? TypeParameters { get; }
 
 		/// <summary>
 		/// Gets the type arguments passed to this type.
 		/// If this type is a generic type definition that is not parameterized, this property returns the type parameters,
 		/// as if the type was parameterized with its own type arguments (<c>class C&lt;T&gt; { C&lt;T&gt; field; }</c>).
 		/// </summary>
-		IReadOnlyList<IType> TypeArguments { get; }
+		IReadOnlyList<IType>? TypeArguments { get; }
 
 		/// <summary>
 		/// Calls ITypeVisitor.Visit for this type.
 		/// </summary>
 		/// <returns>The return value of the ITypeVisitor.Visit call</returns>
-		IType AcceptVisitor(TypeVisitor visitor);
+		IType AcceptVisitor(TypeVisitor? visitor);
 
 		/// <summary>
 		/// Calls ITypeVisitor.Visit for all children of this type, and reconstructs this type with the children based
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <returns>A copy of this type, with all children replaced by the return value of the corresponding visitor call.
 		/// If the visitor returned the original types for all children (or if there are no children), returns <c>this</c>.
 		/// </returns>
-		IType VisitChildren(TypeVisitor visitor);
+		IType VisitChildren(TypeVisitor? visitor);
 
 		/// <summary>
 		/// Gets the direct base types.
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// of this parameterized type.
 		/// Returns TypeParameterSubstitution.Identity if the type is not parametrized.
 		/// </summary>
-		TypeParameterSubstitution GetSubstitution();
+		TypeParameterSubstitution? GetSubstitution();
 
 		/// <summary>
 		/// Gets inner classes (including inherited inner classes).
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and thus 'leaked' to the caller in the same way the GetMembers() method does not specialize members
 		/// from an <see cref="ITypeDefinition"/> and 'leaks' type parameters in member signatures.
 		/// </remarks>
-		IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None);
+		IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType?>? typeArguments, Predicate<ITypeDefinition>? filter = null, GetMemberOptions options = GetMemberOptions.None);
 
 		/// <summary>
 		/// Gets all instance constructors for this type.
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and the other overload's remarks about ambiguous signatures apply here as well.
 		/// </para>
 		/// </remarks>
-		IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None);
+		IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None);
 
 		/// <summary>
 		/// Gets all properties that can be called on this type.

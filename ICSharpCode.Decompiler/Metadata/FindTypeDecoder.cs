@@ -30,9 +30,9 @@ namespace ICSharpCode.Decompiler.Metadata
 	internal sealed class FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
 	{
 		readonly MetadataModule? currentModule;
-		readonly PEFile declaringModule;
+		readonly PEFile? declaringModule;
 		readonly TypeDefinitionHandle handle;
-		readonly string? namespaceName;
+		readonly string namespaceName;
 		readonly PrimitiveTypeCode primitiveType;
 		readonly string? typeName;
 
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// Constructs a FindTypeDecoder that finds uses of a specific type-definition handle.
 		/// This assumes that the module we are search in is the same as the module containing the type-definiton.
 		/// </summary>
-		internal FindTypeDecoder(TypeDefinitionHandle handle, PEFile declaringModule)
+		internal FindTypeDecoder(TypeDefinitionHandle handle, PEFile? declaringModule)
 		{
 			this.handle = handle;
 			this.declaringModule = declaringModule;
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			return this.handle == handle && reader == declaringModule.Metadata;
+			return this.handle == handle && reader == declaringModule?.Metadata;
 		}
 
 		public bool GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				return false;
 
 			var t = currentModule.ResolveType(handle, default);
-			var td = t.GetDefinition();
+			var td = t?.GetDefinition();
 			if (td == null)
 				return false;
 

@@ -19,7 +19,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Note: the transform may only modify the specified block and its descendants,
 		/// as well as any sibling blocks that are dominated by the specified block.
 		/// </summary>
-		void Run(Block block, BlockTransformContext context);
+		void Run(Block? block, BlockTransformContext context);
 	}
 
 	/// <summary>

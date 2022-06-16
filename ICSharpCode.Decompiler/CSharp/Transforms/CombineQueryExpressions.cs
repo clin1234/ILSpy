@@ -56,17 +56,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
 			CombineQueries(rootNode, new Dictionary<string, object>());
 		}
 
-		void CombineQueries(AstNode node, Dictionary<string, object> fromOrLetIdentifiers)
+		void CombineQueries(AstNode? node, Dictionary<string, object> fromOrLetIdentifiers)
 		{
 			AstNode next;
-			for (AstNode child = node.FirstChild; child != null; child = next)
+			for (AstNode? child = node.FirstChild; child != null; child = next)
 			{
 				// store reference to next child before transformation
 				next = child.NextSibling;
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			fromClause.Remove();
 			selectClause.Remove();
 			// Move clauses from innerQuery to query
-			QueryClause insertionPos = null;
+			QueryClause? insertionPos = null;
 			foreach (var clause in innerQuery.Clauses)
 			{
 				query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());

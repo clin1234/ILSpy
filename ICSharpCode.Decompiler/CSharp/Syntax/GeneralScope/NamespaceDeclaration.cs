@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class NamespaceDeclaration : AstNode
 	{
-		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
-		public static readonly Role<AstType> NamespaceNameRole = new("NamespaceName", AstType.Null);
+		public static readonly Role<AstNode?> MemberRole = SyntaxTree.MemberRole;
+		public static readonly Role<AstType?> NamespaceNameRole = new("NamespaceName", AstType.Null);
 
 		public NamespaceDeclaration()
 		{
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.NamespaceKeyword); }
 		}
 
-		public AstType NamespaceName {
+		public AstType? NamespaceName {
 			get { return GetChildByRole(NamespaceNameRole) ?? AstType.Null; }
 			init { SetChildByRole(NamespaceNameRole, value); }
 		}
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return UsingDeclaration.ConstructNamespace(NamespaceName);
 			}
 			init {
-				var arr = value.Split('.');
+				string[] arr = value.Split('.');
 				NamespaceName = ConstructType(arr, arr.Length - 1);
 			}
 		}
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IEnumerable<string> Identifiers {
 			get {
 				var result = new Stack<string>();
-				AstType type = NamespaceName;
+				AstType? type = NamespaceName;
 				while (type is MemberType mt)
 				{
 					result.Push(mt.MemberName);
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<AstNode> Members {
+		public AstNodeCollection<AstNode?> Members {
 			get { return GetChildrenByRole(MemberRole); }
 		}
 
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RBrace); }
 		}
 
-		static AstType ConstructType(string[] arr, int i)
+		static AstType? ConstructType(string[] arr, int i)
 		{
 			if (i < 0 || i >= arr.Length)
 				throw new ArgumentOutOfRangeException(nameof(i));
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return name1 + "." + name2;
 		}
 
-		public void AddMember(AstNode child)
+		public void AddMember(AstNode? child)
 		{
 			AddChild(child, MemberRole);
 		}
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitNamespaceDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is NamespaceDeclaration o && MatchString(this.Name, o.Name) &&
 			       this.Members.DoMatch(o.Members, match);

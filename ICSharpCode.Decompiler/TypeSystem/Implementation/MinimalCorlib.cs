@@ -38,8 +38,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public static readonly IModuleReference Instance = new CorlibModuleReference(KnownTypeReference.AllKnownTypes);
 
-		readonly CorlibNamespace rootNamespace;
-		readonly CorlibTypeDefinition[] typeDefinitions;
+		readonly CorlibNamespace? rootNamespace;
+		readonly CorlibTypeDefinition?[] typeDefinitions;
 
 		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
@@ -53,33 +53,33 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IModule.IsMainModule => Compilation.MainModule == this;
 
 		string IModule.AssemblyName => "corlib";
-		Version IModule.AssemblyVersion { get; } = new(0, 0, 0, 0);
+		Version? IModule.AssemblyVersion { get; } = new(0, 0, 0, 0);
 
 		string IModule.FullAssemblyName => "corlib";
 		string ISymbol.Name => "corlib";
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
-		PEFile IModule.PEFile => null;
-		INamespace IModule.RootNamespace => rootNamespace;
+		PEFile? IModule.PEFile => null;
+		INamespace? IModule.RootNamespace => rootNamespace;
 
-		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(static td => td != null);
-		public IEnumerable<ITypeDefinition> TypeDefinitions => TopLevelTypeDefinitions;
+		public IEnumerable<ITypeDefinition?> TopLevelTypeDefinitions => typeDefinitions.Where(static td => td != null);
+		public IEnumerable<ITypeDefinition?> TypeDefinitions => TopLevelTypeDefinitions;
 
-		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
+		public ITypeDefinition? GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
 			foreach (var typeDef in typeDefinitions)
 			{
-				if (typeDef.FullTypeName == topLevelTypeName)
+				if (typeDef != null && typeDef.FullTypeName == topLevelTypeName)
 					return typeDef;
 			}
 
 			return null;
 		}
 
-		IEnumerable<IAttribute> IModule.GetAssemblyAttributes() => EmptyList<IAttribute>.Instance;
-		IEnumerable<IAttribute> IModule.GetModuleAttributes() => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute?> IModule.GetAssemblyAttributes() => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute?> IModule.GetModuleAttributes() => EmptyList<IAttribute>.Instance;
 
-		bool IModule.InternalsVisibleTo(IModule module)
+		bool IModule.InternalsVisibleTo(IModule? module)
 		{
 			return module == this;
 		}
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.types = types;
 			}
 
-			IModule IModuleReference.Resolve(ITypeResolveContext context)
+			IModule? IModuleReference.Resolve(ITypeResolveContext context)
 			{
 				return new MinimalCorlib(context.Compilation, types);
 			}
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			private readonly List<INamespace> childNamespaces = new();
 			readonly MinimalCorlib corlib;
 
-			public CorlibNamespace(MinimalCorlib corlib, INamespace parentNamespace, string fullName, string name)
+			public CorlibNamespace(MinimalCorlib corlib, INamespace? parentNamespace, string fullName, string name)
 			{
 				this.corlib = corlib;
 				this.ParentNamespace = parentNamespace;
@@ -117,13 +117,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Name = name;
 			}
 
-			public INamespace ParentNamespace { get; }
+			public INamespace? ParentNamespace { get; }
 			public string FullName { get; }
 			public string Name { get; }
 
-			string INamespace.ExternAlias => string.Empty;
+			string? INamespace.ExternAlias => string.Empty;
 
-			IEnumerable<INamespace> INamespace.ChildNamespaces => childNamespaces;
+			IEnumerable<INamespace?> INamespace.ChildNamespaces => childNamespaces;
 
 			IEnumerable<ITypeDefinition> INamespace.Types =>
 				corlib.TopLevelTypeDefinitions.Where(td => td.Namespace == FullName);
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			SymbolKind ISymbol.SymbolKind => SymbolKind.Namespace;
 			ICompilation ICompilationProvider.Compilation => corlib.Compilation;
 
-			INamespace INamespace.GetChildNamespace(string name)
+			INamespace? INamespace.GetChildNamespace(string name)
 			{
 				return childNamespaces.FirstOrDefault(ns => ns.Name == name);
 			}
@@ -146,11 +146,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		sealed class CorlibTypeDefinition : ITypeDefinition
 		{
-			readonly MinimalCorlib corlib;
+			readonly MinimalCorlib? corlib;
 			readonly KnownTypeCode typeCode;
 			readonly TypeKind typeKind;
 
-			public CorlibTypeDefinition(MinimalCorlib corlib, KnownTypeCode typeCode)
+			public CorlibTypeDefinition(MinimalCorlib? corlib, KnownTypeCode typeCode)
 			{
 				this.corlib = corlib;
 				this.typeCode = typeCode;
@@ -174,10 +174,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			public string MetadataName { get; }
 
-			ITypeDefinition IEntity.DeclaringTypeDefinition => null;
-			IType ITypeDefinition.DeclaringType => null;
-			IType IType.DeclaringType => null;
-			IType IEntity.DeclaringType => null;
+			ITypeDefinition? IEntity.DeclaringTypeDefinition => null;
+			IType? ITypeDefinition.DeclaringType => null;
+			IType? IType.DeclaringType => null;
+			IType? IEntity.DeclaringType => null;
 
 			bool ITypeDefinition.HasExtensionMethods => false;
 			bool ITypeDefinition.IsReadOnly => false;
@@ -213,17 +213,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
 
-			IReadOnlyList<ITypeParameter> IType.TypeParameters =>
+			IReadOnlyList<ITypeParameter>? IType.TypeParameters =>
 				DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
 
-			IReadOnlyList<IType> IType.TypeArguments =>
+			IReadOnlyList<IType>? IType.TypeArguments =>
 				DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
 
 			IEnumerable<IType> IType.DirectBaseTypes {
 				get {
 					var baseType = KnownTypeReference.Get(typeCode).baseType;
 					if (baseType != KnownTypeCode.None)
-						return new[] { corlib.Compilation.FindType(baseType) };
+						if (corlib != null)
+						{
+							return new[] { corlib.Compilation.FindType(baseType) };
+						}
+
 					return EmptyList<IType>.Instance;
 				}
 			}
@@ -232,7 +236,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			public string Name => KnownTypeReference.Get(typeCode).Name;
 
-			IModule IEntity.ParentModule => corlib;
+			IModule? IEntity.ParentModule => corlib;
 
 			Accessibility IEntity.Accessibility => Accessibility.Public;
 
@@ -255,64 +259,64 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			string INamedElement.Namespace => KnownTypeReference.Get(typeCode).Namespace;
 
-			bool IEquatable<IType>.Equals(IType other)
+			bool IEquatable<IType>.Equals(IType? other)
 			{
 				return this == other;
 			}
 
-			IEnumerable<IMethod> IType.GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
+			IEnumerable<IMethod> IType.GetAccessors(Predicate<IMethod>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IAttribute> IEntity.GetAttributes()
+			IEnumerable<IAttribute?> IEntity.GetAttributes()
 			{
 				return EmptyList<IAttribute>.Instance;
 			}
 
-			IEnumerable<IMethod> IType.GetConstructors(Predicate<IMethod> filter, GetMemberOptions options)
+			IEnumerable<IMethod> IType.GetConstructors(Predicate<IMethod>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IEvent> IType.GetEvents(Predicate<IEvent> filter, GetMemberOptions options)
+			IEnumerable<IEvent> IType.GetEvents(Predicate<IEvent>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IEvent>.Instance;
 			}
 
-			IEnumerable<IField> IType.GetFields(Predicate<IField> filter, GetMemberOptions options)
+			IEnumerable<IField> IType.GetFields(Predicate<IField>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IField>.Instance;
 			}
 
-			IEnumerable<IMember> IType.GetMembers(Predicate<IMember> filter, GetMemberOptions options)
+			IEnumerable<IMember> IType.GetMembers(Predicate<IMember>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IMember>.Instance;
 			}
 
-			IEnumerable<IMethod> IType.GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
+			IEnumerable<IMethod> IType.GetMethods(Predicate<IMethod>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+			IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter,
 				GetMemberOptions options)
 			{
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IType> IType.GetNestedTypes(Predicate<ITypeDefinition> filter, GetMemberOptions options)
+			IEnumerable<IType> IType.GetNestedTypes(Predicate<ITypeDefinition>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IType>.Instance;
 			}
 
-			IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments,
-				Predicate<ITypeDefinition> filter, GetMemberOptions options)
+			IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType?>? typeArguments,
+				Predicate<ITypeDefinition>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IType>.Instance;
 			}
 
-			IEnumerable<IProperty> IType.GetProperties(Predicate<IProperty> filter, GetMemberOptions options)
+			IEnumerable<IProperty> IType.GetProperties(Predicate<IProperty>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IProperty>.Instance;
 			}
@@ -320,14 +324,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			bool ITypeDefinition.IsRecord => false;
 
 			ITypeDefinition IType.GetDefinition() => this;
-			TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
+			TypeParameterSubstitution? IType.GetSubstitution() => TypeParameterSubstitution.Identity;
 
 			IType IType.AcceptVisitor(TypeVisitor visitor)
 			{
 				return visitor.VisitTypeDefinition(this);
 			}
 
-			IType IType.VisitChildren(TypeVisitor visitor)
+			IType IType.VisitChildren(TypeVisitor? visitor)
 			{
 				return this;
 			}

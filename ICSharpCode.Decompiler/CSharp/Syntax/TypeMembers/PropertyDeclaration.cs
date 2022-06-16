@@ -33,9 +33,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole GetKeywordRole = new("get");
 		public static readonly TokenRole SetKeywordRole = new("set");
 		public static readonly TokenRole InitKeywordRole = new("init");
-		public static readonly Role<Accessor> GetterRole = new("Getter", Accessor.Null);
-		public static readonly Role<Accessor> SetterRole = new("Setter", Accessor.Null);
-		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
+		public static readonly Role<Accessor?> GetterRole = new("Getter", Accessor.Null);
+		public static readonly Role<Accessor?> SetterRole = new("Setter", Accessor.Null);
+		public static readonly Role<Expression?> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Property; }
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
+		public AstType? PrivateImplementationType {
 			get { return GetChildByRole(PrivateImplementationTypeRole); }
 			set { SetChildByRole(PrivateImplementationTypeRole, value); }
 		}
@@ -54,12 +54,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public Accessor Getter {
+		public Accessor? Getter {
 			get { return GetChildByRole(GetterRole); }
 			set { SetChildByRole(GetterRole, value); }
 		}
 
-		public Accessor Setter {
+		public Accessor? Setter {
 			get { return GetChildByRole(SetterRole); }
 			set { SetChildByRole(SetterRole, value); }
 		}
@@ -72,12 +72,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression Initializer {
+		public Expression? Initializer {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public Expression ExpressionBody {
+		public Expression? ExpressionBody {
 			get { return GetChildByRole(ExpressionBodyRole); }
 			set { SetChildByRole(ExpressionBodyRole, value); }
 		}
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPropertyDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is PropertyDeclaration o && MatchString(this.Name, o.Name)
 			                                      && this.MatchAttributesAndModifiers(o, match) &&

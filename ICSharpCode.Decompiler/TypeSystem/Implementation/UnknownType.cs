@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="namespaceName">Namespace name, if known. Can be null if unknown.</param>
 		/// <param name="name">Name of the type, must not be null.</param>
 		/// <param name="typeParameterCount">Type parameter count, zero if unknown.</param>
-		public UnknownType(string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
+		public UnknownType(string? namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
 			ArgumentNullException.ThrowIfNull(name);
 			this.namespaceKnown = namespaceName != null;
@@ -86,10 +86,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
 
-		public override IReadOnlyList<ITypeParameter> TypeParameters =>
+		public override IReadOnlyList<ITypeParameter>? TypeParameters =>
 			DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
 
-		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
+		public override IReadOnlyList<IType>? TypeArguments => TypeParameters;
 
 		public override bool? IsReferenceType {
 			get { return isReferenceType; }

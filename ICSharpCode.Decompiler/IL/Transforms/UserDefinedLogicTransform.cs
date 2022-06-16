@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///       if (call op_True(ldloc lhsVar)) ldloc lhsVar else call op_BitwiseOr(ldloc lhsVar, rhsInst)
 		///    -> user.logic op_BitwiseOr(ldloc lhsVar, rhsInst)
 		/// </summary>
-		public static ILInstruction Transform(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		public static ILInstruction? Transform(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			if (!MatchCondition(condition, out var lhsVar, out var conditionMethodName))
 				return null;
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return result;
 		}
 
-		public static ILInstruction TransformDynamic(ILInstruction condition, ILInstruction trueInst,
+		public static ILInstruction? TransformDynamic(ILInstruction condition, ILInstruction trueInst,
 			ILInstruction falseInst)
 		{
 			// Check condition:
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// Check trueInst:
-			DynamicUnaryOperatorInstruction rhsUnary;
+			DynamicUnaryOperatorInstruction? rhsUnary;
 			if (trueInst.MatchLdLoc(lhsVar))
 			{
 				// OK, typical pattern where the expression evaluates to 'dynamic'

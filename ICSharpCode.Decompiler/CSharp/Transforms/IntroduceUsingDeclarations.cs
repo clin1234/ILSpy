@@ -24,6 +24,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	internal sealed class IntroduceUsingDeclarations : IAstTransform
 	{
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			// First determine all the namespaces that need to be imported:
 			var requiredImports = new FindRequiredImports(context);
@@ -105,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			}
 
-			public override void VisitSimpleType(SimpleType simpleType)
+			public override void VisitSimpleType(SimpleType? simpleType)
 			{
 				var trr = simpleType.Annotation<TypeResolveResult>();
 				if (trr != null && !IsParentOfCurrentNamespace(trr.Type.Namespace))
@@ -116,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				base.VisitSimpleType(simpleType); // also visit type arguments
 			}
 
-			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
+			public override void VisitNamespaceDeclaration(NamespaceDeclaration? namespaceDeclaration)
 			{
 				string oldNamespace = currentNamespace;
 				foreach (string ident in namespaceDeclaration.Identifiers)
@@ -132,13 +133,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor
 		{
-			readonly Stack<CSharpTypeResolveContext> context;
+			readonly Stack<CSharpTypeResolveContext>? context;
 			readonly bool ignoreUsingScope;
 			readonly DecompilerSettings settings;
 
 			TypeSystemAstBuilder astBuilder;
 
-			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
+			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope? usingScope)
 			{
 				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
 				this.settings = context.Settings;
@@ -153,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					this.context = new Stack<CSharpTypeResolveContext>();
 					if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
 					{
-						foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
+						foreach (string? ns in context.CurrentTypeDefinition.Namespace.Split('.'))
 						{
 							usingScope = new UsingScope(usingScope, ns);
 						}
@@ -167,14 +168,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}
 
-			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
+			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, ILFunction? function = null)
 			{
 				CSharpResolver resolver = new(context);
 				if (function != null)
 				{
 					foreach (var v in function.Variables)
 					{
-						if (v.Kind != IL.VariableKind.Parameter && v.Name != null)
+						if (v.Kind != VariableKind.Parameter && v.Name != null)
 							resolver = resolver.AddVariable(new DefaultVariable(v.Type, v.Name));
 					}
 				}
@@ -216,7 +217,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 
-			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
+			public override void VisitTypeDeclaration(TypeDeclaration? typeDeclaration)
 			{
 				if (ignoreUsingScope)
 				{
@@ -240,27 +241,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 
-			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+			public override void VisitMethodDeclaration(MethodDeclaration? methodDeclaration)
 			{
 				Visit(methodDeclaration, base.VisitMethodDeclaration);
 			}
 
-			public override void VisitAccessor(Accessor accessor)
+			public override void VisitAccessor(Accessor? accessor)
 			{
 				Visit(accessor, base.VisitAccessor);
 			}
 
-			public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
+			public override void VisitConstructorDeclaration(ConstructorDeclaration? constructorDeclaration)
 			{
 				Visit(constructorDeclaration, base.VisitConstructorDeclaration);
 			}
 
-			public override void VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+			public override void VisitDestructorDeclaration(DestructorDeclaration? destructorDeclaration)
 			{
 				Visit(destructorDeclaration, base.VisitDestructorDeclaration);
 			}
 
-			public override void VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration)
+			public override void VisitOperatorDeclaration(OperatorDeclaration? operatorDeclaration)
 			{
 				Visit(operatorDeclaration, base.VisitOperatorDeclaration);
 			}
@@ -283,7 +284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					context.Push(currentContext);
 					try
 					{
-						var function = entityDeclaration.Annotation<IL.ILFunction>();
+						var function = entityDeclaration.Annotation<ILFunction>();
 						astBuilder = CreateAstBuilder(currentContext, function);
 						baseCall(entityDeclaration);
 					}
@@ -299,9 +300,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 
-			public override void VisitSimpleType(SimpleType simpleType)
+			public override void VisitSimpleType(SimpleType? simpleType)
 			{
-				TypeResolveResult rr;
+				TypeResolveResult? rr;
 				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null)
 				{
 					base.VisitSimpleType(simpleType);

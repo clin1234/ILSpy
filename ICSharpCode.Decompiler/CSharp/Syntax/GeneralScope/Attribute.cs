@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			init { SetChildByRole(Roles.Type, value); }
 		}
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
+		public AstNodeCollection<Expression?> Arguments {
 			get { return base.GetChildrenByRole(Roles.Argument); }
 		}
 
@@ -77,13 +77,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitAttribute(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is Attribute o && this.Type.DoMatch(o.Type, match) &&
 			       this.Arguments.DoMatch(o.Arguments, match);
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			if (IsNull)
 				return "Null";

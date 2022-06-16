@@ -32,17 +32,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	readonly struct AttributeListBuilder
 	{
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 		readonly List<IAttribute> attributes;
 
-		public AttributeListBuilder(MetadataModule module)
+		public AttributeListBuilder(MetadataModule? module)
 		{
 			Debug.Assert(module != null);
 			this.module = module;
 			this.attributes = new List<IAttribute>();
 		}
 
-		public AttributeListBuilder(MetadataModule module, int capacity)
+		public AttributeListBuilder(MetadataModule? module, int capacity)
 		{
 			Debug.Assert(module != null);
 			this.module = module;
@@ -165,8 +165,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				case 0x2c: // CustomMarshaler
 					marshalInfo.ReadSerializedString();
 					marshalInfo.ReadSerializedString();
-					string managedType = marshalInfo.ReadSerializedString();
-					string cookie = marshalInfo.ReadSerializedString();
+					string? managedType = marshalInfo.ReadSerializedString();
+					string? cookie = marshalInfo.ReadSerializedString();
 					if (managedType != null)
 					{
 						b.AddNamedArg("MarshalType", KnownTypeCode.String, managedType);
@@ -327,8 +327,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader,
-			SRM.CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, SRM.CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
@@ -337,10 +336,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return b.Build();
 		}
 
-		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader,
-			SRM.CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, SRM.CustomAttributeTypedArgument<IType> securityAction)
 		{
-			string attributeTypeName = reader.ReadSerializedString();
+			string? attributeTypeName = reader.ReadSerializedString();
 			IType attributeType = module.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
 
 			reader.ReadCompressedInteger(); // ??
@@ -348,7 +346,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int numNamed = reader.ReadCompressedInteger();
 
 			var decoder = new CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
-			var namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
+			ImmutableArray<SRM.CustomAttributeNamedArgument<IType>> namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
 
 			return new DefaultAttribute(
 				attributeType,
@@ -358,7 +356,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#endregion
 
-		public IAttribute[] Build()
+		public IAttribute?[] Build()
 		{
 			if (attributes.Count == 0)
 				return Empty<IAttribute>.Array;
@@ -373,12 +371,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly ImmutableArray<SRM.CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
 		readonly ImmutableArray<SRM.CustomAttributeNamedArgument<IType>>.Builder namedArgs;
 
-		public AttributeBuilder(MetadataModule module, KnownAttribute attributeType)
+		public AttributeBuilder(MetadataModule? module, KnownAttribute attributeType)
 			: this(module, module.GetAttributeType(attributeType))
 		{
 		}
 
-		private AttributeBuilder(MetadataModule module, IType attributeType)
+		private AttributeBuilder(MetadataModule? module, IType attributeType)
 		{
 			this.compilation = module.Compilation;
 			this.attributeType = attributeType;
@@ -406,17 +404,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			fixedArgs.Add(new SRM.CustomAttributeTypedArgument<IType>(type, value));
 		}
 
-		public void AddNamedArg(string name, KnownTypeCode type, object value)
+		public void AddNamedArg(string name, KnownTypeCode type, object? value)
 		{
 			AddNamedArg(name, compilation.FindType(type), value);
 		}
 
-		public void AddNamedArg(string name, TopLevelTypeName type, object value)
+		public void AddNamedArg(string name, TopLevelTypeName type, object? value)
 		{
 			AddNamedArg(name, compilation.FindType(type), value);
 		}
 
-		public void AddNamedArg(string name, IType type, object value)
+		public void AddNamedArg(string name, IType type, object? value)
 		{
 			SRM.CustomAttributeNamedArgumentKind kind =
 				attributeType.GetFields(f => f.Name == name, GetMemberOptions.ReturnMemberDefinitions).Any()

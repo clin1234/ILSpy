@@ -25,13 +25,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	public abstract class TokenWriter
 	{
-		public abstract void StartNode(AstNode node);
-		public abstract void EndNode(AstNode node);
+		public abstract void StartNode(AstNode? node);
+		public abstract void EndNode(AstNode? node);
 
 		/// <summary>
 		/// Writes an identifier.
 		/// </summary>
-		public abstract void WriteIdentifier(Identifier identifier);
+		public abstract void WriteIdentifier(Identifier? identifier);
 
 		/// <summary>
 		/// Writes a keyword to the output.
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Write a piece of text in an interpolated string literal.
 		/// </summary>
-		public abstract void WriteInterpolatedText(string text);
+		public abstract void WriteInterpolatedText(string? text);
 
 		public abstract void Space();
 		public abstract void Indent();
@@ -104,17 +104,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			this.decoratedWriter = decoratedWriter ?? throw new ArgumentNullException(nameof(decoratedWriter));
 		}
 
-		public override void StartNode(AstNode node)
+		public override void StartNode(AstNode? node)
 		{
 			decoratedWriter.StartNode(node);
 		}
 
-		public override void EndNode(AstNode node)
+		public override void EndNode(AstNode? node)
 		{
 			decoratedWriter.EndNode(node);
 		}
 
-		public override void WriteIdentifier(Identifier identifier)
+		public override void WriteIdentifier(Identifier? identifier)
 		{
 			decoratedWriter.WriteIdentifier(identifier);
 		}
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			decoratedWriter.WritePrimitiveType(type);
 		}
 
-		public override void WriteInterpolatedText(string text)
+		public override void WriteInterpolatedText(string? text)
 		{
 			decoratedWriter.WriteInterpolatedText(text);
 		}

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// The identity function.
 		/// </summary>
-		internal static readonly TypeParameterSubstitution Identity = new(null, null);
+		public static readonly TypeParameterSubstitution? Identity = new(null, null);
 
 		/// <summary>
 		/// Creates a new type parameter substitution.
@@ -45,8 +45,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The type arguments to substitute for method type parameters.
 		/// Pass <c>null</c> to keep method type parameters unmodified.
 		/// </param>
-		internal TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments,
-			IReadOnlyList<IType> methodTypeArguments)
+		public TypeParameterSubstitution(IReadOnlyList<IType>? classTypeArguments,
+			IReadOnlyList<IType>? methodTypeArguments)
 		{
 			this.ClassTypeArguments = classTypeArguments;
 			this.MethodTypeArguments = methodTypeArguments;
@@ -56,15 +56,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the list of class type arguments.
 		/// Returns <c>null</c> if this substitution keeps class type parameters unmodified.
 		/// </summary>
-		internal IReadOnlyList<IType> ClassTypeArguments { get; }
+		public IReadOnlyList<IType>? ClassTypeArguments { get; }
 
 		/// <summary>
 		/// Gets the list of method type arguments.
 		/// Returns <c>null</c> if this substitution keeps method type parameters unmodified.
 		/// </summary>
-		internal IReadOnlyList<IType> MethodTypeArguments { get; }
+		public IReadOnlyList<IType>? MethodTypeArguments { get; }
 
-		internal override IType VisitTypeParameter(ITypeParameter type)
+		public override IType VisitTypeParameter(ITypeParameter type)
 		{
 			int index = type.Index;
 			if (ClassTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition)
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitTypeParameter(type);
 		}
 
-		internal override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (type is NullabilityAnnotatedTypeParameter tp)
 			{
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <c>t.AcceptVisitor(Compose(g, f)) equals t.AcceptVisitor(f).AcceptVisitor(g)</c>
 		/// </summary>
 		/// <remarks>If you consider type parameter substitution to be a function, this is function composition.</remarks>
-		internal static TypeParameterSubstitution Compose(TypeParameterSubstitution g, TypeParameterSubstitution f)
+		public static TypeParameterSubstitution? Compose(TypeParameterSubstitution? g, TypeParameterSubstitution? f)
 		{
 			if (g == null)
 				return f;
@@ -182,8 +182,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new TypeParameterSubstitution(classTypeArguments, methodTypeArguments);
 		}
 
-		static IReadOnlyList<IType> GetComposedTypeArguments(IReadOnlyList<IType> input,
-			TypeParameterSubstitution substitution)
+		static IReadOnlyList<IType>? GetComposedTypeArguments(IReadOnlyList<IType> input,
+			TypeParameterSubstitution? substitution)
 		{
 			IType[] result = new IType[input.Count];
 			for (int i = 0; i < result.Length; i++)
@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Equals and GetHashCode implementation
 
-		internal bool Equals(TypeParameterSubstitution other, TypeVisitor normalization)
+		public bool Equals(TypeParameterSubstitution? other, TypeVisitor? normalization)
 		{
 			if (other == null)
 				return false;
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			       && TypeListEquals(MethodTypeArguments, other.MethodTypeArguments, normalization);
 		}
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			if (obj is not TypeParameterSubstitution other)
 				return false;
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b)
+		static bool TypeListEquals(IReadOnlyList<IType>? a, IReadOnlyList<IType>? b)
 		{
 			if (a == b)
 				return true;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return !a.Where((t, i) => !t.Equals(b[i])).Any();
 		}
 
-		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b, TypeVisitor normalization)
+		static bool TypeListEquals(IReadOnlyList<IType>? a, IReadOnlyList<IType>? b, TypeVisitor? normalization)
 		{
 			if (a == b)
 				return true;
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return true;
 		}
 
-		static int TypeListHashCode(IReadOnlyList<IType> obj)
+		static int TypeListHashCode(IReadOnlyList<IType>? obj)
 		{
 			if (obj == null)
 				return 0;

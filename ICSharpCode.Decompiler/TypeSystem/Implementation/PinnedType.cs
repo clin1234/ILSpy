@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override TypeKind Kind => TypeKind.Other;
 
-		public override IType VisitChildren(TypeVisitor visitor)
+		public override IType VisitChildren(TypeVisitor? visitor)
 		{
 			var newType = elementType.AcceptVisitor(visitor);
 			if (newType == elementType)

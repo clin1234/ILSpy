@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	sealed class KnownTypeCache
 	{
 		readonly ICompilation compilation;
-		readonly IType[] knownTypes = new IType[KnownTypeReference.KnownTypeCodeCount];
+		readonly IType?[] knownTypes = new IType?[KnownTypeReference.KnownTypeCodeCount];
 
 		public KnownTypeCache(ICompilation compilation)
 		{
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType FindType(KnownTypeCode typeCode)
 		{
-			IType type = LazyInit.VolatileRead(ref knownTypes[(int)typeCode]);
+			IType? type = LazyInit.VolatileRead(ref knownTypes[(int)typeCode]);
 			if (type != null)
 			{
 				return type;
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (typeRef == null)
 				return SpecialType.UnknownType;
 			var typeName = new TopLevelTypeName(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
-			foreach (IModule asm in compilation.Modules)
+			foreach (IModule? asm in compilation.Modules)
 			{
 				var typeDef = asm.GetTypeDefinition(typeName);
 				if (typeDef != null)

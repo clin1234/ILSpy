@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		internal static bool IsNonNullableValueType(IType type)
 		{
-			return type.IsReferenceType == false && !IsNullable(type);
+			return type?.IsReferenceType == false && !IsNullable(type);
 		}
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ArgumentNullException.ThrowIfNull(elementType);
 
 			IType nullableType = compilation.FindType(KnownTypeCode.NullableOfT);
-			ITypeDefinition nullableTypeDef = nullableType.GetDefinition();
+			ITypeDefinition nullableTypeDef = nullableType?.GetDefinition();
 			if (nullableTypeDef != null)
 				return new ParameterizedType(nullableTypeDef, new[] { elementType });
 			return nullableType;

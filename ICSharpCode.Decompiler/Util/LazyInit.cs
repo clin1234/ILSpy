@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Util
 {
 	public static class LazyInit
 	{
-		public static T VolatileRead<T>(ref T location) where T : class?
+		public static T? VolatileRead<T>(ref T location) where T : class?
 		{
 			return Volatile.Read(ref location);
 		}

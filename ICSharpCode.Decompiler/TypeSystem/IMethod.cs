@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// Does not include inherited attributes.
 		/// </remarks>
-		IEnumerable<IAttribute> GetReturnTypeAttributes();
+		IEnumerable<IAttribute?> GetReturnTypeAttributes();
 
 		/// <summary>
 		/// Gets whether the return type is 'ref readonly'.
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the type parameters of this method; or an empty list if the method is not generic.
 		/// </summary>
-		IReadOnlyList<ITypeParameter> TypeParameters { get; }
+		IReadOnlyList<ITypeParameter>? TypeParameters { get; }
 
 		/// <summary>
 		/// Gets the type arguments passed to this method.
@@ -105,6 +105,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Specializes this method with the given substitution.
 		/// If this method is already specialized, the new substitution is composed with the existing substition.
 		/// </summary>
-		new IMethod Specialize(TypeParameterSubstitution substitution);
+		new IMethod Specialize(TypeParameterSubstitution? substitution);
 	}
 }

@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (analysisSuccess && UseCSharpSwitch(out _))
 			{
 				// complex multi-block switch that can be combined into a single SwitchInstruction
-				ILInstruction switchValue = new LdLoc(analysis.SwitchVariable);
+				ILInstruction? switchValue = new LdLoc(analysis.SwitchVariable);
 				Debug.Assert(switchValue.ResultType.IsIntegerType() || switchValue.ResultType == StackType.Unknown);
 				if (!(switchValue.ResultType is StackType.I4 or StackType.I8))
 				{
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			SortSwitchSections(sw);
 		}
 
-		static void SortSwitchSections(SwitchInstruction sw)
+		static void SortSwitchSections(SwitchInstruction? sw)
 		{
 			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body switch {
 				Branch b => b.TargetILOffset,

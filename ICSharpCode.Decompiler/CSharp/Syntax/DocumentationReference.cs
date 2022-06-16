@@ -25,9 +25,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DocumentationReference : AstNode
 	{
-		public static readonly Role<AstType> DeclaringTypeRole = new("DeclaringType", AstType.Null);
+		public static readonly Role<AstType?> DeclaringTypeRole = new("DeclaringType", AstType.Null);
 
-		public static readonly Role<AstType> ConversionOperatorReturnTypeRole =
+		public static readonly Role<AstType?> ConversionOperatorReturnTypeRole =
 			new("ConversionOperatorReturnType", AstType.Null);
 
 		bool hasParameterList;
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets/Sets the declaring type.
 		/// </summary>
-		public AstType DeclaringType {
+		public AstType? DeclaringType {
 			get { return GetChildByRole(DeclaringTypeRole); }
 			set { SetChildByRole(DeclaringTypeRole, value); }
 		}
@@ -90,8 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/sets the member name.
 		/// This property is only used when SymbolKind==None.
 		/// </summary>
-		public string MemberName {
-			get { return GetChildByRole(Roles.Identifier).Name; }
+		public string? MemberName {
+			get { return GetChildByRole(Roles.Identifier)?.Name; }
 			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
 
@@ -99,20 +99,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the return type of conversion operators.
 		/// This property is only used when SymbolKind==Operator and OperatorType is explicit or implicit.
 		/// </summary>
-		public AstType ConversionOperatorReturnType {
+		public AstType? ConversionOperatorReturnType {
 			get { return GetChildByRole(ConversionOperatorReturnTypeRole); }
 			set { SetChildByRole(ConversionOperatorReturnTypeRole, value); }
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
+		public AstNodeCollection<AstType?> TypeArguments {
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
+		public AstNodeCollection<ParameterDeclaration?> Parameters {
 			get { return GetChildrenByRole(Roles.Parameter); }
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			if (!(other is DocumentationReference o && this.SymbolKind == o.SymbolKind &&
 			      this.HasParameterList == o.HasParameterList))

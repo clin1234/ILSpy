@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets/Sets the type specified in the 'constrained.' prefix.
 		/// Returns null if no 'constrained.' prefix exists for this call.
 		/// </summary>
-		public IType? ConstrainedTo;
+		public IType ConstrainedTo;
 
 		/// <summary>
 		/// Gets whether the IL stack was empty at the point of this call.
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public static CallInstruction Create(OpCode opCode, IMethod method)
+		public static CallInstruction? Create(OpCode opCode, IMethod method)
 		{
 			return opCode switch {
 				OpCode.Call => new Call(method),
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Match match)
+		protected internal sealed override bool PerformMatch(ILInstruction other, ref Match match)
 		{
 			return other is CallInstruction o && this.OpCode == o.OpCode && this.Method.Equals(o.Method) &&
 			       this.IsTail == o.IsTail

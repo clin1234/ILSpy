@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void WritingOptions_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void WritingOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			DecompileAsync(lastSelectedStep);
 		}
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void FilterSettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (e.PropertyName == "Language")

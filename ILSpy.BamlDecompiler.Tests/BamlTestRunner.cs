@@ -216,10 +216,13 @@ namespace ILSpy.BamlDecompiler.Tests
 			{
 				switch (entry.Value)
 				{
-					case Stream value:
-						return value;
-					case byte[] bytes:
-						return new MemoryStream(bytes);
+					switch (entry.Value)
+					{
+						case Stream value:
+							return value;
+						case byte[] bytes:
+							return new MemoryStream(bytes);
+					}
 				}
 			}
 			return null;

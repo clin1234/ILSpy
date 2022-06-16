@@ -72,7 +72,8 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 		public static XamlResourceKey Create(BamlNode node) => new XamlResourceKey(node);
 
-		public BamlNode KeyNode { get; }
+		public BamlNode KeyNode { get; set; }
+		public BamlElement? KeyElement { get; set; }
 		public IList<BamlNode> StaticResources { get; }
 
 		public static XamlResourceKey? FindKeyInSiblings(BamlNode node)

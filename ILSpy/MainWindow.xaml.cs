@@ -65,6 +65,7 @@ namespace ICSharpCode.ILSpy
 		bool refreshInProgress, changingActiveTab;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
 		ILSpySettings spySettingsForMainWindow_Loaded;
+		readonly SessionSettings sessionSettings;
 		FilterSettings filterSettings;
 
 		public static MainWindow Instance { get; private set; }
@@ -571,6 +572,8 @@ namespace ICSharpCode.ILSpy
 					boundsOK = true;
 			}
 
+			SetWindowBounds(boundsOK ? sessionSettings.WindowBounds : SessionSettings.DefaultWindowBounds);
+
 			SetWindowBounds(boundsOK ? SessionSettings.WindowBounds : SessionSettings.DefaultWindowBounds);
 
 			this.WindowState = SessionSettings.WindowState;
@@ -994,11 +997,11 @@ namespace ICSharpCode.ILSpy
 			this.CurrentAssemblyList = assemblyList;
 			assemblyList.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
 
-			AssemblyListTreeNode = new AssemblyListTreeNode(assemblyList) {
+			assemblyListTreeNode = new AssemblyListTreeNode(assemblyList) {
 				FilterSettings = filterSettings.Clone(),
 				Select = x => SelectNode(x, inNewTabPage: false)
 			};
-			AssemblyTreeView.Root = AssemblyListTreeNode;
+			AssemblyTreeView.Root = assemblyListTreeNode;
 
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
 #if DEBUG
@@ -1203,16 +1206,16 @@ namespace ICSharpCode.ILSpy
 		public ILSpyTreeNode FindTreeNode(object reference)
 		{
 			return reference switch {
-				LoadedAssembly lasm => AssemblyListTreeNode.FindAssemblyNode(lasm),
-				PEFile asm => AssemblyListTreeNode.FindAssemblyNode(asm),
-				Resource res => AssemblyListTreeNode.FindResourceNode(res),
-				ValueTuple<Resource, string> resName => AssemblyListTreeNode.FindResourceNode(resName.Item1,
+				LoadedAssembly lasm => assemblyListTreeNode.FindAssemblyNode(lasm),
+				PEFile asm => assemblyListTreeNode.FindAssemblyNode(asm),
+				Resource res => assemblyListTreeNode.FindResourceNode(res),
+				ValueTuple<Resource, string> resName => assemblyListTreeNode.FindResourceNode(resName.Item1,
 					resName.Item2),
-				ITypeDefinition type => AssemblyListTreeNode.FindTypeNode(type),
-				IField fd => AssemblyListTreeNode.FindFieldNode(fd),
-				IMethod md => AssemblyListTreeNode.FindMethodNode(md),
-				IProperty pd => AssemblyListTreeNode.FindPropertyNode(pd),
-				IEvent ed => AssemblyListTreeNode.FindEventNode(ed),
+				ITypeDefinition type => assemblyListTreeNode.FindTypeNode(type),
+				IField fd => assemblyListTreeNode.FindFieldNode(fd),
+				IMethod md => assemblyListTreeNode.FindMethodNode(md),
+				IProperty pd => assemblyListTreeNode.FindPropertyNode(pd),
+				IEvent ed => assemblyListTreeNode.FindEventNode(ed),
 				INamespace nd => AssemblyListTreeNode.FindNamespaceNode(nd),
 				_ => null
 			};
@@ -1327,7 +1330,7 @@ namespace ICSharpCode.ILSpy
 		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly> loadedAssemblies = null, bool focusNode = true)
 		{
 			SharpTreeNode lastNode = null;
-			foreach (var asm in fileNames.Select(file => CurrentAssemblyList.OpenAssembly(file)))
+			foreach (var asm in fileNames.Select(file => assemblyList.OpenAssembly(file)))
 			{
 				if (asm != null)
 				{
@@ -1594,7 +1597,7 @@ namespace ICSharpCode.ILSpy
 			base.OnStateChanged(e);
 			// store window state in settings only if it's not minimized
 			if (this.WindowState != WindowState.Minimized)
-				SessionSettings.WindowState = this.WindowState;
+				sessionSettings.WindowState = this.WindowState;
 		}
 
 		protected override void OnClosing(CancelEventArgs e)

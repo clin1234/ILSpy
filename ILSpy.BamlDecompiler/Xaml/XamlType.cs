@@ -37,10 +37,10 @@ namespace ILSpy.BamlDecompiler.Xaml
 		public string TypeNamespace { get; }
 		public string TypeName { get; }
 
-		public XNamespace? Namespace { get; private set; }
-		public IType? ResolvedType { get; init; }
+		public XNamespace Namespace { get; private set; }
+		public IType ResolvedType { get; init; }
 
-		public XamlType(IModule assembly, string? fullAssemblyName, string ns, string name, XNamespace? xmlns = null)
+		public XamlType(IModule assembly, string? fullAssemblyName, string ns, string name, XNamespace xmlns = null)
 		{
 			Assembly = assembly;
 			FullAssemblyName = fullAssemblyName;
@@ -59,7 +59,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 			string? xmlNs = null;
 			if (elem.Annotation<XmlnsScope>() != null)
-				xmlNs = elem.Annotation<XmlnsScope>()!.LookupXmlns(FullAssemblyName, TypeNamespace);
+				xmlNs = elem.Annotation<XmlnsScope>().LookupXmlns(FullAssemblyName, TypeNamespace);
 			// Sometimes there's no reference to System.Xaml even if x:Type is used
 			xmlNs ??= ctx.XmlNs.LookupXmlns(FullAssemblyName, TypeNamespace) ?? ctx.TryGetXmlNamespace(Assembly, TypeNamespace);
 

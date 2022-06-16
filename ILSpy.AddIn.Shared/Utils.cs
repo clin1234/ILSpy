@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	{
 		public static byte[] HexStringToBytes(string hex)
 		{
-			if (hex is null) throw new ArgumentNullException(nameof(hex));
+			ArgumentNullException.ThrowIfNull(hex);
 			var result = new byte[hex.Length / 2];
 			for (int i = 0; i < hex.Length / 2; i++)
 			{
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		public static object?[] GetProperties(Properties properties, params string[] names)
+		public static object[] GetProperties(Properties properties, params string[] names)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -114,7 +114,8 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			IWpfTextViewHost? viewHost = GetCurrentViewHost(serviceProvider);
 
-			if (viewHost?.GetTextDocument() is not { } textDocument || !predicate(textDocument.FilePath))
+			ITextDocument textDocument = viewHost?.GetTextDocument();
+			if (textDocument == null || !predicate(textDocument.FilePath))
 				return null;
 
 			return viewHost;

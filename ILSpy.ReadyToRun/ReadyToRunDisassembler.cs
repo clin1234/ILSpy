@@ -161,9 +161,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private sealed class DebugInfoHelper
 		{
 			public List<NativeVarInfoRecord>? records;
-			private int i;
+			public int i;
 			public readonly Dictionary<string, Dictionary<int, HashSet<Variable>>> registerRelativeVariables;
-			public readonly Dictionary<string, HashSet<Variable?>> registerVariables;
+			public readonly Dictionary<string, HashSet<Variable>> registerVariables;
 
 			public DebugInfoHelper()
 			{
@@ -175,7 +175,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			{
 				while (i < records.Count && records[i].codeOffset == codeOffset)
 				{
-					HashSet<Variable?> variables;
+					HashSet<Variable> variables;
 					if (records[i].isRegRelative)
 					{
 						Dictionary<int, HashSet<Variable>> offsetToVariableMap;

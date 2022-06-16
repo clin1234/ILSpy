@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy
 
 		public override IReadOnlyList<LanguageVersion> LanguageVersions {
 			get {
-				return versions ??= new List<LanguageVersion> {
+				return versions ??= new List<LanguageVersion>() {
 					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp1.ToString(), "C# 1.0 / VS .NET"),
 					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp2.ToString(), "C# 2.0 / VS 2005"),
 					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp3.ToString(), "C# 3.0 / VS 2008"),

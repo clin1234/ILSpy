@@ -119,7 +119,7 @@ namespace ICSharpCode.TreeView
 			get { return false; }
 		}
 
-		object ICollection.SyncRoot { get; } = new();
+		object ICollection.SyncRoot { get; } = new object();
 
 		void IList.Insert(int index, object? item)
 		{

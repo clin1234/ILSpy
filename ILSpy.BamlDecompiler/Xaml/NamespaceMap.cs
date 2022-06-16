@@ -24,12 +24,12 @@ namespace ILSpy.BamlDecompiler.Xaml
 {
 	internal sealed class NamespaceMap
 	{
-		public string? XmlnsPrefix { get; }
+		public string? XmlnsPrefix { get; set; }
 		public string FullAssemblyName { get; set; }
-		public string? XMLNamespace { get; }
-		public string? CLRNamespace { get; set; }
+		public string? XMLNamespace { get; set; }
+		public string CLRNamespace { get; set; }
 
-		public NamespaceMap(string? prefix, string fullAssemblyName, string? xmlNs, string? clrNs = null)
+		public NamespaceMap(string? prefix, string fullAssemblyName, string? xmlNs, string clrNs = null)
 		{
 			XmlnsPrefix = prefix;
 			FullAssemblyName = fullAssemblyName;

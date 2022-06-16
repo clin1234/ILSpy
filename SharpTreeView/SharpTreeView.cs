@@ -171,10 +171,10 @@ namespace ICSharpCode.TreeView
 			// Deselect nodes that are being hidden, if any remain in the tree
 			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0)
 			{
-				List<SharpTreeNode>? selectedOldItems = null;
+				List<SharpTreeNode> selectedOldItems = null;
 				foreach (var node in e.OldItems.Cast<SharpTreeNode>().Where(static node => node.IsSelected))
 				{
-					selectedOldItems ??= new();
+					selectedOldItems ??= new List<SharpTreeNode>();
 					selectedOldItems.Add(node);
 				}
 				if (!updatesLocked && selectedOldItems != null)
@@ -408,7 +408,7 @@ namespace ICSharpCode.TreeView
 
 		object? OnFocusItem(object item)
 		{
-			FrameworkElement? element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
+			FrameworkElement element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
 			element?.Focus();
 			return null;
 		}
@@ -585,7 +585,7 @@ namespace ICSharpCode.TreeView
 
 		void TryAddDropTarget(List<DropTarget> targets, SharpTreeViewItem item, DropPlace place, DragEventArgs e)
 		{
-			GetNodeAndIndex(item, place, out SharpTreeNode? node, out int index);
+			GetNodeAndIndex(item, place, out SharpTreeNode node, out int index);
 
 			if (node != null)
 			{

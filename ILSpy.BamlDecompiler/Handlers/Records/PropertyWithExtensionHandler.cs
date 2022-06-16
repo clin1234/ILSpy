@@ -48,7 +48,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 			{
 				var value = ctx.ResolveType(record.ValueId);
 
-				object[]? initializer = { ctx.ToString(parent.Xaml, value) };
+				object[] initializer = { ctx.ToString(parent.Xaml, value) };
 				if (valTypeExt)
 					initializer = new object[] { new XamlExtension(ctx.ResolveType(0xfd4d)) { Initializer = initializer } }; // Known type - TypeExtension
 
@@ -103,7 +103,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 					attrName = ctx.ToString(parent.Xaml, xName);
 				}
 
-				object[]? initializer = { attrName };
+				object[] initializer = { attrName };
 				if (valStaticExt)
 					initializer = new object[] { new XamlExtension(ctx.ResolveType(0xfda6)) { Initializer = initializer } }; // Known type - StaticExtension
 

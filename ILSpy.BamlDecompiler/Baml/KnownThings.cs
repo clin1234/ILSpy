@@ -89,7 +89,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 
 		public KnownTypes Parent { get; }
-		public IProperty? Property { get; }
+		public IProperty Property { get; }
 		public string? Name { get; }
 	}
 }

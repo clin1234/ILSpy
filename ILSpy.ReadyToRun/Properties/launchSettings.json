@@ -2,7 +2,7 @@
   "profiles": {
     "ILSpy.ReadyToRun": {
       "commandName": "Executable",
-      "executablePath": "C:\\Users\\sie_p\\Projects\\ILSpy\\ILSpy\\bin\\Debug\\ne6.0\\ILSpy.exe",
+      "executablePath": "C:\\Users\\sie_p\\Projects\\ILSpy\\ILSpy\\bin\\Debug\\net6.0\\ILSpy.exe",
       "commandLineArgs": "/separate /language:ReadyToRun"
     }
   }

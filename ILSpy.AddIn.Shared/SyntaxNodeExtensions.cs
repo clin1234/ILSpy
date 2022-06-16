@@ -45,13 +45,13 @@ namespace ICSharpCode.ILSpy.AddIn
 		public static TNode? GetAncestor<TNode>(this SyntaxNode node)
 			where TNode : SyntaxNode
 		{
-			return node.GetAncestors<TNode>().FirstOrDefault();
+			return node?.GetAncestors<TNode>().FirstOrDefault();
 		}
 
 		public static TNode? GetAncestorOrThis<TNode>(this SyntaxNode node)
 			where TNode : SyntaxNode
 		{
-			return node.GetAncestorsOrThis<TNode>().FirstOrDefault();
+			return node?.GetAncestorsOrThis<TNode>().FirstOrDefault();
 		}
 
 		public static IEnumerable<TNode> GetAncestorsOrThis<TNode>(this SyntaxNode node)
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool CheckParent<T>(this SyntaxNode node, Func<T, bool> valueChecker) where T : SyntaxNode
 		{
-			if (node.Parent is not T parentNode)
+			if (node?.Parent is not T parentNode)
 			{
 				return false;
 			}
@@ -562,7 +562,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static SyntaxNode GetParent(this SyntaxNode node)
 		{
-			return node.Parent;
+			return node?.Parent;
 		}
 
 		public static ValueTuple<SyntaxToken, SyntaxToken> GetBraces(this SyntaxNode node)

@@ -11,6 +11,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	/// </summary>
 	sealed class ProjectItemForILSpy
 	{
+		SelectedItem item;
 		readonly Project project;
 		readonly Microsoft.CodeAnalysis.Project roslynProject;
 
@@ -31,7 +32,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var project = item.Project;
-			var roslynProject = package.Workspace?.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
+			var roslynProject = package.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
 			return roslynProject == null ? null : new ProjectItemForILSpy(project, roslynProject, item);
 		}
 

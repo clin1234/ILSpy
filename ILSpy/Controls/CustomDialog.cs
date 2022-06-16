@@ -27,6 +27,7 @@ namespace ICSharpCode.ILSpy.Controls
 		Label label;
 		Panel panel;
 		readonly int cancelButton;
+		int result = -1;
 
 		/// <summary>
 		/// Gets the index of the button pressed.

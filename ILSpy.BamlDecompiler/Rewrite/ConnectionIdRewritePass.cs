@@ -397,7 +397,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var ldftn = newObj.Arguments[1];
 			if (ldftn.OpCode != OpCode.LdFtn && ldftn.OpCode != OpCode.LdVirtFtn)
 				return false;
-			handlerName = (ldftn as IInstructionWithMethodOperand).Method.Name;
+			handlerName = ((IInstructionWithMethodOperand)ldftn).Method?.Name;
 			handlerName = XamlUtils.EscapeName(handlerName);
 			return true;
 		}

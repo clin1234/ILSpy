@@ -45,37 +45,37 @@ namespace ICSharpCode.ILSpy
 		/// Returns the selected nodes in the tree view.
 		/// Returns null, if context menu does not belong to a tree view.
 		/// </summary>
-		public SharpTreeNode[]? SelectedTreeNodes { get; private init; }
+		public SharpTreeNode[] SelectedTreeNodes { get; private init; }
 
 		/// <summary>
 		/// Returns the tree view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a tree view.
 		/// </summary>
-		public SharpTreeView? TreeView { get; private init; }
+		public SharpTreeView TreeView { get; private init; }
 
 		/// <summary>
 		/// Returns the text view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a text view.
 		/// </summary>
-		public DecompilerTextView? TextView { get; private init; }
+		public DecompilerTextView TextView { get; private init; }
 
 		/// <summary>
 		/// Returns the list box the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a list box.
 		/// </summary>
-		public ListBox? ListBox { get; private init; }
+		public ListBox ListBox { get; private init; }
 
 		/// <summary>
 		/// Returns the data grid the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a data grid.
 		/// </summary>
-		public DataGrid? DataGrid { get; private init; }
+		public DataGrid DataGrid { get; private init; }
 
 		/// <summary>
 		/// Returns the reference the mouse cursor is currently hovering above.
 		/// Returns null, if there was no reference found.
 		/// </summary>
-		public ReferenceSegment? Reference { get; private init; }
+		public ReferenceSegment Reference { get; private init; }
 
 		/// <summary>
 		/// Returns the position in TextView the mouse cursor is currently hovering above.

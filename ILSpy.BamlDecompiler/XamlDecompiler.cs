@@ -48,7 +48,7 @@ namespace ILSpy.BamlDecompiler
 
 		private readonly BamlDecompilerTypeSystem typeSystem;
 
-		public BamlDecompilerSettings Settings { get; }
+		public BamlDecompilerSettings Settings { get; set; }
 
 		public CancellationToken CancellationToken { get; init; }
 

@@ -56,7 +56,7 @@ namespace ICSharpCode.TreeView
 			if (NodeView.Node.IsRoot)
 				return;
 
-			dc.DrawLine(pen, p, NodeView.Node.IsLast ? p with { Y = ActualHeight / 2 } : p with { Y = ActualHeight });
+			dc.DrawLine(pen, p, NodeView.Node.IsLast ? new Point(p.X, ActualHeight / 2) : new Point(p.X, ActualHeight));
 
 			var current = NodeView.Node;
 			while (true)

@@ -28,8 +28,8 @@ namespace ICSharpCode.TreeView
 {
 	public partial class SharpTreeNode : INotifyPropertyChanged
 	{
-		SharpTreeNodeCollection? modelChildren;
-		internal SharpTreeNode? modelParent;
+		SharpTreeNodeCollection modelChildren;
+		internal SharpTreeNode modelParent;
 
 		void UpdateIsVisible(bool parentIsVisible, bool updateFlattener)
 		{
@@ -100,7 +100,7 @@ namespace ICSharpCode.TreeView
 		#region Main
 
 		public SharpTreeNodeCollection Children {
-			get { return modelChildren ??= new(this); }
+			get { return modelChildren ??= new SharpTreeNodeCollection(this); }
 		}
 
 		public SharpTreeNode? Parent {
@@ -205,7 +205,7 @@ namespace ICSharpCode.TreeView
 					node.UpdateIsVisible(IsVisible && isExpanded, false);
 					//Debug.WriteLine("Inserting {0} after {1}", node, insertionPos);
 
-					while (insertionPos is { modelChildren.Count: > 0 })
+					while (insertionPos is { modelChildren: { Count: > 0 } })
 					{
 						insertionPos = insertionPos.modelChildren.Last();
 					}
@@ -660,7 +660,7 @@ namespace ICSharpCode.TreeView
 
 		public void RaisePropertyChanged(string name)
 		{
-			PropertyChanged?.Invoke(this, new(name));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 
 		#endregion

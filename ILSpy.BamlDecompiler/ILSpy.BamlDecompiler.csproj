@@ -10,7 +10,6 @@
     <BaseAddress>6488064</BaseAddress>
     <UseWpf>true</UseWpf>
     <Nullable>enable</Nullable>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

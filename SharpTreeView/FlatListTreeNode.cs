@@ -196,7 +196,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (totalListLength >= 0)
 				return totalListLength;
-			int length = IsVisible ? 1 : 0;
+			int length = (IsVisible ? 1 : 0);
 			if (left != null)
 			{
 				length += left.GetTotalListLength();

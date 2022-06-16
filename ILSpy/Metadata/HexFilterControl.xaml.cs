@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				if (value == null)
 					return false;
 
-				return $"{value:x8}".IndexOf(Value, StringComparison.OrdinalIgnoreCase) >= 0;
+				return $"{value:x8}".IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
 			}
 
 			public string Value { get; }

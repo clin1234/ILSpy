@@ -15,7 +15,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	{
 		readonly ProjectItem projectItem;
 		readonly string fusionName;
-		readonly string? resolvedPath;
+		readonly string resolvedPath;
 
 		ProjectReferenceForILSpy(ProjectItem projectItem, string fusionName, string resolvedPath)
 		{

@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public KeyGesture ShortcutKey { get; protected init; }
 
-		public string? Icon { get; protected init; }
+		public string Icon { get; protected init; }
 
 		public ICommand AssociatedCommand { get; init; }
 	}

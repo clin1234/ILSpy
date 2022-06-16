@@ -44,13 +44,13 @@ namespace ILSpy.BamlDecompiler
 
 		readonly Dictionary<ushort, XamlType> typeMap = new Dictionary<ushort, XamlType>();
 		readonly Dictionary<ushort, XamlProperty> propertyMap = new Dictionary<ushort, XamlProperty>();
-		readonly Dictionary<string, XNamespace> xmlnsMap = new Dictionary<string, XNamespace>();
+		readonly Dictionary<string?, XNamespace> xmlnsMap = new Dictionary<string?, XNamespace>();
 
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public CancellationToken CancellationToken { get; private init; }
-		public BamlDecompilerSettings? Settings { get; private init; }
+		public BamlDecompilerSettings Settings { get; private init; }
 
-		public BamlContext? Baml { get; private init; }
+		public BamlContext Baml { get; private init; }
 		public BamlNode? RootNode { get; private init; }
 		public IDictionary<BamlRecord, BamlBlockNode> NodeMap { get; }
 
@@ -135,7 +135,7 @@ namespace ILSpy.BamlDecompiler
 
 			XamlType type;
 			string? name;
-			IMember? member;
+			IMember member;
 
 			if (id > 0x7fff)
 			{
@@ -164,14 +164,14 @@ namespace ILSpy.BamlDecompiler
 		public string? ResolveString(ushort id)
 		{
 			if (id > 0x7fff)
-				return Baml?.KnownThings.Strings(unchecked((short)-id));
+				return Baml.KnownThings.Strings(unchecked((short)-id));
 			if (Baml.StringIdMap.ContainsKey(id))
 				return Baml.StringIdMap[id].Value;
 
 			return null;
 		}
 
-		public XNamespace? GetXmlNamespace(string? xmlns)
+		public XNamespace GetXmlNamespace(string? xmlns)
 		{
 			if (xmlns == null)
 				return null;
@@ -181,11 +181,11 @@ namespace ILSpy.BamlDecompiler
 			return ns;
 		}
 
-		public const string KnownNamespace_Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
-		public const string KnownNamespace_Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-		public const string KnownNamespace_PresentationOptions = "http://schemas.microsoft.com/winfx/2006/xaml/presentation/options";
+		public const string? KnownNamespace_Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+		public const string? KnownNamespace_Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+		public const string? KnownNamespace_PresentationOptions = "http://schemas.microsoft.com/winfx/2006/xaml/presentation/options";
 
-		public string? TryGetXmlNamespace(IModule? assembly, string typeNamespace)
+		public string? TryGetXmlNamespace(IModule assembly, string typeNamespace)
 		{
 			if (assembly == null)
 				return null;
@@ -213,7 +213,7 @@ namespace ILSpy.BamlDecompiler
 			return possibleXmlNs.FirstOrDefault();
 		}
 
-		public XName GetKnownNamespace(string name, string? xmlNamespace, XElement? context = null)
+		public XName GetKnownNamespace(string? name, string? xmlNamespace, XElement context = null)
 		{
 			var xNs = GetXmlNamespace(xmlNamespace);
 			XName xName;

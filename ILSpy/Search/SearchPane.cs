@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Search
 	/// <summary>
 	/// Search pane
 	/// </summary>
-	public sealed partial class SearchPane
+	public sealed partial class SearchPane : UserControl
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
@@ -324,7 +324,7 @@ namespace ICSharpCode.ILSpy.Search
 
 					// Find end of prefix
 					prefixLength = part.StartsWith("@", StringComparison.Ordinal) ? 1 : part.IndexOf(':', 0, prefixLength);
-					string? prefix;
+					string prefix;
 					if (prefixLength <= 0)
 					{
 						prefix = null;

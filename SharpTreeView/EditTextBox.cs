@@ -35,7 +35,7 @@ namespace ICSharpCode.TreeView
 			Loaded += delegate { Init(); };
 		}
 
-		public SharpTreeViewItem? Item { get; init; }
+		public SharpTreeViewItem Item { get; init; }
 
 		public SharpTreeNode Node {
 			get { return Item.Node; }

@@ -143,7 +143,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		bool foldBraces = false;
+		bool foldBraces;
 
 		public bool FoldBraces {
 			get { return foldBraces; }
@@ -156,7 +156,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		bool expandMemberDefinitions = false;
+		bool expandMemberDefinitions;
 
 		public bool ExpandMemberDefinitions {
 			get { return expandMemberDefinitions; }
@@ -169,7 +169,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		bool expandUsingDeclarations = false;
+		bool expandUsingDeclarations;
 
 		public bool ExpandUsingDeclarations {
 			get { return expandUsingDeclarations; }
@@ -247,7 +247,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		bool highlightCurrentLine = false;
+		bool highlightCurrentLine;
 
 		public bool HighlightCurrentLine {
 			get { return highlightCurrentLine; }

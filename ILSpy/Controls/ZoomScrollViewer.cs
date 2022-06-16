@@ -17,20 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class ZoomScrollViewer : ScrollViewer
+	internal sealed class ZoomScrollViewer : ScrollViewer
 	{
 		static ZoomScrollViewer()
 		{
@@ -103,8 +98,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void CalculateZoomButtonCollapsed(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
-			ZoomScrollViewer z = d as ZoomScrollViewer;
-			if (z != null)
+			if (d is ZoomScrollViewer z)
 				z.ComputedZoomButtonCollapsed = (z.AlwaysShowZoomButtons == false) && (z.CurrentZoom == 1.0);
 		}
 
@@ -117,9 +111,8 @@ namespace ICSharpCode.ILSpy.Controls
 				newZoom = Math.Max(this.MinimumZoom, Math.Min(this.MaximumZoom, newZoom));
 
 				// adjust scroll position so that mouse stays over the same virtual coordinate
-				ContentPresenter presenter = Template.FindName("PART_Presenter", this) as ContentPresenter;
 				Vector relMousePos;
-				if (presenter != null)
+				if (Template.FindName("PART_Presenter", this) is ContentPresenter presenter)
 				{
 					Point mousePos = e.GetPosition(presenter);
 					relMousePos = new Vector(mousePos.X / presenter.ActualWidth, mousePos.Y / presenter.ActualHeight);
@@ -183,7 +176,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (parameter is bool && (bool)parameter)
+			if (parameter is bool and true)
 				return true;
 			return ((double)value) == 1.0;
 		}

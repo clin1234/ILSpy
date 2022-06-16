@@ -22,7 +22,6 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 
 namespace ICSharpCode.ILSpy.Controls
 {
@@ -41,7 +40,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		public static readonly DependencyProperty IsCollapsedProperty = DependencyProperty.Register(
 			"IsCollapsed", typeof(bool), typeof(CollapsiblePanel),
-			new UIPropertyMetadata(false, new PropertyChangedCallback(OnIsCollapsedChanged)));
+			new UIPropertyMetadata(false, OnIsCollapsedChanged));
 
 		public bool IsCollapsed {
 			get { return (bool)GetValue(IsCollapsedProperty); }
@@ -121,10 +120,11 @@ namespace ICSharpCode.ILSpy.Controls
 					currentProgress = 1.0 - currentProgress;
 				}
 
-				DoubleAnimation animation = new DoubleAnimation();
-				animation.To = isCollapsed ? 0.0 : 1.0;
-				animation.Duration = TimeSpan.FromSeconds(Duration.TotalSeconds * currentProgress);
-				animation.FillBehavior = FillBehavior.HoldEnd;
+				DoubleAnimation animation = new DoubleAnimation {
+					To = isCollapsed ? 0.0 : 1.0,
+					Duration = TimeSpan.FromSeconds(Duration.TotalSeconds * currentProgress),
+					FillBehavior = FillBehavior.HoldEnd
+				};
 
 				this.BeginAnimation(AnimationProgressProperty, animation);
 				if (CollapseOrientation == Orientation.Horizontal)
@@ -151,8 +151,8 @@ namespace ICSharpCode.ILSpy.Controls
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			if (value is double)
-				return (double)value > 0 ? Visibility.Visible : Visibility.Collapsed;
+			if (value is double d)
+				return d > 0 ? Visibility.Visible : Visibility.Collapsed;
 			else
 				return Visibility.Visible;
 		}
@@ -163,11 +163,11 @@ namespace ICSharpCode.ILSpy.Controls
 		}
 	}
 
-	public class SelfCollapsingPanel : CollapsiblePanel
+	public sealed class SelfCollapsingPanel : CollapsiblePanel
 	{
 		public static readonly DependencyProperty CanCollapseProperty =
 			DependencyProperty.Register("CanCollapse", typeof(bool), typeof(SelfCollapsingPanel),
-										new FrameworkPropertyMetadata(false, new PropertyChangedCallback(OnCanCollapseChanged)));
+										new FrameworkPropertyMetadata(false, OnCanCollapseChanged));
 
 		public bool CanCollapse {
 			get { return (bool)GetValue(CanCollapseProperty); }

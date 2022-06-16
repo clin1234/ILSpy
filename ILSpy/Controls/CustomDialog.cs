@@ -22,12 +22,11 @@ using System.Windows.Forms;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public sealed class CustomDialog : System.Windows.Forms.Form
+	public sealed class CustomDialog : Form
 	{
-		System.Windows.Forms.Label label;
-		System.Windows.Forms.Panel panel;
-		int acceptButton;
-		int cancelButton;
+		Label label;
+		Panel panel;
+		readonly int cancelButton;
 		int result = -1;
 
 		/// <summary>
@@ -45,7 +44,6 @@ namespace ICSharpCode.ILSpy.Controls
 			MyInitializeComponent();
 
 			this.Icon = null;
-			this.acceptButton = acceptButton;
 			this.cancelButton = cancelButton;
 			this.Text = caption;
 
@@ -64,7 +62,7 @@ namespace ICSharpCode.ILSpy.Controls
 					newButton.Tag = i;
 					string buttonLabel = buttonLabels[i];
 					newButton.Text = buttonLabel;
-					newButton.Click += new EventHandler(ButtonClick);
+					newButton.Click += ButtonClick;
 					SizeF buttonSize = g.MeasureString(buttonLabel, newButton.Font);
 					newButton.Width = Math.Max(newButton.Width, ((int)Math.Ceiling(buttonSize.Width / 8.0) + 1) * 8);
 					positions[i] = pos;
@@ -126,42 +124,42 @@ namespace ICSharpCode.ILSpy.Controls
 		/// </summary>
 		void MyInitializeComponent()
 		{
-			this.panel = new System.Windows.Forms.Panel();
-			this.label = new System.Windows.Forms.Label();
+			this.panel = new Panel();
+			this.label = new Label();
 			// 
 			// panel
 			// 
-			this.panel.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.panel.Location = new System.Drawing.Point(4, 80);
+			this.panel.Dock = DockStyle.Bottom;
+			this.panel.Location = new Point(4, 80);
 			this.panel.Name = "panel";
-			this.panel.Size = new System.Drawing.Size(266, 32);
+			this.panel.Size = new Size(266, 32);
 			this.panel.TabIndex = 0;
 			// 
 			// label
 			// 
-			this.label.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.label.FlatStyle = System.Windows.Forms.FlatStyle.System;
-			this.label.Location = new System.Drawing.Point(4, 4);
+			this.label.Dock = DockStyle.Fill;
+			this.label.FlatStyle = FlatStyle.System;
+			this.label.Location = new Point(4, 4);
 			this.label.Name = "label";
-			this.label.Size = new System.Drawing.Size(266, 76);
+			this.label.Size = new Size(266, 76);
 			this.label.TabIndex = 1;
 			this.label.UseMnemonic = false;
 			// 
 			// CustomDialog
 			// 
-			this.ClientSize = new System.Drawing.Size(274, 112);
+			this.ClientSize = new Size(274, 112);
 			this.Controls.Add(this.label);
 			this.Controls.Add(this.panel);
 			this.DockPadding.Left = 4;
 			this.DockPadding.Right = 4;
 			this.DockPadding.Top = 4;
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+			this.FormBorderStyle = FormBorderStyle.FixedDialog;
 			this.ShowInTaskbar = false;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "CustomDialog";
 			this.KeyPreview = true;
-			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+			this.StartPosition = FormStartPosition.CenterParent;
 			this.Text = "CustomDialog";
 			this.AutoScaleMode = AutoScaleMode.Dpi;
 			this.AutoScaleDimensions = new SizeF(96, 96);

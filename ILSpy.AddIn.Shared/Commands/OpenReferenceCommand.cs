@@ -9,7 +9,7 @@ using VSLangProj;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
-	class OpenReferenceCommand : ILSpyCommand
+	sealed class OpenReferenceCommand : ILSpyCommand
 	{
 		static OpenReferenceCommand instance;
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
 				var references = GetReferences(roslynProject);
 				var parameters = referenceItem.GetILSpyParameters(references);
-				if (references.TryGetValue(reference.Name, out var path))
+				if (references.TryGetValue(reference.Name, out DetectedReference _))
 					OpenAssembliesInILSpy(parameters);
 				else
 					owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", reference.Name);
@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				{
 					var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == fileName);
 					var references = GetReferences(roslynProject);
-					if (references.TryGetValue(projectItem.Name, out DetectedReference path))
+					if (references.TryGetValue(projectItem.Name, out DetectedReference _))
 					{
 						OpenAssembliesInILSpy(projectRefItem.GetILSpyParameters(references));
 						return;
@@ -94,7 +94,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (nugetRefItem != null)
 			{
 				OpenAssembliesInILSpy(nugetRefItem.GetILSpyParameters());
-				return;
 			}
 		}
 

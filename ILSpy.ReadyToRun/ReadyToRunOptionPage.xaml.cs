@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.ComponentModel;
-using System.Windows.Controls;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Options;
@@ -25,7 +24,7 @@ using ICSharpCode.ILSpy.Options;
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
 	[ExportOptionPage(Title = nameof(global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun), Order = 40)]
-	partial class ReadyToRunOptionPage : UserControl, IOptionPage
+	partial class ReadyToRunOptionPage : IOptionPage
 	{
 		public ReadyToRunOptionPage()
 		{
@@ -34,10 +33,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public void Load(ILSpySettings settings)
 		{
-			Options s = new Options();
-			s.DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings);
-			s.IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings);
-			s.IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings);
+			Options s = new Options {
+				DisassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(settings),
+				IsShowUnwindInfo = ReadyToRunOptions.GetIsShowUnwindInfo(settings),
+				IsShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(settings)
+			};
 
 			this.DataContext = s;
 		}
@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		}
 	}
 
-	internal class Options : INotifyPropertyChanged
+	internal sealed class Options : INotifyPropertyChanged
 	{
 		public string[] DisassemblyFormats {
 			get {
@@ -62,34 +62,34 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private bool isShowUnwindInfo;
+		private readonly bool isShowUnwindInfo;
 		public bool IsShowUnwindInfo {
 			get {
 				return isShowUnwindInfo;
 			}
-			set {
+			init {
 				isShowUnwindInfo = value;
 				OnPropertyChanged(nameof(IsShowUnwindInfo));
 			}
 		}
 
-		private bool isShowDebugInfo;
+		private readonly bool isShowDebugInfo;
 
 		public bool IsShowDebugInfo {
 			get {
 				return isShowDebugInfo;
 			}
-			set {
+			init {
 				isShowDebugInfo = value;
 				OnPropertyChanged(nameof(IsShowDebugInfo));
 			}
 		}
 
-		private string disassemblyFormat;
+		private readonly string? disassemblyFormat;
 
-		public string DisassemblyFormat {
+		public string? DisassemblyFormat {
 			get { return disassemblyFormat; }
-			set {
+			init {
 				if (disassemblyFormat != value)
 				{
 					disassemblyFormat = value;
@@ -98,14 +98,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
-		protected virtual void OnPropertyChanged(string propertyName)
+		private void OnPropertyChanged(string propertyName)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 	}
 }

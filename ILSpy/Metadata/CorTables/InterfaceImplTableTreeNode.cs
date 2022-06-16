@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class InterfaceImplTableTreeNode : MetadataTableTreeNode
+	sealed class InterfaceImplTableTreeNode : MetadataTableTreeNode
 	{
 		public InterfaceImplTableTreeNode(PEFile module)
 			: base((HandleKind)0x09, module)
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		unsafe struct InterfaceImplEntry
+		unsafe readonly struct InterfaceImplEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -111,7 +110,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)interfaceImpl.Class).WriteTo(module, output, context);
+					interfaceImpl.Class.WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}
@@ -129,7 +128,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)interfaceImpl.Interface).WriteTo(module, output, context);
+					interfaceImpl.Interface.WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}

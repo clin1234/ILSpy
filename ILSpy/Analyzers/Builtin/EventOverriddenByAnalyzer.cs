@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 
@@ -65,7 +64,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public bool Show(ISymbol symbol)
 		{
-			return symbol is IEvent entity && entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
+			return symbol is IEvent { IsOverridable: true } entity && entity.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

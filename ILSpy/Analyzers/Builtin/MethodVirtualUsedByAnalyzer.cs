@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		public bool Show(ISymbol symbol) => symbol is IMethod method && method.IsVirtual;
+		public bool Show(ISymbol symbol) => symbol is IMethod { IsVirtual: true };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -74,7 +74,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (property.CanSet && IsUsedInMethod((IMethod)analyzedSymbol, property.Setter, context))
 					{
 						yield return property;
-						continue;
 					}
 				}
 
@@ -93,7 +92,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (@event.CanInvoke && IsUsedInMethod((IMethod)analyzedSymbol, @event.InvokeAccessor, context))
 					{
 						yield return @event;
-						continue;
 					}
 				}
 
@@ -111,7 +109,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				return false;
 			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
-			var genericContext = new Decompiler.TypeSystem.GenericContext();
+			var genericContext = new GenericContext();
 
 			while (blob.RemainingBytes > 0)
 			{
@@ -139,7 +137,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 						}
 						break;
 					default:
-						ILParser.SkipOperand(ref blob, opCode);
+						blob.SkipOperand(opCode);
 						break;
 				}
 			}

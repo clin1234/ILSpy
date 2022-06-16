@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.Controls
@@ -28,7 +27,7 @@ namespace ICSharpCode.ILSpy.Controls
 	/// <summary>
 	/// Interaction logic for ResourceObjectTable.xaml
 	/// </summary>
-	public partial class ResourceObjectTable : UserControl
+	public sealed partial class ResourceObjectTable
 	{
 		public ResourceObjectTable(IEnumerable resources, FrameworkElement container)
 		{

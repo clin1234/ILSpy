@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
@@ -26,7 +25,7 @@ using System.Windows.Media;
 
 namespace ICSharpCode.TreeView
 {
-	public class SharpTreeNodeView : Control
+	public sealed class SharpTreeNodeView : Control
 	{
 		static SharpTreeNodeView()
 		{
@@ -104,28 +103,32 @@ namespace ICSharpCode.TreeView
 
 		void Node_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "IsEditing")
+			switch (e.PropertyName)
 			{
-				OnIsEditingChanged();
-			}
-			else if (e.PropertyName == "IsLast")
-			{
-				if (ParentTreeView.ShowLines)
+				case "IsEditing":
+					OnIsEditingChanged();
+					break;
+				case "IsLast":
 				{
-					foreach (var child in Node.VisibleDescendantsAndSelf())
+					if (ParentTreeView.ShowLines)
 					{
-						var container = ParentTreeView.ItemContainerGenerator.ContainerFromItem(child) as SharpTreeViewItem;
-						if (container != null && container.NodeView != null)
+						foreach (var child in Node.VisibleDescendantsAndSelf())
 						{
-							container.NodeView.LinesRenderer.InvalidateVisual();
+							if (ParentTreeView.ItemContainerGenerator.ContainerFromItem(child) is SharpTreeViewItem { NodeView: { } } container)
+							{
+								container.NodeView.LinesRenderer.InvalidateVisual();
+							}
 						}
 					}
+
+					break;
 				}
-			}
-			else if (e.PropertyName == "IsExpanded")
-			{
-				if (Node.IsExpanded)
-					ParentTreeView.HandleExpanding(Node);
+				case "IsExpanded":
+				{
+					if (Node.IsExpanded)
+						ParentTreeView.HandleExpanding(Node);
+					break;
+				}
 			}
 		}
 
@@ -134,10 +137,7 @@ namespace ICSharpCode.TreeView
 			var textEditorContainer = Template.FindName("textEditorContainer", this) as Border;
 			if (Node.IsEditing)
 			{
-				if (CellEditor == null)
-					textEditorContainer.Child = new EditTextBox() { Item = ParentItem };
-				else
-					textEditorContainer.Child = CellEditor;
+				textEditorContainer.Child = CellEditor ?? new EditTextBox() { Item = ParentItem };
 			}
 			else
 			{

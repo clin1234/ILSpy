@@ -28,9 +28,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -41,8 +39,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
@@ -58,7 +54,7 @@ namespace ICSharpCode.ILSpy
 	public class CSharpLanguage : Language
 	{
 		string name = "C#";
-		bool showAllMembers = false;
+		bool showAllMembers;
 		int transformCount = int.MaxValue;
 
 #if DEBUG
@@ -99,34 +95,32 @@ namespace ICSharpCode.ILSpy
 
 		public override IReadOnlyList<LanguageVersion> LanguageVersions {
 			get {
-				if (versions == null)
-				{
-					versions = new List<LanguageVersion>() {
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp1.ToString(), "C# 1.0 / VS .NET"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp2.ToString(), "C# 2.0 / VS 2005"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp3.ToString(), "C# 3.0 / VS 2008"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp4.ToString(), "C# 4.0 / VS 2010"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp5.ToString(), "C# 5.0 / VS 2012"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp6.ToString(), "C# 6.0 / VS 2015"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7.ToString(), "C# 7.0 / VS 2017"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_1.ToString(), "C# 7.1 / VS 2017.3"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_2.ToString(), "C# 7.2 / VS 2017.4"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_3.ToString(), "C# 7.3 / VS 2017.7"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp8_0.ToString(), "C# 8.0 / VS 2019"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp9_0.ToString(), "C# 9.0 / VS 2019.8"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp10_0.ToString(), "C# 10.0 / VS 2022"),
-						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp11_0.ToString(), "C# 11.0 / VS 2022.1"),
-					};
-				}
-				return versions;
+				return versions ??= new List<LanguageVersion>() {
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp1.ToString(), "C# 1.0 / VS .NET"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp2.ToString(), "C# 2.0 / VS 2005"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp3.ToString(), "C# 3.0 / VS 2008"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp4.ToString(), "C# 4.0 / VS 2010"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp5.ToString(), "C# 5.0 / VS 2012"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp6.ToString(), "C# 6.0 / VS 2015"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7.ToString(), "C# 7.0 / VS 2017"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_1.ToString(), "C# 7.1 / VS 2017.3"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_2.ToString(), "C# 7.2 / VS 2017.4"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_3.ToString(), "C# 7.3 / VS 2017.7"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp8_0.ToString(), "C# 8.0 / VS 2019"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp9_0.ToString(), "C# 9.0 / VS 2019.8"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp10_0.ToString(), "C# 10.0 / VS 2022"),
+					new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp11_0.ToString(), "C# 11.0 / VS 2022.1"),
+				};
 			}
 		}
 
 		CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
-			decompiler.CancellationToken = options.CancellationToken;
-			decompiler.DebugInfoProvider = module.GetDebugInfoOrNull();
+			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings)
+				{
+					CancellationToken = options.CancellationToken,
+					DebugInfoProvider = module.GetDebugInfoOrNull()
+				};
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			if (options.EscapeInvalidIdentifiers)
@@ -168,7 +162,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		class SelectCtorTransform : IAstTransform
+		sealed class SelectCtorTransform : IAstTransform
 		{
 			readonly IMethod ctor;
 			readonly HashSet<ISymbol> removedSymbols = new HashSet<ISymbol>();
@@ -294,7 +288,7 @@ namespace ICSharpCode.ILSpy
 				{
 					switch (node)
 					{
-						case EntityDeclaration ed:
+						case EntityDeclaration:
 							if (node.GetSymbol() != field)
 								node.Remove();
 							break;
@@ -426,7 +420,7 @@ namespace ICSharpCode.ILSpy
 				var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
 				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition)
 				{
-					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
+					var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new GenericContext());
 					if (entrypoint != null)
 					{
 						output.Write("// Entry point: ");
@@ -435,7 +429,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+				if ((corHeader.Flags & CorFlags.ILOnly) == 0)
 				{
 					output.WriteLine("// This assembly contains unmanaged code.");
 				}
@@ -444,7 +438,7 @@ namespace ICSharpCode.ILSpy
 				{
 					output.WriteLine("// Runtime: " + runtimeName);
 				}
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
+				if ((corHeader.Flags & CorFlags.StrongNameSigned) != 0)
 				{
 					output.WriteLine("// This assembly is signed with a strong name key.");
 				}
@@ -477,27 +471,22 @@ namespace ICSharpCode.ILSpy
 				}
 				output.WriteLine();
 
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
-				decompiler.CancellationToken = options.CancellationToken;
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings)
+					{
+						CancellationToken = options.CancellationToken
+					};
 				if (options.EscapeInvalidIdentifiers)
 				{
 					decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				}
-				SyntaxTree st;
-				if (options.FullDecompilation)
-				{
-					st = decompiler.DecompileWholeModuleAsSingleFile();
-				}
-				else
-				{
-					st = decompiler.DecompileModuleAndAssemblyAttributes();
-				}
+
+				SyntaxTree st = options.FullDecompilation ? decompiler.DecompileWholeModuleAsSingleFile() : decompiler.DecompileModuleAndAssemblyAttributes();
 				WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				return null;
 			}
 		}
 
-		class ILSpyWholeProjectDecompiler : WholeProjectDecompiler
+		sealed class ILSpyWholeProjectDecompiler : WholeProjectDecompiler
 		{
 			readonly LoadedAssembly assembly;
 			readonly DecompilationOptions options;
@@ -526,9 +515,10 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpAmbience CreateAmbience()
 		{
-			CSharpAmbience ambience = new CSharpAmbience();
-			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
-			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
+			CSharpAmbience ambience = new CSharpAmbience {
+				// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
+				ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList
+			};
 			if (new DecompilationOptions().DecompilerSettings.LiftNullables)
 			{
 				ambience.ConversionFlags |= ConversionFlags.UseNullableSpecifierForValueTypes;
@@ -552,8 +542,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeToString(IType type, bool includeNamespace)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
 			if (includeNamespace)
@@ -579,29 +568,25 @@ namespace ICSharpCode.ILSpy
 
 		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 			return EntityToString(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
+			ArgumentNullException.ThrowIfNull(property);
 			return EntityToString(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (method == null)
-				throw new ArgumentNullException(nameof(method));
+			ArgumentNullException.ThrowIfNull(method);
 			return EntityToString(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (@event == null)
-				throw new ArgumentNullException(nameof(@event));
+			ArgumentNullException.ThrowIfNull(@event);
 			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
@@ -743,7 +728,7 @@ namespace ICSharpCode.ILSpy
 			{
 				flags |= ConversionFlags.SupportInitAccessors;
 			}
-			if (entity is IMethod m && m.IsLocalFunction)
+			if (entity is IMethod { IsLocalFunction: true })
 			{
 				writer.WriteIdentifier(Identifier.Create("(local)"));
 			}
@@ -758,7 +743,7 @@ namespace ICSharpCode.ILSpy
 			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}
 
-		CSharpBracketSearcher bracketSearcher = new CSharpBracketSearcher();
+		readonly CSharpBracketSearcher bracketSearcher = new CSharpBracketSearcher();
 
 		public override IBracketSearcher BracketSearcher => bracketSearcher;
 	}

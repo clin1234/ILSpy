@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.BamlDecompiler.Xaml
 {
-	internal class XamlProperty
+	internal sealed class XamlProperty
 	{
 		public XamlType DeclaringType { get; }
 		public string PropertyName { get; }

@@ -21,7 +21,7 @@ using System.Windows.Controls;
 
 namespace ICSharpCode.TreeView
 {
-	public class SharpGridView : GridView
+	internal class SharpGridView : GridView
 	{
 		static SharpGridView()
 		{

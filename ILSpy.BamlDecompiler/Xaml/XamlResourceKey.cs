@@ -22,12 +22,13 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 using ILSpy.BamlDecompiler.Baml;
 
 namespace ILSpy.BamlDecompiler.Xaml
 {
-	internal class XamlResourceKey
+	internal sealed class XamlResourceKey
 	{
 		XamlResourceKey(BamlNode node)
 		{
@@ -35,8 +36,8 @@ namespace ILSpy.BamlDecompiler.Xaml
 			StaticResources = new List<BamlNode>();
 
 			IBamlDeferRecord keyRecord;
-			if (node is BamlBlockNode)
-				keyRecord = (IBamlDeferRecord)((BamlBlockNode)node).Header;
+			if (node is BamlBlockNode blockNode)
+				keyRecord = (IBamlDeferRecord)blockNode.Header;
 			else
 				keyRecord = (IBamlDeferRecord)((BamlRecordNode)node).Record;
 
@@ -60,11 +61,8 @@ namespace ILSpy.BamlDecompiler.Xaml
 				Debug.WriteLine($"Key record @{keyRecord.Position} must be attached to ElementStart (actual {keyRecord.Record.Type})");
 			}
 
-			foreach (var child in node.Parent.Children)
+			foreach (var child in node.Parent.Children.Where(child => child.Record == keyRecord.Record))
 			{
-				if (child.Record != keyRecord.Record)
-					continue;
-
 				child.Annotation = this;
 				node.Annotation = this;
 				return;
@@ -75,7 +73,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 		public static XamlResourceKey Create(BamlNode node) => new XamlResourceKey(node);
 
 		public BamlNode KeyNode { get; set; }
-		public BamlElement KeyElement { get; set; }
+		public BamlElement? KeyElement { get; set; }
 		public IList<BamlNode> StaticResources { get; }
 
 		public static XamlResourceKey FindKeyInSiblings(BamlNode node)
@@ -97,10 +95,10 @@ namespace ILSpy.BamlDecompiler.Xaml
 			BamlNode n = node;
 			do
 			{
-				if (n.Annotation is XamlResourceKey)
+				if (n.Annotation is XamlResourceKey key)
 				{
 					found = n;
-					return (XamlResourceKey)n.Annotation;
+					return key;
 				}
 				n = n.Parent;
 			} while (n != null);

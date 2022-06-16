@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ExportedTypeTableTreeNode : MetadataTableTreeNode
+	internal sealed class ExportedTypeTableTreeNode : MetadataTableTreeNode
 	{
 		public ExportedTypeTableTreeNode(PEFile module)
 			: base(HandleKind.ExportedType, module)
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct ExportedTypeEntry
+		readonly struct ExportedTypeEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

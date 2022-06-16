@@ -16,26 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.DebugInfo;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class UserStringHeapTreeNode : MetadataHeapTreeNode
+	internal sealed class UserStringHeapTreeNode : MetadataHeapTreeNode
 	{
 		readonly List<UserStringHeapEntry> list;
 
@@ -71,7 +61,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		class UserStringHeapEntry
+		sealed class UserStringHeapEntry
 		{
 			readonly MetadataReader metadata;
 			readonly UserStringHandle handle;

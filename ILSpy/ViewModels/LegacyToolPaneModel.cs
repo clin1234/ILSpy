@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		Bottom
 	}
 
-	internal class LegacyToolPaneModel : ToolPaneModel
+	internal sealed class LegacyToolPaneModel : ToolPaneModel
 	{
 		public LegacyToolPaneModel(string title, object content, LegacyToolPaneLocation location)
 		{

@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Options
 			task.Start();
 			task.ContinueWith(
 				delegate (Task continuation) {
-					App.Current.Dispatcher.Invoke(
+					Application.Current.Dispatcher.Invoke(
 						DispatcherPriority.Normal,
 						(Action)(
 							() => {
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public static DisplaySettings CurrentDisplaySettings {
 			get {
-				return currentDisplaySettings ?? (currentDisplaySettings = LoadDisplaySettings(ILSpySettings.Load()));
+				return currentDisplaySettings ??= LoadDisplaySettings(ILSpySettings.Load());
 			}
 		}
 
@@ -80,10 +80,9 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			foreach (var tf in fontFamily.GetTypefaces())
 			{
-				GlyphTypeface glyph;
 				try
 				{
-					if (tf.TryGetGlyphTypeface(out glyph))
+					if (tf.TryGetGlyphTypeface(out GlyphTypeface glyph))
 						return glyph.Symbol;
 				}
 				catch (Exception)
@@ -105,27 +104,28 @@ namespace ICSharpCode.ILSpy.Options
 		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings)
 		{
 			XElement e = settings["DisplaySettings"];
-			var s = new DisplaySettings();
-			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
-			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
-			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
-			s.ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false;
-			s.ShowMetadataTokensInBase10 = (bool?)e.Attribute("ShowMetadataTokensInBase10") ?? false;
-			s.ShowDebugInfo = (bool?)e.Attribute("ShowDebugInfo") ?? false;
-			s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
-			s.SortResults = (bool?)e.Attribute("SortResults") ?? true;
-			s.FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false;
-			s.ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false;
-			s.ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false;
-			s.IndentationUseTabs = (bool?)e.Attribute("IndentationUseTabs") ?? true;
-			s.IndentationSize = (int?)e.Attribute("IndentationSize") ?? 4;
-			s.IndentationTabSize = (int?)e.Attribute("IndentationTabSize") ?? 4;
-			s.HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true;
-			s.HighlightCurrentLine = (bool?)e.Attribute("HighlightCurrentLine") ?? false;
-			s.HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true;
-			s.UseNestedNamespaceNodes = (bool?)e.Attribute("UseNestedNamespaceNodes") ?? false;
-			s.ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
-			s.StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false;
+			var s = new DisplaySettings {
+				SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas"),
+				SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3,
+				ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false,
+				ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false,
+				ShowMetadataTokensInBase10 = (bool?)e.Attribute("ShowMetadataTokensInBase10") ?? false,
+				ShowDebugInfo = (bool?)e.Attribute("ShowDebugInfo") ?? false,
+				EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false,
+				SortResults = (bool?)e.Attribute("SortResults") ?? true,
+				FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false,
+				ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false,
+				ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false,
+				IndentationUseTabs = (bool?)e.Attribute("IndentationUseTabs") ?? true,
+				IndentationSize = (int?)e.Attribute("IndentationSize") ?? 4,
+				IndentationTabSize = (int?)e.Attribute("IndentationTabSize") ?? 4,
+				HighlightMatchingBraces = (bool?)e.Attribute("HighlightMatchingBraces") ?? true,
+				HighlightCurrentLine = (bool?)e.Attribute("HighlightCurrentLine") ?? false,
+				HideEmptyMetadataTables = (bool?)e.Attribute("HideEmptyMetadataTables") ?? true,
+				UseNestedNamespaceNodes = (bool?)e.Attribute("UseNestedNamespaceNodes") ?? false,
+				ShowRawOffsetsAndBytesBeforeInstruction = (bool?)e.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false,
+				StyleWindowTitleBar = (bool?)e.Attribute("StyleWindowTitleBar") ?? false
+			};
 
 			return s;
 		}
@@ -162,8 +162,7 @@ namespace ICSharpCode.ILSpy.Options
 			else
 				root.Add(section);
 
-			if (currentDisplaySettings != null)
-				currentDisplaySettings.CopyValues(s);
+			currentDisplaySettings?.CopyValues(s);
 		}
 
 		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
@@ -188,7 +187,7 @@ namespace ICSharpCode.ILSpy.Options
 		}
 	}
 
-	public class FontSizeConverter : IValueConverter
+	public sealed class FontSizeConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{

@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy
 
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportToolbarCommandAttribute : ExportAttribute, IToolbarCommandMetadata
+	public sealed class ExportToolbarCommandAttribute : ExportAttribute, IToolbarCommandMetadata
 	{
 		public ExportToolbarCommandAttribute()
 			: base("ToolbarCommand", typeof(ICommand))
@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy
 
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportMainMenuCommandAttribute : ExportAttribute, IMainMenuCommandMetadata
+	public sealed class ExportMainMenuCommandAttribute : ExportAttribute, IMainMenuCommandMetadata
 	{
 		public ExportMainMenuCommandAttribute()
 			: base("MainMenuCommand", typeof(ICommand))
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy
 
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportToolPaneAttribute : ExportAttribute, IToolPaneMetadata
+	public sealed class ExportToolPaneAttribute : ExportAttribute, IToolPaneMetadata
 	{
 		public ExportToolPaneAttribute()
 			: base("ToolPane", typeof(ViewModels.ToolPaneModel))

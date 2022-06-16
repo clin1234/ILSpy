@@ -31,7 +31,7 @@ using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class ManageAssemblyListsViewModel : ViewModelBase
+	public sealed class ManageAssemblyListsViewModel : ViewModelBase
 	{
 		private readonly AssemblyListManager manager;
 		private readonly Window parent;
@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					string name = match.Groups["name"].Value;
 					int index = name.LastIndexOfAny(new[] { '/', '\\' });
 					if (index >= 0)
-						name = name.Substring(index + 1);
+						name = name[(index + 1)..];
 					string text = name + " " + match.Groups["version"].Value;
 					if (!latestRevision.TryGetValue(text, out int revision))
 						revision = -1;
@@ -123,9 +123,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteNew()
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.NewList);
-			dlg.Owner = parent;
-			dlg.Closing += (s, args) => {
+			CreateListDialog dlg = new CreateListDialog(Resources.NewList) {
+				Owner = parent
+			};
+			dlg.Closing += (_, args) => {
 				if (dlg.DialogResult == true)
 				{
 					if (manager.AssemblyLists.Contains(dlg.ListName))
@@ -148,9 +149,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteClone()
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.NewList);
-			dlg.Owner = parent;
-			dlg.Closing += (s, args) => {
+			CreateListDialog dlg = new CreateListDialog(Resources.NewList) {
+				Owner = parent
+			};
+			dlg.Closing += (_, args) => {
 				if (dlg.DialogResult == true)
 				{
 					if (manager.AssemblyLists.Contains(dlg.ListName))
@@ -207,11 +209,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		private void ExecuteRename()
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.RenameList);
-			dlg.Owner = parent;
-			dlg.ListName = selectedAssemblyList;
+			CreateListDialog dlg = new CreateListDialog(Resources.RenameList) {
+				Owner = parent,
+				ListName = selectedAssemblyList
+			};
 			dlg.ListNameBox.SelectAll();
-			dlg.Closing += (s, args) => {
+			dlg.Closing += (_, args) => {
 				if (dlg.DialogResult == true)
 				{
 					if (dlg.ListName == selectedAssemblyList)
@@ -233,24 +236,25 @@ namespace ICSharpCode.ILSpy.ViewModels
 				manager.RenameList(assemblyList, dlg.ListName);
 				if (MainWindow.Instance.SessionSettings.ActiveAssemblyList == assemblyList)
 				{
-					MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[manager.AssemblyLists.Count - 1];
+					MainWindow.Instance.SessionSettings.ActiveAssemblyList = manager.AssemblyLists[^1];
 				}
 			}
 		}
 
 		private void ExecuteCreatePreconfiguredAssemblyList(PreconfiguredAssemblyList config)
 		{
-			CreateListDialog dlg = new CreateListDialog(Resources.AddPreconfiguredList);
-			dlg.Owner = parent;
-			dlg.ListName = config.Name;
+			CreateListDialog dlg = new CreateListDialog(Resources.AddPreconfiguredList) {
+				Owner = parent,
+				ListName = config.Name
+			};
 			dlg.ListNameBox.SelectAll();
-			dlg.Closing += (s, args) => {
+			dlg.Closing += (_, args) => {
 				if (dlg.DialogResult == true)
 				{
 					if (manager.AssemblyLists.Contains(dlg.ListName))
 					{
 						args.Cancel = true;
-						MessageBox.Show(Properties.Resources.ListExistsAlready, null, MessageBoxButton.OK);
+						MessageBox.Show(Resources.ListExistsAlready, null, MessageBoxButton.OK);
 					}
 				}
 			};
@@ -276,7 +280,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		}
 	}
 
-	public class PreconfiguredAssemblyList
+	public sealed class PreconfiguredAssemblyList
 	{
 		public string Name { get; }
 		public string Path { get; }

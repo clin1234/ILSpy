@@ -70,10 +70,9 @@ namespace ICSharpCode.ILSpy.Xaml
 									output.WriteLine();
 									return output;
 								}
-								using (var reader = new StreamReader(data))
-								{
-									xaml = reader.ReadToEnd();
-								}
+
+								using var reader = new StreamReader(data);
+								xaml = reader.ReadToEnd();
 							}
 							output.Write(xaml);
 							highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");

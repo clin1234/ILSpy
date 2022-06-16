@@ -32,7 +32,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PropertyWithStaticResourceId;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyWithStaticResourceIdRecord)((BamlRecordNode)node).Record;
 			var doc = new BamlElement(node);

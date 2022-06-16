@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Manages IL Spy settings.
 	/// </summary>
-	public class ILSpySettings : ISettingsProvider
+	public sealed class ILSpySettings : ISettingsProvider
 	{
 		readonly XElement root;
 
@@ -157,8 +157,7 @@ namespace ICSharpCode.ILSpy
 
 			public MutexProtector(string name)
 			{
-				bool createdNew;
-				this.mutex = new Mutex(true, name, out createdNew);
+				this.mutex = new Mutex(true, name, out bool createdNew);
 				if (!createdNew)
 				{
 					try

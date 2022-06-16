@@ -30,9 +30,9 @@ using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class CoffHeaderTreeNode : ILSpyTreeNode
+	sealed class CoffHeaderTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		private readonly PEFile module;
 
 		public CoffHeaderTreeNode(PEFile module)
 		{
@@ -67,13 +67,15 @@ namespace ICSharpCode.ILSpy.Metadata
 			var headers = module.Reader.PEHeaders;
 			var header = headers.CoffHeader;
 
-			var entries = new List<Entry>();
-			entries.Add(new Entry(headers.CoffHeaderStartOffset, (int)header.Machine, 2, "Machine", header.Machine.ToString()));
-			entries.Add(new Entry(headers.CoffHeaderStartOffset + 2, (int)header.NumberOfSections, 2, "Number of Sections", "Number of sections; indicates size of the Section Table, which immediately follows the headers."));
-			entries.Add(new Entry(headers.CoffHeaderStartOffset + 4, header.TimeDateStamp, 4, "Time/Date Stamp", DateTimeOffset.FromUnixTimeSeconds(unchecked((uint)header.TimeDateStamp)).DateTime + " - Time and date the file was created in seconds since January 1st 1970 00:00:00 or 0."));
-			entries.Add(new Entry(headers.CoffHeaderStartOffset + 8, header.PointerToSymbolTable, 4, "Pointer to Symbol Table", "Always 0 in .NET executables."));
-			entries.Add(new Entry(headers.CoffHeaderStartOffset + 12, header.NumberOfSymbols, 4, "Number of Symbols", "Always 0 in .NET executables."));
-			entries.Add(new Entry(headers.CoffHeaderStartOffset + 16, (int)header.SizeOfOptionalHeader, 2, "Optional Header Size", "Size of the optional header."));
+			var entries = new List<Entry> {
+				new Entry(headers.CoffHeaderStartOffset, (int)header.Machine, 2, "Machine", header.Machine.ToString()),
+				new Entry(headers.CoffHeaderStartOffset + 2, (int)header.NumberOfSections, 2, "Number of Sections",
+					"Number of sections; indicates size of the Section Table, which immediately follows the headers."),
+				new Entry(headers.CoffHeaderStartOffset + 4, header.TimeDateStamp, 4, "Time/Date Stamp", DateTimeOffset.FromUnixTimeSeconds(unchecked((uint)header.TimeDateStamp)).DateTime + " - Time and date the file was created in seconds since January 1st 1970 00:00:00 or 0."),
+				new Entry(headers.CoffHeaderStartOffset + 8, header.PointerToSymbolTable, 4, "Pointer to Symbol Table", "Always 0 in .NET executables."),
+				new Entry(headers.CoffHeaderStartOffset + 12, header.NumberOfSymbols, 4, "Number of Symbols", "Always 0 in .NET executables."),
+				new Entry(headers.CoffHeaderStartOffset + 16, (int)header.SizeOfOptionalHeader, 2, "Optional Header Size", "Size of the optional header.")
+			};
 			Entry characteristics;
 			entries.Add(characteristics = new Entry(headers.CoffHeaderStartOffset + 18, (int)header.Characteristics, 2, "Characteristics", "Flags indicating attributes of the file.", new[] {
 				new BitEntry(((int)header.Characteristics & 0x0001) != 0, "<0001> Relocation info stripped from file"),
@@ -106,9 +108,9 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	public class CharacteristicsDataTemplateSelector : DataTemplateSelector
+	internal sealed class CharacteristicsDataTemplateSelector : DataTemplateSelector
 	{
-		string detailsFieldName;
+		readonly string detailsFieldName;
 
 		public CharacteristicsDataTemplateSelector(string detailsFieldName)
 		{

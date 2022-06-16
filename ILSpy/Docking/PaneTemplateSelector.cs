@@ -24,13 +24,13 @@ using System.Windows.Controls;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class TemplateMapping
+	public sealed class TemplateMapping
 	{
-		public Type Type { get; set; }
-		public DataTemplate Template { get; set; }
+		public Type Type { get; init; }
+		public DataTemplate Template { get; init; }
 	}
 
-	public class PaneTemplateSelector : DataTemplateSelector
+	internal sealed class PaneTemplateSelector : DataTemplateSelector
 	{
 		public Collection<TemplateMapping> Mappings { get; set; } = new Collection<TemplateMapping>();
 

@@ -51,12 +51,10 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		{
 			string fileName = GetType().Assembly.Location;
 
-			using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-			{
-				var module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, MetadataReaderOptions.None);
+			using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(fileName, stream, PEStreamOptions.PrefetchEntireImage, MetadataReaderOptions.None);
 
-				testAssembly = new SimpleCompilation(module.WithOptions(TypeSystemOptions.Default), MinimalCorlib.Instance);
-			}
+			testAssembly = new SimpleCompilation(module.WithOptions(TypeSystemOptions.Default), MinimalCorlib.Instance);
 		}
 
 		[Test]
@@ -152,7 +150,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 			Assert.AreEqual(1, results.Count());
 			var result = results.FirstOrDefault() as IMethod;
 			Assert.IsNotNull(result);
-			Assert.IsNotNull(result.DeclaringTypeDefinition);
+			Assert.IsNotNull(result?.DeclaringTypeDefinition);
 			Assert.AreEqual(TypeKind.Interface, result.DeclaringTypeDefinition.Kind);
 			Assert.AreEqual(nameof(ITestInterface), result.DeclaringTypeDefinition.Name);
 		}

@@ -31,12 +31,12 @@ namespace ILSpy.BamlDecompiler
 	internal interface IHandler
 	{
 		BamlRecordType Type { get; }
-		BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent);
+		BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent);
 	}
 
 	internal interface IDeferHandler
 	{
-		BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent);
+		BamlElement? TranslateDefer(XamlContext ctx, BamlNode node, BamlElement? parent);
 	}
 
 	internal static class HandlerMap
@@ -77,11 +77,10 @@ namespace ILSpy.BamlDecompiler
 			return handlers.ContainsKey(type) ? handlers[type] : null;
 		}
 
-		public static void ProcessChildren(XamlContext ctx, BamlBlockNode node, BamlElement nodeElem)
+		public static void ProcessChildren(XamlContext ctx, BamlBlockNode node, BamlElement? nodeElem)
 		{
 			ctx.XmlNs.PushScope(nodeElem);
-			if (nodeElem.Xaml.Element != null)
-				nodeElem.Xaml.Element.AddAnnotation(ctx.XmlNs.CurrentScope);
+			nodeElem.Xaml.Element?.AddAnnotation(ctx.XmlNs.CurrentScope);
 			foreach (var child in node.Children)
 			{
 				var handler = LookupHandler(child.Type);
@@ -90,7 +89,7 @@ namespace ILSpy.BamlDecompiler
 					Debug.WriteLine("BAML Handler {0} not implemented.", child.Type);
 					continue;
 				}
-				var elem = handler.Translate(ctx, (BamlNode)child, nodeElem);
+				var elem = handler.Translate(ctx, child, nodeElem);
 				if (elem != null)
 				{
 					nodeElem.Children.Add(elem);

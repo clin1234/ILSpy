@@ -15,11 +15,11 @@ namespace ILSpy.Installer
 			Compiler.AutoGeneration.IgnoreWildCardEmptyDirectories = true;
 
 #if DEBUG
-			var buildConfiguration = "Debug";
+			const string buildConfiguration = "Debug";
 #else
-			var buildConfiguration = "Release";
+			const string buildConfiguration = "Release";
 #endif
-			var buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net6.0-windows";
+			const string buildOutputDir = $@"ILSpy\bin\{buildConfiguration}\net6.0-windows";
 
 			var project = new Project("ILSpy",
 							  new InstallDir(@"%LocalAppData%\Programs\ILSpy",

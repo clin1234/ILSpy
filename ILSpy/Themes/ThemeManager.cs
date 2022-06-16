@@ -4,7 +4,7 @@ using System.Windows.Controls;
 
 namespace ICSharpCode.ILSpy.Themes
 {
-	internal class ThemeManager
+	internal sealed class ThemeManager
 	{
 		private bool _isDarkMode;
 		private readonly ResourceDictionary _themeDictionaryContainer = new ResourceDictionary();

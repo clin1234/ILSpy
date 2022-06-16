@@ -24,7 +24,7 @@ using System;
 
 namespace ILSpy.BamlDecompiler.Baml
 {
-	internal partial class KnownThings
+	internal sealed partial class KnownThings
 	{
 		// Auto-generated. Do not modify.
 

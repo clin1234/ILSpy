@@ -21,7 +21,6 @@
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 

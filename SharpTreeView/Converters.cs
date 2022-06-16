@@ -24,9 +24,9 @@ using System.Windows.Markup;
 
 namespace ICSharpCode.TreeView
 {
-	public class CollapsedWhenFalse : MarkupExtension, IValueConverter
+	public sealed class CollapsedWhenFalse : MarkupExtension, IValueConverter
 	{
-		public static CollapsedWhenFalse Instance = new CollapsedWhenFalse();
+		public static readonly CollapsedWhenFalse Instance = new CollapsedWhenFalse();
 
 		public override object ProvideValue(IServiceProvider serviceProvider)
 		{

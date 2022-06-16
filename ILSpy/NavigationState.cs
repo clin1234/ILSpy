@@ -27,12 +27,12 @@ using ICSharpCode.TreeView;
 namespace ICSharpCode.ILSpy
 {
 	[DebuggerDisplay("Nodes = {treeNodes.Count}, State = [{ViewState}]")]
-	public class NavigationState : IEquatable<NavigationState>
+	public sealed class NavigationState : IEquatable<NavigationState>
 	{
 		private readonly HashSet<SharpTreeNode> treeNodes;
 
 		public IEnumerable<SharpTreeNode> TreeNodes => treeNodes;
-		public ViewState ViewState { get; private set; }
+		public ViewState ViewState { get; private init; }
 		public TabPageModel TabPage { get; private set; }
 
 		public NavigationState(TabPageModel tabPage, ViewState viewState)
@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 			if (!this.treeNodes.SetEquals(other.treeNodes))
 				return false;
 
-			if (object.ReferenceEquals(this.ViewState, other.ViewState))
+			if (ReferenceEquals(this.ViewState, other.ViewState))
 				return true;
 
 			if (this.ViewState == null)

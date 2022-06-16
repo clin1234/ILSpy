@@ -23,7 +23,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportAnalyzerAttribute : ExportAttribute, IAnalyzerMetadata
+	public sealed class ExportAnalyzerAttribute : ExportAttribute, IAnalyzerMetadata
 	{
 		public ExportAnalyzerAttribute() : base("Analyzer", typeof(IAnalyzer))
 		{ }

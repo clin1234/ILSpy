@@ -29,7 +29,6 @@ using System.Runtime.CompilerServices;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -120,7 +119,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 			else
 			{
-				ReadyToRunReader reader = cacheEntry.readyToRunReader;
+				ReadyToRunReader? reader = cacheEntry.readyToRunReader;
 				WriteCommentLine(output, reader.Machine.ToString());
 				WriteCommentLine(output, reader.OperatingSystem.ToString());
 				WriteCommentLine(output, reader.CompilerIdentifier);
@@ -140,7 +139,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 			else
 			{
-				ReadyToRunReader reader = cacheEntry.readyToRunReader;
+				ReadyToRunReader? reader = cacheEntry.readyToRunReader;
 				int bitness = -1;
 				if (reader.Machine == Machine.Amd64)
 				{
@@ -151,12 +150,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					Debug.Assert(reader.Machine == Machine.I386);
 					bitness = 32;
 				}
-				if (cacheEntry.methodMap == null)
-				{
-					cacheEntry.methodMap = reader.Methods.ToList()
-						.GroupBy(m => m.MethodHandle)
-						.ToDictionary(g => g.Key, g => g.ToArray());
-				}
+				cacheEntry.methodMap ??= reader.Methods.ToList()
+					.GroupBy(m => m.MethodHandle)
+					.ToDictionary(g => g.Key, g => g.ToArray());
 				bool showMetadataTokens = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens;
 				bool showMetadataTokensInBase10 = ILSpy.Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10;
 #if STRESS
@@ -216,18 +212,18 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			return result;
 		}
 
-		private class ReadyToRunAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
+		private sealed class ReadyToRunAssemblyResolver : ILCompiler.Reflection.ReadyToRun.IAssemblyResolver
 		{
-			private Decompiler.Metadata.IAssemblyResolver assemblyResolver;
+			private readonly Decompiler.Metadata.IAssemblyResolver assemblyResolver;
 
 			public ReadyToRunAssemblyResolver(LoadedAssembly loadedAssembly)
 			{
 				assemblyResolver = loadedAssembly.GetAssemblyResolver();
 			}
 
-			public IAssemblyMetadata FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
+			public IAssemblyMetadata? FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
-				PEFile module = assemblyResolver.Resolve(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
+				PEFile? module = assemblyResolver.Resolve(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
 				PEReader reader = module?.Reader;
 				return reader == null ? null : new StandaloneAssemblyMetadata(reader);
 			}
@@ -240,11 +236,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private class ReadyToRunReaderCacheEntry
+		private sealed class ReadyToRunReaderCacheEntry
 		{
-			public ReadyToRunReader readyToRunReader;
+			public ReadyToRunReader? readyToRunReader;
 			public string failureReason;
-			public Dictionary<EntityHandle, ReadyToRunMethod[]> methodMap;
+			public Dictionary<EntityHandle, ReadyToRunMethod[]>? methodMap;
 		}
 	}
 }

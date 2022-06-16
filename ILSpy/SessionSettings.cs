@@ -42,9 +42,7 @@ namespace ICSharpCode.ILSpy
 		{
 			XElement doc = spySettings["SessionSettings"];
 
-			XElement filterSettings = doc.Element("FilterSettings");
-			if (filterSettings == null)
-				filterSettings = new XElement("FilterSettings");
+			XElement filterSettings = doc.Element("FilterSettings") ?? new XElement("FilterSettings");
 
 			this.FilterSettings = new FilterSettings(filterSettings);
 
@@ -121,8 +119,9 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// position of the left/right splitter
 		/// </summary>
-		public double SplitterPosition;
-		public double TopPaneSplitterPosition, BottomPaneSplitterPosition;
+		public readonly double SplitterPosition;
+		public readonly double TopPaneSplitterPosition;
+		public readonly double BottomPaneSplitterPosition;
 
 		public DockLayoutSettings DockLayout { get; private set; }
 
@@ -164,7 +163,7 @@ namespace ICSharpCode.ILSpy
 			ILSpySettings.SaveSettings(doc);
 		}
 
-		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
+		static readonly Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
 		private string activeAssemblyList;
 
 		static string Escape(string p)
@@ -175,7 +174,7 @@ namespace ICSharpCode.ILSpy
 				if (char.IsLetterOrDigit(ch))
 					sb.Append(ch);
 				else
-					sb.AppendFormat("\\x{0:X4}", (int)ch);
+					sb.Append($"\\x{(int)ch:X4}");
 			}
 			return sb.ToString();
 		}

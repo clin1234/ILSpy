@@ -21,7 +21,7 @@ using System.Windows.Controls;
 
 namespace ILSpy.BamlDecompiler.Tests.Cases
 {
-	public class CustomControl : ContentControl
+	public sealed class CustomControl : ContentControl
 	{
 		public static string SimpleProperty = "Hi!";
 

@@ -5,16 +5,14 @@ using System.Windows.Controls;
 
 using DataGridExtensions;
 
-using ICSharpCode.Decompiler.Util;
-
 namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Interaction logic for FlagsFilterControl.xaml
 	/// </summary>
-	public partial class FlagsFilterControl
+	public sealed partial class FlagsFilterControl
 	{
-		ListBox listBox;
+		ListBox? listBox;
 
 		public FlagsFilterControl()
 		{
@@ -26,14 +24,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			set { SetValue(FilterProperty, value); }
 		}
 
-		public Type FlagsType { get; set; }
+		public Type? FlagsType { get; set; }
 
 		/// <summary>
 		/// Identifies the Filter dependency property
 		/// </summary>
 		public static readonly DependencyProperty FilterProperty =
 			DependencyProperty.Register("Filter", typeof(FlagsContentFilter), typeof(FlagsFilterControl),
-				new FrameworkPropertyMetadata(new FlagsContentFilter(-1), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, (sender, e) => ((FlagsFilterControl)sender).Filter_Changed()));
+				new FrameworkPropertyMetadata(new FlagsContentFilter(-1), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, (sender, _) => ((FlagsFilterControl)sender).Filter_Changed()));
 
 		/// <summary>When overridden in a derived class, is invoked whenever application code or internal processes call <see cref="M:System.Windows.FrameworkElement.ApplyTemplate" />.</summary>
 		public override void OnApplyTemplate()
@@ -105,7 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	public class FlagsContentFilter : IContentFilter
+	public sealed class FlagsContentFilter : IContentFilter
 	{
 		public int Mask { get; }
 

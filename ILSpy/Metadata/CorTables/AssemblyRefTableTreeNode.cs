@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class AssemblyRefTableTreeNode : MetadataTableTreeNode
+	internal sealed class AssemblyRefTableTreeNode : MetadataTableTreeNode
 	{
 		public AssemblyRefTableTreeNode(PEFile module)
 			: base(HandleKind.AssemblyReference, module)
@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct AssemblyRefEntry
+		readonly struct AssemblyRefEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[StringFormat("X8")]
 			public AssemblyFlags Flags => assemblyRef.Flags;
 
-			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, null) {
+			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags) {
 				FlagGroup.CreateMultipleChoiceGroup(typeof(AssemblyFlags), selectedValue: (int)assemblyRef.Flags, includeAll: false)
 			};
 

@@ -28,7 +28,7 @@ using ILSpy.BamlDecompiler.Xaml;
 
 namespace ILSpy.BamlDecompiler.Rewrite
 {
-	internal class MarkupExtensionRewritePass : IRewritePass
+	internal sealed class MarkupExtensionRewritePass : IRewritePass
 	{
 		XName key;
 		XName ctor;
@@ -67,7 +67,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			if ((property == null || type == null) && elem.Name != key)
 				return false;
 
-			if (elem.Elements().Count() != 1 || elem.Attributes().Any(t => t.Name.Namespace != XNamespace.Xmlns))
+			if (elem.Elements().Count() != 1 || elem.Attributes().Any(static t => t.Name.Namespace != XNamespace.Xmlns))
 				return false;
 
 			var value = elem.Elements().Single();
@@ -85,7 +85,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 			var attrName = elem.Name;
 			if (attrName != key)
-				attrName = property.ToXName(ctx, parent, property.IsAttachedTo(type));
+				attrName = property?.ToXName(ctx, parent, property.IsAttachedTo(type));
 			if (!parent.Attributes(attrName).Any())
 			{
 				var attr = new XAttribute(attrName, extValue);
@@ -105,7 +105,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		bool CanInlineExt(XamlContext ctx, XElement ctxElement)
 		{
 			var type = ctxElement.Annotation<XamlType>();
-			if (type != null && type.ResolvedType != null)
+			if (type is { ResolvedType: { } })
 			{
 				var typeDef = type.ResolvedType.GetDefinition()?.DirectBaseTypes.FirstOrDefault();
 				bool isExt = false;
@@ -135,12 +135,11 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 		object InlineObject(XamlContext ctx, XNode obj)
 		{
-			if (obj is XText)
-				return ((XText)obj).Value;
-			else if (obj is XElement)
-				return InlineExtension(ctx, (XElement)obj);
-			else
-				return null;
+			return obj switch {
+				XText text => text.Value,
+				XElement element => InlineExtension(ctx, element),
+				_ => null
+			};
 		}
 
 		object[] InlineCtor(XamlContext ctx, XElement ctor)
@@ -148,9 +147,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			if (ctor.HasAttributes)
 				return null;
 			var args = new List<object>();
-			foreach (var child in ctor.Nodes())
+			foreach (var arg in ctor.Nodes().Select(child => InlineObject(ctx, child)))
 			{
-				var arg = InlineObject(ctx, child);
 				if (arg == null)
 					return null;
 				args.Add(arg);
@@ -166,13 +164,12 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 			var ext = new XamlExtension(type);
 
-			foreach (var attr in ctxElement.Attributes().Where(attr => attr.Name.Namespace != XNamespace.Xmlns))
+			foreach (var attr in ctxElement.Attributes().Where(static attr => attr.Name.Namespace != XNamespace.Xmlns))
 				ext.NamedArguments[attr.Name.LocalName] = attr.Value;
 
 			foreach (var child in ctxElement.Nodes())
 			{
-				var elem = child as XElement;
-				if (elem == null)
+				if (child is not XElement elem)
 					return null;
 
 				if (elem.Name == ctor)
@@ -190,7 +187,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 				var property = elem.Annotation<XamlProperty>();
 				if (property == null || elem.Nodes().Count() != 1 ||
-					elem.Attributes().Any(attr => attr.Name.Namespace != XNamespace.Xmlns))
+					elem.Attributes().Any(static attr => attr.Name.Namespace != XNamespace.Xmlns))
 					return null;
 
 				var name = property.PropertyName;

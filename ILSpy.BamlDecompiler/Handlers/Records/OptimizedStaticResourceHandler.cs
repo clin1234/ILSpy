@@ -31,16 +31,15 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.OptimizedStaticResource;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
-			var record = (OptimizedStaticResourceRecord)((BamlRecordNode)node).Record;
 			var key = XamlResourceKey.FindKeyInSiblings(node);
 
 			key.StaticResources.Add(node);
 			return null;
 		}
 
-		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? TranslateDefer(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (OptimizedStaticResourceRecord)((BamlRecordNode)node).Record;
 			var bamlElem = new BamlElement(node);
@@ -61,19 +60,19 @@ namespace ILSpy.BamlDecompiler.Handlers
 				{
 					bool isKey = true;
 					short bamlId = unchecked((short)-record.ValueId);
-					if (bamlId > 232 && bamlId < 464)
+					switch (bamlId)
 					{
-						bamlId -= 232;
-						isKey = false;
-					}
-					else if (bamlId > 464 && bamlId < 467)
-					{
-						bamlId -= 231;
-					}
-					else if (bamlId > 467 && bamlId < 470)
-					{
-						bamlId -= 234;
-						isKey = false;
+						case > 232 and < 464:
+							bamlId -= 232;
+							isKey = false;
+							break;
+						case > 464 and < 467:
+							bamlId -= 231;
+							break;
+						case > 467 and < 470:
+							bamlId -= 234;
+							isKey = false;
+							break;
 					}
 					var res = ctx.Baml.KnownThings.Resources(bamlId);
 					string name;

@@ -12,7 +12,7 @@ using DTEConstants = EnvDTE.Constants;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
-	public class DetectedReference
+	internal sealed class DetectedReference
 	{
 		public DetectedReference(string name, string assemblyFile, bool isProjectReference)
 		{
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 	abstract class ILSpyCommand
 	{
-		protected ILSpyAddInPackage owner;
+		protected readonly ILSpyAddInPackage owner;
 
 		protected ILSpyCommand(ILSpyAddInPackage owner, uint id)
 		{
@@ -80,12 +80,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var dict = new Dictionary<string, DetectedReference>();
 			foreach (var reference in parentProject.MetadataReferences)
 			{
-				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display))
-				{
-					string assemblyName = assemblyDef.Name.Name;
-					string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
-					dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
-				}
+				using var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display);
+				string assemblyName = assemblyDef.Name.Name;
+				string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
+				dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 			}
 			foreach (var projectReference in parentProject.ProjectReferences)
 			{
@@ -136,7 +134,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		}
 	}
 
-	class OpenILSpyCommand : ILSpyCommand
+	sealed class OpenILSpyCommand : ILSpyCommand
 	{
 		static OpenILSpyCommand instance;
 

@@ -19,14 +19,13 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Xml;
 using System.Xml.Linq;
 
 using AvalonDock.Layout.Serialization;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockLayoutSettings
+	public sealed class DockLayoutSettings
 	{
 		/// <remarks>NOTE: do NOT remove any of the (empty) sections, the deserializer is not very resilient and expects this exact order of elements!</remarks>
 		private const string DefaultLayout = @"
@@ -71,7 +70,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public DockLayoutSettings(XElement element)
 		{
-			if ((element != null) && element.HasElements)
+			if (element is { HasElements: true })
 			{
 				rawSettings = element.Elements().FirstOrDefault()?.ToString();
 			}
@@ -104,20 +103,16 @@ namespace ICSharpCode.ILSpy.Docking
 
 			void Deserialize(string settings)
 			{
-				using (StringReader reader = new StringReader(settings))
-				{
-					serializer.Deserialize(reader);
-				}
+				using StringReader reader = new StringReader(settings);
+				serializer.Deserialize(reader);
 			}
 		}
 
 		public void Serialize(XmlLayoutSerializer serializer)
 		{
-			using (StringWriter fs = new StringWriter())
-			{
-				serializer.Serialize(fs);
-				rawSettings = fs.ToString();
-			}
+			using StringWriter fs = new StringWriter();
+			serializer.Serialize(fs);
+			rawSettings = fs.ToString();
 		}
 	}
 }

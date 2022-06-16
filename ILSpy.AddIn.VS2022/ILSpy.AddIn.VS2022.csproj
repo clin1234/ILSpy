@@ -22,6 +22,7 @@
       MSB3277;<!-- this is due to Visual Studio package references weirdness, see https://github.com/dotnet/roslyn/discussions/49787 -->
       VSSDK1009
     </NoWarn>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -37,11 +38,13 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" />
+    <PackageReference Include="Microsoft.VisualStudio.ComponentModelHost" Version="17.2.3194" />
+    <PackageReference Include="Microsoft.VisualStudio.Interop" Version="17.2.32505.113" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.2.32505.173" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
-    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.0.1" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.1.4054">
+    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.2.0" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.2.2186">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -183,6 +186,33 @@
 
   <ItemGroup>
     <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualStudio.Editor">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.editor\15.0.26228\lib\net45\Microsoft.VisualStudio.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Shell.15.0">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.shell.15.0\15.0.26228\lib\Microsoft.VisualStudio.Shell.15.0.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Shell.Framework">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.shell.framework\15.0.26228\lib\net45\Microsoft.VisualStudio.Shell.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.Data">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.text.data\15.0.26228\lib\net45\Microsoft.VisualStudio.Text.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.Logic">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.text.logic\15.0.26228\lib\net45\Microsoft.VisualStudio.Text.Logic.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.UI">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.text.ui\15.0.26228\lib\net45\Microsoft.VisualStudio.Text.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.UI.Wpf">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.text.ui.wpf\15.0.26228\lib\net45\Microsoft.VisualStudio.Text.UI.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Threading">
+      <HintPath>..\..\..\cl\.nuget\packages\microsoft.visualstudio.threading\15.0.240\lib\netstandard1.1\Microsoft.VisualStudio.Threading.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

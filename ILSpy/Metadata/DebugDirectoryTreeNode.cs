@@ -18,22 +18,18 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DebugDirectoryTreeNode : ILSpyTreeNode
+	sealed class DebugDirectoryTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		private readonly PEFile module;
 
 		public DebugDirectoryTreeNode(PEFile module)
 		{
@@ -102,7 +98,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			language.WriteCommentLine(output, "Data Directories");
 		}
 
-		class DebugDirectoryEntryView
+		sealed class DebugDirectoryEntryView
 		{
 			public uint Timestamp { get; set; }
 			public ushort MajorVersion { get; set; }

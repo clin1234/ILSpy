@@ -23,8 +23,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
 
 namespace ICSharpCode.TreeView
 {
@@ -32,18 +30,17 @@ namespace ICSharpCode.TreeView
 	{
 		SharpTreeNodeCollection modelChildren;
 		internal SharpTreeNode modelParent;
-		bool isVisible = true;
 
 		void UpdateIsVisible(bool parentIsVisible, bool updateFlattener)
 		{
 			bool newIsVisible = parentIsVisible && !isHidden;
-			if (isVisible != newIsVisible)
+			if (IsVisible != newIsVisible)
 			{
-				isVisible = newIsVisible;
+				IsVisible = newIsVisible;
 
 				// invalidate the augmented data
 				SharpTreeNode node = this;
-				while (node != null && node.totalListLength >= 0)
+				while (node is { totalListLength: >= 0 })
 				{
 					node.totalListLength = -1;
 					node = node.listParent;
@@ -90,9 +87,9 @@ namespace ICSharpCode.TreeView
 
 		void UpdateChildIsVisible(bool updateFlattener)
 		{
-			if (modelChildren != null && modelChildren.Count > 0)
+			if (modelChildren is { Count: > 0 })
 			{
-				bool showChildren = isVisible && isExpanded;
+				bool showChildren = IsVisible && isExpanded;
 				foreach (SharpTreeNode child in modelChildren)
 				{
 					child.UpdateIsVisible(showChildren, updateFlattener);
@@ -102,16 +99,8 @@ namespace ICSharpCode.TreeView
 
 		#region Main
 
-		public SharpTreeNode()
-		{
-		}
-
 		public SharpTreeNodeCollection Children {
-			get {
-				if (modelChildren == null)
-					modelChildren = new SharpTreeNodeCollection(this);
-				return modelChildren;
-			}
+			get { return modelChildren ??= new SharpTreeNodeCollection(this); }
 		}
 
 		public SharpTreeNode Parent {
@@ -147,10 +136,9 @@ namespace ICSharpCode.TreeView
 				{
 					isHidden = value;
 					if (modelParent != null)
-						UpdateIsVisible(modelParent.isVisible && modelParent.isExpanded, true);
+						UpdateIsVisible(modelParent.IsVisible && modelParent.isExpanded, true);
 					RaisePropertyChanged(nameof(IsHidden));
-					if (Parent != null)
-						Parent.RaisePropertyChanged(nameof(ShowExpander));
+					Parent?.RaisePropertyChanged(nameof(ShowExpander));
 				}
 			}
 		}
@@ -158,9 +146,7 @@ namespace ICSharpCode.TreeView
 		/// <summary>
 		/// Return true when this node is not hidden and when all parent nodes are expanded and not hidden.
 		/// </summary>
-		public bool IsVisible {
-			get { return isVisible; }
-		}
+		public bool IsVisible { get; private set; } = true;
 
 		bool isSelected;
 
@@ -188,12 +174,12 @@ namespace ICSharpCode.TreeView
 					node.modelParent = null;
 					Debug.WriteLine("Removing {0} from {1}", node, this);
 					SharpTreeNode removeEnd = node;
-					while (removeEnd.modelChildren != null && removeEnd.modelChildren.Count > 0)
+					while (removeEnd.modelChildren is { Count: > 0 })
 						removeEnd = removeEnd.modelChildren.Last();
 
 					List<SharpTreeNode> removedNodes = null;
 					int visibleIndexOfRemoval = 0;
-					if (node.isVisible)
+					if (node.IsVisible)
 					{
 						visibleIndexOfRemoval = GetVisibleIndexForNode(node);
 						removedNodes = node.VisibleDescendantsAndSelf().ToList();
@@ -204,42 +190,32 @@ namespace ICSharpCode.TreeView
 					if (removedNodes != null)
 					{
 						var flattener = GetListRoot().treeFlattener;
-						if (flattener != null)
-						{
-							flattener.NodesRemoved(visibleIndexOfRemoval, removedNodes);
-						}
+						flattener?.NodesRemoved(visibleIndexOfRemoval, removedNodes);
 					}
 				}
 			}
 			if (e.NewItems != null)
 			{
-				SharpTreeNode insertionPos;
-				if (e.NewStartingIndex == 0)
-					insertionPos = null;
-				else
-					insertionPos = modelChildren[e.NewStartingIndex - 1];
+				SharpTreeNode insertionPos = e.NewStartingIndex == 0 ? null : modelChildren[e.NewStartingIndex - 1];
 
 				foreach (SharpTreeNode node in e.NewItems)
 				{
 					Debug.Assert(node.modelParent == null);
 					node.modelParent = this;
-					node.UpdateIsVisible(isVisible && isExpanded, false);
+					node.UpdateIsVisible(IsVisible && isExpanded, false);
 					//Debug.WriteLine("Inserting {0} after {1}", node, insertionPos);
 
-					while (insertionPos != null && insertionPos.modelChildren != null && insertionPos.modelChildren.Count > 0)
+					while (insertionPos is { modelChildren: { Count: > 0 } })
 					{
 						insertionPos = insertionPos.modelChildren.Last();
 					}
 					InsertNodeAfter(insertionPos ?? this, node);
 
 					insertionPos = node;
-					if (node.isVisible)
+					if (node.IsVisible)
 					{
 						var flattener = GetListRoot().treeFlattener;
-						if (flattener != null)
-						{
-							flattener.NodesInserted(GetVisibleIndexForNode(node), node.VisibleDescendantsAndSelf());
-						}
+						flattener?.NodesInserted(GetVisibleIndexForNode(node), node.VisibleDescendantsAndSelf());
 					}
 				}
 			}
@@ -352,12 +328,12 @@ namespace ICSharpCode.TreeView
 
 		internal IEnumerable<SharpTreeNode> VisibleDescendants()
 		{
-			return TreeTraversal.PreOrder(this.Children.Where(c => c.isVisible), n => n.Children.Where(c => c.isVisible));
+			return TreeTraversal.PreOrder(this.Children.Where(c => c.IsVisible), n => n.Children.Where(c => c.IsVisible));
 		}
 
 		internal IEnumerable<SharpTreeNode> VisibleDescendantsAndSelf()
 		{
-			return TreeTraversal.PreOrder(this, n => n.Children.Where(c => c.isVisible));
+			return TreeTraversal.PreOrder(this, n => n.Children.Where(c => c.IsVisible));
 		}
 
 		public IEnumerable<SharpTreeNode> Ancestors()
@@ -430,12 +406,9 @@ namespace ICSharpCode.TreeView
 				{
 					if (IsChecked != null)
 					{
-						foreach (var child in Descendants())
+						foreach (var child in Descendants().Where(static child => child.IsCheckable))
 						{
-							if (child.IsCheckable)
-							{
-								child.SetIsChecked(IsChecked, false);
-							}
+							child.SetIsChecked(IsChecked, false);
 						}
 					}
 
@@ -654,7 +627,7 @@ namespace ICSharpCode.TreeView
 		public bool IsLast {
 			get {
 				return Parent == null ||
-					Parent.Children[Parent.Children.Count - 1] == this;
+					Parent.Children[^1] == this;
 			}
 		}
 
@@ -667,9 +640,9 @@ namespace ICSharpCode.TreeView
 					{
 						if (Children.Count > 1)
 						{
-							Children[Children.Count - 2].RaisePropertyChanged(nameof(IsLast));
+							Children[^2].RaisePropertyChanged(nameof(IsLast));
 						}
-						Children[Children.Count - 1].RaisePropertyChanged(nameof(IsLast));
+						Children[^1].RaisePropertyChanged(nameof(IsLast));
 					}
 					break;
 				case NotifyCollectionChangedAction.Remove:
@@ -677,7 +650,7 @@ namespace ICSharpCode.TreeView
 					{
 						if (Children.Count > 0)
 						{
-							Children[Children.Count - 1].RaisePropertyChanged(nameof(IsLast));
+							Children[^1].RaisePropertyChanged(nameof(IsLast));
 						}
 					}
 					break;
@@ -692,10 +665,7 @@ namespace ICSharpCode.TreeView
 
 		public void RaisePropertyChanged(string name)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(name));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 
 		#endregion

@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public static MiscSettings CurrentMiscSettings {
 			get {
-				return currentMiscSettings ?? (currentMiscSettings = LoadMiscSettings(ILSpySettings.Load()));
+				return currentMiscSettings ??= LoadMiscSettings(ILSpySettings.Load());
 			}
 		}
 

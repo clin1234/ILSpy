@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			if (!(analyzedSymbol is ITypeDefinition attributeType))
+			if (analyzedSymbol is not ITypeDefinition attributeType)
 				return Empty<ISymbol>.Array;
 
 			var scope = context.GetScopeOf(attributeType);
@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					.Select(m => m.AccessorOwner ?? m);
 			}
 
-			foreach (Decompiler.Metadata.PEFile module in scope.GetModulesInScope(ct))
+			foreach (PEFile module in scope.GetModulesInScope(ct))
 			{
 				var ts = scope.ConstructTypeSystem(module);
 				ct.ThrowIfCancellationRequested();
@@ -150,7 +150,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		IEnumerable<ISymbol> HandleCustomAttribute(ITypeDefinition attributeType, AnalyzerScope scope, CancellationToken ct)
 		{
-			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type arguments do not matter for this analyzer.
+			var genericContext = new GenericContext(); // type arguments do not matter for this analyzer.
 
 			foreach (var module in scope.GetModulesInScope(ct))
 			{

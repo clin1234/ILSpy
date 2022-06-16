@@ -1,17 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 using DataGridExtensions;
 
@@ -20,7 +9,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	/// <summary>
 	/// Interaction logic for HexFilterControl.xaml
 	/// </summary>
-	public partial class HexFilterControl
+	public sealed partial class HexFilterControl
 	{
 		TextBox textBox;
 
@@ -62,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			textBox.Text = (newValue as ContentFilter)?.Value ?? string.Empty;
 		}
 
-		class ContentFilter : IContentFilter
+		sealed class ContentFilter : IContentFilter
 		{
 			readonly string filter;
 
@@ -78,7 +67,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				if (value == null)
 					return false;
 
-				return string.Format("{0:x8}", value).IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
+				return $"{value:x8}".IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
 			}
 
 			public string Value => filter;

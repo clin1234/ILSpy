@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
-	class ILSpyParameters
+	sealed class ILSpyParameters
 	{
 		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
 		{
@@ -20,7 +19,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		public string[] Arguments { get; private set; }
 	}
 
-	class ILSpyInstance
+	sealed class ILSpyInstance
 	{
 		readonly ILSpyParameters parameters;
 
@@ -105,11 +104,10 @@ namespace ICSharpCode.ILSpy.AddIn
 			fixed (char* buffer = message)
 			{
 				lParam.Buffer = (IntPtr)buffer;
-				IntPtr result;
 				// SendMessage with 3s timeout (e.g. when the target process is stopped in the debugger)
 				if (NativeMethods.SendMessageTimeout(
 					hWnd, NativeMethods.WM_COPYDATA, IntPtr.Zero, ref lParam,
-					SMTO_NORMAL, 3000, out result) != IntPtr.Zero)
+					SMTO_NORMAL, 3000, out IntPtr result) != IntPtr.Zero)
 				{
 					return result;
 				}

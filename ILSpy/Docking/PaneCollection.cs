@@ -20,23 +20,21 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Linq;
 
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class PaneCollection<T> : INotifyCollectionChanged, ICollection<T>
+	public sealed class PaneCollection<T> : INotifyCollectionChanged, ICollection<T>
 		where T : PaneModel
 	{
-		private ObservableCollection<T> observableCollection = new ObservableCollection<T>();
+		private readonly ObservableCollection<T> observableCollection = new ObservableCollection<T>();
 
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
 
 		public PaneCollection()
 		{
-			observableCollection.CollectionChanged += (sender, e) => CollectionChanged?.Invoke(this, e);
+			observableCollection.CollectionChanged += (_, e) => CollectionChanged?.Invoke(this, e);
 		}
 
 		public void Add(T item)

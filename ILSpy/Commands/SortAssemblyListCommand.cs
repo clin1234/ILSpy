@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
@@ -50,12 +51,10 @@ namespace ICSharpCode.ILSpy
 			using (MainWindow.Instance.AssemblyTreeView.LockUpdates())
 				CollapseChildren(MainWindow.Instance.AssemblyTreeView.Root);
 
-			void CollapseChildren(SharpTreeNode node)
+			static void CollapseChildren(SharpTreeNode node)
 			{
-				foreach (var child in node.Children)
+				foreach (var child in node.Children.Where(static child => child.IsExpanded))
 				{
-					if (!child.IsExpanded)
-						continue;
 					CollapseChildren(child);
 					child.IsExpanded = false;
 				}

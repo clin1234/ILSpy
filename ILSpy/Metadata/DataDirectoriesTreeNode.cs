@@ -17,19 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Reflection.PortableExecutable;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DataDirectoriesTreeNode : ILSpyTreeNode
+	sealed class DataDirectoriesTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		private readonly PEFile module;
 
 		public DataDirectoriesTreeNode(PEFile module)
 		{
@@ -54,7 +51,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			var headers = module.Reader.PEHeaders;
 			var header = headers.PEHeader;
 
-			var entries = new DataDirectoryEntry[] {
+			var entries = new[] {
 				new DataDirectoryEntry(headers, "Export Table", header.ExportTableDirectory),
 				new DataDirectoryEntry(headers, "Import Table", header.ImportTableDirectory),
 				new DataDirectoryEntry(headers, "Resource Table", header.ResourceTableDirectory),
@@ -83,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			language.WriteCommentLine(output, "Data Directories");
 		}
 
-		class DataDirectoryEntry
+		sealed class DataDirectoryEntry
 		{
 			public string Name { get; set; }
 			public int RVA { get; set; }

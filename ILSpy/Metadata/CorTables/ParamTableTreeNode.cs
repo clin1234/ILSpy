@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ParamTableTreeNode : MetadataTableTreeNode
+	internal sealed class ParamTableTreeNode : MetadataTableTreeNode
 	{
 		public ParamTableTreeNode(PEFile module)
 			: base(HandleKind.Parameter, module)
@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct ParamEntry
+		readonly struct ParamEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

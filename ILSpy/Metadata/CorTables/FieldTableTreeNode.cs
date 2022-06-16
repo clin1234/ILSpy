@@ -21,12 +21,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -34,7 +30,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class FieldTableTreeNode : MetadataTableTreeNode
+	internal sealed class FieldTableTreeNode : MetadataTableTreeNode
 	{
 		public FieldTableTreeNode(PEFile module)
 			: base(HandleKind.FieldDefinition, module)
@@ -78,7 +74,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct FieldDefEntry : IMemberTreeNode
+		readonly struct FieldDefEntry : IMemberTreeNode
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;
@@ -116,7 +112,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)handle).WriteTo(module, output, context);
 					return output.ToString();
 				}

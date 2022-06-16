@@ -20,6 +20,7 @@
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -48,7 +49,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="16.9.20" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
-    <PackageReference Include="DataGridExtensions" Version="2.5.13" />
+    <PackageReference Include="DataGridExtensions" Version="2.5.14" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
@@ -82,6 +83,12 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\ZoomScrollViewer.cs">
+      <DependentUpon>ZoomScrollViewer.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="TextView\DecompilerTextView.cs">
+      <DependentUpon>DecompilerTextView.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
 
@@ -121,7 +128,7 @@
 
   <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)">
     <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-      <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
+      <SortResX>pwsh -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
     </PropertyGroup>
     <Exec WorkingDirectory=".." Command="$(SortResX)" Timeout="60000" />
     <Touch Files="@(SortResXStamp)" AlwaysCreate="true" />

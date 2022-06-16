@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 
 namespace ICSharpCode.ILSpy.Controls
@@ -27,7 +28,7 @@ namespace ICSharpCode.ILSpy.Controls
 	/// <summary>
 	/// Allows to automatically sort a grid view.
 	/// </summary>
-	public class SortableGridViewColumn : GridViewColumn
+	public sealed class SortableGridViewColumn : GridViewColumn
 	{
 		// This class was copied from ICSharpCode.Core.Presentation.
 
@@ -73,8 +74,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void OnSortDirectionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
-			if (grid != null)
+			if (sender is ListView grid)
 			{
 				SortableGridViewColumn col = GetCurrentSortColumn(grid);
 				if (col != null)
@@ -101,8 +101,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void OnCurrentSortColumnChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
-			if (grid != null)
+			if (sender is ListView grid)
 			{
 				SortableGridViewColumn oldColumn = (SortableGridViewColumn)args.OldValue;
 				if (oldColumn != null)
@@ -134,21 +133,18 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void OnSortModeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
-			if (grid != null)
+			if (sender is ListView grid)
 			{
 				if ((ListViewSortMode)args.NewValue != ListViewSortMode.None)
-					grid.AddHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
+					grid.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
 				else
-					grid.RemoveHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
+					grid.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
 			}
 		}
 
 		static void GridViewColumnHeaderClickHandler(object sender, RoutedEventArgs e)
 		{
-			ListView grid = sender as ListView;
-			GridViewColumnHeader headerClicked = e.OriginalSource as GridViewColumnHeader;
-			if (grid != null && headerClicked != null && headerClicked.Role != GridViewColumnHeaderRole.Padding)
+			if (sender is ListView grid && e.OriginalSource is GridViewColumnHeader headerClicked && headerClicked.Role != GridViewColumnHeaderRole.Padding)
 			{
 				if (headerClicked.Column == GetCurrentSortColumn(grid))
 				{
@@ -188,8 +184,7 @@ namespace ICSharpCode.ILSpy.Controls
 				string sortBy = column.SortBy;
 				if (sortBy == null)
 				{
-					Binding binding = column.DisplayMemberBinding as Binding;
-					if (binding != null && binding.Path != null)
+					if (column.DisplayMemberBinding is Binding { Path: { } } binding)
 					{
 						sortBy = binding.Path.Path;
 					}

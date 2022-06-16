@@ -36,9 +36,9 @@ using ILSpy.BamlDecompiler.Rewrite;
 
 namespace ILSpy.BamlDecompiler
 {
-	public class XamlDecompiler
+	internal sealed class XamlDecompiler
 	{
-		static readonly IRewritePass[] rewritePasses = new IRewritePass[] {
+		static readonly IRewritePass[] rewritePasses = {
 			new XClassRewritePass(),
 			new MarkupExtensionRewritePass(),
 			new AttributeRewritePass(),
@@ -46,16 +46,11 @@ namespace ILSpy.BamlDecompiler
 			new DocumentRewritePass(),
 		};
 
-		private BamlDecompilerTypeSystem typeSystem;
-		private BamlDecompilerSettings settings;
-		private MetadataModule module;
+		private readonly BamlDecompilerTypeSystem typeSystem;
 
-		public BamlDecompilerSettings Settings {
-			get { return settings; }
-			set { settings = value; }
-		}
+		public BamlDecompilerSettings Settings { get; set; }
 
-		public CancellationToken CancellationToken { get; set; }
+		public CancellationToken CancellationToken { get; init; }
 
 		public XamlDecompiler(string fileName, BamlDecompilerSettings settings)
 			: this(CreateTypeSystemFromFile(fileName, settings), settings)
@@ -75,8 +70,8 @@ namespace ILSpy.BamlDecompiler
 		internal XamlDecompiler(BamlDecompilerTypeSystem typeSystem, BamlDecompilerSettings settings)
 		{
 			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
-			this.settings = settings;
-			this.module = typeSystem.MainModule;
+			this.Settings = settings;
+			MetadataModule module = typeSystem.MainModule;
 			if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.Uncached))
 				throw new ArgumentException("Cannot use an uncached type system in the decompiler.");
 		}
@@ -105,7 +100,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			var ct = CancellationToken;
 			var document = BamlReader.ReadDocument(stream, ct);
-			var ctx = XamlContext.Construct(typeSystem, document, ct, settings);
+			var ctx = XamlContext.Construct(typeSystem, document, ct, Settings);
 
 			var handler = HandlerMap.LookupHandler(ctx.RootNode.Type);
 			var elem = handler.Translate(ctx, ctx.RootNode, null);

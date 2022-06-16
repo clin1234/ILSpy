@@ -27,6 +27,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
+	[Flags]
 	public enum TokenSearchResult : byte
 	{
 		NoResult = 0,
@@ -52,7 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		SystemType = 127,
 	}
 
-	class FindTypeInAttributeDecoder : ICustomAttributeTypeProvider<TokenSearchResult>
+	sealed class FindTypeInAttributeDecoder : ICustomAttributeTypeProvider<TokenSearchResult>
 	{
 		readonly PEFile declaringModule;
 		readonly MetadataModule currentModule;
@@ -104,7 +105,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return GetResultFromResolvedType(t);
 		}
 
-		public TokenSearchResult GetTypeFromSerializedName(string name)
+		public TokenSearchResult GetTypeFromSerializedName(string? name)
 		{
 			if (name == null)
 			{
@@ -148,7 +149,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public PrimitiveTypeCode GetUnderlyingEnumType(TokenSearchResult type)
 		{
 			TokenSearchResult typeCode = type & TokenSearchResult.TypeCodeMask;
-			if (typeCode == 0 || typeCode == TokenSearchResult.SystemType)
+			if (typeCode is 0 or TokenSearchResult.SystemType)
 				throw new EnumUnderlyingTypeResolveException();
 			return (PrimitiveTypeCode)typeCode;
 		}

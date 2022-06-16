@@ -16,13 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -68,7 +64,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public bool Show(ISymbol entity)
 		{
-			return entity is IProperty property && property.IsOverridable && property.DeclaringType.Kind != TypeKind.Interface;
+			return entity is IProperty { IsOverridable: true } property && property.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

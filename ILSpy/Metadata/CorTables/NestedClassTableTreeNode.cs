@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class NestedClassTableTreeNode : MetadataTableTreeNode
+	sealed class NestedClassTableTreeNode : MetadataTableTreeNode
 	{
 		public NestedClassTableTreeNode(PEFile module)
 			: base((HandleKind)0x29, module)
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		unsafe struct NestedClassEntry
+		unsafe readonly struct NestedClassEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -110,7 +109,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string NestedClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)nestedClass.Nested).WriteTo(module, output, context);
 					return output.ToString();
 				}
@@ -128,7 +127,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string EnclosingClassTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)nestedClass.Enclosing).WriteTo(module, output, context);
 					return output.ToString();
 				}

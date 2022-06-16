@@ -20,11 +20,10 @@ using System;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
-	internal class AnalyzedModuleTreeNode : AnalyzerEntityTreeNode
+	internal sealed class AnalyzedModuleTreeNode : AnalyzerEntityTreeNode
 	{
 		readonly IModule analyzedModule;
 

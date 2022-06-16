@@ -28,7 +28,7 @@ using System.Threading;
 
 namespace ILSpy.BamlDecompiler.Baml
 {
-	internal class BamlBinaryReader : BinaryReader
+	internal sealed class BamlBinaryReader : BinaryReader
 	{
 		public BamlBinaryReader(Stream stream)
 			: base(stream)
@@ -38,7 +38,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public int ReadEncodedInt() => Read7BitEncodedInt();
 	}
 
-	internal class BamlReader
+	internal static class BamlReader
 	{
 		const string MSBAML_SIG = "MSBAML";
 
@@ -91,7 +91,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 				long pos = str.Position;
 				var type = (BamlRecordType)reader.ReadByte();
-				BamlRecord rec = null;
+				BamlRecord rec;
 				switch (type)
 				{
 					case BamlRecordType.AssemblyInfo:

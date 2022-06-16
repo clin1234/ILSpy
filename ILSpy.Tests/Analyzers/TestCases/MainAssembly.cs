@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ICSharpCode.ILSpy.Tests.Analyzers.TestCases.Main
+﻿namespace ICSharpCode.ILSpy.Tests.Analyzers.TestCases.Main
 {
 	class MainAssembly
 	{

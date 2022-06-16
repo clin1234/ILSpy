@@ -26,7 +26,7 @@ using System.Xml.Linq;
 
 namespace ILSpy.BamlDecompiler.Rewrite
 {
-	internal class DocumentRewritePass : IRewritePass
+	internal sealed class DocumentRewritePass : IRewritePass
 	{
 		public void Run(XamlContext ctx, XDocument document)
 		{

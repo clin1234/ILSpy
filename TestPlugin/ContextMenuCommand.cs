@@ -6,11 +6,9 @@ using System.Linq;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TreeNodes;
 
-using Microsoft.Win32;
-
 namespace TestPlugin
 {
-	[ExportContextMenuEntryAttribute(Header = "_Save Assembly")]
+	[ExportContextMenuEntry(Header = "_Save Assembly")]
 	public class SaveAssembly : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -20,7 +18,7 @@ namespace TestPlugin
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return context.SelectedTreeNodes != null && context.SelectedTreeNodes.Length == 1;
+			return context.SelectedTreeNodes is { Length: 1 };
 		}
 
 		public void Execute(TextViewContext context)

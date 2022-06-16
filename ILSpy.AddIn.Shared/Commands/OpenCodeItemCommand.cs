@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -12,7 +11,7 @@ using Microsoft.VisualStudio.Text;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
-	class OpenCodeItemCommand : ILSpyCommand
+	sealed class OpenCodeItemCommand : ILSpyCommand
 	{
 		static OpenCodeItemCommand instance;
 
@@ -169,11 +168,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var current = node;
 			while (current != null)
 			{
-				var symbol = model.GetSymbolInfo(current).Symbol;
-				if (symbol == null)
-				{
-					symbol = model.GetDeclaredSymbol(current);
-				}
+				var symbol = model.GetSymbolInfo(current).Symbol ?? model.GetDeclaredSymbol(current);
 
 				// ILSpy can only resolve some symbol types, so allow them, discard everything else
 				if (symbol != null)
@@ -198,8 +193,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				if (symbol != null)
 					return symbol;
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -32,7 +31,7 @@ namespace ICSharpCode.ILSpy.Controls
 	/// remaining width (after assigning the fixed sizes).
 	/// Examples: 50%;25%;25% or 30;100%;50
 	/// </summary>
-	public class GridViewColumnAutoSize
+	public sealed class GridViewColumnAutoSize
 	{
 		// This class was copied from ICSharpCode.Core.Presentation.
 
@@ -52,20 +51,15 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void AutoWidthPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
-			if (grid == null)
+			if (sender is not ListView grid)
 				return;
 			grid.SizeChanged += delegate (object listView, SizeChangedEventArgs e) {
 				ListView lv = listView as ListView;
-				if (lv == null)
-					return;
-				GridView v = lv.View as GridView;
-				if (v == null)
+				if (lv?.View is not GridView v)
 					return;
 				CalculateSizes(v, GetAutoWidth(lv), e.NewSize.Width);
 			};
-			GridView view = grid.View as GridView;
-			if (view == null)
+			if (grid.View is not GridView view)
 				return;
 			CalculateSizes(view, args.NewValue as string, grid.ActualWidth);
 		}
@@ -82,8 +76,7 @@ namespace ICSharpCode.ILSpy.Controls
 			for (int i = 0; i < view.Columns.Count; i++)
 			{
 				var column = view.Columns[i];
-				double size;
-				bool isPercentage = !double.TryParse(sizes[i], out size);
+				bool isPercentage = !double.TryParse(sizes[i], out double size);
 				if (isPercentage)
 				{
 					size = double.Parse(sizes[i].TrimEnd('%', ' '));

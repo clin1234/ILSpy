@@ -36,10 +36,10 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Interaction logic for OpenFromGacDialog.xaml
 	/// </summary>
-	public partial class OpenFromGacDialog : Window
+	public sealed partial class OpenFromGacDialog
 	{
-		ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
-		ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
+		readonly ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
+		readonly ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
 		Predicate<GacEntry> filterMethod = _ => true;
 		volatile bool cancelFetchThread;
 
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy
 			SortableGridViewColumn.SetCurrentSortColumn(listView, nameColumn);
 			SortableGridViewColumn.SetSortDirection(listView, ColumnSortDirection.Ascending);
 
-			new Thread(new ThreadStart(FetchGacContents)).Start();
+			new Thread(FetchGacContents).Start();
 		}
 
 		protected override void OnClosing(CancelEventArgs e)
@@ -89,11 +89,7 @@ namespace ICSharpCode.ILSpy
 			}
 
 			public string FormattedVersion {
-				get {
-					if (formattedVersion == null)
-						formattedVersion = Version.ToString();
-					return formattedVersion;
-				}
+				get { return formattedVersion ??= Version.ToString(); }
 			}
 
 			public string Culture {
@@ -162,7 +158,7 @@ namespace ICSharpCode.ILSpy
 				filterMethod = _ => true;
 			else
 			{
-				var elements = filterString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				var elements = filterString.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 				filterMethod = entry => elements.All(el => Contains(entry.FullName, el) || Contains(entry.FormattedVersion, el));
 			}
 

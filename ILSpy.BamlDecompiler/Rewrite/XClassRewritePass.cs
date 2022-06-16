@@ -27,7 +27,7 @@ using ILSpy.BamlDecompiler.Xaml;
 
 namespace ILSpy.BamlDecompiler.Rewrite
 {
-	internal class XClassRewritePass : IRewritePass
+	internal sealed class XClassRewritePass : IRewritePass
 	{
 		public void Run(XamlContext ctx, XDocument document)
 		{
@@ -38,17 +38,15 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		void RewriteClass(XamlContext ctx, XElement elem)
 		{
 			var type = elem.Annotation<XamlType>();
-			if (type == null || type.ResolvedType == null)
-				return;
 
-			var typeDef = type.ResolvedType.GetDefinition();
+			var typeDef = type?.ResolvedType?.GetDefinition();
 			if (typeDef == null || !typeDef.ParentModule.IsMainModule)
 				return;
 
 			var newType = typeDef.DirectBaseTypes.First().GetDefinition();
 			if (newType == null)
 				return;
-			var xamlType = new XamlType(newType.ParentModule, newType.ParentModule.FullAssemblyName, newType.Namespace, newType.Name);
+			var xamlType = new XamlType(newType.ParentModule, newType.ParentModule?.FullAssemblyName, newType.Namespace, newType.Name);
 			xamlType.ResolveNamespace(elem, ctx);
 
 			elem.Name = xamlType.ToXName(ctx);

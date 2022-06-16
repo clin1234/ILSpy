@@ -30,19 +30,19 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// <summary>
 	/// Provides additional context for analyzers.
 	/// </summary>
-	public class AnalyzerContext
+	public sealed class AnalyzerContext
 	{
-		public AssemblyList AssemblyList { get; internal set; }
+		public AssemblyList AssemblyList { get; internal init; }
 
 		/// <summary>
 		/// CancellationToken. Currently Analyzers do not support cancellation from the UI, but it should be checked nonetheless.
 		/// </summary>
-		public CancellationToken CancellationToken { get; internal set; }
+		public CancellationToken CancellationToken { get; internal init; }
 
 		/// <summary>
 		/// Currently used language.
 		/// </summary>
-		public Language Language { get; internal set; }
+		public Language Language { get; internal init; }
 
 		/// <summary>
 		/// Allows the analyzer to control whether the tree nodes will be sorted.

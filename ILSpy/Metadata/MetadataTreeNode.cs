@@ -30,9 +30,9 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class MetadataTreeNode : ILSpyTreeNode
+	sealed class MetadataTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		private readonly PEFile module;
 		private AssemblyTreeNode assemblyTreeNode;
 
 		public MetadataTreeNode(PEFile module, AssemblyTreeNode assemblyTreeNode)
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	class Entry
+	sealed class Entry
 	{
 		public string Member { get; }
 		public int Offset { get; }
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	class BitEntry
+	sealed class BitEntry
 	{
 		public bool Value { get; }
 		public string Meaning { get; }
@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	class ByteWidthConverter : IValueConverter
+	sealed class ByteWidthConverter : IValueConverter
 	{
 		public static readonly ByteWidthConverter Instance = new ByteWidthConverter();
 

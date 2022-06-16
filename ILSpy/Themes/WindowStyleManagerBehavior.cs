@@ -8,7 +8,7 @@ using TomsToolbox.Wpf.Interactivity;
 
 namespace ICSharpCode.ILSpy.Themes
 {
-	public class WindowStyleManagerBehavior : FrameworkElementBehavior<Window>
+	public sealed class WindowStyleManagerBehavior : FrameworkElementBehavior<Window>
 	{
 		private static readonly DispatcherThrottle restartNotificationThrottle = new DispatcherThrottle(ShowRestartNotification);
 

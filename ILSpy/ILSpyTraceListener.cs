@@ -26,7 +26,7 @@ using ICSharpCode.ILSpy.Controls;
 
 namespace ICSharpCode.ILSpy
 {
-	class ILSpyTraceListener : DefaultTraceListener
+	sealed class ILSpyTraceListener : DefaultTraceListener
 	{
 		[Conditional("DEBUG")]
 		public static void Install()
@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 			base.AssertUiEnabled = false;
 		}
 
-		HashSet<string> ignoredStacks = new HashSet<string>();
+		readonly HashSet<string> ignoredStacks = new HashSet<string>();
 		bool dialogIsOpen;
 
 		public override void Fail(string message)
@@ -81,22 +81,23 @@ namespace ICSharpCode.ILSpy
 			thread.SetApartmentState(ApartmentState.STA);
 			thread.Start();
 			thread.Join();
-			if (result == 0)
-			{ // throw
-				throw new AssertionFailedException(message);
-			}
-			else if (result == 1)
-			{ // debug
-				Debugger.Break();
-			}
-			else if (result == 2)
-			{ // ignore
-			}
-			else if (result == 3)
+			switch (result)
 			{
-				lock (ignoredStacks)
+				case 0: // throw
+					throw new AssertionFailedException(message);
+				case 1: // debug
+					Debugger.Break();
+					break;
+				case 2: // ignore
+					break;
+				case 3:
 				{
-					ignoredStacks.Add(topFrame);
+					lock (ignoredStacks)
+					{
+						ignoredStacks.Add(topFrame);
+					}
+
+					break;
 				}
 			}
 		}
@@ -121,7 +122,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	class AssertionFailedException : Exception
+	sealed class AssertionFailedException : Exception
 	{
 		public AssertionFailedException(string message) : base(message) { }
 	}

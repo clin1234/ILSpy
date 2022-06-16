@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy
 		internal static void Execute(IEnumerable<AssemblyTreeNode> nodes)
 		{
 			var highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
-			var options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.IncludeMethodSpans | PdbToXmlOptions.IncludeTokens;
+			const PdbToXmlOptions options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.IncludeMethodSpans | PdbToXmlOptions.IncludeTokens;
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				var writer = new TextOutputWriter(output);
@@ -60,9 +60,9 @@ namespace ICSharpCode.ILSpy
 					string pdbFileName = Path.ChangeExtension(node.LoadedAssembly.FileName, ".pdb");
 					if (!File.Exists(pdbFileName))
 						continue;
-					using (var pdbStream = File.OpenRead(pdbFileName))
-					using (var peStream = File.OpenRead(node.LoadedAssembly.FileName))
-						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
+					using var pdbStream = File.OpenRead(pdbFileName);
+					using var peStream = File.OpenRead(node.LoadedAssembly.FileName);
+					PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
 				}
 				return output;
 			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowNodes(output, null, highlighting)).HandleExceptions();

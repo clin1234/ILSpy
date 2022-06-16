@@ -24,7 +24,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="50" />
 					</Grid.RowDefinitions>
-					<Label Margin="3,0" Content="{x:Static properties:Resources.DisplaySettingsPanel_Font}"></Label>
+					<Label Margin="3,0" Content="{x:Static properties:Resources.DisplaySettingsPanel_Font}" />
 					<ComboBox x:Name="fontSelector" VerticalContentAlignment="Center" SelectedItem="{Binding SelectedFont}" Grid.Column="1">
 						<ComboBox.ItemTemplate>
 							<DataTemplate>
@@ -32,7 +32,7 @@
 							</DataTemplate>
 						</ComboBox.ItemTemplate>
 					</ComboBox>
-					<Label Grid.Column="2" Margin="3,0" Content="{x:Static properties:Resources.Size}"></Label>
+					<Label Grid.Column="2" Margin="3,0" Content="{x:Static properties:Resources.Size}" />
 					<ComboBox Grid.Column="3" Text="{Binding SelectedFontSize, Converter={StaticResource fontSizeConv}}" IsEditable="True" Margin="3,0">
 						<system:Int32>6</system:Int32>
 						<system:Int32>7</system:Int32>
@@ -61,42 +61,42 @@
 			</GroupBox>
 			<GroupBox Header="{x:Static properties:Resources.Indentation}">
 				<StackPanel Margin="3">
-					<CheckBox IsChecked="{Binding IndentationUseTabs}" Content="{x:Static properties:Resources.UseTabsInsteadOfSpaces}"></CheckBox>
+					<CheckBox IsChecked="{Binding IndentationUseTabs}" Content="{x:Static properties:Resources.UseTabsInsteadOfSpaces}" />
 					<StackPanel Orientation="Horizontal">
-						<Label Content="{x:Static properties:Resources.TabSize}"></Label>
+						<Label Content="{x:Static properties:Resources.TabSize}" />
 						<TextBox x:Name="tabSizeTextBox" Width="50" Margin="3" Text="{Binding IndentationTabSize}" PreviewTextInput="TextBox_PreviewTextInput" />
 					</StackPanel>
 					<StackPanel Orientation="Horizontal">
-						<Label Content="{x:Static properties:Resources.IndentSize}"></Label>
+						<Label Content="{x:Static properties:Resources.IndentSize}" />
 						<TextBox x:Name="indentSizeTextBox" Width="50" Margin="3" Text="{Binding IndentationSize}" PreviewTextInput="TextBox_PreviewTextInput" />
 					</StackPanel>
 				</StackPanel>
 			</GroupBox>
 			<GroupBox Header="{x:Static properties:Resources.DecompilationViewOptions}">
 				<StackPanel Margin="3">
-					<CheckBox IsChecked="{Binding ShowLineNumbers}" Content="{x:Static properties:Resources.ShowLineNumbers}"></CheckBox>
-					<CheckBox IsChecked="{Binding EnableWordWrap}" Content="{x:Static properties:Resources.EnableWordWrap}"></CheckBox>
-					<CheckBox IsChecked="{Binding FoldBraces}" Content="{x:Static properties:Resources.EnableFoldingBlocksBraces}"></CheckBox>
-					<CheckBox IsChecked="{Binding HighlightMatchingBraces}" Content="{x:Static properties:Resources.HighlightMatchingBraces}"></CheckBox>
-					<CheckBox IsChecked="{Binding HighlightCurrentLine}" Content="{x:Static properties:Resources.HighlightCurrentLine}"></CheckBox>
-					<CheckBox IsChecked="{Binding ExpandMemberDefinitions}" Content="{x:Static properties:Resources.ExpandMemberDefinitionsAfterDecompilation}"></CheckBox>
-					<CheckBox IsChecked="{Binding ExpandUsingDeclarations}" Content="{x:Static properties:Resources.ExpandUsingDeclarationsAfterDecompilation}"></CheckBox>
-					<CheckBox IsChecked="{Binding ShowDebugInfo}" Content="{x:Static properties:Resources.ShowInfoFromDebugSymbolsAvailable}"></CheckBox>
-					<CheckBox IsChecked="{Binding ShowRawOffsetsAndBytesBeforeInstruction}" Content="{x:Static properties:Resources.ShowRawOffsetsAndBytesBeforeInstruction}"></CheckBox>
+					<CheckBox IsChecked="{Binding ShowLineNumbers}" Content="{x:Static properties:Resources.ShowLineNumbers}" />
+					<CheckBox IsChecked="{Binding EnableWordWrap}" Content="{x:Static properties:Resources.EnableWordWrap}" />
+					<CheckBox IsChecked="{Binding FoldBraces}" Content="{x:Static properties:Resources.EnableFoldingBlocksBraces}" />
+					<CheckBox IsChecked="{Binding HighlightMatchingBraces}" Content="{x:Static properties:Resources.HighlightMatchingBraces}" />
+					<CheckBox IsChecked="{Binding HighlightCurrentLine}" Content="{x:Static properties:Resources.HighlightCurrentLine}" />
+					<CheckBox IsChecked="{Binding ExpandMemberDefinitions}" Content="{x:Static properties:Resources.ExpandMemberDefinitionsAfterDecompilation}" />
+					<CheckBox IsChecked="{Binding ExpandUsingDeclarations}" Content="{x:Static properties:Resources.ExpandUsingDeclarationsAfterDecompilation}" />
+					<CheckBox IsChecked="{Binding ShowDebugInfo}" Content="{x:Static properties:Resources.ShowInfoFromDebugSymbolsAvailable}" />
+					<CheckBox IsChecked="{Binding ShowRawOffsetsAndBytesBeforeInstruction}" Content="{x:Static properties:Resources.ShowRawOffsetsAndBytesBeforeInstruction}" />
 				</StackPanel>
 			</GroupBox>
 			<GroupBox Header="{x:Static properties:Resources.TreeViewOptions}">
 				<StackPanel Margin="3">
-					<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}"></CheckBox>
-					<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}" Content="{x:Static properties:Resources.ShowMetadataTokensInBase10}"></CheckBox>
-					<CheckBox IsChecked="{Binding HideEmptyMetadataTables}" Content="{x:Static properties:Resources.HideEmptyMetadataTables}"></CheckBox>
-					<CheckBox IsChecked="{Binding UseNestedNamespaceNodes}" Content="{x:Static properties:Resources.UseNestedNamespaceNodes}"></CheckBox>
+					<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}" />
+					<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}" Content="{x:Static properties:Resources.ShowMetadataTokensInBase10}" />
+					<CheckBox IsChecked="{Binding HideEmptyMetadataTables}" Content="{x:Static properties:Resources.HideEmptyMetadataTables}" />
+					<CheckBox IsChecked="{Binding UseNestedNamespaceNodes}" Content="{x:Static properties:Resources.UseNestedNamespaceNodes}" />
 				</StackPanel>
 			</GroupBox>
 			<GroupBox Header="{x:Static properties:Resources.OtherOptions}">
 				<StackPanel Margin="3">
-					<CheckBox IsChecked="{Binding SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}"></CheckBox>
-					<CheckBox IsChecked="{Binding StyleWindowTitleBar}" Content="{x:Static properties:Resources.StyleTheWindowTitleBar}"></CheckBox>
+					<CheckBox IsChecked="{Binding SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}" />
+					<CheckBox IsChecked="{Binding StyleWindowTitleBar}" Content="{x:Static properties:Resources.StyleTheWindowTitleBar}" />
 				</StackPanel>
 			</GroupBox>
 		</StackPanel>

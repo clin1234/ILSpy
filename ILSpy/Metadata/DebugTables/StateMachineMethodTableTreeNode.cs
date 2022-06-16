@@ -16,21 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class StateMachineMethodTableTreeNode : DebugMetadataTableTreeNode
+	internal sealed class StateMachineMethodTableTreeNode : DebugMetadataTableTreeNode
 	{
 		readonly bool isEmbedded;
 
@@ -53,8 +49,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<StateMachineMethodEntry>();
 			StateMachineMethodEntry scrollTargetEntry = default;
 			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
-			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength);
-			reader.Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
+			var reader = new BlobReader(metadata.MetadataPointer, metadata.MetadataLength) {
+				Offset = +metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod)
+			};
 
 			for (int rid = 1; rid <= length; rid++)
 			{
@@ -78,7 +75,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct StateMachineMethodEntry
+		readonly struct StateMachineMethodEntry
 		{
 			readonly int? offset;
 			readonly PEFile module;
@@ -88,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID { get; }
 
-			public object Offset => offset == null ? "n/a" : (object)offset;
+			public object Offset => offset == null ? "n/a" : offset;
 
 			[StringFormat("X8")]
 			[LinkToTable]
@@ -133,7 +130,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.RID = row;
 				int rowOffset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod)
 					+ metadata.GetTableRowSize(TableIndex.StateMachineMethod) * (row - 1);
-				this.offset = isEmbedded ? null : (int?)rowOffset;
+				this.offset = isEmbedded ? null : rowOffset;
 
 				int methodDefSize = metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4;
 				this.moveNextMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());

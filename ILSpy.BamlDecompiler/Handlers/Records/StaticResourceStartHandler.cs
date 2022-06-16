@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Linq;
 
 using ILSpy.BamlDecompiler.Baml;
@@ -29,16 +27,15 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.StaticResourceStart;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
-			var record = (StaticResourceStartRecord)((BamlBlockNode)node).Record;
 			var key = XamlResourceKey.FindKeyInSiblings(node);
 
 			key.StaticResources.Add(node);
 			return null;
 		}
 
-		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? TranslateDefer(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (StaticResourceStartRecord)((BamlBlockNode)node).Record;
 			var doc = new BamlElement(node);

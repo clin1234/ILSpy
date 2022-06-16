@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Navigation;
@@ -67,9 +68,10 @@ namespace ICSharpCode.ILSpy
 
 			output.AddUIElement(
 			delegate {
-				StackPanel stackPanel = new StackPanel();
-				stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
-				stackPanel.Orientation = Orientation.Horizontal;
+				StackPanel stackPanel = new StackPanel {
+					HorizontalAlignment = HorizontalAlignment.Center,
+					Orientation = Orientation.Horizontal
+				};
 				if (latestAvailableVersion == null)
 				{
 					AddUpdateCheckButton(stackPanel, textView);
@@ -79,11 +81,12 @@ namespace ICSharpCode.ILSpy
 					// we already retrieved the latest version sometime earlier
 					ShowAvailableVersion(latestAvailableVersion, stackPanel);
 				}
-				CheckBox checkBox = new CheckBox();
-				checkBox.Margin = new Thickness(4);
-				checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
+				CheckBox checkBox = new CheckBox {
+					Margin = new Thickness(4),
+					Content = Resources.AutomaticallyCheckUpdatesEveryWeek
+				};
 				UpdateSettings settings = new UpdateSettings(ILSpySettings.Load());
-				checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
+				checkBox.SetBinding(ToggleButton.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
 				return new StackPanel {
 					Margin = new Thickness(0, 4, 0, 0),
 					Cursor = Cursors.Arrow,
@@ -100,8 +103,7 @@ namespace ICSharpCode.ILSpy
 			{
 				using (StreamReader r = new StreamReader(s))
 				{
-					string line;
-					while ((line = r.ReadLine()) != null)
+					while (r.ReadLine() is { } line)
 					{
 						output.WriteLine(line);
 					}

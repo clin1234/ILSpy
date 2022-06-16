@@ -31,19 +31,20 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.DefAttributeKeyString;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			XamlResourceKey.Create(node);
 			return null;
 		}
 
-		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? TranslateDefer(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (DefAttributeKeyStringRecord)((BamlRecordNode)node).Record;
 			var key = (XamlResourceKey)node.Annotation;
 
-			var bamlElem = new BamlElement(node);
-			bamlElem.Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml));
+			var bamlElem = new BamlElement(node) {
+				Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml))
+			};
 			parent.Xaml.Element.Add(bamlElem.Xaml.Element);
 			bamlElem.Xaml.Element.Value = ctx.ResolveString(record.ValueId);
 			key.KeyElement = bamlElem;

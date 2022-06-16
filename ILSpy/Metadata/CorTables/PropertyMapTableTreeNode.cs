@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class PropertyMapTableTreeNode : MetadataTableTreeNode
+	sealed class PropertyMapTableTreeNode : MetadataTableTreeNode
 	{
 		public PropertyMapTableTreeNode(PEFile module)
 			: base((HandleKind)0x15, module)
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		unsafe struct PropertyMapEntry
+		unsafe readonly struct PropertyMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;

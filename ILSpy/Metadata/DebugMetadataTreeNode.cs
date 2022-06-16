@@ -18,21 +18,19 @@
 
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DebugMetadataTreeNode : ILSpyTreeNode
+	sealed class DebugMetadataTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
-		private MetadataReader provider;
-		private bool isEmbedded;
+		private readonly PEFile module;
+		private readonly MetadataReader provider;
+		private readonly bool isEmbedded;
 
 		public DebugMetadataTreeNode(PEFile module, bool isEmbedded, MetadataReader provider)
 		{

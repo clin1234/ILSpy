@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Search
 	/// <summary>
 	/// Search pane
 	/// </summary>
-	public partial class SearchPane : UserControl
+	public sealed partial class SearchPane : UserControl
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
@@ -177,36 +177,37 @@ namespace ICSharpCode.ILSpy.Search
 
 		void ListBox_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Return)
+			switch (e.Key)
 			{
-				e.Handled = true;
-				JumpToSelectedItem();
-			}
-			else if (e.Key == Key.Up && listBox.SelectedIndex == 0)
-			{
-				e.Handled = true;
-				listBox.SelectedIndex = -1;
-				searchBox.Focus();
+				case Key.Return:
+					e.Handled = true;
+					JumpToSelectedItem();
+					break;
+				case Key.Up when listBox.SelectedIndex == 0:
+					e.Handled = true;
+					listBox.SelectedIndex = -1;
+					searchBox.Focus();
+					break;
 			}
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			base.OnKeyDown(e);
-			if (e.Key == Key.T && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+			switch (e.Key)
 			{
-				searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
-				e.Handled = true;
-			}
-			else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
-			{
-				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
-				e.Handled = true;
-			}
-			else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
-			{
-				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
-				e.Handled = true;
+				case Key.T when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+					searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
+					e.Handled = true;
+					break;
+				case Key.M when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+					searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
+					e.Handled = true;
+					break;
+				case Key.S when e.KeyboardDevice.Modifiers == ModifierKeys.Control:
+					searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
+					e.Handled = true;
+					break;
 			}
 		}
 
@@ -322,14 +323,7 @@ namespace ICSharpCode.ILSpy.Search
 					}
 
 					// Find end of prefix
-					if (part.StartsWith("@", StringComparison.Ordinal))
-					{
-						prefixLength = 1;
-					}
-					else
-					{
-						prefixLength = part.IndexOf(':', 0, prefixLength);
-					}
+					prefixLength = part.StartsWith("@", StringComparison.Ordinal) ? 1 : part.IndexOf(':', 0, prefixLength);
 					string prefix;
 					if (prefixLength <= 0)
 					{
@@ -338,17 +332,17 @@ namespace ICSharpCode.ILSpy.Search
 					}
 					else
 					{
-						prefix = part.Substring(0, prefixLength);
+						prefix = part[..prefixLength];
 					}
 
 					// unescape quotes
-					string searchTerm = part.Substring(prefixLength + 1).Trim();
+					string searchTerm = part[(prefixLength + 1)..].Trim();
 					if (searchTerm.Length > 0)
 					{
 						searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm)[0];
 					}
 
-					if (prefix == null || prefix.Length <= 2)
+					if (prefix is not { Length: > 2 })
 					{
 						if (regex == null && searchTerm.StartsWith("/", StringComparison.Ordinal) && searchTerm.Length > 1)
 						{
@@ -433,7 +427,7 @@ namespace ICSharpCode.ILSpy.Search
 					}
 				}
 
-				Regex CreateRegex(string s)
+				static Regex CreateRegex(string s)
 				{
 					try
 					{
@@ -495,35 +489,28 @@ namespace ICSharpCode.ILSpy.Search
 				if (request.Keywords.Length == 0 && request.RegEx == null)
 					return null;
 
-				switch (request.Mode)
-				{
-					case SearchMode.TypeAndMember:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue);
-					case SearchMode.Type:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Type);
-					case SearchMode.Member:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, request.MemberSearchKind);
-					case SearchMode.Literal:
-						return new LiteralSearchStrategy(language, apiVisibility, request, resultQueue);
-					case SearchMode.Method:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Method);
-					case SearchMode.Field:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Field);
-					case SearchMode.Property:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Property);
-					case SearchMode.Event:
-						return new MemberSearchStrategy(language, apiVisibility, request, resultQueue, MemberSearchKind.Event);
-					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue);
-					case SearchMode.Resource:
-						return new ResourceSearchStrategy(apiVisibility, request, resultQueue);
-					case SearchMode.Assembly:
-						return new AssemblySearchStrategy(request, resultQueue, AssemblySearchKind.NameOrFileName);
-					case SearchMode.Namespace:
-						return new NamespaceSearchStrategy(request, resultQueue);
-				}
-
-				return null;
+				return request.Mode switch {
+					SearchMode.TypeAndMember => new MemberSearchStrategy(language, apiVisibility, request, resultQueue),
+					SearchMode.Type => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Type),
+					SearchMode.Member => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						request.MemberSearchKind),
+					SearchMode.Literal => new LiteralSearchStrategy(language, apiVisibility, request, resultQueue),
+					SearchMode.Method => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Method),
+					SearchMode.Field => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Field),
+					SearchMode.Property => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Property),
+					SearchMode.Event => new MemberSearchStrategy(language, apiVisibility, request, resultQueue,
+						MemberSearchKind.Event),
+					SearchMode.Token => new MetadataTokenSearchStrategy(language, apiVisibility, request, resultQueue),
+					SearchMode.Resource => new ResourceSearchStrategy(apiVisibility, request, resultQueue),
+					SearchMode.Assembly => new AssemblySearchStrategy(request, resultQueue,
+						AssemblySearchKind.NameOrFileName),
+					SearchMode.Namespace => new NamespaceSearchStrategy(request, resultQueue),
+					_ => null
+				};
 			}
 		}
 	}

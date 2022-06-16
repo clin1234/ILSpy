@@ -208,7 +208,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
 			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
 			if (debugInfo is PortableDebugInfoProvider ppdb
-				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
+				&& ppdb.GetMetadataReader() is { } reader)
 			{
 				this.Children.Add(new Metadata.DebugMetadataTreeNode(module, ppdb.IsEmbedded, reader));
 			}
@@ -250,8 +250,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						}
 						else
 						{
-							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
-							var escapedInnerNamespace = Language.EscapeName(@namespace.Substring(decimalIndex + 1));
+							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace[..decimalIndex]);
+							var escapedInnerNamespace = Language.EscapeName(@namespace[(decimalIndex + 1)..]);
 							ns = new NamespaceTreeNode(escapedInnerNamespace);
 							parentNamespaceTreeNode.Children.Add(ns);
 						}
@@ -284,8 +284,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (type == null)
 				return null;
 			EnsureLazyChildren();
-			TypeTreeNode node;
-			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
+			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out TypeTreeNode node))
 				return node;
 			else
 				return null;
@@ -299,8 +298,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (string.IsNullOrEmpty(namespaceName))
 				return null;
 			EnsureLazyChildren();
-			NamespaceTreeNode node;
-			if (namespaces.TryGetValue(namespaceName, out node))
+			if (namespaces.TryGetValue(namespaceName, out NamespaceTreeNode node))
 				return node;
 			else
 				return null;
@@ -424,13 +422,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Language language = this.Language;
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(LoadedAssembly.ShortName) + language.ProjectFileExtension;
-			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = WholeProjectDecompiler.CleanUpFileName(LoadedAssembly.ShortName) + language.ProjectFileExtension,
+				Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*"
+			};
 			if (dlg.ShowDialog() == true)
 			{
-				DecompilationOptions options = new DecompilationOptions();
-				options.FullDecompilation = true;
+				DecompilationOptions options = new DecompilationOptions {
+					FullDecompilation = true
+				};
 				if (dlg.FilterIndex == 1)
 				{
 					options.SaveAsProjectDirectory = Path.GetDirectoryName(dlg.FileName);

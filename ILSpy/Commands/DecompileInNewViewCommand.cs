@@ -22,9 +22,7 @@ using System.Linq;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Commands
@@ -62,14 +60,14 @@ namespace ICSharpCode.ILSpy.Commands
 			}
 			else if (context.Reference?.Reference is IEntity entity)
 			{
-				if (MainWindow.Instance.FindTreeNode(entity) is ILSpyTreeNode node)
+				if (MainWindow.Instance.FindTreeNode(entity) is { } node)
 				{
 					return new[] { node };
 				}
 			}
 			return Array.Empty<ILSpyTreeNode>();
 
-			ILSpyTreeNode FindTreeNode(IMemberTreeNode node)
+			static ILSpyTreeNode FindTreeNode(IMemberTreeNode node)
 			{
 				if (node is ILSpyTreeNode ilspyNode)
 					return ilspyNode;

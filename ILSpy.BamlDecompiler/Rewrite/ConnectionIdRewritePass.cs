@@ -32,7 +32,7 @@ using ILSpy.BamlDecompiler.Xaml;
 
 namespace ILSpy.BamlDecompiler.Rewrite
 {
-	internal class ConnectionIdRewritePass : IRewritePass
+	internal sealed class ConnectionIdRewritePass : IRewritePass
 	{
 		static readonly TopLevelTypeName componentConnectorTypeName
 			= new TopLevelTypeName("System.Windows.Markup", "IComponentConnector");
@@ -69,11 +69,11 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				{
 					foreach (var entry in eventMappings[index].value)
 					{
-						string xmlns = ""; // TODO : implement xmlns resolver!
+						const string xmlns = ""; // TODO : implement xmlns resolver!
 						var type = element.Annotation<XamlType>();
 						if (type?.TypeNamespace + "." + type?.TypeName == "System.Windows.Style")
 						{
-							element.Add(new XElement(type.Namespace + "EventSetter",
+							element.Add(new XElement(type?.Namespace + "EventSetter",
 								new XAttribute("Event", entry.EventName),
 								new XAttribute("Handler", entry.MethodName)));
 						}
@@ -97,8 +97,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var fieldAssignments = new List<(LongSet key, FieldAssignment value)>();
 			var eventMappings = new List<(LongSet, EventRegistration[])>();
 
-			var xClass = document.Root
-				.Elements().First()
+			var xClass = document.Root?.Elements().First()
 				.Attribute(ctx.GetKnownNamespace("Class", XamlContext.KnownNamespace_Xaml));
 			if (xClass == null)
 				return (fieldAssignments, eventMappings);
@@ -119,7 +118,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var connectorInterface = ctx.TypeSystem.FindType(connectorTypeName).GetDefinition();
 			if (connectorInterface == null)
 				return;
-			var connect = connectorInterface.GetMethods(m => m.Name == "Connect").SingleOrDefault();
+			var connect = connectorInterface.GetMethods(static m => m.Name == "Connect").SingleOrDefault();
 
 			IMethod method = null;
 			MethodDefinition metadataEntry = default;
@@ -141,7 +140,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 			var body = module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress);
 			var genericContext = new GenericContext(
-				classTypeParameters: method.DeclaringType?.TypeParameters,
+				classTypeParameters: method.DeclaringType.TypeParameters,
 				methodTypeParameters: method.TypeParameters);
 
 			// decompile method and optimize the switch
@@ -383,7 +382,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				{
 					return false;
 				}
-				eventName = addMethod.Name.Substring("add_".Length);
+				eventName = addMethod.Name["add_".Length..];
 				return MatchEventHandlerCreation(call.Arguments[1], out handlerName);
 			}
 
@@ -398,7 +397,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var ldftn = newObj.Arguments[1];
 			if (ldftn.OpCode != OpCode.LdFtn && ldftn.OpCode != OpCode.LdVirtFtn)
 				return false;
-			handlerName = ((IInstructionWithMethodOperand)ldftn).Method.Name;
+			handlerName = ((IInstructionWithMethodOperand)ldftn).Method?.Name;
 			handlerName = XamlUtils.EscapeName(handlerName);
 			return true;
 		}

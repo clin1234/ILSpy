@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
-	public partial class App : Application
+	public sealed partial class App
 	{
 		internal static CommandLineArguments CommandLineArguments;
 		internal static readonly IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy
 		public static ExportProvider ExportProvider { get; private set; }
 		public static IExportProviderFactory ExportProviderFactory { get; private set; }
 
-		internal class ExceptionData
+		internal sealed class ExceptionData
 		{
 			public Exception Exception;
 			public string PluginName;
@@ -60,8 +60,8 @@ namespace ICSharpCode.ILSpy
 		public App()
 		{
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
-			bool forceSingleInstance = (App.CommandLineArguments.SingleInstance ?? true)
+			CommandLineArguments = new CommandLineArguments(cmdArgs);
+			bool forceSingleInstance = (CommandLineArguments.SingleInstance ?? true)
 				&& !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances;
 			if (forceSingleInstance)
 			{
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy
 				}
 				cmdArgs = cmdArgs.Select(FullyQualifyPath);
 				string message = string.Join(Environment.NewLine, cmdArgs);
-				if (SendToPreviousInstance("ILSpy:\r\n" + message, !App.CommandLineArguments.NoActivate))
+				if (SendToPreviousInstance("ILSpy:\r\n" + message, !CommandLineArguments.NoActivate))
 				{
 					ReleaseSingleInstanceMutex();
 					Environment.Exit(0);
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy
 
 			Resources.RegisterDefaultStyles();
 
-			if (!System.Diagnostics.Debugger.IsAttached)
+			if (!Debugger.IsAttached)
 			{
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
@@ -238,8 +238,7 @@ namespace ICSharpCode.ILSpy
 
 		static void ShowErrorBox(object sender, UnhandledExceptionEventArgs e)
 		{
-			Exception ex = e.ExceptionObject as Exception;
-			if (ex != null)
+			if (e.ExceptionObject is Exception ex)
 			{
 				UnhandledException(ex);
 			}
@@ -253,8 +252,7 @@ namespace ICSharpCode.ILSpy
 			Debug.WriteLine(exception.ToString());
 			for (Exception ex = exception; ex != null; ex = ex.InnerException)
 			{
-				ReflectionTypeLoadException rtle = ex as ReflectionTypeLoadException;
-				if (rtle != null && rtle.LoaderExceptions.Length > 0)
+				if (ex is ReflectionTypeLoadException rtle && rtle.LoaderExceptions.Length > 0)
 				{
 					exception = rtle.LoaderExceptions[0];
 					Debug.WriteLine(exception.ToString());
@@ -290,7 +288,7 @@ namespace ICSharpCode.ILSpy
 
 			bool success = false;
 			NativeMethods.EnumWindows(
-				(hWnd, lParam) => {
+				(hWnd, _) => {
 					string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
 					if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal))
 					{
@@ -324,11 +322,10 @@ namespace ICSharpCode.ILSpy
 			fixed (char* buffer = message)
 			{
 				lParam.Buffer = (IntPtr)buffer;
-				IntPtr result;
 				// SendMessage with 3s timeout (e.g. when the target process is stopped in the debugger)
 				if (NativeMethods.SendMessageTimeout(
 					hWnd, NativeMethods.WM_COPYDATA, IntPtr.Zero, ref lParam,
-					SMTO_NORMAL, 3000, out result) != IntPtr.Zero)
+					SMTO_NORMAL, 3000, out IntPtr result) != IntPtr.Zero)
 				{
 					return result;
 				}

@@ -33,7 +33,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PropertyTypeReference;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyTypeReferenceRecord)((BamlRecordNode)node).Record;
 			var attr = ctx.ResolveProperty(record.AttributeId);
@@ -65,7 +65,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 		}
 	}
 
-	internal class TargetTypeAnnotation
+	internal sealed class TargetTypeAnnotation
 	{
 		public XamlType Type { get; }
 

@@ -221,19 +221,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 			return false;
 
-			bool CheckAttributeValue(object value)
+			static bool CheckAttributeValue(object value)
 			{
-				if (value is TokenSearchResult typeofType)
+				switch (value)
 				{
-					if ((typeofType & TokenSearchResult.Found) != 0)
+					case TokenSearchResult typeofType when (typeofType & TokenSearchResult.Found) != 0:
 						return true;
-				}
-				else if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr)
-				{
-					foreach (var element in arr)
+					case ImmutableArray<CustomAttributeTypedArgument<IType>> arr:
 					{
-						if (CheckAttributeValue(element.Value))
-							return true;
+						foreach (var element in arr)
+						{
+							if (CheckAttributeValue(element.Value))
+								return true;
+						}
+
+						break;
 					}
 				}
 
@@ -391,7 +393,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public bool Show(ISymbol symbol) => symbol is ITypeDefinition;
 	}
 
-	class TypeDefinitionUsedVisitor : TypeVisitor
+	sealed class TypeDefinitionUsedVisitor : TypeVisitor
 	{
 		public readonly ITypeDefinition TypeDefinition;
 

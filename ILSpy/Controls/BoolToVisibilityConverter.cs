@@ -23,20 +23,20 @@ using System.Windows.Data;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class BoolToVisibilityConverter : IValueConverter
+	public sealed class BoolToVisibilityConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			if (!(parameter is Visibility notVisible))
+			if (parameter is not Visibility notVisible)
 				notVisible = Visibility.Collapsed;
-			if (!(value is bool b))
+			if (value is not bool b)
 				return notVisible;
 			return b ? Visibility.Visible : notVisible;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			if (!(value is Visibility visibility))
+			if (value is not Visibility visibility)
 				return false;
 			return visibility == Visibility.Visible;
 		}

@@ -28,7 +28,7 @@ namespace ICSharpCode.TreeView
 	/// Custom TextSearch-implementation.
 	/// Fixes #67 - Moving to class member in tree view by typing in first character of member name selects parent assembly
 	/// </summary>
-	public class SharpTreeViewTextSearch : DependencyObject
+	public sealed class SharpTreeViewTextSearch : DependencyObject
 	{
 		[DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
 		static extern int GetDoubleClickTime();
@@ -48,8 +48,7 @@ namespace ICSharpCode.TreeView
 
 		private SharpTreeViewTextSearch(SharpTreeView treeView)
 		{
-			if (treeView == null)
-				throw new ArgumentNullException(nameof(treeView));
+			ArgumentNullException.ThrowIfNull(treeView);
 			this.treeView = treeView;
 			inputStack = new Stack<string>(8);
 			ClearState();
@@ -70,7 +69,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (!isActive || inputStack.Count == 0)
 				return false;
-			matchPrefix = matchPrefix.Substring(0, matchPrefix.Length - inputStack.Pop().Length);
+			matchPrefix = matchPrefix[..^inputStack.Pop().Length];
 			ResetTimeout();
 			return true;
 		}
@@ -115,7 +114,7 @@ namespace ICSharpCode.TreeView
 			do
 			{
 				var item = (SharpTreeNode)treeView.Items[i];
-				if (item != null && item.Text != null)
+				if (item is { Text: { } })
 				{
 					string text = item.Text.ToString();
 					if (text.StartsWith(needle, comparisonType))

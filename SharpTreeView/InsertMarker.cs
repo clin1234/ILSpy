@@ -21,7 +21,7 @@ using System.Windows.Controls;
 
 namespace ICSharpCode.TreeView
 {
-	public class InsertMarker : Control
+	internal sealed class InsertMarker : Control
 	{
 		static InsertMarker()
 		{

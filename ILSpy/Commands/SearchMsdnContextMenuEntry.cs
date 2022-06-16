@@ -17,31 +17,24 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
-using System.Threading;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 namespace ICSharpCode.ILSpy
 {
-	using ICSharpCode.Decompiler.TypeSystem;
+	using Decompiler.TypeSystem;
 
 	[ExportContextMenuEntry(Header = nameof(Resources.SearchMSDN), Icon = "images/SearchMsdn", Order = 9999)]
 	internal sealed class SearchMsdnContextMenuEntry : IContextMenuEntry
 	{
-		private static string msdnAddress = "https://docs.microsoft.com/dotnet/api/{0}";
+		private const string msdnAddress = "https://docs.microsoft.com/dotnet/api/{0}";
 
 		public bool IsVisible(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
 				return false;
 
-			return context.SelectedTreeNodes.All(
-				n => n is NamespaceTreeNode
-				|| n is TypeTreeNode
-				|| n is EventTreeNode
-				|| n is FieldTreeNode
-				|| n is PropertyTreeNode
-				|| n is MethodTreeNode);
+			return context.SelectedTreeNodes.All(static n => n is NamespaceTreeNode or TypeTreeNode or EventTreeNode or FieldTreeNode or PropertyTreeNode or MethodTreeNode);
 		}
 
 		public bool IsEnabled(TextViewContext context)
@@ -51,23 +44,16 @@ namespace ICSharpCode.ILSpy
 
 			foreach (var node in context.SelectedTreeNodes)
 			{
-				if (node is TypeTreeNode typeNode && !typeNode.IsPublicAPI)
-					return false;
-
-				if (node is EventTreeNode eventNode && (!eventNode.IsPublicAPI || !IsAccessible(eventNode.EventDefinition)))
-					return false;
-
-				if (node is FieldTreeNode fieldNode && (!fieldNode.IsPublicAPI || !IsAccessible(fieldNode.FieldDefinition) || IsDelegateOrEnumMember(fieldNode.FieldDefinition)))
-					return false;
-
-				if (node is PropertyTreeNode propertyNode && (!propertyNode.IsPublicAPI || !IsAccessible(propertyNode.PropertyDefinition)))
-					return false;
-
-				if (node is MethodTreeNode methodNode && (!methodNode.IsPublicAPI || !IsAccessible(methodNode.MethodDefinition) || IsDelegateOrEnumMember(methodNode.MethodDefinition)))
-					return false;
-
-				if (node is NamespaceTreeNode namespaceNode && string.IsNullOrEmpty(namespaceNode.Name))
-					return false;
+				switch (node)
+				{
+					case TypeTreeNode { IsPublicAPI: false }:
+					case EventTreeNode eventNode when (!eventNode.IsPublicAPI || !IsAccessible(eventNode.EventDefinition)):
+					case FieldTreeNode fieldNode when (!fieldNode.IsPublicAPI || !IsAccessible(fieldNode.FieldDefinition) || IsDelegateOrEnumMember(fieldNode.FieldDefinition)):
+					case PropertyTreeNode propertyNode when (!propertyNode.IsPublicAPI || !IsAccessible(propertyNode.PropertyDefinition)):
+					case MethodTreeNode methodNode when (!methodNode.IsPublicAPI || !IsAccessible(methodNode.MethodDefinition) || IsDelegateOrEnumMember(methodNode.MethodDefinition)):
+					case NamespaceTreeNode namespaceNode when string.IsNullOrEmpty(namespaceNode.Name):
+						return false;
+				}
 			}
 
 			return true;
@@ -106,7 +92,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (context.SelectedTreeNodes != null)
 			{
-				foreach (ILSpyTreeNode node in context.SelectedTreeNodes)
+				foreach (var node in context.SelectedTreeNodes.Cast<ILSpyTreeNode>())
 				{
 					SearchMsdn(node);
 				}
@@ -117,18 +103,21 @@ namespace ICSharpCode.ILSpy
 		{
 			var address = string.Empty;
 
-			if (node is NamespaceTreeNode namespaceNode)
+			switch (node)
 			{
-				address = string.Format(msdnAddress, namespaceNode.Name);
-			}
-			else if (node is IMemberTreeNode memberNode)
-			{
-				var member = memberNode.Member;
-				var memberName = member.ReflectionName.Replace('`', '-').Replace('+', '.');
-				if (memberName.EndsWith("..ctor", System.StringComparison.Ordinal))
-					memberName = memberName.Substring(0, memberName.Length - 5) + "-ctor";
+				case NamespaceTreeNode namespaceNode:
+					address = string.Format(msdnAddress, namespaceNode.Name);
+					break;
+				case IMemberTreeNode memberNode:
+				{
+					var member = memberNode.Member;
+					var memberName = member.ReflectionName.Replace('`', '-').Replace('+', '.');
+					if (memberName.EndsWith("..ctor", System.StringComparison.Ordinal))
+						memberName = memberName[..^5] + "-ctor";
 
-				address = string.Format(msdnAddress, memberName);
+					address = string.Format(msdnAddress, memberName);
+					break;
+				}
 			}
 
 			address = address.ToLower();

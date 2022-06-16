@@ -31,10 +31,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public abstract DataTemplate Template { get; }
 
-		public KeyGesture ShortcutKey { get; protected set; }
+		public KeyGesture ShortcutKey { get; protected init; }
 
-		public string Icon { get; protected set; }
+		public string Icon { get; protected init; }
 
-		public ICommand AssociatedCommand { get; set; }
+		public ICommand AssociatedCommand { get; init; }
 	}
 }

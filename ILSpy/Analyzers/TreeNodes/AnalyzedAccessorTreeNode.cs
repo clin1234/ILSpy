@@ -20,7 +20,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
-	class AnalyzedAccessorTreeNode : AnalyzedMethodTreeNode
+	sealed class AnalyzedAccessorTreeNode : AnalyzedMethodTreeNode
 	{
 		readonly string name;
 

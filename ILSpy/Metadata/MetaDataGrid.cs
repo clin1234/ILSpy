@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,7 +28,7 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class MetaDataGrid : DataGrid, IHaveState
+	sealed class MetaDataGrid : DataGrid, IHaveState
 	{
 		private readonly MouseHoverLogic hoverLogic;
 		private ToolTip toolTip;
@@ -57,11 +56,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var position = e.GetPosition(this);
 			var hit = VisualTreeHelper.HitTest(this, position);
-			if (hit == null)
-			{
-				return;
-			}
-			var cell = hit.VisualHit.GetParent<DataGridCell>();
+			var cell = hit?.VisualHit.GetParent<DataGridCell>();
 			if (cell == null)
 				return;
 			var data = cell.DataContext;

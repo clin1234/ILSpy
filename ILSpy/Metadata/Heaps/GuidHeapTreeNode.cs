@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -26,7 +25,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class GuidHeapTreeNode : MetadataHeapTreeNode
+	internal sealed class GuidHeapTreeNode : MetadataHeapTreeNode
 	{
 		readonly List<GuidHeapEntry> list;
 
@@ -60,7 +59,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		class GuidHeapEntry
+		sealed class GuidHeapEntry
 		{
 			readonly MetadataReader metadata;
 			readonly GuidHandle handle;

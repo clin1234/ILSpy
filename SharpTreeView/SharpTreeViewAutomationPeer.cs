@@ -20,7 +20,7 @@ using System.Windows.Automation.Peers;
 
 namespace ICSharpCode.TreeView
 {
-	class SharpTreeViewAutomationPeer : FrameworkElementAutomationPeer
+	sealed class SharpTreeViewAutomationPeer : FrameworkElementAutomationPeer
 	{
 		internal SharpTreeViewAutomationPeer(SharpTreeView owner) : base(owner)
 		{

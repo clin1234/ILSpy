@@ -28,6 +28,6 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PIMapping;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent) => null;
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent) => null;
 	}
 }

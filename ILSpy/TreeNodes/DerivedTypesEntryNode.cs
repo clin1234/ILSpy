@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
@@ -25,9 +24,9 @@ using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	using ICSharpCode.Decompiler.TypeSystem;
+	using Decompiler.TypeSystem;
 
-	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
+	sealed class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly AssemblyList list;
 		readonly ITypeDefinition type;

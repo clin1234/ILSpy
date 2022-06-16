@@ -22,7 +22,6 @@ using System.IO;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpyX.Abstractions;
 
 using Microsoft.Win32;
 
@@ -47,12 +46,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public ResourceEntryNode(string key, Func<Stream> openStream)
 		{
-			if (key == null)
-				throw new ArgumentNullException(nameof(key));
-			if (openStream == null)
-				throw new ArgumentNullException(nameof(openStream));
-			this.key = key;
-			this.openStream = openStream;
+			this.key = key ?? throw new ArgumentNullException(nameof(key));
+			this.openStream = openStream ?? throw new ArgumentNullException(nameof(openStream));
 		}
 
 		public static ILSpyTreeNode Create(Resource resource)
@@ -75,13 +70,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			using var data = OpenStream();
-			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
+			language.WriteCommentLine(output, $"{key} = {data}");
 		}
 
 		public override bool Save(ViewModels.TabPageModel tabPage)
 		{
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(key));
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(key))
+			};
 			if (dlg.ShowDialog() == true)
 			{
 				using var data = OpenStream();

@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Interaction logic for ManageAssemblyListsDialog.xaml
 	/// </summary>
-	public partial class ManageAssemblyListsDialog : Window
+	public sealed partial class ManageAssemblyListsDialog
 	{
 		public ManageAssemblyListsDialog()
 		{

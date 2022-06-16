@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -28,7 +27,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class DocumentTableTreeNode : DebugMetadataTableTreeNode
+	internal sealed class DocumentTableTreeNode : DebugMetadataTableTreeNode
 	{
 		private readonly bool isEmbedded;
 
@@ -73,7 +72,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct DocumentEntry
+		readonly struct DocumentEntry
 		{
 			readonly int? offset;
 			readonly MetadataReader metadata;
@@ -82,7 +81,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
-			public object Offset => offset == null ? "n/a" : (object)offset;
+			public object Offset => offset == null ? "n/a" : offset;
 
 			public string Name => metadata.GetString(document.Name);
 

@@ -30,7 +30,7 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ILSpy.BamlDecompiler
 {
-	public sealed class BamlResourceEntryNode : ResourceEntryNode
+	internal sealed class BamlResourceEntryNode : ResourceEntryNode
 	{
 		public BamlResourceEntryNode(string key, Func<Stream> data) : base(key, data)
 		{
@@ -66,8 +66,9 @@ namespace ILSpy.BamlDecompiler
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().First().LoadedAssembly;
 			using var data = OpenStream();
 			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(asm.GetPEFileOrNull(), asm.GetAssemblyResolver());
-			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
-			decompiler.CancellationToken = cancellationToken;
+			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings()) {
+				CancellationToken = cancellationToken
+			};
 			var result = decompiler.Decompile(data);
 			output.Write(result.Xaml.ToString());
 		}

@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	[ExportAnalyzer(Header = "Uses", Order = 10)]
 	class MethodUsesAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol symbol) => symbol is IMethod method && method.HasBody;
+		public bool Show(ISymbol symbol) => symbol is IMethod { HasBody: true };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				yield break;
 			}
 			var visitor = new TypeDefinitionCollector();
-			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
+			var genericContext = new GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0)
 			{
@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					default:
 						try
 						{
-							ILParser.SkipOperand(ref blob, opCode);
+							blob.SkipOperand(opCode);
 						}
 						catch (BadImageFormatException)
 						{
@@ -143,7 +143,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		class TypeDefinitionCollector : TypeVisitor
+		sealed class TypeDefinitionCollector : TypeVisitor
 		{
 			public readonly List<ITypeDefinition> UsedTypes = new List<ITypeDefinition>();
 

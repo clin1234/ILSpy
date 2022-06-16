@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			this.Children.Clear();
 			this.Children.AddRange(collection.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
-			collection.CollectionChanged += delegate (object sender, NotifyCollectionChangedEventArgs e) {
+			collection.CollectionChanged += delegate (object _, NotifyCollectionChangedEventArgs e) {
 				switch (e.Action)
 				{
 					case NotifyCollectionChangedAction.Add:
@@ -97,8 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Drop(DragEventArgs e, int index)
 		{
-			string[] files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
-			if (files == null)
+			if (e.Data.GetData(AssemblyTreeNode.DataFormat) is not string[] files)
 				files = e.Data.GetData(DataFormats.FileDrop) as string[];
 			if (files != null)
 			{
@@ -179,7 +178,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (asm == null)
 				return null;
-			App.Current.Dispatcher.VerifyAccess();
+			Application.Current.Dispatcher.VerifyAccess();
 			if (asm.ParentBundle != null)
 			{
 				var bundle = FindAssemblyNode(asm.ParentBundle);
@@ -275,9 +274,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return methodNode;
 				default:
 					methodNode = typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-					if (methodNode != null)
-						return methodNode;
-					return null;
+					return methodNode;
 			}
 		}
 

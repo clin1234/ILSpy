@@ -93,15 +93,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private void ProcessResourceEntry(KeyValuePair<string, object> entry)
 		{
-			if (entry.Value is string)
+			if (entry.Value is string value)
 			{
-				stringTableEntries.Add(new KeyValuePair<string, string>(entry.Key, (string)entry.Value));
+				stringTableEntries.Add(new KeyValuePair<string, string>(entry.Key, value));
 				return;
 			}
 
-			if (entry.Value is byte[])
+			if (entry.Value is byte[] bytes)
 			{
-				Children.Add(ResourceEntryNode.Create(entry.Key, (byte[])entry.Value));
+				Children.Add(ResourceEntryNode.Create(entry.Key, bytes));
 				return;
 			}
 
@@ -130,9 +130,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Stream s = Resource.TryOpenStream();
 			if (s == null)
 				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
-			dlg.Filter = Resources.ResourcesFileFilter;
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name)),
+				Filter = Resources.ResourcesFileFilter
+			};
 			if (dlg.ShowDialog() == true)
 			{
 				s.Position = 0;
@@ -147,13 +148,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					case 2:
 						try
 						{
-							using (var fs = dlg.OpenFile())
-							using (var writer = new ResXResourceWriter(fs))
+							using var fs = dlg.OpenFile();
+							using var writer = new ResXResourceWriter(fs);
+							foreach (var entry in new ResourcesFile(s))
 							{
-								foreach (var entry in new ResourcesFile(s))
-								{
-									writer.AddResource(entry.Key, entry.Value);
-								}
+								writer.AddResource(entry.Key, entry.Value);
 							}
 						}
 						catch (BadImageFormatException)
@@ -179,33 +178,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (stringTableEntries.Count != 0)
 			{
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
-				if (null != smartOutput)
-				{
-					smartOutput.AddUIElement(
-						delegate {
-							return new ResourceStringTable(stringTableEntries, textView);
-						}
-					);
-				}
+				smartOutput?.AddUIElement(
+					delegate {
+						return new ResourceStringTable(stringTableEntries, textView);
+					}
+				);
 				output.WriteLine();
 				output.WriteLine();
 			}
 			if (otherEntries.Count != 0)
 			{
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
-				if (null != smartOutput)
-				{
-					smartOutput.AddUIElement(
-						delegate {
-							return new ResourceObjectTable(otherEntries, textView);
-						}
-					);
-				}
+				smartOutput?.AddUIElement(
+					delegate {
+						return new ResourceObjectTable(otherEntries, textView);
+					}
+				);
 				output.WriteLine();
 			}
 		}
 
-		internal class SerializedObjectRepresentation
+		internal sealed class SerializedObjectRepresentation
 		{
 			public SerializedObjectRepresentation(string key, string type, string value)
 			{

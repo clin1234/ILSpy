@@ -17,10 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Xml.Linq;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -165,23 +163,21 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
-			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read))
-			{
-				var module = new PEFile(asmPath, fileStream);
-				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Metadata.DetectTargetFrameworkId());
-				resolver.RemoveSearchDirectory(".");
-				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
-				var res = module.Resources.First();
-				Stream bamlStream = LoadBaml(res, name + ".baml");
-				Assert.IsNotNull(bamlStream);
+			using var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(asmPath, fileStream);
+			var resolver = new UniversalAssemblyResolver(asmPath, false, module.Metadata.DetectTargetFrameworkId());
+			resolver.RemoveSearchDirectory(".");
+			resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
+			var res = module.Resources.First();
+			Stream bamlStream = LoadBaml(res, name + ".baml");
+			Assert.IsNotNull(bamlStream);
 
-				BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(module, resolver);
-				var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
+			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(module, resolver);
+			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings());
 
-				XDocument document = decompiler.Decompile(bamlStream).Xaml;
+			XDocument document = decompiler.Decompile(bamlStream).Xaml;
 
-				XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
-			}
+			XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
 		}
 
 		void XamlIsEqual(string input1, string input2)
@@ -219,10 +215,13 @@ namespace ILSpy.BamlDecompiler.Tests
 			{
 				if (entry.Key == name)
 				{
-					if (entry.Value is Stream)
-						return (Stream)entry.Value;
-					if (entry.Value is byte[])
-						return new MemoryStream((byte[])entry.Value);
+					switch (entry.Value)
+					{
+						case Stream value:
+							return value;
+						case byte[] bytes:
+							return new MemoryStream(bytes);
+					}
 				}
 			}
 			return null;

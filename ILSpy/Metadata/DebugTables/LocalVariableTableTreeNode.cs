@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class LocalVariableTableTreeNode : DebugMetadataTableTreeNode
+	internal sealed class LocalVariableTableTreeNode : DebugMetadataTableTreeNode
 	{
 		private readonly bool isEmbedded;
 
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct LocalVariableEntry
+		readonly struct LocalVariableEntry
 		{
 			readonly int? offset;
 			readonly PEFile module;
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
-			public object Offset => offset == null ? "n/a" : (object)offset;
+			public object Offset => offset == null ? "n/a" : offset;
 
 			[StringFormat("X8")]
 			public LocalVariableAttributes Attributes => localVar.Attributes;

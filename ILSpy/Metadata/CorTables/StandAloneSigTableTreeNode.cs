@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class StandAloneSigTableTreeNode : MetadataTableTreeNode
+	sealed class StandAloneSigTableTreeNode : MetadataTableTreeNode
 	{
 		public StandAloneSigTableTreeNode(PEFile module)
 			: base(HandleKind.StandaloneSignature, module)
@@ -70,7 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct StandAloneSigEntry
+		readonly struct StandAloneSigEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;
@@ -92,7 +91,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 					((EntityHandle)handle).WriteTo(module, output, context);
 					return output.ToString();
 				}

@@ -24,12 +24,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.BamlDecompiler.Baml
 {
-	internal partial class KnownThings
+	internal sealed partial class KnownThings
 	{
 		readonly IDecompilerTypeSystem typeSystem;
 
@@ -77,24 +76,20 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 
 		ITypeDefinition InitType(IModule assembly, string ns, string name) => assembly.GetTypeDefinition(new TopLevelTypeName(ns, name));
-		KnownMember InitMember(KnownTypes parent, string name, ITypeDefinition type) => new KnownMember(parent, types[parent], name, type);
+		KnownMember InitMember(KnownTypes parent, string? name, ITypeDefinition type) => new KnownMember(parent, types[parent], name, type);
 	}
 
-	internal class KnownMember
+	internal sealed class KnownMember
 	{
-		public KnownMember(KnownTypes parent, ITypeDefinition declType, string name, ITypeDefinition type)
+		public KnownMember(KnownTypes parent, ITypeDefinition declType, string? name, ITypeDefinition type)
 		{
 			Parent = parent;
 			Property = declType.GetProperties(p => p.Name == name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
-			DeclaringType = declType;
 			Name = name;
-			Type = type;
 		}
 
 		public KnownTypes Parent { get; }
-		public ITypeDefinition DeclaringType { get; }
 		public IProperty Property { get; }
-		public string Name { get; }
-		public ITypeDefinition Type { get; }
+		public string? Name { get; }
 	}
 }

@@ -31,8 +31,8 @@ namespace ICSharpCode.ILSpy
 
 		private DateTime lastNavigationTime = DateTime.MinValue;
 		T current;
-		List<T> back = new List<T>();
-		List<T> forward = new List<T>();
+		readonly List<T> back = new List<T>();
+		readonly List<T> forward = new List<T>();
 
 		public bool CanNavigateBack {
 			get { return back.Count > 0; }
@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 		public T GoBack()
 		{
 			forward.Add(current);
-			current = back[back.Count - 1];
+			current = back[^1];
 			back.RemoveAt(back.Count - 1);
 			return current;
 		}
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy
 		public T GoForward()
 		{
 			back.Add(current);
-			current = forward[forward.Count - 1];
+			current = forward[^1];
 			forward.RemoveAt(forward.Count - 1);
 			return current;
 		}

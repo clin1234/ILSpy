@@ -18,12 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
@@ -64,7 +61,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (property.CanSet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Setter, mappingInfo, context))
 					{
 						yield return property;
-						continue;
 					}
 				}
 
@@ -83,7 +79,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (@event.CanInvoke && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context))
 					{
 						yield return @event;
-						continue;
 					}
 				}
 			}
@@ -100,14 +95,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				return false;
 			var blob = methodBody.GetILReader();
 			var module = (MetadataModule)method.ParentModule;
-			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
+			var genericContext = new GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0)
 			{
-				ILOpCode opCode;
 				try
 				{
-					opCode = blob.DecodeOpCode();
+					ILOpCode opCode = blob.DecodeOpCode();
 					if (!CanBeReference(opCode))
 					{
 						blob.SkipOperand(opCode);
@@ -130,7 +124,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				{
 					continue;
 				}
-				if (ctor == null || !ctor.IsConstructor)
+				if (ctor is not { IsConstructor: true })
 					continue;
 
 				if (ctor.DeclaringTypeDefinition?.MetadataToken == analyzedEntity.MetadataToken
@@ -143,9 +137,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool CanBeReference(ILOpCode opCode)
 		{
-			return opCode == ILOpCode.Newobj || opCode == ILOpCode.Initobj;
+			return opCode is ILOpCode.Newobj or ILOpCode.Initobj;
 		}
 
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition { IsAbstract: false, IsStatic: false };
 	}
 }

@@ -6,25 +6,17 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
-	public class AssemblyFileFinder
+	internal static class AssemblyFileFinder
 	{
 		public static string FindAssemblyFile(Mono.Cecil.AssemblyDefinition assemblyDefinition, string assemblyFile)
 		{
 			string tfi = DetectTargetFrameworkId(assemblyDefinition, assemblyFile);
-			UniversalAssemblyResolver assemblyResolver;
-			if (IsReferenceAssembly(assemblyDefinition, assemblyFile))
-			{
-				assemblyResolver = new UniversalAssemblyResolver(null, throwOnError: false, tfi);
-			}
-			else
-			{
-				assemblyResolver = new UniversalAssemblyResolver(assemblyFile, throwOnError: false, tfi);
-			}
+			UniversalAssemblyResolver assemblyResolver = IsReferenceAssembly(assemblyDefinition, assemblyFile) ? new UniversalAssemblyResolver(null, throwOnError: false, tfi) : new UniversalAssemblyResolver(assemblyFile, throwOnError: false, tfi);
 
 			return assemblyResolver.FindAssemblyFile(AssemblyNameReference.Parse(assemblyDefinition.Name.FullName));
 		}
 
-		static readonly string RefPathPattern = @"NuGetFallbackFolder[/\\][^/\\]+[/\\][^/\\]+[/\\]ref[/\\]";
+		private const string RefPathPattern = @"NuGetFallbackFolder[/\\][^/\\]+[/\\][^/\\]+[/\\]ref[/\\]";
 
 		public static bool IsReferenceAssembly(Mono.Cecil.AssemblyDefinition assemblyDef, string assemblyFile)
 		{
@@ -36,14 +28,11 @@ namespace ICSharpCode.ILSpy.AddIn
 			return refPathMatch.Success;
 		}
 
-		static readonly string DetectTargetFrameworkIdRefPathPattern =
-			@"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<1>.NETFramework)[/\\]v(?<2>[^/\\]+)[/\\])" +
-			@"|((NuGetFallbackFolder|packs|.nuget[/\\]packages)[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\]ref[/\\])";
+		private const string DetectTargetFrameworkIdRefPathPattern = @"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<1>.NETFramework)[/\\]v(?<2>[^/\\]+)[/\\])" + @"|((NuGetFallbackFolder|packs|.nuget[/\\]packages)[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\]ref[/\\])";
 
 		public static string DetectTargetFrameworkId(Mono.Cecil.AssemblyDefinition assembly, string assemblyPath = null)
 		{
-			if (assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
+			ArgumentNullException.ThrowIfNull(assembly);
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 

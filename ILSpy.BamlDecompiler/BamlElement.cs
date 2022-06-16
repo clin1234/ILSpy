@@ -50,18 +50,18 @@ namespace ILSpy.BamlDecompiler
 		public static implicit operator string(XamlNode node) => node.String;
 	}
 
-	internal class BamlElement
+	internal sealed class BamlElement
 	{
 		public BamlNode Node { get; }
 		public XamlNode Xaml { get; set; }
 
-		public BamlElement Parent { get; set; }
-		public IList<BamlElement> Children { get; }
+		public BamlElement? Parent { get; set; }
+		public IList<BamlElement?> Children { get; }
 
 		public BamlElement(BamlNode node)
 		{
 			Node = node;
-			Children = new List<BamlElement>();
+			Children = new List<BamlElement?>();
 		}
 	}
 }

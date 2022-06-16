@@ -21,10 +21,10 @@ using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
 {
-	class MainWindowViewModel
+	sealed class MainWindowViewModel
 	{
-		public DockWorkspace Workspace { get; set; }
-		public SessionSettings SessionSettings { get; set; }
-		public AssemblyListManager AssemblyListManager { get; set; }
+		public DockWorkspace Workspace { get; init; }
+		public SessionSettings SessionSettings { get; init; }
+		public AssemblyListManager AssemblyListManager { get; init; }
 	}
 }

@@ -23,7 +23,7 @@ namespace ILSpy.BamlDecompiler.Tests.Cases
 	/// <summary>
 	/// Interaction logic for MyControl.xaml
 	/// </summary>
-	public partial class MyControl : UserControl
+	public sealed partial class MyControl : UserControl
 	{
 		public MyControl()
 		{

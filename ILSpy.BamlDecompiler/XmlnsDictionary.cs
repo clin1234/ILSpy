@@ -22,25 +22,20 @@
 
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
-
 using ILSpy.BamlDecompiler.Xaml;
 
 namespace ILSpy.BamlDecompiler
 {
-	internal class XmlnsScope : List<NamespaceMap>
+	internal sealed class XmlnsScope : List<NamespaceMap>
 	{
-		public BamlElement Element { get; }
-		public XmlnsScope PreviousScope { get; }
+		public XmlnsScope? PreviousScope { get; }
 
-		public XmlnsScope(XmlnsScope prev, BamlElement elem)
+		public XmlnsScope(XmlnsScope? prev, BamlElement? elem)
 		{
 			PreviousScope = prev;
-			Element = elem;
 		}
 
-		public string LookupXmlns(string fullAssemblyName, string clrNs)
+		public string? LookupXmlns(string? fullAssemblyName, string clrNs)
 		{
 			foreach (var ns in this)
 			{
@@ -52,21 +47,21 @@ namespace ILSpy.BamlDecompiler
 		}
 	}
 
-	internal class XmlnsDictionary
+	internal sealed class XmlnsDictionary
 	{
-		Dictionary<string, NamespaceMap> piMappings = new Dictionary<string, NamespaceMap>();
+		readonly Dictionary<string, NamespaceMap> piMappings = new Dictionary<string, NamespaceMap>();
 
 		public XmlnsDictionary() => CurrentScope = null;
 
-		public XmlnsScope CurrentScope { get; set; }
+		public XmlnsScope? CurrentScope { get; private set; }
 
-		public void PushScope(BamlElement element) => CurrentScope = new XmlnsScope(CurrentScope, element);
+		public void PushScope(BamlElement? element) => CurrentScope = new XmlnsScope(CurrentScope, element);
 
 		public void PopScope() => CurrentScope = CurrentScope.PreviousScope;
 
 		public void Add(NamespaceMap map) => CurrentScope.Add(map);
 
-		public void SetPIMapping(string xmlNs, string clrNs, string fullAssemblyName)
+		public void SetPIMapping(string? xmlNs, string clrNs, string fullAssemblyName)
 		{
 			if (!piMappings.ContainsKey(xmlNs))
 			{
@@ -75,7 +70,7 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 
-		NamespaceMap PIFixup(NamespaceMap map)
+		NamespaceMap? PIFixup(NamespaceMap? map)
 		{
 			if (piMappings.TryGetValue(map.XMLNamespace, out var piMap))
 			{
@@ -85,7 +80,7 @@ namespace ILSpy.BamlDecompiler
 			return map;
 		}
 
-		public NamespaceMap LookupNamespaceFromPrefix(string prefix)
+		public NamespaceMap? LookupNamespaceFromPrefix(string prefix)
 		{
 			var scope = CurrentScope;
 			while (scope != null)
@@ -102,7 +97,7 @@ namespace ILSpy.BamlDecompiler
 			return null;
 		}
 
-		public NamespaceMap LookupNamespaceFromXmlns(string xmlNs)
+		public NamespaceMap? LookupNamespaceFromXmlns(string xmlNs)
 		{
 			var scope = CurrentScope;
 			while (scope != null)
@@ -119,7 +114,7 @@ namespace ILSpy.BamlDecompiler
 			return null;
 		}
 
-		public string LookupXmlns(string fullAssemblyName, string clrNs)
+		public string? LookupXmlns(string? fullAssemblyName, string clrNs)
 		{
 			foreach (var map in piMappings)
 			{

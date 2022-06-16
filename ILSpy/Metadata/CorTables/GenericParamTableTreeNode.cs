@@ -22,13 +22,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class GenericParamTableTreeNode : MetadataTableTreeNode
+	internal sealed class GenericParamTableTreeNode : MetadataTableTreeNode
 	{
 		public GenericParamTableTreeNode(PEFile module)
 			: base(HandleKind.GenericParameter, module)
@@ -70,7 +69,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct GenericParamEntry
+		readonly struct GenericParamEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

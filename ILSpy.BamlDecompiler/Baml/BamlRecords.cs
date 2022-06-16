@@ -21,7 +21,6 @@
 */
 
 using System;
-using System.Diagnostics;
 using System.IO;
 
 namespace ILSpy.BamlDecompiler.Baml
@@ -144,18 +143,18 @@ namespace ILSpy.BamlDecompiler.Baml
 	internal interface IBamlDeferRecord
 	{
 		long Position { get; }
-		BamlRecord Record { get; set; }
+		BamlRecord? Record { get; set; }
 		void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve);
 		void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr);
 	}
 
-	internal class XmlnsPropertyRecord : SizedBamlRecord
+	internal sealed class XmlnsPropertyRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.XmlnsProperty;
 
-		public string Prefix { get; set; }
-		public string XmlNamespace { get; set; }
-		public ushort[] AssemblyIds { get; set; }
+		public string Prefix { get; private set; }
+		public string? XmlNamespace { get; set; }
+		public ushort[]? AssemblyIds { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
 		{
@@ -176,11 +175,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PresentationOptionsAttributeRecord : SizedBamlRecord
+	internal sealed class PresentationOptionsAttributeRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PresentationOptionsAttribute;
 
-		public string Value { get; set; }
+		public string? Value { get; set; }
 		public ushort NameId { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
@@ -196,11 +195,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PIMappingRecord : SizedBamlRecord
+	internal sealed class PIMappingRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PIMapping;
 
-		public string XmlNamespace { get; set; }
+		public string? XmlNamespace { get; set; }
 		public string ClrNamespace { get; set; }
 		public ushort AssemblyId { get; set; }
 
@@ -219,12 +218,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class AssemblyInfoRecord : SizedBamlRecord
+	internal sealed class AssemblyInfoRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.AssemblyInfo;
 
 		public ushort AssemblyId { get; set; }
-		public string AssemblyFullName { get; set; }
+		public string? AssemblyFullName { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
 		{
@@ -244,7 +243,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public override BamlRecordType Type => BamlRecordType.Property;
 
 		public ushort AttributeId { get; set; }
-		public string Value { get; set; }
+		public string? Value { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
 		{
@@ -259,7 +258,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyWithConverterRecord : PropertyRecord
+	internal sealed class PropertyWithConverterRecord : PropertyRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyWithConverter;
 
@@ -278,7 +277,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyCustomRecord : SizedBamlRecord
+	internal sealed class PropertyCustomRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyCustom;
 
@@ -302,7 +301,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class DefAttributeRecord : SizedBamlRecord
+	internal sealed class DefAttributeRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.DefAttribute;
 
@@ -322,7 +321,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class DefAttributeKeyStringRecord : SizedBamlRecord, IBamlDeferRecord
+	internal sealed class DefAttributeKeyStringRecord : SizedBamlRecord, IBamlDeferRecord
 	{
 		internal uint pos = 0xffffffff;
 
@@ -332,11 +331,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		public bool Shared { get; set; }
 		public bool SharedSet { get; set; }
 
-		public BamlRecord Record { get; set; }
+		public BamlRecord? Record { get; set; }
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -366,7 +365,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -432,7 +431,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public ushort TypeId { get; set; }
 		public ushort AssemblyId { get; set; }
-		public string TypeFullName { get; set; }
+		public string? TypeFullName { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
 		{
@@ -449,7 +448,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class TypeSerializerInfoRecord : TypeInfoRecord
+	internal sealed class TypeSerializerInfoRecord : TypeInfoRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.TypeSerializerInfo;
 
@@ -468,14 +467,14 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class AttributeInfoRecord : SizedBamlRecord
+	internal sealed class AttributeInfoRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.AttributeInfo;
 
 		public ushort AttributeId { get; set; }
 		public ushort OwnerTypeId { get; set; }
 		public byte AttributeUsage { get; set; }
-		public string Name { get; set; }
+		public string? Name { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
 		{
@@ -494,12 +493,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class StringInfoRecord : SizedBamlRecord
+	internal sealed class StringInfoRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.StringInfo;
 
 		public ushort StringId { get; set; }
-		public string Value { get; set; }
+		public string? Value { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size)
 		{
@@ -518,14 +517,14 @@ namespace ILSpy.BamlDecompiler.Baml
 	{
 		public override BamlRecordType Type => BamlRecordType.Text;
 
-		public string Value { get; set; }
+		public string? Value { get; set; }
 
 		protected override void ReadData(BamlBinaryReader reader, int size) => Value = reader.ReadString();
 
 		protected override void WriteData(BamlBinaryWriter writer) => writer.Write(Value);
 	}
 
-	internal class TextWithConverterRecord : TextRecord
+	internal sealed class TextWithConverterRecord : TextRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.TextWithConverter;
 
@@ -544,7 +543,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class TextWithIdRecord : SizedBamlRecord
+	internal sealed class TextWithIdRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.TextWithId;
 
@@ -555,11 +554,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		protected override void WriteData(BamlBinaryWriter writer) => writer.Write(ValueId);
 	}
 
-	internal class LiteralContentRecord : SizedBamlRecord
+	internal sealed class LiteralContentRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.LiteralContent;
 
-		public string Value { get; set; }
+		public string? Value { get; set; }
 		public uint Reserved0 { get; set; }
 		public uint Reserved1 { get; set; }
 
@@ -578,7 +577,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class RoutedEventRecord : SizedBamlRecord
+	internal sealed class RoutedEventRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.RoutedEvent;
 
@@ -599,7 +598,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class DocumentStartRecord : BamlRecord
+	internal sealed class DocumentStartRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.DocumentStart;
 
@@ -622,7 +621,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class DocumentEndRecord : BamlRecord
+	internal sealed class DocumentEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.DocumentEnd;
 
@@ -655,7 +654,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class ElementEndRecord : BamlRecord
+	internal sealed class ElementEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.ElementEnd;
 
@@ -668,12 +667,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class KeyElementStartRecord : DefAttributeKeyTypeRecord
+	internal sealed class KeyElementStartRecord : DefAttributeKeyTypeRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.KeyElementStart;
 	}
 
-	internal class KeyElementEndRecord : BamlRecord
+	internal sealed class KeyElementEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.KeyElementEnd;
 
@@ -686,7 +685,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class ConnectionIdRecord : BamlRecord
+	internal sealed class ConnectionIdRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.ConnectionId;
 
@@ -697,7 +696,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public override void Write(BamlBinaryWriter writer) => writer.Write(ConnectionId);
 	}
 
-	internal class PropertyWithExtensionRecord : BamlRecord
+	internal sealed class PropertyWithExtensionRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyWithExtension;
 
@@ -720,7 +719,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyTypeReferenceRecord : PropertyComplexStartRecord
+	internal sealed class PropertyTypeReferenceRecord : PropertyComplexStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyTypeReference;
 
@@ -739,11 +738,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyStringReferenceRecord : PropertyComplexStartRecord
+	internal sealed class PropertyStringReferenceRecord : PropertyComplexStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyStringReference;
 
-		public ushort StringId { get; set; }
+		private ushort StringId { get; set; }
 
 		public override void Read(BamlBinaryReader reader)
 		{
@@ -758,7 +757,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyWithStaticResourceIdRecord : StaticResourceIdRecord
+	internal sealed class PropertyWithStaticResourceIdRecord : StaticResourceIdRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyWithStaticResourceId;
 
@@ -777,7 +776,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class ContentPropertyRecord : BamlRecord
+	internal sealed class ContentPropertyRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.ContentProperty;
 
@@ -797,11 +796,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		public bool Shared { get; set; }
 		public bool SharedSet { get; set; }
 
-		public BamlRecord Record { get; set; }
+		public BamlRecord? Record { get; set; }
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -831,7 +830,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -891,12 +890,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyListStartRecord : PropertyComplexStartRecord
+	internal sealed class PropertyListStartRecord : PropertyComplexStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyListStart;
 	}
 
-	internal class PropertyListEndRecord : BamlRecord
+	internal sealed class PropertyListEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyListEnd;
 
@@ -909,12 +908,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyDictionaryStartRecord : PropertyComplexStartRecord
+	internal sealed class PropertyDictionaryStartRecord : PropertyComplexStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyDictionaryStart;
 	}
 
-	internal class PropertyDictionaryEndRecord : BamlRecord
+	internal sealed class PropertyDictionaryEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyDictionaryEnd;
 
@@ -927,12 +926,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class PropertyArrayStartRecord : PropertyComplexStartRecord
+	internal sealed class PropertyArrayStartRecord : PropertyComplexStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyArrayStart;
 	}
 
-	internal class PropertyArrayEndRecord : BamlRecord
+	internal sealed class PropertyArrayEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyArrayEnd;
 
@@ -956,7 +955,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public override void Write(BamlBinaryWriter writer) => writer.Write(AttributeId);
 	}
 
-	internal class PropertyComplexEndRecord : BamlRecord
+	internal sealed class PropertyComplexEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.PropertyComplexEnd;
 
@@ -969,7 +968,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class ConstructorParametersStartRecord : BamlRecord
+	internal sealed class ConstructorParametersStartRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.ConstructorParametersStart;
 
@@ -982,7 +981,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class ConstructorParametersEndRecord : BamlRecord
+	internal sealed class ConstructorParametersEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.ConstructorParametersEnd;
 
@@ -995,7 +994,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class ConstructorParameterTypeRecord : BamlRecord
+	internal sealed class ConstructorParameterTypeRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.ConstructorParameterType;
 
@@ -1006,14 +1005,14 @@ namespace ILSpy.BamlDecompiler.Baml
 		public override void Write(BamlBinaryWriter writer) => writer.Write(TypeId);
 	}
 
-	internal class DeferableContentStartRecord : BamlRecord, IBamlDeferRecord
+	internal sealed class DeferableContentStartRecord : BamlRecord, IBamlDeferRecord
 	{
 		long pos;
-		internal uint size = 0xffffffff;
+		private uint size = 0xffffffff;
 
 		public override BamlRecordType Type => BamlRecordType.DeferableContentStart;
 
-		public BamlRecord Record { get; set; }
+		public BamlRecord? Record { get; set; }
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve) => Record = resolve(pos + size);
 
@@ -1036,12 +1035,12 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class StaticResourceStartRecord : ElementStartRecord
+	internal sealed class StaticResourceStartRecord : ElementStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.StaticResourceStart;
 	}
 
-	internal class StaticResourceEndRecord : BamlRecord
+	internal sealed class StaticResourceEndRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.StaticResourceEnd;
 
@@ -1065,7 +1064,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public override void Write(BamlBinaryWriter writer) => writer.Write(StaticResourceId);
 	}
 
-	internal class OptimizedStaticResourceRecord : BamlRecord
+	internal sealed class OptimizedStaticResourceRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.OptimizedStaticResource;
 
@@ -1089,11 +1088,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class LineNumberAndPositionRecord : BamlRecord
+	internal sealed class LineNumberAndPositionRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.LineNumberAndPosition;
 
-		public uint LineNumber { get; set; }
+		private uint LineNumber { get; set; }
 		public uint LinePosition { get; set; }
 
 		public override void Read(BamlBinaryReader reader)
@@ -1109,7 +1108,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		}
 	}
 
-	internal class LinePositionRecord : BamlRecord
+	internal sealed class LinePositionRecord : BamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.LinePosition;
 
@@ -1120,11 +1119,11 @@ namespace ILSpy.BamlDecompiler.Baml
 		public override void Write(BamlBinaryWriter writer) => writer.Write(LinePosition);
 	}
 
-	internal class NamedElementStartRecord : ElementStartRecord
+	internal sealed class NamedElementStartRecord : ElementStartRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.NamedElementStart;
 
-		public string RuntimeName { get; set; }
+		public string? RuntimeName { get; set; }
 
 		public override void Read(BamlBinaryReader reader)
 		{

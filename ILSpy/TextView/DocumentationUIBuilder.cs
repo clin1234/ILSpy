@@ -19,15 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Xml;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Document;
@@ -43,7 +40,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// <summary>
 	/// Renders XML documentation into a WPF <see cref="FlowDocument"/>.
 	/// </summary>
-	public class DocumentationUIBuilder
+	internal sealed class DocumentationUIBuilder
 	{
 		readonly IAmbience ambience;
 		readonly IHighlightingDefinition highlightingDefinition;
@@ -144,8 +141,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void AddDocumentationElement(XmlDocumentationElement element)
 		{
-			if (element == null)
-				throw new ArgumentNullException("element");
+			ArgumentNullException.ThrowIfNull(element);
 			if (element.IsTextNode)
 			{
 				AddText(element.TextContent);
@@ -252,16 +248,17 @@ namespace ICSharpCode.ILSpy.TextView
 			List list = new List();
 			AddBlock(list);
 			list.Margin = new Thickness(0, 5, 0, 5);
-			if (type == "number")
-				list.MarkerStyle = TextMarkerStyle.Decimal;
-			else if (type == "bullet")
-				list.MarkerStyle = TextMarkerStyle.Disc;
+			list.MarkerStyle = type switch {
+				"number" => TextMarkerStyle.Decimal,
+				"bullet" => TextMarkerStyle.Disc,
+				_ => list.MarkerStyle
+			};
 			var oldBlockCollection = blockCollection;
 			try
 			{
 				foreach (var itemElement in items)
 				{
-					if (itemElement.Name == "listheader" || itemElement.Name == "item")
+					if (itemElement.Name is "listheader" or "item")
 					{
 						ListItem item = new ListItem();
 						blockCollection = item.Blocks;
@@ -294,15 +291,25 @@ namespace ICSharpCode.ILSpy.TextView
 			AddSection(
 				new Run("Thread-safety: "),
 				delegate {
-					if (staticThreadSafe == true)
-						AddText("Any public static members of this type are thread safe. ");
-					else if (staticThreadSafe == false)
-						AddText("The static members of this type are not thread safe. ");
+					switch (staticThreadSafe)
+					{
+						case true:
+							AddText("Any public static members of this type are thread safe. ");
+							break;
+						case false:
+							AddText("The static members of this type are not thread safe. ");
+							break;
+					}
 
-					if (instanceThreadSafe == true)
-						AddText("Any public instance members of this type are thread safe. ");
-					else if (instanceThreadSafe == false)
-						AddText("Any instance members are not guaranteed to be thread safe. ");
+					switch (instanceThreadSafe)
+					{
+						case true:
+							AddText("Any public instance members of this type are thread safe. ");
+							break;
+						case false:
+							AddText("Any instance members are not guaranteed to be thread safe. ");
+							break;
+					}
 
 					foreach (var child in children)
 						AddDocumentationElement(child);
@@ -337,7 +344,7 @@ namespace ICSharpCode.ILSpy.TextView
 		Inline ConvertReference(IEntity referencedEntity)
 		{
 			var h = new Hyperlink(new Run(ambience.ConvertSymbol(referencedEntity)));
-			h.Click += (sender, e) => {
+			h.Click += (_, _) => {
 				MainWindow.Instance.JumpToReference(referencedEntity);
 			};
 			return h;
@@ -380,7 +387,7 @@ namespace ICSharpCode.ILSpy.TextView
 				if (element.Children.Any())
 				{
 					Hyperlink link = new Hyperlink();
-					link.Click += (sender, e) => {
+					link.Click += (_, _) => {
 						MainWindow.Instance.JumpToReference(referencedEntity);
 					};
 					AddSpan(link, element.Children);
@@ -396,8 +403,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (element.GetAttribute("href") != null)
 			{
-				Uri uri;
-				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out uri))
+				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out Uri uri))
 				{
 					if (element.Children.Any())
 					{
@@ -443,8 +449,9 @@ namespace ICSharpCode.ILSpy.TextView
 			FlushAddedText(false);
 			if (inlineCollection == null)
 			{
-				var para = new Paragraph();
-				para.Margin = new Thickness(0, 0, 0, 5);
+				var para = new Paragraph {
+					Margin = new Thickness(0, 0, 0, 5)
+				};
 				inlineCollection = para.Inlines;
 				AddBlock(para);
 			}
@@ -529,7 +536,7 @@ namespace ICSharpCode.ILSpy.TextView
 			blockCollection.Add(block);
 		}
 
-		StringBuilder addedText = new StringBuilder();
+		readonly StringBuilder addedText = new StringBuilder();
 		bool ignoreWhitespace;
 
 		public void AddLineBreak()
@@ -580,7 +587,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TrimEndOfAddedText()
 		{
-			while (addedText.Length > 0 && addedText[addedText.Length - 1] == ' ')
+			while (addedText.Length > 0 && addedText[^1] == ' ')
 			{
 				addedText.Length--;
 			}

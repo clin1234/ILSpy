@@ -27,7 +27,7 @@ using ILSpy.BamlDecompiler.Xaml;
 
 namespace ILSpy.BamlDecompiler.Rewrite
 {
-	internal class AttributeRewritePass : IRewritePass
+	internal sealed class AttributeRewritePass : IRewritePass
 	{
 		XName key;
 
@@ -71,7 +71,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var value = elem.Value;
 			var attrName = elem.Name;
 			if (attrName != key)
-				attrName = property.ToXName(ctx, parent, property.IsAttachedTo(parent.Annotation<XamlType>()));
+				attrName = property?.ToXName(ctx, parent, property.IsAttachedTo(parent.Annotation<XamlType>()));
 			var attr = new XAttribute(attrName, value);
 			var list = new List<XAttribute>(parent.Attributes());
 			if (attrName == key)

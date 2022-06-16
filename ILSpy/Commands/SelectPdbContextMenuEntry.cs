@@ -34,10 +34,11 @@ namespace ICSharpCode.ILSpy
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			OpenFileDialog dlg = new OpenFileDialog();
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb";
-			dlg.Filter = Resources.PortablePDBPdbAllFiles;
-			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
+			OpenFileDialog dlg = new OpenFileDialog {
+				FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb",
+				Filter = Resources.PortablePDBPdbAllFiles,
+				InitialDirectory = Path.GetDirectoryName(assembly.FileName)
+			};
 			if (dlg.ShowDialog() != true)
 				return;
 

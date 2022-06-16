@@ -17,15 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
-	public class TabPageModel : PaneModel
+	public sealed class TabPageModel : PaneModel
 	{
 		public TabPageModel()
 		{
@@ -36,7 +34,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public FilterSettings FilterSettings {
 			get => filterSettings;
-			set {
+			init {
 				if (filterSettings != value)
 				{
 					filterSettings = value;
@@ -91,7 +89,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		public static Task<T> ShowTextViewAsync<T>(this TabPageModel tabPage, Func<DecompilerTextView, Task<T>> action)
 		{
-			if (!(tabPage.Content is DecompilerTextView textView))
+			if (tabPage.Content is not DecompilerTextView textView)
 			{
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
@@ -102,7 +100,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public static Task ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
 		{
-			if (!(tabPage.Content is DecompilerTextView textView))
+			if (tabPage.Content is not DecompilerTextView textView)
 			{
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;
@@ -113,7 +111,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public static void ShowTextView(this TabPageModel tabPage, Action<DecompilerTextView> action)
 		{
-			if (!(tabPage.Content is DecompilerTextView textView))
+			if (tabPage.Content is not DecompilerTextView textView)
 			{
 				textView = new DecompilerTextView();
 				tabPage.Content = textView;

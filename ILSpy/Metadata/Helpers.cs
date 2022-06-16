@@ -23,22 +23,15 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Media;
-using System.Windows.Navigation;
 
 using DataGridExtensions;
 
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Controls;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -48,7 +41,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		public static DataGrid PrepareDataGrid(TabPageModel tabPage, ILSpyTreeNode selectedNode)
 		{
-			if (!(tabPage.Content is DataGrid view && view.Name == "MetadataView"))
+			if (!(tabPage.Content is DataGrid { Name: "MetadataView" } view))
 			{
 				view = new MetaDataGrid() {
 					Name = "MetadataView",
@@ -67,10 +60,10 @@ namespace ICSharpCode.ILSpy.Metadata
 					CellStyle = (Style)MetadataTableViews.Instance["DataGridCellStyle"],
 				};
 				ContextMenuProvider.Add(view);
-				DataGridFilter.SetIsAutoFilterEnabled(view, true);
-				DataGridFilter.SetContentFilterFactory(view, new RegexContentFilterFactory());
+				view.SetIsAutoFilterEnabled(true);
+				view.SetContentFilterFactory(new RegexContentFilterFactory());
 			}
-			DataGridFilter.GetFilter(view).Clear();
+			view.GetFilter().Clear();
 			view.RowDetailsTemplateSelector = null;
 			view.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;
 			view.EnableColumnVirtualization = true;
@@ -265,12 +258,12 @@ namespace ICSharpCode.ILSpy.Metadata
 		public static int ComputeCodedTokenSize(this MetadataReader metadata, int largeRowSize,
 			TableMask mask)
 		{
-			return (int)computeCodedTokenSize.Invoke(metadata, new object[] {
+			return (int)computeCodedTokenSize.Invoke(metadata, new[] {
 				largeRowSize, rowCounts.GetValue(metadata), (ulong)mask }
 			);
 		}
 
-		class UnderlyingEnumValueConverter : IValueConverter
+		sealed class UnderlyingEnumValueConverter : IValueConverter
 		{
 			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 			{
@@ -297,7 +290,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	class StringFormatAttribute : Attribute
+	sealed class StringFormatAttribute : Attribute
 	{
 		public string Format { get; }
 
@@ -307,7 +300,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		}
 	}
 
-	class LinkToTableAttribute : Attribute
+	sealed class LinkToTableAttribute : Attribute
 	{
 	}
 

@@ -17,19 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class ZoomButtons : RangeBase
+	public sealed class ZoomButtons : RangeBase
 	{
 		static ZoomButtons()
 		{

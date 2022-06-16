@@ -26,13 +26,13 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Options passed to the decompiler.
 	/// </summary>
-	public class DecompilationOptions
+	public sealed class DecompilationOptions
 	{
 		/// <summary>
 		/// Gets whether a full decompilation (all members recursively) is desired.
 		/// If this option is false, language bindings are allowed to show the only headers of the decompiled element's children.
 		/// </summary>
-		public bool FullDecompilation { get; set; }
+		public bool FullDecompilation { get; init; }
 
 		/// <summary>
 		/// Gets/Sets the directory into which the project is saved.
@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy
 		/// <remarks>
 		/// This state is used to restore test view's state when decompilation is started by Go Back/Forward action.
 		/// </remarks>
-		public TextView.DecompilerTextViewState TextViewState { get; set; }
+		public TextView.DecompilerTextViewState TextViewState { get; init; }
 
 		/// <summary>
 		/// Used internally for debugging.
@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy
 		{
 		}
 
-		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, Options.DisplaySettings displaySettings)
+		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, DisplaySettings displaySettings)
 		{
 			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;

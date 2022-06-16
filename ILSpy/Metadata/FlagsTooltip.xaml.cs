@@ -32,9 +32,9 @@ namespace ICSharpCode.ILSpy.Metadata
 	/// <summary>
 	/// Interaction logic for FlagsTooltip.xaml
 	/// </summary>
-	public partial class FlagsTooltip : IEnumerable<FlagGroup>
+	internal sealed partial class FlagsTooltip : IEnumerable<FlagGroup>
 	{
-		public FlagsTooltip(int value = 0, Type flagsType = null)
+		public FlagsTooltip(int value = 0, Type? flagsType = null)
 		{
 			InitializeComponent();
 		}
@@ -94,18 +94,22 @@ namespace ICSharpCode.ILSpy.Metadata
 
 	public abstract class FlagGroup
 	{
-		public static MultipleChoiceGroup CreateMultipleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, bool includeAll = true)
+		public static MultipleChoiceGroup CreateMultipleChoiceGroup(Type? flagsType, string header = null, int mask = -1, int selectedValue = 0, bool includeAll = true)
 		{
-			MultipleChoiceGroup group = new MultipleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null));
-			group.Header = header;
-			group.SelectedFlags = selectedValue;
+			MultipleChoiceGroup group = new MultipleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAll ? "<All>" : null))
+				{
+					Header = header,
+					SelectedFlags = selectedValue
+				};
 			return group;
 		}
 
-		public static SingleChoiceGroup CreateSingleChoiceGroup(Type flagsType, string header = null, int mask = -1, int selectedValue = 0, Flag defaultFlag = default, bool includeAny = true)
+		public static SingleChoiceGroup CreateSingleChoiceGroup(Type? flagsType, string header = null, int mask = -1, int selectedValue = 0, Flag defaultFlag = default, bool includeAny = true)
 		{
-			var group = new SingleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAny ? "<Any>" : null));
-			group.Header = header;
+			var group = new SingleChoiceGroup(GetFlags(flagsType, mask, selectedValue, includeAny ? "<Any>" : null))
+				{
+					Header = header
+				};
 			group.SelectedFlag = group.Flags.SingleOrDefault(f => f.Value == selectedValue);
 			if (group.SelectedFlag.Name == null)
 			{
@@ -114,7 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return group;
 		}
 
-		public static IEnumerable<Flag> GetFlags(Type flagsType, int mask = -1, int selectedValues = 0, string neutralItem = null)
+		public static IEnumerable<Flag> GetFlags(Type? flagsType, int mask = -1, int selectedValues = 0, string neutralItem = null)
 		{
 			if (neutralItem != null)
 				yield return new Flag(neutralItem, -1, false);
@@ -132,10 +136,10 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		public string Header { get; set; }
 
-		public IList<Flag> Flags { get; protected set; }
+		public IList<Flag> Flags { get; protected init; }
 	}
 
-	public class MultipleChoiceGroup : FlagGroup
+	public sealed class MultipleChoiceGroup : FlagGroup
 	{
 		public MultipleChoiceGroup(IEnumerable<Flag> flags)
 		{
@@ -145,7 +149,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		public int SelectedFlags { get; set; }
 	}
 
-	public class SingleChoiceGroup : FlagGroup
+	public sealed class SingleChoiceGroup : FlagGroup
 	{
 		public SingleChoiceGroup(IEnumerable<Flag> flags)
 		{
@@ -155,7 +159,7 @@ namespace ICSharpCode.ILSpy.Metadata
 		public Flag SelectedFlag { get; set; }
 	}
 
-	class NullVisibilityConverter : IValueConverter
+	sealed class NullVisibilityConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{

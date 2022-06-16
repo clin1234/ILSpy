@@ -93,7 +93,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 			foreach (char ch in name)
 			{
 				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
-					sb.AppendFormat("\\u{0:x4}", (int)ch);
+					sb.Append($"\\u{(int)ch:x4}");
 				else
 					sb.Append(ch);
 			}

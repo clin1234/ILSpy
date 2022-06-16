@@ -50,12 +50,11 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class DefinitionLookup
 	{
-		internal Dictionary<object, int> definitions = new Dictionary<object, int>();
+		internal readonly Dictionary<object, int> definitions = new Dictionary<object, int>();
 
 		public int GetDefinitionPosition(object definition)
 		{
-			int val;
-			if (definitions.TryGetValue(definition, out val))
+			if (definitions.TryGetValue(definition, out int val))
 				return val;
 			else
 				return -1;
@@ -72,7 +71,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public sealed class AvalonEditTextOutput : ISmartTextOutput
 	{
-		int lastLineStart = 0;
+		int lastLineStart;
 		int lineNumber = 1;
 		readonly StringBuilder b = new StringBuilder();
 
@@ -83,7 +82,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public string IndentationString { get; set; } = "\t";
 
-		internal bool IgnoreNewLineAndIndent { get; set; }
+		internal bool IgnoreNewLineAndIndent { get; init; }
 
 		public string Title { get; set; } = Properties.Resources.NewTab;
 
@@ -96,26 +95,22 @@ namespace ICSharpCode.ILSpy.TextView
 		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
 
 		/// <summary>List of all references that were written to the output</summary>
-		TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
+		readonly TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
 
 		/// <summary>Stack of the fold markers that are open but not closed yet</summary>
-		Stack<(NewFolding, int startLine)> openFoldings = new Stack<(NewFolding, int startLine)>();
+		readonly Stack<(NewFolding, int startLine)> openFoldings = new Stack<(NewFolding, int startLine)>();
 
 		/// <summary>List of all foldings that were written to the output</summary>
 		internal readonly List<NewFolding> Foldings = new List<NewFolding>();
 
 		internal readonly DefinitionLookup DefinitionLookup = new DefinitionLookup();
 
-		internal bool EnableHyperlinks { get; set; }
+		internal bool EnableHyperlinks { get; init; }
 
 		/// <summary>Embedded UIElements, see <see cref="UIElementGenerator"/>.</summary>
 		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new List<KeyValuePair<int, Lazy<UIElement>>>();
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
-
-		public AvalonEditTextOutput()
-		{
-		}
 
 		/// <summary>
 		/// Gets the list of references (hyperlinks).

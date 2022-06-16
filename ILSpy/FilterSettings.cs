@@ -48,9 +48,8 @@ namespace ICSharpCode.ILSpy
 		{
 			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicAndInternal;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
-			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
-			if (this.LanguageVersion == default(LanguageVersion))
-				this.LanguageVersion = language.LanguageVersions.LastOrDefault();
+			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion")) ??
+			                       language.LanguageVersions.LastOrDefault();
 		}
 
 		public XElement SaveAsXml()
@@ -75,7 +74,7 @@ namespace ICSharpCode.ILSpy
 				if (searchTerm != value)
 				{
 					searchTerm = value;
-					OnPropertyChanged(nameof(SearchTerm));
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -101,7 +100,7 @@ namespace ICSharpCode.ILSpy
 				if (showApiLevel != value)
 				{
 					showApiLevel = value;
-					OnPropertyChanged(nameof(ShowApiLevel));
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -112,7 +111,7 @@ namespace ICSharpCode.ILSpy
 				if (value == (showApiLevel == ApiVisibility.PublicOnly))
 					return;
 				ShowApiLevel = ApiVisibility.PublicOnly;
-				OnPropertyChanged(nameof(ApiVisPublicOnly));
+				OnPropertyChanged();
 				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
 				OnPropertyChanged(nameof(ApiVisAll));
 			}
@@ -125,7 +124,7 @@ namespace ICSharpCode.ILSpy
 					return;
 				ShowApiLevel = ApiVisibility.PublicAndInternal;
 				OnPropertyChanged(nameof(ApiVisPublicOnly));
-				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
+				OnPropertyChanged();
 				OnPropertyChanged(nameof(ApiVisAll));
 			}
 		}
@@ -138,7 +137,7 @@ namespace ICSharpCode.ILSpy
 				ShowApiLevel = ApiVisibility.All;
 				OnPropertyChanged(nameof(ApiVisPublicOnly));
 				OnPropertyChanged(nameof(ApiVisPublicAndInternal));
-				OnPropertyChanged(nameof(ApiVisAll));
+				OnPropertyChanged();
 			}
 		}
 
@@ -156,7 +155,7 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value)
 				{
-					if (language != null && language.HasLanguageVersions)
+					if (language is { HasLanguageVersions: true })
 					{
 						languageVersionHistory[language] = languageVersion;
 					}
@@ -164,14 +163,7 @@ namespace ICSharpCode.ILSpy
 					OnPropertyChanged();
 					if (language.HasLanguageVersions)
 					{
-						if (languageVersionHistory.TryGetValue(value, out var version))
-						{
-							LanguageVersion = version;
-						}
-						else
-						{
-							LanguageVersion = Language.LanguageVersions.Last();
-						}
+						LanguageVersion = languageVersionHistory.TryGetValue(value, out var version) ? version : Language.LanguageVersions.Last();
 					}
 					else
 					{
@@ -209,10 +201,7 @@ namespace ICSharpCode.ILSpy
 
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		public FilterSettings Clone()

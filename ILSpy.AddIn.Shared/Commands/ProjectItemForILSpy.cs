@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 
 using EnvDTE;
 
@@ -10,11 +9,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	/// <summary>
 	/// Represents a project item in Solution Explorer, which can be opened in ILSpy.
 	/// </summary>
-	class ProjectItemForILSpy
+	sealed class ProjectItemForILSpy
 	{
 		SelectedItem item;
-		Project project;
-		Microsoft.CodeAnalysis.Project roslynProject;
+		readonly Project project;
+		readonly Microsoft.CodeAnalysis.Project roslynProject;
 
 		ProjectItemForILSpy(Project project, Microsoft.CodeAnalysis.Project roslynProject, SelectedItem item)
 		{
@@ -34,10 +33,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 			var project = item.Project;
 			var roslynProject = package.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
-			if (roslynProject == null)
-				return null;
-
-			return new ProjectItemForILSpy(project, roslynProject, item);
+			return roslynProject == null ? null : new ProjectItemForILSpy(project, roslynProject, item);
 		}
 
 		/// <summary>

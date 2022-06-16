@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class PaneModel : INotifyPropertyChanged
 	{
-		class CloseCommandImpl : ICommand
+		sealed class CloseCommandImpl : ICommand
 		{
 			readonly PaneModel model;
 
@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
-		private bool isSelected = false;
+		private bool isSelected;
 		public bool IsSelected {
 			get => isSelected;
 			set {
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		private bool isActive = false;
+		private bool isActive;
 		public bool IsActive {
 			get => isActive;
 			set {
@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		private string contentId;
 		public string ContentId {
 			get => contentId;
-			set {
+			init {
 				if (contentId != value)
 				{
 					contentId = value;

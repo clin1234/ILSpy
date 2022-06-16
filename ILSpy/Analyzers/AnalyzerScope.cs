@@ -28,9 +28,9 @@ using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	using ICSharpCode.Decompiler.TypeSystem;
+	using Decompiler.TypeSystem;
 
-	public class AnalyzerScope
+	public sealed class AnalyzerScope
 	{
 		readonly ITypeDefinition typeScope;
 		readonly AssemblyListSnapshot assemblyListSnapshot;
@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public ITypeDefinition TypeScope => typeScope;
 
-		Accessibility effectiveAccessibility;
+		readonly Accessibility effectiveAccessibility;
 
 		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
 		{
@@ -152,7 +152,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 					ct.ThrowIfCancellationRequested();
 					bool found = false;
 					var module = assembly.GetPEFileOrNull();
-					if (module == null || !module.IsAssembly)
+					if (module is not { IsAssembly: true })
 						continue;
 					if (checkedFiles.Contains(module))
 						continue;

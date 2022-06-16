@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -28,11 +27,11 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class DebugMetadataTablesTreeNode : ILSpyTreeNode
+	sealed class DebugMetadataTablesTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
-		private bool isEmbedded;
-		private MetadataReader provider;
+		private readonly PEFile module;
+		private readonly bool isEmbedded;
+		private readonly MetadataReader provider;
 
 		public DebugMetadataTablesTreeNode(PEFile module, bool isEmbedded, MetadataReader provider)
 		{

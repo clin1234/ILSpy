@@ -25,7 +25,7 @@ using System.Windows.Threading;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class SearchBox : TextBox
+	public sealed class SearchBox : TextBox
 	{
 		static SearchBox()
 		{
@@ -36,11 +36,11 @@ namespace ICSharpCode.ILSpy.Controls
 
 		#region Dependency properties
 
-		public static DependencyProperty WatermarkTextProperty = DependencyProperty.Register("WatermarkText", typeof(string), typeof(SearchBox));
+		public static readonly DependencyProperty WatermarkTextProperty = DependencyProperty.Register("WatermarkText", typeof(string), typeof(SearchBox));
 
-		public static DependencyProperty WatermarkColorProperty = DependencyProperty.Register("WatermarkColor", typeof(Brush), typeof(SearchBox));
+		public static readonly DependencyProperty WatermarkColorProperty = DependencyProperty.Register("WatermarkColor", typeof(Brush), typeof(SearchBox));
 
-		public static DependencyProperty HasTextProperty = DependencyProperty.Register("HasText", typeof(bool), typeof(SearchBox));
+		public static readonly DependencyProperty HasTextProperty = DependencyProperty.Register("HasText", typeof(bool), typeof(SearchBox));
 
 		public static readonly DependencyProperty UpdateDelayProperty =
 			DependencyProperty.Register("UpdateDelay", typeof(TimeSpan), typeof(SearchBox),
@@ -106,10 +106,7 @@ namespace ICSharpCode.ILSpy.Controls
 			timer.Stop();
 			timer = null;
 			var textBinding = GetBindingExpression(TextProperty);
-			if (textBinding != null)
-			{
-				textBinding.UpdateSource();
-			}
+			textBinding?.UpdateSource();
 		}
 
 		protected override void OnLostFocus(RoutedEventArgs e)
@@ -140,8 +137,7 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			base.OnApplyTemplate();
 
-			Border iconBorder = GetTemplateChild("PART_IconBorder") as Border;
-			if (iconBorder != null)
+			if (GetTemplateChild("PART_IconBorder") is Border iconBorder)
 			{
 				iconBorder.MouseLeftButtonUp += IconBorder_MouseLeftButtonUp;
 			}

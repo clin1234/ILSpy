@@ -93,21 +93,13 @@ namespace ICSharpCode.ILSpy
 			const int UTF8Sequence = 3;
 			int state = ASCII;
 			int sequenceLength = 0;
-			byte b;
 			for (int i = 0; i < max; i++)
 			{
-				if (i == 0)
-				{
-					b = firstByte;
-				}
-				else if (i == 1)
-				{
-					b = secondByte;
-				}
-				else
-				{
-					b = (byte)fs.ReadByte();
-				}
+				byte b = i switch {
+					0 => firstByte,
+					1 => secondByte,
+					_ => (byte)fs.ReadByte()
+				};
 				if (b < 0x80)
 				{
 					// normal ASCII character
@@ -139,24 +131,17 @@ namespace ICSharpCode.ILSpy
 						break;
 					}
 				}
-				else if (b >= 0xc2 && b < 0xf5)
+				else if (b is >= 0xc2 and < 0xf5)
 				{
 					// beginning of byte sequence
-					if (state == UTF8 || state == ASCII)
+					if (state is UTF8 or ASCII)
 					{
 						state = UTF8Sequence;
-						if (b < 0xe0)
-						{
-							sequenceLength = 1; // one more byte following
-						}
-						else if (b < 0xf0)
-						{
-							sequenceLength = 2; // two more bytes following
-						}
-						else
-						{
-							sequenceLength = 3; // three more bytes following
-						}
+						sequenceLength = b switch {
+							< 0xe0 => 1,
+							< 0xf0 => 2,
+							_ => 3
+						};
 					}
 					else
 					{

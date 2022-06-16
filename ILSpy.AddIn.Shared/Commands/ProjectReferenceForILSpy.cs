@@ -11,11 +11,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	/// <summary>
 	/// Represents a project reference item in Solution Explorer, which can be opened in ILSpy.
 	/// </summary>
-	class ProjectReferenceForILSpy
+	sealed class ProjectReferenceForILSpy
 	{
-		ProjectItem projectItem;
-		string fusionName;
-		string resolvedPath;
+		readonly ProjectItem projectItem;
+		readonly string fusionName;
+		readonly string resolvedPath;
 
 		ProjectReferenceForILSpy(ProjectItem projectItem, string fusionName, string resolvedPath)
 		{
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 			else if (!string.IsNullOrWhiteSpace(fusionName))
 			{
-				return new ILSpyParameters(new string[] { UniversalAssemblyResolver.GetAssemblyInGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
+				return new ILSpyParameters(new[] { UniversalAssemblyResolver.GetAssemblyInGac(AssemblyNameReference.Parse(fusionName)) });
 			}
 
 			return null;

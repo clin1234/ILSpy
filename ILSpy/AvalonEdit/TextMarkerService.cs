@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -35,23 +34,18 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 	sealed class TextMarkerService : DocumentColorizingTransformer, IBackgroundRenderer, ITextMarkerService
 	{
 		TextSegmentCollection<TextMarker> markers;
-		TextView textView;
+		readonly TextView textView;
 
 		public TextMarkerService(TextView textView)
 		{
-			if (textView == null)
-				throw new ArgumentNullException(nameof(textView));
-			this.textView = textView;
+			this.textView = textView ?? throw new ArgumentNullException(nameof(textView));
 			textView.DocumentChanged += OnDocumentChanged;
 			OnDocumentChanged(null, null);
 		}
 
 		void OnDocumentChanged(object sender, EventArgs e)
 		{
-			if (textView.Document != null)
-				markers = new TextSegmentCollection<TextMarker>(textView.Document);
-			else
-				markers = null;
+			markers = textView.Document != null ? new TextSegmentCollection<TextMarker>(textView.Document) : null;
 		}
 
 		#region ITextMarkerService
@@ -86,8 +80,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 
 		public void RemoveAll(Predicate<ITextMarker> predicate)
 		{
-			if (predicate == null)
-				throw new ArgumentNullException(nameof(predicate));
+			ArgumentNullException.ThrowIfNull(predicate);
 			if (markers != null)
 			{
 				foreach (TextMarker m in markers.ToArray())
@@ -100,8 +93,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 
 		public void Remove(ITextMarker marker)
 		{
-			if (marker == null)
-				throw new ArgumentNullException(nameof(marker));
+			ArgumentNullException.ThrowIfNull(marker);
 			TextMarker m = marker as TextMarker;
 			if (markers != null && markers.Remove(m))
 			{
@@ -115,7 +107,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 		/// </summary>
 		internal void Redraw(ISegment segment)
 		{
-			textView.Redraw(segment, DispatcherPriority.Normal);
+			textView.Redraw(segment);
 			RedrawRequested?.Invoke(this, EventArgs.Empty);
 		}
 
@@ -166,12 +158,10 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			}
 		}
 
-		public void Draw(ICSharpCode.AvalonEdit.Rendering.TextView textView, DrawingContext drawingContext)
+		public void Draw(TextView textView, DrawingContext drawingContext)
 		{
-			if (textView == null)
-				throw new ArgumentNullException(nameof(textView));
-			if (drawingContext == null)
-				throw new ArgumentNullException(nameof(drawingContext));
+			ArgumentNullException.ThrowIfNull(textView);
+			ArgumentNullException.ThrowIfNull(drawingContext);
 			if (markers == null || !textView.VisualLinesValid)
 				return;
 			var visualLines = textView.VisualLines;
@@ -183,9 +173,10 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			{
 				if (marker.BackgroundColor != null)
 				{
-					BackgroundGeometryBuilder geoBuilder = new BackgroundGeometryBuilder();
-					geoBuilder.AlignToWholePixels = true;
-					geoBuilder.CornerRadius = 3;
+					BackgroundGeometryBuilder geoBuilder = new BackgroundGeometryBuilder {
+						AlignToWholePixels = true,
+						CornerRadius = 3
+					};
 					geoBuilder.AddSegment(textView, marker);
 					Geometry geometry = geoBuilder.CreateGeometry();
 					if (geometry != null)
@@ -196,7 +187,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 						drawingContext.DrawGeometry(brush, null, geometry);
 					}
 				}
-				var underlineMarkerTypes = TextMarkerTypes.SquigglyUnderline | TextMarkerTypes.NormalUnderline | TextMarkerTypes.DottedUnderline;
+				const TextMarkerTypes underlineMarkerTypes = TextMarkerTypes.SquigglyUnderline | TextMarkerTypes.NormalUnderline | TextMarkerTypes.DottedUnderline;
 				if ((marker.MarkerTypes & underlineMarkerTypes) != 0)
 				{
 					foreach (Rect r in BackgroundGeometryBuilder.GetRectsForSegment(textView, marker))
@@ -208,7 +199,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 						usedBrush.Freeze();
 						if ((marker.MarkerTypes & TextMarkerTypes.SquigglyUnderline) != 0)
 						{
-							double offset = 2.5;
+							const double offset = 2.5;
 
 							int count = Math.Max((int)((endPoint.X - startPoint.X) / offset) + 1, 4);
 
@@ -234,8 +225,9 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 						}
 						if ((marker.MarkerTypes & TextMarkerTypes.DottedUnderline) != 0)
 						{
-							Pen usedPen = new Pen(usedBrush, 1);
-							usedPen.DashStyle = DashStyles.Dot;
+							Pen usedPen = new Pen(usedBrush, 1) {
+								DashStyle = DashStyles.Dot
+							};
 							usedPen.Freeze();
 							drawingContext.DrawLine(usedPen, startPoint, endPoint);
 						}
@@ -258,9 +250,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 
 		public TextMarker(TextMarkerService service, int startOffset, int length)
 		{
-			if (service == null)
-				throw new ArgumentNullException(nameof(service));
-			this.service = service;
+			this.service = service ?? throw new ArgumentNullException(nameof(service));
 			this.StartOffset = startOffset;
 			this.Length = length;
 			this.markerTypes = TextMarkerTypes.None;

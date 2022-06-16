@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// <summary>
 	/// Analyzer tree view.
 	/// </summary>
-	public class AnalyzerTreeView : SharpTreeView
+	public sealed class AnalyzerTreeView : SharpTreeView
 	{
 		FilterSettings filterSettings;
 
@@ -108,9 +108,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void ShowOrFocus(AnalyzerTreeNode node)
 		{
-			if (node is AnalyzerEntityTreeNode)
+			if (node is AnalyzerEntityTreeNode an)
 			{
-				var an = node as AnalyzerEntityTreeNode;
 				var found = this.Root.Children.OfType<AnalyzerEntityTreeNode>().FirstOrDefault(n => n.Member == an.Member);
 				if (found != null)
 				{
@@ -127,10 +126,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Analyze(IEntity entity)
 		{
-			if (entity == null)
-			{
-				throw new ArgumentNullException(nameof(entity));
-			}
+			ArgumentNullException.ThrowIfNull(entity);
 
 			if (entity.MetadataToken.IsNil)
 			{
@@ -166,10 +162,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 			{
 				this.Children.RemoveAll(
-					delegate (SharpTreeNode n) {
-						AnalyzerTreeNode an = n as AnalyzerTreeNode;
-						return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
-					});
+					n => n is not AnalyzerTreeNode an ||
+					     !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies));
 				return true;
 			}
 		}

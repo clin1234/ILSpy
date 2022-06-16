@@ -26,7 +26,7 @@ using System.Text;
 
 namespace ILSpy.BamlDecompiler.Baml
 {
-	internal class BamlBinaryWriter : BinaryWriter
+	internal sealed class BamlBinaryWriter : BinaryWriter
 	{
 		public BamlBinaryWriter(Stream stream)
 			: base(stream)
@@ -66,7 +66,7 @@ namespace ILSpy.BamlDecompiler.Baml
 					defers.Add(i);
 			}
 			foreach (int i in defers)
-				(doc[i] as IBamlDeferRecord).WriteDefer(doc, i, writer);
+				(doc[i] as IBamlDeferRecord)?.WriteDefer(doc, i, writer);
 		}
 	}
 }

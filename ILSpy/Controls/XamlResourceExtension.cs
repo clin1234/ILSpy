@@ -21,7 +21,7 @@ using System.Windows.Markup;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	class XamlResourceExtension : MarkupExtension
+	sealed class XamlResourceExtension : MarkupExtension
 	{
 		readonly string name;
 

@@ -21,14 +21,13 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ConstantTableTreeNode : MetadataTableTreeNode
+	internal sealed class ConstantTableTreeNode : MetadataTableTreeNode
 	{
 		public ConstantTableTreeNode(PEFile module)
 			: base((HandleKind)0x0B, module)
@@ -71,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct ConstantEntry
+		readonly struct ConstantEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

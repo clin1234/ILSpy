@@ -23,16 +23,13 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	internal abstract class MetadataTableTreeNode : ILSpyTreeNode
 	{
-		protected PEFile module;
+		protected readonly PEFile module;
 		protected int scrollTarget;
 
 		public HandleKind Kind { get; }
@@ -66,7 +63,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 	internal abstract class DebugMetadataTableTreeNode : MetadataTableTreeNode
 	{
-		protected MetadataReader metadata;
+		protected readonly MetadataReader metadata;
 
 		public DebugMetadataTableTreeNode(HandleKind kind, PEFile module, MetadataReader metadata)
 			: base(kind, module)

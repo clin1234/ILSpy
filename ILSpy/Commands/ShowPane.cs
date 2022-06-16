@@ -1,10 +1,9 @@
 ﻿using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Commands
 {
-	class ToolPaneCommand : SimpleCommand
+	sealed class ToolPaneCommand : SimpleCommand
 	{
 		readonly string contentId;
 
@@ -19,7 +18,7 @@ namespace ICSharpCode.ILSpy.Commands
 		}
 	}
 
-	class TabPageCommand : SimpleCommand
+	sealed class TabPageCommand : SimpleCommand
 	{
 		readonly TabPageModel model;
 

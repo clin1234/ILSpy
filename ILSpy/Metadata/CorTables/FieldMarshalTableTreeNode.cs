@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class FieldMarshalTableTreeNode : MetadataTableTreeNode
+	internal sealed class FieldMarshalTableTreeNode : MetadataTableTreeNode
 	{
 		public FieldMarshalTableTreeNode(PEFile module)
 			: base((HandleKind)0x0D, module)
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		unsafe struct FieldMarshalEntry
+		unsafe readonly struct FieldMarshalEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -110,8 +109,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			public string ParentTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)fieldMarshal.Parent).WriteTo(module, output, context);
+					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
+					fieldMarshal.Parent.WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}

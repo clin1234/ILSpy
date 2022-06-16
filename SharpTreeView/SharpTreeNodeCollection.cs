@@ -63,10 +63,9 @@ namespace ICSharpCode.TreeView
 
 		void ThrowIfValueIsNullOrHasParent(SharpTreeNode node)
 		{
-			if (node == null)
-				throw new ArgumentNullException("node");
+			ArgumentNullException.ThrowIfNull(node);
 			if (node.modelParent != null)
-				throw new ArgumentException("The node already has a parent", "node");
+				throw new ArgumentException("The node already has a parent", nameof(node));
 		}
 
 		public SharpTreeNode this[int index] {
@@ -110,8 +109,7 @@ namespace ICSharpCode.TreeView
 
 		public void InsertRange(int index, IEnumerable<SharpTreeNode> nodes)
 		{
-			if (nodes == null)
-				throw new ArgumentNullException("nodes");
+			ArgumentNullException.ThrowIfNull(nodes);
 			ThrowOnReentrancy();
 			List<SharpTreeNode> newNodes = nodes.ToList();
 			if (newNodes.Count == 0)
@@ -199,8 +197,7 @@ namespace ICSharpCode.TreeView
 
 		public void RemoveAll(Predicate<SharpTreeNode> match)
 		{
-			if (match == null)
-				throw new ArgumentNullException("match");
+			ArgumentNullException.ThrowIfNull(match);
 			ThrowOnReentrancy();
 			int firstToRemove = 0;
 			for (int i = 0; i < list.Count; i++)

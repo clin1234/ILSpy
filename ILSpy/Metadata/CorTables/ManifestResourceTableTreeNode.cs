@@ -22,13 +22,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ManifestResourceTableTreeNode : MetadataTableTreeNode
+	sealed class ManifestResourceTableTreeNode : MetadataTableTreeNode
 	{
 		public ManifestResourceTableTreeNode(PEFile module)
 			: base(HandleKind.ManifestResource, module)
@@ -72,7 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct ManifestResourceEntry
+		readonly struct ManifestResourceEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

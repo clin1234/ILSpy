@@ -38,7 +38,7 @@ namespace ILSpy.BamlDecompiler
 		public string EventName, MethodName;
 	}
 
-	internal class BamlConnectionId
+	internal sealed class BamlConnectionId
 	{
 		public uint Id { get; }
 

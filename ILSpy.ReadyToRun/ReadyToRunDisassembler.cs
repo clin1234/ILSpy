@@ -32,13 +32,13 @@ using ILCompiler.Reflection.ReadyToRun.Amd64;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	internal class ReadyToRunDisassembler
+	internal sealed class ReadyToRunDisassembler
 	{
 		private readonly ITextOutput output;
-		private readonly ReadyToRunReader reader;
+		private readonly ReadyToRunReader? reader;
 		private readonly RuntimeFunction runtimeFunction;
 
-		public ReadyToRunDisassembler(ITextOutput output, ReadyToRunReader reader, RuntimeFunction runtimeFunction)
+		public ReadyToRunDisassembler(ITextOutput output, ReadyToRunReader? reader, RuntimeFunction runtimeFunction)
 		{
 			this.output = output;
 			this.reader = reader;
@@ -51,14 +51,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			ReadyToRunMethod readyToRunMethod = runtimeFunction.Method;
 			WriteCommentLine(readyToRunMethod.SignatureString);
 
-			Dictionary<ulong, UnwindCode> unwindInfo = null;
+			Dictionary<ulong, UnwindCode>? unwindInfo = null;
 			if (ReadyToRunOptions.GetIsShowUnwindInfo(null) && bitness == 64)
 			{
 				unwindInfo = WriteUnwindInfo();
 			}
 
 			bool isShowDebugInfo = ReadyToRunOptions.GetIsShowDebugInfo(null);
-			DebugInfoHelper debugInfo = null;
+			DebugInfoHelper? debugInfo = null;
 			if (isShowDebugInfo)
 			{
 				debugInfo = WriteDebugInfo();
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 
 			string disassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(null);
-			Formatter formatter = null;
+			Formatter formatter;
 			if (disassemblyFormat.Equals(ReadyToRunOptions.intel))
 			{
 				formatter = new NasmFormatter();
@@ -105,17 +105,17 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					{
 						if (bound.NativeOffset == byteBaseIndex)
 						{
-							if (bound.ILOffset == (uint)DebugInfoBoundsType.Prolog)
+							switch (bound.ILOffset)
 							{
-								WriteCommentLine("Prolog");
-							}
-							else if (bound.ILOffset == (uint)DebugInfoBoundsType.Epilog)
-							{
-								WriteCommentLine("Epilog");
-							}
-							else
-							{
-								WriteCommentLine($"IL_{bound.ILOffset:x4}");
+								case (uint)DebugInfoBoundsType.Prolog:
+									WriteCommentLine("Prolog");
+									break;
+								case (uint)DebugInfoBoundsType.Epilog:
+									WriteCommentLine("Epilog");
+									break;
+								default:
+									WriteCommentLine($"IL_{bound.ILOffset:x4}");
+									break;
 							}
 						}
 					}
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			output.WriteLine("; " + comment);
 		}
 
-		private class NativeVarInfoRecord
+		private sealed class NativeVarInfoRecord
 		{
 			public ulong codeOffset;
 			public bool isStart;
@@ -158,12 +158,12 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			public Variable variable;
 		}
 
-		private class DebugInfoHelper
+		private sealed class DebugInfoHelper
 		{
-			public List<NativeVarInfoRecord> records;
+			public List<NativeVarInfoRecord>? records;
 			public int i;
-			public Dictionary<string, Dictionary<int, HashSet<Variable>>> registerRelativeVariables;
-			public Dictionary<string, HashSet<Variable>> registerVariables;
+			public readonly Dictionary<string, Dictionary<int, HashSet<Variable>>> registerRelativeVariables;
+			public readonly Dictionary<string, HashSet<Variable>> registerVariables;
 
 			public DebugInfoHelper()
 			{
@@ -173,9 +173,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 			public void Update(ulong codeOffset)
 			{
-				HashSet<Variable> variables;
 				while (i < records.Count && records[i].codeOffset == codeOffset)
 				{
+					HashSet<Variable> variables;
 					if (records[i].isRegRelative)
 					{
 						Dictionary<int, HashSet<Variable>> offsetToVariableMap;
@@ -236,9 +236,8 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				DebugInfo debugInfo = runtimeFunction.DebugInfo;
 				if (debugInfo != null && debugInfo.BoundsList.Count > 0)
 				{
-					for (int i = 0; i < debugInfo.VariablesList.Count; ++i)
+					foreach (var varLoc in debugInfo.VariablesList)
 					{
-						var varLoc = debugInfo.VariablesList[i];
 						if (varLoc.StartOffset == varLoc.EndOffset)
 						{
 							// This could happen if the compiler is generating bogus variable info mapping record that covers 0 instructions
@@ -258,7 +257,6 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 									registerOffset = varLoc.VariableLocation.Data2,
 									variable = varLoc.Variable
 								});
-								;
 								records.Add(new NativeVarInfoRecord {
 									codeOffset = varLoc.EndOffset,
 									isStart = false,
@@ -303,18 +301,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				}
 				else
 				{
-					if (!x.isStart && y.isStart)
-					{
-						return -1;
-					}
-					else if (x.isStart && !y.isStart)
-					{
-						return 1;
-					}
-					else
-					{
-						return 0;
-					}
+					return x.isStart switch {
+						false when y.isStart => -1,
+						true when !y.isStart => 1,
+						_ => 0
+					};
 				}
 			});
 			return new DebugInfoHelper {
@@ -348,15 +339,15 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				WriteCommentLine($"Version:            {amd64UnwindInfo.Version}");
 				WriteCommentLine($"Flags:              0x{amd64UnwindInfo.Flags:X2}{parsedFlags}");
 				WriteCommentLine($"FrameRegister:      {((amd64UnwindInfo.FrameRegister == 0) ? "none" : amd64UnwindInfo.FrameRegister.ToString().ToLower())}");
-				for (int unwindCodeIndex = 0; unwindCodeIndex < amd64UnwindInfo.UnwindCodes.Count; unwindCodeIndex++)
+				foreach (var t in amd64UnwindInfo.UnwindCodes)
 				{
-					unwindCodes.Add((ulong)(amd64UnwindInfo.UnwindCodes[unwindCodeIndex].CodeOffset), amd64UnwindInfo.UnwindCodes[unwindCodeIndex]);
+					unwindCodes.Add(t.CodeOffset, t);
 				}
 			}
 			return unwindCodes;
 		}
 
-		private void DecorateUnwindInfo(Dictionary<ulong, UnwindCode> unwindInfo, ulong baseInstrIP, Instruction instr)
+		private void DecorateUnwindInfo(Dictionary<ulong, UnwindCode>? unwindInfo, ulong baseInstrIP, Instruction instr)
 		{
 			ulong nextInstructionOffset = instr.NextIP - baseInstrIP;
 			if (unwindInfo != null && unwindInfo.ContainsKey(nextInstructionOffset))
@@ -366,7 +357,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		private void DecorateDebugInfo(Instruction instr, DebugInfoHelper debugRecords, ulong baseInstrIP)
+		private void DecorateDebugInfo(Instruction instr, DebugInfoHelper? debugRecords, ulong baseInstrIP)
 		{
 			if (debugRecords != null)
 			{
@@ -377,12 +368,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 				debugRecords.Update(codeOffset);
 				foreach (UsedMemory usedMemInfo in info.GetUsedMemory())
 				{
-					string baseRegister = usedMemInfo.Base.ToString();
 					int displacement;
 					unchecked
 					{ displacement = (int)usedMemInfo.Displacement; }
-					Dictionary<int, HashSet<Variable>> offsetToVariableMap;
-					if (debugRecords.registerRelativeVariables.TryGetValue(usedMemInfo.Base.ToString(), out offsetToVariableMap))
+
+					if (debugRecords.registerRelativeVariables.TryGetValue(usedMemInfo.Base.ToString(), out Dictionary<int, HashSet<Variable>> offsetToVariableMap))
 					{
 						if (offsetToVariableMap.TryGetValue(displacement, out variables))
 						{
@@ -424,14 +414,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							var methodDefToken = MetadataTokens.EntityHandle(unchecked((int)methodDefSignature.MethodDefToken));
 							if (showMetadataTokens)
 							{
-								if (showMetadataTokensInBase10)
-								{
-									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken)}) ", "metadata");
-								}
-								else
-								{
-									output.WriteReference(currentFile, methodDefToken, $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
-								}
+								output.WriteReference(currentFile, methodDefToken,
+									showMetadataTokensInBase10
+										? $"({MetadataTokens.GetToken(methodDefToken)}) "
+										: $"({MetadataTokens.GetToken(methodDefToken):X8}) ", "metadata");
 							}
 							methodDefToken.WriteTo(currentFile, output, default);
 							break;
@@ -439,14 +425,10 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							var methodRefToken = MetadataTokens.EntityHandle(unchecked((int)methodRefSignature.MethodRefToken));
 							if (showMetadataTokens)
 							{
-								if (showMetadataTokensInBase10)
-								{
-									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken)}) ", "metadata");
-								}
-								else
-								{
-									output.WriteReference(currentFile, methodRefToken, $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
-								}
+								output.WriteReference(currentFile, methodRefToken,
+									showMetadataTokensInBase10
+										? $"({MetadataTokens.GetToken(methodRefToken)}) "
+										: $"({MetadataTokens.GetToken(methodRefToken):X8}) ", "metadata");
 							}
 							methodRefToken.WriteTo(currentFile, output, default);
 							break;

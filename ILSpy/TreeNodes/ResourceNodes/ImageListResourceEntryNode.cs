@@ -37,8 +37,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
-			if (data is ImageListStreamer)
-				return new ImageListResourceEntryNode(key, (ImageListStreamer)data);
+			if (data is ImageListStreamer streamer)
+				return new ImageListResourceEntryNode(key, streamer);
 			return null;
 		}
 	}
@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				using var s = new MemoryStream();
 				image.Save(s, System.Drawing.Imaging.ImageFormat.Bmp);
-				var node = ResourceEntryNode.Create("Image" + i.ToString(), s.ToArray());
+				var node = ResourceEntryNode.Create("Image" + i, s.ToArray());
 				if (node != null)
 					Children.Add(node);
 				++i;

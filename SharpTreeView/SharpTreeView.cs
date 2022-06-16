@@ -135,9 +135,9 @@ namespace ICSharpCode.TreeView
 			return new UpdateLock(this);
 		}
 
-		class UpdateLock : IDisposable
+		sealed class UpdateLock : IDisposable
 		{
-			SharpTreeView instance;
+			readonly SharpTreeView instance;
 
 			public UpdateLock(SharpTreeView instance)
 			{
@@ -153,10 +153,7 @@ namespace ICSharpCode.TreeView
 
 		void Reload()
 		{
-			if (flattener != null)
-			{
-				flattener.Stop();
-			}
+			flattener?.Stop();
 			if (Root != null)
 			{
 				if (!(ShowRoot && ShowRootExpander))
@@ -175,14 +172,10 @@ namespace ICSharpCode.TreeView
 			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0)
 			{
 				List<SharpTreeNode> selectedOldItems = null;
-				foreach (SharpTreeNode node in e.OldItems)
+				foreach (var node in e.OldItems.Cast<SharpTreeNode>().Where(static node => node.IsSelected))
 				{
-					if (node.IsSelected)
-					{
-						if (selectedOldItems == null)
-							selectedOldItems = new List<SharpTreeNode>();
-						selectedOldItems.Add(node);
-					}
+					selectedOldItems ??= new List<SharpTreeNode>();
+					selectedOldItems.Add(node);
 				}
 				if (!updatesLocked && selectedOldItems != null)
 				{
@@ -223,10 +216,7 @@ namespace ICSharpCode.TreeView
 			SharpTreeViewItem container = element as SharpTreeViewItem;
 			container.ParentTreeView = this;
 			// Make sure that the line renderer takes into account the new bound data
-			if (container.NodeView != null)
-			{
-				container.NodeView.LinesRenderer.InvalidateVisual();
-			}
+			container.NodeView?.LinesRenderer.InvalidateVisual();
 		}
 
 		bool doNotScrollOnExpanding;
@@ -393,8 +383,7 @@ namespace ICSharpCode.TreeView
 		/// </summary>
 		public void FocusNode(SharpTreeNode node)
 		{
-			if (node == null)
-				throw new ArgumentNullException("node");
+			ArgumentNullException.ThrowIfNull(node);
 			ScrollIntoView(node);
 			// WPF's ScrollIntoView() uses the same if/dispatcher construct, so we call OnFocusItem() after the item was brought into view.
 			if (this.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
@@ -409,8 +398,7 @@ namespace ICSharpCode.TreeView
 
 		public void ScrollIntoView(SharpTreeNode node)
 		{
-			if (node == null)
-				throw new ArgumentNullException("node");
+			ArgumentNullException.ThrowIfNull(node);
 			doNotScrollOnExpanding = true;
 			foreach (SharpTreeNode ancestor in node.Ancestors())
 				ancestor.IsExpanded = true;
@@ -421,10 +409,7 @@ namespace ICSharpCode.TreeView
 		object OnFocusItem(object item)
 		{
 			FrameworkElement element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
-			if (element != null)
-			{
-				element.Focus();
-			}
+			element?.Focus();
 			return null;
 		}
 
@@ -520,7 +505,7 @@ namespace ICSharpCode.TreeView
 			e.Handled = true;
 		}
 
-		class DropTarget
+		sealed class DropTarget
 		{
 			public SharpTreeViewItem Item;
 			public DropPlace Place;
@@ -573,41 +558,34 @@ namespace ICSharpCode.TreeView
 			var y2 = h / 2;
 			var y3 = h - y1;
 
-			if (result.Count == 2)
+			switch (result.Count)
 			{
-				if (result[0].Place == DropPlace.Inside &&
-					result[1].Place != DropPlace.Inside)
-				{
+				case 2 when result[0].Place == DropPlace.Inside &&
+				            result[1].Place != DropPlace.Inside:
 					result[0].Y = y3;
-				}
-				else if (result[0].Place != DropPlace.Inside &&
-						 result[1].Place == DropPlace.Inside)
-				{
+					break;
+				case 2 when result[0].Place != DropPlace.Inside &&
+				            result[1].Place == DropPlace.Inside:
 					result[0].Y = y1;
-				}
-				else
-				{
+					break;
+				case 2:
 					result[0].Y = y2;
-				}
-			}
-			else if (result.Count == 3)
-			{
-				result[0].Y = y1;
-				result[1].Y = y3;
+					break;
+				case 3:
+					result[0].Y = y1;
+					result[1].Y = y3;
+					break;
 			}
 			if (result.Count > 0)
 			{
-				result[result.Count - 1].Y = h;
+				result[^1].Y = h;
 			}
 			return result;
 		}
 
 		void TryAddDropTarget(List<DropTarget> targets, SharpTreeViewItem item, DropPlace place, DragEventArgs e)
 		{
-			SharpTreeNode node;
-			int index;
-
-			GetNodeAndIndex(item, place, out node, out index);
+			GetNodeAndIndex(item, place, out SharpTreeNode node, out int index);
 
 			if (node != null)
 			{
@@ -630,25 +608,31 @@ namespace ICSharpCode.TreeView
 			node = null;
 			index = 0;
 
-			if (place == DropPlace.Inside)
+			switch (place)
 			{
-				node = item.Node;
-				index = node.Children.Count;
-			}
-			else if (place == DropPlace.Before)
-			{
-				if (item.Node.Parent != null)
+				case DropPlace.Inside:
+					node = item.Node;
+					index = node.Children.Count;
+					break;
+				case DropPlace.Before:
 				{
-					node = item.Node.Parent;
-					index = node.Children.IndexOf(item.Node);
+					if (item.Node.Parent != null)
+					{
+						node = item.Node.Parent;
+						index = node.Children.IndexOf(item.Node);
+					}
+
+					break;
 				}
-			}
-			else
-			{
-				if (item.Node.Parent != null)
+				default:
 				{
-					node = item.Node.Parent;
-					index = node.Children.IndexOf(item.Node) + 1;
+					if (item.Node.Parent != null)
+					{
+						node = item.Node.Parent;
+						index = node.Children.IndexOf(item.Node) + 1;
+					}
+
+					break;
 				}
 			}
 		}

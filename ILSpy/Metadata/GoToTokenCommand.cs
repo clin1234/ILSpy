@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Commands
 			Type type = cell.Item.GetType();
 			var property = type.GetProperty(cell.Column.Header.ToString());
 			var moduleField = type.GetField("module", BindingFlags.NonPublic | BindingFlags.Instance);
-			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is StringFormatAttribute sf && sf.Format == "X8"))
+			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is StringFormatAttribute { Format: "X8" }))
 				return null;
 			module = (PEFile)moduleField.GetValue(cell.Item);
 			return (int)property.GetValue(cell.Item);
@@ -91,12 +91,8 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			position = grid.PointFromScreen(position);
 			var hit = VisualTreeHelper.HitTest(grid, position);
-			if (hit == null)
-				return null;
-			var cell = hit.VisualHit.GetParent<DataGridCell>();
-			if (cell == null)
-				return null;
-			return cell.DataContext.GetType()
+			var cell = hit?.VisualHit.GetParent<DataGridCell>();
+			return cell?.DataContext.GetType()
 				.GetProperty(cell.Column.Header.ToString(), BindingFlags.Instance | BindingFlags.Public)
 				.GetValue(cell.DataContext).ToString();
 		}

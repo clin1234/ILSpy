@@ -22,7 +22,7 @@ namespace TestPlugin
 		{
 			foreach (var loadedAssembly in MainWindow.Instance.CurrentAssemblyList.GetAssemblies())
 			{
-				loadedAssembly.AssemblyList.Unload(loadedAssembly);
+				loadedAssembly?.AssemblyList.Unload(loadedAssembly);
 			}
 		}
 	}

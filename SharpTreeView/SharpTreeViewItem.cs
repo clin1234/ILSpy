@@ -24,7 +24,7 @@ using System.Windows.Input;
 
 namespace ICSharpCode.TreeView
 {
-	public class SharpTreeViewItem : ListViewItem
+	public sealed class SharpTreeViewItem : ListViewItem
 	{
 		static SharpTreeViewItem()
 		{

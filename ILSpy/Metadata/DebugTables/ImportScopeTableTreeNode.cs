@@ -16,22 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class ImportScopeTableTreeNode : DebugMetadataTableTreeNode
+	internal sealed class ImportScopeTableTreeNode : DebugMetadataTableTreeNode
 	{
 		private readonly bool isEmbedded;
 
@@ -76,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct ImportScopeEntry
+		readonly struct ImportScopeEntry
 		{
 			readonly int? offset;
 			readonly PEFile module;
@@ -86,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
-			public object Offset => offset == null ? "n/a" : (object)offset;
+			public object Offset => offset == null ? "n/a" : offset;
 
 			[StringFormat("X8")]
 			[LinkToTable]

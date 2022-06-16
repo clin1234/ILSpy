@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy.Commands
 {
-	public class DelegateCommand : ICommand
+	internal sealed class DelegateCommand : ICommand
 	{
 		private readonly Action action;
 		private readonly Func<bool> canExecute;
@@ -39,7 +35,7 @@ namespace ICSharpCode.ILSpy.Commands
 		}
 	}
 
-	public class DelegateCommand<T> : ICommand
+	internal sealed class DelegateCommand<T> : ICommand
 	{
 		private readonly Action<T> action;
 		private readonly Func<T, bool> canExecute;

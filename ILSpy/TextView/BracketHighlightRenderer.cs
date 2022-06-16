@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.TextView
 		BracketSearchResult SearchBracket(IDocument document, int offset);
 	}
 
-	public class DefaultBracketSearcher : IBracketSearcher
+	public sealed class DefaultBracketSearcher : IBracketSearcher
 	{
 		public static readonly DefaultBracketSearcher DefaultInstance = new DefaultBracketSearcher();
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// <summary>
 	/// Describes a pair of matching brackets found by <see cref="IBracketSearcher"/>.
 	/// </summary>
-	public class BracketSearchResult
+	public sealed class BracketSearchResult
 	{
 		public int OpeningBracketOffset { get; private set; }
 
@@ -69,12 +69,12 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 	}
 
-	public class BracketHighlightRenderer : IBackgroundRenderer
+	public sealed class BracketHighlightRenderer : IBackgroundRenderer
 	{
 		BracketSearchResult result;
 		Pen borderPen;
 		Brush backgroundBrush;
-		ICSharpCode.AvalonEdit.Rendering.TextView textView;
+		readonly ICSharpCode.AvalonEdit.Rendering.TextView textView;
 
 		public void SetHighlight(BracketSearchResult result)
 		{
@@ -89,8 +89,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public BracketHighlightRenderer(ICSharpCode.AvalonEdit.Rendering.TextView textView)
 		{
-			if (textView == null)
-				throw new ArgumentNullException("textView");
+			ArgumentNullException.ThrowIfNull(textView);
 
 			this.borderPen = (Pen)textView.FindResource(Themes.ResourceKeys.BracketHighlightBorderPen);
 			this.backgroundBrush = (SolidColorBrush)textView.FindResource(Themes.ResourceKeys.BracketHighlightBackgroundBrush);
@@ -111,9 +110,9 @@ namespace ICSharpCode.ILSpy.TextView
 			if (this.result == null)
 				return;
 
-			BackgroundGeometryBuilder builder = new BackgroundGeometryBuilder();
-
-			builder.CornerRadius = 1;
+			BackgroundGeometryBuilder builder = new BackgroundGeometryBuilder {
+				CornerRadius = 1
+			};
 
 			builder.AddSegment(textView, new TextSegment() { StartOffset = result.OpeningBracketOffset, Length = result.OpeningBracketLength });
 			builder.CloseFigure(); // prevent connecting the two segments

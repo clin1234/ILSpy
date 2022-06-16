@@ -21,7 +21,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -29,7 +28,7 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class ImplMapTableTreeNode : MetadataTableTreeNode
+	sealed class ImplMapTableTreeNode : MetadataTableTreeNode
 	{
 		public ImplMapTableTreeNode(PEFile module)
 			: base((HandleKind)0x1C, module)
@@ -92,7 +91,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		unsafe struct ImplMapEntry
+		unsafe readonly struct ImplMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;
@@ -128,7 +127,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				get {
 					ITextOutput output = new PlainTextOutput();
 					var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
-					((EntityHandle)implMap.MemberForwarded).WriteTo(module, output, context);
+					implMap.MemberForwarded.WriteTo(module, output, context);
 					return output.ToString();
 				}
 			}

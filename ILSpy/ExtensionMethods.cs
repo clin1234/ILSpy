@@ -19,17 +19,13 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy
@@ -58,7 +54,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (string.IsNullOrEmpty(s) || length >= s.Length)
 				return s;
-			return s.Substring(0, length) + "...";
+			return s[..length] + "...";
 		}
 
 		/// <summary>
@@ -78,7 +74,7 @@ namespace ICSharpCode.ILSpy
 
 		public static ICompilation? GetTypeSystemWithCurrentOptionsOrNull(this PEFile file)
 		{
-			return LoadedAssemblyExtensions.GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
+			return file.GetLoadedAssembly().GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(new DecompilationOptions().DecompilerSettings));
 		}
 
 		#region DPI independence
@@ -126,9 +122,9 @@ namespace ICSharpCode.ILSpy
 				for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
 				{
 					DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-					if (child != null && child is T)
+					if (child is T dependencyObject)
 					{
-						return (T)child;
+						return dependencyObject;
 					}
 
 					T? childItem = FindVisualChild<T>(child);
@@ -143,7 +139,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (depObj == null)
 				return null;
-			while (!(depObj is T))
+			while (depObj is not T)
 			{
 				var parent = VisualTreeHelper.GetParent(depObj);
 				if (parent == null)

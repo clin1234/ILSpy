@@ -34,9 +34,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (protocol != "metadata")
 				return null;
 			var assemblyTreeNode = MainWindow.Instance.FindTreeNode(module) as AssemblyTreeNode;
-			if (assemblyTreeNode == null)
-				return null;
-			var mxNode = assemblyTreeNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();
+			var mxNode = assemblyTreeNode?.Children.OfType<MetadataTreeNode>().FirstOrDefault();
 			if (mxNode != null)
 			{
 				mxNode.EnsureLazyChildren();

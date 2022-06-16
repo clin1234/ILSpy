@@ -6,7 +6,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Interaction logic for Create.xaml
 	/// </summary>
-	public partial class CreateListDialog : Window
+	public sealed partial class CreateListDialog
 	{
 		public CreateListDialog(string title)
 		{
@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy
 
 		public string ListName {
 			get => ListNameBox.Text;
-			set => ListNameBox.Text = value;
+			init => ListNameBox.Text = value;
 		}
 	}
 }

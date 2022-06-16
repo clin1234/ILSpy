@@ -26,7 +26,7 @@ using System.Xml.Linq;
 
 namespace ILSpy.BamlDecompiler.Xaml
 {
-	internal class XamlExtension
+	internal sealed class XamlExtension
 	{
 		public XamlType ExtensionType { get; }
 		public object[] Initializer { get; set; }
@@ -40,10 +40,10 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 		static void WriteObject(StringBuilder sb, XamlContext ctx, XElement ctxElement, object value)
 		{
-			if (value is XamlExtension)
-				sb.Append(((XamlExtension)value).ToString(ctx, ctxElement));
+			if (value is XamlExtension extension)
+				sb.Append(extension.ToString(ctx, ctxElement));
 			else
-				sb.Append(value.ToString());
+				sb.Append(value);
 		}
 
 		public string ToString(XamlContext ctx, XElement ctxElement)
@@ -52,20 +52,17 @@ namespace ILSpy.BamlDecompiler.Xaml
 			sb.Append('{');
 
 			var typeName = ctx.ToString(ctxElement, ExtensionType);
-			if (typeName.EndsWith("Extension"))
-				sb.Append(typeName.Substring(0, typeName.Length - 9));
-			else
-				sb.Append(typeName);
+			sb.Append(typeName.EndsWith("Extension") ? typeName[..^9] : typeName);
 
 			bool comma = false;
-			if (Initializer != null && Initializer.Length > 0)
+			if (Initializer is { Length: > 0 })
 			{
 				sb.Append(' ');
-				for (int i = 0; i < Initializer.Length; i++)
+				foreach (var t in Initializer)
 				{
 					if (comma)
 						sb.Append(", ");
-					WriteObject(sb, ctx, ctxElement, Initializer[i]);
+					WriteObject(sb, ctx, ctxElement, t);
 					comma = true;
 				}
 			}
@@ -81,7 +78,8 @@ namespace ILSpy.BamlDecompiler.Xaml
 						sb.Append(' ');
 						comma = true;
 					}
-					sb.AppendFormat("{0}=", kvp.Key);
+
+					sb.Append($"{kvp.Key}=");
 					WriteObject(sb, ctx, ctxElement, kvp.Value);
 				}
 			}

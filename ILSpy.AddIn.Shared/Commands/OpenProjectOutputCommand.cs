@@ -1,15 +1,11 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 
 using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
-	class OpenProjectOutputCommand : ILSpyCommand
+	sealed class OpenProjectOutputCommand : ILSpyCommand
 	{
-		static OpenProjectOutputCommand instance;
-
 		public OpenProjectOutputCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenProjectOutputInILSpy)
 		{
@@ -46,7 +42,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenProjectOutputCommand(owner);
+			new OpenProjectOutputCommand(owner);
 		}
 	}
 }

@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -47,10 +46,11 @@ namespace ICSharpCode.ILSpy
 			if (bundleNode == null)
 				return;
 			var assembly = selectedNodes[0].PackageEntry;
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(assembly.Name));
-			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd" + Resources.AllFiles;
-			dlg.InitialDirectory = Path.GetDirectoryName(bundleNode.LoadedAssembly.FileName);
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(assembly.Name)),
+				Filter = ".NET assemblies|*.dll;*.exe;*.winmd" + Resources.AllFiles,
+				InitialDirectory = Path.GetDirectoryName(bundleNode.LoadedAssembly.FileName)
+			};
 			if (dlg.ShowDialog() != true)
 				return;
 

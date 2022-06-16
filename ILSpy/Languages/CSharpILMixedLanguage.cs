@@ -23,8 +23,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Threading;
-using System.Windows;
 using System.Windows.Media;
 
 using ICSharpCode.AvalonEdit.Highlighting;
@@ -65,8 +63,10 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
-			decompiler.CancellationToken = options.CancellationToken;
+			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings)
+				{
+					CancellationToken = options.CancellationToken
+				};
 			return decompiler;
 		}
 
@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 		}
 
-		class MixedMethodBodyDisassembler : MethodBodyDisassembler
+		sealed class MixedMethodBodyDisassembler : MethodBodyDisassembler
 		{
 			readonly DecompilationOptions options;
 			// list sorted by IL offset
@@ -149,7 +149,7 @@ namespace ICSharpCode.ILSpy
 				base.WriteInstruction(output, metadata, methodHandle, ref blob, methodRva);
 			}
 
-			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
+			readonly HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
 
 			void WriteHighlightedCommentLine(ISmartTextOutput output, string text, int startColumn, int endColumn, bool isSingleLine)
 			{
@@ -165,14 +165,11 @@ namespace ICSharpCode.ILSpy
 				}
 				output.Write("// ");
 				output.BeginSpan(gray);
-				if (isSingleLine)
-					output.Write(text.Substring(0, startColumn).TrimStart());
-				else
-					output.Write(text.Substring(0, startColumn));
+				output.Write(isSingleLine ? text[..startColumn].TrimStart() : text[..startColumn]);
 				output.EndSpan();
 				output.Write(text.Substring(startColumn, endColumn - startColumn));
 				output.BeginSpan(gray);
-				output.Write(text.Substring(endColumn));
+				output.Write(text[endColumn..]);
 				output.EndSpan();
 				output.WriteLine();
 			}

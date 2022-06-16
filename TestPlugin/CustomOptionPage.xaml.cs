@@ -11,7 +11,7 @@ using ICSharpCode.ILSpy.Options;
 namespace TestPlugin
 {
 	[ExportOptionPage(Title = "TestPlugin", Order = 0)]
-	partial class CustomOptionPage : UserControl, IOptionPage
+	partial class CustomOptionPage : IOptionPage
 	{
 		static readonly XNamespace ns = "http://www.ilspy.net/testplugin";
 
@@ -55,7 +55,7 @@ namespace TestPlugin
 		}
 	}
 
-	class Options : INotifyPropertyChanged
+	sealed class Options : INotifyPropertyChanged
 	{
 		bool uselessOption1;
 
@@ -85,12 +85,9 @@ namespace TestPlugin
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		protected virtual void OnPropertyChanged(string propertyName)
+		private void OnPropertyChanged(string propertyName)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 	}
 }

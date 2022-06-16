@@ -20,16 +20,13 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
 {
-	public class TabItemViewModel
+	public sealed class TabItemViewModel
 	{
 		public TabItemViewModel(string header, UIElement content)
 		{
@@ -44,7 +41,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for OptionsDialog.xaml
 	/// </summary>
-	public partial class OptionsDialog : Window
+	public sealed partial class OptionsDialog : Window
 	{
 
 		readonly Lazy<UIElement, IOptionsMetadata>[] optionPages;
@@ -65,8 +62,7 @@ namespace ICSharpCode.ILSpy.Options
 				tabControl.Items.Add(tabItem);
 
 				IOptionPage page = optionPage.Value as IOptionPage;
-				if (page != null)
-					page.Load(settings);
+				page?.Load(settings);
 			}
 		}
 
@@ -77,8 +73,7 @@ namespace ICSharpCode.ILSpy.Options
 					foreach (var optionPage in optionPages)
 					{
 						IOptionPage page = optionPage.Value as IOptionPage;
-						if (page != null)
-							page.Save(root);
+						page?.Save(root);
 					}
 				});
 			this.DialogResult = true;
@@ -90,8 +85,7 @@ namespace ICSharpCode.ILSpy.Options
 			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
 			{
 				var page = tabControl.SelectedValue as IOptionPage;
-				if (page != null)
-					page.LoadDefaults();
+				page?.LoadDefaults();
 			}
 		}
 	}
@@ -111,7 +105,7 @@ namespace ICSharpCode.ILSpy.Options
 
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportOptionPageAttribute : ExportAttribute
+	public sealed class ExportOptionPageAttribute : ExportAttribute
 	{
 		public ExportOptionPageAttribute() : base("OptionPages", typeof(UIElement))
 		{ }
@@ -126,8 +120,9 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		public override void Execute(object parameter)
 		{
-			OptionsDialog dlg = new OptionsDialog();
-			dlg.Owner = MainWindow.Instance;
+			OptionsDialog dlg = new OptionsDialog {
+				Owner = MainWindow.Instance
+			};
 			if (dlg.ShowDialog() == true)
 			{
 				new RefreshCommand().Execute(parameter);

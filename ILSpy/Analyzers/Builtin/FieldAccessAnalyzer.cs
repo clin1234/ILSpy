@@ -17,20 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers;
 
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
@@ -97,7 +92,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (property.CanSet && IsUsedInMethod((IField)analyzedSymbol, property.Setter, mappingInfo, context))
 					{
 						yield return property;
-						continue;
 					}
 				}
 
@@ -116,7 +110,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (@event.CanInvoke && IsUsedInMethod((IField)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context))
 					{
 						yield return @event;
-						continue;
 					}
 				}
 			}
@@ -154,14 +147,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
-			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
+			var genericContext = new GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0)
 			{
-				ILOpCode opCode;
 				try
 				{
-					opCode = blob.DecodeOpCode();
+					ILOpCode opCode = blob.DecodeOpCode();
 					if (!CanBeReference(opCode))
 					{
 						blob.SkipOperand(opCode);

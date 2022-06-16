@@ -18,26 +18,25 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.ILSpy
 {
 	sealed class CommandLineArguments
 	{
 		// see /doc/Command Line.txt for details
-		public List<string> AssembliesToLoad = new List<string>();
+		public readonly List<string> AssembliesToLoad = new List<string>();
 		public bool? SingleInstance;
-		public string NavigateTo;
-		public string Search;
-		public string Language;
-		public bool NoActivate;
-		public string ConfigFile;
+		public readonly string NavigateTo;
+		public readonly string Search;
+		public readonly string Language;
+		public readonly bool NoActivate;
+		public readonly string ConfigFile;
 
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
-			foreach (string arg in arguments)
+			foreach (var arg in arguments.Where(static arg => arg.Length != 0))
 			{
-				if (arg.Length == 0)
-					continue;
 				if (arg[0] == '/')
 				{
 					if (arg.Equals("/singleInstance", StringComparison.OrdinalIgnoreCase))
@@ -45,15 +44,15 @@ namespace ICSharpCode.ILSpy
 					else if (arg.Equals("/separate", StringComparison.OrdinalIgnoreCase))
 						this.SingleInstance = false;
 					else if (arg.StartsWith("/navigateTo:", StringComparison.OrdinalIgnoreCase))
-						this.NavigateTo = arg.Substring("/navigateTo:".Length);
+						this.NavigateTo = arg["/navigateTo:".Length..];
 					else if (arg.StartsWith("/search:", StringComparison.OrdinalIgnoreCase))
-						this.Search = arg.Substring("/search:".Length);
+						this.Search = arg["/search:".Length..];
 					else if (arg.StartsWith("/language:", StringComparison.OrdinalIgnoreCase))
-						this.Language = arg.Substring("/language:".Length);
+						this.Language = arg["/language:".Length..];
 					else if (arg.Equals("/noActivate", StringComparison.OrdinalIgnoreCase))
 						this.NoActivate = true;
 					else if (arg.StartsWith("/config:", StringComparison.OrdinalIgnoreCase))
-						this.ConfigFile = arg.Substring("/config:".Length);
+						this.ConfigFile = arg["/config:".Length..];
 				}
 				else
 				{

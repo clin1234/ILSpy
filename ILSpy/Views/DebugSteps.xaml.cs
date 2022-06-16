@@ -7,12 +7,11 @@ using System.Windows.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy
 {
-	public partial class DebugSteps : UserControl
+	public sealed partial class DebugSteps
 	{
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
 			UseFieldSugar = true,
@@ -58,7 +57,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void WritingOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			DecompileAsync(lastSelectedStep);
 		}
@@ -71,7 +70,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (e.PropertyName == "Language")
@@ -143,7 +142,7 @@ namespace ICSharpCode.ILSpy
 
 		private void tree_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Enter || e.Key == Key.Return)
+			if (e.Key is Key.Enter or Key.Return)
 			{
 				if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
 					ShowStateBefore_Click(sender, e);

@@ -36,7 +36,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy
 {
-	public class LanguageVersion
+	public sealed class LanguageVersion
 	{
 		public string Version { get; }
 		public string DisplayName { get; }
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy
 		public LanguageVersion(string version, string name = null)
 		{
 			this.Version = version ?? "";
-			this.DisplayName = name ?? version.ToString();
+			this.DisplayName = name ?? version;
 		}
 
 		public override string ToString()
@@ -84,9 +84,9 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the syntax highlighting used for this language.
 		/// </summary>
-		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting {
+		public virtual IHighlightingDefinition SyntaxHighlighting {
 			get {
-				return ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
+				return HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
 			}
 		}
 
@@ -176,7 +176,7 @@ namespace ICSharpCode.ILSpy
 			return visitor.ToString();
 		}
 
-		class TypeToStringVisitor : TypeVisitor
+		sealed class TypeToStringVisitor : TypeVisitor
 		{
 			readonly bool includeNamespace;
 			readonly StringBuilder builder;
@@ -292,10 +292,7 @@ namespace ICSharpCode.ILSpy
 
 			private void WriteType(IType type)
 			{
-				if (includeNamespace)
-					EscapeName(builder, type.FullName);
-				else
-					EscapeName(builder, type.Name);
+				EscapeName(builder, includeNamespace ? type.FullName : type.Name);
 				if (type.TypeParameterCount > 0)
 				{
 					builder.Append('`');
@@ -390,22 +387,19 @@ namespace ICSharpCode.ILSpy
 
 		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 			return GetDisplayName(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(field.ReturnType, includeNamespace);
 		}
 
 		public virtual string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
+			ArgumentNullException.ThrowIfNull(property);
 			return GetDisplayName(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(property.ReturnType, includeNamespace);
 		}
 
 		public virtual string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (method == null)
-				throw new ArgumentNullException(nameof(method));
+			ArgumentNullException.ThrowIfNull(method);
 
 			int i = 0;
 			var buffer = new StringBuilder();
@@ -447,8 +441,7 @@ namespace ICSharpCode.ILSpy
 
 		public virtual string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (@event == null)
-				throw new ArgumentNullException(nameof(@event));
+			ArgumentNullException.ThrowIfNull(@event);
 			var buffer = new StringBuilder();
 			buffer.Append(GetDisplayName(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			buffer.Append(" : ");
@@ -459,7 +452,7 @@ namespace ICSharpCode.ILSpy
 		protected string GetDisplayName(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			string entityName;
-			if (entity is ITypeDefinition t && !t.MetadataToken.IsNil)
+			if (entity is ITypeDefinition { MetadataToken.IsNil: false } t)
 			{
 				MetadataReader metadata = t.ParentModule.PEFile.Metadata;
 				var typeDef = metadata.GetTypeDefinition((TypeDefinitionHandle)t.MetadataToken);
@@ -541,13 +534,13 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
+		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
 		{
-			var declaringType = (SRM.TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
+			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 
-			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition)
+			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition)
 			{
-				declaringType = (SRM.TypeDefinitionHandle)member;
+				declaringType = (TypeDefinitionHandle)member;
 			}
 
 			return new CodeMappingInfo(module, declaringType);
@@ -593,7 +586,7 @@ namespace ICSharpCode.ILSpy
 			foreach (char ch in name)
 			{
 				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
-					sb.AppendFormat("\\u{0:x4}", (int)ch);
+					sb.Append($"\\u{(int)ch:x4}");
 				else
 					sb.Append(ch);
 			}

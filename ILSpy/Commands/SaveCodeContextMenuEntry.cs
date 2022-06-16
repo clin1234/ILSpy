@@ -22,7 +22,6 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
@@ -49,7 +48,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public static bool CanExecute(IReadOnlyList<SharpTreeNode> selectedNodes)
 		{
-			if (selectedNodes == null || selectedNodes.Any(n => !(n is ILSpyTreeNode)))
+			if (selectedNodes == null || selectedNodes.Any(n => n is not ILSpyTreeNode))
 				return false;
 			return selectedNodes.Count == 1
 				|| (selectedNodes.Count > 1 && (selectedNodes.All(n => n is AssemblyTreeNode) || selectedNodes.All(n => n is IMemberTreeNode)));
@@ -60,31 +59,34 @@ namespace ICSharpCode.ILSpy.TextView
 			var currentLanguage = MainWindow.Instance.CurrentLanguage;
 			var tabPage = Docking.DockWorkspace.Instance.ActiveTabPage;
 			tabPage.ShowTextView(textView => {
-				if (selectedNodes.Count == 1 && selectedNodes[0] is ILSpyTreeNode singleSelection)
+				switch (selectedNodes.Count)
 				{
 					// if there's only one treenode selected
 					// we will invoke the custom Save logic
-					if (singleSelection.Save(tabPage))
+					case 1 when selectedNodes[0] is ILSpyTreeNode singleSelection && singleSelection.Save(tabPage):
 						return;
-				}
-				else if (selectedNodes.Count > 1 && selectedNodes.All(n => n is AssemblyTreeNode))
-				{
-					var selectedPath = SelectSolutionFile();
-
-					if (!string.IsNullOrEmpty(selectedPath))
+					case > 1 when selectedNodes.All(n => n is AssemblyTreeNode):
 					{
-						var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
-							.Select(n => n.LoadedAssembly)
-							.Where(a => a.IsLoadedAsValidAssembly).ToArray();
-						SolutionWriter.CreateSolution(textView, selectedPath, currentLanguage, assemblies);
-					}
-					return;
-				}
+						var selectedPath = SelectSolutionFile();
 
-				// Fallback: if nobody was able to handle the request, use default behavior.
-				// try to save all nodes to disk.
-				var options = new DecompilationOptions() { FullDecompilation = true };
-				textView.SaveToDisk(currentLanguage, selectedNodes.OfType<ILSpyTreeNode>(), options);
+						if (!string.IsNullOrEmpty(selectedPath))
+						{
+							var assemblies = selectedNodes.OfType<AssemblyTreeNode>()
+								.Select(n => n.LoadedAssembly)
+								.Where(a => a.IsLoadedAsValidAssembly).ToArray();
+							SolutionWriter.CreateSolution(textView, selectedPath, currentLanguage, assemblies);
+						}
+						return;
+					}
+					default:
+					{
+						// Fallback: if nobody was able to handle the request, use default behavior.
+						// try to save all nodes to disk.
+						var options = new DecompilationOptions() { FullDecompilation = true };
+						textView.SaveToDisk(currentLanguage, selectedNodes.OfType<ILSpyTreeNode>(), options);
+						break;
+					}
+				}
 			});
 		}
 
@@ -97,9 +99,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
 		static string SelectSolutionFile()
 		{
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = "Solution.sln";
-			dlg.Filter = Resources.VisualStudioSolutionFileSlnAllFiles;
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = "Solution.sln",
+				Filter = Resources.VisualStudioSolutionFileSlnAllFiles
+			};
 
 			if (dlg.ShowDialog() != true)
 			{
@@ -112,7 +115,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				directoryNotEmpty = Directory.EnumerateFileSystemEntries(selectedPath).Any();
 			}
-			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException)
+			catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException)
 			{
 				MessageBox.Show(
 					"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",

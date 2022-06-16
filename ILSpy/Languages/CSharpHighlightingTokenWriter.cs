@@ -28,41 +28,40 @@ using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy
 {
-	class CSharpHighlightingTokenWriter : DecoratingTokenWriter
+	sealed class CSharpHighlightingTokenWriter : DecoratingTokenWriter
 	{
-		HighlightingColor visibilityKeywordsColor;
-		HighlightingColor namespaceKeywordsColor;
-		HighlightingColor structureKeywordsColor;
-		HighlightingColor gotoKeywordsColor;
-		HighlightingColor queryKeywordsColor;
-		HighlightingColor exceptionKeywordsColor;
-		HighlightingColor checkedKeywordColor;
-		HighlightingColor unsafeKeywordsColor;
-		HighlightingColor valueTypeKeywordsColor;
-		HighlightingColor referenceTypeKeywordsColor;
-		HighlightingColor operatorKeywordsColor;
-		HighlightingColor parameterModifierColor;
-		HighlightingColor modifiersColor;
-		HighlightingColor accessorKeywordsColor;
-		HighlightingColor attributeKeywordsColor;
+		readonly HighlightingColor visibilityKeywordsColor;
+		readonly HighlightingColor namespaceKeywordsColor;
+		readonly HighlightingColor structureKeywordsColor;
+		readonly HighlightingColor gotoKeywordsColor;
+		readonly HighlightingColor queryKeywordsColor;
+		readonly HighlightingColor exceptionKeywordsColor;
+		readonly HighlightingColor checkedKeywordColor;
+		readonly HighlightingColor unsafeKeywordsColor;
+		readonly HighlightingColor valueTypeKeywordsColor;
+		readonly HighlightingColor referenceTypeKeywordsColor;
+		readonly HighlightingColor operatorKeywordsColor;
+		readonly HighlightingColor parameterModifierColor;
+		readonly HighlightingColor modifiersColor;
+		readonly HighlightingColor accessorKeywordsColor;
+		readonly HighlightingColor attributeKeywordsColor;
 
-		HighlightingColor referenceTypeColor;
-		HighlightingColor valueTypeColor;
-		HighlightingColor interfaceTypeColor;
-		HighlightingColor enumerationTypeColor;
-		HighlightingColor typeParameterTypeColor;
-		HighlightingColor delegateTypeColor;
+		readonly HighlightingColor referenceTypeColor;
+		readonly HighlightingColor valueTypeColor;
+		readonly HighlightingColor interfaceTypeColor;
+		readonly HighlightingColor enumerationTypeColor;
+		readonly HighlightingColor delegateTypeColor;
 
-		HighlightingColor methodCallColor;
-		HighlightingColor methodDeclarationColor;
+		readonly HighlightingColor methodCallColor;
+		readonly HighlightingColor methodDeclarationColor;
 
-		HighlightingColor fieldDeclarationColor;
-		HighlightingColor fieldAccessColor;
+		readonly HighlightingColor fieldDeclarationColor;
+		readonly HighlightingColor fieldAccessColor;
 
-		HighlightingColor valueKeywordColor;
-		HighlightingColor thisKeywordColor;
-		HighlightingColor trueKeywordColor;
-		HighlightingColor typeKeywordsColor;
+		readonly HighlightingColor valueKeywordColor;
+		readonly HighlightingColor thisKeywordColor;
+		readonly HighlightingColor trueKeywordColor;
+		readonly HighlightingColor typeKeywordsColor;
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 
@@ -93,7 +92,7 @@ namespace ICSharpCode.ILSpy
 			this.valueTypeColor = highlighting.GetNamedColor("ValueTypes");
 			this.interfaceTypeColor = highlighting.GetNamedColor("InterfaceTypes");
 			this.enumerationTypeColor = highlighting.GetNamedColor("EnumTypes");
-			this.typeParameterTypeColor = highlighting.GetNamedColor("TypeParameters");
+			highlighting.GetNamedColor("TypeParameters");
 			this.delegateTypeColor = highlighting.GetNamedColor("DelegateTypes");
 			this.methodDeclarationColor = this.methodCallColor = highlighting.GetNamedColor("MethodCall");
 			//this.eventDeclarationColor = this.eventAccessColor = defaultTextColor;
@@ -116,10 +115,7 @@ namespace ICSharpCode.ILSpy
 			{
 				case "namespace":
 				case "using":
-					if (role == UsingStatement.UsingKeywordRole)
-						color = structureKeywordsColor;
-					else
-						color = namespaceKeywordsColor;
+					color = role == UsingStatement.UsingKeywordRole ? structureKeywordsColor : namespaceKeywordsColor;
 					break;
 				case "this":
 				case "base":
@@ -149,10 +145,7 @@ namespace ICSharpCode.ILSpy
 					color = structureKeywordsColor;
 					break;
 				case "where":
-					if (nodeStack.PeekOrDefault() is QueryClause)
-						color = queryKeywordsColor;
-					else
-						color = structureKeywordsColor;
+					color = nodeStack.PeekOrDefault() is QueryClause ? queryKeywordsColor : structureKeywordsColor;
 					break;
 				case "in":
 					if (nodeStack.PeekOrDefault() is ForeachStatement)
@@ -211,10 +204,7 @@ namespace ICSharpCode.ILSpy
 					color = modifiersColor;
 					break;
 				case "readonly":
-					if (role == ComposedType.ReadonlyRole)
-						color = parameterModifierColor;
-					else
-						color = modifiersColor;
+					color = role == ComposedType.ReadonlyRole ? parameterModifierColor : modifiersColor;
 					break;
 				case "checked":
 				case "unchecked":
@@ -340,78 +330,49 @@ namespace ICSharpCode.ILSpy
 			if (identifier.Name == "value"
 				&& identifier.Parent?.GetResolveResult() is ILVariableResolveResult rr
 				&& rr.Variable.Kind == Decompiler.IL.VariableKind.Parameter
-				&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor
+				&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is { } accessor
 				&& accessor.Role != PropertyDeclaration.GetterRole)
 			{
 				color = valueKeywordColor;
 			}
 			if (identifier.Parent is AstType)
 			{
-				switch (identifier.Name)
-				{
-					case "var":
-						color = queryKeywordsColor;
-						break;
-					case "global":
-						color = structureKeywordsColor;
-						break;
-				}
+				color = identifier.Name switch {
+					"var" => queryKeywordsColor,
+					"global" => structureKeywordsColor,
+					_ => color
+				};
 			}
-			switch (GetCurrentDefinition())
-			{
-				case ITypeDefinition t:
-					switch (t.Kind)
-					{
-						case TypeKind.Delegate:
-							color = delegateTypeColor;
-							break;
-						case TypeKind.Class:
-							color = referenceTypeColor;
-							break;
-						case TypeKind.Interface:
-							color = interfaceTypeColor;
-							break;
-						case TypeKind.Enum:
-							color = enumerationTypeColor;
-							break;
-						case TypeKind.Struct:
-							color = valueTypeColor;
-							break;
-					}
-					break;
-				case IMethod m:
-					color = methodDeclarationColor;
-					break;
-				case IField f:
-					color = fieldDeclarationColor;
-					break;
-			}
+
+			color = GetCurrentDefinition() switch {
+				ITypeDefinition t => t.Kind switch {
+					TypeKind.Delegate => delegateTypeColor,
+					TypeKind.Class => referenceTypeColor,
+					TypeKind.Interface => interfaceTypeColor,
+					TypeKind.Enum => enumerationTypeColor,
+					TypeKind.Struct => valueTypeColor,
+					_ => color
+				},
+				IMethod => methodDeclarationColor,
+				IField => fieldDeclarationColor,
+				_ => color
+			};
 			switch (GetCurrentMemberReference())
 			{
 				case IType t:
-					switch (t.Kind)
-					{
-						case TypeKind.Delegate:
-							color = delegateTypeColor;
-							break;
-						case TypeKind.Class:
-							color = referenceTypeColor;
-							break;
-						case TypeKind.Interface:
-							color = interfaceTypeColor;
-							break;
-						case TypeKind.Enum:
-							color = enumerationTypeColor;
-							break;
-						case TypeKind.Struct:
-							color = valueTypeColor;
-							break;
-					}
+					color = t.Kind switch {
+						TypeKind.Delegate => delegateTypeColor,
+						TypeKind.Class => referenceTypeColor,
+						TypeKind.Interface => interfaceTypeColor,
+						TypeKind.Enum => enumerationTypeColor,
+						TypeKind.Struct => valueTypeColor,
+						_ => color
+					};
 					break;
-				case IMethod m:
+				case IMethod:
 					color = methodCallColor;
 					break;
-				case IField f:
+				case IField:
 					color = fieldAccessColor;
 					break;
 			}
@@ -426,17 +387,13 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WritePrimitiveValue(object value, Decompiler.CSharp.Syntax.LiteralFormat format)
+		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
-			HighlightingColor color = null;
-			if (value is null)
-			{
-				color = valueKeywordColor;
-			}
-			if (value is true || value is false)
-			{
-				color = trueKeywordColor;
-			}
+			HighlightingColor color = value switch {
+				null => valueKeywordColor,
+				true or false => trueKeywordColor,
+				_ => null
+			};
 			if (color != null)
 			{
 				BeginSpan(color);
@@ -477,12 +434,7 @@ namespace ICSharpCode.ILSpy
 			{
 				symbol = node.Parent.GetSymbol();
 			}
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
-			{
-				var declaringType = member.DeclaringType;
-				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
-					return null;
-			}
+			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember { DeclaringType.Kind: TypeKind.Delegate }) return null;
 			return symbol;
 		}
 

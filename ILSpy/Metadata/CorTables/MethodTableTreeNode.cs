@@ -16,16 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
-using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -33,7 +29,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodTableTreeNode : MetadataTableTreeNode
+	internal sealed class MethodTableTreeNode : MetadataTableTreeNode
 	{
 		public MethodTableTreeNode(PEFile module)
 			: base(HandleKind.MethodDefinition, module)
@@ -127,7 +123,7 @@ namespace ICSharpCode.ILSpy.Metadata
 					if (signatureTooltip == null)
 					{
 						ITextOutput output = new PlainTextOutput();
-						var context = new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), module);
+						var context = new MetadataGenericContext(default(TypeDefinitionHandle), module);
 						((EntityHandle)handle).WriteTo(module, output, context);
 						signatureTooltip = output.ToString();
 					}

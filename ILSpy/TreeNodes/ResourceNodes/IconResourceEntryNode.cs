@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				IconBitmapDecoder decoder = new IconBitmapDecoder(data, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
 				foreach (var frame in decoder.Frames)
 				{
-					output.Write(String.Format("{0}x{1}, {2} bit: ", frame.PixelHeight, frame.PixelWidth, frame.Thumbnail.Format.BitsPerPixel));
+					output.Write($"{frame.PixelHeight}x{frame.PixelWidth}, {frame.Thumbnail.Format.BitsPerPixel} bit: ");
 					AddIcon(output, frame);
 					output.WriteLine();
 				}

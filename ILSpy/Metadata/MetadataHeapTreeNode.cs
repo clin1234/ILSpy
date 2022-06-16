@@ -18,15 +18,11 @@
 
 using System;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Metadata
 {

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -12,7 +11,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	[ExportAnalyzer(Header = "Extension Methods", Order = 50)]
 	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition { IsStatic: false };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{

@@ -23,7 +23,7 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class ActiveTabPageConverter : IValueConverter
+	public sealed class ActiveTabPageConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{

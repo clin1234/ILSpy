@@ -23,19 +23,16 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
 	sealed class DebugDirectoryEntryTreeNode : ILSpyTreeNode
 	{
 		readonly PEFile module;
-		readonly PEReader reader;
 		readonly DebugDirectoryEntry entry;
 		public DebugDirectoryEntryTreeNode(PEFile module, DebugDirectoryEntry entry)
 		{
 			this.module = module;
-			this.reader = module.Reader;
 			this.entry = entry;
 		}
 

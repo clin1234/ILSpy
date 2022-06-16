@@ -27,7 +27,7 @@ using System.Text;
 
 namespace ILSpy.BamlDecompiler.Xaml
 {
-	class XamlPathDeserializer
+	static class XamlPathDeserializer
 	{
 		enum PathOpCodes
 		{
@@ -76,7 +76,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 		static IList<Point> ReadPointsBoolBool(BinaryReader reader, byte b, out bool b1, out bool b2)
 		{
-			UnpackBools(b, out b1, out b2, out bool b3, out bool b4);
+			UnpackBools(b, out b1, out b2, out bool _, out bool _);
 
 			var count = reader.ReadInt32();
 			var pts = new List<Point>();
@@ -91,91 +91,91 @@ namespace ILSpy.BamlDecompiler.Xaml
 			bool end = false;
 			var sb = new StringBuilder();
 
-			Point pt1, pt2, pt3;
-			IList<Point> pts;
-
 			while (!end)
 			{
 				var b = reader.ReadByte();
 
+				Point pt2;
+				Point pt1;
+				IList<Point> pts;
 				switch ((PathOpCodes)(b & 0xf))
 				{
 					case PathOpCodes.BeginFigure:
 					{
-						ReadPointBoolBool(reader, b, out pt1, out bool filled, out bool closed);
+						ReadPointBoolBool(reader, b, out pt1, out bool _, out bool _);
 
-						sb.AppendFormat("M{0} ", pt1);
+						sb.Append($"M{pt1} ");
 						break;
 					}
 
 					case PathOpCodes.LineTo:
 					{
-						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						ReadPointBoolBool(reader, b, out pt1, out bool _, out bool _);
 
-						sb.AppendFormat("L{0} ", pt1);
+						sb.Append($"L{pt1} ");
 						break;
 					}
 
 					case PathOpCodes.QuadraticBezierTo:
 					{
-						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						ReadPointBoolBool(reader, b, out pt1, out bool _, out bool _);
 						pt2 = ReadPoint(reader);
 
-						sb.AppendFormat("Q{0} {1} ", pt1, pt2);
+						sb.Append($"Q{pt1} {pt2} ");
 						break;
 					}
 
 					case PathOpCodes.BezierTo:
 					{
-						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						ReadPointBoolBool(reader, b, out pt1, out bool _, out bool _);
 						pt2 = ReadPoint(reader);
-						pt3 = ReadPoint(reader);
+						Point pt3 = ReadPoint(reader);
 
-						sb.AppendFormat("C{0} {1} {2} ", pt1, pt2, pt3);
+						sb.Append($"C{pt1} {pt2} {pt3} ");
 						break;
 					}
 
 					case PathOpCodes.PolyLineTo:
 					{
-						pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
+						pts = ReadPointsBoolBool(reader, b, out bool _, out bool _);
 
 						sb.Append('L');
 						foreach (var pt in pts)
-							sb.AppendFormat("{0} ", pt);
+							sb.Append($"{pt} ");
 						break;
 					}
 
 					case PathOpCodes.PolyQuadraticBezierTo:
 					{
-						pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
+						pts = ReadPointsBoolBool(reader, b, out bool _, out bool _);
 
 						sb.Append('Q');
 						foreach (var pt in pts)
-							sb.AppendFormat("{0} ", pt);
+							sb.Append($"{pt} ");
 						break;
 					}
 
 					case PathOpCodes.PolyBezierTo:
 					{
-						pts = ReadPointsBoolBool(reader, b, out bool stroked, out bool smoothJoin);
+						pts = ReadPointsBoolBool(reader, b, out bool _, out bool _);
 
 						sb.Append('C');
 						foreach (var pt in pts)
-							sb.AppendFormat("{0} ", pt);
+							sb.Append($"{pt} ");
 						break;
 					}
 
 					case PathOpCodes.ArcTo:
 					{
-						ReadPointBoolBool(reader, b, out pt1, out bool stroked, out bool smoothJoin);
+						ReadPointBoolBool(reader, b, out pt1, out bool _, out bool _);
 						byte b2 = reader.ReadByte();
 						bool largeArc = (b2 & 0x0f) != 0;
 						bool sweepDirection = (b2 & 0xf0) != 0;
 						var size = ReadPoint(reader);
 						double angle = reader.ReadXamlDouble();
 
-						sb.AppendFormat(CultureInfo.InvariantCulture, "A{0} {1:R} {2} {3} {4}",
-							size, angle, largeArc ? '1' : '0', sweepDirection ? '1' : '0', pt1);
+						sb.Append(CultureInfo.InvariantCulture,
+							$"A{size} {angle:R} {(largeArc ? '1' : '0')} {(sweepDirection ? '1' : '0')} {pt1}");
 						break;
 					}
 					case PathOpCodes.Closed:
@@ -184,7 +184,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 					case PathOpCodes.FillRule:
 					{
-						UnpackBools(b, out bool fillRule, out bool b2, out bool b3, out bool b4);
+						UnpackBools(b, out bool fillRule, out bool _, out bool _, out bool _);
 						if (fillRule)
 							sb.Insert(0, "F1 ");
 						break;

@@ -22,7 +22,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -30,7 +29,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class PropertyTableTreeNode : MetadataTableTreeNode
+	internal sealed class PropertyTableTreeNode : MetadataTableTreeNode
 	{
 		public PropertyTableTreeNode(PEFile module)
 			: base(HandleKind.PropertyDefinition, module)
@@ -74,7 +73,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct PropertyDefEntry : IMemberTreeNode
+		readonly struct PropertyDefEntry : IMemberTreeNode
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

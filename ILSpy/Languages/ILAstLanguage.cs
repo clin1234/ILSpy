@@ -18,8 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
@@ -47,19 +45,17 @@ namespace ICSharpCode.ILSpy
 
 		protected virtual void OnStepperUpdated(EventArgs e = null)
 		{
-			StepperUpdated?.Invoke(this, e ?? new EventArgs());
+			StepperUpdated?.Invoke(this, e ?? EventArgs.Empty);
 		}
 
 		public Stepper Stepper { get; set; } = new Stepper();
 
-		readonly string name;
-
 		protected ILAstLanguage(string name)
 		{
-			this.name = name;
+			this.Name = name;
 		}
 
-		public override string Name { get { return name; } }
+		public override string Name { get; }
 
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
@@ -82,7 +78,7 @@ namespace ICSharpCode.ILSpy
 			output.WriteLine();
 		}
 
-		class TypedIL : ILAstLanguage
+		sealed class TypedIL : ILAstLanguage
 		{
 			public TypedIL() : base("Typed IL") { }
 
@@ -100,7 +96,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		class BlockIL : ILAstLanguage
+		sealed class BlockIL : ILAstLanguage
 		{
 			readonly IReadOnlyList<IILTransform> transforms;
 
@@ -119,8 +115,9 @@ namespace ICSharpCode.ILSpy
 					return;
 				IAssemblyResolver assemblyResolver = module.GetAssemblyResolver();
 				var typeSystem = new DecompilerTypeSystem(module, assemblyResolver);
-				var reader = new ILReader(typeSystem.MainModule);
-				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
+				var reader = new ILReader(typeSystem.MainModule) {
+					UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols
+				};
 				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 				ILFunction il = reader.ReadIL((SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, kind: ILFunctionKind.TopLevelFunction, cancellationToken: options.CancellationToken);
 				var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
@@ -146,7 +143,7 @@ namespace ICSharpCode.ILSpy
 					if (options.StepLimit == int.MaxValue)
 					{
 						Stepper = context.Stepper;
-						OnStepperUpdated(new EventArgs());
+						OnStepperUpdated(EventArgs.Empty);
 					}
 				}
 				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {

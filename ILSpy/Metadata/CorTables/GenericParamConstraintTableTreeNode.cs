@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class GenericParamConstraintTableTreeNode : MetadataTableTreeNode
+	internal sealed class GenericParamConstraintTableTreeNode : MetadataTableTreeNode
 	{
 		public GenericParamConstraintTableTreeNode(PEFile module)
 			: base(HandleKind.GenericParameterConstraint, module)

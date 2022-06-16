@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -27,7 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class AssemblyTableTreeNode : MetadataTableTreeNode
+	internal sealed class AssemblyTableTreeNode : MetadataTableTreeNode
 	{
 		public AssemblyTableTreeNode(PEFile module)
 			: base(HandleKind.AssemblyDefinition, module)
@@ -44,20 +43,13 @@ namespace ICSharpCode.ILSpy.Metadata
 			tabPage.SupportsLanguageSwitching = false;
 
 			var view = Helpers.PrepareDataGrid(tabPage, this);
-			if (module.IsAssembly)
-			{
-				view.ItemsSource = new[] { new AssemblyEntry(module) };
-			}
-			else
-			{
-				view.ItemsSource = Array.Empty<AssemblyEntry>();
-			}
+			view.ItemsSource = module.IsAssembly ? new[] { new AssemblyEntry(module) } : Array.Empty<AssemblyEntry>();
 
 			tabPage.Content = view;
 			return true;
 		}
 
-		struct AssemblyEntry
+		readonly struct AssemblyEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

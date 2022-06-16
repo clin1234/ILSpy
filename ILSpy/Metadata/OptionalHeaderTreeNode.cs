@@ -29,9 +29,9 @@ using ICSharpCode.ILSpyX.Extensions;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class OptionalHeaderTreeNode : ILSpyTreeNode
+	sealed class OptionalHeaderTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		private readonly PEFile module;
 
 		public OptionalHeaderTreeNode(PEFile module)
 		{

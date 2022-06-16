@@ -24,22 +24,14 @@ namespace ICSharpCode.ILSpy.TextView
 	/// <summary>
 	/// This exception gets used when the text output is longer than the specified limit.
 	/// </summary>
-	class OutputLengthExceededException : Exception, ISerializable
+	sealed class OutputLengthExceededException : Exception
 	{
 		public OutputLengthExceededException()
 		{
 		}
 
-		public OutputLengthExceededException(string message) : base(message)
-		{
-		}
-
-		public OutputLengthExceededException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
 		// This constructor is needed for serialization.
-		protected OutputLengthExceededException(SerializationInfo info, StreamingContext context) : base(info, context)
+		private OutputLengthExceededException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
 		}
 	}

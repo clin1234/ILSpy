@@ -22,7 +22,7 @@ using System.Windows.Media;
 
 namespace ICSharpCode.TreeView
 {
-	public class GeneralAdorner : Adorner
+	internal sealed class GeneralAdorner : Adorner
 	{
 		public GeneralAdorner(UIElement target)
 			: base(target)

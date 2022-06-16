@@ -22,7 +22,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -30,7 +29,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class EventTableTreeNode : MetadataTableTreeNode
+	internal sealed class EventTableTreeNode : MetadataTableTreeNode
 	{
 		public EventTableTreeNode(PEFile module)
 			: base(HandleKind.EventDefinition, module)
@@ -74,7 +73,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct EventDefEntry : IMemberTreeNode
+		readonly struct EventDefEntry : IMemberTreeNode
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

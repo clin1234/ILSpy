@@ -35,8 +35,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			if (resource.Name.EndsWith(".baml", StringComparison.OrdinalIgnoreCase))
 				return new BamlResourceEntryNode(resource.Name, resource.TryOpenStream);
-			else
-				return null;
+			return null;
 		}
 	}
 
@@ -49,10 +48,11 @@ namespace ILSpy.BamlDecompiler
 		public string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, DecompilationOptions options)
 		{
 			BamlDecompilerTypeSystem typeSystem = new BamlDecompilerTypeSystem(assembly.GetPEFileOrNull(), assembly.GetAssemblyResolver());
-			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings() {
+			var decompiler = new XamlDecompiler(typeSystem, new BamlDecompilerSettings {
 				ThrowOnAssemblyResolveErrors = options.DecompilerSettings.ThrowOnAssemblyResolveErrors
-			});
-			decompiler.CancellationToken = options.CancellationToken;
+			}) {
+				CancellationToken = options.CancellationToken
+			};
 			fileName = Path.ChangeExtension(fileName, ".xaml");
 			var result = decompiler.Decompile(stream);
 			result.Xaml.Save(Path.Combine(options.SaveAsProjectDirectory, fileName));

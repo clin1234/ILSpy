@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public static Decompiler.DecompilerSettings CurrentDecompilerSettings {
 			get {
-				return currentDecompilerSettings ?? (currentDecompilerSettings = LoadDecompilerSettings(ILSpySettings.Load()));
+				return currentDecompilerSettings ??= LoadDecompilerSettings(ILSpySettings.Load());
 			}
 		}
 
@@ -116,15 +116,11 @@ namespace ICSharpCode.ILSpy.Options
 			bool value = true;
 			foreach (var item in group.Items)
 			{
-				switch (item)
-				{
-					case CollectionViewGroup subGroup:
-						value = value && IsGroupChecked(subGroup);
-						break;
-					case CSharpDecompilerSetting setting:
-						value = value && setting.IsEnabled;
-						break;
-				}
+				value = item switch {
+					CollectionViewGroup subGroup => value && IsGroupChecked(subGroup),
+					CSharpDecompilerSetting setting => value && setting.IsEnabled,
+					_ => value
+				};
 			}
 			return value;
 		}

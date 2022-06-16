@@ -24,7 +24,7 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
-	class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
+	sealed class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
 	{
 		readonly IField analyzedField;
 

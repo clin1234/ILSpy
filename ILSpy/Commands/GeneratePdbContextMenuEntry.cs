@@ -64,10 +64,11 @@ namespace ICSharpCode.ILSpy
 				MessageBox.Show(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
 				return;
 			}
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb";
-			dlg.Filter = Resources.PortablePDBPdbAllFiles;
-			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb",
+				Filter = Resources.PortablePDBPdbAllFiles,
+				InitialDirectory = Path.GetDirectoryName(assembly.FileName)
+			};
 			if (dlg.ShowDialog() != true)
 				return;
 			DecompilationOptions options = new DecompilationOptions();

@@ -22,7 +22,7 @@ using System.Windows.Input;
 
 namespace ICSharpCode.TreeView
 {
-	class EditTextBox : TextBox
+	sealed class EditTextBox : TextBox
 	{
 		static EditTextBox()
 		{
@@ -35,7 +35,7 @@ namespace ICSharpCode.TreeView
 			Loaded += delegate { Init(); };
 		}
 
-		public SharpTreeViewItem Item { get; set; }
+		public SharpTreeViewItem Item { get; init; }
 
 		public SharpTreeNode Node {
 			get { return Item.Node; }
@@ -50,13 +50,14 @@ namespace ICSharpCode.TreeView
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
-			if (e.Key == Key.Enter)
+			switch (e.Key)
 			{
-				Commit();
-			}
-			else if (e.Key == Key.Escape)
-			{
-				Node.IsEditing = false;
+				case Key.Enter:
+					Commit();
+					break;
+				case Key.Escape:
+					Node.IsEditing = false;
+					break;
 			}
 		}
 

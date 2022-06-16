@@ -21,14 +21,14 @@ using System.Runtime.CompilerServices;
 
 namespace ILSpy.BamlDecompiler
 {
-	public class BamlDecompilerSettings : INotifyPropertyChanged
+	internal sealed class BamlDecompilerSettings : INotifyPropertyChanged
 	{
-		bool throwOnAssemblyResolveErrors = true;
+		readonly bool throwOnAssemblyResolveErrors = true;
 
 		[Browsable(false)]
 		public bool ThrowOnAssemblyResolveErrors {
 			get { return throwOnAssemblyResolveErrors; }
-			set {
+			init {
 				if (throwOnAssemblyResolveErrors != value)
 				{
 					throwOnAssemblyResolveErrors = value;
@@ -39,12 +39,9 @@ namespace ILSpy.BamlDecompiler
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		private void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 	}
 }

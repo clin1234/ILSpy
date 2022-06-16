@@ -62,13 +62,7 @@ namespace ICSharpCode.ILSpy
 
 		static ILLanguage ilLanguage;
 		public static ILLanguage ILLanguage {
-			get {
-				if (ilLanguage == null)
-				{
-					ilLanguage = (ILLanguage)GetLanguage("IL");
-				}
-				return ilLanguage;
-			}
+			get { return ilLanguage ??= (ILLanguage)GetLanguage("IL"); }
 		}
 	}
 }

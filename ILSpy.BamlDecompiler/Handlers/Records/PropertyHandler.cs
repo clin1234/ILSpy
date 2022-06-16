@@ -31,7 +31,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public virtual BamlRecordType Type => BamlRecordType.Property;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyRecord)((BamlRecordNode)node).Record;
 
@@ -47,9 +47,9 @@ namespace ILSpy.BamlDecompiler.Handlers
 			XAttribute ConstructXAttribute()
 			{
 				if (xamlProp.IsAttachedTo(elemType))
-					return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, true), value);
+					return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml), value);
 
-				if (xamlProp.PropertyName == "Name" && elemType.ResolvedType.GetDefinition()?.ParentModule.IsMainModule == true)
+				if (xamlProp.PropertyName == "Name" && elemType?.ResolvedType.GetDefinition()?.ParentModule?.IsMainModule == true)
 					return new XAttribute(ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml), value);
 
 				return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, false), value);

@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MethodSpecTableTreeNode : MetadataTableTreeNode
+	internal sealed class MethodSpecTableTreeNode : MetadataTableTreeNode
 	{
 		public MethodSpecTableTreeNode(PEFile module)
 			: base(HandleKind.MethodSpecification, module)
@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct MethodSpecEntry
+		readonly struct MethodSpecEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

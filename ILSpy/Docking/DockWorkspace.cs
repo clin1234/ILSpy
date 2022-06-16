@@ -17,11 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -40,13 +38,13 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class DockWorkspace : INotifyPropertyChanged, ILayoutUpdateStrategy
+	public sealed class DockWorkspace : INotifyPropertyChanged, ILayoutUpdateStrategy
 	{
 		private SessionSettings sessionSettings;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public static DockWorkspace Instance { get; private set; }
+		internal static DockWorkspace Instance { get; private set; }
 
 		internal DockWorkspace(MainWindow parent)
 		{
@@ -64,7 +62,7 @@ namespace ICSharpCode.ILSpy.Docking
 			foreach (var tab in TabPages.ToArray())
 			{
 				var state = tab.GetState();
-				if (state == null || state.DecompiledNodes == null)
+				if (state?.DecompiledNodes == null)
 				{
 					continue;
 				}
@@ -112,13 +110,18 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public void Remove(PaneModel model)
 		{
-			if (model is TabPageModel document)
-				TabPages.Remove(document);
-			if (model is ToolPaneModel tool)
-				tool.IsVisible = false;
+			switch (model)
+			{
+				case TabPageModel document:
+					TabPages.Remove(document);
+					break;
+				case ToolPaneModel tool:
+					tool.IsVisible = false;
+					break;
+			}
 		}
 
-		private TabPageModel _activeTabPage = null;
+		private TabPageModel _activeTabPage;
 		public TabPageModel ActiveTabPage {
 			get {
 				return _activeTabPage;
@@ -141,7 +144,7 @@ namespace ICSharpCode.ILSpy.Docking
 						}
 					}
 
-					RaisePropertyChanged(nameof(ActiveTabPage));
+					RaisePropertyChanged();
 				}
 			}
 		}
@@ -181,7 +184,7 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
+		private void RaisePropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
@@ -231,7 +234,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public bool BeforeInsertAnchorable(LayoutRoot layout, LayoutAnchorable anchorableToShow, ILayoutContainer destinationContainer)
 		{
-			if (!(anchorableToShow.Content is LegacyToolPaneModel legacyContent))
+			if (anchorableToShow.Content is not LegacyToolPaneModel legacyContent)
 				return false;
 			anchorableToShow.CanDockAsTabbedDocument = false;
 

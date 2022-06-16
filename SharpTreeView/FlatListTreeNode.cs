@@ -45,7 +45,7 @@ namespace ICSharpCode.TreeView
 
 		static int Height(SharpTreeNode node)
 		{
-			return node != null ? node.height : 0;
+			return node?.height ?? 0;
 		}
 
 		internal SharpTreeNode GetListRoot()
@@ -70,11 +70,9 @@ namespace ICSharpCode.TreeView
 			Debug.Assert(right == null || right.listParent == this);
 			Debug.Assert(height == 1 + Math.Max(Height(left), Height(right)));
 			Debug.Assert(Math.Abs(this.Balance) <= 1);
-			Debug.Assert(totalListLength == -1 || totalListLength == (left != null ? left.totalListLength : 0) + (isVisible ? 1 : 0) + (right != null ? right.totalListLength : 0));
-			if (left != null)
-				left.CheckInvariants();
-			if (right != null)
-				right.CheckInvariants();
+			Debug.Assert(totalListLength == -1 || totalListLength == (left?.totalListLength ?? 0) + (IsVisible ? 1 : 0) + (right?.totalListLength ?? 0));
+			left?.CheckInvariants();
+			right?.CheckInvariants();
 		}
 
 		[Conditional("DEBUG")]
@@ -87,13 +85,11 @@ namespace ICSharpCode.TreeView
 		void DumpTree()
 		{
 			Debug.Indent();
-			if (left != null)
-				left.DumpTree();
+			left?.DumpTree();
 			Debug.Unindent();
-			Debug.WriteLine("{0}, totalListLength={1}, height={2}, Balance={3}, isVisible={4}", ToString(), totalListLength, height, Balance, isVisible);
+			Debug.WriteLine("{0}, totalListLength={1}, height={2}, Balance={3}, isVisible={4}", ToString(), totalListLength, height, Balance, IsVisible);
 			Debug.Indent();
-			if (right != null)
-				right.DumpTree();
+			right?.DumpTree();
 			Debug.Unindent();
 		}
 		#endregion
@@ -117,7 +113,7 @@ namespace ICSharpCode.TreeView
 					{
 						index -= node.left.totalListLength;
 					}
-					if (node.isVisible)
+					if (node.IsVisible)
 					{
 						if (index == 0)
 							return node;
@@ -130,14 +126,14 @@ namespace ICSharpCode.TreeView
 
 		internal static int GetVisibleIndexForNode(SharpTreeNode node)
 		{
-			int index = node.left != null ? node.left.GetTotalListLength() : 0;
+			int index = node.left?.GetTotalListLength() ?? 0;
 			while (node.listParent != null)
 			{
 				if (node == node.listParent.right)
 				{
 					if (node.listParent.left != null)
 						index += node.listParent.left.GetTotalListLength();
-					if (node.listParent.isVisible)
+					if (node.listParent.IsVisible)
 						index++;
 				}
 				node = node.listParent;
@@ -160,28 +156,33 @@ namespace ICSharpCode.TreeView
 			// the Rope code where node merging made this necessary.
 			while (Math.Abs(node.Balance) > 1)
 			{
-				// AVL balancing
-				// note: because we don't care about the identity of concat nodes, this works a little different than usual
-				// tree rotations: in our implementation, the "this" node will stay at the top, only its children are rearranged
-				if (node.Balance > 1)
+				switch (node.Balance)
 				{
-					if (node.right.Balance < 0)
+					// AVL balancing
+					// note: because we don't care about the identity of concat nodes, this works a little different than usual
+					// tree rotations: in our implementation, the "this" node will stay at the top, only its children are rearranged
+					case > 1:
 					{
-						node.right = node.right.RotateRight();
+						if (node.right.Balance < 0)
+						{
+							node.right = node.right.RotateRight();
+						}
+						node = node.RotateLeft();
+						// If 'node' was unbalanced by more than 2, we've shifted some of the inbalance to the left node; so rebalance that.
+						node.left = Rebalance(node.left);
+						break;
 					}
-					node = node.RotateLeft();
-					// If 'node' was unbalanced by more than 2, we've shifted some of the inbalance to the left node; so rebalance that.
-					node.left = Rebalance(node.left);
-				}
-				else if (node.Balance < -1)
-				{
-					if (node.left.Balance > 0)
+					case < -1:
 					{
-						node.left = node.left.RotateLeft();
+						if (node.left.Balance > 0)
+						{
+							node.left = node.left.RotateLeft();
+						}
+						node = node.RotateRight();
+						// If 'node' was unbalanced by more than 2, we've shifted some of the inbalance to the right node; so rebalance that.
+						node.right = Rebalance(node.right);
+						break;
 					}
-					node = node.RotateRight();
-					// If 'node' was unbalanced by more than 2, we've shifted some of the inbalance to the right node; so rebalance that.
-					node.right = Rebalance(node.right);
 				}
 			}
 			Debug.Assert(Math.Abs(node.Balance) <= 1);
@@ -195,7 +196,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (totalListLength >= 0)
 				return totalListLength;
-			int length = (isVisible ? 1 : 0);
+			int length = (IsVisible ? 1 : 0);
 			if (left != null)
 			{
 				length += left.GetTotalListLength();

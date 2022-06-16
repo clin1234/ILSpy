@@ -26,8 +26,9 @@ namespace ICSharpCode.ILSpy
 	{
 		public override void Execute(object parameter)
 		{
-			ManageAssemblyListsDialog dlg = new ManageAssemblyListsDialog();
-			dlg.Owner = MainWindow.Instance;
+			ManageAssemblyListsDialog dlg = new ManageAssemblyListsDialog {
+				Owner = MainWindow.Instance
+			};
 			dlg.ShowDialog();
 		}
 	}

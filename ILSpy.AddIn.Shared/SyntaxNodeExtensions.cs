@@ -1,17 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
-
-using Roslyn.Utilities;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -25,8 +19,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			{
 				yield return current;
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 		}
@@ -37,13 +31,13 @@ namespace ICSharpCode.ILSpy.AddIn
 			var current = node.Parent;
 			while (current != null)
 			{
-				if (current is TNode)
+				if (current is TNode tNode)
 				{
-					yield return (TNode)current;
+					yield return tNode;
 				}
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 		}
@@ -51,23 +45,13 @@ namespace ICSharpCode.ILSpy.AddIn
 		public static TNode GetAncestor<TNode>(this SyntaxNode node)
 			where TNode : SyntaxNode
 		{
-			if (node == null)
-			{
-				return default(TNode);
-			}
-
-			return node.GetAncestors<TNode>().FirstOrDefault();
+			return node?.GetAncestors<TNode>().FirstOrDefault();
 		}
 
 		public static TNode GetAncestorOrThis<TNode>(this SyntaxNode node)
 			where TNode : SyntaxNode
 		{
-			if (node == null)
-			{
-				return default(TNode);
-			}
-
-			return node.GetAncestorsOrThis<TNode>().FirstOrDefault();
+			return node?.GetAncestorsOrThis<TNode>().FirstOrDefault();
 		}
 
 		public static IEnumerable<TNode> GetAncestorsOrThis<TNode>(this SyntaxNode node)
@@ -76,13 +60,13 @@ namespace ICSharpCode.ILSpy.AddIn
 			var current = node;
 			while (current != null)
 			{
-				if (current is TNode)
+				if (current is TNode tNode)
 				{
-					yield return (TNode)current;
+					yield return tNode;
 				}
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 		}
@@ -95,13 +79,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool CheckParent<T>(this SyntaxNode node, Func<T, bool> valueChecker) where T : SyntaxNode
 		{
-			if (node == null)
-			{
-				return false;
-			}
-
-			var parentNode = node.Parent as T;
-			if (parentNode == null)
+			if (node?.Parent is not T parentNode)
 			{
 				return false;
 			}
@@ -181,7 +159,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					: blocks.Intersect(node.AncestorsAndSelf().Where(predicate));
 			}
 
-			return blocks == null ? null : blocks.First();
+			return blocks?.First();
 		}
 
 		public static TSyntaxNode FindInnermostCommonNode<TSyntaxNode>(this IEnumerable<SyntaxNode> nodes)
@@ -247,9 +225,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 				else
 				{
-					var lastToken = getLastToken == null
-						? lastNode.GetLastToken()
-						: getLastToken(lastNode);
+					var lastToken = getLastToken?.Invoke(lastNode) ?? lastNode.GetLastToken();
 					if (lastToken.GetNextToken(includeDirectives: true) == node.GetFirstToken())
 					{
 						// Expand the span
@@ -415,15 +391,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			{
 				// We are inside a using directive. In this case, we should find and return the first 'parent' namespace with usings.
 				var containingNamespace = usingDirectiveAncestor.GetAncestor<NamespaceDeclarationSyntax>();
-				if (containingNamespace == null)
-				{
-					// We are inside a top level using directive (i.e. one that's directly in the compilation unit).
-					return null;
-				}
-				else
-				{
-					return containingNamespace.GetAncestors<NamespaceDeclarationSyntax>().FirstOrDefault(n => n.Usings.Count > 0);
-				}
+				return containingNamespace?.GetAncestors<NamespaceDeclarationSyntax>().FirstOrDefault(n => n.Usings.Count > 0);
 			}
 		}
 
@@ -594,54 +562,28 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static SyntaxNode GetParent(this SyntaxNode node)
 		{
-			return node != null ? node.Parent : null;
+			return node?.Parent;
 		}
 
 		public static ValueTuple<SyntaxToken, SyntaxToken> GetBraces(this SyntaxNode node)
 		{
-			var namespaceNode = node as NamespaceDeclarationSyntax;
-			if (namespaceNode != null)
-			{
-				return ValueTuple.Create(namespaceNode.OpenBraceToken, namespaceNode.CloseBraceToken);
-			}
-
-			var baseTypeNode = node as BaseTypeDeclarationSyntax;
-			if (baseTypeNode != null)
-			{
-				return ValueTuple.Create(baseTypeNode.OpenBraceToken, baseTypeNode.CloseBraceToken);
-			}
-
-			var accessorListNode = node as AccessorListSyntax;
-			if (accessorListNode != null)
-			{
-				return ValueTuple.Create(accessorListNode.OpenBraceToken, accessorListNode.CloseBraceToken);
-			}
-
-			var blockNode = node as BlockSyntax;
-			if (blockNode != null)
-			{
-				return ValueTuple.Create(blockNode.OpenBraceToken, blockNode.CloseBraceToken);
-			}
-
-			var switchStatementNode = node as SwitchStatementSyntax;
-			if (switchStatementNode != null)
-			{
-				return ValueTuple.Create(switchStatementNode.OpenBraceToken, switchStatementNode.CloseBraceToken);
-			}
-
-			var anonymousObjectCreationExpression = node as AnonymousObjectCreationExpressionSyntax;
-			if (anonymousObjectCreationExpression != null)
-			{
-				return ValueTuple.Create(anonymousObjectCreationExpression.OpenBraceToken, anonymousObjectCreationExpression.CloseBraceToken);
-			}
-
-			var initializeExpressionNode = node as InitializerExpressionSyntax;
-			if (initializeExpressionNode != null)
-			{
-				return ValueTuple.Create(initializeExpressionNode.OpenBraceToken, initializeExpressionNode.CloseBraceToken);
-			}
-
-			return new ValueTuple<SyntaxToken, SyntaxToken>();
+			return node switch {
+				NamespaceDeclarationSyntax namespaceNode => ValueTuple.Create(namespaceNode.OpenBraceToken,
+					namespaceNode.CloseBraceToken),
+				BaseTypeDeclarationSyntax baseTypeNode => ValueTuple.Create(baseTypeNode.OpenBraceToken,
+					baseTypeNode.CloseBraceToken),
+				AccessorListSyntax accessorListNode => ValueTuple.Create(accessorListNode.OpenBraceToken,
+					accessorListNode.CloseBraceToken),
+				BlockSyntax blockNode => ValueTuple.Create(blockNode.OpenBraceToken, blockNode.CloseBraceToken),
+				SwitchStatementSyntax switchStatementNode => ValueTuple.Create(switchStatementNode.OpenBraceToken,
+					switchStatementNode.CloseBraceToken),
+				AnonymousObjectCreationExpressionSyntax anonymousObjectCreationExpression => ValueTuple.Create(
+					anonymousObjectCreationExpression.OpenBraceToken,
+					anonymousObjectCreationExpression.CloseBraceToken),
+				InitializerExpressionSyntax initializeExpressionNode => ValueTuple.Create(
+					initializeExpressionNode.OpenBraceToken, initializeExpressionNode.CloseBraceToken),
+				_ => new ValueTuple<SyntaxToken, SyntaxToken>()
+			};
 		}
 
 		public static SyntaxTokenList GetModifiers(this SyntaxNode member)
@@ -737,49 +679,36 @@ namespace ICSharpCode.ILSpy.AddIn
 		public static TypeDeclarationSyntax WithModifiers(
 			this TypeDeclarationSyntax node, SyntaxTokenList modifiers)
 		{
-			switch (node.Kind())
-			{
-				case SyntaxKind.ClassDeclaration:
-					return ((ClassDeclarationSyntax)node).WithModifiers(modifiers);
-				case SyntaxKind.InterfaceDeclaration:
-					return ((InterfaceDeclarationSyntax)node).WithModifiers(modifiers);
-				case SyntaxKind.StructDeclaration:
-					return ((StructDeclarationSyntax)node).WithModifiers(modifiers);
-			}
-
-			throw new InvalidOperationException();
+			return node.Kind() switch {
+				SyntaxKind.ClassDeclaration => ((ClassDeclarationSyntax)node).WithModifiers(modifiers),
+				SyntaxKind.InterfaceDeclaration => ((InterfaceDeclarationSyntax)node).WithModifiers(modifiers),
+				SyntaxKind.StructDeclaration => ((StructDeclarationSyntax)node).WithModifiers(modifiers),
+				_ => throw new InvalidOperationException()
+			};
 		}
 
 		public static bool CheckTopLevel(this SyntaxNode node, TextSpan span)
 		{
-			var block = node as BlockSyntax;
-			if (block != null)
+			switch (node)
 			{
-				return block.ContainsInBlockBody(span);
-			}
-
-			var field = node as FieldDeclarationSyntax;
-			if (field != null)
-			{
-				foreach (var variable in field.Declaration.Variables)
+				case BlockSyntax block:
+					return block.ContainsInBlockBody(span);
+				case FieldDeclarationSyntax field:
 				{
-					if (variable.Initializer != null && variable.Initializer.Span.Contains(span))
+					foreach (var variable in field.Declaration.Variables)
 					{
-						return true;
+						if (variable.Initializer != null && variable.Initializer.Span.Contains(span))
+						{
+							return true;
+						}
 					}
+
+					break;
 				}
-			}
-
-			var global = node as GlobalStatementSyntax;
-			if (global != null)
-			{
-				return true;
-			}
-
-			var constructorInitializer = node as ConstructorInitializerSyntax;
-			if (constructorInitializer != null)
-			{
-				return constructorInitializer.ContainsInArgument(span);
+				case GlobalStatementSyntax:
+					return true;
+				case ConstructorInitializerSyntax constructorInitializer:
+					return constructorInitializer.ContainsInArgument(span);
 			}
 
 			return false;

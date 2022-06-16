@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 
 using EnvDTE;
 
@@ -17,7 +13,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
-	public enum MessageButtonResult : int
+	internal enum MessageButtonResult
 	{
 		IDOK = 1,
 		IDCANCEL = 2,
@@ -34,8 +30,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	{
 		public static byte[] HexStringToBytes(string hex)
 		{
-			if (hex == null)
-				throw new ArgumentNullException(nameof(hex));
+			ArgumentNullException.ThrowIfNull(hex);
 			var result = new byte[hex.Length / 2];
 			for (int i = 0; i < hex.Length / 2; i++)
 			{
@@ -58,7 +53,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		public static object[] GetProperties(EnvDTE.Properties properties, params string[] names)
+		public static object[] GetProperties(Properties properties, params string[] names)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -81,13 +76,12 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 				catch
 				{
-					continue;
 				}
 			}
 			return values;
 		}
 
-		public static List<(string, object)> GetAllProperties(EnvDTE.Properties properties)
+		public static List<(string, object)> GetAllProperties(Properties properties)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -96,14 +90,13 @@ namespace ICSharpCode.ILSpy.AddIn
 			{
 				try
 				{
-					if (properties.Item(i) is Property p)
+					if (properties.Item(i) is { } p)
 					{
 						result.Add((p.Name, p.Value));
 					}
 				}
 				catch
 				{
-					continue;
 				}
 			}
 
@@ -112,27 +105,23 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static ITextSelection GetSelectionInCurrentView(IServiceProvider serviceProvider, Func<string, bool> predicate)
 		{
-			IWpfTextViewHost viewHost = GetCurrentViewHost(serviceProvider, predicate);
-			if (viewHost == null)
-				return null;
+			IWpfTextViewHost? viewHost = GetCurrentViewHost(serviceProvider, predicate);
 
-			return viewHost.TextView.Selection;
+			return viewHost?.TextView.Selection;
 		}
 
-		public static IWpfTextViewHost GetCurrentViewHost(IServiceProvider serviceProvider, Func<string, bool> predicate)
+		public static IWpfTextViewHost? GetCurrentViewHost(IServiceProvider serviceProvider, Func<string, bool> predicate)
 		{
-			IWpfTextViewHost viewHost = GetCurrentViewHost(serviceProvider);
-			if (viewHost == null)
-				return null;
+			IWpfTextViewHost? viewHost = GetCurrentViewHost(serviceProvider);
 
-			ITextDocument textDocument = viewHost.GetTextDocument();
+			ITextDocument textDocument = viewHost?.GetTextDocument();
 			if (textDocument == null || !predicate(textDocument.FilePath))
 				return null;
 
 			return viewHost;
 		}
 
-		public static IWpfTextViewHost GetCurrentViewHost(IServiceProvider serviceProvider)
+		public static IWpfTextViewHost? GetCurrentViewHost(IServiceProvider serviceProvider)
 		{
 			IVsTextManager txtMgr = (IVsTextManager)serviceProvider.GetService(typeof(SVsTextManager));
 			if (txtMgr == null)
@@ -140,24 +129,20 @@ namespace ICSharpCode.ILSpy.AddIn
 				return null;
 			}
 
-			IVsTextView vTextView = null;
-			int mustHaveFocus = 1;
-			txtMgr.GetActiveView(mustHaveFocus, null, out vTextView);
-			IVsUserData userData = vTextView as IVsUserData;
-			if (userData == null)
+			const int mustHaveFocus = 1;
+			txtMgr.GetActiveView(mustHaveFocus, null, out IVsTextView vTextView);
+			if (vTextView is not IVsUserData userData)
 				return null;
 
-			object holder;
 			Guid guidViewHost = DefGuidList.guidIWpfTextViewHost;
-			userData.GetData(ref guidViewHost, out holder);
+			userData.GetData(ref guidViewHost, out object holder);
 
 			return holder as IWpfTextViewHost;
 		}
 
 		public static ITextDocument GetTextDocument(this IWpfTextViewHost viewHost)
 		{
-			ITextDocument textDocument = null;
-			viewHost.TextView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
+			viewHost.TextView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument);
 			return textDocument;
 		}
 

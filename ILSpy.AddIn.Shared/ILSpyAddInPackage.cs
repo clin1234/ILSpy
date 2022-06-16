@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	[Guid(GuidList.guidILSpyAddInPkgString)]
 	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
 	[ProvideBindingPath]
-	public sealed class ILSpyAddInPackage : AsyncPackage
+	internal sealed class ILSpyAddInPackage : AsyncPackage
 	{
 		/// <summary>
 		/// Default constructor of the package.
@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		VisualStudioWorkspace workspace;
 		public VisualStudioWorkspace Workspace => workspace;
 
-		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE));
+		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(DTE));
 
 
 		/////////////////////////////////////////////////////////////////////////////
@@ -124,8 +124,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 
 			Guid clsid = Guid.Empty;
-			int result;
-			Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(
+			ErrorHandler.ThrowOnFailure(
 				uiShell.ShowMessageBox(
 					0,
 					ref clsid,
@@ -137,7 +136,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					defaultButton,
 					icon,
 					0,        // false
-					out result
+					out int result
 				)
 			);
 

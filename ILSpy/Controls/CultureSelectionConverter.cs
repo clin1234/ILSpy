@@ -22,7 +22,7 @@ using System.Windows.Data;
 
 namespace ICSharpCode.ILSpy.Controls
 {
-	public class CultureSelectionConverter : IValueConverter
+	public sealed class CultureSelectionConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{

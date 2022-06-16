@@ -18,12 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -38,7 +36,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual && method.ParentModule is not null;
+		public bool Show(ISymbol symbol) => symbol is IMethod { IsVirtual: false, ParentModule: { } };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -80,7 +78,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (property.CanSet && IsUsedInMethod(analyzedMethod, analyzedBaseMethod, property.Setter, context))
 					{
 						yield return property;
-						continue;
 					}
 				}
 
@@ -99,7 +96,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					if (@event.CanInvoke && IsUsedInMethod(analyzedMethod, analyzedBaseMethod, @event.InvokeAccessor, context))
 					{
 						yield return @event;
-						continue;
 					}
 				}
 			}
@@ -118,7 +114,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
 
-			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
+			var genericContext = new GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0)
 			{
@@ -128,7 +124,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					opCode = blob.DecodeOpCode();
 					if (!IsSupportedOpCode(opCode))
 					{
-						ILParser.SkipOperand(ref blob, opCode);
+						blob.SkipOperand(opCode);
 						continue;
 					}
 				}

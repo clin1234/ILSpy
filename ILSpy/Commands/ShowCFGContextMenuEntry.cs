@@ -21,7 +21,7 @@ namespace ICSharpCode.ILSpy.Commands
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show("Error generating CFG - requires GraphViz dot.exe in PATH" + Environment.NewLine + Environment.NewLine + ex.ToString());
+				MessageBox.Show("Error generating CFG - requires GraphViz dot.exe in PATH" + Environment.NewLine + Environment.NewLine + ex);
 			}
 		}
 

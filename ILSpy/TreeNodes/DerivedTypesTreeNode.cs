@@ -89,7 +89,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					}
 				}
 			}
-			yield break;
 		}
 
 		static bool IsSameType(SRM.MetadataReader referenceMetadata, SRM.EntityHandle typeRef,

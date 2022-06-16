@@ -44,9 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ResourceTreeNode(Resource r)
 		{
-			if (r == null)
-				throw new ArgumentNullException(nameof(r));
-			this.Resource = r;
+			this.Resource = r ?? throw new ArgumentNullException(nameof(r));
 		}
 
 		public Resource Resource { get; }
@@ -67,10 +65,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", Resource.Name, Resource.ResourceType, Resource.Attributes));
+			language.WriteCommentLine(output, $"{Resource.Name} ({Resource.ResourceType}, {Resource.Attributes})");
 
-			ISmartTextOutput smartOutput = output as ISmartTextOutput;
-			if (smartOutput != null)
+			if (output is ISmartTextOutput smartOutput)
 			{
 				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.ActiveTabPage); });
 				output.WriteLine();
@@ -80,15 +77,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool View(TabPageModel tabPage)
 		{
 			Stream s = Resource.TryOpenStream();
-			if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit)
+			if (s is { Length: < DecompilerTextView.DefaultOutputLengthLimit })
 			{
 				s.Position = 0;
 				FileType type = GuessFileType.DetectFileType(s);
 				if (type != FileType.Binary)
 				{
 					s.Position = 0;
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					output.Title = Resource.Name;
+					AvalonEditTextOutput output = new AvalonEditTextOutput {
+						Title = Resource.Name
+					};
 					output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
 					string ext;
 					if (type == FileType.Xml)
@@ -108,15 +106,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Stream s = Resource.TryOpenStream();
 			if (s == null)
 				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
+			SaveFileDialog dlg = new SaveFileDialog {
+				FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name))
+			};
 			if (dlg.ShowDialog() == true)
 			{
 				s.Position = 0;
-				using (var fs = dlg.OpenFile())
-				{
-					s.CopyTo(fs);
-				}
+				using var fs = dlg.OpenFile();
+				s.CopyTo(fs);
 			}
 			return true;
 		}

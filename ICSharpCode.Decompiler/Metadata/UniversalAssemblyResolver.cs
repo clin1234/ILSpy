@@ -728,8 +728,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					foreach (var item in new DirectoryInfo(rootPath).EnumerateFiles("*.dll",
 						         SearchOption.AllDirectories))
 					{
-						string[]? name = Path.GetDirectoryName(item.FullName)
-							?.Substring(rootPath.Length + 1)
+						string[]? name = Path.GetDirectoryName(item.FullName)?[(rootPath.Length + 1)..]
 							.Split(new[] {
 									"\\"
 								},

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using EnvDTE;
+﻿using EnvDTE;
 
 using Microsoft.VisualStudio.Shell;
 
@@ -15,9 +9,9 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	/// <summary>
 	/// Represents a NuGet package item in Solution Explorer, which can be opened in ILSpy.
 	/// </summary>
-	class NuGetReferenceForILSpy
+	sealed class NuGetReferenceForILSpy
 	{
-		ProjectItem projectItem;
+		readonly ProjectItem projectItem;
 
 		NuGetReferenceForILSpy(ProjectItem projectItem)
 		{

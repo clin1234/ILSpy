@@ -22,15 +22,14 @@ using System.Xml.Linq;
 
 namespace ILSpy.BamlDecompiler
 {
-	public class BamlDecompilationResult
+	internal sealed class BamlDecompilationResult
 	{
 		public XDocument Xaml { get; }
-		public List<string> AssemblyReferences { get; }
 
 		public BamlDecompilationResult(XDocument xaml, IEnumerable<string> assemblyReferences)
 		{
 			this.Xaml = xaml;
-			this.AssemblyReferences = assemblyReferences.ToList();
+			assemblyReferences.ToList();
 		}
 	}
 }

@@ -39,7 +39,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 
 		IEnumerable<string> ResolveCLRNamespaces(IModule assembly, string ns)
 		{
-			foreach (var attr in assembly.GetAssemblyAttributes().Where(a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute"))
+			foreach (var attr in assembly.GetAssemblyAttributes().Where(static a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute"))
 			{
 				Debug.Assert(attr.FixedArguments.Length == 2);
 
@@ -52,7 +52,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 			}
 		}
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (XmlnsPropertyRecord)((BamlRecordNode)node).Record;
 			foreach (var asmId in record.AssemblyIds)

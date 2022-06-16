@@ -11,6 +11,7 @@
     <UseWpf>true</UseWpf>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -37,14 +38,14 @@
   <Import Project="../packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Iced" Version="1.13.0" />
+    <PackageReference Include="Iced" Version="1.17.0" />
     <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="6.0.0-rc.2.21424.11" />
     <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
          System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
          directory, we're at risk of overwriting our dependencies with different versions.
          So ensure NuGet uses consistent versions (from our packages.props) for these.
          -->
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
   </ItemGroup>
 

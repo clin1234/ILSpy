@@ -29,9 +29,9 @@ namespace ILSpy.BamlDecompiler.Baml
 {
 	internal abstract class BamlNode
 	{
-		public BamlBlockNode Parent { get; set; }
+		public BamlBlockNode? Parent { get; set; }
 		public abstract BamlRecordType Type { get; }
-		public object Annotation { get; set; }
+		public object? Annotation { get; set; }
 
 		public abstract BamlRecord Record { get; }
 
@@ -107,23 +107,23 @@ namespace ILSpy.BamlDecompiler.Baml
 			return false;
 		}
 
-		public static BamlNode Parse(BamlDocument document, CancellationToken token)
+		public static BamlNode? Parse(BamlDocument document, CancellationToken token)
 		{
 			Debug.Assert(document.Count > 0 && document[0].Type == BamlRecordType.DocumentStart);
 
-			BamlBlockNode current = null;
+			BamlBlockNode? current = null;
 			var stack = new Stack<BamlBlockNode>();
 
-			for (int i = 0; i < document.Count; i++)
+			foreach (var t in document)
 			{
 				token.ThrowIfCancellationRequested();
 
-				if (IsHeader(document[i]))
+				if (IsHeader(t))
 				{
 					var prev = current;
 
 					current = new BamlBlockNode {
-						Header = document[i]
+						Header = t
 					};
 
 					if (prev != null)
@@ -133,42 +133,41 @@ namespace ILSpy.BamlDecompiler.Baml
 						stack.Push(prev);
 					}
 				}
-				else if (IsFooter(document[i]))
+				else if (IsFooter(t))
 				{
 					if (current == null)
 						throw new Exception("Unexpected footer.");
 
-					while (!IsMatch(current.Header, document[i]))
+					while (!IsMatch(current.Header, t))
 					{
 						// End record can be omited (sometimes).
 						if (stack.Count > 0)
 							current = stack.Pop();
 					}
-					current.Footer = document[i];
+					current.Footer = t;
 					if (stack.Count > 0)
 						current = stack.Pop();
 				}
 				else
-					current.Children.Add(new BamlRecordNode(document[i]) { Parent = current });
+					current?.Children.Add(new BamlRecordNode(t) { Parent = current });
 			}
 			Debug.Assert(stack.Count == 0);
 			return current;
 		}
 	}
 
-	internal class BamlRecordNode : BamlNode
+	internal sealed class BamlRecordNode : BamlNode
 	{
-		BamlRecord record;
+		public override BamlRecord Record { get; }
 
-		public override BamlRecord Record => record;
 		public override BamlRecordType Type => Record.Type;
 
-		public BamlRecordNode(BamlRecord record) => this.record = record;
+		public BamlRecordNode(BamlRecord record) => this.Record = record;
 	}
 
-	internal class BamlBlockNode : BamlNode
+	internal sealed class BamlBlockNode : BamlNode
 	{
-		public BamlRecord Header { get; set; }
+		public BamlRecord Header { get; init; }
 		public IList<BamlNode> Children { get; }
 		public BamlRecord Footer { get; set; }
 

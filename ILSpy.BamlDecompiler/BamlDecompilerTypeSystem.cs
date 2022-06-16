@@ -28,9 +28,9 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ILSpy.BamlDecompiler
 {
-	class BamlDecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
+	sealed class BamlDecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 	{
-		string[] defaultBamlReferences = new[] {
+		readonly string?[] defaultBamlReferences = {
 				"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 				"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 				"WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
@@ -42,10 +42,8 @@ namespace ILSpy.BamlDecompiler
 
 		public BamlDecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
 		{
-			if (mainModule == null)
-				throw new ArgumentNullException(nameof(mainModule));
-			if (assemblyResolver == null)
-				throw new ArgumentNullException(nameof(assemblyResolver));
+			ArgumentNullException.ThrowIfNull(mainModule);
+			ArgumentNullException.ThrowIfNull(assemblyResolver);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<PEFile>();
@@ -73,7 +71,7 @@ namespace ILSpy.BamlDecompiler
 			{
 				assemblyReferenceQueue.Enqueue((true, mainModule, AssemblyNameReference.Parse(bamlReference)));
 			}
-			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
+			var comparer = KeyComparer.Create(static ((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
 				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
 									   "M:" + reference.Reference);
 			var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
@@ -82,15 +80,7 @@ namespace ILSpy.BamlDecompiler
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
 					continue;
-				PEFile asm;
-				if (asmRef.IsAssembly)
-				{
-					asm = assemblyResolver.Resolve((IAssemblyReference)asmRef.Reference);
-				}
-				else
-				{
-					asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
-				}
+				PEFile asm = asmRef.IsAssembly ? assemblyResolver.Resolve((IAssemblyReference)asmRef.Reference) : assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
 				if (asm != null)
 				{
 					referencedAssemblies.Add(asm);
@@ -112,7 +102,7 @@ namespace ILSpy.BamlDecompiler
 				}
 			}
 			var mainModuleWithOptions = mainModule.WithOptions(TypeSystemOptions.Default);
-			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(TypeSystemOptions.Default));
+			var referencedAssembliesWithOptions = referencedAssemblies.Select(static file => file.WithOptions(TypeSystemOptions.Default));
 			// Primitive types are necessary to avoid assertions in ILReader.
 			// Fallback to MinimalCorlib to provide the primitive types.
 			if (!HasType(KnownTypeCode.Void) || !HasType(KnownTypeCode.Int32))

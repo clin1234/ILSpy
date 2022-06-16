@@ -38,9 +38,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
-			if (isLink == null)
-				throw new ArgumentNullException(nameof(isLink));
-			this.isLink = isLink;
+			this.isLink = isLink ?? throw new ArgumentNullException(nameof(isLink));
 		}
 
 		public override int GetFirstInterestedOffset(int startOffset)
@@ -49,7 +47,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return -1;
 			// inform AvalonEdit about the next position where we want to build a hyperlink
 			var segment = this.References.FindFirstSegmentWithStartAfter(startOffset);
-			return segment != null ? segment.StartOffset : -1;
+			return segment?.StartOffset ?? -1;
 		}
 
 		public override VisualLineElement ConstructElement(int offset)

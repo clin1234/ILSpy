@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	class EventMapTableTreeNode : MetadataTableTreeNode
+	sealed class EventMapTableTreeNode : MetadataTableTreeNode
 	{
 		public EventMapTableTreeNode(PEFile module)
 			: base((HandleKind)0x12, module)
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		unsafe struct EventMapEntry
+		unsafe readonly struct EventMapEntry
 		{
 			readonly PEFile module;
 			readonly MetadataReader metadata;

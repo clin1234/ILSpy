@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
+									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
 								}
 								catch (Exception ex)
 								{
@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy
 				w.Stop();
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
 				double msPerRun = w.Elapsed.TotalMilliseconds / numRuns;
-				output.Write($"Average time: {msPerRun.ToString("f1")}ms\n");
+				output.Write($"Average time: {msPerRun:f1}ms\n");
 				return output;
 			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}

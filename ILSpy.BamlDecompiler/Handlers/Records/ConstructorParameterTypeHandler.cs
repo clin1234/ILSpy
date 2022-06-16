@@ -31,15 +31,16 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.ConstructorParameterType;
 
-		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
+		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (ConstructorParameterTypeRecord)((BamlRecordNode)node).Record;
 
 			var elem = new XElement(ctx.GetKnownNamespace("TypeExtension", XamlContext.KnownNamespace_Xaml, parent.Xaml));
 			elem.AddAnnotation(ctx.ResolveType(0xfd4d)); // Known type - TypeExtension
 
-			var bamlElem = new BamlElement(node);
-			bamlElem.Xaml = elem;
+			var bamlElem = new BamlElement(node) {
+				Xaml = elem
+			};
 			parent.Xaml.Element.Add(elem);
 
 			var type = ctx.ResolveType(record.TypeId);

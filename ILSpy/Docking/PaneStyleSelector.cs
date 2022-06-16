@@ -22,7 +22,7 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Docking
 {
-	public class PaneStyleSelector : StyleSelector
+	public sealed class PaneStyleSelector : StyleSelector
 	{
 		public Style ToolPaneStyle { get; set; }
 
@@ -30,13 +30,11 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public override Style SelectStyle(object item, DependencyObject container)
 		{
-			if (item is TabPageModel)
-				return TabPageStyle;
-
-			if (item is ToolPaneModel)
-				return ToolPaneStyle;
-
-			return base.SelectStyle(item, container);
+			return item switch {
+				TabPageModel => TabPageStyle,
+				ToolPaneModel => ToolPaneStyle,
+				_ => base.SelectStyle(item, container)
+			};
 		}
 	}
 }

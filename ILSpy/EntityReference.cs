@@ -26,7 +26,7 @@ using ICSharpCode.ILSpyX;
 namespace ICSharpCode.ILSpy
 {
 	[DebuggerDisplay("EntityReference Module={Module}, Handle={Handle}, Protocol={Protocol}")]
-	public class EntityReference
+	public sealed class EntityReference
 	{
 		readonly PEFile? peFile;
 		public string Module { get; }

@@ -28,7 +28,6 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
 
@@ -44,7 +43,7 @@ namespace ICSharpCode.ILSpy
 	[Export(typeof(Language))]
 	public class ILLanguage : Language
 	{
-		protected bool detectControlStructure = true;
+		protected readonly bool detectControlStructure = true;
 
 		public override string Name {
 			get { return "IL"; }
@@ -119,7 +118,7 @@ namespace ICSharpCode.ILSpy
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
 
-			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
+			var ed = module.Metadata.GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
 			var accessors = ed.GetAccessors();
 			if (!accessors.Adder.IsNil)
 			{

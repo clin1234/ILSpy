@@ -28,10 +28,10 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Searches matching brackets for C#.
 	/// </summary>
-	class CSharpBracketSearcher : IBracketSearcher
+	sealed class CSharpBracketSearcher : IBracketSearcher
 	{
-		string openingBrackets = "([{";
-		string closingBrackets = ")]}";
+		private const string openingBrackets = "([{";
+		private const string closingBrackets = ")]}";
 
 		public BracketSearchResult SearchBracket(IDocument document, int offset)
 		{
@@ -98,22 +98,27 @@ namespace ICSharpCode.ILSpy
 					case '"':
 						if (!inChar)
 						{
-							if (inString && verbatim)
+							switch (inString)
 							{
-								if (i + 1 < document.TextLength && document.GetCharAt(i + 1) == '"')
+								case true when verbatim:
 								{
-									++i; // skip escaped quote
-									inString = false; // let the string go on
+									if (i + 1 < document.TextLength && document.GetCharAt(i + 1) == '"')
+									{
+										++i; // skip escaped quote
+										inString = false; // let the string go on
+									}
+									else
+									{
+										verbatim = false;
+									}
+
+									break;
 								}
-								else
-								{
-									verbatim = false;
-								}
+								case false when i > 0 && document.GetCharAt(i - 1) == '@':
+									verbatim = true;
+									break;
 							}
-							else if (!inString && i > 0 && document.GetCharAt(i - 1) == '@')
-							{
-								verbatim = true;
-							}
+
 							inString = !inString;
 						}
 						break;
@@ -200,22 +205,27 @@ namespace ICSharpCode.ILSpy
 					case '"':
 						if (!(inChar || lineComment || blockComment))
 						{
-							if (inString && verbatim)
+							switch (inString)
 							{
-								if (i + 1 < document.TextLength && document.GetCharAt(i + 1) == '"')
+								case true when verbatim:
 								{
-									++i; // skip escaped quote
-									inString = false; // let the string go
+									if (i + 1 < document.TextLength && document.GetCharAt(i + 1) == '"')
+									{
+										++i; // skip escaped quote
+										inString = false; // let the string go
+									}
+									else
+									{
+										verbatim = false;
+									}
+
+									break;
 								}
-								else
-								{
-									verbatim = false;
-								}
+								case false when offset > 0 && document.GetCharAt(i - 1) == '@':
+									verbatim = true;
+									break;
 							}
-							else if (!inString && offset > 0 && document.GetCharAt(i - 1) == '@')
-							{
-								verbatim = true;
-							}
+
 							inString = !inString;
 						}
 						break;
@@ -249,7 +259,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 			if (bracketStack.Count > 0)
-				return (int)bracketStack.Pop();
+				return bracketStack.Pop();
 			return -1;
 		}
 		#endregion
@@ -319,22 +329,27 @@ namespace ICSharpCode.ILSpy
 					case '"':
 						if (!(inChar || lineComment || blockComment))
 						{
-							if (inString && verbatim)
+							switch (inString)
 							{
-								if (offset + 1 < document.TextLength && document.GetCharAt(offset + 1) == '"')
+								case true when verbatim:
 								{
-									++offset; // skip escaped quote
-									inString = false; // let the string go
+									if (offset + 1 < document.TextLength && document.GetCharAt(offset + 1) == '"')
+									{
+										++offset; // skip escaped quote
+										inString = false; // let the string go
+									}
+									else
+									{
+										verbatim = false;
+									}
+
+									break;
 								}
-								else
-								{
-									verbatim = false;
-								}
+								case false when offset > 0 && document.GetCharAt(offset - 1) == '@':
+									verbatim = true;
+									break;
 							}
-							else if (!inString && offset > 0 && document.GetCharAt(offset - 1) == '@')
-							{
-								verbatim = true;
-							}
+
 							inString = !inString;
 						}
 						break;

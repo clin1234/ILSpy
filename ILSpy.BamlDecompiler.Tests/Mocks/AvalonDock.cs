@@ -21,14 +21,11 @@ using System.Windows.Controls.Primitives;
 
 namespace AvalonDock
 {
-	public class DockingManager
+	public abstract class DockingManager
 	{
-		public DockingManager()
-		{
-		}
 	}
 
-	public class Resizer : Thumb
+	public sealed class Resizer : Thumb
 	{
 		static Resizer()
 		{

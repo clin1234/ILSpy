@@ -21,13 +21,12 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.Metadata
 {
-	internal class MemberRefTableTreeNode : MetadataTableTreeNode
+	internal sealed class MemberRefTableTreeNode : MetadataTableTreeNode
 	{
 		public MemberRefTableTreeNode(PEFile module)
 			: base(HandleKind.MemberReference, module)
@@ -71,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			return true;
 		}
 
-		struct MemberRefEntry
+		readonly struct MemberRefEntry
 		{
 			readonly int metadataOffset;
 			readonly PEFile module;

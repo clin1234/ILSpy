@@ -27,7 +27,6 @@ using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Solution;
-using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX;
 
@@ -37,7 +36,7 @@ namespace ICSharpCode.ILSpy
 	/// An utility class that creates a Visual Studio solution containing projects for the
 	/// decompiled assemblies.
 	/// </summary>
-	internal class SolutionWriter
+	internal sealed class SolutionWriter
 	{
 		/// <summary>
 		/// Creates a Visual Studio solution that contains projects with decompiled code
@@ -55,26 +54,20 @@ namespace ICSharpCode.ILSpy
 		/// <paramref name="assemblies"/> is null.</exception>
 		public static void CreateSolution(DecompilerTextView textView, string solutionFilePath, Language language, IEnumerable<LoadedAssembly> assemblies)
 		{
-			if (textView == null)
-			{
-				throw new ArgumentNullException(nameof(textView));
-			}
+			ArgumentNullException.ThrowIfNull(textView);
 
 			if (string.IsNullOrWhiteSpace(solutionFilePath))
 			{
 				throw new ArgumentException("The solution file path cannot be null or empty.", nameof(solutionFilePath));
 			}
 
-			if (assemblies == null)
-			{
-				throw new ArgumentNullException(nameof(assemblies));
-			}
+			ArgumentNullException.ThrowIfNull(assemblies);
 
 			var writer = new SolutionWriter(solutionFilePath);
 
 			textView
 				.RunWithCancellation(ct => writer.CreateSolution(assemblies, language, ct))
-				.Then(output => textView.ShowText(output))
+				.Then(textView.ShowText)
 				.HandleExceptions();
 		}
 
@@ -111,7 +104,7 @@ namespace ICSharpCode.ILSpy
 				// long to decompile.
 				await Task.Run(() => Parallel.ForEach(Partitioner.Create(assemblies),
 					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-					n => WriteProject(n, language, solutionDirectory, ct)))
+					n => WriteProject(n, language, solutionDirectory, ct)), ct)
 					.ConfigureAwait(false);
 
 				if (projects.Count == 0)
@@ -121,7 +114,7 @@ namespace ICSharpCode.ILSpy
 				}
 				else
 				{
-					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects))
+					await Task.Run(() => SolutionCreator.WriteSolutionFile(solutionFilePath, projects), ct)
 						.ConfigureAwait(false);
 				}
 			}
@@ -209,20 +202,18 @@ namespace ICSharpCode.ILSpy
 
 			try
 			{
-				using (var projectFileWriter = new StreamWriter(projectFileName))
-				{
-					var projectFileOutput = new PlainTextOutput(projectFileWriter);
-					var options = new DecompilationOptions() {
-						FullDecompilation = true,
-						CancellationToken = ct,
-						SaveAsProjectDirectory = targetDirectory
-					};
+				using var projectFileWriter = new StreamWriter(projectFileName);
+				var projectFileOutput = new PlainTextOutput(projectFileWriter);
+				var options = new DecompilationOptions() {
+					FullDecompilation = true,
+					CancellationToken = ct,
+					SaveAsProjectDirectory = targetDirectory
+				};
 
-					var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
-					if (projectInfo != null)
-					{
-						projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid, projectInfo.TypeGuid));
-					}
+				var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
+				if (projectInfo != null)
+				{
+					projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid, projectInfo.TypeGuid));
 				}
 			}
 			catch (NotSupportedException e)
@@ -235,9 +226,9 @@ namespace ICSharpCode.ILSpy
 				statusOutput.Add("-------------");
 				statusOutput.Add(string.Format(Properties.Resources.ProjectExportPathTooLong, loadedAssembly.FileName)
 					+ Environment.NewLine + Environment.NewLine
-					+ e.ToString());
+					+ e);
 			}
-			catch (Exception e) when (!(e is OperationCanceledException))
+			catch (Exception e) when (e is not OperationCanceledException)
 			{
 				statusOutput.Add("-------------");
 				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e}");

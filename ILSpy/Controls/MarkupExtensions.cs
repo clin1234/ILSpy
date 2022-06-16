@@ -38,25 +38,18 @@ namespace ICSharpCode.ILSpy.Controls
 		/// </summary>
 		public ControlColor(float val)
 		{
-			if (!(val >= 105 && val <= 255))
+			if (!(val is >= 105 and <= 255))
 				throw new ArgumentOutOfRangeException(nameof(val));
 			this.val = val;
 		}
 
 		public override object ProvideValue(IServiceProvider serviceProvider)
 		{
-			if (val > 227)
-			{
-				return Interpolate(227, SystemColors.ControlLightColor, 255, SystemColors.ControlLightLightColor);
-			}
-			else if (val > 160)
-			{
-				return Interpolate(160, SystemColors.ControlDarkColor, 227, SystemColors.ControlLightColor);
-			}
-			else
-			{
-				return Interpolate(105, SystemColors.ControlDarkDarkColor, 160, SystemColors.ControlDarkColor);
-			}
+			return val switch {
+				> 227 => Interpolate(227, SystemColors.ControlLightColor, 255, SystemColors.ControlLightLightColor),
+				> 160 => Interpolate(160, SystemColors.ControlDarkColor, 227, SystemColors.ControlLightColor),
+				_ => Interpolate(105, SystemColors.ControlDarkDarkColor, 160, SystemColors.ControlDarkColor)
+			};
 		}
 
 		Color Interpolate(float v1, Color c1, float v2, Color c2)

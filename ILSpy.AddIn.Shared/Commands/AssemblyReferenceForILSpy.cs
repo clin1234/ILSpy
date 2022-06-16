@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 using VSLangProj;
 
@@ -11,9 +7,9 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	/// <summary>
 	/// Represents an assembly reference item in Solution Explorer, which can be opened in ILSpy.
 	/// </summary>
-	class AssemblyReferenceForILSpy
+	sealed class AssemblyReferenceForILSpy
 	{
-		Reference reference;
+		readonly Reference reference;
 
 		AssemblyReferenceForILSpy(Reference reference)
 		{

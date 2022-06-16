@@ -28,7 +28,7 @@ using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	class AnalyzerSearchTreeNode : AnalyzerTreeNode
+	sealed class AnalyzerSearchTreeNode : AnalyzerTreeNode
 	{
 		private readonly ThreadingSupport threading = new ThreadingSupport();
 		readonly ISymbol symbol;
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			threading.LoadChildren(this, FetchChildren);
 		}
 
-		protected IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
+		private IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
 			if (symbol is IEntity)
 			{
@@ -77,40 +77,18 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		AnalyzerTreeNode SymbolTreeNodeFactory(ISymbol symbol)
 		{
-			if (symbol == null)
-			{
-				throw new ArgumentNullException(nameof(symbol));
-			}
+			ArgumentNullException.ThrowIfNull(symbol);
 
-			switch (symbol)
-			{
-				case IModule module:
-					return new AnalyzedModuleTreeNode(module) {
-						Language = this.Language
-					};
-				case ITypeDefinition td:
-					return new AnalyzedTypeTreeNode(td) {
-						Language = this.Language
-					};
-				case IField fd:
-					return new AnalyzedFieldTreeNode(fd) {
-						Language = this.Language
-					};
-				case IMethod md:
-					return new AnalyzedMethodTreeNode(md) {
-						Language = this.Language
-					};
-				case IProperty pd:
-					return new AnalyzedPropertyTreeNode(pd) {
-						Language = this.Language
-					};
-				case IEvent ed:
-					return new AnalyzedEventTreeNode(ed) {
-						Language = this.Language
-					};
-				default:
-					throw new ArgumentOutOfRangeException(nameof(symbol), $"Symbol {symbol.GetType().FullName} is not supported.");
-			}
+			return symbol switch {
+				IModule module => new AnalyzedModuleTreeNode(module) { Language = this.Language },
+				ITypeDefinition td => new AnalyzedTypeTreeNode(td) { Language = this.Language },
+				IField fd => new AnalyzedFieldTreeNode(fd) { Language = this.Language },
+				IMethod md => new AnalyzedMethodTreeNode(md) { Language = this.Language },
+				IProperty pd => new AnalyzedPropertyTreeNode(pd) { Language = this.Language },
+				IEvent ed => new AnalyzedEventTreeNode(ed) { Language = this.Language },
+				_ => throw new ArgumentOutOfRangeException(nameof(symbol),
+					$"Symbol {symbol.GetType().FullName} is not supported.")
+			};
 		}
 
 		protected override void OnIsVisibleChanged()

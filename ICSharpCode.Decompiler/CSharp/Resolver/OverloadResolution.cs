@@ -540,7 +540,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.conversions = overloadResolution.conversions;
 			}
 
-			internal override IType VisitParameterizedType(ParameterizedType type)
+			public override IType VisitParameterizedType(ParameterizedType type)
 			{
 				IType newType = base.VisitParameterizedType(type);
 				if (newType != type && ConstraintsValid)

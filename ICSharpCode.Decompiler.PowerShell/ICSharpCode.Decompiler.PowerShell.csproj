@@ -6,13 +6,12 @@
     <RootNamespace>ICSharpCode.Decompiler.PowerShell</RootNamespace>
     <LangVersion>default</LangVersion>
     <TargetFrameworks>net6.0</TargetFrameworks>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" />
     <PackageReference Include="Mono.Cecil" Version="$(MonoCecilVersion)" />
   </ItemGroup>
 

@@ -46,7 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	public class WholeProjectDecompiler : IProjectInfoProvider
 	{
 		const int maxSegmentLength = 255;
-<<<<<<< HEAD
 
 		#region Settings
 
@@ -691,8 +690,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}
-=======
->>>>>>> 5ac9ae8d6 (Fix #2706: Filenames and directories truncated to 30 characters.)
 
 		#region Settings
 

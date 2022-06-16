@@ -47,13 +47,13 @@ Examples:
 	[ProjectOptionRequiresOutputDirectoryValidation]
 	[VersionOptionFromMember("-v|--version", Description = "Show version of ICSharpCode.Decompiler used.",
 		MemberName = nameof(DecompilerVersion))]
-	sealed class ILSpyCmdProgram
+	class ILSpyCmdProgram
 	{
 		[FilesExist]
 		[Required]
 		[Argument(0, "Assembly file name(s)",
 			"The list of assemblies that is being decompiled. This argument is mandatory.")]
-		private string[] InputAssemblyNames { get; }
+		public string[] InputAssemblyNames { get; }
 
 		[Option("-o|--outputdir <directory>",
 			"The output directory, if omitted decompiler output is written to standard out.",
@@ -66,25 +66,25 @@ Examples:
 
 		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.",
 			CommandOptionType.SingleValue)]
-		private string TypeName { get; }
+		public string TypeName { get; }
 
 		[Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue)]
-		private bool ShowILCodeFlag { get; }
+		public bool ShowILCodeFlag { get; }
 
 		[Option("--il-sequence-points", "Show IL with sequence points. Implies -il.", CommandOptionType.NoValue)]
-		private bool ShowILSequencePointsFlag { get; }
+		public bool ShowILSequencePointsFlag { get; }
 
 		[Option("-genpdb|--generate-pdb", "Generate PDB.", CommandOptionType.NoValue)]
-		private bool CreateDebugInfoFlag { get; }
+		public bool CreateDebugInfoFlag { get; }
 
 		[FileExistsOrNull]
 		[Option("-usepdb|--use-varnames-from-pdb", "Use variable names from PDB.", CommandOptionType.SingleOrNoValue)]
-		private (bool IsSet, string Value) InputPDBFile { get; }
+		public (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>",
 			"Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)",
 			CommandOptionType.MultipleValue)]
-		private IEnumerable<string> EntityTypes { get; } = Array.Empty<string>();
+		public IEnumerable<string> EntityTypes { get; } = Array.Empty<string>();
 
 		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version +
 		                                   Environment.NewLine
@@ -92,29 +92,29 @@ Examples:
 		                                   typeof(FullTypeName).Assembly.GetName().Version;
 
 		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
-		                                           "CSharp4, CSharp5, CSharp6, CSharp7_0, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-		                                           "CSharp_10_0 or Latest", CommandOptionType.SingleValue)]
-		private LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
+			"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
+			"CSharp10_0, Preview or Latest", CommandOptionType.SingleValue)]
+		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>",
 			"Path to a directory containing dependencies of the assembly that is being decompiled.",
 			CommandOptionType.MultipleValue)]
-		private IEnumerable<string> ReferencePaths { get; } = Array.Empty<string>();
+		public IEnumerable<string> ReferencePaths { get; } = Array.Empty<string>();
 
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
-		private bool RemoveDeadCode { get; }
+		public bool RemoveDeadCode { get; }
 
 		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
-		private bool RemoveDeadStores { get; }
+		public bool RemoveDeadStores { get; }
 
 		[Option("-d|--dump-package",
 			"Dump package assembiles into a folder. This requires the output directory option.",
 			CommandOptionType.NoValue)]
-		private bool DumpPackageFlag { get; }
+		public bool DumpPackageFlag { get; }
 
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
-		private bool NestedDirectories { get; }
+		public bool NestedDirectories { get; }
 
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 
@@ -122,8 +122,8 @@ Examples:
 
 		private int? OnExecute(CommandLineApplication app)
 		{
-			TextWriter output = System.Console.Out;
-			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
+			TextWriter output = Console.Out;
+			string? outputDirectory = ResolveOutputDirectory(OutputDirectory);
 
 			if (outputDirectory != null)
 			{
@@ -189,8 +189,7 @@ Examples:
 
 					return ListContent(fileName, output, kinds);
 				}
-
-				if (ShowILCodeFlag || ShowILSequencePointsFlag)
+				else if (ShowILCodeFlag || ShowILSequencePointsFlag)
 				{
 					if (outputDirectory != null)
 					{
@@ -200,10 +199,9 @@ Examples:
 
 					return ShowIL(fileName, output);
 				}
-
-				if (CreateDebugInfoFlag)
+				else if (CreateDebugInfoFlag)
 				{
-					string pdbFileName = null;
+					string? pdbFileName = null;
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
@@ -216,20 +214,29 @@ Examples:
 
 					return GeneratePdbForAssembly(fileName, pdbFileName, app);
 				}
-
-				if (DumpPackageFlag)
+				else if (DumpPackageFlag)
 				{
 					return DumpPackageAssemblies(fileName, outputDirectory, app);
 				}
-
-				if (outputDirectorySpecified)
+				else
 				{
-					string outputName = Path.GetFileNameWithoutExtension(fileName);
-					output = File.CreateText(Path.Combine(OutputDirectory,
-						(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
-				}
+					if (outputDirectory != null)
+					{
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						output = File.CreateText(Path.Combine(outputDirectory,
+							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+					}
+				else
+				{
+					if (outputDirectory != null)
+					{
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						output = File.CreateText(Path.Combine(outputDirectory,
+							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+					}
 
-				return Decompile(fileName, output, TypeName);
+					return Decompile(fileName, output, TypeName);
+				}
 			}
 		}
 

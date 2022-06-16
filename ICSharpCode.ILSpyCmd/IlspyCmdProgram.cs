@@ -120,8 +120,8 @@ Examples:
 
 		private int? OnExecute(CommandLineApplication app)
 		{
-			TextWriter output = Console.Out;
-			string? outputDirectory = ResolveOutputDirectory(OutputDirectory);
+			TextWriter output = System.Console.Out;
+			string outputDirectory = ResolveOutputDirectory(OutputDirectory);
 
 			if (outputDirectory != null)
 			{
@@ -201,7 +201,7 @@ Examples:
 
 				if (CreateDebugInfoFlag)
 				{
-					string? pdbFileName = null;
+					string pdbFileName = null;
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
@@ -233,7 +233,7 @@ Examples:
 			}
 		}
 
-		private static string? ResolveOutputDirectory(string outputDirectory)
+		private static string ResolveOutputDirectory(string outputDirectory)
 		{
 			// path is not set
 			if (string.IsNullOrWhiteSpace(outputDirectory))

@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		ITypeDefinition? IEntity.DeclaringTypeDefinition => DeclaringType?.GetDefinition();
 
-		public IType DeclaringType { get; init; }
+		public IType? DeclaringType { get; init; }
 
 		IModule? IEntity.ParentModule => DeclaringType?.GetDefinition().ParentModule;
 

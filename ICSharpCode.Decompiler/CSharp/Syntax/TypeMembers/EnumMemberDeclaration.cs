@@ -30,13 +30,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class EnumMemberDeclaration : EntityDeclaration
 	{
-		public static readonly Role<Expression> InitializerRole = new("Initializer", Expression.Null);
+		public static readonly Role<Expression?> InitializerRole = new("Initializer", Expression.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }
 		}
 
-		public Expression Initializer {
+		public Expression? Initializer {
 			get { return GetChildByRole(InitializerRole); }
 			set { SetChildByRole(InitializerRole, value); }
 		}

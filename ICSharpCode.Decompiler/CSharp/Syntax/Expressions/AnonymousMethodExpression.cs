@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
+		public AnonymousMethodExpression(BlockStatement? body, IEnumerable<ParameterDeclaration?>? parameters = null)
 		{
 			if (parameters != null)
 			{
@@ -60,8 +60,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AddChild(body, Roles.Body);
 		}
 
-		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body,
-			(IEnumerable<ParameterDeclaration>)parameters)
+		public AnonymousMethodExpression(BlockStatement? body, params ParameterDeclaration[] parameters) : this(body,
+			(IEnumerable<ParameterDeclaration?>)parameters)
 		{
 		}
 

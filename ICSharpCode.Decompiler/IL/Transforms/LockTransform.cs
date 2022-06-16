@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!flagStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean) || !flagStore.Value.MatchLdcI4(0))
 				return false;
 			if (body.TryBlock is not BlockContainer tryContainer || !MatchLockEntryPoint(tryContainer.EntryPoint,
-				    flagStore.Variable, out StLoc objectStore))
+				    flagStore.Variable, out StLoc? objectStore))
 				return false;
 			if (body.FinallyBlock is not BlockContainer finallyContainer || !MatchExitBlock(finallyContainer.EntryPoint,
 				    flagStore.Variable, objectStore.Variable))

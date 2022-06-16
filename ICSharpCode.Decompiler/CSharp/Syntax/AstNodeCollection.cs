@@ -30,12 +30,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents the children of an AstNode that have a specific role.
 	/// </summary>
 	public sealed class AstNodeCollection<T> : ICollection<T>, IReadOnlyCollection<T>
-		where T : AstNode
+		where T : AstNode?
 	{
 		readonly AstNode node;
 		readonly Role<T?> role;
 
-		internal AstNodeCollection(AstNode node, Role<T> role)
+		internal AstNodeCollection(AstNode node, Role<T?> role)
 		{
 			this.node = node ?? throw new ArgumentNullException(nameof(node));
 			this.role = role ?? throw new ArgumentNullException(nameof(role));
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			node.AddChild(element, role);
 		}
 
-		public bool Contains(T element)
+		public bool Contains(T? element)
 		{
 			return element != null && element.Parent == node && element.RoleIndex == role.Index;
 		}
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return GetEnumerator();
 		}
 
-		internal void AddRange(IEnumerable<T> nodes)
+		internal void AddRange(IEnumerable<T>? nodes)
 		{
 			// Evaluate 'nodes' first, since it might change when we add the new children
 			// Example: collection.AddRange(collection);
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		internal void AddRange(T[] nodes)
+		internal void AddRange(T[]? nodes)
 		{
 			// Fast overload for arrays - we don't need to create a copy
 			if (nodes != null)
@@ -153,19 +153,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Returns the first element for which the predicate returns true,
 		/// or the null node (AstNode with IsNull=true) if no such object is found.
 		/// </summary>
-		internal T FirstOrNullObject(Func<T, bool> predicate = null)
+		internal T? FirstOrNullObject(Func<T, bool>? predicate = null)
 		{
-			foreach (T item in this.Where(item => predicate == null || predicate(item)))
+			foreach (T? item in this.Where(item => predicate == null || predicate(item)))
 				return item;
 			return role.NullObject;
 		}
 
-		internal bool DoMatch(AstNodeCollection<T> other, Match match)
+		internal bool DoMatch(AstNodeCollection<T?> other, Match match)
 		{
 			return Pattern.DoMatchCollection(role, node.FirstChild, other.node.FirstChild, match);
 		}
 
-		internal void InsertAfter(T existingItem, T newItem)
+		internal void InsertAfter(T existingItem, T? newItem)
 		{
 			node.InsertChildAfter(existingItem, newItem, role);
 		}

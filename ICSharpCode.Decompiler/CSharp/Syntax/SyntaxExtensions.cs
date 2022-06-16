@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static Statement? GetNextStatement(this Statement? statement)
 		{
-			AstNode next = statement.NextSibling;
+			AstNode? next = statement?.NextSibling;
 			while (next != null && next is not Statement)
 				next = next.NextSibling;
 			return (Statement?)next;
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return type is SimpleType { Identifier: "__arglist" };
 		}
 
-		public static void AddNamedArgument(this Attribute attribute, string name, Expression argument)
+		public static void AddNamedArgument(this Attribute attribute, string name, Expression? argument)
 		{
 			attribute.Arguments.Add(new AssignmentExpression(new IdentifierExpression(name), argument));
 		}

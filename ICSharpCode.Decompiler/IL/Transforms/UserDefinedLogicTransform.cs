@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return result;
 		}
 
-		public static ILInstruction TransformDynamic(ILInstruction condition, ILInstruction trueInst,
+		public static ILInstruction? TransformDynamic(ILInstruction condition, ILInstruction trueInst,
 			ILInstruction falseInst)
 		{
 			// Check condition:

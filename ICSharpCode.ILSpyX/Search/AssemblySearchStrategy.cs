@@ -16,6 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Concurrent;
+using System.IO;
+using System.Threading;
+
+using ICSharpCode.Decompiler.Metadata;
+
 namespace ICSharpCode.ILSpyX.Search
 {
 	public class AssemblySearchStrategy : AbstractSearchStrategy

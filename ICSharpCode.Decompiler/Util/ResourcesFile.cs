@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// .resources file.
 	/// </summary>
-	internal sealed class ResourcesFile : IEnumerable<KeyValuePair<string, object?>>, IDisposable
+	public sealed class ResourcesFile : IEnumerable<KeyValuePair<string, object?>>, IDisposable
 	{
 		/// <summary>Holds the number used to identify resource files.</summary>
 		private const int MagicNumber = unchecked((int)0xBEEFCACE);
@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.Util
 						bits[i] = reader.ReadInt32();
 					return new decimal(bits);
 				default:
-					return new ResourceSerializedObject(this, reader.BaseStream.Position);
+					return new ResourceSerializedObject(FindType(typeIndex), this, reader.BaseStream.Position);
 			}
 		}
 
@@ -441,7 +441,7 @@ namespace ICSharpCode.Decompiler.Util
 						throw new BadImageFormatException("Invalid typeCode");
 					}
 
-					return new ResourceSerializedObject(this, reader.BaseStream.Position);
+					return new ResourceSerializedObject(FindType(typeCode - ResourceTypeCode.StartOfUserTypes),this, reader.BaseStream.Position);
 			}
 		}
 
@@ -547,8 +547,9 @@ namespace ICSharpCode.Decompiler.Util
 		readonly ResourcesFile file;
 		readonly long position;
 
-		internal ResourceSerializedObject(ResourcesFile file, long position)
+		internal ResourceSerializedObject(string? typeName, ResourcesFile file, long position)
 		{
+			this.TypeName = typeName;
 			this.file = file;
 			this.position = position;
 		}

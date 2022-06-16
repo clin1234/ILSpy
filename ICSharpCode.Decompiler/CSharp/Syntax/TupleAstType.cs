@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class TupleAstType : AstType
 	{
-		public static readonly Role<TupleTypeElement> ElementRole = new("Element", TupleTypeElement.Null);
+		public static readonly Role<TupleTypeElement?> ElementRole = new("Element", TupleTypeElement.Null);
 
 		public AstNodeCollection<TupleTypeElement?> Elements {
 			get { return GetChildrenByRole(ElementRole); }
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			return new TupleTypeReference(
 				this.Elements.Select(e => e.Type.ToTypeReference(lookupMode, interningProvider)).ToImmutableArray(),
@@ -76,8 +76,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			init { SetChildByRole(Roles.Type, value); }
 		}
 
-		public string Name {
-			get { return GetChildByRole(Roles.Identifier).Name; }
+		public string? Name {
+			get { return GetChildByRole(Roles.Identifier)?.Name; }
 			init { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
 

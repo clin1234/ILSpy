@@ -103,6 +103,7 @@ namespace ICSharpCode.ILSpyX
 			: this(bundle.AssemblyList, fileName, stream, assemblyResolver, null,
 				applyWinRTProjections, useDebugSymbols)
 		{
+			this.ParentBundle = bundle;
 		}
 		public LoadedAssembly? ParentBundle { get; }
 
@@ -165,7 +166,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public bool HasLoadError => loadingTask.IsFaulted;
 
-		internal bool IsAutoLoaded { get; init; }
+		internal bool IsAutoLoaded { get; set; }
 
 		/// <summary>
 		/// Gets the PDB file name or null, if no PDB was found or it's embedded.

@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpyX
 		/// Technically read accesses need locking when done on non-GUI threads... but whenever possible, use the
 		/// thread-safe <see cref="GetAssemblies()"/> method.
 		/// </remarks>
-		private readonly ObservableCollection<LoadedAssembly> assemblies = new();
+		private readonly ObservableCollection<LoadedAssembly?> assemblies = new();
 
 		/// <summary>
 		/// Assembly lookup by filename.
@@ -133,7 +133,7 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		public string ListName { get; }
 
-		public event NotifyCollectionChangedEventHandler CollectionChanged {
+		public event NotifyCollectionChangedEventHandler? CollectionChanged {
 			add {
 				VerifyAccess();
 				this.assemblies.CollectionChanged += value;

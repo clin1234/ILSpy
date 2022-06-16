@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return newTupleExpr.WithILInstruction(this.ILInstructions)
 						.WithRR(new TupleResolveResult(
 							expressionBuilder.compilation, newElementRRs.ToImmutableArray(),
-							valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
+							valueTupleAssembly: targetTupleType.GetDefinition().ParentModule
 						));
 				}
 			}
@@ -494,7 +494,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
 
-			Expression expr;
+			Expression? expr;
 			if (targetType.Kind == TypeKind.ByReference)
 			{
 				if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(targetType, this.Type))
@@ -505,7 +505,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var elementType = ((ByReferenceType)targetType).ElementType;
 				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(static i =>
 					                                                   i.OpCode == OpCode.AddressOf)
-				                                                   && thisDir.Expression.GetResolveResult()?.Type
+				                                                   && thisDir.Expression.GetResolveResult().Type
 					                                                   .GetStackType() == elementType.GetStackType())
 				{
 					// When converting a reference to a temporary to a different type,
@@ -667,7 +667,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
 		/// The existing cast is classified in 'conversion'.
 		/// </summary>
-		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType,
+		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion? conversion, IType inputType,
 			IType oldTargetType, IType newTargetType)
 		{
 			if (!conversion.IsImplicit)

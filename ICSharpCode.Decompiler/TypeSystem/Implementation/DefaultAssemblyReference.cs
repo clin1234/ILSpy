@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public DefaultAssemblyReference(string? assemblyName)
 		{
 			int pos = assemblyName?.IndexOf(',') ?? -1;
-			shortName = pos >= 0 ? assemblyName[..pos] : assemblyName;
+			shortName = pos >= 0 ? assemblyName?[..pos] : assemblyName;
 		}
 
 		public IModule? Resolve(ITypeResolveContext context)

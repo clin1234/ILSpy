@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -81,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// 
 		/// All other uses of V are in blocks dominated by trueBlock.
-		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context,
+		private bool PatternMatchRefTypes(Block? block, BlockContainer container, ILTransformContext context,
 			ref ControlFlowGraph? cfg)
 		{
 			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
@@ -146,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 
-			IType? unboxType;
+			IType unboxType;
 			if (value is UnboxAny unboxAny)
 			{
 				// stloc S(unbox.any T(isinst T(testedOperand)))
@@ -186,7 +187,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
-			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context,
+			ILInstruction? storeToV, ILInstruction loadInNullCheck, ILTransformContext context,
 			ref ControlFlowGraph? cfg)
 		{
 			var targetBlock = trueInst as Block;
@@ -244,7 +245,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (match.type[T].notnull(V = testedOperand)) br unboxBlock
 		///		br falseBlock
 		///	}
-		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context,
+		private bool PatternMatchValueTypes(Block? block, BlockContainer container, ILTransformContext context,
 			ref ControlFlowGraph? cfg)
 		{
 			if (!MatchIsInstBlock(block, out var type, out var testedOperand,

@@ -68,9 +68,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					"TypeHandle"))
 			));
 
-		TransformContext context;
+		TransformContext? context;
 
-		void IAstTransform.Run(AstNode rootNode, TransformContext context)
+		void IAstTransform.Run(AstNode? rootNode, TransformContext context)
 		{
 			try
 			{
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
+		public override void VisitInvocationExpression(InvocationExpression? invocationExpression)
 		{
 			base.VisitInvocationExpression(invocationExpression);
 			ProcessInvocationExpression(invocationExpression);
@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			       method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
 
-		internal static Expression RemoveRedundantToStringInConcat(Expression expr, IMethod concatMethod,
+		internal static Expression? RemoveRedundantToStringInConcat(Expression? expr, IMethod concatMethod,
 			bool isLastArgument)
 		{
 			var m = ToStringCallPattern.Match(expr);
@@ -433,7 +433,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			};
 		}
 
-		public override void VisitCastExpression(CastExpression castExpression)
+		public override void VisitCastExpression(CastExpression? castExpression)
 		{
 			base.VisitCastExpression(castExpression);
 			// Handle methodof
@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
 				if (m.Has("declaringType") && method != null)
 				{
-					Expression newNode = new MemberReferenceExpression(
+					Expression? newNode = new MemberReferenceExpression(
 						new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);
 					newNode = new InvocationExpression(newNode,
 						method.Parameters.Select(p =>

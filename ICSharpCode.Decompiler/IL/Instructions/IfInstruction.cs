@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class IfInstruction : ILInstruction
 	{
-		public IfInstruction(ILInstruction condition, ILInstruction trueInst, ILInstruction? falseInst = null) : base(
+		public IfInstruction(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst = null) : base(
 			OpCode.IfInstruction)
 		{
 			this.Condition = condition;
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new IfInstruction(lhs, rhs, new LdcI4(0));
 		}
 
-		public static IfInstruction LogicOr(ILInstruction lhs, ILInstruction? rhs)
+		public static IfInstruction LogicOr(ILInstruction lhs, ILInstruction rhs)
 		{
 			return new IfInstruction(lhs, new LdcI4(1), rhs);
 		}

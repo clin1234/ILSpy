@@ -10,7 +10,7 @@ namespace ICSharpCode.ILSpyCmd
 	[AttributeUsage(AttributeTargets.Class)]
 	public sealed class ProjectOptionRequiresOutputDirectoryValidationAttribute : ValidationAttribute
 	{
-		protected override ValidationResult IsValid(object value, ValidationContext context)
+		protected override ValidationResult? IsValid(object value, ValidationContext context)
 		{
 			if (value is ILSpyCmdProgram obj)
 			{
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpyCmd
 					return ValidatePath(path);
 				case string[] paths:
 				{
-					foreach (ValidationResult result in paths.Select(ValidatePath)
+					foreach (ValidationResult? result in paths.Select(ValidatePath)
 						         .Where(static result => result != ValidationResult.Success))
 					{
 						return result;

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public WhileStatement(Expression condition, Statement embeddedStatement)
+		public WhileStatement(Expression? condition, Statement? embeddedStatement)
 		{
 			this.Condition = condition;
 			this.EmbeddedStatement = embeddedStatement;

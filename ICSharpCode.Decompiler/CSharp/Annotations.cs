@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
 		{
-			foreach (ILInstruction annotation in other.Annotations.OfType<ILInstruction>())
+			foreach (ILInstruction? annotation in other.Annotations.OfType<ILInstruction>())
 			{
 				node.AddAnnotation(annotation);
 			}
@@ -339,8 +339,8 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	internal sealed class QueryJoinClauseAnnotation
 	{
-		public readonly ILFunction EqualsLambda;
-		public readonly ILFunction OnLambda;
+		public readonly ILFunction? EqualsLambda;
+		public readonly ILFunction? OnLambda;
 
 		public QueryJoinClauseAnnotation(ILFunction? on, ILFunction? equals)
 		{

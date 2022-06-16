@@ -24,10 +24,10 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	public sealed class CSharpTypeResolveContext : ITypeResolveContext
 	{
-		readonly string[] methodTypeParameterNames;
+		readonly string[]? methodTypeParameterNames;
 
-		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope = null,
-			ITypeDefinition typeDefinition = null, IMember member = null)
+		public CSharpTypeResolveContext(IModule? module, ResolvedUsingScope? usingScope = null,
+			ITypeDefinition? typeDefinition = null, IMember? member = null)
 		{
 			this.CurrentModule = module ?? throw new ArgumentNullException(nameof(module));
 			this.CurrentUsingScope = usingScope;
@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.CurrentMember = member;
 		}
 
-		private CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope, ITypeDefinition typeDefinition,
-			IMember member, string[] methodTypeParameterNames)
+		private CSharpTypeResolveContext(IModule? module, ResolvedUsingScope usingScope, ITypeDefinition typeDefinition,
+			IMember? member, string[] methodTypeParameterNames)
 		{
 			this.CurrentModule = module;
 			this.CurrentUsingScope = usingScope;
@@ -45,24 +45,24 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.methodTypeParameterNames = methodTypeParameterNames;
 		}
 
-		public ResolvedUsingScope CurrentUsingScope { get; }
+		public ResolvedUsingScope? CurrentUsingScope { get; }
 
 		public ICompilation Compilation {
 			get { return CurrentModule.Compilation; }
 		}
 
-		public IModule CurrentModule { get; }
+		public IModule? CurrentModule { get; }
 
-		public ITypeDefinition CurrentTypeDefinition { get; }
+		public ITypeDefinition? CurrentTypeDefinition { get; }
 
-		public IMember CurrentMember { get; }
+		public IMember? CurrentMember { get; }
 
 		ITypeResolveContext ITypeResolveContext.WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{
 			return WithCurrentTypeDefinition(typeDefinition);
 		}
 
-		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember member)
+		ITypeResolveContext ITypeResolveContext.WithCurrentMember(IMember? member)
 		{
 			return WithCurrentMember(member);
 		}
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				methodTypeParameterNames);
 		}
 
-		public CSharpTypeResolveContext WithCurrentMember(IMember member)
+		public CSharpTypeResolveContext WithCurrentMember(IMember? member)
 		{
 			return new CSharpTypeResolveContext(CurrentModule, CurrentUsingScope, CurrentTypeDefinition, member,
 				methodTypeParameterNames);

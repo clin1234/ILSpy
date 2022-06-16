@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
 			if (typeCode == KnownTypeCode.None)
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return new UnknownType(null, this.Keyword);
 			}
 
-			return KnownTypeReference.Get(typeCode);
+			return KnownTypeReference.Get(typeCode)!;
 		}
 
 		public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)

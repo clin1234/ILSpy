@@ -424,7 +424,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		IEnumerator<T?> IEnumerable<T>.GetEnumerator()
 		{
 			return GetEnumerator();
 		}

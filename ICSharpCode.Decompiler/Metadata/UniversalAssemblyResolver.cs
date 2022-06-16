@@ -397,9 +397,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			return CreatePEFileFromFileName(file, ex => new ResolutionException(name, file, ex));
 		}
 
-		public PEFile? ResolveModule(PEFile mainModule, string moduleName)
+		public PEFile? ResolveModule(PEFile? mainModule, string moduleName)
 		{
-			string? baseDirectory = Path.GetDirectoryName(mainModule.FileName);
+			string? baseDirectory = Path.GetDirectoryName(mainModule?.FileName);
 			if (baseDirectory == null)
 				return null;
 			string moduleFileName = Path.Combine(baseDirectory, moduleName);
@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return Task.Run(() => Resolve(name));
 		}
 
-		public Task<PEFile?> ResolveModuleAsync(PEFile mainModule, string moduleName)
+		public Task<PEFile?> ResolveModuleAsync(PEFile? mainModule, string? moduleName)
 		{
 			return Task.Run(() => ResolveModule(mainModule, moduleName));
 		}

@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Create a new LongSet that contains a single value.
 		/// </summary>
-		internal LongSet(long value)
+		public LongSet(long value)
 			: this(ImmutableArray.Create(LongInterval.Inclusive(value, value)))
 		{
 		}

@@ -30,8 +30,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	internal sealed class MergedNamespace : INamespace
 	{
-		readonly INamespace[] namespaces;
-		Dictionary<string, INamespace> childNamespaces;
+		readonly INamespace?[] namespaces;
+		Dictionary<string, INamespace?>? childNamespaces;
 
 		/// <summary>
 		/// Creates a new merged root namespace.
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		/// <param name="parentNamespace">The parent merged namespace.</param>
 		/// <param name="namespaces">The individual namespaces being merged.</param>
-		private MergedNamespace(INamespace parentNamespace, INamespace[] namespaces)
+		private MergedNamespace(INamespace? parentNamespace, INamespace?[] namespaces)
 		{
 			this.ParentNamespace = parentNamespace ?? throw new ArgumentNullException(nameof(parentNamespace));
 			this.namespaces = namespaces ?? throw new ArgumentNullException(nameof(namespaces));
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.ExternAlias = parentNamespace.ExternAlias;
 		}
 
-		public string ExternAlias { get; }
+		public string? ExternAlias { get; }
 
 		public string FullName {
 			get { return namespaces[0].FullName; }
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return namespaces[0].Name; }
 		}
 
-		public INamespace ParentNamespace { get; }
+		public INamespace? ParentNamespace { get; }
 
 		public IEnumerable<ITypeDefinition> Types {
 			get {
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public INamespace? GetChildNamespace(string name)
 		{
-			if (GetChildNamespaces().TryGetValue(name, out INamespace ns))
+			if (GetChildNamespaces().TryGetValue(name, out INamespace? ns))
 				return ns;
 			return null;
 		}
@@ -123,9 +123,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return anyTypeDef;
 		}
 
-		Dictionary<string, INamespace> GetChildNamespaces()
+		Dictionary<string, INamespace?> GetChildNamespaces()
 		{
-			var result = LazyInit.VolatileRead(ref this.childNamespaces);
+			Dictionary<string, INamespace?>? result = LazyInit.VolatileRead(ref this.childNamespaces);
 			if (result != null)
 			{
 				return result;

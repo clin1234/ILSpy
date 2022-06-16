@@ -27,12 +27,12 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class NamespaceResolveResult : ResolveResult
 	{
-		public NamespaceResolveResult(INamespace ns) : base(SpecialType.NoType)
+		public NamespaceResolveResult(INamespace? ns) : base(SpecialType.NoType)
 		{
 			this.Namespace = ns;
 		}
 
-		public INamespace Namespace { get; }
+		public INamespace? Namespace { get; }
 
 		public string NamespaceName {
 			get { return Namespace.FullName; }

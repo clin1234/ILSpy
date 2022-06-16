@@ -90,8 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole AddKeywordRole = new("add");
 		public static readonly TokenRole RemoveKeywordRole = new("remove");
 
-		public static readonly Role<Accessor> AddAccessorRole = new("AddAccessor", Accessor.Null);
-		public static readonly Role<Accessor> RemoveAccessorRole = new("RemoveAccessor", Accessor.Null);
+		public static readonly Role<Accessor?> AddAccessorRole = new("AddAccessor", Accessor.Null);
+		public static readonly Role<Accessor?> RemoveAccessorRole = new("RemoveAccessor", Accessor.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }

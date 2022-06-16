@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	sealed class CustomAttribute : IAttribute
 	{
 		readonly CustomAttributeHandle handle;
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 		bool hasDecodeErrors;
 
 		// lazy-loaded:
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		internal static IMember MemberForNamedArgument(IType attributeType,
+		internal static IMember? MemberForNamedArgument(IType attributeType,
 			CustomAttributeNamedArgument<IType> namedArgument)
 		{
 			return namedArgument.Kind switch {

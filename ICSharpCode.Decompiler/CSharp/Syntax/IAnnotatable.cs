@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// or to an AnnotationList.
 		// Once it is pointed at an AnnotationList, it will never change (this allows thread-safety support by locking the list)
 
-		object annotations;
+		object? annotations;
 
 		public virtual void AddAnnotation(object annotation)
 		{
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual void RemoveAnnotations<T>() where T : class
 		{
 			retry: // Retry until successful
-			object oldAnnotations = this.annotations;
+			object? oldAnnotations = this.annotations;
 			switch (oldAnnotations)
 			{
 				case AnnotationList list:
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			retry: // Retry until successful
-			object oldAnnotations = this.annotations;
+			object? oldAnnotations = this.annotations;
 			if (oldAnnotations is AnnotationList list)
 			{
 				lock (list)
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public T? Annotation<T>() where T : class
 		{
-			object annotations = this.annotations;
+			object? annotations = this.annotations;
 			if (annotations is AnnotationList list)
 			{
 				lock (list)
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public object? Annotation(Type type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
-			object annotations = this.annotations;
+			object? annotations = this.annotations;
 			if (annotations is AnnotationList list)
 			{
 				lock (list)
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<object> Annotations {
 			get {
-				object annotations = this.annotations;
+				object? annotations = this.annotations;
 				if (annotations is AnnotationList list)
 				{
 					lock (list)

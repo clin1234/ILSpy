@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class ConstructorDeclaration : EntityDeclaration
 	{
-		public static readonly Role<ConstructorInitializer> InitializerRole =
+		public static readonly Role<ConstructorInitializer?> InitializerRole =
 			new("Initializer", ConstructorInitializer.Null);
 
 		public override SymbolKind SymbolKind {
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
+		public AstNodeCollection<Expression?> Arguments {
 			get { return GetChildrenByRole(Roles.Argument); }
 		}
 
@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitConstructorInitializer(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is ConstructorInitializer { IsNull: false } o &&
 			       (this.ConstructorInitializerType == ConstructorInitializerType.Any ||

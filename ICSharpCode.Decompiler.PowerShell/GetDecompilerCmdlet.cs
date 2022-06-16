@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 		[Parameter(HelpMessage = "Remove dead code")]
 		public bool RemoveDeadCode { get; set; }
 
-		[Parameter(HelpMessage = "Use PDB")] public string PDBFilePath { get; set; }
+		[Parameter(HelpMessage = "Use PDB")] public string? PDBFilePath { get; set; }
 
 		protected override void ProcessRecord()
 		{

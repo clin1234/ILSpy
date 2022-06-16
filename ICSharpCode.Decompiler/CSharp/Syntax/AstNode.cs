@@ -258,12 +258,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return role.NullObject;
 		}
 
-		internal AstNode? GetParent(Func<AstNode, bool>? pred)
+		internal AstNode? GetParent(Func<AstNode, bool> pred)
 		{
 			return pred != null ? Ancestors.FirstOrDefault(pred) : Ancestors.FirstOrDefault();
 		}
 
-		internal AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
+		internal AstNodeCollection<T?> GetChildrenByRole<T>(Role<T> role) where T : AstNode?
 		{
 			return new AstNodeCollection<T?>(this, role);
 		}
@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				oldChild.ReplaceWith(newChild);
 		}
 
-		public void AddChild<T>(T? child, Role<T> role) where T : AstNode
+		public void AddChild<T>(T? child, Role<T?> role) where T : AstNode
 		{
 			ArgumentNullException.ThrowIfNull(role);
 			if (child == null || child.IsNull)
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public void InsertChildBefore<T>(AstNode? nextSibling, T? child, Role<T> role) where T : AstNode
+		public void InsertChildBefore<T>(AstNode? nextSibling, T? child, Role<T?> role) where T : AstNode
 		{
 			ArgumentNullException.ThrowIfNull(role);
 			if (nextSibling == null || nextSibling.IsNull)

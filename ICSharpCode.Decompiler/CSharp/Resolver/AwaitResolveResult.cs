@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Method representing the GetResult method on the awaiter type. Can be null if the awaiter type or the method was not found, or when awaiting a dynamic expression.
 		/// </summary>
-		public readonly IMethod GetResultMethod;
+		public readonly IMethod? GetResultMethod;
 
 		/// <summary>
 		/// The method representing the GetAwaiter() call. Can be an <see cref="InvocationResolveResult"/> or a <see cref="DynamicInvocationResolveResult"/>.
@@ -65,8 +65,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly IMethod? OnCompletedMethod;
 
-		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType,
-			IProperty isCompletedProperty, IMethod onCompletedMethod, IMethod getResultMethod)
+		public AwaitResolveResult(IType resultType, ResolveResult? getAwaiterInvocation, IType awaiterType,
+			IProperty? isCompletedProperty, IMethod? onCompletedMethod, IMethod? getResultMethod)
 			: base(resultType)
 		{
 			this.GetAwaiterInvocation =

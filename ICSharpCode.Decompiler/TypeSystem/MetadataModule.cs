@@ -37,19 +37,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[DebuggerDisplay("<MetadataModule: {" + nameof(AssemblyName) + "}>")]
 	public sealed class MetadataModule : IModule
 	{
-		readonly MetadataEvent[] eventDefs;
-		readonly MetadataField[] fieldDefs;
+		readonly MetadataEvent?[]? eventDefs;
+		readonly MetadataField?[]? fieldDefs;
 		internal readonly MetadataReader metadata;
-		readonly MetadataMethod[] methodDefs;
+		readonly MetadataMethod?[]? methodDefs;
 		internal readonly Nullability NullableContext;
-		readonly MetadataProperty[] propertyDefs;
-		readonly IModule[] referencedAssemblies;
+		readonly MetadataProperty?[]? propertyDefs;
+		readonly IModule?[]? referencedAssemblies;
 
-		readonly MetadataNamespace rootNamespace;
-		readonly MetadataTypeDefinition[] typeDefs;
+		readonly MetadataNamespace? rootNamespace;
+		readonly MetadataTypeDefinition[]? typeDefs;
 		internal readonly TypeProvider TypeProvider;
 
-		internal MetadataModule(ICompilation compilation, PEFile peFile, TypeSystemOptions options)
+		internal MetadataModule(ICompilation compilation, PEFile? peFile, TypeSystemOptions options)
 		{
 			this.Compilation = compilation;
 			this.PEFile = peFile;
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		internal TypeSystemOptions TypeSystemOptions { get; }
+		public TypeSystemOptions TypeSystemOptions { get; }
 		public ICompilation Compilation { get; }
 
 		internal string GetString(StringHandle name)
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region IAssembly interface
 
-		public PEFile PEFile { get; }
+		public PEFile? PEFile { get; }
 
 		public bool IsMainModule => this == Compilation.MainModule;
 
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region InternalsVisibleTo
 
-		public bool InternalsVisibleTo(IModule module)
+		public bool InternalsVisibleTo(IModule? module)
 		{
 			if (this == module)
 				return true;
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		string[]? internalsVisibleTo;
 
-		string[] GetInternalsVisibleTo()
+		string[]? GetInternalsVisibleTo()
 		{
 			var result = LazyInit.VolatileRead(ref this.internalsVisibleTo);
 			if (result != null)
@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Method type arguments are provided by the caller.
 		/// </remarks>
 		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context,
-			IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
+			IReadOnlyList<IType>? methodTypeArguments = null, bool expandVarArgs = true)
 		{
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
 			if (memberRef.GetKind() != MemberReferenceKind.Method)
@@ -503,7 +503,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			MethodSignature<IType> signature;
 			IReadOnlyList<IType>? classTypeArguments = null;
-			IMethod? method;
+			IMethod method;
 			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
 			{
 				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
@@ -584,7 +584,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method;
 		}
 
-		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new() {
+		static readonly NormalizeTypeVisitor? normalizeTypeVisitor = new() {
 			ReplaceClassTypeParametersWithDummy = true,
 			ReplaceMethodTypeParametersWithDummy = true,
 		};
@@ -641,7 +641,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				substitution = declaringType.GetSubstitution();
 			}
 
-			var parameters = new List<IParameter>();
+			var parameters = new List<IParameter?>();
 			for (int i = 0; i < signature.RequiredParameterCount; i++)
 			{
 				var type = signature.ParameterTypes[i];
@@ -662,7 +662,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		private void GuessFakeMethodAccessor(IType declaringType, string name, MethodSignature<IType> signature,
-			FakeMethod m, List<IParameter> parameters)
+			FakeMethod? m, List<IParameter?> parameters)
 		{
 			if (signature.GenericParameterCount > 0)
 				return;
@@ -845,7 +845,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Decode Standalone Signature
 
-		public (SignatureHeader, FunctionPointerType) DecodeMethodSignature(StandaloneSignatureHandle handle,
+		public (SignatureHeader, FunctionPointerType?) DecodeMethodSignature(StandaloneSignatureHandle handle,
 			GenericContext genericContext)
 		{
 			var standaloneSignature = metadata.GetStandaloneSignature(handle);
@@ -957,7 +957,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						foreach (var asm in Compilation.Modules.Where(asm =>
 							         string.Equals(asm?.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)))
 						{
-							return asm;
+							if (string.Equals(asm?.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
+							{
+								return asm;
+							}
 						}
 
 						return null;

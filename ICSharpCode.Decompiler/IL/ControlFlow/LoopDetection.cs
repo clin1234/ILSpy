@@ -179,11 +179,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void ConstructLoop(List<ControlFlowNode> loop, ControlFlowNode exitPoint)
 		{
-			Block oldEntryPoint = (Block)loop[0].UserData;
-			Block exitTargetBlock = (Block)exitPoint?.UserData;
+			Block? oldEntryPoint = (Block)loop[0].UserData;
+			Block? exitTargetBlock = (Block)exitPoint?.UserData;
 
-			BlockContainer loopContainer = new(ContainerKind.Loop);
-			Block newEntryPoint = new();
+			BlockContainer? loopContainer = new(ContainerKind.Loop);
+			Block? newEntryPoint = new();
 			loopContainer.Blocks.Add(newEntryPoint);
 			// Move contents of oldEntryPoint to newEntryPoint
 			// (we can't move the block itself because it might be the target of branch instructions outside the loop)
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// and thus cannot be the target of branch instructions outside the loop.
 			for (int i = 1; i < loop.Count; i++)
 			{
-				Block block = (Block)loop[i].UserData;
+				Block? block = (Block)loop[i].UserData;
 				// some blocks might already be in use by nested loops that were detected earlier;
 				// don't move those (they'll be implicitly moved when the block containing the
 				// nested loop container is moved).
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private void DetectSwitchBody(Block block, SwitchInstruction switchInst)
+		private void DetectSwitchBody(Block? block, SwitchInstruction switchInst)
 		{
 			Debug.Assert(block.Instructions.Last() == switchInst);
 			ControlFlowNode h = context.ControlFlowNode; // CFG node for our switch head
@@ -279,14 +279,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Debug.Assert(h.Dominates(node), "The switch body must be dominated by the switch head");
 			}
 
-			BlockContainer switchContainer = new(ContainerKind.Switch);
-			Block newEntryPoint = new();
+			BlockContainer? switchContainer = new(ContainerKind.Switch);
+			Block? newEntryPoint = new();
 			newEntryPoint.AddILRange(switchInst);
 			switchContainer.Blocks.Add(newEntryPoint);
 			newEntryPoint.Instructions.Add(switchInst);
 			block.Instructions[^1] = switchContainer;
 
-			Block exitTargetBlock = (Block)exitPoint?.UserData;
+			Block? exitTargetBlock = (Block)exitPoint?.UserData;
 			if (exitTargetBlock != null)
 			{
 				block.Instructions.Add(new Branch(exitTargetBlock));

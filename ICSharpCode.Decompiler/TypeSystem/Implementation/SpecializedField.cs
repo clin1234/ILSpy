@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
 		}
 
-		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
+		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution? substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution) ||
 			    fieldDefinition.DeclaringType.TypeParameterCount == 0)

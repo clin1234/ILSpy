@@ -37,14 +37,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// eagerly loaded fields:
 		readonly MethodAttributes attributes;
 		readonly MethodDefinitionHandle handle;
-		readonly MetadataModule module;
-		readonly ITypeParameter[] typeParameters;
+		readonly MetadataModule? module;
+		readonly ITypeParameter[]? typeParameters;
 
 		// lazy-loaded fields:
-		ITypeDefinition declaringType;
+		ITypeDefinition? declaringType;
 		bool isInitOnly;
-		string name;
-		IParameter[] parameters;
+		string? name;
+		IParameter?[] parameters;
 		IType returnType;
 		byte returnTypeIsRefReadonly = ThreeState.Unknown;
 		byte thisIsRefReadonly = ThreeState.Unknown;
@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMember IMember.MemberDefinition => this;
 		IMethod IMethod.ReducedFrom => null;
-		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
+		TypeParameterSubstitution? IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		public ITypeDefinition DeclaringTypeDefinition {
 			get {
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType DeclaringType => DeclaringTypeDefinition;
 
-		public IModule ParentModule => module;
+		public IModule? ParentModule => module;
 		public ICompilation Compilation => module.Compilation;
 
 		public Accessibility Accessibility => GetAccessibility(attributes);
@@ -205,17 +205,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public IMethod Specialize(TypeParameterSubstitution substitution)
+		public IMethod Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);
 		}
 
-		IMember IMember.Specialize(TypeParameterSubstitution substitution)
+		IMember IMember.Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);
 		}
@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region Signature (ReturnType + Parameters)
 
-		public IReadOnlyList<IParameter> Parameters {
+		public IReadOnlyList<IParameter?> Parameters {
 			get {
 				var parameters = LazyInit.VolatileRead(ref this.parameters);
 				if (parameters != null)
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				var nullableContext = methodDef.GetCustomAttributes().GetNullableContext(module.metadata) ??
 				                      DeclaringTypeDefinition.NullableContext;
-				var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
+				MethodSignature<IType> signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
 				(returnType, parameters, mod) = DecodeSignature(module, this, signature,
 					methodDef.GetParameters(), nullableContext, module.OptionsForEntity(this));
 			}
@@ -562,7 +562,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		#region Return type attributes
 
-		public IEnumerable<IAttribute> GetReturnTypeAttributes()
+		public IEnumerable<IAttribute?> GetReturnTypeAttributes()
 		{
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;

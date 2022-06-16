@@ -34,9 +34,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public class UsingScope : AbstractFreezable
 	{
-		IList<string> externAliases;
-		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
-		IList<TypeOrNamespaceReference> usings;
+		IList<string>? externAliases;
+		IList<KeyValuePair<string, TypeOrNamespaceReference>>? usingAliases;
+		IList<TypeOrNamespaceReference>? usings;
 
 		/// <summary>
 		/// Creates a new root using scope.
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.ShortNamespaceName = shortName ?? throw new ArgumentNullException(nameof(shortName));
 		}
 
-		public UsingScope Parent { get; }
+		public UsingScope? Parent { get; }
 
 		public string ShortNamespaceName { get; } = "";
 

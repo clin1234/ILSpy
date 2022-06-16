@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			int count = ++reservedVariableNames[nameWithoutDigits];
-			string nameWithDigits = nameWithoutDigits + count;
+			string? nameWithDigits = nameWithoutDigits + count;
 			if (oldVariableName == nameWithDigits)
 			{
 				return oldVariableName;

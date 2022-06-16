@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class InvalidBranch : SimpleInstruction
 	{
 		public StackType ExpectedResultType = StackType.Void;
-		public string? Message;
+		public string Message;
 
 		public InvalidBranch(string message) : this()
 		{
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class InvalidExpression : SimpleInstruction
 	{
 		public StackType ExpectedResultType = StackType.Unknown;
-		public string? Message;
+		public string Message;
 		public string Severity = "Error";
 
 		public InvalidExpression(string message) : this()

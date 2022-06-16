@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// This method determines the return type inferred from the lambda body, which is used as part of C# type inference.
 		/// Use the <see cref="ReturnType"/> property to retrieve the actual return type as determined by the target delegate type.
 		/// </remarks>
-		public abstract IType GetInferredReturnType(IType[] parameterTypes);
+		public abstract IType GetInferredReturnType(IType[]? parameterTypes);
 
 		/// <summary>
 		/// Gets whether the lambda body is valid for the given parameter types and return type.
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Produces a conversion with <see cref="Conversion.IsAnonymousFunctionConversion"/>=<c>true</c> if the lambda is valid;
 		/// otherwise returns <see cref="Conversion.None"/>.
 		/// </returns>
-		public abstract Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions);
+		public abstract Conversion? IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions);
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	sealed class DecompiledLambdaResolveResult : LambdaResolveResult
 	{
 		public readonly IType DelegateType;
-		readonly IL.ILFunction function;
+		readonly ILFunction function;
 
 		/// <summary>
 		/// The inferred return type.
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 	sealed class LambdaConversion : Conversion
 	{
-		public static readonly LambdaConversion Instance = new();
+		public static readonly LambdaConversion? Instance = new();
 
 		public override bool IsAnonymousFunctionConversion => true;
 		public override bool IsImplicit => true;

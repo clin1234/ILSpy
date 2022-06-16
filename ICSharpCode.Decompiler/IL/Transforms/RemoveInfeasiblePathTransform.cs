@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//  stloc s(ldc.i4 1)
 		//  br IL_0019
 		// }
-		private bool MatchBlock1(Block block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue,
+		private bool MatchBlock1(Block? block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue,
 			[NotNullWhen(true)] out Branch? branch)
 		{
 			variable = null;

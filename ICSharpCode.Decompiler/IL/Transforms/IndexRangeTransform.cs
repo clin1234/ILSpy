@@ -435,7 +435,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
+		private bool MatchIndexImplicitConv(ILInstruction? inst, out ILInstruction offsetInst)
 		{
 			offsetInst = null;
 			if (inst is not CallInstruction call)

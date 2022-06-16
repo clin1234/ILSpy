@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public new static readonly CSharpTokenNode Null = new NullCSharpTokenNode();
 
-		public CSharpTokenNode(TextLocation location, TokenRole role)
+		public CSharpTokenNode(TextLocation location, TokenRole? role)
 		{
 			this.StartLocation = location;
 			if (role != null)
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			uint tokenRoleIndex = (this.flags >> AstNodeFlagsUsedBits);
 			if (Role.GetByIndex(tokenRoleIndex) is TokenRole r)
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCSharpTokenNode(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is CSharpTokenNode { IsNull: false } and not CSharpModifierToken;
 		}
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}

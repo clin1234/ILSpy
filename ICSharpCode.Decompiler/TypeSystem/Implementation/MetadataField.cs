@@ -35,18 +35,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly FieldAttributes attributes;
 		readonly FieldDefinitionHandle handle;
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 
-		object constantValue;
+		object? constantValue;
 
 		// this can't be bool? as bool? is not thread-safe from torn reads
 		byte decimalConstantState;
-
-		// lazy-loaded fields:
-		ITypeDefinition declaringType;
-		bool isVolatile; // initialized together with this.type
-		string name;
-		IType type;
 
 		// lazy-loaded fields:
 		ITypeDefinition? declaringType;
@@ -244,12 +238,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		bool IMember.Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public IMember Specialize(TypeParameterSubstitution substitution)
+		public IMember Specialize(TypeParameterSubstitution? substitution)
 		{
 			return SpecializedField.Create(this, substitution);
 		}

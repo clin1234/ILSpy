@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override ILInstruction Clone()
 		{
-			Block clone = new(Kind);
+			Block? clone = new(Kind);
 			clone.AddILRange(this);
 			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
 			clone.FinalInstruction = this.FinalInstruction.Clone();
@@ -164,15 +164,15 @@ namespace ICSharpCode.Decompiler.IL
 					var final = finalInstruction as LdLoc;
 					Debug.Assert(final != null && final.Variable.IsSingleDefinition &&
 					             final.Variable.Kind == VariableKind.InitializerTarget);
-					IType? type = null;
+					IType type = null;
 					Debug.Assert(
 						Instructions[0].MatchStLoc(final!.Variable, out var init) && init.MatchNewArr(out type));
 					for (int i = 1; i < Instructions.Count; i++)
 					{
-						DebugAssert(Instructions[i].MatchStObj(out ILInstruction? target, out _, out var t) &&
+						DebugAssert(Instructions[i].MatchStObj(out ILInstruction target, out _, out var t) &&
 						            type != null && type.Equals(t));
-						DebugAssert(target.MatchLdElema(out t, out ILInstruction? array) && type.Equals(t));
-						DebugAssert(array.MatchLdLoc(out ILVariable? v) && v == final.Variable);
+						DebugAssert(target.MatchLdElema(out t, out ILInstruction array) && type.Equals(t));
+						DebugAssert(array.MatchLdLoc(out ILVariable v) && v == final.Variable);
 					}
 
 					break;
@@ -388,7 +388,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public bool MatchInlineAssignBlock([NotNullWhen(true)] out CallInstruction? call,
-			[NotNullWhen(true)] out ILInstruction? value)
+			[NotNullWhen(true)] out ILInstruction value)
 		{
 			call = null;
 			value = null;
@@ -406,8 +406,8 @@ namespace ICSharpCode.Decompiler.IL
 			return this.FinalInstruction.MatchLdLoc(tmp);
 		}
 
-		public bool MatchIfAtEndOfBlock([NotNullWhen(true)] out ILInstruction? condition,
-			[NotNullWhen(true)] out ILInstruction? trueInst, [NotNullWhen(true)] out ILInstruction? falseInst)
+		public bool MatchIfAtEndOfBlock([NotNullWhen(true)] out ILInstruction condition,
+			[NotNullWhen(true)] out ILInstruction trueInst, [NotNullWhen(true)] out ILInstruction? falseInst)
 		{
 			condition = null;
 			trueInst = null;

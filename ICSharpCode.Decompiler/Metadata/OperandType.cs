@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return (OperandType)operandTypes[index];
 		}
 
-		public static string GetDisplayName(this ILOpCode opCode)
+		public static string? GetDisplayName(this ILOpCode opCode)
 		{
 			ushort index = (ushort)((((int)opCode & 0x200) >> 1) | ((int)opCode & 0xff));
 			if (index >= operandNames.Length)

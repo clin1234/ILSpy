@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer =
 			new(static l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
 
-		readonly List<ILFunction> functions = new();
+		readonly List<ILFunction?> functions = new();
 		readonly ImportScopeInfo globalImportScope = new();
 		readonly List<ImportScopeInfo> importScopes = new();
 
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		/// <summary>
 		/// Gets all functions with bodies that were seen by the visitor so far.
 		/// </summary>
-		public IReadOnlyList<ILFunction> Functions {
+		public IReadOnlyList<ILFunction?> Functions {
 			get => functions;
 		}
 

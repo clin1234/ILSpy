@@ -34,13 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	internal sealed class IntroduceExtensionMethods : DepthFirstAstVisitor, IAstTransform
 	{
-		TransformContext context;
-		CSharpConversions conversions;
+		TransformContext? context;
+		CSharpConversions? conversions;
 
 		Stack<CSharpTypeResolveContext> resolveContextStack = new();
-		CSharpResolver resolver;
+		CSharpResolver? resolver;
 
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem);
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			rootNode.AcceptVisitor(this);
 		}
 
-		void InitializeContext(UsingScope usingScope)
+		void InitializeContext(UsingScope? usingScope)
 		{
 			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
 			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition.Namespace))
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments,
 				argumentNames, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous)
+			if (or.IsAmbiguous)
 				return false;
 			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments())
 			       && CSharpResolver.IsEligibleExtensionMethod(target.Type, method, useTypeInference: false, out _);

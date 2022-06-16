@@ -18,6 +18,8 @@
 
 using System;
 
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -35,12 +37,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public new Expression Clone()
+		public new Expression? Clone()
 		{
 			return (Expression)base.Clone();
 		}
 
-		public Expression ReplaceWith(Func<Expression, Expression> replaceFunction)
+		public Expression? ReplaceWith(Func<Expression?, Expression> replaceFunction)
 		{
 			ArgumentNullException.ThrowIfNull(replaceFunction);
 			return (Expression)base.ReplaceWith(node => replaceFunction((Expression)node));
@@ -48,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Null
 
-		public new static readonly Expression Null = new NullExpression();
+		public new static readonly Expression? Null = new NullExpression();
 
 		sealed class NullExpression : Expression
 		{
@@ -83,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator Expression(PatternMatching.Pattern pattern)
+		public static implicit operator Expression(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
@@ -101,8 +103,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
-				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode? pos,
+				Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}

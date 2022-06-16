@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
-			List<(BlockContainer, Block)> blocksToAdd = new();
+			List<(BlockContainer, Block?)> blocksToAdd = new();
 			HashSet<Block> visitedBlocks = new();
 			foreach (var branch in function.Descendants.OfType<Branch>())
 			{
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					targetBlock.Instructions.Clear(); // mark the block for deletion
 			}
 
-			foreach ((BlockContainer container, Block block) in blocksToAdd)
+			foreach ((BlockContainer container, Block? block) in blocksToAdd)
 			{
 				container.Blocks.Add(block);
 			}

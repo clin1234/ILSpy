@@ -63,40 +63,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		readonly SymbolKind ownerType;
-
-		public TypeParameterReference(SymbolKind ownerType, int index)
-		{
-			this.ownerType = ownerType;
-			this.Index = index;
-		}
-
-		public int Index { get; }
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			switch (ownerType)
-			{
-				case SymbolKind.Method
-					when context.CurrentMember is IMethod method && Index < method.TypeParameters.Count:
-					return method.TypeParameters[Index];
-				case SymbolKind.Method:
-					return DummyTypeParameter.GetMethodTypeParameter(Index);
-				case SymbolKind.TypeDefinition:
-				{
-					ITypeDefinition typeDef = context.CurrentTypeDefinition;
-					if (typeDef != null && Index < typeDef.TypeParameters.Count)
-					{
-						return typeDef.TypeParameters[Index];
-					}
-
-					return DummyTypeParameter.GetClassTypeParameter(Index);
-				}
-				default:
-					return SpecialType.UnknownType;
-			}
-		}
-
 		/// <summary>
 		/// Creates a type parameter reference.
 		/// For common type parameter references, this method may return a shared instance.
@@ -105,12 +71,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (index is >= 0 and < 8 && ownerType is SymbolKind.TypeDefinition or SymbolKind.Method)
 			{
-				TypeParameterReference[] arr = (ownerType == SymbolKind.TypeDefinition)
+				TypeParameterReference?[] arr = (ownerType == SymbolKind.TypeDefinition)
 					? classTypeParameterReferences
 					: methodTypeParameterReferences;
-				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]) ??
-				                                LazyInit.GetOrSet(ref arr[index],
-					                                new TypeParameterReference(ownerType, index));
+				TypeParameterReference? result = LazyInit.VolatileRead(ref arr[index]) ??
+				                                 LazyInit.GetOrSet(ref arr[index],
+					                                 new TypeParameterReference(ownerType, index));
 				return result;
 			}
 

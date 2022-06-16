@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			foreach (ControlFlowNode node in nodes)
 			{
 				// Create list of children in dominator tree
-				node.ImmediateDominator?.DominatorTreeChildren.Add(node);
+				node.ImmediateDominator?.DominatorTreeChildren?.Add(node);
 				// Also reset the visited flag
 				node.Visited = false;
 			}

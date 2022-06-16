@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				b.Append('#');
 			}
 
-			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+			b.Append(member.Name?.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
 			if (member is IMethod method && method.TypeParameters.Count > 0)
 			{
 				b.Append("``");
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			int dotPos = memberIdString.LastIndexOf('.', parenPos - 1);
 			if (dotPos < 0)
 				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
-			string typeName = memberIdString[..dotPos];
+			string? typeName = memberIdString[..dotPos];
 			int pos = 2;
 			ITypeReference typeReference = ParseTypeName(typeName, ref pos);
 			if (pos != typeName.Length)
@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <param name="context">Type resolve context</param>
 		/// <returns>Returns the entity, or null if it is not found.</returns>
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
-		public static IEntity FindEntity(string idString, ITypeResolveContext context)
+		public static IEntity? FindEntity(string idString, ITypeResolveContext context)
 		{
 			ArgumentNullException.ThrowIfNull(idString);
 			ArgumentNullException.ThrowIfNull(context);
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		#region GetTypeName
 
-		public static string GetTypeName(IType type)
+		public static string GetTypeName(IType? type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			StringBuilder b = new();
@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			return result;
 		}
 
-		static string ReadTypeName(string typeName, ref int pos, bool allowDottedName, out int typeParameterCount,
+		static string ReadTypeName(string? typeName, ref int pos, bool allowDottedName, out int typeParameterCount,
 			List<ITypeReference> typeArguments)
 		{
 			int startPos = pos;

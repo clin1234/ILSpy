@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public sealed class CSharpInvocationResolveResult : InvocationResolveResult
 	{
-		readonly IReadOnlyList<int> argumentToParameterMap;
+		readonly IReadOnlyList<int>? argumentToParameterMap;
 
 		/// <summary>
 		/// Gets whether this invocation is calling a delegate (without explicitly calling ".Invoke()").
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				IType arrayType = Member.Parameters.Last().Type;
 				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
-				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
+				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments!.Count) };
 				results[^1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
 			}
 

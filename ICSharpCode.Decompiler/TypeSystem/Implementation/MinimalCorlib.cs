@@ -38,8 +38,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public static readonly IModuleReference Instance = new CorlibModuleReference(KnownTypeReference.AllKnownTypes);
 
-		readonly CorlibNamespace rootNamespace;
-		readonly CorlibTypeDefinition[] typeDefinitions;
+		readonly CorlibNamespace? rootNamespace;
+		readonly CorlibTypeDefinition?[] typeDefinitions;
 
 		private MinimalCorlib(ICompilation compilation, IEnumerable<KnownTypeReference> types)
 		{
@@ -53,17 +53,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IModule.IsMainModule => Compilation.MainModule == this;
 
 		string IModule.AssemblyName => "corlib";
-		Version IModule.AssemblyVersion { get; } = new(0, 0, 0, 0);
+		Version? IModule.AssemblyVersion { get; } = new(0, 0, 0, 0);
 
 		string IModule.FullAssemblyName => "corlib";
 		string ISymbol.Name => "corlib";
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
-		PEFile IModule.PEFile => null;
-		INamespace IModule.RootNamespace => rootNamespace;
+		PEFile? IModule.PEFile => null;
+		INamespace? IModule.RootNamespace => rootNamespace;
 
-		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(static td => td != null);
-		public IEnumerable<ITypeDefinition> TypeDefinitions => TopLevelTypeDefinitions;
+		public IEnumerable<ITypeDefinition?> TopLevelTypeDefinitions => typeDefinitions.Where(static td => td != null);
+		public IEnumerable<ITypeDefinition?> TypeDefinitions => TopLevelTypeDefinitions;
 
 		public ITypeDefinition? GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
@@ -117,13 +117,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Name = name;
 			}
 
-			public INamespace ParentNamespace { get; }
+			public INamespace? ParentNamespace { get; }
 			public string FullName { get; }
 			public string Name { get; }
 
-			string INamespace.ExternAlias => string.Empty;
+			string? INamespace.ExternAlias => string.Empty;
 
-			IEnumerable<INamespace> INamespace.ChildNamespaces => childNamespaces;
+			IEnumerable<INamespace?> INamespace.ChildNamespaces => childNamespaces;
 
 			IEnumerable<ITypeDefinition> INamespace.Types =>
 				corlib.TopLevelTypeDefinitions.Where(td => td.Namespace == FullName);
@@ -213,17 +213,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
 
-			IReadOnlyList<ITypeParameter> IType.TypeParameters =>
+			IReadOnlyList<ITypeParameter>? IType.TypeParameters =>
 				DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
 
-			IReadOnlyList<IType> IType.TypeArguments =>
+			IReadOnlyList<IType>? IType.TypeArguments =>
 				DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
 
 			IEnumerable<IType> IType.DirectBaseTypes {
 				get {
 					var baseType = KnownTypeReference.Get(typeCode).baseType;
 					if (baseType != KnownTypeCode.None)
-						return new[] { corlib.Compilation.FindType(baseType) };
+						if (corlib != null)
+						{
+							return new[] { corlib.Compilation.FindType(baseType) };
+						}
+
 					return EmptyList<IType>.Instance;
 				}
 			}
@@ -295,7 +299,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IMethod>.Instance;
 			}
 
-			IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
+			IEnumerable<IMethod> IType.GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter,
 				GetMemberOptions options)
 			{
 				return EmptyList<IMethod>.Instance;
@@ -306,8 +310,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return EmptyList<IType>.Instance;
 			}
 
-			IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments,
-				Predicate<ITypeDefinition> filter, GetMemberOptions options)
+			IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType?>? typeArguments,
+				Predicate<ITypeDefinition>? filter, GetMemberOptions options)
 			{
 				return EmptyList<IType>.Instance;
 			}

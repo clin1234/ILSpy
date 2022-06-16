@@ -40,13 +40,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool hasNamespace;
 		NamespaceDeclaration? singleNamespaceDeclaration;
 
-		void IAstTransform.Run(AstNode rootNode, TransformContext context)
+		void IAstTransform.Run(AstNode? rootNode, TransformContext context)
 		{
 			this.context = context;
 			rootNode.AcceptVisitor(this);
 		}
 
-		public override void VisitSyntaxTree(SyntaxTree syntaxTree)
+		public override void VisitSyntaxTree(SyntaxTree? syntaxTree)
 		{
 			singleNamespaceDeclaration = null;
 			hasNamespace = false;
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		public override void VisitPropertyDeclaration(PropertyDeclaration? propertyDeclaration)
 		{
 			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties)
 			{
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitIndexerDeclaration(indexerDeclaration);
 		}
 
-		void SimplifyPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		void SimplifyPropertyDeclaration(PropertyDeclaration? propertyDeclaration)
 		{
 			var m = CalculatedGetterOnlyPropertyPattern.Match(propertyDeclaration);
 			if (!m.Success)

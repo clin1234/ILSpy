@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		public override AstNode VisitIdentifier(Identifier identifier)
+		public override AstNode VisitIdentifier(Identifier? identifier)
 		{
 			if (context.Settings.AutomaticProperties)
 			{
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
-		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
+		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty? property)
 		{
 			property = null;
 			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out string propertyName))
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		Identifier ReplaceBackingFieldUsage(Identifier identifier)
+		Identifier? ReplaceBackingFieldUsage(Identifier? identifier)
 		{
 			if (NameCouldBeBackingFieldOfAutomaticProperty(identifier.Name, out _))
 			{
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		Identifier ReplaceEventFieldAnnotation(Identifier identifier)
+		Identifier? ReplaceEventFieldAnnotation(Identifier? identifier)
 		{
 			var parent = identifier.Parent;
 			var mrr = parent.Annotation<MemberResolveResult>();
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region C# 8.0 Using variables
 
-		public override AstNode VisitUsingStatement(UsingStatement usingStatement)
+		public override AstNode? VisitUsingStatement(UsingStatement? usingStatement)
 		{
 			usingStatement = (UsingStatement)base.VisitUsingStatement(usingStatement);
 			if (!context.Settings.UseEnhancedUsing)
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region Visitor Overrides
 
-		protected override AstNode VisitChildren(AstNode node)
+		protected override AstNode? VisitChildren(AstNode? node)
 		{
 			// Go through the children, and keep visiting a node as long as it changes.
 			// Because some transforms delete/replace nodes before and after the node being transformed, we rely
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (loop.DescendantNodes(DescendIntoStatement).OfType<Statement>().Any(s => s is ContinueStatement))
 				return null;
 			node.Remove();
-			BlockStatement newBody = new();
+			BlockStatement? newBody = new();
 			foreach (Statement stmt in m3.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
 			forStatement = new ForStatement();
@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool VariableCanBeUsedAsForeachLocal(ILVariable itemVar, Statement? loop)
 		{
-			if (itemVar is not { Kind: (IL.VariableKind.Local or IL.VariableKind.StackSlot) })
+			if (itemVar is not { Kind: (VariableKind.Local or VariableKind.StackSlot) })
 			{
 				// only locals/temporaries can be converted into foreach loop variable
 				return false;
@@ -452,7 +452,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (v.StoreCount == 1 && v.AddressCount == 1 && v.LoadCount == 0 && v.Type.IsReferenceType == false)
 			{
-				if (v.AddressInstructions[0].Parent is IL.Call call
+				if (v.AddressInstructions[0].Parent is Call call
 				    && v.AddressInstructions[0].ChildIndex == 0
 				    && !call.Method.IsStatic)
 				{
@@ -462,7 +462,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (node == loop)
 							return true;
-						if (node is IL.BlockContainer)
+						if (node is BlockContainer)
 							break;
 					}
 				}
@@ -580,9 +580,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return m.Get<IdentifierExpression>("collection").Single().GetILVariable() == collection;
 		}
 
-		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection,
-			Statement firstInitializerStatement, out IdentifierExpression foreachVariable,
-			out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
+		bool MatchForeachOnMultiDimArray(ILVariable[] upperBounds, ILVariable collection,
+			Statement? firstInitializerStatement, out IdentifierExpression foreachVariable,
+			out IList<Statement> statements, out ILVariable[] lowerBounds)
 		{
 			int i = 0;
 			foreachVariable = null;
@@ -621,10 +621,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!context.Settings.ForEachStatement)
 				return null;
 			Match m;
-			Statement stmt = expressionStatement;
-			IL.ILVariable collection = null;
-			IL.ILVariable[] upperBounds = null;
-			List<Statement> statementsToDelete = new();
+			Statement? stmt = expressionStatement;
+			ILVariable collection = null;
+			ILVariable[] upperBounds = null;
+			List<Statement?> statementsToDelete = new();
 			int i = 0;
 			// first we look for all the upper bound initializations
 			do
@@ -664,7 +664,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable is not { IsSingleDefinition: true } ||
-			    (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot) ||
+			    (itemVariable.Kind != VariableKind.Local && itemVariable.Kind != VariableKind.StackSlot) ||
 			    !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1) || !lowerBounds.All(lb =>
 				    lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
@@ -757,7 +757,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration? propertyDeclaration)
 		{
-			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
+			IProperty? property = propertyDeclaration.GetSymbol() as IProperty;
 			if (!CanTransformToAutomaticProperty(property,
 				    !property.DeclaringTypeDefinition.Fields.Any(f =>
 					    f.Name == "_" + property.Name && f.IsCompilerGenerated())))
@@ -817,7 +817,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				"System.Runtime.CompilerServices.CompilerGeneratedAttribute");
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections,
+		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection?> attributeSections,
 			params string[] attributesToRemove)
 		{
 			foreach (AttributeSection? section in attributeSections)
@@ -839,7 +839,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region Automatic Events
 
-		static readonly Expression fieldReferencePattern = new Choice {
+		static readonly Expression? fieldReferencePattern = new Choice {
 			new IdentifierExpression(Pattern.AnyString),
 			new MemberReferenceExpression {
 				Target = new Choice
@@ -888,7 +888,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked))
 										.ToType()),
 									"CompareExchange"),
-								new Expression[] {
+								new Expression?[] {
 									// arguments
 									new DirectionExpression {
 										FieldDirection = FieldDirection.Ref, Expression = new Backreference("field")
@@ -927,7 +927,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked))
 										.ToType()),
 									"CompareExchange"),
-								new Expression[] {
+								new Expression?[] {
 									// arguments
 									new NamedArgumentExpression("value",
 										new CastExpression(new AnyNode("type"),
@@ -980,7 +980,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										.ToType()),
 									"CompareExchange",
 									new AstType[] { new Repeat(new AnyNode()) }), // optional type arguments
-								new Expression[] {
+								new Expression?[] {
 									// arguments
 									new DirectionExpression {
 										FieldDirection = FieldDirection.Ref, Expression = new Backreference("field")
@@ -1105,7 +1105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
-			EventDeclaration ed = new();
+			EventDeclaration? ed = new();
 			ev.Attributes.MoveTo(ed.Attributes);
 			foreach (var attr in ev.AddAccessor.Attributes)
 			{

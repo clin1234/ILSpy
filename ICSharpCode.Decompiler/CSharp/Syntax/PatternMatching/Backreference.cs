@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public sealed class Backreference : Pattern
 	{
-		public Backreference(string referencedGroupName)
+		public Backreference(string? referencedGroupName)
 		{
 			this.ReferencedGroupName =
 				referencedGroupName ?? throw new ArgumentNullException(nameof(referencedGroupName));
@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public string ReferencedGroupName { get; }
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			var last = match.Get(ReferencedGroupName).LastOrDefault();
 			if (last == null && other == null)

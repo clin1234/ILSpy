@@ -86,10 +86,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
 
-		public override IReadOnlyList<ITypeParameter> TypeParameters =>
+		public override IReadOnlyList<ITypeParameter>? TypeParameters =>
 			DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
 
-		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
+		public override IReadOnlyList<IType>? TypeArguments => TypeParameters;
 
 		public override bool? IsReferenceType {
 			get { return isReferenceType; }

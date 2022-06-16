@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// Returns null if the type is not a delegate type; or if the invoke method could not be found.
 		/// </remarks>
-		public static IMethod GetDelegateInvokeMethod(this IType type)
+		public static IMethod? GetDelegateInvokeMethod(this IType type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			if (type.Kind == TypeKind.Delegate)
@@ -96,14 +96,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Resolve on collections
 
-		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences,
+		public static IReadOnlyList<IType>? Resolve(this IList<ITypeReference> typeReferences,
 			ITypeResolveContext context)
 		{
 			ArgumentNullException.ThrowIfNull(typeReferences);
 			if (typeReferences.Count == 0)
 				return EmptyList<IType>.Instance;
-			return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences,
-				(c, t) => t.Resolve(c));
+			return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences, static (c, t) => t.Resolve(c));
 		}
 
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
@@ -128,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region ResolveResult
 
-		public static ISymbol GetSymbol(this ResolveResult rr)
+		public static ISymbol? GetSymbol(this ResolveResult rr)
 		{
 			return rr switch {
 				LocalResolveResult result => result.Variable,
@@ -193,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type.ChangeNullability(Nullability.Oblivious);
 		}
 
-		public static bool IsDirectImportOf(this ITypeDefinition type, IModule module)
+		public static bool IsDirectImportOf(this ITypeDefinition type, IModule? module)
 		{
 			var moduleReference = type.ParentModule;
 			foreach (var asmRef in module.PEFile.AssemblyReferences)
@@ -211,11 +210,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		public static IModule FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
+		public static IModule? FindModuleByReference(this ICompilation compilation, IAssemblyReference assemblyName)
 		{
 			foreach (var module in compilation.Modules)
 			{
-				if (string.Equals(module.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase))
+				if (string.Equals(module?.FullAssemblyName, assemblyName.FullName, StringComparison.OrdinalIgnoreCase))
 				{
 					return module;
 				}
@@ -336,10 +335,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		sealed class TypeClassificationVisitor : TypeVisitor
 		{
-			internal bool isOpen;
+			public bool isOpen;
 			int typeParameterOwnerNestingLevel;
 
-			internal override IType VisitTypeParameter(ITypeParameter type)
+			public override IType VisitTypeParameter(ITypeParameter type)
 			{
 				isOpen = true;
 				// If both classes and methods, or different classes (nested types)
@@ -382,7 +381,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool IsOpen(this IType type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
-			TypeClassificationVisitor v = new();
+			TypeClassificationVisitor? v = new();
 			type.AcceptVisitor(v);
 			return v.isOpen;
 		}
@@ -476,7 +475,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							return false;
 						}
 
-						if (!IsUnmanagedTypeInternal(f.Type))
+						if (!IsUnmanagedTypepublic(f.Type))
 						{
 							return false;
 						}
@@ -569,7 +568,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType FindType(this ICompilation compilation, FullTypeName fullTypeName)
 		{
 			ArgumentNullException.ThrowIfNull(compilation);
-			foreach (IModule asm in compilation.Modules)
+			foreach (IModule? asm in compilation.Modules)
 			{
 				ITypeDefinition? def = asm.GetTypeDefinition(fullTypeName);
 				if (def != null)

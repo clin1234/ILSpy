@@ -36,14 +36,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class ComposedType : AstType
 	{
-		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
+		public static readonly Role<AttributeSection?> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole RefRole = new("ref");
 		public static readonly TokenRole ReadonlyRole = new("readonly");
 		public static readonly TokenRole NullableRole = new("?");
 		public static readonly TokenRole PointerRole = new("*");
-		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new("ArraySpecifier", null);
+		public static readonly Role<ArraySpecifier?> ArraySpecifierRole = new("ArraySpecifier", null);
 
-		public AstNodeCollection<AttributeSection> Attributes {
+		public AstNodeCollection<AttributeSection?> Attributes {
 			get { return base.GetChildrenByRole(AttributeRole); }
 		}
 
@@ -191,13 +191,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return this;
 		}
 
-		public override AstType MakeArrayType(int dimensions = 1)
-		{
-			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions),
-				ArraySpecifierRole);
-			return this;
-		}
-
 		public override AstType? MakeArrayType(int dimensions = 1)
 		{
 			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions),
@@ -212,7 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			interningProvider ??= InterningProvider.Dummy;
 			ITypeReference t = this.BaseType.ToTypeReference(lookupMode, interningProvider);

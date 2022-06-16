@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int Length { get; private set; }
 
-		public override void WriteIdentifier(Identifier identifier)
+		public override void WriteIdentifier(Identifier? identifier)
 		{
 			WriteIndentation();
 			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier))

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class FunctionPointerAstType : AstType
 	{
 		public static readonly TokenRole PointerRole = new("*");
-		public static readonly Role<AstType> CallingConventionRole = new("CallConv", Null);
+		public static readonly Role<AstType?> CallingConventionRole = new("CallConv", Null);
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			throw new NotImplementedException();
 		}

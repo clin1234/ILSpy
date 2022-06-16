@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (result.NextBlockOrExitContainer is Block { IncomingEdgeCount: 0 } nextBlock)
 					{
 						List<Block> dependentBlocks = new();
-						Block current = nextBlock;
+						Block? current = nextBlock;
 
 						do
 						{
@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			}
 
-			bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable,
+			static bool ParseSwitchJumpTable(int id, SwitchInstruction jumpTable, ILVariable identifierVariable,
 				out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
 			{
 				realEntryPoint = null;
@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 
-			bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable,
+			static bool ParseIfJumpTable(int id, Block jumpTableEntryBlock, ILVariable identifierVariable,
 				out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out ILInstruction jumpTableEntry)
 			{
 				realEntryPoint = null;
@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ref ILVariable objectVariable, out StLoc typedExceptionVariableStore, out Block captureBlock,
 			out Block throwBlock)
 		{
-			bool DerivesFromException(IType t) =>
+			static bool DerivesFromException(IType t) =>
 				t.GetAllBaseTypes().Any(ty => ty.IsKnownType(KnownTypeCode.Exception));
 
 			captureBlock = null;

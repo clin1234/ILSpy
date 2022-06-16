@@ -40,13 +40,13 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new();
 		internal List<List<IMethod>> AllExtensionMethods;
 
-		INamespace @namespace;
+		INamespace? @namespace;
 
-		IList<KeyValuePair<string, ResolveResult>> usingAliases;
+		IList<KeyValuePair<string, ResolveResult>>? usingAliases;
 
 		IList<INamespace> usings;
 
-		public ResolvedUsingScope(CSharpTypeResolveContext context, UsingScope usingScope)
+		public ResolvedUsingScope(CSharpTypeResolveContext context, UsingScope? usingScope)
 		{
 			this.parentContext = context ?? throw new ArgumentNullException(nameof(context));
 			this.UnresolvedUsingScope = usingScope ?? throw new ArgumentNullException(nameof(usingScope));
@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
-		public UsingScope UnresolvedUsingScope { get; }
+		public UsingScope? UnresolvedUsingScope { get; }
 
-		public INamespace Namespace {
+		public INamespace? Namespace {
 			get {
 				INamespace? result = LazyInit.VolatileRead(ref this.@namespace);
 				if (result != null)
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			get { return parentContext.CurrentUsingScope; }
 		}
 
-		public IList<INamespace> Usings {
+		public IList<INamespace?> Usings {
 			get {
 				IList<INamespace?>? result = LazyInit.VolatileRead(ref this.usings);
 				if (result != null)
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 						result.Add(ns);
 				}
 
-				return LazyInit.GetOrSet(ref this.usings, new ReadOnlyCollection<INamespace>(result));
+				return LazyInit.GetOrSet(ref this.usings, new ReadOnlyCollection<INamespace?>(result));
 			}
 		}
 
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		sealed class DummyNamespace : INamespace
 		{
-			readonly INamespace parentNamespace;
+			readonly INamespace? parentNamespace;
 
 			public DummyNamespace(INamespace? parentNamespace, string name)
 			{

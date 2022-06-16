@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 
-		public OutVarDeclarationExpression(AstType type, string name)
+		public OutVarDeclarationExpression(AstType? type, string name)
 		{
 			this.Type = type;
 			this.Variable = new VariableInitializer(name);

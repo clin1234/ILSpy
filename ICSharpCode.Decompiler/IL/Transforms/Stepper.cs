@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			public string Description { get; }
-			public ILInstruction? Position { get; set; }
+			public ILInstruction Position { get; set; }
 
 			/// <summary>
 			/// BeginStep is inclusive.

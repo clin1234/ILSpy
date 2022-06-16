@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Identifier = identifier;
 		}
 
-		public SimpleType(Identifier identifier)
+		public SimpleType(Identifier? identifier)
 		{
 			this.IdentifierToken = identifier;
 		}
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(identifier, location));
 		}
 
-		public SimpleType(string identifier, IEnumerable<AstType> typeArguments)
+		public SimpleType(string identifier, IEnumerable<AstType?> typeArguments)
 		{
 			this.Identifier = identifier;
 			foreach (var arg in typeArguments)
@@ -63,20 +63,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public SimpleType(string identifier, params AstType[] typeArguments) : this(identifier,
-			(IEnumerable<AstType>)typeArguments)
+			(IEnumerable<AstType?>)typeArguments)
 		{
 		}
 
-		public string Identifier {
+		public string? Identifier {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier)?.Name;
 			}
 			set {
 				SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value));
 			}
 		}
 
-		public Identifier IdentifierToken {
+		public Identifier? IdentifierToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
+		public AstNodeCollection<AstType?> TypeArguments {
 			get { return GetChildrenByRole(Roles.TypeArgument); }
 		}
 
@@ -104,14 +104,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSimpleType(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is SimpleType o && MatchString(this.Identifier, o.Identifier) &&
 			       this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-			InterningProvider interningProvider = null)
+			InterningProvider? interningProvider = null)
 		{
 			interningProvider ??= InterningProvider.Dummy;
 			var typeArguments = new List<ITypeReference>();
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
 
-			string identifier = interningProvider.Intern(this.Identifier);
+			string? identifier = interningProvider?.Intern(this.Identifier);
 			if (typeArguments.Count == 0 && string.IsNullOrEmpty(identifier))
 			{
 				// empty SimpleType is used for typeof(List<>).
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode,
-				InterningProvider interningProvider = null)
+				InterningProvider? interningProvider = null)
 			{
 				return SpecialType.UnknownType;
 			}

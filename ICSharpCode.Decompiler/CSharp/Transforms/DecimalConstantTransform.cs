@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		static readonly PrimitiveType decimalType = new("decimal");
 
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			if (!context.Settings.DecimalConstants)
 				return;

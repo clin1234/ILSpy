@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public DoWhileStatement(Expression condition, Statement embeddedStatement)
+		public DoWhileStatement(Expression? condition, Statement? embeddedStatement)
 		{
 			this.Condition = condition;
 			this.EmbeddedStatement = embeddedStatement;

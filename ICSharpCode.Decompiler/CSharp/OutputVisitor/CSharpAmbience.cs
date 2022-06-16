@@ -35,14 +35,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	{
 		public ConversionFlags ConversionFlags { get; set; }
 
-		public string ConvertType(IType type)
+		public string ConvertType(IType? type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) !=
 			                                     ConversionFlags.UseFullyQualifiedEntityNames;
-			AstType astType = astBuilder.ConvertType(type);
+			AstType? astType = astBuilder.ConvertType(type);
 			return astType.ToString();
 		}
 
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public string ConvertVariable(IVariable v)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
-			AstNode astNode = astBuilder.ConvertVariable(v);
+			AstNode? astNode = astBuilder.ConvertVariable(v);
 			return astNode.ToString().TrimEnd(';', '\r', '\n', (char)8232);
 		}
 
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) !=
 			                                     ConversionFlags.UseFullyQualifiedEntityNames;
-			AstType astType = astBuilder.ConvertType(type);
+			AstType? astType = astBuilder.ConvertType(type);
 			astType.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
 		}
 
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return writer.ToString();
 		}
 
-		private void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		public void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			ArgumentNullException.ThrowIfNull(symbol);
 			ArgumentNullException.ThrowIfNull(writer);
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		void WriteMemberDeclarationName(IMember member, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
-			EntityDeclaration node = astBuilder.ConvertEntity(member);
+			EntityDeclaration? node = astBuilder.ConvertEntity(member);
 			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType &&
 			    member is not LocalFunctionMethod)
 			{
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				outputVisitor.WriteTypeParameters(typeParameters);
 			}
 
-			static TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
+			static TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration? decl)
 			{
 				decl.Variance = VarianceModifier.Invariant;
 				return decl;

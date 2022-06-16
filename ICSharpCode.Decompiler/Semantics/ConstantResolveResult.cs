@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public sealed class ConstantResolveResult : ResolveResult
 	{
-		readonly object constantValue;
+		readonly object? constantValue;
 
 		public ConstantResolveResult(IType type, object? constantValue) : base(type)
 		{

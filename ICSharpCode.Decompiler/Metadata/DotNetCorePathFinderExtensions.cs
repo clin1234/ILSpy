@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			// Try to detect reference assembly through specific path pattern
 			var refPathMatch =
-				Regex.Match(assemblyPath, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+				Regex.Match(assemblyPath!, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			return refPathMatch.Success;
 		}
 

@@ -46,8 +46,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.CurrentMember = entity as IMember;
 		}
 
-		private SimpleTypeResolveContext(ICompilation compilation, IModule currentModule,
-			ITypeDefinition currentTypeDefinition, IMember currentMember)
+		private SimpleTypeResolveContext(ICompilation compilation, IModule? currentModule,
+			ITypeDefinition currentTypeDefinition, IMember? currentMember)
 		{
 			this.Compilation = compilation;
 			this.CurrentModule = currentModule;
@@ -57,11 +57,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ICompilation Compilation { get; }
 
-		public IModule CurrentModule { get; }
+		public IModule? CurrentModule { get; }
 
 		public ITypeDefinition CurrentTypeDefinition { get; }
 
-		public IMember CurrentMember { get; }
+		public IMember? CurrentMember { get; }
 
 		public ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{

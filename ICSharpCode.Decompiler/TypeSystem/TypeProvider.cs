@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		SRM.ISignatureTypeProvider<IType, GenericContext>,
 		SRM.ICustomAttributeTypeProvider<IType>
 	{
-		readonly MetadataModule module;
+		readonly MetadataModule? module;
 
 		public TypeProvider(MetadataModule? module)
 		{
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Compilation.FindType(KnownTypeCode.Type);
 		}
 
-		public IType GetTypeFromSerializedName(string name)
+		public IType? GetTypeFromSerializedName(string? name)
 		{
 			if (name == null)
 			{

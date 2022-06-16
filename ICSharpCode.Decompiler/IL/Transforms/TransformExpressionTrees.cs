@@ -37,11 +37,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	public sealed class TransformExpressionTrees : IStatementTransform
 	{
 		StatementTransformContext context;
-		CSharpConversions conversions;
-		List<ILInstruction> instructionsToRemove;
+		CSharpConversions? conversions;
+		List<ILInstruction?> instructionsToRemove;
 		Stack<ILFunction> lambdaStack;
 		Dictionary<ILVariable, ILVariable> parameterMapping;
-		Dictionary<ILVariable, (IType, string)> parameters;
+		Dictionary<ILVariable?, (IType, string)> parameters;
 		CSharpResolver resolver;
 
 		public void Run(Block block, int pos, StatementTransformContext context)
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Returns true if the instruction matches the pattern for Expression.Lambda calls.
 		/// </summary>
-		static bool MightBeExpressionTree(ILInstruction inst, ILInstruction stmt)
+		static bool MightBeExpressionTree(ILInstruction inst, ILInstruction? stmt)
 		{
 			if (!(inst is CallInstruction call
 			      && call.Method.FullNameIs("System.Linq.Expressions.Expression", "Lambda")
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool IsEmptyParameterList(ILInstruction inst)
+		static bool IsEmptyParameterList(ILInstruction? inst)
 		{
 			if (inst is CallInstruction emptyCall && emptyCall.Method.FullNameIs("System.Array", "Empty") &&
 			    emptyCall.Arguments.Count == 0)
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType type,
+		bool MatchParameterVariableAssignment(ILInstruction? expr, out ILVariable? parameterReferenceVar, out IType type,
 			out string name)
 		{
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return typeArg.Arguments[0].MatchLdTypeToken(out type) && initCall.Arguments[1].MatchLdStr(out name);
 		}
 
-		bool TryConvertExpressionTree(ILInstruction instruction, ILInstruction statement)
+		bool TryConvertExpressionTree(ILInstruction instruction, ILInstruction? statement)
 		{
 			if (MightBeExpressionTree(instruction, statement))
 			{
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			lambda.DelegateType = call.Method.ReturnType;
 		}
 
-		bool ReadParameters(ILInstruction initializer, IList<IParameter> parameters,
+		bool ReadParameters(ILInstruction? initializer, IList<IParameter?> parameters,
 			IList<ILVariable> parameterVariables, ITypeResolveContext resolveContext)
 		{
 			switch (initializer)
@@ -1182,7 +1182,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
-			ArrayType arrayType = new(context.BlockContext.TypeSystem, type);
+			ArrayType? arrayType = new(context.BlockContext.TypeSystem, type);
 			if (arguments.Count == 0)
 				return (() => new NewArr(type, new LdcI4(0)), arrayType);
 			var convertedArguments = new Func<ILInstruction>[arguments.Count];
@@ -1384,7 +1384,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (converted == null)
 				return (null, SpecialType.UnknownType);
 
-			ILInstruction BuildTypeAs()
+			ILInstruction? BuildTypeAs()
 			{
 				ILInstruction? inst = new IsInst(converted(), type);
 				// We must follow ECMA-335, III.4.6:

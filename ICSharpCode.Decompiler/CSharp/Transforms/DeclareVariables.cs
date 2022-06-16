@@ -36,9 +36,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	internal sealed class DeclareVariables : IAstTransform
 	{
 		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new();
-		TransformContext context;
+		TransformContext? context;
 
-		public void Run(AstNode rootNode, TransformContext context)
+		public void Run(AstNode? rootNode, TransformContext context)
 		{
 			try
 			{
@@ -508,7 +508,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			/// </summary>
 			internal int level;
 
-			internal AstNode nextNode;
+			internal AstNode? nextNode;
 
 			/// <summary>Go up one level</summary>
 			internal InsertionPoint Up()
@@ -563,7 +563,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public bool InvolvedInCollision;
 
-			public VariableToDeclare ReplacementDueToCollision;
+			public VariableToDeclare? ReplacementDueToCollision;
 
 			/// <summary>
 			/// Integer value that can be used to compare to VariableToDeclare instances
@@ -601,7 +601,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region EnsureExpressionStatementsAreValid
 
-		void EnsureExpressionStatementsAreValid(AstNode rootNode)
+		void EnsureExpressionStatementsAreValid(AstNode? rootNode)
 		{
 			foreach (var stmt in rootNode.DescendantsAndSelf.OfType<ExpressionStatement>())
 			{
@@ -637,7 +637,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		private static bool IsValidInStatementExpression(Expression expr)
+		private static bool IsValidInStatementExpression(Expression? expr)
 		{
 			switch (expr)
 			{
@@ -681,9 +681,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Insertion point for a variable = common parent of all uses of that variable
 		/// = smallest possible scope that contains all the uses of the variable
 		/// </remarks>
-		void FindInsertionPoints(AstNode node, int nodeLevel)
+		void FindInsertionPoints(AstNode? node, int nodeLevel)
 		{
-			BlockContainer scope = node.Annotation<BlockContainer>();
+			BlockContainer? scope = node.Annotation<BlockContainer>();
 			if (scope != null && (scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction))
 			{
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
@@ -696,7 +696,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			try
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					FindInsertionPoints(child, nodeLevel + 1);
 				}

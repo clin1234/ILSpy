@@ -33,9 +33,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole GetKeywordRole = new("get");
 		public static readonly TokenRole SetKeywordRole = new("set");
 		public static readonly TokenRole InitKeywordRole = new("init");
-		public static readonly Role<Accessor> GetterRole = new("Getter", Accessor.Null);
-		public static readonly Role<Accessor> SetterRole = new("Setter", Accessor.Null);
-		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
+		public static readonly Role<Accessor?> GetterRole = new("Getter", Accessor.Null);
+		public static readonly Role<Accessor?> SetterRole = new("Setter", Accessor.Null);
+		public static readonly Role<Expression?> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Property; }

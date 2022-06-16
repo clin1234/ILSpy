@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ParameterDeclaration? ConvertParameter(IParameter? parameter)
 		{
-			if (parameter is null) throw new ArgumentNullException(nameof(parameter));
+			ArgumentNullException.ThrowIfNull(parameter);
 			ParameterDeclaration? decl = new();
 			if (parameter.IsRef)
 			{
@@ -132,106 +132,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		AstType? GetExplicitInterfaceType(IMember member)
-		{
-			if (member.IsExplicitInterfaceImplementation)
-			{
-				var baseMember = member.ExplicitlyImplementedInterfaceMembers.FirstOrDefault();
-				if (baseMember != null)
-					return ConvertType(baseMember.DeclaringType);
-			}
-
-			return null;
-		}
-
-		#region Convert Parameter
-
-		public ParameterDeclaration ConvertParameter(IParameter parameter)
-		{
-			ArgumentNullException.ThrowIfNull(parameter);
-			ParameterDeclaration decl = new();
-			if (parameter.IsRef)
-			{
-				decl.ParameterModifier = ParameterModifier.Ref;
-			}
-			else if (parameter.IsOut)
-			{
-				decl.ParameterModifier = ParameterModifier.Out;
-			}
-			else if (parameter.IsIn)
-			{
-				decl.ParameterModifier = ParameterModifier.In;
-			}
-			else if (parameter.IsParams)
-			{
-				decl.ParameterModifier = ParameterModifier.Params;
-			}
-
-			if (ShowAttributes)
-			{
-				decl.Attributes.AddRange(ConvertAttributes(parameter.GetAttributes()));
-			}
-
-			// avoid 'out ref'
-			IType parameterType = parameter.Type.Kind == TypeKind.ByReference
-				? ((ByReferenceType)parameter.Type).ElementType
-				: parameter.Type;
-			decl.Type = ConvertType(parameterType);
-			if (this.ShowParameterNames)
-			{
-				decl.Name = parameter.Name;
-			}
-
-			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues)
-			{
-				try
-				{
-					decl.DefaultExpression = ConvertConstantValue(parameterType,
-						parameter.GetConstantValue(throwOnInvalidMetadata: true));
-				}
-				catch (BadImageFormatException ex)
-				{
-					decl.DefaultExpression = new ErrorExpression(ex.Message);
-				}
-			}
-
-			return decl;
-		}
-
-		#endregion
-
-		#region Convert Variable
-
-		public VariableDeclarationStatement ConvertVariable(IVariable v)
-		{
-			VariableDeclarationStatement decl = new() {
-				Modifiers = v.IsConst ? Modifiers.Const : Modifiers.None,
-				Type = ConvertType(v.Type)
-			};
-			Expression initializer = null;
-			if (v.IsConst)
-			{
-				try
-				{
-					initializer = ConvertConstantValue(v.Type, v.GetConstantValue(throwOnInvalidMetadata: true));
-				}
-				catch (BadImageFormatException ex)
-				{
-					initializer = new ErrorExpression(ex.Message);
-				}
-			}
-
-			decl.Variables.Add(new VariableInitializer(v.Name, initializer));
-			return decl;
-		}
-
-		#endregion
-
-		NamespaceDeclaration ConvertNamespaceDeclaration(INamespace ns)
-		{
-			return new NamespaceDeclaration(ns.FullName);
-		}
-
-		AstType GetExplicitInterfaceType(IMember member)
 		{
 			if (member.IsExplicitInterfaceImplementation)
 			{
@@ -433,10 +333,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Convert Type
 
-		public AstType ConvertType(IType type)
+		public AstType? ConvertType(IType type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
-			AstType astType = ConvertTypeHelper(type);
+			AstType? astType = ConvertTypeHelper(type);
 			AddTypeAnnotation(astType, type);
 			return astType;
 		}
@@ -522,18 +422,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case FunctionPointerType fpt:
 				{
 					var astType = new FunctionPointerAstType();
-					if (fpt.CallingConvention == System.Reflection.Metadata.SignatureCallingConvention.Unmanaged)
+					if (fpt.CallingConvention == SignatureCallingConvention.Unmanaged)
 					{
 						astType.HasUnmanagedCallingConvention = true;
 					}
-					else if (fpt.CallingConvention != System.Reflection.Metadata.SignatureCallingConvention.Default)
+					else if (fpt.CallingConvention != SignatureCallingConvention.Default)
 					{
-						string callconvName = fpt.CallingConvention switch {
-							System.Reflection.Metadata.SignatureCallingConvention.CDecl => "Cdecl",
-							System.Reflection.Metadata.SignatureCallingConvention.StdCall => "Stdcall",
-							System.Reflection.Metadata.SignatureCallingConvention.ThisCall => "Thiscall",
-							System.Reflection.Metadata.SignatureCallingConvention.FastCall => "Fastcall",
-							System.Reflection.Metadata.SignatureCallingConvention.VarArgs => "Varargs",
+						string? callconvName = fpt.CallingConvention switch {
+							SignatureCallingConvention.CDecl => "Cdecl",
+							SignatureCallingConvention.StdCall => "Stdcall",
+							SignatureCallingConvention.ThisCall => "Thiscall",
+							SignatureCallingConvention.FastCall => "Fastcall",
+							SignatureCallingConvention.VarArgs => "Varargs",
 							_ => fpt.CallingConvention.ToString()
 						};
 						astType.HasUnmanagedCallingConvention = true;
@@ -542,7 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 					foreach (var customCallConv in fpt.CustomCallingConventions)
 					{
-						AstType callConvSyntax;
+						AstType? callConvSyntax;
 						if (customCallConv.Name.StartsWith("CallConv", StringComparison.Ordinal) &&
 						    customCallConv.Name.Length > 8)
 						{
@@ -570,7 +470,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 								_ => ParameterModifier.None,
 							}
 						};
-						IType parameterType = fpt.ParameterTypes[i];
+						IType? parameterType = fpt.ParameterTypes[i];
 						if (paramDecl.ParameterModifier != ParameterModifier.None &&
 						    parameterType is ByReferenceType brt)
 						{
@@ -590,11 +490,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						ct.HasReadOnlySpecifier = true;
 					}
 
-					ITypeDefinition treatedAs = fpt.GetDefinition();
+					ITypeDefinition? treatedAs = fpt.GetDefinition();
 					if (treatedAs != null)
 					{
 						var result = ConvertTypeHelper(treatedAs);
-						result.AddChild(new Comment(astType.ToString(), CommentType.MultiLine), Roles.Comment);
+						result?.AddChild(new Comment(astType.ToString(), CommentType.MultiLine), Roles.Comment);
 						return result;
 					}
 
@@ -602,7 +502,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				default:
 				{
-					AstType astType;
+					AstType? astType;
 					switch (type)
 					{
 						case ITypeDefinition _:
@@ -726,7 +626,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments))
 					{
 						// We can use the short type name
-						SimpleType shortResult = MakeSimpleType(typeDef.Name);
+						SimpleType? shortResult = MakeSimpleType(typeDef.Name);
 						AddTypeArguments(shortResult, typeDef.TypeParameters, typeArguments, outerTypeParameterCount,
 							typeDef.TypeParameterCount);
 						return shortResult;
@@ -742,7 +642,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return shortResult;
 			}
 
-			MemberType result = new();
+			MemberType? result = new();
 			if (genericType.DeclaringType != null)
 			{
 				// Handle nested types
@@ -816,8 +716,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <param name="typeArguments">The list of type arguments</param>
 		/// <param name="startIndex">Index of first type argument to add</param>
 		/// <param name="endIndex">Index after last type argument to add</param>
-		void AddTypeArguments(AstType result, IReadOnlyList<ITypeParameter> typeParameters,
-			IReadOnlyList<IType> typeArguments, int startIndex, int endIndex)
+		void AddTypeArguments(AstType? result, IReadOnlyList<ITypeParameter>? typeParameters,
+			IReadOnlyList<IType>? typeArguments, int startIndex, int endIndex)
 		{
 			Debug.Assert(endIndex <= typeParameters.Count);
 			for (int i = startIndex; i < endIndex; i++)
@@ -906,8 +806,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			{
-				string parentNamespace = namespaceName[..pos];
-				string localNamespace = namespaceName[(pos + 1)..];
+				string? parentNamespace = namespaceName[..pos];
+				string? localNamespace = namespaceName[(pos + 1)..];
 				var parentNS = ConvertNamespace(parentNamespace, out var parentNRR, requiresGlobalPrefix);
 				var ns = new MemberType {
 					Target = parentNS,
@@ -962,9 +862,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Convert Attribute
 
-		public Attribute ConvertAttribute(IAttribute attribute)
+		public Attribute? ConvertAttribute(IAttribute? attribute)
 		{
-			Attribute attr = new() {
+			Attribute? attr = new() {
 				Type = ConvertAttributeType(attribute.AttributeType)
 			};
 			switch (attr.Type)
@@ -994,7 +894,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			if (attribute.NamedArguments.Length > 0)
 			{
-				InitializedObjectResolveResult targetResult = new(attribute.AttributeType);
+				InitializedObjectResolveResult? targetResult = new(attribute.AttributeType);
 				foreach (var namedArg in attribute.NamedArguments)
 				{
 					NamedExpression namedArgument =
@@ -1040,10 +940,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Convert Attribute Type
 
-		public AstType ConvertAttributeType(IType type)
+		public AstType? ConvertAttributeType(IType type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
-			AstType astType = ConvertTypeHelper(type);
+			AstType? astType = ConvertTypeHelper(type);
 
 			string shortName = null;
 			if (type.Name.Length > 9 && type.Name.EndsWith("Attribute", StringComparison.Ordinal))
@@ -1180,7 +1080,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				case ArrayCreateResolveResult acrr:
 				{
-					ArrayCreateExpression ace = new() {
+					ArrayCreateExpression? ace = new() {
 						Type = ConvertType(acrr.Type)
 					};
 					if (ace.Type is ComposedType composedType)
@@ -1198,7 +1098,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 					if (acrr.InitializerElements != null)
 					{
-						ArrayInitializerExpression initializer = new();
+						ArrayInitializerExpression? initializer = new();
 						initializer.Elements.AddRange(acrr.InitializerElements.Select(ConvertConstantValue));
 						ace.Initializer = initializer;
 					}
@@ -1274,7 +1174,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						expr.AddAnnotation(new TypeOfResolveResult(type, typeofType));
 					return expr;
 				}
-				case ImmutableArray<System.Reflection.Metadata.CustomAttributeTypedArgument<IType>> arr:
+				case ImmutableArray<CustomAttributeTypedArgument<IType>> arr:
 				{
 					var elementType = (type as ArrayType)?.ElementType ?? SpecialType.UnknownType;
 					var expr = new ArrayCreateExpression {
@@ -1498,13 +1398,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		Expression? ConvertEnumValue(IType type, long val)
 		{
-			ITypeDefinition enumDefinition = type.GetDefinition();
+			ITypeDefinition? enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = enumDefinition.EnumUnderlyingType.GetTypeCode();
-			var fields = enumDefinition.Fields
+			(long value, IField? field)[] fields = enumDefinition.Fields
 				.Select(PrepareConstant)
 				.Where(f => f.field != null)
 				.ToArray();
-			foreach ((long value, IField field) in fields)
+			foreach ((long value, IField? field) in fields)
 			{
 				if (value == val)
 				{
@@ -1537,7 +1437,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						break;
 				}
 
-				Expression negatedExpr = null;
+				Expression? negatedExpr = null;
 				foreach ((long fieldValue, IField field) in fields.OrderByDescending(f =>
 					         CalculateHammingWeight(unchecked((ulong)f.value))))
 				{
@@ -1738,7 +1638,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const float MathF_PI = 3.14159274f;
 		const float MathF_E = 2.71828175f;
 
-		Expression TryExtractExpression(IType mathType, IType type, object literalValue, string memberName,
+		Expression? TryExtractExpression(IType mathType, IType type, object literalValue, string memberName,
 			bool isDouble)
 		{
 			Expression? MakeFieldReference()
@@ -1941,7 +1841,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Convert Entity
 
-		public AstNode ConvertSymbol(ISymbol symbol)
+		public AstNode? ConvertSymbol(ISymbol symbol)
 		{
 			ArgumentNullException.ThrowIfNull(symbol);
 			switch (symbol.SymbolKind)
@@ -2157,7 +2057,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ITypeDefinition d = invokeMethod.DeclaringTypeDefinition;
 
-			DelegateDeclaration decl = new() {
+			DelegateDeclaration? decl = new() {
 				Modifiers = modifiers & ~Modifiers.Sealed
 			};
 			if (ShowAttributes)
@@ -2209,7 +2109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		FieldDeclaration? ConvertField(IField field)
 		{
-			FieldDeclaration decl = new();
+			FieldDeclaration? decl = new();
 			if (ShowModifiers)
 			{
 				Modifiers m = GetMemberModifiers(field);
@@ -2273,12 +2173,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return BlockStatement.Null;
 		}
 
-		Accessor ConvertAccessor(IMethod accessor, MethodSemanticsAttributes kind, Accessibility ownerAccessibility,
+		Accessor? ConvertAccessor(IMethod? accessor, MethodSemanticsAttributes kind, Accessibility ownerAccessibility,
 			bool addParameterAttribute)
 		{
 			if (accessor == null)
 				return Accessor.Null;
-			Accessor decl = new();
+			Accessor? decl = new();
 			if (ShowAttributes)
 			{
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
@@ -2334,7 +2234,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		PropertyDeclaration? ConvertProperty(IProperty property)
 		{
-			PropertyDeclaration decl = new() {
+			PropertyDeclaration? decl = new() {
 				Modifiers = GetMemberModifiers(property)
 			};
 			if (ShowAttributes)
@@ -2380,7 +2280,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		IndexerDeclaration? ConvertIndexer(IProperty indexer)
 		{
-			IndexerDeclaration decl = new() {
+			IndexerDeclaration? decl = new() {
 				Modifiers = GetMemberModifiers(indexer)
 			};
 			if (ShowAttributes)
@@ -2399,7 +2299,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				ct.HasReadOnlySpecifier = true;
 			}
 
-			foreach (IParameter p in indexer.Parameters)
+			foreach (IParameter? p in indexer.Parameters)
 			{
 				decl.Parameters.Add(ConvertParameter(p));
 			}
@@ -2417,7 +2317,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (this.UseCustomEvents)
 			{
-				CustomEventDeclaration decl = new() {
+				CustomEventDeclaration? decl = new() {
 					Modifiers = GetMemberModifiers(ev)
 				};
 				if (ShowAttributes)
@@ -2442,7 +2342,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else
 			{
-				EventDeclaration decl = new() {
+				EventDeclaration? decl = new() {
 					Modifiers = GetMemberModifiers(ev)
 				};
 				if (ShowAttributes)
@@ -2463,7 +2363,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		MethodDeclaration? ConvertMethod(IMethod method)
 		{
-			MethodDeclaration decl = new() {
+			MethodDeclaration? decl = new() {
 				Modifiers = GetMemberModifiers(method)
 			};
 			if (ShowAttributes)
@@ -2523,7 +2423,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (opType == null)
 				return ConvertMethod(op);
 
-			OperatorDeclaration decl = new() {
+			OperatorDeclaration? decl = new() {
 				Modifiers = GetMemberModifiers(op),
 				OperatorType = opType.Value,
 				ReturnType = ConvertType(op.ReturnType)
@@ -2533,7 +2433,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				ct.HasReadOnlySpecifier = true;
 			}
 
-			foreach (IParameter p in op.Parameters)
+			foreach (IParameter? p in op.Parameters)
 			{
 				decl.Parameters.Add(ConvertParameter(p));
 			}
@@ -2555,7 +2455,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		ConstructorDeclaration? ConvertConstructor(IMethod ctor)
 		{
-			ConstructorDeclaration decl = new() {
+			ConstructorDeclaration? decl = new() {
 				Modifiers = GetMemberModifiers(ctor)
 			};
 			if (ShowAttributes)
@@ -2578,7 +2478,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		DestructorDeclaration? ConvertDestructor(IMethod? dtor)
 		{
-			DestructorDeclaration decl = new();
+			DestructorDeclaration? decl = new();
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(dtor.GetAttributes()));
 			if (dtor.DeclaringTypeDefinition != null)
@@ -2693,9 +2593,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region Convert Type Parameter
 
-		internal TypeParameterDeclaration ConvertTypeParameter(ITypeParameter tp)
+		internal TypeParameterDeclaration? ConvertTypeParameter(ITypeParameter tp)
 		{
-			TypeParameterDeclaration decl = new() {
+			TypeParameterDeclaration? decl = new() {
 				Variance = tp.Variance,
 				Name = tp.Name
 			};
@@ -2704,7 +2604,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return decl;
 		}
 
-		private Constraint ConvertTypeParameterConstraint(ITypeParameter tp)
+		private Constraint? ConvertTypeParameterConstraint(ITypeParameter tp)
 		{
 			if (!tp.HasDefaultConstructorConstraint && !tp.HasReferenceTypeConstraint && !tp.HasValueTypeConstraint &&
 			    tp.NullabilityConstraint != Nullability.NotNullable && tp.DirectBaseTypes.All(IsObjectOrValueType))

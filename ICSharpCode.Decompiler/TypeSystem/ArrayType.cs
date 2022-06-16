@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			};
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null,
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -119,15 +119,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments,
-			Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments,
+			Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			return Compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null,
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null,
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty>? filter = null,
 			GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)

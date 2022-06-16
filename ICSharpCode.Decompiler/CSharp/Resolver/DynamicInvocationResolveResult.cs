@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public readonly ResolveResult Target;
 
 		public DynamicInvocationResolveResult(ResolveResult target, DynamicInvocationType invocationType,
-			IList<ResolveResult> arguments, IList<ResolveResult> initializerStatements = null) : base(SpecialType
+			IList<ResolveResult>? arguments, IList<ResolveResult>? initializerStatements = null) : base(SpecialType
 			.Dynamic)
 		{
 			this.Target = target;

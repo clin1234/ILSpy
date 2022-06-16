@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool MatchDoWhileLoop(BlockContainer? loop)
 		{
-			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap) =
+			(List<IfInstruction> conditions, ILInstruction? exit, bool swap, bool split, bool unwrap) =
 				AnalyzeDoWhileConditions(loop);
 			// not a do-while loop, exit.
 			if (conditions == null || conditions.Count == 0)
@@ -243,8 +243,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static (List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap)
-			AnalyzeDoWhileConditions(BlockContainer loop)
+		static (List<IfInstruction> conditions, ILInstruction? exit, bool swap, bool split, bool unwrap)
+			AnalyzeDoWhileConditions(BlockContainer? loop)
 		{
 			// we iterate over all blocks from the bottom, because the entry-point
 			// should only be considered as condition block, if there are no other blocks.
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool MatchDoWhileConditionBlock(BlockContainer loop, Block block, out bool swapBranches,
+		static bool MatchDoWhileConditionBlock(BlockContainer? loop, Block block, out bool swapBranches,
 			out bool unwrapCondtionBlock, out Block conditionBlock)
 		{
 			// match the end of the block:
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ExpressionTransforms.RunOnSingleStatement(forCondition, context);
 				for (int i = conditions.Count - 1; i >= numberOfConditions; i--)
 				{
-					IfInstruction inst;
+					IfInstruction? inst;
 					whileLoopBody.Instructions.Insert(0,
 						inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
 					ExpressionTransforms.RunOnSingleStatement(inst, context);

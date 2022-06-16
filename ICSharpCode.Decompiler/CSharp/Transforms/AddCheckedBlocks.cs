@@ -28,11 +28,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	sealed internal class AddCheckedBlocks : IAstTransform
 	{
-		public void Run(AstNode node, TransformContext context)
+		public void Run(AstNode? node, TransformContext context)
 		{
 			if (node is not BlockStatement block)
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					Run(child, context);
 				}
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			else
 			{
 				Result r = GetResultFromBlock(block);
-				r.NodesToInsertInUncheckedContext?.Insert();
+				r.NodesToInsertInUncheckedContext.Insert();
 			}
 		}
 
@@ -49,14 +49,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// For a block, we are tracking 4 possibilities:
 			// a) context is checked, no unchecked block open
 			Cost costCheckedContext = new(0, 0);
-			InsertedNode nodesCheckedContext = null;
+			InsertedNode? nodesCheckedContext = null;
 			// b) context is checked, an unchecked block is open
 			Cost costCheckedContextUncheckedBlockOpen = Cost.Infinite;
 			InsertedNode? nodesCheckedContextUncheckedBlockOpen = null;
 			Statement? uncheckedBlockStart = null;
 			// c) context is unchecked, no checked block open
 			Cost costUncheckedContext = new(0, 0);
-			InsertedNode nodesUncheckedContext = null;
+			InsertedNode? nodesUncheckedContext = null;
 			// d) context is unchecked, a checked block is open
 			Cost costUncheckedContextCheckedBlockOpen = Cost.Infinite;
 			InsertedNode? nodesUncheckedContextCheckedBlockOpen = null;
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (node is BlockStatement statement)
 				return GetResultFromBlock(statement);
 			Result result = new();
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+			for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 			{
 				Result childResult = GetResult(child);
 				result.CostInCheckedContext += childResult.CostInCheckedContext;
@@ -297,8 +297,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			public Cost CostInCheckedContext;
 			public Cost CostInUncheckedContext;
-			public InsertedNode NodesToInsertInCheckedContext;
-			public InsertedNode NodesToInsertInUncheckedContext;
+			public InsertedNode? NodesToInsertInCheckedContext;
+			public InsertedNode? NodesToInsertInUncheckedContext;
 		}
 
 		#endregion
@@ -333,7 +333,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		abstract class InsertedNode
 		{
-			public static InsertedNode operator +(InsertedNode a, InsertedNode b)
+			public static InsertedNode? operator +(InsertedNode? a, InsertedNode? b)
 			{
 				if (a == null)
 					return b;
@@ -384,11 +384,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		sealed class InsertedBlock : InsertedNode
 		{
-			readonly Statement firstStatement; // inclusive
+			readonly Statement? firstStatement; // inclusive
 			readonly bool isChecked;
-			readonly Statement lastStatement; // exclusive
+			readonly Statement? lastStatement; // exclusive
 
-			public InsertedBlock(Statement firstStatement, Statement lastStatement, bool isChecked)
+			public InsertedBlock(Statement? firstStatement, Statement? lastStatement, bool isChecked)
 			{
 				this.firstStatement = firstStatement;
 				this.lastStatement = lastStatement;
@@ -399,8 +399,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				BlockStatement newBlock = new();
 				// Move all statements except for the first
-				Statement next;
-				for (Statement stmt = firstStatement.GetNextStatement(); stmt != lastStatement; stmt = next)
+				Statement? next;
+				for (Statement? stmt = firstStatement.GetNextStatement(); stmt != lastStatement; stmt = next)
 				{
 					next = stmt.GetNextStatement();
 					newBlock.Add(stmt.Detach());
@@ -408,9 +408,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				// Replace the first statement with the new (un)checked block
 				if (isChecked)
-					firstStatement.ReplaceWith(new CheckedStatement { Body = newBlock });
+					firstStatement?.ReplaceWith(new CheckedStatement { Body = newBlock });
 				else
-					firstStatement.ReplaceWith(new UncheckedStatement { Body = newBlock });
+					firstStatement?.ReplaceWith(new UncheckedStatement { Body = newBlock });
 				// now also move the first node into the new block
 				newBlock.Statements.InsertAfter(null, firstStatement);
 			}

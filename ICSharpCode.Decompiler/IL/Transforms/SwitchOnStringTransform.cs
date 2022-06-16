@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Remove all transformed hashtable initializers from the entrypoint.
 			foreach (var item in hashtableInitializers)
 			{
-				(_, IfInstruction jumpToNext, Block containingBlock, Block previous, Block next, bool transformed) =
+				(_, IfInstruction? jumpToNext, Block containingBlock, Block previous, Block? next, bool transformed) =
 					item.Value;
 				if (!transformed)
 					continue;
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			int offset = firstBlock == null ? 1 : 0;
-			var sections = new List<SwitchSection>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection
+			var sections = new List<SwitchSection?>(values.Skip(offset).SelectWithIndex((index, s) => new SwitchSection
 				{ Labels = new LongSet(index), Body = s.Item2 is Block b ? new Branch(b) : s.Item2.Clone() }));
 			sections.Add(new SwitchSection {
 				Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(),
@@ -476,7 +476,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				values.Add((null, new Branch(defaultOrNullBlock)));
 			}
 
-			var sections = new List<SwitchSection>(values.SelectWithIndex(static (index, b) =>
+			var sections = new List<SwitchSection?>(values.SelectWithIndex(static (index, b) =>
 				new SwitchSection { Labels = new LongSet(index), Body = b.Item2 }));
 			sections.Add(new SwitchSection {
 				Labels = new LongSet(new LongInterval(0,
@@ -817,7 +817,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches and extracts values from Add-call sequences.
 		/// </summary>
-		bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, out Block blockAfterInit,
+		bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, out Block? blockAfterInit,
 			IType dictionaryType, IField dictionaryField, bool isHashtablePattern)
 		{
 			values = null;
@@ -1005,7 +1005,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		bool FindHashtableInitBlock(Block entryPoint, out List<(string, int)> stringValues, out IField dictField,
-			out Block blockAfterThisInitBlock, out ILInstruction thisSwitchInitJumpInst,
+			out Block? blockAfterThisInitBlock, out ILInstruction? thisSwitchInitJumpInst,
 			out ILInstruction nextSwitchInitJumpInst)
 		{
 			stringValues = null;
@@ -1222,7 +1222,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				var defaultLabel = new LongSet(new LongInterval(0, stringValues.Count)).Invert();
 				var values = new string[stringValues.Count];
-				var sections = new SwitchSection[stringValues.Count];
+				var sections = new SwitchSection?[stringValues.Count];
 				foreach ((int idx, (string value, ILInstruction bodyInstruction)) in stringValues.WithIndex())
 				{
 					values[idx] = value;

@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	internal sealed class Repeat : Pattern
 	{
-		public Repeat(INode childNode)
+		public Repeat(INode? childNode)
 		{
 			this.ChildNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
 			this.MinCount = 0;
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public INode ChildNode { get; }
 
-		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+		public override bool DoMatchCollection(Role role, INode? pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
 			var backtrackingStack = backtrackingInfo.backtrackingStack;
 			Debug.Assert(pos == null || pos.Role == role);

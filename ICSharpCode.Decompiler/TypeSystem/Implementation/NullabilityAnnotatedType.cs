@@ -109,6 +109,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		Nullability ITypeParameter.NullabilityConstraint => OriginalTypeParameter.NullabilityConstraint;
 		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => OriginalTypeParameter.TypeConstraints;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
-		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => OriginalTypeParameter.GetAttributes();
+		IEnumerable<IAttribute?> ITypeParameter.GetAttributes() => OriginalTypeParameter.GetAttributes();
 	}
 }

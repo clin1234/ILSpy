@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// List of outgoing control flow edges.
 		/// </summary>
-		public object UserData;
+		public object? UserData;
 
 		/// <summary>
 		/// User index, can be used to look up additional information in an array.
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// List of children in the dominator tree.
 		/// Null if dominance has not been calculated; or if the node is unreachable.
 		/// </summary>
-		public List<ControlFlowNode> DominatorTreeChildren { get; internal set; }
+		public List<ControlFlowNode>? DominatorTreeChildren { get; internal set; }
 
 		public void AddEdgeTo(ControlFlowNode target)
 		{
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 #if DEBUG
 		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes,
-			Func<ControlFlowNode, string> labelFunc
+			Func<ControlFlowNode, string>? labelFunc
 				= null)
 		{
 			labelFunc ??= static node => node.UserData is Block block ? block.Label : node.UserData?.ToString();

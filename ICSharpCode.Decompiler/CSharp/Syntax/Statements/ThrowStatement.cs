@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public ThrowStatement(Expression expression)
+		public ThrowStatement(Expression? expression)
 		{
 			AddChild(expression, Roles.Expression);
 		}

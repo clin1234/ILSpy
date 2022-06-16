@@ -45,14 +45,14 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ICompilation compilation;
 		readonly MetadataReader metadata;
 		readonly MetadataModule module;
-		MethodBodyBlock body;
+		MethodBodyBlock? body;
 
 		IType constrainedPrefix;
 		int currentInstructionStart;
 		ImmutableStack<ILVariable> currentStack;
 
 		GenericContext genericContext;
-		List<ILInstruction> instructionBuilder;
+		List<ILInstruction?> instructionBuilder;
 		BitArray isBranchTarget;
 		ILVariable[] localVariables;
 		BlockContainer mainContainer;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 		List<(ILVariable, ILVariable)> stackMismatchPairs;
 		IEnumerable<ILVariable> stackVariables;
 		UnionFind<ILVariable> unionFind;
-		Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
+		Dictionary<ExceptionRegion, ILVariable?> variableByExceptionHandler;
 
 		/// <summary>
 		/// Creates a new ILReader instance.
@@ -82,8 +82,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.SequencePointCandidates = new List<int>();
 		}
 
-		public bool UseDebugSymbols { get; init; }
-		public DebugInfo.IDebugInfoProvider DebugInfo { get; init; }
+		public bool UseDebugSymbols { get; set; }
+		public IDebugInfoProvider? DebugInfo { get; init; }
 		public List<string> Warnings { get; } = new();
 
 		// List of candidate locations for sequence points. Includes empty il stack locations, any nop instructions, and the instruction following
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.IL
 					declaringType = new ParameterizedType(declaringType, declaringType.TypeParameters);
 				}
 
-				ILVariable ilVar = CreateILVariable(-1, declaringType, "this");
+				ILVariable? ilVar = CreateILVariable(-1, declaringType, "this");
 				ilVar.IsRefReadOnly = method.ThisIsRefReadOnly;
 				parameterVariables[paramIndex++] = ilVar;
 			}
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL
 				kind = VariableKind.Local;
 			}
 
-			ILVariable ilVar = new(kind, type, index);
+			ILVariable? ilVar = new(kind, type, index);
 			if (!UseDebugSymbols || DebugInfo == null ||
 			    !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name))
 			{
@@ -524,7 +524,7 @@ namespace ICSharpCode.Decompiler.IL
 					dict.Add(a, b);
 			}
 
-			var newInstructions = new List<ILInstruction>();
+			var newInstructions = new List<ILInstruction?>();
 			foreach (var inst in instructionBuilder)
 			{
 				newInstructions.Add(inst);
@@ -595,7 +595,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Decodes the specified method body and returns an ILFunction.
 		/// </summary>
-		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body,
+		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock? body,
 			GenericContext genericContext = default, ILFunctionKind kind = ILFunctionKind.TopLevelFunction,
 			CancellationToken cancellationToken = default)
 		{
@@ -1156,7 +1156,7 @@ namespace ICSharpCode.Decompiler.IL
 			return currentStack.Peek().StackType;
 		}
 
-		ILInstruction Push(ILInstruction inst)
+		ILInstruction? Push(ILInstruction inst)
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
 			IType type = compilation.FindType(inst.ResultType);
@@ -1430,7 +1430,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new StObj(target, value, type);
 		}
 
-		private ILInstruction DecodeConstrainedCall()
+		private ILInstruction? DecodeConstrainedCall()
 		{
 			constrainedPrefix = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
@@ -1562,7 +1562,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction? DecodeCallIndirect()
 		{
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
-			(SignatureHeader header, FunctionPointerType fpt) =
+			(SignatureHeader header, FunctionPointerType? fpt) =
 				module.DecodeMethodSignature(signatureHandle, genericContext);
 			var functionPointer = Pop(StackType.I);
 			int firstArgument = header.IsInstance ? 1 : 0;
@@ -1808,7 +1808,7 @@ namespace ICSharpCode.Decompiler.IL
 			return instr;
 		}
 
-		ILInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false,
+		ILInstruction? BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false,
 			Sign sign = Sign.None)
 		{
 			var right = Pop();

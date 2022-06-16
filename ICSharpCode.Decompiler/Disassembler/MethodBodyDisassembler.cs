@@ -40,13 +40,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 		readonly CancellationToken cancellationToken;
 		readonly ITextOutput output;
 		MetadataGenericContext genericContext;
-		MetadataReader metadata;
+		MetadataReader? metadata;
 
 		// cache info
-		PEFile module;
+		PEFile? module;
 		int nextSequencePointIndex;
 
-		IList<SequencePoint> sequencePoints;
+		IList<SequencePoint>? sequencePoints;
 		DisassemblerSignatureTypeProvider signatureDecoder;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public IDebugInfoProvider? DebugInfo { get; set; }
 
-		public virtual void Disassemble(PEFile module, MethodDefinitionHandle handle)
+		public virtual void Disassemble(PEFile? module, MethodDefinitionHandle handle)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return;
 			}
 
-			MethodBodyBlock body;
+			MethodBodyBlock? body;
 			BlobReader bodyBlockReader;
 			try
 			{

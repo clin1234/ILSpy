@@ -16,6 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
@@ -30,29 +33,68 @@ namespace ICSharpCode.ILSpyX.Search
 		NamespaceSearchResult Create(PEFile module, INamespace? @namespace);
 	}
 
-	internal class SearchResult
+	public class SearchResult
 	{
-		private static string? Name => null;
+		public static readonly IComparer<SearchResult> ComparerByName = new SearchResultNameComparer();
+		public static readonly IComparer<SearchResult> ComparerByFitness = new SearchResultFitnessComparer();
+
+		public virtual object? Reference => null;
+
+		public float Fitness { get; set; }
+
+		public string? Name { get; set; }
+		public string? Location { get; set; }
+		public string? Assembly { get; set; }
+		public object? ToolTip { get; set; }
+		public object Image { get; set; }
+		public object LocationImage { get; set; }
+
+		public object AssemblyImage { get; set; }
 
 		public override string? ToString()
 		{
 			return Name;
 		}
+
+		class SearchResultNameComparer : IComparer<SearchResult>
+		{
+			public int Compare(SearchResult? x, SearchResult? y)
+			{
+				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
+			}
+		}
+
+		class SearchResultFitnessComparer : IComparer<SearchResult>
+		{
+			public int Compare(SearchResult? x, SearchResult? y)
+			{
+				//elements with higher Fitness come first
+				return Comparer<float>.Default.Compare(y?.Fitness ?? 0, x?.Fitness ?? 0);
+			}
+		}
 	}
 
-	internal abstract class MemberSearchResult : SearchResult
+	internal class MemberSearchResult : SearchResult
 	{
+		public IEntity Member { get; set; }
+		public override object Reference => Member;
 	}
 
-	internal abstract class ResourceSearchResult : SearchResult
+	internal class ResourceSearchResult : SearchResult
 	{
+		public Resource Resource { get; set; }
+		public override object Reference => ValueTuple.Create(Resource, Name);
 	}
 
-	internal abstract class AssemblySearchResult : SearchResult
+	internal class AssemblySearchResult : SearchResult
 	{
+		public PEFile Module { get; set; }
+		public override object Reference => Module;
 	}
 
-	internal abstract class NamespaceSearchResult : SearchResult
+	internal class NamespaceSearchResult : SearchResult
 	{
+		public INamespace Namespace { get; set; }
+		public override object Reference => Namespace;
 	}
 }

@@ -35,10 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class TryCatchStatement : Statement
 	{
 		public static readonly TokenRole TryKeywordRole = new("try");
-		public static readonly Role<BlockStatement> TryBlockRole = new("TryBlock", BlockStatement.Null);
-		public static readonly Role<CatchClause> CatchClauseRole = new("CatchClause", CatchClause.Null);
+		public static readonly Role<BlockStatement?> TryBlockRole = new("TryBlock", BlockStatement.Null);
+		public static readonly Role<CatchClause?> CatchClauseRole = new("CatchClause", CatchClause.Null);
 		public static readonly TokenRole FinallyKeywordRole = new("finally");
-		public static readonly Role<BlockStatement> FinallyBlockRole = new("FinallyBlock", BlockStatement.Null);
+		public static readonly Role<BlockStatement?> FinallyBlockRole = new("FinallyBlock", BlockStatement.Null);
 
 		public CSharpTokenNode TryToken {
 			get { return GetChildByRole(TryKeywordRole); }
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole CatchKeywordRole = new("catch");
 		public static readonly TokenRole WhenKeywordRole = new("when");
-		public static readonly Role<Expression> ConditionRole = Roles.Condition;
+		public static readonly Role<Expression?> ConditionRole = Roles.Condition;
 		public static readonly TokenRole CondLPar = new("(");
 		public static readonly TokenRole CondRPar = new(")");
 
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode CatchToken {
+		public CSharpTokenNode? CatchToken {
 			get { return GetChildByRole(CatchKeywordRole); }
 		}
 
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstType Type {
+		public AstType? Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Identifier, string.IsNullOrEmpty(value) ? null : Identifier.Create(value)); }
 		}
 
-		public Identifier VariableNameToken {
+		public Identifier? VariableNameToken {
 			get {
 				return GetChildByRole(Roles.Identifier);
 			}
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public CSharpTokenNode WhenToken {
+		public CSharpTokenNode? WhenToken {
 			get { return GetChildByRole(WhenKeywordRole); }
 		}
 
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(CondLPar); }
 		}
 
-		public Expression Condition {
+		public Expression? Condition {
 			get { return GetChildByRole(ConditionRole); }
 			set { SetChildByRole(ConditionRole, value); }
 		}
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(CondRPar); }
 		}
 
-		public BlockStatement Body {
+		public BlockStatement? Body {
 			get { return GetChildByRole(Roles.Body); }
 			set { SetChildByRole(Roles.Body, value); }
 		}
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCatchClause(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, Match match)
 		{
 			return other is CatchClause o && this.Type.DoMatch(o.Type, match) &&
 			       MatchString(this.VariableName, o.VariableName) && this.Body.DoMatch(o.Body, match);
@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -212,16 +212,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		#region PatternPlaceholder
 
-		public static implicit operator CatchClause(PatternMatching.Pattern pattern)
+		public static implicit operator CatchClause(Pattern? pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 
-		sealed class PatternPlaceholder : CatchClause, PatternMatching.INode
+		sealed class PatternPlaceholder : CatchClause, INode
 		{
-			readonly PatternMatching.Pattern child;
+			readonly Pattern child;
 
-			public PatternPlaceholder(PatternMatching.Pattern child)
+			public PatternPlaceholder(Pattern child)
 			{
 				this.child = child;
 			}
@@ -230,8 +230,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos,
-				PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool INode.DoMatchCollection(Role role, INode? pos,
+				Match match, BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}
@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode? other, Match match)
 			{
 				return child.DoMatch(other, match);
 			}

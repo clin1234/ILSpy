@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						inst.MatchLdLocRef(testedVar),
 					Mode.NullableByValue => NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar),
 					Mode.NullableByReference => NullableLiftingTransform.MatchGetValueOrDefault(inst,
-						out ILInstruction arg) && arg.MatchLdLoc(testedVar),
+						out ILInstruction? arg) && arg.MatchLdLoc(testedVar),
 					Mode.UnconstrainedType =>
 						// unconstrained generic type (expect: ldloc(testedVar))
 						inst.MatchLdLoc(testedVar),

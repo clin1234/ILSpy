@@ -55,14 +55,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		// determines the maximum generic nesting level; necessary to avoid infinite recursion in 'Improved' mode.
 		const int maxNestingLevel = 5;
 		readonly ICompilation compilation;
-		readonly CSharpConversions conversions;
-		ResolveResult[] arguments;
-		IReadOnlyList<IType> classTypeArguments;
-		bool[,] dependencyMatrix;
+		readonly CSharpConversions? conversions;
+		ResolveResult[]? arguments;
+		IReadOnlyList<IType>? classTypeArguments;
+		bool[,]? dependencyMatrix;
 		int nestingLevel;
-		IType[] parameterTypes;
+		IType[]? parameterTypes;
 
-		TP[] typeParameters;
+		TP[]? typeParameters;
 
 		#region MakeExplicitParameterTypeInference (§7.5.2.7)
 
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (e.IsImplicitlyTyped || !e.HasParameterList)
 				return;
 			Log.WriteLine(" MakeExplicitParameterTypeInference from " + e + " to " + t);
-			IMethod m = GetDelegateOrExpressionTreeSignature(t);
+			IMethod? m = GetDelegateOrExpressionTreeSignature(t);
 			if (m == null)
 				return;
 			for (int i = 0; i < e.Parameters.Count && i < m.Parameters.Count; i++)
@@ -108,9 +108,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			// Handle array types:
-			ArrayType arrU = U as ArrayType;
-			ArrayType arrV = V as ArrayType;
-			ParameterizedType pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
+			ArrayType? arrU = U as ArrayType;
+			ArrayType? arrV = V as ArrayType;
+			ParameterizedType? pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 			if (arrV != null && arrU != null && arrU.Dimensions == arrV.Dimensions)
 			{
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Handle parameterized types:
 			if (pU != null)
 			{
-				ParameterizedType uniqueBaseType = null;
+				ParameterizedType? uniqueBaseType = null;
 				foreach (IType baseV in V.GetAllBaseTypes())
 				{
 					if (baseV.TupleUnderlyingTypeOrSelf() is ParameterizedType pV &&
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case FunctionPointerType fnPtrU when V is FunctionPointerType fnPtrV:
 				{
 					MakeUpperBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-					foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+					foreach ((IType ptU, IType? ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
 					{
 						MakeLowerBoundInference(ptU, ptV);
 					}
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the best common type (C# 4.0 spec: §7.5.2.14) of a set of expressions.
 		/// </summary>
-		public IType GetBestCommonType(IList<ResolveResult> expressions, out bool success)
+		public IType GetBestCommonType(IList<ResolveResult>? expressions, out bool success)
 		{
 			ArgumentNullException.ThrowIfNull(expressions);
 			if (expressions.Count == 1)
@@ -272,8 +272,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public readonly HashSet<IType> LowerBounds = new();
 			public readonly ITypeParameter TypeParameter;
 			public readonly HashSet<IType> UpperBounds = new();
-			public IType ExactBound;
-			public IType FixedTo;
+			public IType? ExactBound;
+			public IType? FixedTo;
 			public bool MultipleDifferentExactBounds;
 
 			public TP(ITypeParameter typeParameter)
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		sealed class OccursInVisitor : TypeVisitor
 		{
 			public readonly bool[] Occurs;
-			readonly TP[] tp;
+			readonly TP[]? tp;
 
 			public OccursInVisitor(TypeInference typeInference)
 			{
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.Occurs = new bool[tp.Length];
 			}
 
-			internal override IType VisitTypeParameter(ITypeParameter type)
+			public override IType VisitTypeParameter(ITypeParameter type)
 			{
 				int index = type.Index;
 				if (index < tp.Length && tp[index].TypeParameter == type)
@@ -375,9 +375,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// when inferring a method group or lambda.
 		/// </param>
 		/// <returns>The inferred type arguments.</returns>
-		public IType[] InferTypeArguments(IReadOnlyList<ITypeParameter> typeParameters,
-			IReadOnlyList<ResolveResult> arguments, IReadOnlyList<IType> parameterTypes, out bool success,
-			IReadOnlyList<IType> classTypeArguments = null)
+		public IType[]? InferTypeArguments(IReadOnlyList<ITypeParameter>? typeParameters,
+			IReadOnlyList<ResolveResult>? arguments, IReadOnlyList<IType> parameterTypes, out bool success,
+			IReadOnlyList<IType>? classTypeArguments = null)
 		{
 			ArgumentNullException.ThrowIfNull(typeParameters);
 			ArgumentNullException.ThrowIfNull(arguments);
@@ -440,8 +440,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Infers type arguments for the <paramref name="typeParameters"/> occurring in the <paramref name="targetType"/>
 		/// so that the resulting type (after substition) satisfies the given bounds.
 		/// </summary>
-		public IType[] InferTypeArgumentsFromBounds(IReadOnlyList<ITypeParameter> typeParameters, IType targetType,
-			IEnumerable<IType> lowerBounds, IEnumerable<IType> upperBounds, out bool success)
+		public IType[]? InferTypeArgumentsFromBounds(IReadOnlyList<ITypeParameter>? typeParameters, IType? targetType,
+			IEnumerable<IType>? lowerBounds, IEnumerable<IType>? upperBounds, out bool success)
 		{
 			ArgumentNullException.ThrowIfNull(typeParameters);
 			ArgumentNullException.ThrowIfNull(targetType);
@@ -465,7 +465,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeUpperBoundInference(b, targetType);
 			}
 
-			IType[] result = new IType[this.typeParameters.Length];
+			IType?[]? result = new IType?[this.typeParameters.Length];
 			success = true;
 			for (int i = 0; i < result.Length; i++)
 			{
@@ -666,7 +666,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool AnyTypeContainsUnfixedParameter(IEnumerable<IType> types)
 		{
-			OccursInVisitor o = new(this);
+			OccursInVisitor? o = new(this);
 			foreach (var type in types)
 			{
 				type.AcceptVisitor(o);
@@ -693,8 +693,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			dependencyMatrix = new bool[n, n];
 			for (int k = 0; k < arguments.Length; k++)
 			{
-				OccursInVisitor input = new(this);
-				OccursInVisitor output = new(this);
+				OccursInVisitor? input = new(this);
+				OccursInVisitor? output = new(this);
 				foreach (var type in InputTypes(arguments[k], parameterTypes[k]))
 				{
 					type.AcceptVisitor(input);
@@ -752,7 +752,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// tree type with return type Tb, then a lower-bound inference (§7.5.2.9) is made from U to Tb.
 				case LambdaResolveResult lrr:
 				{
-					IMethod m = GetDelegateOrExpressionTreeSignature(t);
+					IMethod? m = GetDelegateOrExpressionTreeSignature(t);
 					if (m != null)
 					{
 						IType inferredReturnType;
@@ -760,8 +760,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						{
 							if (m.Parameters.Count != lrr.Parameters.Count)
 								return; // cannot infer due to mismatched parameter lists
-							TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
-							IType[] inferredParameterTypes = new IType[m.Parameters.Count];
+							TypeParameterSubstitution? substitution = GetSubstitutionForFixedTPs();
+							IType[]? inferredParameterTypes = new IType[m.Parameters.Count];
 							for (int i = 0; i < inferredParameterTypes.Length; i++)
 							{
 								IType parameterType = m.Parameters[i].Type;
@@ -787,14 +787,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// inference is made from U to Tb.
 				case MethodGroupResolveResult mgrr:
 				{
-					IMethod m = GetDelegateOrExpressionTreeSignature(t);
+					IMethod? m = GetDelegateOrExpressionTreeSignature(t);
 					if (m != null)
 					{
-						ResolveResult[] args = new ResolveResult[m.Parameters.Count];
-						TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
+						ResolveResult[]? args = new ResolveResult[m.Parameters.Count];
+						TypeParameterSubstitution? substitution = GetSubstitutionForFixedTPs();
 						for (int i = 0; i < args.Length; i++)
 						{
-							IParameter param = m.Parameters[i];
+							IParameter? param = m.Parameters[i];
 							IType parameterType = param.Type.AcceptVisitor(substitution);
 							if ((param.ReferenceKind != ReferenceKind.None) &&
 							    parameterType.Kind == TypeKind.ByReference)
@@ -862,7 +862,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
-			TP tp = GetTPForType(V);
+			TP? tp = GetTPForType(V);
 			if (tp is { IsFixed: false })
 			{
 				Log.WriteLine(" Add exact bound '" + U + "' to " + tp);
@@ -908,7 +908,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case FunctionPointerType fnPtrU when V is FunctionPointerType fnPtrV:
 				{
 					MakeExactInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-					foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+					foreach ((IType? ptU, IType? ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
 					{
 						MakeExactInference(ptU, ptV);
 					}
@@ -953,7 +953,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
-			TP tp = GetTPForType(V);
+			TP? tp = GetTPForType(V);
 			if (tp is { IsFixed: false })
 			{
 				Log.WriteLine("  Add lower bound '" + U + "' to " + tp);
@@ -1052,7 +1052,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case FunctionPointerType fnPtrU when V is FunctionPointerType fnPtrV:
 				{
 					MakeLowerBoundInference(fnPtrU.ReturnType, fnPtrV.ReturnType);
-					foreach ((IType ptU, IType ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
+					foreach ((IType? ptU, IType? ptV) in fnPtrU.ParameterTypes.Zip(fnPtrV.ParameterTypes))
 					{
 						MakeUpperBoundInference(ptU, ptV);
 					}
@@ -1188,7 +1188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					Log.WriteLine("Inferring arguments for candidate type definition: " + candidateDef);
-					IType[] result = InferTypeArgumentsFromBounds(
+					IType[]? result = InferTypeArgumentsFromBounds(
 						candidateDef.TypeParameters,
 						new ParameterizedType(candidateDef, candidateDef.TypeParameters),
 						lowerBounds, upperBounds,

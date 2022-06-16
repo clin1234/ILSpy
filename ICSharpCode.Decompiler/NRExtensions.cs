@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler
 			if (type == null)
 				return false;
 			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
-			                                         && (type.Name.Contains("AnonType") ||
+			                                         && (type.Name!.Contains("AnonType") ||
 			                                             type.Name.Contains("AnonymousType")))
 			{
 				ITypeDefinition? td = type.GetDefinition();
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler
 
 		internal static string GetDocumentation(this IEntity entity)
 		{
-			var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
+			var docProvider = XmlDocLoader.LoadDocumentation(entity?.ParentModule?.PEFile);
 			return docProvider?.GetDocumentation(entity);
 		}
 
@@ -86,14 +86,14 @@ namespace ICSharpCode.Decompiler
 		{
 			public bool ContainsAnonType;
 
-			internal override IType VisitOtherType(IType type)
+			public override IType VisitOtherType(IType type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
 				return base.VisitOtherType(type);
 			}
 
-			internal override IType VisitTypeDefinition(ITypeDefinition type)
+			public override IType VisitTypeDefinition(ITypeDefinition type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;

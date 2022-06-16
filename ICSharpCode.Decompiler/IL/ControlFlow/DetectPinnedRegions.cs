@@ -533,7 +533,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		#region CreatePinnedRegion
 
-		bool DetectPinnedRegion(Block block)
+		bool DetectPinnedRegion(Block? block)
 		{
 			// After SplitBlocksAtWritesToPinnedLocals(), only the second-to-last instruction in each block
 			// can be a write to a pinned local.
@@ -626,7 +626,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			context.Step("CreatePinnedRegion", block);
-			BlockContainer body = new();
+			BlockContainer? body = new();
 			Block[] clonedBlocks = cloneBlocks ? new Block[sourceContainer.Blocks.Count] : null;
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++)
 			{
@@ -767,7 +767,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					elementType = ((PointerType)elementType).ElementType;
 				}
 
-				ILVariable newVar = new(
+				ILVariable? newVar = new(
 					VariableKind.PinnedRegionLocal,
 					new PointerType(elementType),
 					oldVar.Index) {
@@ -830,7 +830,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			Debug.Assert(arrayToPointer.IsDescendantOf(pinnedRegion));
 			ILVariable oldVar = pinnedRegion.Variable;
-			ILVariable newVar = new(
+			ILVariable? newVar = new(
 				VariableKind.PinnedRegionLocal,
 				new PointerType(((ArrayType)oldVar.Type).ElementType),
 				oldVar.Index) {

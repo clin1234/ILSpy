@@ -176,13 +176,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Body, value); }
 		}
 
-		public override string Name {
+		public override string? Name {
 			get { return GetName(this.OperatorType); }
 			set { throw new NotSupportedException(); }
 		}
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
-		public override Identifier NameToken {
+		public override Identifier? NameToken {
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
@@ -297,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitOperatorDeclaration(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is OperatorDeclaration o && this.MatchAttributesAndModifiers(o, match) &&
 			       this.OperatorType == o.OperatorType

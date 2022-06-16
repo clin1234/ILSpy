@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public readonly int LoopEntryPointOffset;
 
 		public readonly MethodDefinitionHandle MethodHandle;
-		public readonly PEFile Module;
+		public readonly PEFile? Module;
 
 		/// <summary>
 		/// Start position of the structure.
@@ -94,8 +94,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public readonly ILStructureType Type;
 
-		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
-			MethodBodyBlock body)
+		public ILStructure(PEFile? module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
+			MethodBodyBlock? body)
 			: this(module, handle, genericContext, ILStructureType.Root, 0, body.GetILReader().Length)
 		{
 			// Build the tree of exception structures:
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			SortChildren();
 		}
 
-		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
+		public ILStructure(PEFile? module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
 			ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
 		{
 			Debug.Assert(startOffset < endOffset);
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.ExceptionHandler = handler;
 		}
 
-		public ILStructure(PEFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
+		public ILStructure(PEFile? module, MethodDefinitionHandle handle, MetadataGenericContext genericContext,
 			ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
 		{
 			Debug.Assert(startOffset < endOffset);

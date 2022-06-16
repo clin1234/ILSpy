@@ -26,8 +26,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	sealed class InsertMissingTokensDecorator : DecoratingTokenWriter
 	{
 		readonly ILocatable locationProvider;
-		readonly Stack<List<AstNode>> nodes = new();
-		List<AstNode> currentList;
+		readonly Stack<List<AstNode?>> nodes = new();
+		List<AstNode?> currentList;
 
 		public InsertMissingTokensDecorator(TokenWriter writer, ILocatable locationProvider)
 			: base(writer)

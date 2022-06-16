@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType Create(IEnumerable<IType> types)
 		{
 			IType[] arr = types.Distinct().ToArray();
-			foreach (IType type in arr)
+			foreach (IType? type in arr)
 			{
 				if (type == null)
 					throw new ArgumentNullException();
@@ -156,13 +156,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod>? filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter,
-			GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType>? typeArguments, Predicate<IMethod>? filter = null,
+			GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}

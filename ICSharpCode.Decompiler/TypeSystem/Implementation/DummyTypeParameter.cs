@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		static ITypeParameter[] methodTypeParameters = { new DummyTypeParameter(SymbolKind.Method, 0) };
 		static ITypeParameter[] classTypeParameters = { new DummyTypeParameter(SymbolKind.TypeDefinition, 0) };
-		static IReadOnlyList<ITypeParameter>[] classTypeParameterLists = { EmptyList<ITypeParameter>.Instance };
+		static IReadOnlyList<ITypeParameter>?[] classTypeParameterLists = { EmptyList<ITypeParameter>.Instance };
 
 		readonly SymbolKind ownerType;
 
@@ -143,15 +143,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Gets a list filled with dummy type parameters.
 		/// </summary>
-		internal static IReadOnlyList<ITypeParameter> GetClassTypeParameterList(int length)
+		internal static IReadOnlyList<ITypeParameter>? GetClassTypeParameterList(int length)
 		{
-			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
+			IReadOnlyList<ITypeParameter>?[] tps = classTypeParameterLists;
 			while (length >= tps.Length)
 			{
 				// We don't have a normal type parameter for this index, so we need to extend our array.
 				// Because the array can be used concurrently from multiple threads, we have to use
 				// Interlocked.CompareExchange.
-				IReadOnlyList<ITypeParameter>[] newTps = new IReadOnlyList<ITypeParameter>[length + 1];
+				IReadOnlyList<ITypeParameter>?[] newTps = new IReadOnlyList<ITypeParameter>?[length + 1];
 				tps.CopyTo(newTps, 0);
 				for (int i = tps.Length; i < newTps.Length; i++)
 				{

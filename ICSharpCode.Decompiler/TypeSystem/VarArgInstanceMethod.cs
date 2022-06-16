@@ -31,12 +31,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	internal sealed class VarArgInstanceMethod : IMethod
 	{
-		readonly IParameter[] parameters;
+		readonly IParameter?[] parameters;
 
 		public VarArgInstanceMethod(IMethod baseMethod, IEnumerable<IType> varArgTypes)
 		{
 			this.BaseMethod = baseMethod;
-			var paramList = new List<IParameter>(baseMethod.Parameters);
+			var paramList = new List<IParameter?>(baseMethod.Parameters);
 			Debug.Assert(paramList.Last().Type.Kind == TypeKind.ArgList);
 			paramList.RemoveAt(paramList.Count - 1);
 			foreach (IType varArg in varArgTypes)
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return parameters; }
 		}
 
-		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public bool Equals(IMember obj, TypeVisitor? typeNormalization)
 		{
 			return obj is VarArgInstanceMethod other && BaseMethod.Equals(other.BaseMethod, typeNormalization);
 		}
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#endregion
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 		{
 			return obj is VarArgInstanceMethod other && BaseMethod.Equals(other.BaseMethod);
 		}
@@ -128,25 +128,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region IMethod implementation
 
-		public IMethod Specialize(TypeParameterSubstitution substitution)
+		public IMethod Specialize(TypeParameterSubstitution? substitution)
 		{
 			return new VarArgInstanceMethod(
-				BaseMethod.Specialize(substitution),
+				BaseMethod?.Specialize(substitution),
 				parameters.Skip(BaseMethod.Parameters.Count - 1).Select(p => p.Type.AcceptVisitor(substitution))
 					.ToList());
 		}
 
-		IEnumerable<IAttribute> IEntity.GetAttributes() => BaseMethod.GetAttributes();
-		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => BaseMethod.GetReturnTypeAttributes();
+		IEnumerable<IAttribute?> IEntity.GetAttributes() => BaseMethod.GetAttributes();
+		IEnumerable<IAttribute?> IMethod.GetReturnTypeAttributes() => BaseMethod.GetReturnTypeAttributes();
 		bool IMethod.ReturnTypeIsRefReadOnly => BaseMethod.ReturnTypeIsRefReadOnly;
 		bool IMethod.ThisIsRefReadOnly => BaseMethod.ThisIsRefReadOnly;
 		bool IMethod.IsInitOnly => BaseMethod.IsInitOnly;
 
-		public IReadOnlyList<ITypeParameter> TypeParameters {
+		public IReadOnlyList<ITypeParameter>? TypeParameters {
 			get { return BaseMethod.TypeParameters; }
 		}
 
-		public IReadOnlyList<IType> TypeArguments {
+		public IReadOnlyList<IType>? TypeArguments {
 			get { return BaseMethod.TypeArguments; }
 		}
 
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return BaseMethod.IsOverridable; }
 		}
 
-		public TypeParameterSubstitution Substitution {
+		public TypeParameterSubstitution? Substitution {
 			get { return BaseMethod.Substitution; }
 		}
 
@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return BaseMethod.DeclaringType; }
 		}
 
-		public IModule ParentModule {
+		public IModule? ParentModule {
 			get { return BaseMethod.ParentModule; }
 		}
 

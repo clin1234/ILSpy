@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public sealed class ILInlining : IILTransform, IBlockTransform, IStatementTransform
 	{
-		public void Run(Block block, BlockTransformContext context)
+		public void Run(Block? block, BlockTransformContext context)
 		{
 			InlineAllInBlock(context.Function, block, context);
 		}
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		/// <param name="loadInst">The load instruction (a descendant within 'next')</param>
 		/// <param name="v">The variable being inlined.</param>
-		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
+		static bool IsGeneratedValueTypeTemporary(LdLoca? loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options) possible.)
 		{
 			Debug.Assert(loadInst.Variable == v);
 			// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
@@ -822,10 +822,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public readonly FindResultType Type;
 			public readonly ILInstruction LoadInst; // ldloc or ldloca instruction that loads the variable to be inlined
 
-			public readonly ILInstruction
+			public readonly ILInstruction?
 				CallArgument; // argument of call that needs to be promoted to a named argument
 
-			private FindResult(FindResultType type, ILInstruction loadInst, ILInstruction callArg)
+			private FindResult(FindResultType type, ILInstruction loadInst, ILInstruction? callArg)
 			{
 				this.Type = type;
 				this.LoadInst = loadInst;
@@ -841,7 +841,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return new FindResult(FindResultType.Found, loadInst, null);
 			}
 
-			public static FindResult NamedArgument(ILInstruction loadInst, ILInstruction callArg)
+			public static FindResult NamedArgument(ILInstruction loadInst, ILInstruction? callArg)
 			{
 				Debug.Assert(loadInst.OpCode is OpCode.LdLoc or OpCode.LdLoca);
 				Debug.Assert(callArg.Parent is CallInstruction);

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed class LambdaExpression : Expression
 	{
 		public static readonly TokenRole AsyncModifierRole = new("async");
-		public static readonly Role<AstNode> BodyRole = new("Body", AstNode.Null);
+		public static readonly Role<AstNode?> BodyRole = new("Body", AstNode.Null);
 
 		bool isAsync;
 

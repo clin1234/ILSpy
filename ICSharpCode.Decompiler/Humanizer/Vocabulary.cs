@@ -14,10 +14,6 @@ namespace Humanizer.Inflections
 		private readonly List<Rule> _singulars = new();
 		private readonly List<string> _uncountables = new();
 
-		internal Vocabulary()
-		{
-		}
-
 		/// <summary>
 		/// Adds a word to the vocabulary which cannot easily be pluralized/singularized by RegEx, e.g. "person" and "people".
 		/// </summary>

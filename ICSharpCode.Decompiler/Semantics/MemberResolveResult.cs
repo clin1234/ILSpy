@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		}
 
 		public MemberResolveResult(ResolveResult targetResult, IMember member, bool isVirtualCall,
-			IType returnTypeOverride = null)
+			IType? returnTypeOverride = null)
 			: base(returnTypeOverride ?? ComputeType(member))
 		{
 			this.TargetResult = targetResult;
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ConstantValue = constantValue;
 		}
 
-		public ResolveResult TargetResult { get; }
+		public ResolveResult? TargetResult { get; }
 
 		/// <summary>
 		/// Gets the member.
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			get { return isConstant; }
 		}
 
-		public override object ConstantValue { get; }
+		public override object? ConstantValue { get; }
 
 		static IType ComputeType(IMember member)
 		{

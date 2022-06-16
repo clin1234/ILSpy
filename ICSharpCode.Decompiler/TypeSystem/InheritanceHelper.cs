@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
 		/// </summary>
-		public static IMember GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
+		public static IMember? GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
 		{
 			ArgumentNullException.ThrowIfNull(baseMember);
 			ArgumentNullException.ThrowIfNull(derivedType);
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region Attributes
 
-		internal static IEnumerable<IAttribute> GetAttributes(ITypeDefinition typeDef)
+		internal static IEnumerable<IAttribute?> GetAttributes(ITypeDefinition typeDef)
 		{
 			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse())
 			{

@@ -68,12 +68,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Any
 		);
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return GetModifierName(Modifier);
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
 			return other is CSharpModifierToken o && this.modifier == o.modifier;
 		}

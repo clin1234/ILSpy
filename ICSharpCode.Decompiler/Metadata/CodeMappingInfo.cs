@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <summary>
 		/// Creates a <see cref="CodeMappingInfo"/> instance using the given <paramref name="module"/> and <paramref name="type"/>.
 		/// </summary>
-		internal CodeMappingInfo(PEFile module, TypeDefinitionHandle type)
+		internal CodeMappingInfo(PEFile? module, TypeDefinitionHandle type)
 		{
 			this.parts = new Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>>();
 			this.parents = new Dictionary<MethodDefinitionHandle, MethodDefinitionHandle>();

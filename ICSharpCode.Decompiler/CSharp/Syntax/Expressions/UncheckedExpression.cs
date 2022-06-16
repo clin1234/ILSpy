@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public UncheckedExpression(Expression expression)
+		public UncheckedExpression(Expression? expression)
 		{
 			AddChild(expression, Roles.Expression);
 		}

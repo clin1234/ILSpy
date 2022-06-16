@@ -3,7 +3,7 @@ using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
-	internal static partial class SRMExtensions
+	public static partial class SRMExtensions
 	{
 		internal static ImmutableArray<MethodImplementationHandle> GetMethodImplementations(
 			this MethodDefinitionHandle handle, MetadataReader reader)

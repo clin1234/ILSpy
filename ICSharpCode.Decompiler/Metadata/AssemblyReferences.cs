@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool IsRetargetable { get; private set; }
 
-		public static AssemblyNameReference Parse(string fullName)
+		public static AssemblyNameReference Parse(string? fullName)
 		{
 			if (fullName == null) throw new ArgumentNullException(nameof(fullName));
 			if (fullName.Length == 0)

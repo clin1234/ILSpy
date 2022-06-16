@@ -1534,7 +1534,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody,
 					cancellationToken: CancellationToken);
-				function.CheckInvariant(ILPhase.Normal);
+				function?.CheckInvariant(ILPhase.Normal);
 
 				if (entityDecl != null)
 				{
@@ -1696,7 +1696,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void AddDefinesForConditionalAttributes(ILFunction function, DecompileRun decompileRun)
 		{
-			foreach (var call in function.Descendants.OfType<CallInstruction>())
+			foreach (var call in function?.Descendants.OfType<CallInstruction>())
 			{
 				var attr = call.Method.GetAttribute(KnownAttribute.Conditional, inherit: true);
 				if (attr.FixedArguments.FirstOrDefault().Value is not string symbolName ||
@@ -2199,7 +2199,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 			}
 
-			return typeDef.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
+			return typeDef?.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
 				.OrderBy(GetOrderingHandle, HandleComparer.Default);
 		}
 

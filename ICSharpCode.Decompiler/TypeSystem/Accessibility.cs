@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The result is accessible from any given point in the code
 		/// iff both a and b are accessible from that point.
 		/// </summary>
-		private static Accessibility Intersect(this Accessibility a, Accessibility b)
+		public static Accessibility Intersect(this Accessibility a, Accessibility b)
 		{
 			if (a > b)
 			{

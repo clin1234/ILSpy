@@ -4562,7 +4562,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst,
 			TranslationContext context)
 		{
-			string message = "Error";
+			string? message = "Error";
 			if (inst.StartILOffset != 0)
 			{
 				message += $" near IL_{inst.StartILOffset:x4}";

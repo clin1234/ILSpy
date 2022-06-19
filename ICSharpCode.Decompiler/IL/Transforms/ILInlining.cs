@@ -283,11 +283,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		/// <param name="loadInst">The load instruction (a descendant within 'next')</param>
 		/// <param name="v">The variable being inlined.</param>
-<<<<<<< HEAD
-		static bool IsGeneratedValueTypeTemporary(LdLoca? loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options) possible.)
-=======
-		static bool IsGeneratedValueTypeTemporary(LdLoca loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
->>>>>>> 235996025 (Fix #2714: Force inlining of call targets in ctor initializers.)
+		static bool IsGeneratedValueTypeTemporary(LdLoca? loadInst, ILVariable v, ILInstruction inlinedExpression, InliningOptions options)
 		{
 			Debug.Assert(loadInst.Variable == v);
 			// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
@@ -822,13 +818,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 	}
-<<<<<<< HEAD
-=======
 	internal enum ExpressionClassification
 	{
 		RValue,
 		MutableLValue,
 		ReadonlyLValue,
 	}
->>>>>>> 837626ebd (Fix rebasing mishaps.)
 }

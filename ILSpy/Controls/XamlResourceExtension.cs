@@ -23,9 +23,9 @@ namespace ICSharpCode.ILSpy.Controls
 {
 	sealed class XamlResourceExtension : MarkupExtension
 	{
-		readonly string name;
+		readonly string? name;
 
-		public XamlResourceExtension(string name)
+		public XamlResourceExtension(string? name)
 		{
 			this.name = name ?? throw new ArgumentNullException(nameof(name));
 		}

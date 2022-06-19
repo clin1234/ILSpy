@@ -169,7 +169,7 @@ namespace ILSpy.BamlDecompiler.Baml
 	{
 		public BamlRecord Header { get; init; }
 		public IList<BamlNode> Children { get; }
-		public BamlRecord Footer { get; set; }
+		public BamlRecord? Footer { get; set; }
 
 		public override BamlRecord Record => Header;
 		public override BamlRecordType Type => Header.Type;

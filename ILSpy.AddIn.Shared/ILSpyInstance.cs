@@ -9,21 +9,21 @@ namespace ICSharpCode.ILSpy.AddIn
 {
 	sealed class ILSpyParameters
 	{
-		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
+		public ILSpyParameters(IEnumerable<string?> assemblyFileNames, params string[] arguments)
 		{
 			this.AssemblyFileNames = assemblyFileNames.ToArray();
 			this.Arguments = arguments;
 		}
 
-		public string[] AssemblyFileNames { get; private set; }
+		public string?[] AssemblyFileNames { get; private set; }
 		public string[] Arguments { get; private set; }
 	}
 
 	sealed class ILSpyInstance
 	{
-		readonly ILSpyParameters parameters;
+		readonly ILSpyParameters? parameters;
 
-		public ILSpyInstance(ILSpyParameters parameters = null)
+		public ILSpyInstance(ILSpyParameters? parameters = null)
 		{
 			this.parameters = parameters;
 		}
@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public void Start()
 		{
-			var commandLineArguments = parameters?.AssemblyFileNames?.Concat(parameters.Arguments);
+			var commandLineArguments = parameters?.AssemblyFileNames.Concat(parameters.Arguments);
 			string ilSpyExe = GetILSpyPath();
 			var process = new Process() {
 				StartInfo = new ProcessStartInfo() {

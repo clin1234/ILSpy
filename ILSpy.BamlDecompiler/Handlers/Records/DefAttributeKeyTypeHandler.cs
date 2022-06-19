@@ -54,8 +54,6 @@ namespace ILSpy.BamlDecompiler.Handlers
 			typeElem.Add(new XElement(ctx.GetPseudoName("Ctor"), typeName));
 			bamlElem.Xaml.Element.Add(typeElem);
 
-			key.KeyElement = bamlElem;
-
 			return bamlElem;
 		}
 	}

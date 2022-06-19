@@ -7,14 +7,14 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler
 {
-	public class ReferenceLoadInfo
+	public abstract class ReferenceLoadInfo
 	{
 		public void AddMessage(params object[] args) { }
 	}
 
 	enum MessageKind { Warning }
 
-	public static class MetadataExtensions
+	internal static class MetadataExtensions
 	{
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler
 
 			StringBuilder sb = new StringBuilder(estimatedLength * 2);
 			foreach (var b in bytes)
-				sb.AppendFormat("{0:x2}", b);
+				sb.Append($"{b:x2}");
 			return sb.ToString();
 		}
 	}

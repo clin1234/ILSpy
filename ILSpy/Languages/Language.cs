@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy
 		public string Version { get; }
 		public string DisplayName { get; }
 
-		public LanguageVersion(string version, string name = null)
+		public LanguageVersion(string version, string? name = null)
 		{
 			this.Version = version ?? "";
 			this.DisplayName = name ?? version;
@@ -387,19 +387,19 @@ namespace ICSharpCode.ILSpy
 
 		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(field);
+			if (field == null) throw new ArgumentNullException(nameof(field));
 			return GetDisplayName(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(field.ReturnType, includeNamespace);
 		}
 
 		public virtual string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(property);
+			if (property == null) throw new ArgumentNullException(nameof(property));
 			return GetDisplayName(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(property.ReturnType, includeNamespace);
 		}
 
 		public virtual string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(method);
+			if (method == null) throw new ArgumentNullException(nameof(method));
 
 			int i = 0;
 			var buffer = new StringBuilder();

@@ -33,7 +33,8 @@ namespace ILSpy.BamlDecompiler.Baml
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public KnownThings KnownThings { get; }
 
-		readonly Dictionary<ushort, (string FullAssemblyName, IModule Assembly)> assemblyMap = new Dictionary<ushort, (string FullAssemblyName, IModule Assembly)>();
+		readonly Dictionary<ushort, (string? FullAssemblyName, IModule? Assembly)> assemblyMap =
+			new Dictionary<ushort, (string? FullAssemblyName, IModule? Assembly)>();
 
 		public Dictionary<ushort, AssemblyInfoRecord> AssemblyIdMap { get; }
 		public Dictionary<ushort, AttributeInfoRecord> AttributeIdMap { get; }
@@ -91,7 +92,7 @@ namespace ILSpy.BamlDecompiler.Baml
 			return ctx;
 		}
 
-		public (string FullAssemblyName, IModule Assembly) ResolveAssembly(ushort id)
+		public (string? FullAssemblyName, IModule? Assembly) ResolveAssembly(ushort id)
 		{
 			id &= 0xfff;
 			if (!assemblyMap.TryGetValue(id, out var assembly))

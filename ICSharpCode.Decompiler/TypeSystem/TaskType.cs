@@ -134,8 +134,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IType Create(ICompilation compilation, IType? elementType)
 		{
-			ArgumentNullException.ThrowIfNull(compilation);
-			ArgumentNullException.ThrowIfNull(elementType);
+			if (compilation == null) throw new ArgumentNullException(nameof(compilation));
+			if (elementType == null) throw new ArgumentNullException(nameof(elementType));
 
 			if (elementType.Kind == TypeKind.Void)
 				return compilation.FindType(KnownTypeCode.Task);

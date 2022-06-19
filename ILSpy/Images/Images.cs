@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy
 
 		private static readonly ImageSource OverlayStatic = Load("OverlayStatic");
 
-		public static ImageSource Load(object part, string icon)
+		public static ImageSource Load(object part, string? icon)
 		{
 			if (icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
 				return LoadImage(part, icon);
@@ -119,7 +119,7 @@ namespace ICSharpCode.ILSpy
 			return LoadImage(part, icon + ".png");
 		}
 
-		static BitmapImage LoadImage(object part, string icon)
+		static BitmapImage LoadImage(object part, string? icon)
 		{
 			Uri uri = GetUri(part, icon);
 			BitmapImage image = new BitmapImage(uri);
@@ -130,12 +130,12 @@ namespace ICSharpCode.ILSpy
 			return image;
 		}
 
-		public static Drawing LoadDrawingGroup(object part, string icon)
+		public static Drawing LoadDrawingGroup(object part, string? icon)
 		{
 			return (Drawing)Application.LoadComponent(GetUri(part, icon + ".xaml", absolute: false));
 		}
 
-		private static Uri GetUri(object part, string icon, bool absolute = true)
+		private static Uri GetUri(object part, string? icon, bool absolute = true)
 		{
 			Uri uri;
 			var assembly = part?.GetType().Assembly;

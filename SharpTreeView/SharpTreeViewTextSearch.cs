@@ -48,7 +48,7 @@ namespace ICSharpCode.TreeView
 
 		private SharpTreeViewTextSearch(SharpTreeView treeView)
 		{
-			ArgumentNullException.ThrowIfNull(treeView);
+			if (treeView == null) throw new ArgumentNullException(nameof(treeView));
 			this.treeView = treeView;
 			inputStack = new Stack<string>(8);
 			ClearState();

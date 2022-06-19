@@ -57,11 +57,11 @@ namespace ILSpy.BamlDecompiler
 
 		public void PushScope(BamlElement? element) => CurrentScope = new XmlnsScope(CurrentScope, element);
 
-		public void PopScope() => CurrentScope = CurrentScope.PreviousScope;
+		public void PopScope() => CurrentScope = CurrentScope?.PreviousScope;
 
-		public void Add(NamespaceMap map) => CurrentScope.Add(map);
+		public void Add(NamespaceMap map) => CurrentScope?.Add(map);
 
-		public void SetPIMapping(string? xmlNs, string clrNs, string fullAssemblyName)
+		public void SetPIMapping(string xmlNs, string clrNs, string fullAssemblyName)
 		{
 			if (!piMappings.ContainsKey(xmlNs))
 			{
@@ -70,7 +70,7 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 
-		NamespaceMap? PIFixup(NamespaceMap? map)
+		NamespaceMap PIFixup(NamespaceMap map)
 		{
 			if (piMappings.TryGetValue(map.XMLNamespace, out var piMap))
 			{

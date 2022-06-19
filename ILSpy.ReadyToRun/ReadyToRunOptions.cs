@@ -20,7 +20,7 @@ using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {
-	internal class ReadyToRunOptions
+	internal static class ReadyToRunOptions
 	{
 		private static readonly XNamespace ns = "http://www.ilspy.net/ready-to-run";
 

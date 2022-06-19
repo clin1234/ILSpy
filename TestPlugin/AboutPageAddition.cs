@@ -25,7 +25,7 @@ namespace TestPlugin
 				Foreground = new SimpleHighlightingBrush(Colors.Aquamarine)
 			});
 			textOutput.Write("DO NOT PRESS THIS BUTTON --> ");
-			textOutput.AddButton(null, "Test!", (sender, args) => MessageBox.Show("Naughty Naughty!", "Naughty!", MessageBoxButton.OK, MessageBoxImage.Exclamation));
+			textOutput.AddButton(null, "Test!", static (_, _) => MessageBox.Show("Naughty Naughty!", "Naughty!", MessageBoxButton.OK, MessageBoxImage.Exclamation));
 			textOutput.Write(" <--");
 			textOutput.WriteLine();
 			textOutput.EndSpan();

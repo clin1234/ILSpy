@@ -30,7 +30,7 @@ namespace ILSpy.BamlDecompiler
 {
 	sealed class BamlDecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 	{
-		readonly string?[] defaultBamlReferences = {
+		readonly string[] defaultBamlReferences = {
 				"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 				"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 				"WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
@@ -42,8 +42,8 @@ namespace ILSpy.BamlDecompiler
 
 		public BamlDecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
 		{
-			ArgumentNullException.ThrowIfNull(mainModule);
-			ArgumentNullException.ThrowIfNull(assemblyResolver);
+			if (mainModule == null) throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver == null) throw new ArgumentNullException(nameof(assemblyResolver));
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<PEFile>();
@@ -80,7 +80,7 @@ namespace ILSpy.BamlDecompiler
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
 					continue;
-				PEFile asm = asmRef.IsAssembly ? assemblyResolver.Resolve((IAssemblyReference)asmRef.Reference) : assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
+				PEFile? asm = asmRef.IsAssembly ? assemblyResolver.Resolve((IAssemblyReference)asmRef.Reference) : assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
 				if (asm != null)
 				{
 					referencedAssemblies.Add(asm);
@@ -113,7 +113,7 @@ namespace ILSpy.BamlDecompiler
 			{
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
-			this.MainModule = (MetadataModule)base.MainModule;
+			this.MainModule = base.MainModule as MetadataModule;
 
 			bool HasType(KnownTypeCode code)
 			{
@@ -129,6 +129,6 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 
-		public new MetadataModule MainModule { get; }
+		public new MetadataModule? MainModule { get; }
 	}
 }

@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler
 
 		public static int GetCodeSize(this SRM.MethodBodyBlock? body)
 		{
-			ArgumentNullException.ThrowIfNull(body);
+			if (body == null) throw new ArgumentNullException(nameof(body));
 
 			return body.GetILReader().Length;
 		}

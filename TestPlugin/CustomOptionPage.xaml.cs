@@ -2,7 +2,6 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System.ComponentModel;
-using System.Windows.Controls;
 using System.Xml.Linq;
 
 using ICSharpCode.ILSpy;
@@ -26,7 +25,7 @@ namespace TestPlugin
 			// If the specified section does exist, the indexer will return a new empty element.
 			XElement e = settings[ns + "CustomOptions"];
 			// Now load the options from the XML document:
-			Options s = new Options();
+			Options s = new ();
 			s.UselessOption1 = (bool?)e.Attribute("useless1") ?? s.UselessOption1;
 			s.UselessOption2 = (double?)e.Attribute("useless2") ?? s.UselessOption2;
 			this.DataContext = s;
@@ -41,13 +40,13 @@ namespace TestPlugin
 		{
 			Options s = (Options)this.DataContext;
 			// Save the options back into XML:
-			XElement section = new XElement(ns + "CustomOptions");
+			XElement section = new (ns + "CustomOptions");
 			section.SetAttributeValue("useless1", s.UselessOption1);
 			section.SetAttributeValue("useless2", s.UselessOption2);
 
 			// Replace the existing section in the settings file, or add a new section,
 			// if required.
-			XElement existingElement = root.Element(ns + "CustomOptions");
+			XElement? existingElement = root.Element(ns + "CustomOptions");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
 			else
@@ -65,7 +64,7 @@ namespace TestPlugin
 				if (uselessOption1 != value)
 				{
 					uselessOption1 = value;
-					OnPropertyChanged("UselessOption1");
+					OnPropertyChanged(nameof(UselessOption1));
 				}
 			}
 		}
@@ -78,12 +77,12 @@ namespace TestPlugin
 				if (uselessOption2 != value)
 				{
 					uselessOption2 = value;
-					OnPropertyChanged("UselessOption2");
+					OnPropertyChanged(nameof(UselessOption2));
 				}
 			}
 		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangedEventHandler? PropertyChanged;
 
 		private void OnPropertyChanged(string propertyName)
 		{

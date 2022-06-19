@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			Conversion? conversionBeforeUserDefinedOperator, Conversion? conversionAfterUserDefinedOperator,
 			bool isLifted = false, bool isAmbiguous = false)
 		{
-			ArgumentNullException.ThrowIfNull(operatorMethod);
+			if (operatorMethod == null) throw new ArgumentNullException(nameof(operatorMethod));
 			return new UserDefinedConv(isImplicit, operatorMethod, conversionBeforeUserDefinedOperator,
 				conversionAfterUserDefinedOperator, isLifted, isAmbiguous);
 		}
@@ -294,7 +294,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public static Conversion? MethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup,
 			bool delegateCapturesFirstArgument)
 		{
-			ArgumentNullException.ThrowIfNull(chosenMethod);
+			if (chosenMethod == null) throw new ArgumentNullException(nameof(chosenMethod));
 			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument,
 				isValid: true);
 		}
@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public static Conversion? InvalidMethodGroupConversion(IMethod? chosenMethod, bool isVirtualMethodLookup,
 			bool delegateCapturesFirstArgument)
 		{
-			ArgumentNullException.ThrowIfNull(chosenMethod);
+			if (chosenMethod == null) throw new ArgumentNullException(nameof(chosenMethod));
 			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument,
 				isValid: false);
 		}

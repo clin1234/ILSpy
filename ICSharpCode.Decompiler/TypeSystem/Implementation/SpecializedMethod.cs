@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			: base(methodDefinition)
 		{
 			bool isParameterized = substitution.MethodTypeArguments != null;
-			ArgumentNullException.ThrowIfNull(substitution);
+			if (substitution == null) throw new ArgumentNullException(nameof(substitution));
 			this.methodDefinition = methodDefinition;
 			if (methodDefinition.TypeParameters.Count > 0)
 			{

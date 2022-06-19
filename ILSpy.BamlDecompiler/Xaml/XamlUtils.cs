@@ -88,7 +88,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 		/// <summary>
 		/// Escape characters that cannot be used in XML.
 		/// </summary>
-		public static StringBuilder EscapeName(StringBuilder sb, string name)
+		private static StringBuilder EscapeName(StringBuilder sb, string name)
 		{
 			foreach (char ch in name)
 			{

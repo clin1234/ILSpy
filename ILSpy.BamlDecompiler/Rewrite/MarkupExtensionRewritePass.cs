@@ -30,8 +30,8 @@ namespace ILSpy.BamlDecompiler.Rewrite
 {
 	internal sealed class MarkupExtensionRewritePass : IRewritePass
 	{
-		XName key;
-		XName ctor;
+		XName? key;
+		XName? ctor;
 
 		public void Run(XamlContext ctx, XDocument document)
 		{
@@ -133,7 +133,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			return true;
 		}
 
-		object InlineObject(XamlContext ctx, XNode obj)
+		object? InlineObject(XamlContext ctx, XNode obj)
 		{
 			return obj switch {
 				XText text => text.Value,
@@ -142,7 +142,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			};
 		}
 
-		object[] InlineCtor(XamlContext ctx, XElement ctor)
+		object[]? InlineCtor(XamlContext ctx, XElement ctor)
 		{
 			if (ctor.HasAttributes)
 				return null;
@@ -156,7 +156,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			return args.ToArray();
 		}
 
-		XamlExtension InlineExtension(XamlContext ctx, XElement ctxElement)
+		XamlExtension? InlineExtension(XamlContext ctx, XElement ctxElement)
 		{
 			var type = ctxElement.Annotation<XamlType>();
 			if (type == null)

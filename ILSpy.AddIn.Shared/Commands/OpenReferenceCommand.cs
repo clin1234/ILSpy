@@ -19,7 +19,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
-		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
+		protected override void OnBeforeQueryStatus(object? sender, EventArgs e)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 		}
 
-		protected override void OnExecute(object sender, EventArgs e)
+		protected override void OnExecute(object? sender, EventArgs e)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 

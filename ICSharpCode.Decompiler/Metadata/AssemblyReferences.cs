@@ -153,9 +153,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public bool IsRetargetable { get; private set; }
 
-		public static AssemblyNameReference Parse(string? fullName)
+		public static AssemblyNameReference Parse(string fullName)
 		{
-			ArgumentNullException.ThrowIfNull(fullName);
+			if (fullName == null) throw new ArgumentNullException(nameof(fullName));
 			if (fullName.Length == 0)
 				throw new ArgumentException("Name can not be empty");
 
@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public AssemblyReference(PEFile? module, AssemblyReferenceHandle handle)
 		{
-			ArgumentNullException.ThrowIfNull(module);
+			if (module == null) throw new ArgumentNullException(nameof(module));
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			Metadata = module.Metadata;

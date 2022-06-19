@@ -37,15 +37,12 @@ namespace ILSpy.BamlDecompiler.Handlers
 			return null;
 		}
 
-		public BamlElement? TranslateDefer(XamlContext ctx, BamlNode node, BamlElement? parent)
+		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
-			var key = (XamlResourceKey)node.Annotation;
-
 			var bamlElem = new BamlElement(node) {
-				Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent.Xaml))
+				Xaml = new XElement(ctx.GetKnownNamespace("Key", XamlContext.KnownNamespace_Xaml, parent?.Xaml))
 			};
-			parent.Xaml.Element.Add(bamlElem.Xaml.Element);
-			key.KeyElement = bamlElem;
+			parent?.Xaml.Element?.Add(bamlElem.Xaml.Element);
 			base.Translate(ctx, node, bamlElem);
 
 			return bamlElem;

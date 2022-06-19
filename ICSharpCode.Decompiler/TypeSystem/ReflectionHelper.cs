@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <seealso cref="FullTypeName(string)"/>
 		public static ITypeReference ParseReflectionName(string? reflectionTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(reflectionTypeName);
+			if (reflectionTypeName == null) throw new ArgumentNullException(nameof(reflectionTypeName));
 			int pos = 0;
 			ITypeReference r = ParseReflectionName(reflectionTypeName, ref pos);
 			if (pos < reflectionTypeName.Length)

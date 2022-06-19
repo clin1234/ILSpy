@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public static bool IsInvocable(IMember member)
 		{
-			ArgumentNullException.ThrowIfNull(member);
+			if (member == null) throw new ArgumentNullException(nameof(member));
 			// C# 4.0 spec, §7.4 member lookup
 			if (member is IEvent or IMethod)
 				return true;
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IEnumerable<IEntity> GetAccessibleMembers(ResolveResult? targetResolveResult)
 		{
-			ArgumentNullException.ThrowIfNull(targetResolveResult);
+			if (targetResolveResult == null) throw new ArgumentNullException(nameof(targetResolveResult));
 
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
@@ -171,9 +171,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IReadOnlyList<IType>? typeArguments,
 			bool isInvocation)
 		{
-			ArgumentNullException.ThrowIfNull(targetResolveResult);
-			ArgumentNullException.ThrowIfNull(name);
-			ArgumentNullException.ThrowIfNull(typeArguments);
+			if (targetResolveResult == null) throw new ArgumentNullException(nameof(targetResolveResult));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (typeArguments == null) throw new ArgumentNullException(nameof(typeArguments));
 
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 
@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IReadOnlyList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
 		{
-			ArgumentNullException.ThrowIfNull(targetResolveResult);
+			if (targetResolveResult == null) throw new ArgumentNullException(nameof(targetResolveResult));
 
 			IType targetType = targetResolveResult.Type;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
@@ -617,7 +617,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </param>
 		public bool IsAccessible(IEntity entity, bool allowProtectedAccess)
 		{
-			ArgumentNullException.ThrowIfNull(entity);
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
 			// C# 4.0 spec, §3.5.2 Accessiblity domains
 			switch (entity.Accessibility)
 			{
@@ -682,9 +682,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public ResolveResult LookupType(IType declaringType, string name, IReadOnlyList<IType>? typeArguments,
 			bool parameterizeResultType = true)
 		{
-			ArgumentNullException.ThrowIfNull(declaringType);
-			ArgumentNullException.ThrowIfNull(name);
-			ArgumentNullException.ThrowIfNull(typeArguments);
+			if (declaringType == null) throw new ArgumentNullException(nameof(declaringType));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (typeArguments == null) throw new ArgumentNullException(nameof(typeArguments));
 
 			int typeArgumentCount = typeArguments.Count;
 

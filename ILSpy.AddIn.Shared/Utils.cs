@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	{
 		public static byte[] HexStringToBytes(string hex)
 		{
-			ArgumentNullException.ThrowIfNull(hex);
+			if (hex == null) throw new ArgumentNullException(nameof(hex));
 			var result = new byte[hex.Length / 2];
 			for (int i = 0; i < hex.Length / 2; i++)
 			{
@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return result;
 		}
 
-		public static bool TryGetProjectFileName(dynamic referenceObject, out string fileName)
+		public static bool TryGetProjectFileName(dynamic referenceObject, out string? fileName)
 		{
 			try
 			{
@@ -53,11 +53,11 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		public static object[] GetProperties(Properties properties, params string[] names)
+		public static object?[] GetProperties(Properties properties, params string[] names)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			var values = new object[names.Length];
+			var values = new object?[names.Length];
 			foreach (object p in properties)
 			{
 				try
@@ -114,8 +114,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			IWpfTextViewHost? viewHost = GetCurrentViewHost(serviceProvider);
 
-			ITextDocument textDocument = viewHost?.GetTextDocument();
-			if (textDocument == null || !predicate(textDocument.FilePath))
+			if (viewHost?.GetTextDocument() is not { } textDocument || !predicate(textDocument.FilePath))
 				return null;
 
 			return viewHost;
@@ -123,8 +122,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static IWpfTextViewHost? GetCurrentViewHost(IServiceProvider serviceProvider)
 		{
-			IVsTextManager txtMgr = (IVsTextManager)serviceProvider.GetService(typeof(SVsTextManager));
-			if (txtMgr == null)
+			if (serviceProvider.GetService(typeof(SVsTextManager)) is not IVsTextManager txtMgr)
 			{
 				return null;
 			}
@@ -146,22 +144,22 @@ namespace ICSharpCode.ILSpy.AddIn
 			return textDocument;
 		}
 
-		public static VisualStudioWorkspace GetWorkspace(IServiceProvider serviceProvider)
+		public static VisualStudioWorkspace? GetWorkspace(IServiceProvider serviceProvider)
 		{
-			return (VisualStudioWorkspace)serviceProvider.GetService(typeof(VisualStudioWorkspace));
+			return serviceProvider.GetService(typeof(VisualStudioWorkspace)) as VisualStudioWorkspace;
 		}
 
-		public static string GetProjectOutputAssembly(Project project, Microsoft.CodeAnalysis.Project roslynProject)
+		public static string? GetProjectOutputAssembly(Project project, Microsoft.CodeAnalysis.Project roslynProject)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
+			string? outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
 
 			// Get the directory path based on the project file.
-			string projectPath = Path.GetDirectoryName(project.FullName);
+			string? projectPath = Path.GetDirectoryName(project.FullName);
 
 			// Get the output path based on the active configuration
-			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
+			string? projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
 
 			// Combine the project path and output path to get the bin path
 			if ((projectPath != null) && (projectOutputPath != null) && (outputFileName != null))

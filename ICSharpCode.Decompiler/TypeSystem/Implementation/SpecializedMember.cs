@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected SpecializedMember(IMember memberDefinition)
 		{
-			ArgumentNullException.ThrowIfNull(memberDefinition);
+			if (memberDefinition == null) throw new ArgumentNullException(nameof(memberDefinition));
 			if (memberDefinition is SpecializedMember)
 				throw new ArgumentException(
 					"Member definition cannot be specialized. Please use IMember.Specialize() instead of directly constructing SpecializedMember instances.");

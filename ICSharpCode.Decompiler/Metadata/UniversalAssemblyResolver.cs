@@ -63,7 +63,6 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		static readonly List<string> gac_paths = GetGacPaths();
 		static readonly DecompilerRuntime decompilerRuntime;
-		readonly string? baseDirectory;
 		readonly List<string?> directories = new();
 
 		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
@@ -116,7 +115,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			string? runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default,
 			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
-			string? baseDirectory = null;
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.throwOnError = throwOnError;
 			this.streamOptions = streamOptions;
@@ -127,9 +125,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.dotNetCorePathFinder = new Lazy<DotNetCorePathFinder>(InitDotNetCorePathFinder);
 			if (mainAssemblyFileName != null)
 			{
-				this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
-				if (string.IsNullOrWhiteSpace(this.baseDirectory))
-					this.baseDirectory = Environment.CurrentDirectory;
+				string? baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
+				if (string.IsNullOrWhiteSpace(baseDirectory))
+					baseDirectory = Environment.CurrentDirectory;
 				AddSearchDirectory(baseDirectory);
 			}
 		}
@@ -334,13 +332,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
-			foreach ((Version version, string directoryName) folder in new DirectoryInfo(basePath).GetDirectories()
+			foreach (var folder in new DirectoryInfo(basePath).GetDirectories()
 				         .Select(static d => DotNetCorePathFinder.ConvertToVersion(d.Name))
 				         .Where(static v => v.Item1 != null)
-				         .OrderByDescending(static v => v.Item1))
+				         .OrderByDescending(static v => v.Item1).Where(folder => path == null || version == null || folder.Item1 >= version))
 			{
-				if (path == null || version == null || folder.Item1 >= version)
-					path = folder.Item2;
+				path = folder.Item2;
 			}
 
 			return path ?? version?.ToString() ?? ".";
@@ -348,7 +345,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			ArgumentNullException.ThrowIfNull(name);
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
@@ -729,7 +726,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						         SearchOption.AllDirectories))
 					{
 						string[]? name = Path.GetDirectoryName(item.FullName)?[(rootPath.Length + 1)..]
-							.Split(new[] {
+							?.Split(new[] {
 									"\\"
 								},
 								StringSplitOptions.RemoveEmptyEntries);

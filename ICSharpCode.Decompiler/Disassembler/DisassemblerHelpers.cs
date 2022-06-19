@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static void WriteOperand(ITextOutput writer, object operand)
 		{
-			ArgumentNullException.ThrowIfNull(operand);
+			if (operand == null) throw new ArgumentNullException(nameof(operand));
 
 			if (operand is string s)
 			{

@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// Settings for the decompiler.
 	/// </summary>
-	public class DecompilerSettings : INotifyPropertyChanged
+	public sealed class DecompilerSettings : INotifyPropertyChanged
 	{
 		bool aggressiveInlining;
 
@@ -1794,7 +1794,7 @@ namespace ICSharpCode.Decompiler
 			return CSharp.LanguageVersion.CSharp1;
 		}
 
-		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}

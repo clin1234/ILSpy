@@ -48,7 +48,7 @@ namespace ILSpy.BamlDecompiler
 
 		private readonly BamlDecompilerTypeSystem typeSystem;
 
-		public BamlDecompilerSettings Settings { get; set; }
+		public BamlDecompilerSettings Settings { get; }
 
 		public CancellationToken CancellationToken { get; init; }
 
@@ -114,7 +114,7 @@ namespace ILSpy.BamlDecompiler
 				pass.Run(ctx, xaml);
 			}
 
-			var assemblyReferences = ctx.Baml.AssemblyIdMap.Select(a => a.Value.AssemblyFullName);
+			var assemblyReferences = ctx.Baml.AssemblyIdMap.Select(static a => a.Value.AssemblyFullName);
 			return new BamlDecompilationResult(xaml, assemblyReferences);
 		}
 	}

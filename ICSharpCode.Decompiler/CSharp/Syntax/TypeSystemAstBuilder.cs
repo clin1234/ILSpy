@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ParameterDeclaration? ConvertParameter(IParameter? parameter)
 		{
-			ArgumentNullException.ThrowIfNull(parameter);
+			if (parameter == null) throw new ArgumentNullException(nameof(parameter));
 			ParameterDeclaration? decl = new();
 			if (parameter.IsRef)
 			{
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType? ConvertType(IType type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type == null) throw new ArgumentNullException(nameof(type));
 			AstType? astType = ConvertTypeHelper(type);
 			AddTypeAnnotation(astType, type);
 			return astType;
@@ -942,7 +942,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstType? ConvertAttributeType(IType type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type == null) throw new ArgumentNullException(nameof(type));
 			AstType? astType = ConvertTypeHelper(type);
 
 			string shortName = null;
@@ -1059,7 +1059,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public Expression? ConvertConstantValue(ResolveResult rr)
 		{
-			ArgumentNullException.ThrowIfNull(rr);
+			if (rr == null) throw new ArgumentNullException(nameof(rr));
 			bool isBoxing = false;
 			if (rr is ConversionResolveResult crr)
 			{
@@ -1149,7 +1149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public Expression? ConvertConstantValue(IType expectedType, IType type, object constantValue)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type == null) throw new ArgumentNullException(nameof(type));
 			switch (constantValue)
 			{
 				case null when type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT) ||
@@ -1843,7 +1843,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNode? ConvertSymbol(ISymbol symbol)
 		{
-			ArgumentNullException.ThrowIfNull(symbol);
+			if (symbol == null) throw new ArgumentNullException(nameof(symbol));
 			switch (symbol.SymbolKind)
 			{
 				case SymbolKind.Namespace:
@@ -1863,7 +1863,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public EntityDeclaration? ConvertEntity(IEntity entity)
 		{
-			ArgumentNullException.ThrowIfNull(entity);
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
 			switch (entity.SymbolKind)
 			{
 				case SymbolKind.TypeDefinition:

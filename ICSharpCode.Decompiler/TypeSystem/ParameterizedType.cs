@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ParameterizedType(IType genericType, IEnumerable<IType>? typeArguments)
 		{
-			ArgumentNullException.ThrowIfNull(typeArguments);
+			if (typeArguments == null) throw new ArgumentNullException(nameof(typeArguments));
 			this.GenericType = genericType ?? throw new ArgumentNullException(nameof(genericType));
 			this.typeArguments = typeArguments.ToArray(); // copy input array to ensure it isn't modified
 			if (this.typeArguments.Length == 0)
@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ParameterizedTypeReference(ITypeReference genericType, IEnumerable<ITypeReference> typeArguments)
 		{
-			ArgumentNullException.ThrowIfNull(typeArguments);
+			if (typeArguments == null) throw new ArgumentNullException(nameof(typeArguments));
 			this.GenericType = genericType ?? throw new ArgumentNullException(nameof(genericType));
 			this.typeArguments = typeArguments.ToArray();
 			for (int i = 0; i < this.typeArguments.Length; i++)

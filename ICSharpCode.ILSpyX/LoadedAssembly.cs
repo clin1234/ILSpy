@@ -464,7 +464,7 @@ namespace ICSharpCode.ILSpyX
 			return new MyAssemblyResolver(this, snapshot, loadOnDemand, applyWinRTProjections);
 		}
 
-		private UniversalAssemblyResolver GetUniversalResolver(bool applyWinRTProjections)
+		public UniversalAssemblyResolver GetUniversalResolver(bool applyWinRTProjections)
 		{
 			return LazyInitializer.EnsureInitialized(ref this.universalResolver, () => {
 				var targetFramework = this.GetTargetFrameworkIdAsync().Result;

@@ -153,29 +153,29 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			public ulong codeOffset;
 			public bool isStart;
 			public bool isRegRelative;
-			public string register;
+			public string? register;
 			public int registerOffset;
-			public Variable variable;
+			public Variable? variable;
 		}
 
 		private sealed class DebugInfoHelper
 		{
 			public List<NativeVarInfoRecord>? records;
-			public int i;
+			private int i;
 			public readonly Dictionary<string, Dictionary<int, HashSet<Variable>>> registerRelativeVariables;
-			public readonly Dictionary<string, HashSet<Variable>> registerVariables;
+			public readonly Dictionary<string, HashSet<Variable?>> registerVariables;
 
 			public DebugInfoHelper()
 			{
 				this.registerRelativeVariables = new Dictionary<string, Dictionary<int, HashSet<Variable>>>();
-				this.registerVariables = new Dictionary<string, HashSet<Variable>>();
+				this.registerVariables = new Dictionary<string, HashSet<Variable?>>();
 			}
 
 			public void Update(ulong codeOffset)
 			{
 				while (i < records.Count && records[i].codeOffset == codeOffset)
 				{
-					HashSet<Variable> variables;
+					HashSet<Variable?> variables;
 					if (records[i].isRegRelative)
 					{
 						Dictionary<int, HashSet<Variable>> offsetToVariableMap;
@@ -188,7 +188,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 							}
 							if (!offsetToVariableMap.TryGetValue(records[i].registerOffset, out variables))
 							{
-								variables = new HashSet<Variable>();
+								variables = new HashSet<Variable?>();
 								offsetToVariableMap.Add(records[i].registerOffset, variables);
 							}
 							variables.Add(records[i].variable);
@@ -206,7 +206,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						{
 							if (!this.registerVariables.TryGetValue(records[i].register, out variables))
 							{
-								variables = new HashSet<Variable>();
+								variables = new HashSet<Variable?>();
 								this.registerVariables.Add(records[i].register, variables);
 							}
 							variables.Add(records[i].variable);
@@ -377,7 +377,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 						if (offsetToVariableMap.TryGetValue(displacement, out variables))
 						{
 							output.Write($";");
-							foreach (Variable variable in variables)
+							foreach (Variable? variable in variables)
 							{
 								output.Write($" [{usedMemInfo.Base.ToString().ToLower()}{(displacement < 0 ? '-' : '+')}{Math.Abs(displacement):X}h] = {variable.Type} {variable.Index}");
 							}
@@ -390,7 +390,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					if (debugRecords.registerVariables.TryGetValue(usedMemInfo.Register.ToString(), out variables))
 					{
 						output.Write($";");
-						foreach (Variable variable in variables)
+						foreach (Variable? variable in variables)
 						{
 							output.Write($" {usedMemInfo.Register.ToString().ToLower()} = {variable.Type} {variable.Index}");
 						}

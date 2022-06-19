@@ -29,7 +29,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 	internal sealed class XamlExtension
 	{
 		public XamlType ExtensionType { get; }
-		public object[] Initializer { get; set; }
+		public object[]? Initializer { get; set; }
 		public IDictionary<string, object> NamedArguments { get; }
 
 		public XamlExtension(XamlType type)

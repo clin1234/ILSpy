@@ -27,7 +27,7 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	internal sealed class FieldAssignment
 	{
-		public string FieldName;
+		public string? FieldName;
 	}
 
 	/// <summary>
@@ -35,7 +35,8 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	internal sealed class EventRegistration
 	{
-		public string EventName, MethodName;
+		public string? EventName;
+		public string? MethodName;
 	}
 
 	internal sealed class BamlConnectionId

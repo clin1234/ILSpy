@@ -8,7 +8,7 @@ namespace ICSharpCode.ILSpy.AddIn
 {
 	internal static class AssemblyFileFinder
 	{
-		public static string FindAssemblyFile(Mono.Cecil.AssemblyDefinition assemblyDefinition, string assemblyFile)
+		public static string? FindAssemblyFile(Mono.Cecil.AssemblyDefinition assemblyDefinition, string assemblyFile)
 		{
 			string tfi = DetectTargetFrameworkId(assemblyDefinition, assemblyFile);
 			UniversalAssemblyResolver assemblyResolver = IsReferenceAssembly(assemblyDefinition, assemblyFile) ? new UniversalAssemblyResolver(null, throwOnError: false, tfi) : new UniversalAssemblyResolver(assemblyFile, throwOnError: false, tfi);
@@ -30,9 +30,9 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private const string DetectTargetFrameworkIdRefPathPattern = @"(Reference Assemblies[/\\]Microsoft[/\\]Framework[/\\](?<1>.NETFramework)[/\\]v(?<2>[^/\\]+)[/\\])" + @"|((NuGetFallbackFolder|packs|.nuget[/\\]packages)[/\\](?<1>[^/\\]+)\\(?<2>[^/\\]+)([/\\].*)?[/\\]ref[/\\])";
 
-		public static string DetectTargetFrameworkId(Mono.Cecil.AssemblyDefinition assembly, string assemblyPath = null)
+		public static string DetectTargetFrameworkId(Mono.Cecil.AssemblyDefinition assembly, string? assemblyPath = null)
 		{
-			ArgumentNullException.ThrowIfNull(assembly);
+			if (assembly == null) throw new ArgumentNullException(nameof(assembly));
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 

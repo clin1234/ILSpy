@@ -731,7 +731,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </remarks>
 		public SyntaxTree? DecompileTypes(IEnumerable<TypeDefinitionHandle> types)
 		{
-			ArgumentNullException.ThrowIfNull(types);
+			if (types == null) throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(TypeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
@@ -815,7 +815,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public SyntaxTree? Decompile(IEnumerable<EntityHandle> definitions)
 		{
-			ArgumentNullException.ThrowIfNull(definitions);
+			if (definitions == null) throw new ArgumentNullException(nameof(definitions));
 			syntaxTree = new SyntaxTree();
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
@@ -1347,7 +1347,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (MemberIsHidden(module, field.MetadataToken, settings))
 					continue;
-				object constantValue = field.GetConstantValue();
+				object? constantValue = field.GetConstantValue();
 				if (constantValue == null)
 					continue;
 				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
@@ -1478,7 +1478,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					if (decompileRun.TypeHierarchyIsKnown.TryGetValue(definition, out var value))
 						return value;
-					value = method.DeclaringType.GetNonInterfaceBaseTypes().All(t => t.Kind != TypeKind.Unknown);
+					value = method.DeclaringType.GetNonInterfaceBaseTypes().All(static t => t.Kind != TypeKind.Unknown);
 					decompileRun.TypeHierarchyIsKnown.Add(definition, value);
 					return value;
 				}
@@ -1534,7 +1534,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody,
 					cancellationToken: CancellationToken);
-				function?.CheckInvariant(ILPhase.Normal);
+				function.CheckInvariant(ILPhase.Normal);
 
 				if (entityDecl != null)
 				{
@@ -1696,7 +1696,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void AddDefinesForConditionalAttributes(ILFunction function, DecompileRun decompileRun)
 		{
-			foreach (var call in function?.Descendants.OfType<CallInstruction>())
+			foreach (var call in function.Descendants.OfType<CallInstruction>())
 			{
 				var attr = call.Method.GetAttribute(KnownAttribute.Conditional, inherit: true);
 				if (attr.FixedArguments.FirstOrDefault().Value is not string symbolName ||
@@ -1718,7 +1718,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.IsConst)
 				{
 					var enumDec = new EnumMemberDeclaration { Name = field.Name };
-					object constantValue = field.GetConstantValue();
+					object? constantValue = field.GetConstantValue();
 					if (constantValue != null)
 					{
 						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
@@ -1794,11 +1794,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
+		internal static bool IsFixedField(IField field, out IType? type, out int elementCount)
 		{
 			type = null;
 			elementCount = 0;
-			IAttribute attr = field.GetAttribute(KnownAttribute.FixedBuffer, inherit: false);
+			IAttribute? attr = field.GetAttribute(KnownAttribute.FixedBuffer, inherit: false);
 			if (attr is { FixedArguments.Length: 2 })
 			{
 				if (attr.FixedArguments[0].Value is IType trr && attr.FixedArguments[1].Value is int length)
@@ -2116,7 +2116,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata,
-			out string propertyName)
+			out string? propertyName)
 		{
 			propertyName = null;
 			var name = metadata.GetString(field.Name);
@@ -2199,7 +2199,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 			}
 
-			return typeDef?.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
+			return typeDef.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
 				.OrderBy(GetOrderingHandle, HandleComparer.Default);
 		}
 

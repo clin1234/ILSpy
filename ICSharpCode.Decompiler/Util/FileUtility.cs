@@ -19,12 +19,12 @@
 #nullable enable
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 
 namespace ICSharpCode.Decompiler.Util
 {
+	using System.Diagnostics.CodeAnalysis;
 	static class FileUtility
 	{
 		static readonly char[] separators = { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// Slashes are replaced with backslashes, backreferences "." and ".." are 'evaluated'.
 		/// </summary>
 		[return: NotNullIfNotNull("fileName")]
-		public static string NormalizePath(string fileName)
+		public static string? NormalizePath(string? fileName)
 		{
 			if (string.IsNullOrEmpty(fileName))
 				return fileName;
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.Util
 				StringComparison.OrdinalIgnoreCase);
 		}
 
-		public static bool IsBaseDirectory(string baseDirectory, string testDirectory)
+		public static bool IsBaseDirectory(string? baseDirectory, string? testDirectory)
 		{
 			if (baseDirectory == null || testDirectory == null)
 				return false;
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		[return: NotNullIfNotNull("input")]
-		static string AddTrailingSeparator(string input)
+		static string? AddTrailingSeparator(string? input)
 		{
 			if (string.IsNullOrEmpty(input))
 				return input;
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// Converts a given absolute path and a given base path to a path that leads
 		/// from the base path to the absoulte path. (as a relative path)
 		/// </summary>
-		public static string GetRelativePath(string baseDirectoryPath, string absPath)
+		public static string? GetRelativePath(string baseDirectoryPath, string? absPath)
 		{
 			if (string.IsNullOrEmpty(baseDirectoryPath))
 			{

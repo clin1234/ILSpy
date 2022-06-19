@@ -33,7 +33,7 @@ namespace TestPlugin
 		// There are several methods available to override; in this sample, we deal with methods only
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			var module = ((MetadataModule)method.ParentModule).PEFile;
+			var module = (method.ParentModule as MetadataModule)?.PEFile;
 			var methodDef = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 			if (methodDef.HasBody())
 			{
@@ -43,7 +43,7 @@ namespace TestPlugin
 				if (output is ISmartTextOutput smartOutput)
 				{
 					// when writing to the text view (but not when writing to a file), we can even add UI elements such as buttons:
-					smartOutput.AddButton(null, "Click me!", (sender, e) => (sender as Button).Content = "I was clicked!");
+					smartOutput.AddButton(null, "Click me!", static (sender, _) => ((Button)sender).Content = "I was clicked!");
 					smartOutput.WriteLine();
 				}
 

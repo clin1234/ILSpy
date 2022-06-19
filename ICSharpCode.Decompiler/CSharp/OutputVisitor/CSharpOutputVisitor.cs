@@ -42,15 +42,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public CSharpOutputVisitor(TextWriter textWriter, CSharpFormattingOptions formattingPolicy)
 		{
-			ArgumentNullException.ThrowIfNull(textWriter);
-			ArgumentNullException.ThrowIfNull(formattingPolicy);
+			if (textWriter == null) throw new ArgumentNullException(nameof(textWriter));
+			if (formattingPolicy == null) throw new ArgumentNullException(nameof(formattingPolicy));
 			this.writer = TokenWriter.Create(textWriter, formattingPolicy.IndentationString);
 			this.policy = formattingPolicy;
 		}
 
 		public CSharpOutputVisitor(TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
-			ArgumentNullException.ThrowIfNull(writer);
+			if (writer == null) throw new ArgumentNullException(nameof(writer));
 
 			this.writer = new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(writer));
 			this.policy = formattingPolicy ?? throw new ArgumentNullException(nameof(formattingPolicy));

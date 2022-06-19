@@ -157,11 +157,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 
-		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver)
-			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
-		{
-		}
-
 		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 			: this(mainModule, assemblyResolver,
 				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))))
@@ -169,10 +164,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver,
-			TypeSystemOptions typeSystemOptions)
+			TypeSystemOptions typeSystemOptions = TypeSystemOptions.Default)
 		{
-			ArgumentNullException.ThrowIfNull(mainModule);
-			ArgumentNullException.ThrowIfNull(assemblyResolver);
+			if (mainModule == null) throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver == null) throw new ArgumentNullException(nameof(assemblyResolver));
 			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
 		}
 
@@ -206,11 +201,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return typeSystemOptions;
 		}
 
-		public static Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver)
-		{
-			return CreateAsync(mainModule, assemblyResolver, TypeSystemOptions.Default);
-		}
-
 		public static Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver,
 			DecompilerSettings settings)
 		{
@@ -219,10 +209,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule,
-			IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+			IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions = TypeSystemOptions.Default)
 		{
-			ArgumentNullException.ThrowIfNull(mainModule);
-			ArgumentNullException.ThrowIfNull(assemblyResolver);
+			if (mainModule == null) throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver == null) throw new ArgumentNullException(nameof(assemblyResolver));
 			var ts = new DecompilerTypeSystem();
 			await ts.InitializeAsync(mainModule, assemblyResolver, typeSystemOptions)
 				.ConfigureAwait(false);

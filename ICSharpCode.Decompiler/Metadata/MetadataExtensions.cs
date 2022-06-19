@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
-			ArgumentNullException.ThrowIfNull(bytes);
+			if (bytes == null) throw new ArgumentNullException(nameof(bytes));
 
 			StringBuilder sb = new(estimatedLength * 2);
 			foreach (var b in bytes)

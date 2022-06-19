@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <exception cref="XmlException">Invalid XML file</exception>
 		public XmlDocumentationProvider(string? fileName)
 		{
-			ArgumentNullException.ThrowIfNull(fileName);
+			if (fileName == null) throw new ArgumentNullException(nameof(fileName));
 
 			using FileStream fs = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
 			using XmlTextReader xmlReader = new(fs);
@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string? GetDocumentation(string? key)
 		{
-			ArgumentNullException.ThrowIfNull(key);
+			if (key == null) throw new ArgumentNullException(nameof(key));
 			return GetDocumentation(key, true);
 		}
 
@@ -405,7 +405,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public string? GetDocumentation(IEntity entity)
 		{
-			ArgumentNullException.ThrowIfNull(entity);
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
 			return GetDocumentation(entity.GetIdString());
 		}
 

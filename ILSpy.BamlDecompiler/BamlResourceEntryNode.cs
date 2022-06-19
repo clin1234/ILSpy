@@ -38,7 +38,7 @@ namespace ILSpy.BamlDecompiler
 
 		public override bool View(TabPageModel tabPage)
 		{
-			IHighlightingDefinition highlighting = null;
+			IHighlightingDefinition? highlighting = null;
 
 			tabPage.SupportsLanguageSwitching = false;
 			tabPage.ShowTextView(textView => textView.RunWithCancellation(

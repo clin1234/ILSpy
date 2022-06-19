@@ -14,7 +14,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 {
 	internal sealed class DetectedReference
 	{
-		public DetectedReference(string name, string assemblyFile, bool isProjectReference)
+		public DetectedReference(string name, string? assemblyFile, bool isProjectReference)
 		{
 			this.Name = name;
 			this.AssemblyFile = assemblyFile;
@@ -22,7 +22,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		}
 
 		public string Name { get; private set; }
-		public string AssemblyFile { get; private set; }
+		public string? AssemblyFile { get; private set; }
 		public bool IsProjectReference { get; private set; }
 	}
 
@@ -41,11 +41,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			owner.MenuService.AddCommand(menuItem);
 		}
 
-		protected virtual void OnBeforeQueryStatus(object sender, EventArgs e)
+		protected virtual void OnBeforeQueryStatus(object? sender, EventArgs e)
 		{
 		}
 
-		protected abstract void OnExecute(object sender, EventArgs e);
+		protected abstract void OnExecute(object? sender, EventArgs e);
 
 		protected string GetILSpyPath()
 		{
@@ -53,14 +53,14 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			return Path.Combine(basePath, "ILSpy", "ILSpy.exe");
 		}
 
-		protected void OpenAssembliesInILSpy(ILSpyParameters parameters)
+		protected void OpenAssembliesInILSpy(ILSpyParameters? parameters)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			if (parameters == null)
 				return;
 
-			foreach (string assemblyFileName in parameters.AssemblyFileNames)
+			foreach (string? assemblyFileName in parameters.AssemblyFileNames)
 			{
 				if (!File.Exists(assemblyFileName))
 				{
@@ -82,12 +82,12 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			{
 				using var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display);
 				string assemblyName = assemblyDef.Name.Name;
-				string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
+				string? resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
 				dict.Add(assemblyName, new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 			}
 			foreach (var projectReference in parentProject.ProjectReferences)
 			{
-				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
+				var roslynProject = owner.Workspace?.CurrentSolution.GetProject(projectReference.ProjectId);
 				if (roslynProject != null)
 				{
 					var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			return dict;
 		}
 
-		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
+		protected EnvDTE.Project? FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -136,15 +136,13 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 	sealed class OpenILSpyCommand : ILSpyCommand
 	{
-		static OpenILSpyCommand instance;
-
 		public OpenILSpyCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenILSpy)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
-		protected override void OnExecute(object sender, EventArgs e)
+		protected override void OnExecute(object? sender, EventArgs e)
 		{
 			new ILSpyInstance().Start();
 		}
@@ -153,7 +151,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenILSpyCommand(owner);
+			new OpenILSpyCommand(owner);
 		}
 	}
 }

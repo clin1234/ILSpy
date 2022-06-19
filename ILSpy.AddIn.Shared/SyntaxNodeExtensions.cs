@@ -42,16 +42,16 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		public static TNode GetAncestor<TNode>(this SyntaxNode node)
+		public static TNode? GetAncestor<TNode>(this SyntaxNode node)
 			where TNode : SyntaxNode
 		{
-			return node?.GetAncestors<TNode>().FirstOrDefault();
+			return node.GetAncestors<TNode>().FirstOrDefault();
 		}
 
-		public static TNode GetAncestorOrThis<TNode>(this SyntaxNode node)
+		public static TNode? GetAncestorOrThis<TNode>(this SyntaxNode node)
 			where TNode : SyntaxNode
 		{
-			return node?.GetAncestorsOrThis<TNode>().FirstOrDefault();
+			return node.GetAncestorsOrThis<TNode>().FirstOrDefault();
 		}
 
 		public static IEnumerable<TNode> GetAncestorsOrThis<TNode>(this SyntaxNode node)
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool CheckParent<T>(this SyntaxNode node, Func<T, bool> valueChecker) where T : SyntaxNode
 		{
-			if (node?.Parent is not T parentNode)
+			if (node.Parent is not T parentNode)
 			{
 				return false;
 			}
@@ -151,7 +151,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			this IEnumerable<SyntaxNode> nodes,
 			Func<SyntaxNode, bool> predicate)
 		{
-			IEnumerable<SyntaxNode> blocks = null;
+			IEnumerable<SyntaxNode>? blocks = null;
 			foreach (var node in nodes)
 			{
 				blocks = blocks == null
@@ -213,9 +213,9 @@ namespace ICSharpCode.ILSpy.AddIn
 		}
 
 		public static IEnumerable<TextSpan> GetContiguousSpans(
-			this IEnumerable<SyntaxNode> nodes, Func<SyntaxNode, SyntaxToken> getLastToken = null)
+			this IEnumerable<SyntaxNode> nodes, Func<SyntaxNode, SyntaxToken>? getLastToken = null)
 		{
-			SyntaxNode lastNode = null;
+			SyntaxNode? lastNode = null;
 			TextSpan? textSpan = null;
 			foreach (var node in nodes)
 			{
@@ -272,7 +272,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return node.GetAnnotatedNodesAndTokens(syntaxAnnotation).Select(n => n.AsNode()).OfType<T>();
 		}
 
-		public static bool IsKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2)
+		public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2)
 		{
 			if (node == null)
 			{
@@ -283,7 +283,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return csharpKind == kind1 || csharpKind == kind2;
 		}
 
-		public static bool IsKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
+		public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
 		{
 			if (node == null)
 			{
@@ -294,7 +294,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return csharpKind == kind1 || csharpKind == kind2 || csharpKind == kind3;
 		}
 
-		public static bool IsKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
+		public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
 		{
 			if (node == null)
 			{
@@ -305,7 +305,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return csharpKind == kind1 || csharpKind == kind2 || csharpKind == kind3 || csharpKind == kind4;
 		}
 
-		public static bool IsKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
+		public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
 		{
 			if (node == null)
 			{
@@ -320,12 +320,12 @@ namespace ICSharpCode.ILSpy.AddIn
 		/// Returns the list of using directives that affect <paramref name="node"/>. The list will be returned in
 		/// top down order.  
 		/// </summary>
-		public static IEnumerable<UsingDirectiveSyntax> GetEnclosingUsingDirectives(this SyntaxNode node)
+		public static IEnumerable<UsingDirectiveSyntax>? GetEnclosingUsingDirectives(this SyntaxNode node)
 		{
-			return node.GetAncestorOrThis<CompilationUnitSyntax>().Usings
+			return node.GetAncestorOrThis<CompilationUnitSyntax>()?.Usings
 				.Concat(node.GetAncestorsOrThis<NamespaceDeclarationSyntax>()
 					.Reverse()
-					.SelectMany(n => n.Usings));
+					.SelectMany(static n => n.Usings));
 		}
 
 		public static bool IsUnsafeContext(this SyntaxNode node)
@@ -380,7 +380,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return true;
 		}
 
-		public static NamespaceDeclarationSyntax GetInnermostNamespaceDeclarationWithUsings(this SyntaxNode contextNode)
+		public static NamespaceDeclarationSyntax? GetInnermostNamespaceDeclarationWithUsings(this SyntaxNode contextNode)
 		{
 			var usingDirectiveAncestor = contextNode.GetAncestor<UsingDirectiveSyntax>();
 			if (usingDirectiveAncestor == null)
@@ -485,7 +485,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return SyntaxFacts.IsAssignmentExpression(node.Kind());
 		}
 
-		public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind)
+		public static bool IsParentKind(this SyntaxNode? node, SyntaxKind kind)
 		{
 			return node != null && node.Parent.IsKind(kind);
 		}
@@ -562,7 +562,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static SyntaxNode GetParent(this SyntaxNode node)
 		{
-			return node?.Parent;
+			return node.Parent;
 		}
 
 		public static ValueTuple<SyntaxToken, SyntaxToken> GetBraces(this SyntaxNode node)
@@ -586,7 +586,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			};
 		}
 
-		public static SyntaxTokenList GetModifiers(this SyntaxNode member)
+		public static SyntaxTokenList GetModifiers(this SyntaxNode? member)
 		{
 			if (member != null)
 			{
@@ -631,7 +631,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return default(SyntaxTokenList);
 		}
 
-		public static SyntaxNode WithModifiers(this SyntaxNode member, SyntaxTokenList modifiers)
+		public static SyntaxNode? WithModifiers(this SyntaxNode? member, SyntaxTokenList modifiers)
 		{
 			if (member != null)
 			{
@@ -714,7 +714,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return false;
 		}
 
-		public static bool ContainsInArgument(this ConstructorInitializerSyntax initializer, TextSpan textSpan)
+		public static bool ContainsInArgument(this ConstructorInitializerSyntax? initializer, TextSpan textSpan)
 		{
 			if (initializer == null)
 			{
@@ -724,7 +724,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			return initializer.ArgumentList.Arguments.Any(a => a.Span.Contains(textSpan));
 		}
 
-		public static bool ContainsInBlockBody(this BlockSyntax block, TextSpan textSpan)
+		public static bool ContainsInBlockBody(this BlockSyntax? block, TextSpan textSpan)
 		{
 			if (block == null)
 			{

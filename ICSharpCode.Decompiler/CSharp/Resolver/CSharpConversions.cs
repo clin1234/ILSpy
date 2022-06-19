@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public static CSharpConversions Get(ICompilation compilation)
 		{
-			ArgumentNullException.ThrowIfNull(compilation);
+			if (compilation == null) throw new ArgumentNullException(nameof(compilation));
 			CacheManager cache = compilation.CacheManager;
 			CSharpConversions operators = (CSharpConversions)cache.GetShared(typeof(CSharpConversions)) ??
 			                               (CSharpConversions)cache.GetOrAddShared(typeof(CSharpConversions),
@@ -257,14 +257,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public Conversion? ImplicitConversion(ResolveResult resolveResult, IType toType)
 		{
-			ArgumentNullException.ThrowIfNull(resolveResult);
+			if (resolveResult == null) throw new ArgumentNullException(nameof(resolveResult));
 			return ImplicitConversion(resolveResult, toType, allowUserDefined: true, allowTuple: true);
 		}
 
 		public Conversion? ImplicitConversion(IType fromType, IType toType)
 		{
-			ArgumentNullException.ThrowIfNull(fromType);
-			ArgumentNullException.ThrowIfNull(toType);
+			if (fromType == null) throw new ArgumentNullException(nameof(fromType));
+			if (toType == null) throw new ArgumentNullException(nameof(toType));
 
 			TypePair pair = new(fromType, toType);
 			if (implicitConversionCache.TryGetValue(pair, out Conversion? c))
@@ -278,8 +278,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public Conversion? StandardImplicitConversion(IType fromType, IType toType)
 		{
-			ArgumentNullException.ThrowIfNull(fromType);
-			ArgumentNullException.ThrowIfNull(toType);
+			if (fromType == null) throw new ArgumentNullException(nameof(fromType));
+			if (toType == null) throw new ArgumentNullException(nameof(toType));
 			return StandardImplicitConversion(fromType, toType, allowTupleConversion: true);
 		}
 
@@ -324,8 +324,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public bool IsConstraintConvertible(IType fromType, IType toType)
 		{
-			ArgumentNullException.ThrowIfNull(fromType);
-			ArgumentNullException.ThrowIfNull(toType);
+			if (fromType == null) throw new ArgumentNullException(nameof(fromType));
+			if (toType == null) throw new ArgumentNullException(nameof(toType));
 
 			if (IdentityConversion(fromType, toType))
 				return true;
@@ -355,8 +355,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public Conversion? ExplicitConversion(ResolveResult resolveResult, IType toType)
 		{
-			ArgumentNullException.ThrowIfNull(resolveResult);
-			ArgumentNullException.ThrowIfNull(toType);
+			if (resolveResult == null) throw new ArgumentNullException(nameof(resolveResult));
+			if (toType == null) throw new ArgumentNullException(nameof(toType));
 
 			if (resolveResult.Type.Kind == TypeKind.Dynamic)
 				return Conversion.ExplicitDynamicConversion;
@@ -378,8 +378,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public Conversion? ExplicitConversion(IType fromType, IType toType)
 		{
-			ArgumentNullException.ThrowIfNull(fromType);
-			ArgumentNullException.ThrowIfNull(toType);
+			if (fromType == null) throw new ArgumentNullException(nameof(fromType));
+			if (toType == null) throw new ArgumentNullException(nameof(toType));
 
 			Conversion? c = ImplicitConversion(fromType, toType, allowUserDefined: false, allowTuple: false);
 			if (c != Conversion.None)
@@ -1412,8 +1412,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="delegateType">The delegate type</param>
 		public bool IsDelegateCompatible(IMethod? method, IType delegateType)
 		{
-			ArgumentNullException.ThrowIfNull(method);
-			ArgumentNullException.ThrowIfNull(delegateType);
+			if (method == null) throw new ArgumentNullException(nameof(method));
+			if (delegateType == null) throw new ArgumentNullException(nameof(delegateType));
 			IMethod? invoke = delegateType.GetDelegateInvokeMethod();
 			if (invoke == null)
 				return false;
@@ -1430,8 +1430,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// If this parameter is true, the first parameter of <paramref name="m"/> will be ignored.</param>
 		bool IsDelegateCompatible(IMethod? m, IMethod invoke, bool isExtensionMethodInvocation)
 		{
-			ArgumentNullException.ThrowIfNull(m);
-			ArgumentNullException.ThrowIfNull(invoke);
+			if (m == null) throw new ArgumentNullException(nameof(m));
+			if (invoke == null) throw new ArgumentNullException(nameof(invoke));
 			int firstParameterInM = isExtensionMethodInvocation ? 1 : 0;
 			if (m.Parameters.Count - firstParameterInM != invoke.Parameters.Count)
 				return false;

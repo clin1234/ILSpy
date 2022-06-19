@@ -21,7 +21,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="itemData">Data object of selected item to check.</param>
 		/// <returns><see cref="AssemblyReferenceForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
-		public static AssemblyReferenceForILSpy Detect(object itemData)
+		public static AssemblyReferenceForILSpy? Detect(object itemData)
 		{
 			return (itemData is Reference reference) ? new AssemblyReferenceForILSpy(reference) : null;
 		}
@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="projectReferences">List of current project's references.</param>
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
-		public ILSpyParameters GetILSpyParameters(Dictionary<string, DetectedReference> projectReferences)
+		public ILSpyParameters? GetILSpyParameters(Dictionary<string, DetectedReference> projectReferences)
 		{
 			if (projectReferences.TryGetValue(reference.Name, out var refentry))
 				return new ILSpyParameters(new[] { refentry.AssemblyFile });

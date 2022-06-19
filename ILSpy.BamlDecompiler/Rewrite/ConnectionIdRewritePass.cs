@@ -120,7 +120,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 				return;
 			var connect = connectorInterface.GetMethods(static m => m.Name == "Connect").SingleOrDefault();
 
-			IMethod method = null;
+			IMethod? method = null;
 			MethodDefinition metadataEntry = default;
 			var module = ctx.TypeSystem.MainModule.PEFile;
 
@@ -198,7 +198,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			}
 		}
 
-		FieldAssignment FindField(ILInstruction inst)
+		FieldAssignment? FindField(ILInstruction inst)
 		{
 			switch (inst)
 			{
@@ -216,7 +216,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			}
 		}
 
-		bool MatchFieldAssignment(ILInstruction inst, out FieldAssignment field)
+		bool MatchFieldAssignment(ILInstruction inst, out FieldAssignment? field)
 		{
 			field = null;
 			if (!inst.MatchStFld(out _, out var fld, out var value) || !value.MatchCastClass(out var arg, out _)
@@ -229,7 +229,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 		void FindEvents(ILInstruction inst, List<EventRegistration> events)
 		{
-			EventRegistration @event;
+			EventRegistration? @event;
 			switch (inst)
 			{
 				case Block b:
@@ -260,7 +260,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 		// callvirt set_Event(ldloc v, ldsfld eventName)
 		// callvirt set_Handler(ldloc v, newobj RoutedEventHandler..ctor(ldloc this, ldftn eventHandler))
 		// callvirt Add(callvirt get_Setters(castclass System.Windows.Style(ldloc target)), ldloc v)
-		bool MatchEventSetterCreation(Block b, ref int pos, out EventRegistration @event)
+		bool MatchEventSetterCreation(Block b, ref int pos, out EventRegistration? @event)
 		{
 			@event = null;
 			if (!b.FinalInstruction.MatchNop())
@@ -329,7 +329,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			return true;
 		}
 
-		bool MatchSimpleEventRegistration(ILInstruction inst, out EventRegistration @event)
+		bool MatchSimpleEventRegistration(ILInstruction inst, out EventRegistration? @event)
 		{
 			@event = null;
 			if (!(inst is CallInstruction call) || call.OpCode == OpCode.NewObj)
@@ -397,7 +397,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 			var ldftn = newObj.Arguments[1];
 			if (ldftn.OpCode != OpCode.LdFtn && ldftn.OpCode != OpCode.LdVirtFtn)
 				return false;
-			handlerName = ((IInstructionWithMethodOperand)ldftn).Method?.Name;
+			handlerName = (ldftn as IInstructionWithMethodOperand).Method.Name;
 			handlerName = XamlUtils.EscapeName(handlerName);
 			return true;
 		}

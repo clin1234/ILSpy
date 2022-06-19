@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return CanExecute(context.SelectedTreeNodes);
 		}
 
-		public static bool CanExecute(IReadOnlyList<SharpTreeNode> selectedNodes)
+		public static bool CanExecute(IReadOnlyList<SharpTreeNode>? selectedNodes)
 		{
 			if (selectedNodes == null || selectedNodes.Any(n => n is not ILSpyTreeNode))
 				return false;
@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.TextView
 				|| (selectedNodes.Count > 1 && (selectedNodes.All(n => n is AssemblyTreeNode) || selectedNodes.All(n => n is IMemberTreeNode)));
 		}
 
-		public static void Execute(IReadOnlyList<SharpTreeNode> selectedNodes)
+		public static void Execute(IReadOnlyList<SharpTreeNode>? selectedNodes)
 		{
 			var currentLanguage = MainWindow.Instance.CurrentLanguage;
 			var tabPage = Docking.DockWorkspace.Instance.ActiveTabPage;

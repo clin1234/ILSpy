@@ -21,11 +21,11 @@ using System.Windows.Controls.Primitives;
 
 namespace AvalonDock
 {
-	public abstract class DockingManager
+	internal abstract class DockingManager
 	{
 	}
 
-	public sealed class Resizer : Thumb
+	internal sealed class Resizer : Thumb
 	{
 		static Resizer()
 		{
@@ -40,7 +40,7 @@ namespace AvalonDock
 
 	}
 
-	public enum AvalonDockBrushes
+	internal enum AvalonDockBrushes
 	{
 		DefaultBackgroundBrush,
 		DockablePaneTitleBackground,
@@ -71,7 +71,7 @@ namespace AvalonDock
 		NavigatorWindowBottomBackground
 	}
 
-	public enum ContextMenuElement
+	internal enum ContextMenuElement
 	{
 		DockablePane,
 		DocumentPane,

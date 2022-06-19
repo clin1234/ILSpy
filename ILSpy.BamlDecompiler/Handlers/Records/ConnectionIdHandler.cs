@@ -32,7 +32,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 		{
 			var record = (ConnectionIdRecord)((BamlRecordNode)node).Record;
 
-			parent.Xaml.Element.AddAnnotation(new BamlConnectionId(record.ConnectionId));
+			parent?.Xaml.Element?.AddAnnotation(new BamlConnectionId(record.ConnectionId));
 
 			return null;
 		}

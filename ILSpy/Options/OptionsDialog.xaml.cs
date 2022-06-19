@@ -28,13 +28,13 @@ namespace ICSharpCode.ILSpy.Options
 {
 	public sealed class TabItemViewModel
 	{
-		public TabItemViewModel(string header, UIElement content)
+		public TabItemViewModel(string? header, UIElement content)
 		{
 			Header = header;
 			Content = content;
 		}
 
-		public string Header { get; }
+		public string? Header { get; }
 		public UIElement Content { get; }
 	}
 
@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Options
 
 	public interface IOptionsMetadata
 	{
-		string Title { get; }
+		string? Title { get; }
 		int Order { get; }
 	}
 

@@ -56,11 +56,11 @@ namespace ICSharpCode.ILSpy.AddIn
 			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
 		}
 
-		OleMenuCommandService menuService;
-		public OleMenuCommandService MenuService => menuService;
+		OleMenuCommandService? menuService;
+		public OleMenuCommandService? MenuService => menuService;
 
-		VisualStudioWorkspace workspace;
-		public VisualStudioWorkspace Workspace => workspace;
+		VisualStudioWorkspace? workspace;
+		public VisualStudioWorkspace? Workspace => workspace;
 
 		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(DTE));
 
@@ -99,26 +99,25 @@ namespace ICSharpCode.ILSpy.AddIn
 		}
 		#endregion
 
-		public void ShowMessage(string format, params object[] items)
+		public void ShowMessage(string format, params object?[] items)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			ShowMessage(OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_INFO, format, items);
 		}
 
-		public void ShowMessage(OLEMSGICON icon, string format, params object[] items)
+		public void ShowMessage(OLEMSGICON icon, string format, params object?[] items)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			ShowMessage(OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, icon, format, items);
 		}
 
-		public int ShowMessage(OLEMSGBUTTON buttons, OLEMSGDEFBUTTON defaultButton, OLEMSGICON icon, string format, params object[] items)
+		public int ShowMessage(OLEMSGBUTTON buttons, OLEMSGDEFBUTTON defaultButton, OLEMSGICON icon, string format, params object?[] items)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-			if (uiShell == null)
+			if (GetService(typeof(SVsUIShell)) is not IVsUIShell uiShell)
 			{
 				return 0;
 			}

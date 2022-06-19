@@ -33,7 +33,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 		public XamlType DeclaringType { get; }
 		public string PropertyName { get; }
 
-		public IMember ResolvedMember { get; set; }
+		public IMember? ResolvedMember { get; set; }
 
 		public XamlProperty(XamlType type, string name)
 		{
@@ -46,7 +46,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 			if (ResolvedMember != null)
 				return;
 
-			var typeDef = DeclaringType.ResolvedType.GetDefinition();
+			var typeDef = DeclaringType.ResolvedType?.GetDefinition();
 			if (typeDef == null)
 				return;
 
@@ -65,7 +65,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 			ResolvedMember = typeDef.GetFields(f => f.Name == PropertyName + "Event").FirstOrDefault();
 		}
 
-		public bool IsAttachedTo(XamlType type)
+		public bool IsAttachedTo(XamlType? type)
 		{
 			if (type == null || ResolvedMember == null || type.ResolvedType == null)
 				return true;
@@ -82,7 +82,7 @@ namespace ILSpy.BamlDecompiler.Xaml
 			return true;
 		}
 
-		public XName ToXName(XamlContext ctx, XElement parent, bool isFullName = true)
+		public XName ToXName(XamlContext ctx, XElement? parent, bool isFullName = true)
 		{
 			var typeName = DeclaringType.ToXName(ctx);
 			XName name;

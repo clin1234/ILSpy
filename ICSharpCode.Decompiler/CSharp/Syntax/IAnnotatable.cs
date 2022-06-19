@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public virtual void AddAnnotation(object annotation)
 		{
-			ArgumentNullException.ThrowIfNull(annotation);
+			if (annotation == null) throw new ArgumentNullException(nameof(annotation));
 			retry: // Retry until successful
 			object? oldAnnotation = Interlocked.CompareExchange(ref this.annotations, annotation, null);
 			if (oldAnnotation == null)
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public virtual void RemoveAnnotations(Type type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type == null) throw new ArgumentNullException(nameof(type));
 			retry: // Retry until successful
 			object? oldAnnotations = this.annotations;
 			if (oldAnnotations is AnnotationList list)
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public object? Annotation(Type type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type == null) throw new ArgumentNullException(nameof(type));
 			object? annotations = this.annotations;
 			if (annotations is AnnotationList list)
 			{

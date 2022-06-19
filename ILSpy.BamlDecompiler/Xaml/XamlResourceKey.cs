@@ -72,25 +72,22 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 		public static XamlResourceKey Create(BamlNode node) => new XamlResourceKey(node);
 
-		public BamlNode KeyNode { get; set; }
-		public BamlElement? KeyElement { get; set; }
+		public BamlNode KeyNode { get; }
 		public IList<BamlNode> StaticResources { get; }
 
-		public static XamlResourceKey FindKeyInSiblings(BamlNode node)
+		public static XamlResourceKey? FindKeyInSiblings(BamlNode node)
 		{
 			var children = node.Parent.Children;
 			var index = children.IndexOf(node);
 			for (int i = index; i >= 0; i--)
 			{
 				if (children[i].Annotation is XamlResourceKey)
-					return (XamlResourceKey)children[i].Annotation;
+					return children[i].Annotation as XamlResourceKey;
 			}
 			return null;
 		}
 
-		public static XamlResourceKey FindKeyInAncestors(BamlNode node) => FindKeyInAncestors(node, out var found);
-
-		public static XamlResourceKey FindKeyInAncestors(BamlNode node, out BamlNode found)
+		public static XamlResourceKey? FindKeyInAncestors(BamlNode node, out BamlNode? found)
 		{
 			BamlNode n = node;
 			do

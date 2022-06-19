@@ -45,8 +45,8 @@ namespace ILSpy.BamlDecompiler.Xaml
 
 		readonly struct Point
 		{
-			public readonly double X;
-			public readonly double Y;
+			private readonly double X;
+			private readonly double Y;
 
 			public Point(double x, double y)
 			{

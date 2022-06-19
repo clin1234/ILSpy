@@ -15,7 +15,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	{
 		readonly ProjectItem projectItem;
 		readonly string fusionName;
-		readonly string resolvedPath;
+		readonly string? resolvedPath;
 
 		ProjectReferenceForILSpy(ProjectItem projectItem, string fusionName, string resolvedPath)
 		{
@@ -29,15 +29,15 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="itemData">Data object of selected item to check.</param>
 		/// <returns><see cref="ProjectReferenceForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
-		public static ProjectReferenceForILSpy Detect(object itemData)
+		public static ProjectReferenceForILSpy? Detect(object itemData)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			if (itemData is ProjectItem projectItem)
 			{
 				var properties = Utils.GetProperties(projectItem.Properties, "FusionName", "ResolvedPath");
-				string fusionName = properties[0] as string;
-				string resolvedPath = properties[1] as string;
+				string? fusionName = properties[0] as string;
+				string? resolvedPath = properties[1] as string;
 				if ((fusionName != null) || (resolvedPath != null))
 				{
 					return new ProjectReferenceForILSpy(projectItem, fusionName, resolvedPath);
@@ -52,11 +52,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="projectReferences">List of current project's references.</param>
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
-		public ILSpyParameters GetILSpyParameters(Dictionary<string, DetectedReference> projectReferences)
+		public ILSpyParameters? GetILSpyParameters(Dictionary<string, DetectedReference> projectReferences)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			string fileName = projectItem.ContainingProject?.FileName;
+			string? fileName = projectItem.ContainingProject?.FileName;
 			if (!string.IsNullOrEmpty(fileName))
 			{
 				if (projectReferences.TryGetValue(projectItem.Name, out DetectedReference path))
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// If possible retrieves parameters to use for launching ILSpy instance.
 		/// </summary>
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
-		public ILSpyParameters GetILSpyParameters()
+		public ILSpyParameters? GetILSpyParameters()
 		{
 			if (resolvedPath != null)
 			{

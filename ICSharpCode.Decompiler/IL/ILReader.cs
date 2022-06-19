@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock? body, GenericContext genericContext)
 		{
-			ArgumentNullException.ThrowIfNull(body);
+			if (body == null) throw new ArgumentNullException(nameof(body));
 			if (methodDefinitionHandle.IsNil)
 				throw new ArgumentException("methodDefinitionHandle.IsNil");
 			this.method = module.GetDefinition(methodDefinitionHandle);

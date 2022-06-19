@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IType GetBestCommonType(IList<ResolveResult>? expressions, out bool success)
 		{
-			ArgumentNullException.ThrowIfNull(expressions);
+			if (expressions == null) throw new ArgumentNullException(nameof(expressions));
 			if (expressions.Count == 1)
 			{
 				success = IsValidType(expressions[0].Type);
@@ -379,9 +379,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			IReadOnlyList<ResolveResult>? arguments, IReadOnlyList<IType> parameterTypes, out bool success,
 			IReadOnlyList<IType>? classTypeArguments = null)
 		{
-			ArgumentNullException.ThrowIfNull(typeParameters);
-			ArgumentNullException.ThrowIfNull(arguments);
-			ArgumentNullException.ThrowIfNull(parameterTypes);
+			if (typeParameters == null) throw new ArgumentNullException(nameof(typeParameters));
+			if (arguments == null) throw new ArgumentNullException(nameof(arguments));
+			if (parameterTypes == null) throw new ArgumentNullException(nameof(parameterTypes));
 			try
 			{
 				this.typeParameters = new TP[typeParameters.Count];
@@ -443,10 +443,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public IType[]? InferTypeArgumentsFromBounds(IReadOnlyList<ITypeParameter>? typeParameters, IType? targetType,
 			IEnumerable<IType>? lowerBounds, IEnumerable<IType>? upperBounds, out bool success)
 		{
-			ArgumentNullException.ThrowIfNull(typeParameters);
-			ArgumentNullException.ThrowIfNull(targetType);
-			ArgumentNullException.ThrowIfNull(lowerBounds);
-			ArgumentNullException.ThrowIfNull(upperBounds);
+			if (typeParameters == null) throw new ArgumentNullException(nameof(typeParameters));
+			if (targetType == null) throw new ArgumentNullException(nameof(targetType));
+			if (lowerBounds == null) throw new ArgumentNullException(nameof(lowerBounds));
+			if (upperBounds == null) throw new ArgumentNullException(nameof(upperBounds));
 			this.typeParameters = new TP[typeParameters.Count];
 			for (int i = 0; i < this.typeParameters.Length; i++)
 			{
@@ -1088,8 +1088,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IType FindTypeInBounds(IReadOnlyList<IType>? lowerBounds, IReadOnlyList<IType>? upperBounds)
 		{
-			ArgumentNullException.ThrowIfNull(lowerBounds);
-			ArgumentNullException.ThrowIfNull(upperBounds);
+			if (lowerBounds == null) throw new ArgumentNullException(nameof(lowerBounds));
+			if (upperBounds == null) throw new ArgumentNullException(nameof(upperBounds));
 
 			var result = FindTypesInBounds(lowerBounds, upperBounds);
 

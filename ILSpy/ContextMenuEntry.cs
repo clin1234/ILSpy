@@ -45,37 +45,37 @@ namespace ICSharpCode.ILSpy
 		/// Returns the selected nodes in the tree view.
 		/// Returns null, if context menu does not belong to a tree view.
 		/// </summary>
-		public SharpTreeNode[] SelectedTreeNodes { get; private init; }
+		public SharpTreeNode[]? SelectedTreeNodes { get; private init; }
 
 		/// <summary>
 		/// Returns the tree view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a tree view.
 		/// </summary>
-		public SharpTreeView TreeView { get; private init; }
+		public SharpTreeView? TreeView { get; private init; }
 
 		/// <summary>
 		/// Returns the text view the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a text view.
 		/// </summary>
-		public DecompilerTextView TextView { get; private init; }
+		public DecompilerTextView? TextView { get; private init; }
 
 		/// <summary>
 		/// Returns the list box the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a list box.
 		/// </summary>
-		public ListBox ListBox { get; private init; }
+		public ListBox? ListBox { get; private init; }
 
 		/// <summary>
 		/// Returns the data grid the context menu is assigned to.
 		/// Returns null, if context menu is not assigned to a data grid.
 		/// </summary>
-		public DataGrid DataGrid { get; private init; }
+		public DataGrid? DataGrid { get; private init; }
 
 		/// <summary>
 		/// Returns the reference the mouse cursor is currently hovering above.
 		/// Returns null, if there was no reference found.
 		/// </summary>
-		public ReferenceSegment Reference { get; private init; }
+		public ReferenceSegment? Reference { get; private init; }
 
 		/// <summary>
 		/// Returns the position in TextView the mouse cursor is currently hovering above.
@@ -85,9 +85,9 @@ namespace ICSharpCode.ILSpy
 
 		public Point MousePosition { get; private init; }
 
-		public static TextViewContext Create(SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null, DataGrid dataGrid = null)
+		public static TextViewContext Create(SharpTreeView? treeView = null, DecompilerTextView? textView = null, ListBox? listBox = null, DataGrid? dataGrid = null)
 		{
-			ReferenceSegment reference;
+			ReferenceSegment? reference;
 			if (textView != null)
 				reference = textView.GetReferenceSegmentAtMousePosition();
 			else switch (listBox?.SelectedItem)
@@ -121,19 +121,20 @@ namespace ICSharpCode.ILSpy
 				TextView = textView,
 				Reference = reference,
 				Position = position,
-				MousePosition = ((Visual)textView ?? treeView ?? (Visual)listBox ?? dataGrid).PointToScreen(Mouse.GetPosition((IInputElement)textView ?? treeView ?? (IInputElement)listBox ?? dataGrid))
+				MousePosition = (textView as Visual ?? treeView ?? (Visual)listBox ?? dataGrid).PointToScreen(
+					Mouse.GetPosition((IInputElement)textView ?? treeView ?? (IInputElement)listBox ?? dataGrid))
 			};
 		}
 	}
 
 	public interface IContextMenuEntryMetadata
 	{
-		string MenuID { get; }
-		string ParentMenuID { get; }
-		string Icon { get; }
-		string Header { get; }
-		string Category { get; }
-		string InputGestureText { get; }
+		string? MenuID { get; }
+		string? ParentMenuID { get; }
+		string? Icon { get; }
+		string? Header { get; }
+		string? Category { get; }
+		string? InputGestureText { get; }
 
 		double Order { get; }
 	}
@@ -156,7 +157,7 @@ namespace ICSharpCode.ILSpy
 		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
 		/// will lead to a stack-overflow and crash of ILSpy at startup.
 		/// </summary>
-		public string MenuID { get; set; }
+		public string? MenuID { get; set; }
 		/// <summary>
 		/// Gets/Sets the parent of this menu item. All menu items sharing the same parent will be displayed as sub-menu items.
 		/// If this property is set to <see langword="null"/>, the menu item is displayed in the top-level menu.
@@ -164,11 +165,11 @@ namespace ICSharpCode.ILSpy
 		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
 		/// will lead to a stack-overflow and crash of ILSpy at startup.
 		/// </summary>
-		public string ParentMenuID { get; set; }
-		public string Icon { get; set; }
-		public string Header { get; set; }
-		public string Category { get; set; }
-		public string InputGestureText { get; set; }
+		public string? ParentMenuID { get; set; }
+		public string? Icon { get; set; }
+		public string? Header { get; set; }
+		public string? Category { get; set; }
+		public string? InputGestureText { get; set; }
 		public double Order { get; set; }
 	}
 
@@ -177,7 +178,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Enables extensible context menu support for the specified tree view.
 		/// </summary>
-		public static void Add(SharpTreeView treeView)
+		public static void Add(SharpTreeView? treeView)
 		{
 			var provider = new ContextMenuProvider(treeView);
 			treeView.ContextMenuOpening += provider.treeView_ContextMenuOpening;
@@ -186,7 +187,7 @@ namespace ICSharpCode.ILSpy
 			treeView.ContextMenu = new ContextMenu();
 		}
 
-		public static void Add(DecompilerTextView textView)
+		public static void Add(DecompilerTextView? textView)
 		{
 			var provider = new ContextMenuProvider(textView);
 			textView.ContextMenuOpening += provider.textView_ContextMenuOpening;
@@ -195,24 +196,24 @@ namespace ICSharpCode.ILSpy
 			textView.ContextMenu = new ContextMenu();
 		}
 
-		public static void Add(ListBox listBox)
+		public static void Add(ListBox? listBox)
 		{
 			var provider = new ContextMenuProvider(listBox);
 			listBox.ContextMenuOpening += provider.listBox_ContextMenuOpening;
 			listBox.ContextMenu = new ContextMenu();
 		}
 
-		public static void Add(DataGrid dataGrid)
+		public static void Add(DataGrid? dataGrid)
 		{
 			var provider = new ContextMenuProvider(dataGrid);
 			dataGrid.ContextMenuOpening += provider.dataGrid_ContextMenuOpening;
 			dataGrid.ContextMenu = new ContextMenu();
 		}
 
-		readonly SharpTreeView treeView;
-		readonly DecompilerTextView textView;
-		readonly ListBox listBox;
-		readonly DataGrid dataGrid;
+		readonly SharpTreeView? treeView;
+		readonly DecompilerTextView? textView;
+		readonly ListBox? listBox;
+		readonly DataGrid? dataGrid;
 		readonly Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
 
 		private ContextMenuProvider()
@@ -220,25 +221,25 @@ namespace ICSharpCode.ILSpy
 			entries = App.ExportProvider.GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
 		}
 
-		ContextMenuProvider(DecompilerTextView textView)
+		ContextMenuProvider(DecompilerTextView? textView)
 			: this()
 		{
 			this.textView = textView ?? throw new ArgumentNullException(nameof(textView));
 		}
 
-		ContextMenuProvider(SharpTreeView treeView)
+		ContextMenuProvider(SharpTreeView? treeView)
 			: this()
 		{
 			this.treeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
 		}
 
-		ContextMenuProvider(ListBox listBox)
+		ContextMenuProvider(ListBox? listBox)
 			: this()
 		{
 			this.listBox = listBox ?? throw new ArgumentNullException(nameof(listBox));
 		}
 
-		ContextMenuProvider(DataGrid dataGrid)
+		ContextMenuProvider(DataGrid? dataGrid)
 			: this()
 		{
 			this.dataGrid = dataGrid ?? throw new ArgumentNullException(nameof(dataGrid));
@@ -294,8 +295,8 @@ namespace ICSharpCode.ILSpy
 		{
 			menu = new ContextMenu();
 			var menuGroups = new Dictionary<string, Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[]>();
-			Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] topLevelGroup = null;
-			foreach (var group in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.ParentMenuID))
+			Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[]? topLevelGroup = null;
+			foreach (var group in entries.OrderBy(static c => c.Metadata.Order).GroupBy(c => c.Metadata.ParentMenuID))
 			{
 				if (group.Key == null)
 				{

@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	sealed class RecordDecompiler
+	public sealed class RecordDecompiler
 	{
 		readonly Dictionary<IProperty, IField> autoPropertyToBackingField = new();
 		readonly Dictionary<IProperty, IParameter?> autoPropertyToPrimaryCtorParameter = new();

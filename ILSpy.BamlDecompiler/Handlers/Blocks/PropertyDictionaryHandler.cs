@@ -30,7 +30,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.PropertyDictionaryStart;
 
-		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var record = (PropertyDictionaryStartRecord)((BamlBlockNode)node).Header;
 			var doc = new BamlElement(node);
@@ -38,8 +38,8 @@ namespace ILSpy.BamlDecompiler.Handlers
 			var elemAttr = ctx.ResolveProperty(record.AttributeId);
 			doc.Xaml = new XElement(elemAttr.ToXName(ctx, null));
 
-			doc.Xaml.Element.AddAnnotation(elemAttr);
-			parent.Xaml.Element.Add(doc.Xaml.Element);
+			doc.Xaml.Element?.AddAnnotation(elemAttr);
+			parent?.Xaml.Element?.Add(doc.Xaml.Element);
 
 			HandlerMap.ProcessChildren(ctx, (BamlBlockNode)node, doc);
 			elemAttr.DeclaringType.ResolveNamespace(doc.Xaml, ctx);

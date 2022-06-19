@@ -47,7 +47,6 @@ namespace ILSpy.BamlDecompiler.Handlers
 			};
 			parent.Xaml.Element.Add(bamlElem.Xaml.Element);
 			bamlElem.Xaml.Element.Value = ctx.ResolveString(record.ValueId);
-			key.KeyElement = bamlElem;
 
 			return bamlElem;
 		}

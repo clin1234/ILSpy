@@ -224,7 +224,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			public IAssemblyMetadata? FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
 				PEFile? module = assemblyResolver.Resolve(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle));
-				PEReader reader = module?.Reader;
+				PEReader? reader = module?.Reader;
 				return reader == null ? null : new StandaloneAssemblyMetadata(reader);
 			}
 
@@ -239,7 +239,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		private sealed class ReadyToRunReaderCacheEntry
 		{
 			public ReadyToRunReader? readyToRunReader;
-			public string failureReason;
+			public string? failureReason;
 			public Dictionary<EntityHandle, ReadyToRunMethod[]>? methodMap;
 		}
 	}

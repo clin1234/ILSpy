@@ -13,8 +13,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 {
 	sealed class OpenCodeItemCommand : ILSpyCommand
 	{
-		static OpenCodeItemCommand instance;
-
 		public OpenCodeItemCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenCodeItemInILSpy)
 		{
@@ -44,16 +42,16 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 		}
 
-		Document GetRoslynDocument()
+		Document? GetRoslynDocument()
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var document = owner.DTE.ActiveDocument;
-			var id = owner.Workspace.CurrentSolution.GetDocumentIdsWithFilePath(document.FullName).FirstOrDefault();
+			var id = owner.Workspace?.CurrentSolution.GetDocumentIdsWithFilePath(document.FullName).FirstOrDefault();
 			if (id == null)
 				return null;
 
-			return owner.Workspace.CurrentSolution.GetDocument(id);
+			return owner.Workspace?.CurrentSolution.GetDocument(id);
 		}
 
 		protected override async void OnExecute(object sender, EventArgs e)
@@ -73,7 +71,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 			var ast = await roslynDocument.GetSyntaxRootAsync().ConfigureAwait(false);
 			var model = await roslynDocument.GetSemanticModelAsync().ConfigureAwait(false);
-			var node = ast.FindNode(new TextSpan(caretPosition.Position, 0), false, true);
+			var node = ast?.FindNode(new TextSpan(caretPosition.Position, 0), false, true);
 			if (node == null)
 			{
 				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
@@ -101,7 +99,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 
 			string assemblyName = roslynDocument.Project.AssemblyName;
-			string projectOutputPath = Utils.GetProjectOutputAssembly(project, roslynProject);
+			string? projectOutputPath = Utils.GetProjectOutputAssembly(project, roslynProject);
 			refsmap.Add(assemblyName, new DetectedReference(assemblyName, projectOutputPath, true));
 
 			// Divide into valid and invalid (= not found) referenced assemblies
@@ -163,7 +161,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 		}
 
-		ISymbol GetSymbolResolvableByILSpy(SemanticModel model, SyntaxNode node)
+		ISymbol? GetSymbolResolvableByILSpy(SemanticModel model, SyntaxNode node)
 		{
 			var current = node;
 			while (current != null)
@@ -205,7 +203,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			instance = new OpenCodeItemCommand(owner);
+			new OpenCodeItemCommand(owner);
 		}
 	}
 }

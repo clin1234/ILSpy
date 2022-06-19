@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy
 	#region Toolbar
 	public interface IToolbarCommandMetadata
 	{
-		string ToolbarIcon { get; }
+		string? ToolbarIcon { get; }
 		string ToolTip { get; }
 		string ToolbarCategory { get; }
 		object Tag { get; }
@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		public string ToolTip { get; set; }
-		public string ToolbarIcon { get; set; }
+		public string? ToolbarIcon { get; set; }
 		public string ToolbarCategory { get; set; }
 		public double ToolbarOrder { get; set; }
 		public object Tag { get; set; }
@@ -52,9 +52,9 @@ namespace ICSharpCode.ILSpy
 	#region Main Menu
 	public interface IMainMenuCommandMetadata
 	{
-		string MenuID { get; }
-		string MenuIcon { get; }
-		string Header { get; }
+		string? MenuID { get; }
+		string? MenuIcon { get; }
+		string? Header { get; }
 		string ParentMenuID { get; }
 		[Obsolete("Please use ParentMenuID instead. We decided to rename the property for clarity. It will be removed in ILSpy 8.0.")]
 		string Menu { get; }
@@ -81,9 +81,9 @@ namespace ICSharpCode.ILSpy
 		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
 		/// will lead to a stack-overflow and crash of ILSpy at startup.
 		/// </summary>
-		public string MenuID { get; set; }
-		public string MenuIcon { get; set; }
-		public string Header { get; set; }
+		public string? MenuID { get; set; }
+		public string? MenuIcon { get; set; }
+		public string? Header { get; set; }
 		/// <summary>
 		/// Gets/Sets the parent of this menu item. All menu items sharing the same parent will be displayed as sub-menu items.
 		/// If this property is set to <see langword="null"/>, the menu item is displayed in the top-level menu.

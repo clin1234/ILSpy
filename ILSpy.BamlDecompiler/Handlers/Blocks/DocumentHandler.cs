@@ -30,7 +30,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 	{
 		public BamlRecordType Type => BamlRecordType.DocumentStart;
 
-		public BamlElement? Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
+		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement? parent)
 		{
 			var doc = new BamlElement(node) {
 				Xaml = new XElement(ctx.GetPseudoName("Document"))

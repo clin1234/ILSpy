@@ -152,7 +152,7 @@ namespace ILSpy.BamlDecompiler.Baml
 	{
 		public override BamlRecordType Type => BamlRecordType.XmlnsProperty;
 
-		public string Prefix { get; private set; }
+		public string? Prefix { get; private set; }
 		public string? XmlNamespace { get; set; }
 		public ushort[]? AssemblyIds { get; set; }
 
@@ -581,7 +581,7 @@ namespace ILSpy.BamlDecompiler.Baml
 	{
 		public override BamlRecordType Type => BamlRecordType.RoutedEvent;
 
-		public string Value { get; set; }
+		public string? Value { get; set; }
 		public ushort AttributeId { get; set; }
 		public uint Reserved1 { get; set; }
 

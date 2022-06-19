@@ -211,17 +211,15 @@ namespace ILSpy.BamlDecompiler.Tests
 			{
 				return null;
 			}
-			foreach (var entry in resources.OrderBy(e => e.Key))
+			foreach (var entry in resources.OrderBy(static e => e.Key)
+				         .Where(entry => entry.Key == name))
 			{
-				if (entry.Key == name)
+				switch (entry.Value)
 				{
-					switch (entry.Value)
-					{
-						case Stream value:
-							return value;
-						case byte[] bytes:
-							return new MemoryStream(bytes);
-					}
+					case Stream value:
+						return value;
+					case byte[] bytes:
+						return new MemoryStream(bytes);
 				}
 			}
 			return null;

@@ -52,13 +52,15 @@ namespace ILSpy.BamlDecompiler
 				if (typeof(IHandler).IsAssignableFrom(type) &&
 					!type.IsInterface && !type.IsAbstract)
 				{
-					var handler = (IHandler)Activator.CreateInstance(type);
-					handlers.Add(handler.Type, handler);
+					if (Activator.CreateInstance(type) is IHandler handler)
+					{
+						handlers.Add(handler.Type, handler);
+					}
 				}
 			}
 		}
 
-		public static IHandler LookupHandler(BamlRecordType type)
+		public static IHandler? LookupHandler(BamlRecordType type)
 		{
 #if DEBUG
 			switch (type)
@@ -77,7 +79,7 @@ namespace ILSpy.BamlDecompiler
 			return handlers.ContainsKey(type) ? handlers[type] : null;
 		}
 
-		public static void ProcessChildren(XamlContext ctx, BamlBlockNode node, BamlElement? nodeElem)
+		public static void ProcessChildren(XamlContext ctx, BamlBlockNode node, BamlElement nodeElem)
 		{
 			ctx.XmlNs.PushScope(nodeElem);
 			nodeElem.Xaml.Element?.AddAnnotation(ctx.XmlNs.CurrentScope);

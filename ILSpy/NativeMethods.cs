@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy
 		internal static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		internal static extern unsafe int GetWindowThreadProcessId(IntPtr hWnd, int* lpdwProcessId);
+		private static extern unsafe int GetWindowThreadProcessId(IntPtr hWnd, int* lpdwProcessId);
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		static extern int GetWindowText(IntPtr hWnd, [Out] StringBuilder title, int size);
@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy
 		/// - (2n) + 1 backslashes followed by a quotation mark again produce n backslashes followed by a quotation mark.
 		/// - n backslashes not followed by a quotation mark simply produce n backslashes.
 		/// </remarks>
-		public static string ArgumentArrayToCommandLine(params string[] arguments)
+		public static string? ArgumentArrayToCommandLine(params string[]? arguments)
 		{
 			if (arguments == null)
 				return null;
@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 			return b.ToString();
 		}
 
-		static void AppendArgument(StringBuilder b, string arg)
+		static void AppendArgument(StringBuilder b, string? arg)
 		{
 			if (arg == null)
 			{
@@ -165,7 +165,7 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
-		public unsafe static string GetProcessNameFromWindow(IntPtr hWnd)
+		public unsafe static string? GetProcessNameFromWindow(IntPtr hWnd)
 		{
 			int processId;
 			GetWindowThreadProcessId(hWnd, &processId);

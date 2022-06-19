@@ -11,7 +11,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	/// </summary>
 	sealed class ProjectItemForILSpy
 	{
-		SelectedItem item;
 		readonly Project project;
 		readonly Microsoft.CodeAnalysis.Project roslynProject;
 
@@ -19,20 +18,20 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			this.project = project;
 			this.roslynProject = roslynProject;
-			this.item = item;
 		}
 
 		/// <summary>
 		/// Detects whether the given <see cref="SelectedItem"/> represents a supported project.
 		/// </summary>
+		/// <param name="package"></param>
 		/// <param name="item">Selected item to check.</param>
 		/// <returns><see cref="ProjectItemForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
-		public static ProjectItemForILSpy Detect(ILSpyAddInPackage package, SelectedItem item)
+		public static ProjectItemForILSpy? Detect(ILSpyAddInPackage package, SelectedItem item)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var project = item.Project;
-			var roslynProject = package.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
+			var roslynProject = package.Workspace?.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
 			return roslynProject == null ? null : new ProjectItemForILSpy(project, roslynProject, item);
 		}
 

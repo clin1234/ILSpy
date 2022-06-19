@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy
 
 		internal AssemblyListManager AssemblyListManager { get; }
 
-		public SharpTreeView AssemblyTreeView {
+		public SharpTreeView? AssemblyTreeView {
 			get {
 				return FindResource("AssemblyTreeView") as SharpTreeView;
 			}
@@ -248,7 +248,7 @@ namespace ICSharpCode.ILSpy
 			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
 			// Start by constructing the individual flat menus
 			var parentMenuItems = new Dictionary<string, MenuItem>();
-			var menuGroups = mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.ParentMenuID);
+			IEnumerable<IGrouping<string?, Lazy<ICommand, IMainMenuCommandMetadata>>> menuGroups = mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.ParentMenuID);
 			foreach (var menu in menuGroups)
 			{
 				// Get or add the target menu item and add all items grouped by menu category
@@ -300,7 +300,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			MenuItem GetOrAddParentMenuItem(string menuID, string resourceKey)
+			MenuItem GetOrAddParentMenuItem(string? menuID, string? resourceKey)
 			{
 				if (!parentMenuItems.TryGetValue(menuID, out var parentMenuItem))
 				{
@@ -323,13 +323,13 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		internal static string GetResourceString(string key)
+		internal static string? GetResourceString(string? key)
 		{
 			if (string.IsNullOrEmpty(key))
 			{
 				return null;
 			}
-			string value = Properties.Resources.ResourceManager.GetString(key);
+			string? value = Properties.Resources.ResourceManager.GetString(key);
 			if (!string.IsNullOrEmpty(value))
 			{
 				return value;
@@ -1329,7 +1329,7 @@ namespace ICSharpCode.ILSpy
 
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
-			ArgumentNullException.ThrowIfNull(fileNames);
+			if (fileNames == null) throw new ArgumentNullException(nameof(fileNames));
 
 			if (focusNode)
 				AssemblyTreeView.UnselectAll();

@@ -11,7 +11,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
 {
-	internal sealed class DecompileRun
+	public sealed class DecompileRun
 	{
 		public DecompileRun(DecompilerSettings settings)
 		{
@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler
 
 		public UsingScope UsingScope => usingScope.Value;
 
-		public EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
+		internal EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
 
 		private static UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
 		{

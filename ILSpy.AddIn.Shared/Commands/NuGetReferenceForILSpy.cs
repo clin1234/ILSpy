@@ -23,7 +23,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="itemData">Data object of selected item to check.</param>
 		/// <returns><see cref="NuGetReferenceForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
-		public static NuGetReferenceForILSpy Detect(object itemData)
+		public static NuGetReferenceForILSpy? Detect(object itemData)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// If possible retrieves parameters to use for launching ILSpy instance.
 		/// </summary>
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
-		public ILSpyParameters GetILSpyParameters()
+		public ILSpyParameters? GetILSpyParameters()
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 

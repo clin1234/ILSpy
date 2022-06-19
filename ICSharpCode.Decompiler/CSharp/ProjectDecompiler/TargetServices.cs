@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </returns>
 		public static TargetFramework DetectTargetFramework(PEFile? module)
 		{
-			ArgumentNullException.ThrowIfNull(module);
+			if (module == null) throw new ArgumentNullException(nameof(module));
 
 			int versionNumber = module.GetRuntime() switch {
 				TargetRuntime.Net_1_0 => 100,
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <returns>The platform name, e.g. "AnyCPU" or "x86".</returns>
 		public static string GetPlatformName(PEFile? module)
 		{
-			ArgumentNullException.ThrowIfNull(module);
+			if (module == null) throw new ArgumentNullException(nameof(module));
 
 			var headers = module.Reader.PEHeaders;
 			var architecture = headers.CoffHeader.Machine;

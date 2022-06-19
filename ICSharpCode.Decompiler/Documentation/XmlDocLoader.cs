@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		public static XmlDocumentationProvider? LoadDocumentation(PEFile? module)
 		{
-			ArgumentNullException.ThrowIfNull(module);
+			if (module == null) throw new ArgumentNullException(nameof(module));
 			lock (cache)
 			{
 				if (!cache.TryGetValue(module, out XmlDocumentationProvider? xmlDoc))

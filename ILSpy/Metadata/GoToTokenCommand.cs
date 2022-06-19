@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Commands
 			return context.DataGrid?.Name == "MetadataView" && GetSelectedToken(context.DataGrid, out _) != null;
 		}
 
-		private int? GetSelectedToken(DataGrid grid, out PEFile module)
+		private int? GetSelectedToken(DataGrid? grid, out PEFile module)
 		{
 			module = null;
 			if (grid == null)
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Commands
 				&& GetSelectedCellContent(context.DataGrid, context.MousePosition) != null;
 		}
 
-		private string GetSelectedCellContent(DataGrid grid, Point position)
+		private string GetSelectedCellContent(DataGrid? grid, Point position)
 		{
 			position = grid.PointFromScreen(position);
 			var hit = VisualTreeHelper.HitTest(grid, position);

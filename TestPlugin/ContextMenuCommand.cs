@@ -13,7 +13,7 @@ namespace TestPlugin
 	{
 		public bool IsVisible(TextViewContext context)
 		{
-			return context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
+			return context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(static n => n is AssemblyTreeNode);
 		}
 
 		public bool IsEnabled(TextViewContext context)

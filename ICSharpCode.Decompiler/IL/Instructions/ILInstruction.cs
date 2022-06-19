@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void ValidateChild(ILInstruction inst)
 		{
-			ArgumentNullException.ThrowIfNull(inst);
+			if (inst == null) throw new ArgumentNullException(nameof(inst));
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILInstruction GetCommonParent(ILInstruction other)
 		{
-			ArgumentNullException.ThrowIfNull(other);
+			if (other == null) throw new ArgumentNullException(nameof(other));
 
 			ILInstruction a = this;
 			ILInstruction b = other;
@@ -357,7 +357,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsBefore(ILInstruction other)
 		{
-			ArgumentNullException.ThrowIfNull(other);
+			if (other == null) throw new ArgumentNullException(nameof(other));
 
 			ILInstruction a = this;
 			ILInstruction? b = other;

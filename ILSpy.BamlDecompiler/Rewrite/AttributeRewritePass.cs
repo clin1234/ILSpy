@@ -29,7 +29,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 {
 	internal sealed class AttributeRewritePass : IRewritePass
 	{
-		XName key;
+		XName? key;
 
 		public void Run(XamlContext ctx, XDocument document)
 		{

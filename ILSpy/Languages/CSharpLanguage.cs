@@ -542,7 +542,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeToString(IType type, bool includeNamespace)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type == null) throw new ArgumentNullException(nameof(type));
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
 			if (includeNamespace)
@@ -568,19 +568,19 @@ namespace ICSharpCode.ILSpy
 
 		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(field);
+			if (field == null) throw new ArgumentNullException(nameof(field));
 			return EntityToString(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(property);
+			if (property == null) throw new ArgumentNullException(nameof(property));
 			return EntityToString(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			ArgumentNullException.ThrowIfNull(method);
+			if (method == null) throw new ArgumentNullException(nameof(method));
 			return EntityToString(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 

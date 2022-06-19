@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// <summary>
 	/// Tree Node representing a field, method, property, or event.
 	/// </summary>
-	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
+	internal sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IMethod MethodDefinition { get; }
 

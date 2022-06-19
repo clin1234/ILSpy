@@ -31,7 +31,7 @@ namespace ILSpy.BamlDecompiler
 	[Export(typeof(IResourceNodeFactory))]
 	public sealed class BamlResourceNodeFactory : IResourceNodeFactory
 	{
-		public ITreeNode CreateNode(Resource resource)
+		public ITreeNode? CreateNode(Resource resource)
 		{
 			if (resource.Name.EndsWith(".baml", StringComparison.OrdinalIgnoreCase))
 				return new BamlResourceEntryNode(resource.Name, resource.TryOpenStream);

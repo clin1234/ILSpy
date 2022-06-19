@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <example><c>new FullTypeName("NS.A+B").NestedType("C", 1)</c> will return <c>new FullTypeName("NS.A+B+C`1")</c></example>
 		public FullTypeName NestedType(string name, int additionalTypeParameterCount)
 		{
-			ArgumentNullException.ThrowIfNull(name);
+			if (name == null) throw new ArgumentNullException(nameof(name));
 			var newNestedType = new NestedTypeName(name, additionalTypeParameterCount);
 			if (nestedTypes == null)
 				return new FullTypeName(topLevelType, new[] { newNestedType });

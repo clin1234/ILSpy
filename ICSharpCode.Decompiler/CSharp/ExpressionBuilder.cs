@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return target.Expression is not (ThisReferenceExpression or BaseReferenceExpression);
 		}
 
-		ExpressionWithResolveResult ConvertField(IField field, ILInstruction targetInstruction = null)
+		ExpressionWithResolveResult ConvertField(IField field, ILInstruction? targetInstruction = null)
 		{
 			var target = TranslateTarget(targetInstruction,
 				nonVirtualInvocation: true,
@@ -659,7 +659,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Expression expr;
 			IType constantType;
-			object constantValue;
+			object? constantValue;
 			if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT))
 			{
 				expr = new NullReferenceExpression();
@@ -1377,7 +1377,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					right = right.ConvertTo(brt, this);
 				}
 
-				ILInstruction offsetInst =
+				ILInstruction? offsetInst =
 					PointerArithmeticOffset.Detect(inst.Left, brt.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
@@ -4562,7 +4562,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst,
 			TranslationContext context)
 		{
-			string? message = "Error";
+			string message = "Error";
 			if (inst.StartILOffset != 0)
 			{
 				message += $" near IL_{inst.StartILOffset:x4}";

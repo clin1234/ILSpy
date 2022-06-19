@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			return backtrackingStack?.Count ?? 0;
 		}
 
-		internal void PushToSavePoints(int startMarker, int data)
+		internal readonly void PushToSavePoints(int startMarker, int data)
 		{
 			if (backtrackingStack == null)
 				return;

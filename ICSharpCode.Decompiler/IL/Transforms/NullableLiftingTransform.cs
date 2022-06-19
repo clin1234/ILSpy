@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public ILInstruction Left;
 			public ILInstruction Right;
 
-			public IType LeftExpectedType {
+			public readonly IType LeftExpectedType {
 				get {
 					if (Instruction is Call call)
 					{
@@ -470,7 +470,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			public IType RightExpectedType {
+			public readonly IType RightExpectedType {
 				get {
 					if (Instruction is Call call)
 					{

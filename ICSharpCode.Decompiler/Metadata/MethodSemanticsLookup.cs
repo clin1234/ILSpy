@@ -104,7 +104,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly struct Entry : IComparable<Entry>
 		{
 			public readonly MethodSemanticsAttributes Semantics;
-			private readonly int MethodRowNumber;
+			public readonly int MethodRowNumber;
+			public MethodDefinitionHandle Method => MetadataTokens.MethodDefinitionHandle(MethodRowNumber);
 			public readonly EntityHandle Association;
 
 			public Entry(MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)

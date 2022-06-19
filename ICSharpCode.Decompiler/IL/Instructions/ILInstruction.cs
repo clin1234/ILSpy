@@ -923,7 +923,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			}
 
-			public ILInstruction Current {
+			public readonly ILInstruction Current {
 				get {
 					return inst.GetChild(pos);
 				}
@@ -945,7 +945,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			}
 
-			object IEnumerator.Current {
+			readonly object IEnumerator.Current {
 				get { return this.Current; }
 			}
 

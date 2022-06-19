@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// Gets whether the match was successful.
 		/// </summary>
 		public bool Success {
-			get {
+			readonly get {
 				return results != null;
 			}
 			internal set {
@@ -81,17 +81,17 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			results.Add(new KeyValuePair<CaptureGroup, ILInstruction>(g, n));
 		}
 
-		internal int CheckPoint()
+		internal readonly int CheckPoint()
 		{
 			return results?.Count ?? 0;
 		}
 
-		internal void RestoreCheckPoint(int checkPoint)
+		internal readonly void RestoreCheckPoint(int checkPoint)
 		{
 			results?.RemoveRange(checkPoint, results.Count - checkPoint);
 		}
 
-		public IEnumerable<ILInstruction> Get(CaptureGroup captureGroup)
+		public readonly IEnumerable<ILInstruction> Get(CaptureGroup captureGroup)
 		{
 			if (results != null)
 			{

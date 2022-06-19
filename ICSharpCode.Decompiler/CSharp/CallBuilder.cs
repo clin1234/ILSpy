@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			public bool AddNamesToPrimitiveValues;
 			public bool UseImplicitlyTypedOut;
 			public bool IsExpandedForm;
-			public int Length => Arguments.Length;
+			public readonly int Length => Arguments.Length;
 
 			private int GetActualArgumentCount()
 			{
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			[Conditional("DEBUG")]
-			public void CheckNoNamedOrOptionalArguments()
+			public readonly void CheckNoNamedOrOptionalArguments()
 			{
 				Debug.Assert(ArgumentToParameterMap == null && ArgumentNames == null && FirstOptionalArgumentIndex < 0);
 			}

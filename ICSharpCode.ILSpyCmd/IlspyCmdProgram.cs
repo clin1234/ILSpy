@@ -118,7 +118,7 @@ Examples:
 
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 
-		private int OnExecute(CommandLineApplication app)
+		private int? OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = Console.Out;
 			string? outputDirectory = ResolveOutputDirectory(OutputDirectory);
@@ -155,7 +155,7 @@ Examples:
 				{
 					foreach (var file in InputAssemblyNames)
 					{
-						int result = PerformPerFileAction(file);
+						int? result = PerformPerFileAction(file);
 						if (result != 0)
 							return result;
 					}
@@ -173,7 +173,7 @@ Examples:
 				output.Close();
 			}
 
-			int PerformPerFileAction(string fileName)
+			int? PerformPerFileAction(string fileName)
 			{
 				if (EntityTypes.Any())
 				{
@@ -228,18 +228,12 @@ Examples:
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
 					}
 
-				if (outputDirectorySpecified)
-				{
-					string outputName = Path.GetFileNameWithoutExtension(fileName);
-					output = File.CreateText(Path.Combine(OutputDirectory,
-						(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+					return Decompile(fileName, output, TypeName);
 				}
-
-				return Decompile(fileName, output, TypeName);
 			}
 		}
 
-		private static string ResolveOutputDirectory(string outputDirectory)
+		private static string? ResolveOutputDirectory(string outputDirectory)
 		{
 			// path is not set
 			if (string.IsNullOrWhiteSpace(outputDirectory))
@@ -315,7 +309,7 @@ Examples:
 			return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
 		}
 
-		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
+		int Decompile(string assemblyFileName, TextWriter output, string? typeName = null)
 		{
 			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 
@@ -353,7 +347,7 @@ Examples:
 			return 0;
 		}
 
-		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
+		static int? DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
 		{
 			using MemoryMappedFile memoryMappedPackage =
 				MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
@@ -405,7 +399,7 @@ Examples:
 			return 0;
 		}
 
-		IDebugInfoProvider TryLoadPDB(PEFile module)
+		IDebugInfoProvider? TryLoadPDB(PEFile module)
 		{
 			if (InputPDBFile.IsSet)
 			{

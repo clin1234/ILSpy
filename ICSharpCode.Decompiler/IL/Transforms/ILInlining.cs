@@ -52,7 +52,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				InlineAllInBlock(function, block, context);
 			}
-
 			function.Variables.RemoveDead();
 		}
 
@@ -75,12 +74,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (IsInConstructorInitializer(function, inst) || PreferExpressionsOverStatements(function))
 					options |= InliningOptions.Aggressive;
 			}
-
 			if (!context.Settings.UseRefLocalsForAccurateOrderOfEvaluation)
 			{
 				options |= InliningOptions.AllowChangingOrderOfEvaluationForExceptions;
 			}
-
 			return options;
 		}
 
@@ -103,8 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (instructions[i] is StLoc inst)
 				{
 					InliningOptions options = InliningOptions.None;
-					if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block) ||
-					    IsInConstructorInitializer(function, inst))
+					if (context.Settings.AggressiveInlining || IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst))
 						options = InliningOptions.Aggressive;
 					if (InlineOneIfPossible(block, i, options, context))
 					{
@@ -112,7 +108,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-
 			return modified;
 		}
 
@@ -131,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var container = BlockContainer.FindClosestContainer(block);
 			return container?.Parent is TryCatchHandler handler
-			       && handler.Filter == container;
+				&& handler.Filter == container;
 		}
 
 		/// <summary>
@@ -150,7 +145,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				else
 					break;
 			}
-
 			return count;
 		}
 
@@ -165,8 +159,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Inlines the stloc instruction at block.Instructions[pos] into the next instruction, if possible.
 		/// </summary>
-		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options,
-			ILTransformContext context)
+		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
 			if (block.Instructions[pos] is not StLoc stloc || stloc.Variable.Kind == VariableKind.PinnedLocal)
@@ -227,7 +220,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 			}
-
 			return false;
 		}
 
@@ -254,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
 					bool aggressive = (options & InliningOptions.Aggressive) != 0;
 					if (!aggressive && v.Kind != VariableKind.StackSlot
-					                && !NonAggressiveInlineInto(next, r, inlinedExpression, v))
+						&& !NonAggressiveInlineInto(next, r, inlinedExpression, v))
 					{
 						return false;
 					}
@@ -281,10 +273,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					loadInst.ReplaceWith(inlinedExpression);
 				}
-
 				return true;
 			}
-
 			return false;
 		}
 
@@ -309,10 +299,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// expressionBuilder.VisitAddressOf will handle creating the copy for us.
 					return true;
 				}
-
-				switch (ClassifyExpression(inlinedExpression))
-				{
-					case ExpressionClassification.RValue:
+				return ClassifyExpression(inlinedExpression) switch {
+					ExpressionClassification.RValue =>
 						// For struct method calls on rvalues, the C# compiler always generates temporaries.
 						true,
 					ExpressionClassification.MutableLValue =>
@@ -362,7 +350,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				inst = ldflda;
 			}
-
 			if (inst.ChildIndex != 0)
 				return false;
 			switch (inst.Parent.OpCode)
@@ -383,7 +370,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// C# doesn't allow calling setters on temporary structs
 						return false;
 					}
-
 					return !method.IsStatic;
 				case OpCode.Await:
 					method = ((Await)inst.Parent).GetAwaiterMethod;
@@ -407,7 +393,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				inst = ldflda;
 			}
-
 			return inst != ldloca && inst.Parent is LdObj;
 		}
 
@@ -425,8 +410,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.StLoc:
 					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
 					if (v.IsRefReadOnly
-						|| v.Kind == VariableKind.ForeachLocal
-						|| v.Kind == VariableKind.UsingLocal)
+					    || v.Kind is VariableKind.ForeachLocal or VariableKind.UsingLocal)
 					{
 						return ExpressionClassification.ReadonlyLValue;
 					}
@@ -495,7 +479,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var originalStore = (StLoc)inlinedExpression.Parent;
 				return !originalStore.ILStackWasEmpty;
 			}
-
 			Debug.Assert(findResult.Type == FindResultType.Found);
 
 			var loadInst = findResult.LoadInst;
@@ -518,10 +501,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// so inline more aggressively in such cases.
 						return true;
 					}
-
 					break;
 			}
-
 			if (inlinedExpression.ResultType == StackType.Ref)
 			{
 				// VB likes to use ref locals for compound assignment
@@ -541,7 +522,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return true; // inline into lifted operators
 			}
-
 			// decide based on the new parent into which we are inlining:
 			switch (parent.OpCode)
 			{
@@ -572,12 +552,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return true;
 					}
-
 					if (((CallInstruction)parent).Method is SyntheticRangeIndexAccessor)
 					{
 						return true;
 					}
-
 					break;
 				case OpCode.CallIndirect when loadInst.SlotInfo == CallIndirect.FunctionPointerSlot:
 					return true;
@@ -586,7 +564,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return true;
 					}
-
 					break;
 				case OpCode.Leave:
 				case OpCode.YieldReturn:
@@ -602,10 +579,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return true;
 					}
-
 					break;
 			}
-
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode)
 			{
@@ -614,7 +589,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						parent = parent.Parent;
 					}
-
 					return parent == next;
 				default:
 					return false;
@@ -658,7 +632,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return FindResult.Stop;
 					}
 				}
-
 				return FindResult.Found(expr);
 			}
 
@@ -689,7 +662,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return FindResult.Deconstruction(di);
 			}
-
 			foreach (var child in expr.Children)
 			{
 				if (!expr.CanInlineIntoSlot(child.ChildIndex, expressionBeingMoved))
@@ -705,7 +677,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return r;
 				}
 			}
-
 			if (IsSafeForInlineOver(expr, expressionBeingMoved))
 				return FindResult.Continue; // continue searching
 			return FindResult.Stop; // abort, inlining not possible
@@ -741,7 +712,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return call;
 				}
 			}
-
 			return inst as CallInstruction;
 		}
 
@@ -764,7 +734,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				}
 			}
-
 			return true;
 		}
 
@@ -776,13 +745,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			// moving into and moving out-of are equivalent
 			return CanMoveInto(arg, stmt, arg);
-		}
-
-		internal enum ExpressionClassification
-		{
-			RValue,
-			MutableLValue,
-			ReadonlyLValue,
 		}
 
 		internal enum FindResultType
@@ -854,5 +816,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return new FindResult(FindResultType.Deconstruction, deconstruction, null);
 			}
 		}
+	}
+	internal enum ExpressionClassification
+	{
+		RValue,
+		MutableLValue,
+		ReadonlyLValue,
 	}
 }

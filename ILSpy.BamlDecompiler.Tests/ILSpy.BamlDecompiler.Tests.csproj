@@ -31,11 +31,11 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
     <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
     <!-- used for xml test result files -->
-    <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
+    <PackageReference Include="JunitXml.TestLogger" Version="3.0.114" />
     <PackageReference Include="coverlet.collector" Version="$(CoverletCollectorVersion)" />
   </ItemGroup>
 

@@ -56,7 +56,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemCompilerServicesUnsafeVersion)" />
     <PackageReference Include="System.Composition" Version="$(SystemCompositionVersion)" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />

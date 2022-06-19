@@ -47,16 +47,16 @@
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
-    <PackageReference Include="System.Reflection.Metadata" Version="$(SystemReflectionMetadataVersion)" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
     <PackageReference Include="coverlet.collector" Version="$(CoverletCollectorVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
     <!-- used for xml test result files -->
-    <PackageReference Include="JunitXml.TestLogger" Version="$(JUnitXmlTestLoggerVersion)" />
-    <PackageReference Include="Moq" Version="$(MoqVersion)" />
+    <PackageReference Include="JunitXml.TestLogger" Version="3.0.114" />
+    <PackageReference Include="Moq" Version="4.18.1" />
   </ItemGroup>
 
   <ItemGroup>

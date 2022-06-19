@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.IL
 				return ++pos < list.Count;
 			}
 
-			public T Current {
+			public readonly T Current {
 				[DebuggerStepThrough] get { return list[pos]; }
 			}
 
@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.IL
 				pos = -1;
 			}
 
-			object System.Collections.IEnumerator.Current {
+			readonly object System.Collections.IEnumerator.Current {
 				get { return this.Current; }
 			}
 		}

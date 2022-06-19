@@ -118,8 +118,6 @@ Examples:
 
 		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
 
-		public static int Main(string[] args) => CommandLineApplication.Execute<ILSpyCmdProgram>(args);
-
 		private int? OnExecute(CommandLineApplication app)
 		{
 			TextWriter output = Console.Out;
@@ -240,7 +238,7 @@ Examples:
 			}
 		}
 
-		private static string ResolveOutputDirectory(string outputDirectory)
+		private static string? ResolveOutputDirectory(string outputDirectory)
 		{
 			// path is not set
 			if (string.IsNullOrWhiteSpace(outputDirectory))

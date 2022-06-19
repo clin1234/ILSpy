@@ -696,7 +696,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets the setting this instance uses for decompiling.
 		/// </summary>
-		public DecompilerSettings Settings { get; }
+		public DecompilerSettings? Settings { get; }
 
 		LanguageVersion? languageVersion;
 
@@ -711,9 +711,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		public IAssemblyResolver AssemblyResolver { get; }
+		public IAssemblyResolver? AssemblyResolver { get; }
 
-		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
+		public AssemblyReferenceClassifier? AssemblyReferenceClassifier { get; }
 
 		public IDebugInfoProvider? DebugInfoProvider { get; }
 
@@ -742,6 +742,68 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public IProgress<DecompilationProgress> ProgressIndicator { get; init; }
 
 		#endregion
+		
+		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
+			: this(new DecompilerSettings(), assemblyResolver, assemblyReferenceClassifier: null, debugInfoProvider: null)
+		{
+		}
+
+		public WholeProjectDecompiler(
+			DecompilerSettings settings,
+			IAssemblyResolver assemblyResolver,
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
+			: this(settings, Guid.NewGuid(), assemblyResolver, assemblyReferenceClassifier, debugInfoProvider)
+		{
+		}
+
+		protected WholeProjectDecompiler(
+			DecompilerSettings settings,
+			Guid projectGuid,
+			IAssemblyResolver assemblyResolver,
+			AssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
+		{
+			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			ProjectGuid = projectGuid;
+			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
+			AssemblyReferenceClassifier = assemblyReferenceClassifier ?? new AssemblyReferenceClassifier();
+			DebugInfoProvider = debugInfoProvider;
+			projectWriter = Settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create();
+		}
+		
+		// per-run members
+		readonly HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
+		readonly IProjectFileWriter projectWriter;
+		
+		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
+			using var writer = new StreamWriter(projectFileName);
+			DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
+		}
+
+		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (string.IsNullOrEmpty(targetDirectory))
+			{
+				throw new InvalidOperationException("Must set TargetDirectory");
+			}
+			TargetDirectory = targetDirectory;
+			directories.Clear();
+			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
+			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
+			files.AddRange(WriteMiscellaneousFilesInProject(moduleDefinition));
+			if (StrongNameKeyFile != null)
+			{
+				File.Copy(StrongNameKeyFile, Path.Combine(targetDirectory, Path.GetFileName(StrongNameKeyFile)), overwrite: true);
+			}
+
+			projectWriter.Write(projectFileWriter, this, files, moduleDefinition);
+
+			string platformName = TargetServices.GetPlatformName(moduleDefinition);
+			return new ProjectId(platformName, ProjectGuid, ProjectTypeGuids.CSharpWindows);
+		}
 
 		#region WriteCodeFilesInProject
 
@@ -1082,7 +1144,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
 				Justification = "<Pending>")]
-			public GRPICONDIRENTRY* idEntries {
+			public readonly GRPICONDIRENTRY* idEntries {
 				get {
 					fixed (byte* p = _idEntries)
 						return (GRPICONDIRENTRY*)p;
@@ -1175,12 +1237,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			int pos = text.IndexOf(':');
 			if (pos > 0)
-				text = text.Substring(0, pos);
+				text = text[..pos];
 			pos = text.IndexOf('`');
 			if (pos > 0)
-				text = text.Substring(0, pos);
+				text = text[..pos];
 			text = text.Trim();
-			string extension = null;
+			string? extension = null;
 			int currentSegmentLength = 0;
 			if (treatAsFileName)
 			{
@@ -1193,11 +1255,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				if (lastDot >= 0 && text.Length - lastDot < maxSegmentLength)
 				{
 					string originalText = text;
-					extension = text.Substring(lastDot);
+					extension = text[lastDot..];
 					text = text.Remove(lastDot);
 					foreach (var c in extension)
 					{
-						if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.'))
+						if (!(char.IsLetterOrDigit(c) || c is '-' or '_' or '.'))
 						{
 							// extension contains an invalid character, therefore cannot be a valid extension.
 							extension = null;
@@ -1212,14 +1274,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			foreach (var c in text)
 			{
 				currentSegmentLength++;
-				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
+				if (char.IsLetterOrDigit(c) || c is '-' or '_')
 				{
 					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
 					if (currentSegmentLength <= maxSegmentLength)
 						b.Append(c);
 				}
-				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
+				else if (c == '.' && b.Length > 0 && b[^1] != '.')
 				{
 					// if the current segment exceeds maxSegmentLength characters,
 					// skip until the end of the segment.
@@ -1230,7 +1292,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					if (separateAtDots)
 						currentSegmentLength = 0;
 				}
-				else if (treatAsFileName && (c == '/' || c == '\\') && currentSegmentLength > 0)
+				else if (treatAsFileName && c is '/' or '\\' && currentSegmentLength > 0)
 				{
 					// if we treat this as a file name, we've started a new segment
 					b.Append(c);

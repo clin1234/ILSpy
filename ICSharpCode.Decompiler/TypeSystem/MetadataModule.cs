@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public TypeSystemOptions TypeSystemOptions { get; }
+		internal TypeSystemOptions TypeSystemOptions { get; }
 		public ICompilation Compilation { get; }
 
 		internal string GetString(StringHandle name)

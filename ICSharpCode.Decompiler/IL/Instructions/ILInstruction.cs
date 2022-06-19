@@ -945,7 +945,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			}
 
-			object IEnumerator.Current {
+			readonly object IEnumerator.Current {
 				get { return this.Current; }
 			}
 

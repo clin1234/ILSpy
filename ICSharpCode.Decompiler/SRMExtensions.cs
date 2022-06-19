@@ -12,7 +12,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
-	public static partial class SRMExtensions
+	internal static partial class SRMExtensions
 	{
 		public static bool HasFlag(this SRM.TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;

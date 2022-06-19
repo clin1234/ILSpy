@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 		Resource Resource { get; }
 	}
 
-	internal interface ITreeNodeFactory
+	public interface ITreeNodeFactory
 	{
 		ITreeNode CreateResourcesList(PEFile module);
 		ITreeNode Create(Resource resource);

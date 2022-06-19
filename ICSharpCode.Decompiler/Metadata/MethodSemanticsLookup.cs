@@ -100,24 +100,5 @@ namespace ICSharpCode.Decompiler.Metadata
 				return MethodRowNumber.CompareTo(other.MethodRowNumber);
 			}
 		}
-
-		readonly struct Entry : IComparable<Entry>
-		{
-			public readonly MethodSemanticsAttributes Semantics;
-			private readonly int MethodRowNumber;
-			public readonly EntityHandle Association;
-
-			public Entry(MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
-			{
-				Semantics = semantics;
-				MethodRowNumber = MetadataTokens.GetRowNumber(method);
-				Association = association;
-			}
-
-			public int CompareTo(Entry other)
-			{
-				return MethodRowNumber.CompareTo(other.MethodRowNumber);
-			}
-		}
 	}
 }

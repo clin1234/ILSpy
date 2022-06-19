@@ -23,7 +23,7 @@ using ICSharpCode.ILSpyX.Abstractions;
 
 namespace ICSharpCode.ILSpyX.Search
 {
-	abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
+	public abstract class AbstractEntitySearchStrategy : AbstractSearchStrategy
 	{
 		private readonly ApiVisibility apiVisibility;
 		public readonly ILanguage language;

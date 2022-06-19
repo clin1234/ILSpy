@@ -87,18 +87,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			       && AdditionalTypeParameterCount == o.AdditionalTypeParameterCount
 			       && isReferenceType == o.isReferenceType;
 		}
-
-		public int GetHashCodeForInterning()
-		{
-			return DeclaringTypeReference.GetHashCode() ^ Name.GetHashCode() ^ AdditionalTypeParameterCount;
-		}
-
-		public bool EqualsForInterning(ISupportsInterning other)
-		{
-			return other is NestedTypeReference o && DeclaringTypeReference == o.DeclaringTypeReference &&
-			       Name == o.Name
-			       && AdditionalTypeParameterCount == o.AdditionalTypeParameterCount
-			       && isReferenceType == o.isReferenceType;
-		}
 	}
 }

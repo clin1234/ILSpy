@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Search
 	/// <summary>
 	/// Search pane
 	/// </summary>
-	public sealed partial class SearchPane : UserControl
+	public sealed partial class SearchPane
 	{
 		const int MAX_RESULTS = 1000;
 		const int MAX_REFRESH_TIME_MS = 10; // More means quicker forward of data, less means better responsibility
@@ -308,7 +308,7 @@ namespace ICSharpCode.ILSpy.Search
 
 				SearchRequest request = new SearchRequest();
 				List<string> keywords = new List<string>();
-				Regex regex = null;
+				Regex? regex = null;
 				request.Mode = searchMode;
 
 				foreach (string part in parts)
@@ -324,7 +324,7 @@ namespace ICSharpCode.ILSpy.Search
 
 					// Find end of prefix
 					prefixLength = part.StartsWith("@", StringComparison.Ordinal) ? 1 : part.IndexOf(':', 0, prefixLength);
-					string prefix;
+					string? prefix;
 					if (prefixLength <= 0)
 					{
 						prefix = null;
@@ -484,7 +484,7 @@ namespace ICSharpCode.ILSpy.Search
 				}
 			}
 
-			AbstractSearchStrategy GetSearchStrategy(SearchRequest request)
+			AbstractSearchStrategy? GetSearchStrategy(SearchRequest request)
 			{
 				if (request.Keywords.Length == 0 && request.RegEx == null)
 					return null;

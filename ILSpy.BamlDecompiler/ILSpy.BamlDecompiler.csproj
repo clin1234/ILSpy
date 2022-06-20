@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>ILSpy.BamlDecompiler.Plugin</AssemblyName>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFrameworks>net6.0-windows;net48</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <IsPackable>false</IsPackable>
@@ -10,6 +10,7 @@
     <BaseAddress>6488064</BaseAddress>
     <UseWpf>true</UseWpf>
     <Nullable>enable</Nullable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

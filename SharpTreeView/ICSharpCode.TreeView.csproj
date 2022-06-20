@@ -5,11 +5,10 @@
     <UseWpf>true</UseWpf>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <SignAssembly>True</SignAssembly>
-    <TargetFrameworks>net6.0-windows;net48</TargetFrameworks>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

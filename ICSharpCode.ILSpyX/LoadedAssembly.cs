@@ -323,7 +323,7 @@ namespace ICSharpCode.ILSpyX
 			Exception loadAssemblyException;
 			try
 			{
-				using FileStream fileStream = new(FileName, FileMode.Open, FileAccess.Read);
+				await using FileStream fileStream = new FileStream(FileName, FileMode.Open, FileAccess.Read);
 				return LoadAssembly(fileStream, PEStreamOptions.PrefetchEntireImage, applyWinRTProjections);
 			}
 			catch (PEFileNotSupportedException ex)

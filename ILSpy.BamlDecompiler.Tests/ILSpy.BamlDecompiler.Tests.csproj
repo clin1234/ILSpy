@@ -15,7 +15,6 @@
     <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

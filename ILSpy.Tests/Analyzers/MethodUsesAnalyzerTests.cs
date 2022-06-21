@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers
 		public void MainAssemblyUsesSystemStringEmpty()
 		{
 			var context = new AnalyzerContext { AssemblyList = assemblyList, Language = language };
-			IMethod symbol = typeDefinition.Methods.First(m => m.Name == "UsesSystemStringEmpty");
+			IMethod symbol = typeDefinition.Methods.First(static m => m.Name == "UsesSystemStringEmpty");
 
 			var results = new MethodUsesAnalyzer().Analyze(symbol, context).ToList();
 

@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public static void RunOnSingleStatement(ILInstruction statement, ILTransformContext context)
 		{
-			if (statement == null) throw new ArgumentNullException(nameof(statement));
+			if (statement is null) throw new ArgumentNullException(nameof(statement));
 			if (statement.Parent is not Block parent)
 				throw new ArgumentException("ILInstruction must be a statement, i.e., direct child of a block.");
 			new ExpressionTransforms().Run(parent, statement.ChildIndex,

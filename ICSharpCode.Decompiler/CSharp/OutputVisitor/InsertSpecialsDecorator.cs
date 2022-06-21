@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void WriteIdentifier(Identifier? identifier)
 		{
-			WriteSpecialsUpToRole(identifier.Role ?? Roles.Identifier);
+			WriteSpecialsUpToRole(identifier?.Role ?? Roles.Identifier);
 			base.WriteIdentifier(identifier);
 		}
 

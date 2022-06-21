@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// </remarks>
 		public static Match Match(this INode pattern, INode? other)
 		{
-			if (pattern == null) throw new ArgumentNullException(nameof(pattern));
+			if (pattern is null) throw new ArgumentNullException(nameof(pattern));
 			Match match = PatternMatching.Match.CreateNew();
 			if (pattern.DoMatch(other, match))
 				return match;
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public static bool IsMatch(this INode? pattern, INode? other)
 		{
-			if (pattern == null) throw new ArgumentNullException(nameof(pattern));
+			if (pattern is null) throw new ArgumentNullException(nameof(pattern));
 			return pattern.DoMatch(other, PatternMatching.Match.CreateNew());
 		}
 

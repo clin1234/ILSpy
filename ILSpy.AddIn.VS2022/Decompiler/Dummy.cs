@@ -18,7 +18,7 @@ namespace ICSharpCode.Decompiler
 	{
 		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
-			if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+			if (bytes is null) throw new ArgumentNullException(nameof(bytes));
 
 			StringBuilder sb = new StringBuilder(estimatedLength * 2);
 			foreach (var b in bytes)

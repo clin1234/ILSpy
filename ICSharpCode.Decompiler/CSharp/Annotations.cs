@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Retrieves the <see cref="ISymbol"/> associated with this AstNode, or null if no symbol
 		/// is associated with the node.
 		/// </summary>
-		public static ISymbol GetSymbol(this AstNode node)
+		public static ISymbol? GetSymbol(this AstNode node)
 		{
 			var rr = node.Annotation<ResolveResult>();
 			if (rr is MethodGroupResolveResult)

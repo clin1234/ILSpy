@@ -383,7 +383,7 @@ namespace ICSharpCode.TreeView
 		/// </summary>
 		public void FocusNode(SharpTreeNode node)
 		{
-			if (node == null) throw new ArgumentNullException(nameof(node));
+			if (node is null) throw new ArgumentNullException(nameof(node));
 			ScrollIntoView(node);
 			// WPF's ScrollIntoView() uses the same if/dispatcher construct, so we call OnFocusItem() after the item was brought into view.
 			if (this.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
@@ -398,7 +398,7 @@ namespace ICSharpCode.TreeView
 
 		public void ScrollIntoView(SharpTreeNode node)
 		{
-			if (node == null) throw new ArgumentNullException(nameof(node));
+			if (node is null) throw new ArgumentNullException(nameof(node));
 			doNotScrollOnExpanding = true;
 			foreach (SharpTreeNode ancestor in node.Ancestors())
 				ancestor.IsExpanded = true;

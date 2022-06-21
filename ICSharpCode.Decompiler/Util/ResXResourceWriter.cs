@@ -189,9 +189,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddResource(string name, byte[]? value)
 		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
-			if (value == null) throw new ArgumentNullException(nameof(value));
+			if (value is null) throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -278,9 +278,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		private void AddResource(string name, string? value, string? comment)
 		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
-			if (value == null) throw new ArgumentNullException(nameof(value));
+			if (value is null) throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public ResXResourceWriter(Stream? stream)
 		{
-			if (stream == null) throw new ArgumentNullException(nameof(stream));
+			if (stream is null) throw new ArgumentNullException(nameof(stream));
 
 			if (!stream.CanWrite)
 				throw new ArgumentException("stream is not writable.", nameof(stream));

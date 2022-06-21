@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public CSharpResolver(CSharpTypeResolveContext context)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (context is null) throw new ArgumentNullException(nameof(context));
 			this.Compilation = context.Compilation;
 			this.conversions = CSharpConversions.Get(Compilation);
 			this.CurrentTypeResolveContext = context;
@@ -427,7 +427,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public CSharpResolver AddVariable(IVariable? variable)
 		{
-			if (variable == null) throw new ArgumentNullException(nameof(variable));
+			if (variable is null) throw new ArgumentNullException(nameof(variable));
 			return WithLocalVariableStack(localVariableStack.Push(variable));
 		}
 
@@ -480,7 +480,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public CSharpResolver PushObjectInitializer(ResolveResult? initializedObject)
 		{
-			if (initializedObject == null) throw new ArgumentNullException(nameof(initializedObject));
+			if (initializedObject is null) throw new ArgumentNullException(nameof(initializedObject));
 			return WithObjectInitializerStack(new ObjectInitializerContext(initializedObject, objectInitializerStack));
 		}
 
@@ -1664,8 +1664,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// C# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
 
-			if (identifier == null) throw new ArgumentNullException(nameof(identifier));
-			if (typeArguments == null) throw new ArgumentNullException(nameof(typeArguments));
+			if (identifier is null) throw new ArgumentNullException(nameof(identifier));
+			if (typeArguments is null) throw new ArgumentNullException(nameof(typeArguments));
 
 			int k = typeArguments.Count;
 
@@ -2345,8 +2345,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public static bool IsEligibleExtensionMethod(IType targetType, IMethod method, bool useTypeInference,
 			out IType[]? outInferredTypes)
 		{
-			if (targetType == null) throw new ArgumentNullException(nameof(targetType));
-			if (method == null) throw new ArgumentNullException(nameof(method));
+			if (targetType is null) throw new ArgumentNullException(nameof(targetType));
+			if (method is null) throw new ArgumentNullException(nameof(method));
 			var compilation = method.Compilation;
 			return IsEligibleExtensionMethod(compilation, CSharpConversions.Get(compilation), targetType, method,
 				useTypeInference, out outInferredTypes);
@@ -2817,7 +2817,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public ResolveResult ResolveCondition(ResolveResult input)
 		{
-			if (input == null) throw new ArgumentNullException(nameof(input));
+			if (input is null) throw new ArgumentNullException(nameof(input));
 			IType boolean = Compilation.FindType(KnownTypeCode.Boolean);
 			Conversion? c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid)
@@ -2841,7 +2841,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public ResolveResult ResolveConditionFalse(ResolveResult? input)
 		{
-			if (input == null) throw new ArgumentNullException(nameof(input));
+			if (input is null) throw new ArgumentNullException(nameof(input));
 			IType boolean = Compilation.FindType(KnownTypeCode.Boolean);
 			Conversion? c = conversions.ImplicitConversion(input, boolean);
 			if (!c.IsValid)

@@ -749,7 +749,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext,
 			ILVariable existingVariable = null, bool mustResolveConflicts = false)
 		{
-			if (function == null) throw new ArgumentNullException(nameof(function));
+			if (function is null) throw new ArgumentNullException(nameof(function));
 			if (existingVariable is { HasGeneratedName: false })
 			{
 				return existingVariable.Name;
@@ -809,7 +809,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction? valueContext = null, ILVariable existingVariable = null,
 			bool mustResolveConflicts = false)
 		{
-			if (function == null) throw new ArgumentNullException(nameof(function));
+			if (function is null) throw new ArgumentNullException(nameof(function));
 			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable, mustResolveConflicts);
 
 			string baseName = valueContext != null

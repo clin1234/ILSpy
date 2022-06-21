@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpyX
 
 		public static LoadedAssembly GetLoadedAssembly(this PEFile file)
 		{
-			if (file == null) throw new ArgumentNullException(nameof(file));
+			if (file is null) throw new ArgumentNullException(nameof(file));
 			LoadedAssembly? loadedAssembly;
 			lock (LoadedAssembly.loadedAssemblies)
 			{

@@ -42,15 +42,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public CSharpOutputVisitor(TextWriter textWriter, CSharpFormattingOptions formattingPolicy)
 		{
-			if (textWriter == null) throw new ArgumentNullException(nameof(textWriter));
-			if (formattingPolicy == null) throw new ArgumentNullException(nameof(formattingPolicy));
+			if (textWriter is null) throw new ArgumentNullException(nameof(textWriter));
+			if (formattingPolicy is null) throw new ArgumentNullException(nameof(formattingPolicy));
 			this.writer = TokenWriter.Create(textWriter, formattingPolicy.IndentationString);
 			this.policy = formattingPolicy;
 		}
 
 		public CSharpOutputVisitor(TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
-			if (writer == null) throw new ArgumentNullException(nameof(writer));
+			if (writer is null) throw new ArgumentNullException(nameof(writer));
 
 			this.writer = new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(writer));
 			this.policy = formattingPolicy ?? throw new ArgumentNullException(nameof(formattingPolicy));
@@ -2036,7 +2036,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(labelStatement.GetChildByRole(Roles.Identifier));
 			WriteToken(Roles.Colon);
 			bool foundLabelledStatement = false;
-			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
+			for (AstNode? tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
 			{
 				if (tmp.Role == labelStatement.Role)
 				{

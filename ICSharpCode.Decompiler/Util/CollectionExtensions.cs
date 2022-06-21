@@ -241,8 +241,8 @@ namespace ICSharpCode.Decompiler.Util
 		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
 		private static T MinBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K>? keyComparer)
 		{
-			if (source == null) throw new ArgumentNullException(nameof(source));
-			if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
+			if (source is null) throw new ArgumentNullException(nameof(source));
+			if (keySelector is null) throw new ArgumentNullException(nameof(keySelector));
 			keyComparer ??= Comparer<K>.Default;
 			using var enumerator = source.GetEnumerator();
 			if (!enumerator.MoveNext())
@@ -304,7 +304,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public static void RemoveLast<T>(this IList<T> list)
 		{
-			if (list == null) throw new ArgumentNullException(nameof(list));
+			if (list is null) throw new ArgumentNullException(nameof(list));
 			list.RemoveAt(list.Count - 1);
 		}
 

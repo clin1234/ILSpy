@@ -32,14 +32,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public SimpleTypeResolveContext(IModule? module)
 		{
-			if (module == null) throw new ArgumentNullException(nameof(module));
+			if (module is null) throw new ArgumentNullException(nameof(module));
 			this.Compilation = module.Compilation;
 			this.CurrentModule = module;
 		}
 
 		public SimpleTypeResolveContext(IEntity entity)
 		{
-			if (entity == null) throw new ArgumentNullException(nameof(entity));
+			if (entity is null) throw new ArgumentNullException(nameof(entity));
 			this.Compilation = entity.Compilation;
 			this.CurrentModule = entity.ParentModule;
 			this.CurrentTypeDefinition = (entity as ITypeDefinition) ?? entity.DeclaringTypeDefinition;

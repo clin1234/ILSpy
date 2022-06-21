@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 		ITypeDefinition GetDefinition(Type type)
 		{
-			if (type == null) throw new ArgumentNullException(nameof(type));
+			if (type is null) throw new ArgumentNullException(nameof(type));
 
 			var foundType = compilation.FindType(type).GetDefinition();
 			Assert.IsNotNull(foundType);

@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)

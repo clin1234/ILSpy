@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		static IType UnpackTypeIfByRefParameter(IVariable? variable)
 		{
-			if (variable == null) throw new ArgumentNullException(nameof(variable));
+			if (variable is null) throw new ArgumentNullException(nameof(variable));
 			IType type = variable.Type;
 			if (type.Kind == TypeKind.ByReference)
 			{

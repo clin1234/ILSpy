@@ -1329,7 +1329,7 @@ namespace ICSharpCode.ILSpy
 
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
-			if (fileNames == null) throw new ArgumentNullException(nameof(fileNames));
+			if (fileNames is null) throw new ArgumentNullException(nameof(fileNames));
 
 			if (focusNode)
 				AssemblyTreeView.UnselectAll();

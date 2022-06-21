@@ -37,17 +37,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMember? accessorOwner;
 
-		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution? substitution)
+		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution substitution)
 			: base(methodDefinition)
 		{
 			bool isParameterized = substitution.MethodTypeArguments != null;
-			if (substitution == null) throw new ArgumentNullException(nameof(substitution));
+			if (substitution is null) throw new ArgumentNullException(nameof(substitution));
 			this.methodDefinition = methodDefinition;
 			if (methodDefinition.TypeParameters.Count > 0)
 			{
 				// The method is generic, so we need to specialize the type parameters
 				// (for specializing the constraints, and also to set the correct Owner)
-				specializedTypeParameters = new ITypeParameter?[methodDefinition.TypeParameters.Count];
+				specializedTypeParameters = new ITypeParameter[methodDefinition.TypeParameters.Count];
 				for (int i = 0; i < specializedTypeParameters.Length; i++)
 				{
 					specializedTypeParameters[i] =
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IReadOnlyList<IType>? TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution?.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
 

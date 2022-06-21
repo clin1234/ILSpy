@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="typeParameterCount">Type parameter count, zero if unknown.</param>
 		public UnknownType(string? namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (name is null) throw new ArgumentNullException(nameof(name));
 			this.namespaceKnown = namespaceName != null;
 			this.fullTypeName = new TopLevelTypeName(namespaceName ?? string.Empty, name, typeParameterCount);
 			this.isReferenceType = isReferenceType;
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (context is null) throw new ArgumentNullException(nameof(context));
 			return this;
 		}
 

@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IMember? GetDerivedMember(IMember baseMember, ITypeDefinition derivedType)
 		{
-			if (baseMember == null) throw new ArgumentNullException(nameof(baseMember));
-			if (derivedType == null) throw new ArgumentNullException(nameof(derivedType));
+			if (baseMember is null) throw new ArgumentNullException(nameof(baseMember));
+			if (derivedType is null) throw new ArgumentNullException(nameof(derivedType));
 
 			if (baseMember.Compilation != derivedType.Compilation)
 				throw new ArgumentException("baseMember and derivedType must be from the same compilation");
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </returns>
 		public static IEnumerable<IMember> GetBaseMembers(IMember member, bool includeImplementedInterfaces)
 		{
-			if (member == null) throw new ArgumentNullException(nameof(member));
+			if (member is null) throw new ArgumentNullException(nameof(member));
 
 			if (includeImplementedInterfaces)
 			{

@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (context is null) throw new ArgumentNullException(nameof(context));
 			return this;
 		}
 #pragma warning disable 809

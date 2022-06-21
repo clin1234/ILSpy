@@ -731,7 +731,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </remarks>
 		public SyntaxTree? DecompileTypes(IEnumerable<TypeDefinitionHandle> types)
 		{
-			if (types == null) throw new ArgumentNullException(nameof(types));
+			if (types is null) throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(TypeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
@@ -815,7 +815,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public SyntaxTree? Decompile(IEnumerable<EntityHandle> definitions)
 		{
-			if (definitions == null) throw new ArgumentNullException(nameof(definitions));
+			if (definitions is null) throw new ArgumentNullException(nameof(definitions));
 			syntaxTree = new SyntaxTree();
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),

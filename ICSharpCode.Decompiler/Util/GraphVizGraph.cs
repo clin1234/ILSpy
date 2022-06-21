@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(TextWriter writer)
 		{
-			if (writer == null) throw new ArgumentNullException(nameof(writer));
+			if (writer is null) throw new ArgumentNullException(nameof(writer));
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);

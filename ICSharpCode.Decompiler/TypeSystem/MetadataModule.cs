@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public ITypeDefinition GetDefinition(TypeDefinitionHandle handle)
+		public ITypeDefinition? GetDefinition(TypeDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref typeDefs[row], typeDef);
 		}
 
-		public IField GetDefinition(FieldDefinitionHandle handle)
+		public IField? GetDefinition(FieldDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -503,7 +503,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			MethodSignature<IType> signature;
 			IReadOnlyList<IType>? classTypeArguments = null;
-			IMethod method;
+			IMethod? method;
 			if (memberRef.Parent.Kind == HandleKind.MethodDefinition)
 			{
 				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);

@@ -11,7 +11,7 @@ namespace LightJson.Serialization
 	internal sealed class TextScanner
 	{
 		private TextPosition position;
-		private TextReader reader;
+		private readonly TextReader reader;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TextScanner"/> class.
@@ -68,21 +68,19 @@ namespace LightJson.Serialization
 		{
 			var next = this.reader.Read();
 
-			if (next == -1)
+			switch (next)
 			{
-				throw new JsonParseException(
-					JsonParseException.ErrorType.IncompleteMessage,
-					this.position);
-			}
-
-			if (next == '\n')
-			{
-				this.position.Line += 1;
-				this.position.Column = 0;
-			}
-			else
-			{
-				this.position.Column += 1;
+				case -1:
+					throw new JsonParseException(
+						JsonParseException.ErrorType.IncompleteMessage,
+						this.position);
+				case '\n':
+					this.position.Line += 1;
+					this.position.Column = 0;
+					break;
+				default:
+					this.position.Column += 1;
+					break;
 			}
 
 			return (char)next;

@@ -18,7 +18,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// <returns></returns>
 		public static unsafe Win32ResourceDirectory? ReadWin32Resources(this PEReader pe)
 		{
-			if (pe == null) throw new ArgumentNullException(nameof(pe));
+			if (pe is null) throw new ArgumentNullException(nameof(pe));
 
 			int rva = pe.PEHeaders.PEHeader?.ResourceTableDirectory.RelativeVirtualAddress ?? 0;
 			if (rva == 0)
@@ -27,12 +27,12 @@ namespace ICSharpCode.Decompiler.Util
 			return new Win32ResourceDirectory(pe, pRoot, 0, new Win32ResourceName("Root"));
 		}
 
-		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type)
+		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName? type)
 		{
-			if (root == null) throw new ArgumentNullException(nameof(root));
+			if (root is null) throw new ArgumentNullException(nameof(root));
+			if (type is null) throw new ArgumentNullException(nameof(type));
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
-			if (type == null) throw new ArgumentNullException(nameof(type));
 
 			return root.FindDirectory(type);
 		}
@@ -40,11 +40,11 @@ namespace ICSharpCode.Decompiler.Util
 		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type,
 			Win32ResourceName name)
 		{
-			if (root == null) throw new ArgumentNullException(nameof(root));
+			if (root is null) throw new ArgumentNullException(nameof(root));
+			if (type is null) throw new ArgumentNullException(nameof(type));
+			if (name is null) throw new ArgumentNullException(nameof(name));
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
-			if (type == null) throw new ArgumentNullException(nameof(type));
-			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			return root.FindDirectory(type)?.FindDirectory(name);
 		}
@@ -52,12 +52,12 @@ namespace ICSharpCode.Decompiler.Util
 		public static Win32ResourceData? Find(this Win32ResourceDirectory root, Win32ResourceName type,
 			Win32ResourceName name, Win32ResourceName langId)
 		{
-			if (root == null) throw new ArgumentNullException(nameof(root));
+			if (root is null) throw new ArgumentNullException(nameof(root));
+			if (type is null) throw new ArgumentNullException(nameof(type));
+			if (name is null) throw new ArgumentNullException(nameof(name));
+			if (langId is null) throw new ArgumentNullException(nameof(langId));
 			if (!root.Name.HasName || root.Name.Name != "Root")
 				throw new ArgumentOutOfRangeException(nameof(root));
-			if (type == null) throw new ArgumentNullException(nameof(type));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (langId == null) throw new ArgumentNullException(nameof(langId));
 
 			return root.FindDirectory(type)?.FindDirectory(name)?.FindData(langId);
 		}

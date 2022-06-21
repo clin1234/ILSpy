@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Represents a reference to a local variable.
 	/// </summary>
-	internal sealed class ILVariableResolveResult : ResolveResult
+	public sealed class ILVariableResolveResult : ResolveResult
 	{
 		public readonly ILVariable Variable;
 

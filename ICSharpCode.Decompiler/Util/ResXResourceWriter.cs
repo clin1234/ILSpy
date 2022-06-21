@@ -39,7 +39,7 @@ using System.Xml;
 
 namespace ICSharpCode.Decompiler.Util
 {
-	internal sealed class ResXResourceWriter : IDisposable
+	public sealed class ResXResourceWriter : IDisposable
 	{
 		const string WinFormsAssemblyName =
 			", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";

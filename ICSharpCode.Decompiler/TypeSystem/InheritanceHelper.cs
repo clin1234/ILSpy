@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Provides helper methods for inheritance.
 	/// </summary>
-	internal static class InheritanceHelper
+	public static class InheritanceHelper
 	{
 		#region GetDerivedMember
 

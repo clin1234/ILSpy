@@ -542,7 +542,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 
-	internal sealed class ResourceSerializedObject
+	public sealed class ResourceSerializedObject
 	{
 		readonly ResourcesFile file;
 		readonly long position;

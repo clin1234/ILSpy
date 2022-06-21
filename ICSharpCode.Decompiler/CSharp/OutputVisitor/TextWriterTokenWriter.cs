@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Writes C# code into a TextWriter.
 	/// </summary>
-	internal sealed class TextWriterTokenWriter : TokenWriter, ILocatable
+	public sealed class TextWriterTokenWriter : TokenWriter, ILocatable
 	{
 		readonly TextWriter textWriter;
 		bool isAtStartOfLine = true;

@@ -2,7 +2,7 @@
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
-	internal static class KnownGuids
+	public static class KnownGuids
 	{
 		public static readonly Guid CSharpLanguageGuid = new("3f5162f8-07c6-11d3-9053-00c04fa302a1");
 		public static readonly Guid VBLanguageGuid = new("3a12d0b8-c26c-11d0-b442-00a0244a1dd2");

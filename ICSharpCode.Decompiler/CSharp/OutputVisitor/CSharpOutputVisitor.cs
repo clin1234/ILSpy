@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Outputs the AST.
 	/// </summary>
-	internal sealed class CSharpOutputVisitor : IAstVisitor
+	public sealed class CSharpOutputVisitor : IAstVisitor
 	{
 		private readonly Stack<AstNode?> containerStack = new();
 		private readonly CSharpFormattingOptions policy;

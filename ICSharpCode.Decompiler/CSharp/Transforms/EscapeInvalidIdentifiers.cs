@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <remarks>
 	/// This transform is not enabled by default.
 	/// </remarks>
-	internal sealed class EscapeInvalidIdentifiers : IAstTransform
+	public sealed class EscapeInvalidIdentifiers : IAstTransform
 	{
 		public void Run(AstNode? rootNode, TransformContext context)
 		{

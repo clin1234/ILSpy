@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// <summary>
 	/// Helps finding and loading .xml documentation.
 	/// </summary>
-	internal static class XmlDocLoader
+	public static class XmlDocLoader
 	{
 		private static readonly Lazy<XmlDocumentationProvider?> mscorlibDocumentation = new(LoadMscorlibDocumentation);
 		private static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider?> cache = new();

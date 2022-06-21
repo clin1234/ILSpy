@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy
 		public string Version { get; }
 		public string DisplayName { get; }
 
-		public LanguageVersion(string version, string? name = null)
+		public LanguageVersion(string? version, string? name = null)
 		{
 			this.Version = version ?? "";
 			this.DisplayName = name ?? version;
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy
 				{
 					WriteCommentLine(output, metadata.GetString(name.Name) + " [WinRT]");
 				}
-				else if (metadata.TryGetFullAssemblyName(out string assemblyName))
+				else if (metadata.TryGetFullAssemblyName(out string? assemblyName))
 				{
 					WriteCommentLine(output, assemblyName);
 				}
@@ -573,7 +573,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public static string GetRuntimeDisplayName(PEFile module)
+		public static string? GetRuntimeDisplayName(PEFile module)
 		{
 			return module.Metadata.MetadataVersion;
 		}

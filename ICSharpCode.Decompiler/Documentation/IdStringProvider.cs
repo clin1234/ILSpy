@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// Provides ID strings for entities. (C# 4.0 spec, §A.3.1)
 	/// ID strings are used to identify members in XML documentation files.
 	/// </summary>
-	internal static class IdStringProvider
+	public static class IdStringProvider
 	{
 		#region GetIdString
 

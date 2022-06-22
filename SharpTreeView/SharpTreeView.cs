@@ -52,7 +52,7 @@ namespace ICSharpCode.TreeView
 			RegisterCommands();
 		}
 
-		public static ResourceKey DefaultItemContainerStyleKey { get; private set; }
+		public static ResourceKey DefaultItemContainerStyleKey { get; }
 
 		public SharpTreeView()
 		{
@@ -62,7 +62,7 @@ namespace ICSharpCode.TreeView
 		public static readonly DependencyProperty RootProperty =
 			DependencyProperty.Register("Root", typeof(SharpTreeNode), typeof(SharpTreeView));
 
-		public SharpTreeNode Root {
+		public SharpTreeNode? Root {
 			get { return (SharpTreeNode)GetValue(RootProperty); }
 			set { SetValue(RootProperty, value); }
 		}
@@ -160,7 +160,7 @@ namespace ICSharpCode.TreeView
 				{
 					Root.IsExpanded = true;
 				}
-				flattener = new TreeFlattener(Root, ShowRoot);
+				flattener = new(Root, ShowRoot);
 				flattener.CollectionChanged += flattener_CollectionChanged;
 				this.ItemsSource = flattener;
 			}
@@ -171,10 +171,10 @@ namespace ICSharpCode.TreeView
 			// Deselect nodes that are being hidden, if any remain in the tree
 			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0)
 			{
-				List<SharpTreeNode> selectedOldItems = null;
+				List<SharpTreeNode>? selectedOldItems = null;
 				foreach (var node in e.OldItems.Cast<SharpTreeNode>().Where(static node => node.IsSelected))
 				{
-					selectedOldItems ??= new List<SharpTreeNode>();
+					selectedOldItems ??= new();
 					selectedOldItems.Add(node);
 				}
 				if (!updatesLocked && selectedOldItems != null)
@@ -185,7 +185,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		void UpdateFocusedNode(List<SharpTreeNode> newSelection, int topSelectedIndex)
+		void UpdateFocusedNode(List<SharpTreeNode>? newSelection, int topSelectedIndex)
 		{
 			if (updatesLocked)
 				return;
@@ -284,7 +284,7 @@ namespace ICSharpCode.TreeView
 						else if (container.Node.Children.Count > 0)
 						{
 							// jump to first child:
-							container.MoveFocus(new TraversalRequest(FocusNavigationDirection.Down));
+							container.MoveFocus(new(FocusNavigationDirection.Down));
 						}
 						e.Handled = true;
 					}
@@ -366,7 +366,7 @@ namespace ICSharpCode.TreeView
 				base.OnTextInput(e);
 		}
 
-		void ExpandRecursively(SharpTreeNode node)
+		static void ExpandRecursively(SharpTreeNode node)
 		{
 			if (node.CanExpandRecursively)
 			{
@@ -383,7 +383,7 @@ namespace ICSharpCode.TreeView
 		/// </summary>
 		public void FocusNode(SharpTreeNode node)
 		{
-			if (node is null) throw new ArgumentNullException(nameof(node));
+			ArgumentNullException.ThrowIfNull(node);
 			ScrollIntoView(node);
 			// WPF's ScrollIntoView() uses the same if/dispatcher construct, so we call OnFocusItem() after the item was brought into view.
 			if (this.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
@@ -398,7 +398,7 @@ namespace ICSharpCode.TreeView
 
 		public void ScrollIntoView(SharpTreeNode node)
 		{
-			if (node is null) throw new ArgumentNullException(nameof(node));
+			ArgumentNullException.ThrowIfNull(node);
 			doNotScrollOnExpanding = true;
 			foreach (SharpTreeNode ancestor in node.Ancestors())
 				ancestor.IsExpanded = true;
@@ -406,9 +406,9 @@ namespace ICSharpCode.TreeView
 			base.ScrollIntoView(node);
 		}
 
-		object OnFocusItem(object item)
+		object? OnFocusItem(object item)
 		{
-			FrameworkElement element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
+			FrameworkElement? element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
 			element?.Focus();
 			return null;
 		}
@@ -514,7 +514,7 @@ namespace ICSharpCode.TreeView
 			public int Index;
 		}
 
-		DropTarget GetDropTarget(SharpTreeViewItem item, DragEventArgs e)
+		DropTarget? GetDropTarget(SharpTreeViewItem item, DragEventArgs e)
 		{
 			var dropTargets = BuildDropTargets(item, e);
 			var y = e.GetPosition(item).Y;
@@ -585,14 +585,14 @@ namespace ICSharpCode.TreeView
 
 		void TryAddDropTarget(List<DropTarget> targets, SharpTreeViewItem item, DropPlace place, DragEventArgs e)
 		{
-			GetNodeAndIndex(item, place, out SharpTreeNode node, out int index);
+			GetNodeAndIndex(item, place, out SharpTreeNode? node, out int index);
 
 			if (node != null)
 			{
 				e.Effects = DragDropEffects.None;
 				if (node.CanDrop(e, index))
 				{
-					DropTarget target = new DropTarget() {
+					DropTarget target = new() {
 						Item = item,
 						Place = place,
 						Node = node,
@@ -603,7 +603,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		void GetNodeAndIndex(SharpTreeViewItem item, DropPlace place, out SharpTreeNode node, out int index)
+		static void GetNodeAndIndex(SharpTreeViewItem item, DropPlace place, out SharpTreeNode? node, out int index)
 		{
 			node = null;
 			index = 0;
@@ -637,8 +637,8 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		SharpTreeNodeView previewNodeView;
-		InsertMarker insertMarker;
+		SharpTreeNodeView? previewNodeView;
+		InsertMarker? insertMarker;
 		DropPlace previewPlace;
 
 		enum DropPlace
@@ -662,14 +662,14 @@ namespace ICSharpCode.TreeView
 				{
 					var adornerLayer = AdornerLayer.GetAdornerLayer(this);
 					var adorner = new GeneralAdorner(this);
-					insertMarker = new InsertMarker();
+					insertMarker = new();
 					adorner.Child = insertMarker;
 					adornerLayer.Add(adorner);
 				}
 
 				insertMarker.Visibility = Visibility.Visible;
 
-				var p1 = previewNodeView.TransformToVisual(this).Transform(new Point());
+				var p1 = previewNodeView.TransformToVisual(this).Transform(new());
 				var p = new Point(p1.X + previewNodeView.CalculateIndent() + 4.5, p1.Y - 3);
 
 				if (place == DropPlace.After)
@@ -677,9 +677,9 @@ namespace ICSharpCode.TreeView
 					p.Y += previewNodeView.ActualHeight;
 				}
 
-				insertMarker.Margin = new Thickness(p.X, p.Y, 0, 0);
+				insertMarker.Margin = new(p.X, p.Y, 0, 0);
 
-				SharpTreeNodeView secondNodeView = null;
+				SharpTreeNodeView? secondNodeView = null;
 				var index = flattener.IndexOf(item.Node);
 
 				if (place == DropPlace.Before)
@@ -698,7 +698,7 @@ namespace ICSharpCode.TreeView
 
 				if (secondNodeView != null)
 				{
-					var p2 = secondNodeView.TransformToVisual(this).Transform(new Point());
+					var p2 = secondNodeView.TransformToVisual(this).Transform(new());
 					w = Math.Max(w, p2.X + secondNodeView.ActualWidth - p.X);
 				}
 
@@ -726,16 +726,16 @@ namespace ICSharpCode.TreeView
 		static void RegisterCommands()
 		{
 			CommandManager.RegisterClassCommandBinding(typeof(SharpTreeView),
-													   new CommandBinding(ApplicationCommands.Cut, HandleExecuted_Cut, HandleCanExecute_Cut));
+													   new(ApplicationCommands.Cut, HandleExecuted_Cut, HandleCanExecute_Cut));
 
 			CommandManager.RegisterClassCommandBinding(typeof(SharpTreeView),
-													   new CommandBinding(ApplicationCommands.Copy, HandleExecuted_Copy, HandleCanExecute_Copy));
+													   new(ApplicationCommands.Copy, HandleExecuted_Copy, HandleCanExecute_Copy));
 
 			CommandManager.RegisterClassCommandBinding(typeof(SharpTreeView),
-													   new CommandBinding(ApplicationCommands.Paste, HandleExecuted_Paste, HandleCanExecute_Paste));
+													   new(ApplicationCommands.Paste, HandleExecuted_Paste, HandleCanExecute_Paste));
 
 			CommandManager.RegisterClassCommandBinding(typeof(SharpTreeView),
-													   new CommandBinding(ApplicationCommands.Delete, HandleExecuted_Delete, HandleCanExecute_Delete));
+													   new(ApplicationCommands.Delete, HandleExecuted_Delete, HandleCanExecute_Delete));
 		}
 
 		static void HandleExecuted_Cut(object sender, ExecutedRoutedEventArgs e)

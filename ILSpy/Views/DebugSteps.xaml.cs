@@ -13,12 +13,10 @@ namespace ICSharpCode.ILSpy
 {
 	public sealed partial class DebugSteps
 	{
-		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
+		public static ILAstWritingOptions Options { get; } = new ILAstWritingOptions {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true
 		};
-
-		public static ILAstWritingOptions Options => writingOptions;
 
 #if DEBUG
 		ILAstLanguage language;

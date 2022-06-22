@@ -42,7 +42,7 @@ namespace ICSharpCode.TreeView
 			this.includeRoot = includeRoot;
 		}
 
-		public event NotifyCollectionChangedEventHandler CollectionChanged;
+		public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
 		public void RaiseCollectionChanged(NotifyCollectionChangedEventArgs e)
 		{
@@ -55,7 +55,7 @@ namespace ICSharpCode.TreeView
 				index--;
 			foreach (SharpTreeNode node in nodes)
 			{
-				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, node, index++));
+				RaiseCollectionChanged(new(NotifyCollectionChangedAction.Add, node, index++));
 			}
 		}
 
@@ -65,7 +65,7 @@ namespace ICSharpCode.TreeView
 				index--;
 			foreach (SharpTreeNode node in nodes)
 			{
-				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, node, index));
+				RaiseCollectionChanged(new(NotifyCollectionChangedAction.Remove, node, index));
 			}
 		}
 
@@ -78,7 +78,7 @@ namespace ICSharpCode.TreeView
 		public object this[int index] {
 			get {
 				if (index < 0 || index >= this.Count)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException(nameof(index));
 				return SharpTreeNode.GetNodeByVisibleIndex(root, includeRoot ? index : index + 1);
 			}
 			set {
@@ -119,9 +119,9 @@ namespace ICSharpCode.TreeView
 			get { return false; }
 		}
 
-		object ICollection.SyncRoot { get; } = new object();
+		object ICollection.SyncRoot { get; } = new();
 
-		void IList.Insert(int index, object item)
+		void IList.Insert(int index, object? item)
 		{
 			throw new NotSupportedException();
 		}
@@ -131,7 +131,7 @@ namespace ICSharpCode.TreeView
 			throw new NotSupportedException();
 		}
 
-		int IList.Add(object item)
+		int IList.Add(object? item)
 		{
 			throw new NotSupportedException();
 		}
@@ -152,7 +152,7 @@ namespace ICSharpCode.TreeView
 				array.SetValue(item, arrayIndex++);
 		}
 
-		void IList.Remove(object item)
+		void IList.Remove(object? item)
 		{
 			throw new NotSupportedException();
 		}

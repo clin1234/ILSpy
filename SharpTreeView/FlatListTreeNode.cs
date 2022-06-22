@@ -27,11 +27,11 @@ namespace ICSharpCode.TreeView
 	partial class SharpTreeNode
 	{
 		/// <summary>The parent in the flat list</summary>
-		internal SharpTreeNode listParent;
+		internal SharpTreeNode? listParent;
 		/// <summary>Left/right nodes in the flat list</summary>
-		SharpTreeNode left, right;
+		SharpTreeNode? left, right;
 
-		internal TreeFlattener treeFlattener;
+		internal TreeFlattener? treeFlattener;
 
 		/// <summary>Subtree height in the flat list tree</summary>
 		byte height = 1;
@@ -196,7 +196,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (totalListLength >= 0)
 				return totalListLength;
-			int length = (IsVisible ? 1 : 0);
+			int length = IsVisible ? 1 : 0;
 			if (left != null)
 			{
 				length += left.GetTotalListLength();
@@ -308,19 +308,20 @@ namespace ICSharpCode.TreeView
 		#endregion
 
 		#region Removal
-		void RemoveNodes(SharpTreeNode start, SharpTreeNode end)
+
+		static void RemoveNodes(SharpTreeNode start, SharpTreeNode end)
 		{
 			// Removes all nodes from start to end (inclusive)
 			// All removed nodes will be reorganized in a separate tree, do not delete
 			// regions that don't belong together in the tree model!
 
-			List<SharpTreeNode> removedSubtrees = new List<SharpTreeNode>();
+			List<SharpTreeNode> removedSubtrees = new();
 			SharpTreeNode oldPos;
 			SharpTreeNode pos = start;
 			do
 			{
 				// recalculate the endAncestors every time, because the tree might have been rebalanced
-				HashSet<SharpTreeNode> endAncestors = new HashSet<SharpTreeNode>();
+				HashSet<SharpTreeNode> endAncestors = new();
 				for (SharpTreeNode tmp = end; tmp != null; tmp = tmp.listParent)
 					endAncestors.Add(tmp);
 
@@ -431,7 +432,7 @@ namespace ICSharpCode.TreeView
 				RebalanceUntilRoot(balancingNode);
 		}
 
-		void ReplaceWith(SharpTreeNode node)
+		void ReplaceWith(SharpTreeNode? node)
 		{
 			if (listParent != null)
 			{

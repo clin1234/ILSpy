@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			this.Title = Properties.Resources.NewTab;
 		}
 
-		private FilterSettings filterSettings;
+		private readonly FilterSettings filterSettings;
 
 		public FilterSettings FilterSettings {
 			get => filterSettings;

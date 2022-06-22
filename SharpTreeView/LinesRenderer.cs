@@ -26,7 +26,7 @@ namespace ICSharpCode.TreeView
 	{
 		static LinesRenderer()
 		{
-			pen = new Pen(Brushes.LightGray, 1);
+			pen = new(Brushes.LightGray, 1);
 			pen.Freeze();
 		}
 
@@ -50,13 +50,13 @@ namespace ICSharpCode.TreeView
 
 			if (!NodeView.Node.IsRoot || NodeView.ParentTreeView.ShowRootExpander)
 			{
-				dc.DrawLine(pen, new Point(p.X, ActualHeight / 2), new Point(p.X + 10, ActualHeight / 2));
+				dc.DrawLine(pen, p with { Y = ActualHeight / 2 }, new(p.X + 10, ActualHeight / 2));
 			}
 
 			if (NodeView.Node.IsRoot)
 				return;
 
-			dc.DrawLine(pen, p, NodeView.Node.IsLast ? new Point(p.X, ActualHeight / 2) : new Point(p.X, ActualHeight));
+			dc.DrawLine(pen, p, NodeView.Node.IsLast ? p with { Y = ActualHeight / 2 } : p with { Y = ActualHeight });
 
 			var current = NodeView.Node;
 			while (true)
@@ -67,7 +67,7 @@ namespace ICSharpCode.TreeView
 					break;
 				if (!current.IsLast)
 				{
-					dc.DrawLine(pen, p, new Point(p.X, ActualHeight));
+					dc.DrawLine(pen, p, p with { Y = ActualHeight });
 				}
 			}
 		}

@@ -829,7 +829,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			bool first = true;
-			ITypeDefinition parentTypeDef = null;
+			ITypeDefinition? parentTypeDef = null;
 
 			foreach (var entity in definitions)
 			{
@@ -1112,7 +1112,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					TypeKind.Struct => settings.RecordStructs && typeDef.IsRecord,
 					_ => false,
 				};
-				RecordDecompiler recordDecompiler =
+				RecordDecompiler? recordDecompiler =
 					isRecord ? new RecordDecompiler(TypeSystem, typeDef, settings, CancellationToken) : null;
 				if (recordDecompiler != null)
 					decompileRun.RecordDecompilers.Add(typeDef, recordDecompiler);
@@ -2199,7 +2199,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 			}
 
-			return typeDef?.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
+			return typeDef.Fields.Concat<IMember>(typeDef.Properties).Concat(typeDef.Methods).Concat(typeDef.Events)
 				.OrderBy(GetOrderingHandle, HandleComparer.Default);
 		}
 

@@ -77,7 +77,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			readonly PEFile module;
 			readonly MetadataReader metadata;
 			readonly Handle handle;
-			readonly MethodSemanticsAttributes semantics;
 			readonly MethodDefinitionHandle method;
 			readonly EntityHandle association;
 
@@ -90,9 +89,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				+ metadata.GetTableRowSize(TableIndex.MethodDef) * (RID - 1);
 
 			[StringFormat("X8")]
-			public MethodSemanticsAttributes Semantics => semantics;
+			public MethodSemanticsAttributes Semantics { get; }
 
-			public string SemanticsTooltip => semantics.ToString();
+			public string SemanticsTooltip => Semantics.ToString();
 
 			[StringFormat("X8")]
 			[LinkToTable]
@@ -134,7 +133,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				this.module = module;
 				this.metadata = module.Metadata;
 				this.handle = handle;
-				this.semantics = semantics;
+				this.Semantics = semantics;
 				this.method = method;
 				this.association = association;
 			}

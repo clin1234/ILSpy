@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy
 	{
 		internal static CommandLineArguments CommandLineArguments;
 		internal static readonly IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
-		internal static Mutex SingleInstanceMutex;
+		internal static Mutex? SingleInstanceMutex;
 
 		public static ExportProvider ExportProvider { get; private set; }
 		public static IExportProviderFactory ExportProviderFactory { get; private set; }
@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy
 				{
 					try
 					{
-						SingleInstanceMutex.WaitOne(10000);
+						SingleInstanceMutex?.WaitOne(10000);
 					}
 					catch (AbandonedMutexException)
 					{
@@ -125,7 +125,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		static Assembly ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
+		static Assembly? ResolvePluginDependencies(AssemblyLoadContext context, AssemblyName assemblyName)
 		{
 			var rootPath = Path.GetDirectoryName(typeof(App).Assembly.Location);
 			var assemblyFileName = Path.Combine(rootPath, assemblyName.Name + ".dll");
@@ -223,7 +223,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void DotNet40_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+		void DotNet40_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
 		{
 			// On .NET 4.0, an unobserved exception in a task terminates the process unless we mark it as observed
 			e.SetObserved();
@@ -250,7 +250,7 @@ namespace ICSharpCode.ILSpy
 		internal static void UnhandledException(Exception exception)
 		{
 			Debug.WriteLine(exception.ToString());
-			for (Exception ex = exception; ex != null; ex = ex.InnerException)
+			for (Exception? ex = exception; ex != null; ex = ex.InnerException)
 			{
 				if (ex is ReflectionTypeLoadException rtle && rtle.LoaderExceptions.Length > 0)
 				{
@@ -292,7 +292,7 @@ namespace ICSharpCode.ILSpy
 					string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
 					if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal))
 					{
-						string processName = NativeMethods.GetProcessNameFromWindow(hWnd);
+						string? processName = NativeMethods.GetProcessNameFromWindow(hWnd);
 						Debug.WriteLine("Found {0:x4}: '{1}' in '{2}'", hWnd, windowTitle, processName);
 						if (string.Equals(processName, ownProcessName, StringComparison.OrdinalIgnoreCase))
 						{

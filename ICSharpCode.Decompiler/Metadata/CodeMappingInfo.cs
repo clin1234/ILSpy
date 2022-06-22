@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <summary>
 		/// Creates a <see cref="CodeMappingInfo"/> instance using the given <paramref name="module"/> and <paramref name="type"/>.
 		/// </summary>
-		internal CodeMappingInfo(PEFile? module, TypeDefinitionHandle type)
+		public CodeMappingInfo(PEFile? module, TypeDefinitionHandle type)
 		{
 			this.parts = new Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>>();
 			this.parents = new Dictionary<MethodDefinitionHandle, MethodDefinitionHandle>();
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// A method has at least one part, that is, the method itself.
 		/// If no parts are found, only the method itself is returned.
 		/// </summary>
-		internal IEnumerable<MethodDefinitionHandle> GetMethodParts(MethodDefinitionHandle method)
+		public IEnumerable<MethodDefinitionHandle> GetMethodParts(MethodDefinitionHandle method)
 		{
 			if (parts.TryGetValue(method, out var p))
 				return p;

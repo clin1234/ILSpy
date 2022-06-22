@@ -64,17 +64,17 @@ namespace ICSharpCode.TreeView
 				child.Measure(constraint);
 				return child.DesiredSize;
 			}
-			return new Size();
+			return new();
 		}
 
 		protected override Size ArrangeOverride(Size finalSize)
 		{
 			if (child != null)
 			{
-				child.Arrange(new Rect(finalSize));
+				child.Arrange(new(finalSize));
 				return finalSize;
 			}
-			return new Size();
+			return new();
 		}
 	}
 }

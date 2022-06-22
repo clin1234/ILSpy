@@ -126,7 +126,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Analyze(IEntity entity)
 		{
-			if (entity is null) throw new ArgumentNullException(nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			if (entity.MetadataToken.IsNil)
 			{

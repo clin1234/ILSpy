@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 	}
 
-	internal static class AnnotationExtensions
+	public static class AnnotationExtensions
 	{
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression? expression,
 			ILInstruction instruction)

@@ -30,7 +30,7 @@ namespace ICSharpCode.TreeView
 	public sealed class SharpTreeNodeCollection : IList<SharpTreeNode>, INotifyCollectionChanged
 	{
 		readonly SharpTreeNode parent;
-		List<SharpTreeNode> list = new List<SharpTreeNode>();
+		List<SharpTreeNode> list = new();
 		bool isRaisingEvent;
 
 		public SharpTreeNodeCollection(SharpTreeNode parent)
@@ -38,7 +38,7 @@ namespace ICSharpCode.TreeView
 			this.parent = parent;
 		}
 
-		public event NotifyCollectionChangedEventHandler CollectionChanged;
+		public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
 		void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
 		{
@@ -61,9 +61,9 @@ namespace ICSharpCode.TreeView
 				throw new InvalidOperationException();
 		}
 
-		void ThrowIfValueIsNullOrHasParent(SharpTreeNode node)
+		static void ThrowIfValueIsNullOrHasParent(SharpTreeNode node)
 		{
-			if (node is null) throw new ArgumentNullException(nameof(node));
+			ArgumentNullException.ThrowIfNull(node);
 			if (node.modelParent != null)
 				throw new ArgumentException("The node already has a parent", nameof(node));
 		}
@@ -79,7 +79,7 @@ namespace ICSharpCode.TreeView
 					return;
 				ThrowIfValueIsNullOrHasParent(value);
 				list[index] = value;
-				OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, value, oldItem, index));
+				OnCollectionChanged(new(NotifyCollectionChangedAction.Replace, value, oldItem, index));
 			}
 		}
 
@@ -104,12 +104,12 @@ namespace ICSharpCode.TreeView
 			ThrowOnReentrancy();
 			ThrowIfValueIsNullOrHasParent(node);
 			list.Insert(index, node);
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, node, index));
+			OnCollectionChanged(new(NotifyCollectionChangedAction.Add, node, index));
 		}
 
 		public void InsertRange(int index, IEnumerable<SharpTreeNode> nodes)
 		{
-			if (nodes is null) throw new ArgumentNullException(nameof(nodes));
+			ArgumentNullException.ThrowIfNull(nodes);
 			ThrowOnReentrancy();
 			List<SharpTreeNode> newNodes = nodes.ToList();
 			if (newNodes.Count == 0)
@@ -119,7 +119,7 @@ namespace ICSharpCode.TreeView
 				ThrowIfValueIsNullOrHasParent(node);
 			}
 			list.InsertRange(index, newNodes);
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, newNodes, index));
+			OnCollectionChanged(new(NotifyCollectionChangedAction.Add, newNodes, index));
 		}
 
 		public void RemoveAt(int index)
@@ -127,7 +127,7 @@ namespace ICSharpCode.TreeView
 			ThrowOnReentrancy();
 			var oldItem = list[index];
 			list.RemoveAt(index);
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, oldItem, index));
+			OnCollectionChanged(new(NotifyCollectionChangedAction.Remove, oldItem, index));
 		}
 
 		public void RemoveRange(int index, int count)
@@ -137,7 +137,7 @@ namespace ICSharpCode.TreeView
 				return;
 			var oldItems = list.GetRange(index, count);
 			list.RemoveRange(index, count);
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, oldItems, index));
+			OnCollectionChanged(new(NotifyCollectionChangedAction.Remove, oldItems, index));
 		}
 
 		public void Add(SharpTreeNode node)
@@ -145,7 +145,7 @@ namespace ICSharpCode.TreeView
 			ThrowOnReentrancy();
 			ThrowIfValueIsNullOrHasParent(node);
 			list.Add(node);
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, node, list.Count - 1));
+			OnCollectionChanged(new(NotifyCollectionChangedAction.Add, node, list.Count - 1));
 		}
 
 		public void AddRange(IEnumerable<SharpTreeNode> nodes)
@@ -157,8 +157,8 @@ namespace ICSharpCode.TreeView
 		{
 			ThrowOnReentrancy();
 			var oldList = list;
-			list = new List<SharpTreeNode>();
-			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, oldList, 0));
+			list = new();
+			OnCollectionChanged(new(NotifyCollectionChangedAction.Remove, oldList, 0));
 		}
 
 		public bool Contains(SharpTreeNode node)
@@ -197,7 +197,7 @@ namespace ICSharpCode.TreeView
 
 		public void RemoveAll(Predicate<SharpTreeNode> match)
 		{
-			if (match is null) throw new ArgumentNullException(nameof(match));
+			ArgumentNullException.ThrowIfNull(match);
 			ThrowOnReentrancy();
 			int firstToRemove = 0;
 			for (int i = 0; i < list.Count; i++)

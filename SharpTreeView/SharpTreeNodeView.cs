@@ -51,7 +51,7 @@ namespace ICSharpCode.TreeView
 			DependencyProperty.Register("CellEditor", typeof(Control), typeof(SharpTreeNodeView),
 										new FrameworkPropertyMetadata());
 
-		public Control CellEditor {
+		public Control? CellEditor {
 			get { return (Control)GetValue(CellEditorProperty); }
 			set { SetValue(CellEditorProperty, value); }
 		}
@@ -85,7 +85,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		void UpdateDataContext(SharpTreeNode oldNode, SharpTreeNode newNode)
+		void UpdateDataContext(SharpTreeNode? oldNode, SharpTreeNode? newNode)
 		{
 			if (newNode != null)
 			{
@@ -101,7 +101,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		void Node_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		void Node_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			switch (e.PropertyName)
 			{

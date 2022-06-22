@@ -77,7 +77,6 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly List<VisualLineElementGenerator?> activeCustomElementGenerators = new List<VisualLineElementGenerator?>();
 		readonly BracketHighlightRenderer bracketHighlightRenderer;
 		RichTextColorizer? activeRichTextColorizer;
-		FoldingManager? foldingManager;
 		ILSpyTreeNode[]? decompiledNodes;
 		Uri? currentAddress;
 		string? currentTitle;
@@ -684,10 +683,10 @@ namespace ICSharpCode.ILSpy.TextView
 
 			ClearLocalReferenceMarks();
 			textEditor.ScrollToHome();
-			if (foldingManager != null)
+			if (FoldingManager != null)
 			{
-				FoldingManager.Uninstall(foldingManager);
-				foldingManager = null;
+				FoldingManager.Uninstall(FoldingManager);
+				FoldingManager = null;
 			}
 			textEditor.Document = null; // clear old document while we're changing the highlighting
 			uiElementGenerator.UIElements = textOutput.UIElements;
@@ -731,16 +730,16 @@ namespace ICSharpCode.ILSpy.TextView
 					textEditor.ScrollToVerticalOffset(state.VerticalOffset);
 					textEditor.ScrollToHorizontalOffset(state.HorizontalOffset);
 				}
-				foldingManager = FoldingManager.Install(textEditor.TextArea);
-				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
+				FoldingManager = FoldingManager.Install(textEditor.TextArea);
+				FoldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed);
 				w.Restart();
 			}
 			else if (highlighting?.Name == "XML")
 			{
-				foldingManager = FoldingManager.Install(textEditor.TextArea);
+				FoldingManager = FoldingManager.Install(textEditor.TextArea);
 				var foldingStrategy = new XmlFoldingStrategy();
-				foldingStrategy.UpdateFoldings(foldingManager, textEditor.Document);
+				foldingStrategy.UpdateFoldings(FoldingManager, textEditor.Document);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed);
 				w.Restart();
 			}
@@ -1174,8 +1173,8 @@ namespace ICSharpCode.ILSpy.TextView
 				return null;
 
 			var state = new DecompilerTextViewState();
-			if (foldingManager != null)
-				state.SaveFoldingsState(foldingManager.AllFoldings);
+			if (FoldingManager != null)
+				state.SaveFoldingsState(FoldingManager.AllFoldings);
 			state.VerticalOffset = textEditor.VerticalOffset;
 			state.HorizontalOffset = textEditor.HorizontalOffset;
 			state.ExpandMemberDefinitions = expandMemberDefinitions;
@@ -1205,13 +1204,13 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (lineNumber <= 0 || lineNumber > textEditor.Document.LineCount)
 				return;
-			if (foldingManager == null)
+			if (FoldingManager == null)
 				return;
 
 			var line = textEditor.Document.GetLineByNumber(lineNumber);
 
 			// unfold
-			var foldings = foldingManager.GetFoldingsContaining(line.Offset);
+			var foldings = FoldingManager.GetFoldingsContaining(line.Offset);
 			if (foldings != null)
 			{
 				foreach (var folding in foldings)
@@ -1226,11 +1225,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.ScrollTo(lineNumber, 0);
 		}
 
-		public FoldingManager? FoldingManager {
-			get {
-				return foldingManager;
-			}
-		}
+		public FoldingManager? FoldingManager { get; private set; }
+
 		#endregion
 	}
 

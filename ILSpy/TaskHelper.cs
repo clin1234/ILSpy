@@ -93,31 +93,31 @@ namespace ICSharpCode.ILSpy
 
 		public static Task Then<T>(this Task<T> task, Action<T> action)
 		{
-			if (action is null) throw new ArgumentNullException(nameof(action));
+			ArgumentNullException.ThrowIfNull(action);
 			return task.ContinueWith(t => action(t.Result), CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
 		}
 
 		public static Task<U> Then<T, U>(this Task<T> task, Func<T, U> func)
 		{
-			if (func is null) throw new ArgumentNullException(nameof(func));
+			ArgumentNullException.ThrowIfNull(func);
 			return task.ContinueWith(t => func(t.Result), CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
 		}
 
 		public static Task Then<T>(this Task<T> task, Func<T, Task> asyncFunc)
 		{
-			if (asyncFunc is null) throw new ArgumentNullException(nameof(asyncFunc));
+			ArgumentNullException.ThrowIfNull(asyncFunc);
 			return task.ContinueWith(t => asyncFunc(t.Result), CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext()).Unwrap();
 		}
 
 		public static Task<U> Then<T, U>(this Task<T> task, Func<T, Task<U>> asyncFunc)
 		{
-			if (asyncFunc is null) throw new ArgumentNullException(nameof(asyncFunc));
+			ArgumentNullException.ThrowIfNull(asyncFunc);
 			return task.ContinueWith(t => asyncFunc(t.Result), CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext()).Unwrap();
 		}
 
 		public static Task Then(this Task task, Action action)
 		{
-			if (action is null) throw new ArgumentNullException(nameof(action));
+			ArgumentNullException.ThrowIfNull(action);
 			return task.ContinueWith(t => {
 				t.Wait();
 				action();
@@ -126,7 +126,7 @@ namespace ICSharpCode.ILSpy
 
 		public static Task<U> Then<U>(this Task task, Func<U> func)
 		{
-			if (func is null) throw new ArgumentNullException(nameof(func));
+			ArgumentNullException.ThrowIfNull(func);
 			return task.ContinueWith(t => {
 				t.Wait();
 				return func();
@@ -135,7 +135,7 @@ namespace ICSharpCode.ILSpy
 
 		public static Task Then(this Task task, Func<Task> asyncAction)
 		{
-			if (asyncAction is null) throw new ArgumentNullException(nameof(asyncAction));
+			ArgumentNullException.ThrowIfNull(asyncAction);
 			return task.ContinueWith(t => {
 				t.Wait();
 				return asyncAction();
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy
 
 		public static Task<U> Then<U>(this Task task, Func<Task<U>> asyncFunc)
 		{
-			if (asyncFunc is null) throw new ArgumentNullException(nameof(asyncFunc));
+			ArgumentNullException.ThrowIfNull(asyncFunc);
 			return task.ContinueWith(t => {
 				t.Wait();
 				return asyncFunc();
@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpy
 		/// </returns>
 		public static Task Catch<TException>(this Task task, Action<TException> action) where TException : Exception
 		{
-			if (action is null) throw new ArgumentNullException(nameof(action));
+			ArgumentNullException.ThrowIfNull(action);
 			return task.ContinueWith(t => {
 				if (t.IsFaulted)
 				{

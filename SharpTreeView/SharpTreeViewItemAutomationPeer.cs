@@ -64,7 +64,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName != "IsExpanded")
 				return;

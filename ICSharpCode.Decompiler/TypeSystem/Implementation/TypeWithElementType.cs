@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected abstract string NameSuffix { get; }
 
-		internal IType ElementType {
+		public IType ElementType {
 			get { return elementType; }
 		}
 

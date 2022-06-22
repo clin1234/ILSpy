@@ -65,20 +65,11 @@ namespace ICSharpCode.ILSpy
 		bool refreshInProgress, changingActiveTab;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
 		ILSpySettings spySettingsForMainWindow_Loaded;
-		readonly SessionSettings sessionSettings;
 		FilterSettings filterSettings;
-		AssemblyList assemblyList;
-		AssemblyListTreeNode assemblyListTreeNode;
 
-		static MainWindow instance;
+		public static MainWindow Instance { get; private set; }
 
-		public static MainWindow Instance {
-			get { return instance; }
-		}
-
-		public SessionSettings SessionSettings {
-			get { return sessionSettings; }
-		}
+		public SessionSettings SessionSettings { get; }
 
 		internal AssemblyListManager AssemblyListManager { get; }
 
@@ -102,10 +93,10 @@ namespace ICSharpCode.ILSpy
 
 		public MainWindow()
 		{
-			instance = this;
+			Instance = this;
 			var spySettings = ILSpySettings.Load();
 			this.spySettingsForMainWindow_Loaded = spySettings;
-			this.sessionSettings = new SessionSettings(spySettings);
+			this.SessionSettings = new SessionSettings(spySettings);
 			this.AssemblyListManager = new AssemblyListManager(spySettings) {
 				ApplyWinRTProjections = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections,
 				UseDebugSymbols = Options.DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols
@@ -116,21 +107,21 @@ namespace ICSharpCode.ILSpy
 
 			this.DataContext = new MainWindowViewModel {
 				Workspace = new DockWorkspace(this),
-				SessionSettings = sessionSettings,
+				SessionSettings = SessionSettings,
 				AssemblyListManager = AssemblyListManager
 			};
 
 			AssemblyListManager.CreateDefaultAssemblyLists();
-			if (!string.IsNullOrEmpty(sessionSettings.CurrentCulture))
+			if (!string.IsNullOrEmpty(SessionSettings.CurrentCulture))
 			{
-				System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(sessionSettings.CurrentCulture);
+				System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(SessionSettings.CurrentCulture);
 			}
-			DockWorkspace.Instance.LoadSettings(sessionSettings);
+			DockWorkspace.Instance.LoadSettings(SessionSettings);
 			InitializeComponent();
 			InitToolPanes();
 			DockWorkspace.Instance.InitializeLayout(DockManager);
-			sessionSettings.PropertyChanged += SessionSettings_PropertyChanged;
-			filterSettings = sessionSettings.FilterSettings;
+			SessionSettings.PropertyChanged += SessionSettings_PropertyChanged;
+			filterSettings = SessionSettings.FilterSettings;
 			filterSettings.PropertyChanged += filterSettings_PropertyChanged;
 			DockWorkspace.Instance.PropertyChanged += DockWorkspace_PropertyChanged;
 			InitMainMenu();
@@ -168,7 +159,7 @@ namespace ICSharpCode.ILSpy
 			switch (e.PropertyName)
 			{
 				case nameof(SessionSettings.ActiveAssemblyList):
-					ShowAssemblyList(sessionSettings.ActiveAssemblyList);
+					ShowAssemblyList(SessionSettings.ActiveAssemblyList);
 					break;
 				case nameof(SessionSettings.IsDarkMode):
 					// update syntax highlighting and force reload (AvalonEdit does not automatically refresh on highlighting change)
@@ -570,7 +561,7 @@ namespace ICSharpCode.ILSpy
 			hwndSource?.AddHook(WndProc);
 			App.ReleaseSingleInstanceMutex();
 			// Validate and Set Window Bounds
-			Rect bounds = Rect.Transform(sessionSettings.WindowBounds, source.CompositionTarget.TransformToDevice);
+			Rect bounds = Rect.Transform(SessionSettings.WindowBounds, source.CompositionTarget.TransformToDevice);
 			var boundsRect = new System.Drawing.Rectangle((int)bounds.Left, (int)bounds.Top, (int)bounds.Width, (int)bounds.Height);
 			bool boundsOK = false;
 			foreach (var screen in System.Windows.Forms.Screen.AllScreens)
@@ -580,9 +571,9 @@ namespace ICSharpCode.ILSpy
 					boundsOK = true;
 			}
 
-			SetWindowBounds(boundsOK ? sessionSettings.WindowBounds : SessionSettings.DefaultWindowBounds);
+			SetWindowBounds(boundsOK ? SessionSettings.WindowBounds : SessionSettings.DefaultWindowBounds);
 
-			this.WindowState = sessionSettings.WindowState;
+			this.WindowState = SessionSettings.WindowState;
 		}
 
 		unsafe IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -638,9 +629,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public AssemblyList CurrentAssemblyList {
-			get { return assemblyList; }
-		}
+		public AssemblyList CurrentAssemblyList { get; private set; }
 
 		public event NotifyCollectionChangedEventHandler CurrentAssemblyListChanged;
 
@@ -662,7 +651,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var relevantAssemblies = commandLineLoadedAssemblies.ToList();
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
-			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
+			NavigateOnLaunch(args.NavigateTo, SessionSettings.ActiveTreeViewPath, spySettings, relevantAssemblies);
 			if (args.Search != null)
 			{
 				SearchPane.SearchTerm = args.Search;
@@ -681,7 +670,7 @@ namespace ICSharpCode.ILSpy
 					string namespaceName = navigateTo[2..];
 					foreach (LoadedAssembly asm in relevantAssemblies)
 					{
-						AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
+						AssemblyTreeNode asmNode = AssemblyListTreeNode.FindAssemblyNode(asm);
 						if (asmNode != null)
 						{
 							// FindNamespaceNode() blocks the UI if the assembly is not yet loaded,
@@ -732,7 +721,7 @@ namespace ICSharpCode.ILSpy
 			{
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(relevantAssemblies[0]);
+				AssemblyTreeNode asmNode = AssemblyListTreeNode.FindAssemblyNode(relevantAssemblies[0]);
 				if (asmNode != null && AssemblyTreeView.SelectedItem == initialSelection)
 				{
 					SelectNode(asmNode);
@@ -853,29 +842,29 @@ namespace ICSharpCode.ILSpy
 			{
 				// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
 				// This makes the UI come up a bit faster.
-				this.assemblyList = AssemblyListManager.LoadList(sessionSettings.ActiveAssemblyList);
+				this.CurrentAssemblyList = AssemblyListManager.LoadList(SessionSettings.ActiveAssemblyList);
 			}
 			else
 			{
 				AssemblyListManager.ClearAll();
-				this.assemblyList = AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
+				this.CurrentAssemblyList = AssemblyListManager.CreateList(AssemblyListManager.DefaultListName);
 			}
 
 			HandleCommandLineArguments(App.CommandLineArguments);
 
-			if (assemblyList.GetAssemblies().Length == 0
-				&& assemblyList.ListName == AssemblyListManager.DefaultListName
+			if (CurrentAssemblyList.GetAssemblies().Length == 0
+				&& CurrentAssemblyList.ListName == AssemblyListManager.DefaultListName
 				&& loadPreviousAssemblies)
 			{
 				LoadInitialAssemblies();
 			}
 
-			ShowAssemblyList(this.assemblyList);
+			ShowAssemblyList(this.CurrentAssemblyList);
 
-			if (sessionSettings.ActiveAutoLoadedAssembly != null
-				&& File.Exists(sessionSettings.ActiveAutoLoadedAssembly))
+			if (SessionSettings.ActiveAutoLoadedAssembly != null
+				&& File.Exists(SessionSettings.ActiveAutoLoadedAssembly))
 			{
-				this.assemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
+				this.CurrentAssemblyList.Open(SessionSettings.ActiveAutoLoadedAssembly, true);
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
@@ -997,19 +986,19 @@ namespace ICSharpCode.ILSpy
 		void ShowAssemblyList(AssemblyList assemblyList)
 		{
 			history.Clear();
-			if (this.assemblyList != null)
+			if (this.CurrentAssemblyList != null)
 			{
-				this.assemblyList.CollectionChanged -= assemblyList_Assemblies_CollectionChanged;
+				this.CurrentAssemblyList.CollectionChanged -= assemblyList_Assemblies_CollectionChanged;
 			}
 
-			this.assemblyList = assemblyList;
+			this.CurrentAssemblyList = assemblyList;
 			assemblyList.CollectionChanged += assemblyList_Assemblies_CollectionChanged;
 
-			assemblyListTreeNode = new AssemblyListTreeNode(assemblyList) {
+			AssemblyListTreeNode = new AssemblyListTreeNode(assemblyList) {
 				FilterSettings = filterSettings.Clone(),
 				Select = x => SelectNode(x, inNewTabPage: false)
 			};
-			AssemblyTreeView.Root = assemblyListTreeNode;
+			AssemblyTreeView.Root = AssemblyListTreeNode;
 
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
 #if DEBUG
@@ -1056,7 +1045,7 @@ namespace ICSharpCode.ILSpy
 				typeof(FrameworkElement).Assembly
 			};
 			foreach (System.Reflection.Assembly asm in initialAssemblies)
-				assemblyList.OpenAssembly(asm.Location);
+				CurrentAssemblyList.OpenAssembly(asm.Location);
 		}
 
 		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -1073,13 +1062,11 @@ namespace ICSharpCode.ILSpy
 			// filterSettings is mutable; but the ILSpyTreeNode filtering assumes that filter settings are immutable.
 			// Thus, the main window will use one mutable instance (for data-binding), and assign a new clone to the ILSpyTreeNodes whenever the main
 			// mutable instance changes.
-			if (assemblyListTreeNode != null)
-				assemblyListTreeNode.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
+			if (AssemblyListTreeNode != null)
+				AssemblyListTreeNode.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
 		}
 
-		internal AssemblyListTreeNode AssemblyListTreeNode {
-			get { return assemblyListTreeNode; }
-		}
+		internal AssemblyListTreeNode AssemblyListTreeNode { get; private set; }
 
 		#region Node Selection
 
@@ -1216,16 +1203,16 @@ namespace ICSharpCode.ILSpy
 		public ILSpyTreeNode FindTreeNode(object reference)
 		{
 			return reference switch {
-				LoadedAssembly lasm => assemblyListTreeNode.FindAssemblyNode(lasm),
-				PEFile asm => assemblyListTreeNode.FindAssemblyNode(asm),
-				Resource res => assemblyListTreeNode.FindResourceNode(res),
-				ValueTuple<Resource, string> resName => assemblyListTreeNode.FindResourceNode(resName.Item1,
+				LoadedAssembly lasm => AssemblyListTreeNode.FindAssemblyNode(lasm),
+				PEFile asm => AssemblyListTreeNode.FindAssemblyNode(asm),
+				Resource res => AssemblyListTreeNode.FindResourceNode(res),
+				ValueTuple<Resource, string> resName => AssemblyListTreeNode.FindResourceNode(resName.Item1,
 					resName.Item2),
-				ITypeDefinition type => assemblyListTreeNode.FindTypeNode(type),
-				IField fd => assemblyListTreeNode.FindFieldNode(fd),
-				IMethod md => assemblyListTreeNode.FindMethodNode(md),
-				IProperty pd => assemblyListTreeNode.FindPropertyNode(pd),
-				IEvent ed => assemblyListTreeNode.FindEventNode(ed),
+				ITypeDefinition type => AssemblyListTreeNode.FindTypeNode(type),
+				IField fd => AssemblyListTreeNode.FindFieldNode(fd),
+				IMethod md => AssemblyListTreeNode.FindMethodNode(md),
+				IProperty pd => AssemblyListTreeNode.FindPropertyNode(pd),
+				IEvent ed => AssemblyListTreeNode.FindEventNode(ed),
 				INamespace nd => AssemblyListTreeNode.FindNamespaceNode(nd),
 				_ => null
 			};
@@ -1246,7 +1233,7 @@ namespace ICSharpCode.ILSpy
 					break;
 				case EntityReference unresolvedEntity:
 					string protocol = unresolvedEntity.Protocol ?? "decompile";
-					PEFile file = unresolvedEntity.ResolveAssembly(assemblyList);
+					PEFile file = unresolvedEntity.ResolveAssembly(CurrentAssemblyList);
 					if (file == null)
 					{
 						break;
@@ -1329,7 +1316,7 @@ namespace ICSharpCode.ILSpy
 
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
-			if (fileNames is null) throw new ArgumentNullException(nameof(fileNames));
+			ArgumentNullException.ThrowIfNull(fileNames);
 
 			if (focusNode)
 				AssemblyTreeView.UnselectAll();
@@ -1340,7 +1327,7 @@ namespace ICSharpCode.ILSpy
 		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly> loadedAssemblies = null, bool focusNode = true)
 		{
 			SharpTreeNode lastNode = null;
-			foreach (var asm in fileNames.Select(file => assemblyList.OpenAssembly(file)))
+			foreach (var asm in fileNames.Select(file => CurrentAssemblyList.OpenAssembly(file)))
 			{
 				if (asm != null)
 				{
@@ -1350,7 +1337,7 @@ namespace ICSharpCode.ILSpy
 					}
 					else
 					{
-						var node = assemblyListTreeNode.FindAssemblyNode(asm);
+						var node = AssemblyListTreeNode.FindAssemblyNode(asm);
 						if (node != null && focusNode)
 						{
 							AssemblyTreeView.SelectedItems.Add(node);
@@ -1370,7 +1357,7 @@ namespace ICSharpCode.ILSpy
 			{
 				refreshInProgress = true;
 				var path = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
-				ShowAssemblyList(AssemblyListManager.LoadList(assemblyList.ListName));
+				ShowAssemblyList(AssemblyListManager.LoadList(CurrentAssemblyList.ListName));
 				SelectNode(FindNodeByPath(path, true), false, false);
 			}
 			finally
@@ -1607,19 +1594,19 @@ namespace ICSharpCode.ILSpy
 			base.OnStateChanged(e);
 			// store window state in settings only if it's not minimized
 			if (this.WindowState != WindowState.Minimized)
-				sessionSettings.WindowState = this.WindowState;
+				SessionSettings.WindowState = this.WindowState;
 		}
 
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			base.OnClosing(e);
-			sessionSettings.ActiveAssemblyList = assemblyList.ListName;
-			sessionSettings.ActiveTreeViewPath = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
-			sessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
-			sessionSettings.WindowBounds = this.RestoreBounds;
-			sessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
-			sessionSettings.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
-			sessionSettings.Save();
+			SessionSettings.ActiveAssemblyList = CurrentAssemblyList.ListName;
+			SessionSettings.ActiveTreeViewPath = GetPathForNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
+			SessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyNode(AssemblyTreeView.SelectedItem as SharpTreeNode);
+			SessionSettings.WindowBounds = this.RestoreBounds;
+			SessionSettings.DockLayout.Serialize(new XmlLayoutSerializer(DockManager));
+			SessionSettings.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
+			SessionSettings.Save();
 		}
 
 		private string GetAutoLoadedAssemblyNode(SharpTreeNode node)

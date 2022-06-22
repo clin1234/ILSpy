@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		ShortVariable
 	}
 
-	internal static partial class ILOpCodeExtensions
+	public static partial class ILOpCodeExtensions
 	{
 		public static readonly HashSet<string> ILKeywords;
 
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			HashSet<string> s = new(keywords);
 			foreach (var inst in operandNames.Where(static inst => !string.IsNullOrEmpty(inst)))
 			{
-				s.Add(inst);
+				s.Add(inst!);
 			}
 
 			return s;

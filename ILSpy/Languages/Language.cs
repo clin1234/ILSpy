@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public abstract string FileExtension { get; }
 
-		public virtual string ProjectFileExtension {
+		public virtual string? ProjectFileExtension {
 			get { return null; }
 		}
 
@@ -126,7 +126,7 @@ namespace ICSharpCode.ILSpy
 			WriteCommentLine(output, nameSpace);
 		}
 
-		public virtual ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public virtual ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
 			var asm = assembly.GetPEFileOrNull();
@@ -387,19 +387,19 @@ namespace ICSharpCode.ILSpy
 
 		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (field is null) throw new ArgumentNullException(nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 			return GetDisplayName(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(field.ReturnType, includeNamespace);
 		}
 
 		public virtual string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (property is null) throw new ArgumentNullException(nameof(property));
+			ArgumentNullException.ThrowIfNull(property);
 			return GetDisplayName(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(property.ReturnType, includeNamespace);
 		}
 
 		public virtual string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (method is null) throw new ArgumentNullException(nameof(method));
+			ArgumentNullException.ThrowIfNull(method);
 
 			int i = 0;
 			var buffer = new StringBuilder();

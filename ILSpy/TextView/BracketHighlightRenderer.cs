@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public BracketHighlightRenderer(ICSharpCode.AvalonEdit.Rendering.TextView textView)
 		{
-			if (textView is null) throw new ArgumentNullException(nameof(textView));
+			ArgumentNullException.ThrowIfNull(textView);
 
 			this.borderPen = (Pen)textView.FindResource(Themes.ResourceKeys.BracketHighlightBorderPen);
 			this.backgroundBrush = (SolidColorBrush)textView.FindResource(Themes.ResourceKeys.BracketHighlightBackgroundBrush);

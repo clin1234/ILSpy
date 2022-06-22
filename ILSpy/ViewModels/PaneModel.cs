@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		private string contentId;
+		private readonly string contentId;
 		public string ContentId {
 			get => contentId;
 			init {

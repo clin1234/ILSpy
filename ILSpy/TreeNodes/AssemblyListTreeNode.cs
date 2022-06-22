@@ -36,20 +36,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class AssemblyListTreeNode : ILSpyTreeNode
 	{
-		readonly AssemblyList assemblyList;
-
-		public AssemblyList AssemblyList {
-			get { return assemblyList; }
-		}
+		public AssemblyList AssemblyList { get; }
 
 		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
-			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
+			this.AssemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			BindToObservableCollection(assemblyList);
 		}
 
 		public override object Text {
-			get { return assemblyList.ListName; }
+			get { return AssemblyList.ListName; }
 		}
 
 		void BindToObservableCollection(AssemblyList collection)
@@ -103,11 +99,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				var assemblies = files
 					.Where(file => file != null)
-					.Select(file => assemblyList.OpenAssembly(file))
+					.Select(file => AssemblyList.OpenAssembly(file))
 					.Where(asm => asm != null)
 					.Distinct()
 					.ToArray();
-				assemblyList.Move(assemblies, index);
+				AssemblyList.Move(assemblies, index);
 				var nodes = assemblies.SelectArray(MainWindow.Instance.FindTreeNode);
 				MainWindow.Instance.SelectNodes(nodes);
 			}
@@ -117,7 +113,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "List: " + assemblyList.ListName);
+			language.WriteCommentLine(output, "List: " + AssemblyList.ListName);
 			output.WriteLine();
 			foreach (AssemblyTreeNode asm in this.Children)
 			{

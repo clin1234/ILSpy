@@ -37,7 +37,7 @@ namespace ICSharpCode.TreeView
 			typeof(SharpTreeViewTextSearch), typeof(SharpTreeViewTextSearch), new FrameworkPropertyMetadata(null));
 		static readonly DependencyProperty TextSearchInstanceProperty = TextSearchInstancePropertyKey.DependencyProperty;
 
-		DispatcherTimer timer;
+		DispatcherTimer? timer;
 
 		bool isActive;
 		int lastMatchIndex;
@@ -48,18 +48,17 @@ namespace ICSharpCode.TreeView
 
 		private SharpTreeViewTextSearch(SharpTreeView treeView)
 		{
-			if (treeView is null) throw new ArgumentNullException(nameof(treeView));
+			ArgumentNullException.ThrowIfNull(treeView);
 			this.treeView = treeView;
-			inputStack = new Stack<string>(8);
+			inputStack = new(8);
 			ClearState();
 		}
 
 		public static SharpTreeViewTextSearch GetInstance(SharpTreeView sharpTreeView)
 		{
-			var textSearch = (SharpTreeViewTextSearch)sharpTreeView.GetValue(TextSearchInstanceProperty);
-			if (textSearch == null)
+			if (sharpTreeView.GetValue(TextSearchInstanceProperty) is not SharpTreeViewTextSearch textSearch)
 			{
-				textSearch = new SharpTreeViewTextSearch(sharpTreeView);
+				textSearch = new(sharpTreeView);
 				sharpTreeView.SetValue(TextSearchInstancePropertyKey, textSearch);
 			}
 			return textSearch;
@@ -159,7 +158,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (timer == null)
 			{
-				timer = new DispatcherTimer(DispatcherPriority.Normal);
+				timer = new(DispatcherPriority.Normal);
 				timer.Tick += (sender, e) => ClearState();
 			}
 			else

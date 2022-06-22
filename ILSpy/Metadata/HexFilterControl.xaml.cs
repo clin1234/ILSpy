@@ -53,24 +53,22 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		sealed class ContentFilter : IContentFilter
 		{
-			readonly string filter;
-
 			public ContentFilter(string filter)
 			{
-				this.filter = filter;
+				this.Value = filter;
 			}
 
 			public bool IsMatch(object value)
 			{
-				if (string.IsNullOrWhiteSpace(filter))
+				if (string.IsNullOrWhiteSpace(Value))
 					return true;
 				if (value == null)
 					return false;
 
-				return $"{value:x8}".IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
+				return $"{value:x8}".IndexOf(Value, StringComparison.OrdinalIgnoreCase) >= 0;
 			}
 
-			public string Value => filter;
+			public string Value { get; }
 		}
 	}
 }

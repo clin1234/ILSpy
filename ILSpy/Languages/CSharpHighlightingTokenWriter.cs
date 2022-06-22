@@ -324,7 +324,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void WriteIdentifier(Identifier? identifier)
+		public override void WriteIdentifier(Identifier identifier)
 		{
 			HighlightingColor? color = null;
 			if (identifier.Name == "value"
@@ -455,7 +455,7 @@ namespace ICSharpCode.ILSpy
 		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
 		HighlightingColor currentColor = new HighlightingColor();
 		int currentColorBegin = -1;
-		readonly ILocatable locatable;
+		readonly ILocatable? locatable;
 		readonly ISmartTextOutput? textOutput;
 
 		private void BeginSpan(HighlightingColor highlightingColor)

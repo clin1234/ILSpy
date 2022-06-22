@@ -29,7 +29,7 @@ namespace ICSharpCode.TreeView
 				new ComponentResourceKey(typeof(SharpTreeView), "GridViewItemContainerStyleKey");
 		}
 
-		public static ResourceKey ItemContainerStyleKey { get; private set; }
+		public static ResourceKey ItemContainerStyleKey { get; }
 
 		protected override object ItemContainerDefaultStyleKey {
 			get {

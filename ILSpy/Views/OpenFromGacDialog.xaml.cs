@@ -63,13 +63,12 @@ namespace ICSharpCode.ILSpy
 		sealed class GacEntry
 		{
 			readonly AssemblyNameReference r;
-			readonly string fileName;
 			string formattedVersion;
 
 			public GacEntry(AssemblyNameReference r, string fileName)
 			{
 				this.r = r;
-				this.fileName = fileName;
+				this.FileName = fileName;
 			}
 
 			public string FullName {
@@ -80,9 +79,7 @@ namespace ICSharpCode.ILSpy
 				get { return r.Name; }
 			}
 
-			public string FileName {
-				get { return fileName; }
-			}
+			public string FileName { get; }
 
 			public Version Version {
 				get { return r.Version; }

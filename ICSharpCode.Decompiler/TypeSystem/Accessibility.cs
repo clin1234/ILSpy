@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Public,
 	}
 
-	internal static class AccessibilityExtensions
+	public static class AccessibilityExtensions
 	{
 		// This code depends on the fact that the enum values are sorted similar to the partial order
 		// where an accessibility is smaller than another if it makes an entity visibible to a subset of the code:

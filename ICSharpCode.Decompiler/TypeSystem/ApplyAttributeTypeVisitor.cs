@@ -130,9 +130,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							var arg = ctor.FixedArguments[0];
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-							    && values.All(v => v.Value is string or null))
+							    && values.All(static v => v.Value is string or null))
 							{
-								tupleElementNames = values.SelectArray(static v => (string)v.Value);
+								tupleElementNames = values.SelectArray(static v => v.Value as string);
 							}
 						}
 					}
@@ -243,7 +243,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (tupleCardinality > 1)
 				{
 					var valueTupleAssembly = type.GetDefinition()?.ParentModule;
-					ImmutableArray<string?> elementNames = default;
+					ImmutableArray<string> elementNames = default;
 					if (tupleElementNames != null && tupleTypeIndex < tupleElementNames.Length)
 					{
 						string[] extractedValues = new string[tupleCardinality];

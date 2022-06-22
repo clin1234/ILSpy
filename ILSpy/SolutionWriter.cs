@@ -54,14 +54,14 @@ namespace ICSharpCode.ILSpy
 		/// <paramref name="assemblies"/> is null.</exception>
 		public static void CreateSolution(DecompilerTextView textView, string solutionFilePath, Language language, IEnumerable<LoadedAssembly> assemblies)
 		{
-			if (textView is null) throw new ArgumentNullException(nameof(textView));
+			ArgumentNullException.ThrowIfNull(textView);
 
 			if (string.IsNullOrWhiteSpace(solutionFilePath))
 			{
 				throw new ArgumentException("The solution file path cannot be null or empty.", nameof(solutionFilePath));
 			}
 
-			if (assemblies is null) throw new ArgumentNullException(nameof(assemblies));
+			ArgumentNullException.ThrowIfNull(assemblies);
 
 			var writer = new SolutionWriter(solutionFilePath);
 

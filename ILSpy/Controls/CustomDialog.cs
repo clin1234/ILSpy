@@ -27,16 +27,11 @@ namespace ICSharpCode.ILSpy.Controls
 		Label label;
 		Panel panel;
 		readonly int cancelButton;
-		int result = -1;
 
 		/// <summary>
 		/// Gets the index of the button pressed.
 		/// </summary>
-		public int Result {
-			get {
-				return result;
-			}
-		}
+		public int Result { get; private set; } = -1;
 
 		public CustomDialog(string caption, string message, int acceptButton, int cancelButton, string[] buttonLabels)
 		{
@@ -113,7 +108,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		void ButtonClick(object sender, EventArgs e)
 		{
-			result = (int)((Control)sender).Tag;
+			Result = (int)((Control)sender).Tag;
 			this.Close();
 		}
 

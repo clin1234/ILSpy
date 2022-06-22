@@ -53,9 +53,8 @@ namespace ICSharpCode.ILSpy
 	[Export(typeof(Language))]
 	public class CSharpLanguage : Language
 	{
-		string name = "C#";
 		bool showAllMembers;
-		int transformCount = int.MaxValue;
+		private const int transformCount = int.MaxValue;
 
 #if DEBUG
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
@@ -79,15 +78,13 @@ namespace ICSharpCode.ILSpy
 		}
 #endif
 
-		public override string Name {
-			get { return name; }
-		}
+		public override string Name => "C#";
 
 		public override string FileExtension {
 			get { return ".cs"; }
 		}
 
-		public override string ProjectFileExtension {
+		public override string? ProjectFileExtension {
 			get { return ".csproj"; }
 		}
 
@@ -382,7 +379,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			var module = assembly.GetPEFileOrNull();
 			if (module == null)
@@ -542,7 +539,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeToString(IType type, bool includeNamespace)
 		{
-			if (type is null) throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
 			if (includeNamespace)
@@ -568,19 +565,19 @@ namespace ICSharpCode.ILSpy
 
 		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (field is null) throw new ArgumentNullException(nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 			return EntityToString(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (property is null) throw new ArgumentNullException(nameof(property));
+			ArgumentNullException.ThrowIfNull(property);
 			return EntityToString(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (method is null) throw new ArgumentNullException(nameof(method));
+			ArgumentNullException.ThrowIfNull(method);
 			return EntityToString(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 

@@ -26,7 +26,7 @@ namespace ICSharpCode.TreeView
 {
 	public sealed class CollapsedWhenFalse : MarkupExtension, IValueConverter
 	{
-		public static readonly CollapsedWhenFalse Instance = new CollapsedWhenFalse();
+		public static readonly CollapsedWhenFalse Instance = new();
 
 		public override object ProvideValue(IServiceProvider serviceProvider)
 		{

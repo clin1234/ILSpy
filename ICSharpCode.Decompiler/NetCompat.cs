@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-
 namespace System.Diagnostics.CodeAnalysis
 {
 	/// <summary>Specifies that the output will be non-null if the named parameter is non-null.</summary>

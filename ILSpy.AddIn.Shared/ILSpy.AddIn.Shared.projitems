@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Guids.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILSpyAddInPackage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILSpyInstance.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NetCompat.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PkgCmdID.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>

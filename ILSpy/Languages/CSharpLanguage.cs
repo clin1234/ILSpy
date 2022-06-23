@@ -53,8 +53,9 @@ namespace ICSharpCode.ILSpy
 	[Export(typeof(Language))]
 	public class CSharpLanguage : Language
 	{
+		string name = "C#";
 		bool showAllMembers;
-		private const int transformCount = int.MaxValue;
+		int transformCount = int.MaxValue;
 
 #if DEBUG
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
@@ -430,7 +431,7 @@ namespace ICSharpCode.ILSpy
 				{
 					output.WriteLine("// This assembly contains unmanaged code.");
 				}
-				string runtimeName = GetRuntimeDisplayName(module);
+				string? runtimeName = GetRuntimeDisplayName(module);
 				if (runtimeName != null)
 				{
 					output.WriteLine("// Runtime: " + runtimeName);
@@ -625,7 +626,7 @@ namespace ICSharpCode.ILSpy
 			return builder.ToString();
 		}
 
-		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		public override string? GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind)

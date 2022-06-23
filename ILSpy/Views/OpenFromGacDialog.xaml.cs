@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy
 		sealed class GacEntry
 		{
 			readonly AssemblyNameReference r;
-			string formattedVersion;
+			string? formattedVersion;
 
 			public GacEntry(AssemblyNameReference r, string fileName)
 			{

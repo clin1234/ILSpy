@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		string[]? internalsVisibleTo;
 
-		string[]? GetInternalsVisibleTo()
+		string[] GetInternalsVisibleTo()
 		{
 			var result = LazyInit.VolatileRead(ref this.internalsVisibleTo);
 			if (result != null)
@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref fieldDefs[row], field);
 		}
 
-		public IMethod GetDefinition(MethodDefinitionHandle handle)
+		public IMethod? GetDefinition(MethodDefinitionHandle handle)
 		{
 			if (handle.IsNil)
 				return null;
@@ -954,12 +954,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					case HandleKind.AssemblyReference:
 						var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)type.Implementation);
 						string shortName = metadata.GetString(asmRef.Name);
-						foreach (var asm in Compilation.Modules)
+						foreach (var asm in Compilation.Modules.Where(asm =>
+							         string.Equals(asm?.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)))
 						{
-							if (string.Equals(asm?.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
-							{
-								return asm;
-							}
+							return asm;
 						}
 
 						return null;

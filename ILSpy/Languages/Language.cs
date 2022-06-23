@@ -490,7 +490,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// This should produce a string representation of the entity for search to match search strings against.
 		/// </summary>
-		public virtual string GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
+		public virtual string? GetEntityName(PEFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
 			switch (handle.Kind)

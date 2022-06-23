@@ -13,13 +13,15 @@ namespace ICSharpCode.ILSpy
 {
 	public sealed partial class DebugSteps
 	{
-		public static ILAstWritingOptions Options { get; } = new ILAstWritingOptions {
+		static readonly ILAstWritingOptions writingOptions = new() {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true
 		};
+		
+		public static ILAstWritingOptions Options => writingOptions;
 
 #if DEBUG
-		ILAstLanguage language;
+		ILAstLanguage? language;
 #endif
 		FilterSettings filterSettings;
 
@@ -43,7 +45,7 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void DockWorkspace_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			switch (e.PropertyName)
 			{
@@ -55,7 +57,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void WritingOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void WritingOptions_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			DecompileAsync(lastSelectedStep);
 		}
@@ -68,7 +70,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void FilterSettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (e.PropertyName == "Language")
@@ -87,7 +89,7 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
-		private void ILAstStepperUpdated(object sender, EventArgs e)
+		private void ILAstStepperUpdated(object? sender, EventArgs? e)
 		{
 #if DEBUG
 			if (language == null)
@@ -101,24 +103,21 @@ namespace ICSharpCode.ILSpy
 
 		private void ShowStateAfter_Click(object sender, RoutedEventArgs e)
 		{
-			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
-			if (n == null)
+			if (tree.SelectedItem is not Stepper.Node n)
 				return;
 			DecompileAsync(n.EndStep);
 		}
 
 		private void ShowStateBefore_Click(object sender, RoutedEventArgs e)
 		{
-			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
-			if (n == null)
+			if (tree.SelectedItem is not Stepper.Node n)
 				return;
 			DecompileAsync(n.BeginStep);
 		}
 
 		private void DebugStep_Click(object sender, RoutedEventArgs e)
 		{
-			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
-			if (n == null)
+			if (tree.SelectedItem is not Stepper.Node n)
 				return;
 			DecompileAsync(n.BeginStep, true);
 		}

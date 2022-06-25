@@ -65,8 +65,10 @@ namespace ICSharpCode.ILSpy
 		bool refreshInProgress, changingActiveTab;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
 		ILSpySettings spySettingsForMainWindow_Loaded;
-		readonly SessionSettings sessionSettings;
+		readonly SessionSettings? sessionSettings;
 		FilterSettings filterSettings;
+		AssemblyList? assemblyList;
+		AssemblyListTreeNode? assemblyListTreeNode;
 
 		public static MainWindow Instance { get; private set; }
 
@@ -80,7 +82,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public AnalyzerTreeView AnalyzerTreeView {
+		public AnalyzerTreeView? AnalyzerTreeView {
 			get {
 				return !IsLoaded ? null : FindResource("AnalyzerTreeView") as AnalyzerTreeView;
 			}
@@ -133,7 +135,7 @@ namespace ICSharpCode.ILSpy
 			this.Loaded += MainWindow_Loaded;
 		}
 
-		private void DockWorkspace_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void DockWorkspace_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			switch (e.PropertyName)
 			{
@@ -155,7 +157,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void SessionSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		private void SessionSettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			switch (e.PropertyName)
 			{
@@ -366,7 +368,7 @@ namespace ICSharpCode.ILSpy
 			ToolsChanged(dock.ToolPanes, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 			TabsChanged(dock.TabPages, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
-			void ToolsChanged(object sender, NotifyCollectionChangedEventArgs e)
+			void ToolsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 			{
 				int endIndex = windowMenuItem.Items.IndexOf(separatorBeforeDocuments);
 				int startIndex = windowMenuItem.Items.IndexOf(separatorBeforeTools) + 1;
@@ -446,7 +448,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			void TabsChanged(object sender, NotifyCollectionChangedEventArgs e)
+			void TabsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 			{
 				int endIndex = windowMenuItem.Items.Count;
 				int startIndex = windowMenuItem.Items.IndexOf(separatorBeforeDocuments) + 1;
@@ -516,7 +518,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			static void TabPageChanged(object sender, PropertyChangedEventArgs e)
+			static void TabPageChanged(object? sender, PropertyChangedEventArgs e)
 			{
 				var windowMenuItem = Instance.mainMenu.Items.OfType<MenuItem>().First(m => (string)m.Tag == nameof(Properties.Resources._Window));
 				foreach (MenuItem menuItem in windowMenuItem.Items.OfType<MenuItem>())
@@ -632,9 +634,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public AssemblyList CurrentAssemblyList { get; private set; }
+		public AssemblyList? CurrentAssemblyList { get; private set; }
 
-		public event NotifyCollectionChangedEventHandler CurrentAssemblyListChanged;
+		public event NotifyCollectionChangedEventHandler? CurrentAssemblyListChanged;
 
 		readonly List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
 
@@ -922,7 +924,7 @@ namespace ICSharpCode.ILSpy
 		}
 
 		#region Update Check
-		string updateAvailableDownloadUrl;
+		string? updateAvailableDownloadUrl;
 
 		public async Task ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
@@ -977,7 +979,7 @@ namespace ICSharpCode.ILSpy
 
 		public void ShowAssemblyList(string name)
 		{
-			AssemblyList list = this.AssemblyListManager.LoadList(name);
+			AssemblyList? list = this.AssemblyListManager.LoadList(name);
 			//Only load a new list when it is a different one
 			if (list.ListName != CurrentAssemblyList.ListName)
 			{
@@ -986,7 +988,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void ShowAssemblyList(AssemblyList assemblyList)
+		void ShowAssemblyList(AssemblyList? assemblyList)
 		{
 			history.Clear();
 			if (this.CurrentAssemblyList != null)
@@ -1051,7 +1053,7 @@ namespace ICSharpCode.ILSpy
 				CurrentAssemblyList.OpenAssembly(asm.Location);
 		}
 
-		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		void filterSettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			RefreshTreeViewFilter();
 			if (e.PropertyName is "Language" or "LanguageVersion")
@@ -1069,7 +1071,7 @@ namespace ICSharpCode.ILSpy
 				AssemblyListTreeNode.FilterSettings = DockWorkspace.Instance.ActiveTabPage.FilterSettings.Clone();
 		}
 
-		internal AssemblyListTreeNode AssemblyListTreeNode { get; private set; }
+		internal AssemblyListTreeNode? AssemblyListTreeNode { get; private set; }
 
 		#region Node Selection
 
@@ -1112,12 +1114,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public void SelectNodes(IEnumerable<SharpTreeNode> nodes)
-		{
-			SelectNodes(nodes, false);
-		}
-
-		public void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool inNewTabPage, bool setFocus = true)
+		public void SelectNodes(IEnumerable<SharpTreeNode> nodes, bool inNewTabPage = false, bool setFocus = true)
 		{
 			SelectNodes(nodes, inNewTabPage, setFocus, false);
 		}
@@ -1128,7 +1125,7 @@ namespace ICSharpCode.ILSpy
 			if (inNewTabPage)
 			{
 				DockWorkspace.Instance.TabPages.Add(
-					new TabPageModel() {
+					new TabPageModel {
 						FilterSettings = filterSettings.Clone()
 					});
 				DockWorkspace.Instance.ActiveTabPage = DockWorkspace.Instance.TabPages.Last();
@@ -1189,7 +1186,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the .ToString() representation of the node's ancestors.
 		/// </summary>
-		public static string[] GetPathForNode(SharpTreeNode node)
+		public static string[]? GetPathForNode(SharpTreeNode? node)
 		{
 			if (node == null)
 				return null;
@@ -1203,7 +1200,7 @@ namespace ICSharpCode.ILSpy
 			return path.ToArray();
 		}
 
-		public ILSpyTreeNode FindTreeNode(object reference)
+		public ILSpyTreeNode? FindTreeNode(object reference)
 		{
 			return reference switch {
 				LoadedAssembly lasm => assemblyListTreeNode.FindAssemblyNode(lasm),
@@ -1226,7 +1223,7 @@ namespace ICSharpCode.ILSpy
 			JumpToReferenceAsync(reference, inNewTabPage).HandleExceptions();
 		}
 
-		public Task JumpToReferenceAsync(object reference, bool inNewTabPage = false)
+		public Task? JumpToReferenceAsync(object reference, bool inNewTabPage = false)
 		{
 			decompilationTask = TaskHelper.CompletedTask;
 			switch (reference)
@@ -1263,7 +1260,7 @@ namespace ICSharpCode.ILSpy
 					}
 					break;
 				default:
-					ILSpyTreeNode treeNode = FindTreeNode(reference);
+					ILSpyTreeNode? treeNode = FindTreeNode(reference);
 					if (treeNode != null)
 						SelectNode(treeNode, inNewTabPage);
 					break;
@@ -1271,7 +1268,7 @@ namespace ICSharpCode.ILSpy
 			return decompilationTask;
 		}
 
-		public static void OpenLink(string link)
+		public static void OpenLink(string? link)
 		{
 			try
 			{
@@ -1327,9 +1324,9 @@ namespace ICSharpCode.ILSpy
 			LoadAssemblies(fileNames, focusNode: focusNode);
 		}
 
-		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly> loadedAssemblies = null, bool focusNode = true)
+		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly>? loadedAssemblies = null, bool focusNode = true)
 		{
-			SharpTreeNode lastNode = null;
+			SharpTreeNode? lastNode = null;
 			foreach (var asm in fileNames.Select(file => assemblyList.OpenAssembly(file)))
 			{
 				if (asm != null)
@@ -1407,10 +1404,10 @@ namespace ICSharpCode.ILSpy
 			SelectionChanged?.Invoke(sender, e);
 		}
 
-		Task decompilationTask;
+		Task? decompilationTask;
 		bool ignoreDecompilationRequests;
 
-		void DecompileSelectedNodes(DecompilerTextViewState newState = null, bool recordHistory = true)
+		void DecompileSelectedNodes(DecompilerTextViewState? newState = null, bool recordHistory = true)
 		{
 			if (ignoreDecompilationRequests)
 				return;
@@ -1474,7 +1471,7 @@ namespace ICSharpCode.ILSpy
 
 		public bool SupportsLanguageSwitching => DockWorkspace.Instance.ActiveTabPage.SupportsLanguageSwitching;
 
-		public event SelectionChangedEventHandler SelectionChanged;
+		public event SelectionChangedEventHandler? SelectionChanged;
 
 		public IEnumerable<ILSpyTreeNode> SelectedNodes {
 			get {
@@ -1612,7 +1609,7 @@ namespace ICSharpCode.ILSpy
 			SessionSettings.Save();
 		}
 
-		private string GetAutoLoadedAssemblyNode(SharpTreeNode node)
+		private string? GetAutoLoadedAssemblyNode(SharpTreeNode? node)
 		{
 			if (node == null)
 				return null;

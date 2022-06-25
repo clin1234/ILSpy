@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Solution
 				throw new ArgumentException("The target file cannot be null or empty.", nameof(targetFile));
 			}
 
-			ArgumentNullException.ThrowIfNull(projects);
+			if (projects is null) throw new ArgumentNullException(nameof(projects));
 
 			if (!projects.Any())
 			{

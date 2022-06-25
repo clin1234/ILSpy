@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal void MoveTo(ICollection<T> targetCollection)
 		{
-			ArgumentNullException.ThrowIfNull(targetCollection);
+			if (targetCollection is null) throw new ArgumentNullException(nameof(targetCollection));
 			foreach (T node in this)
 			{
 				node.Remove();

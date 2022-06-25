@@ -77,25 +77,6 @@ namespace ICSharpCode.Decompiler.IL
 			             || falseInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
 		}
 
-		public static IfInstruction LogicAnd(ILInstruction lhs, ILInstruction rhs)
-		{
-			return new IfInstruction(lhs, rhs, new LdcI4(0));
-		}
-
-		public static IfInstruction LogicOr(ILInstruction lhs, ILInstruction rhs)
-		{
-			return new IfInstruction(lhs, new LdcI4(1), rhs);
-		}
-
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(condition.ResultType == StackType.I4);
-			Debug.Assert(trueInst.ResultType == falseInst.ResultType
-			             || trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable)
-			             || falseInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.ControlFlow | condition.Flags |

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// Provides ID strings for entities. (C# 4.0 spec, §A.3.1)
 	/// ID strings are used to identify members in XML documentation files.
 	/// </summary>
-	internal static class IdStringProvider
+	public static class IdStringProvider
 	{
 		#region GetIdString
 
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </remarks>
 		public static IMemberReference ParseMemberIdString(string memberIdString)
 		{
-			ArgumentNullException.ThrowIfNull(memberIdString);
+			if (memberIdString is null) throw new ArgumentNullException(nameof(memberIdString));
 			if (memberIdString.Length < 2 || memberIdString[1] != ':')
 				throw new ReflectionNameParseException(0, "Missing type tag");
 			char typeChar = memberIdString[0];
@@ -160,8 +160,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
 		public static IEntity? FindEntity(string idString, ITypeResolveContext context)
 		{
-			ArgumentNullException.ThrowIfNull(idString);
-			ArgumentNullException.ThrowIfNull(context);
+			if (idString is null) throw new ArgumentNullException(nameof(idString));
+			if (context is null) throw new ArgumentNullException(nameof(context));
 			if (idString.StartsWith("T:", StringComparison.Ordinal))
 			{
 				return ParseTypeName(idString[2..]).Resolve(context).GetDefinition();
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		public static string GetTypeName(IType? type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type is null) throw new ArgumentNullException(nameof(type));
 			StringBuilder b = new();
 			AppendTypeName(b, type, false);
 			return b.ToString();
@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </remarks>
 		public static ITypeReference ParseTypeName(string? typeName)
 		{
-			ArgumentNullException.ThrowIfNull(typeName);
+			if (typeName is null) throw new ArgumentNullException(nameof(typeName));
 			int pos = 0;
 			if (typeName.StartsWith("T:", StringComparison.Ordinal))
 				pos = 2;

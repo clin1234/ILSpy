@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public sealed class CSharpModifierToken : CSharpTokenNode
 	{
-		Modifiers modifier;
+		readonly Modifiers modifier;
 
 		public CSharpModifierToken(TextLocation location, Modifiers modifier) : base(location, null)
 		{

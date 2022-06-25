@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static AssemblyNameReference Parse(string? fullName)
 		{
-			ArgumentNullException.ThrowIfNull(fullName);
+			if (fullName is null) throw new ArgumentNullException(nameof(fullName));
 			if (fullName.Length == 0)
 				throw new ArgumentException("Name can not be empty");
 
@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public AssemblyReference(PEFile? module, AssemblyReferenceHandle handle)
 		{
-			ArgumentNullException.ThrowIfNull(module);
+			if (module is null) throw new ArgumentNullException(nameof(module));
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			Metadata = module.Metadata;

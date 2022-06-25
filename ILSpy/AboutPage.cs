@@ -222,7 +222,7 @@ namespace ICSharpCode.ILSpy
 		sealed class AvailableVersionInfo
 		{
 			public Version Version;
-			public string DownloadUrl;
+			public string? DownloadUrl;
 		}
 
 		sealed class UpdateSettings : INotifyPropertyChanged

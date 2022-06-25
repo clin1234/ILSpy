@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			: base(methodDefinition)
 		{
 			bool isParameterized = substitution.MethodTypeArguments != null;
-			ArgumentNullException.ThrowIfNull(substitution);
+			if (substitution is null) throw new ArgumentNullException(nameof(substitution));
 			this.methodDefinition = methodDefinition;
 			if (methodDefinition.TypeParameters.Count > 0)
 			{
@@ -281,19 +281,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 					return typeConstraints;
 				}
-			}
-
-			public override IEnumerable<IAttribute?> GetAttributes() => baseTp.GetAttributes();
-
-			public override int GetHashCode()
-			{
-				return baseTp.GetHashCode() ^ this.Owner.GetHashCode();
-			}
-
-			public override bool Equals(IType other)
-			{
-				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
-				return other is SpecializedTypeParameter o && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 
 			public override IEnumerable<IAttribute?> GetAttributes() => baseTp.GetAttributes();

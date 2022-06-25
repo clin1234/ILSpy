@@ -31,13 +31,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// C# ambience. Used to convert type system symbols to text (usually for displaying the symbol to the user; e.g. in editor tooltips)
 	/// </summary>
-	internal sealed class CSharpAmbience : IAmbience
+	public sealed class CSharpAmbience : IAmbience
 	{
 		public ConversionFlags ConversionFlags { get; set; }
 
 		public string ConvertType(IType? type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type is null) throw new ArgumentNullException(nameof(type));
 
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) !=
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public string ConvertSymbol(ISymbol symbol)
 		{
-			ArgumentNullException.ThrowIfNull(symbol);
+			if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
 			StringWriter writer = new();
 			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateEmpty());
@@ -85,9 +85,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
-			ArgumentNullException.ThrowIfNull(symbol);
-			ArgumentNullException.ThrowIfNull(writer);
-			ArgumentNullException.ThrowIfNull(formattingPolicy);
+			if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+			if (writer is null) throw new ArgumentNullException(nameof(writer));
+			if (formattingPolicy is null) throw new ArgumentNullException(nameof(formattingPolicy));
 
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			AstNode? node = astBuilder.ConvertSymbol(symbol);

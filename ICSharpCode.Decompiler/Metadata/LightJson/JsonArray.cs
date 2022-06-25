@@ -15,7 +15,7 @@ namespace LightJson
 	[DebuggerTypeProxy(typeof(JsonArrayDebugView))]
 	internal sealed class JsonArray : IEnumerable<JsonValue>
 	{
-		private IList<JsonValue> items;
+		private readonly IList<JsonValue> items;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="JsonArray"/> class.
@@ -32,7 +32,7 @@ namespace LightJson
 		public JsonArray(params JsonValue[] values)
 			: this()
 		{
-			ArgumentNullException.ThrowIfNull(values);
+			if (values is null) throw new ArgumentNullException(nameof(values));
 
 			foreach (var value in values)
 			{
@@ -157,7 +157,7 @@ namespace LightJson
 		[ExcludeFromCodeCoverage]
 		private class JsonArrayDebugView
 		{
-			private JsonArray jsonArray;
+			private readonly JsonArray jsonArray;
 
 			public JsonArrayDebugView(JsonArray jsonArray)
 			{

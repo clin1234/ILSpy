@@ -25,6 +25,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 	public interface ITreeNode
 	{
 		object Text { get; }
+		object Icon { get; }
 		IEnumerable<ITreeNode> Children { get; }
 
 		void EnsureLazyChildren();
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpyX.Abstractions
 		Resource Resource { get; }
 	}
 
-	internal interface ITreeNodeFactory
+	public interface ITreeNodeFactory
 	{
 		ITreeNode CreateResourcesList(PEFile module);
 		ITreeNode Create(Resource resource);

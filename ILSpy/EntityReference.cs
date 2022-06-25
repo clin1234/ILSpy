@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 			this.Protocol = protocol;
 		}
 
-		public PEFile? ResolveAssembly(AssemblyList context)
+		public PEFile? ResolveAssembly(AssemblyList? context)
 		{
 			return peFile ?? context.FindAssembly(Module)?.GetPEFileOrNull();
 		}

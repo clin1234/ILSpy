@@ -1,17 +1,18 @@
 ﻿// Copyright (c) Tunnel Vision Laboratories, LLC. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.IO;
-
 namespace LightJson.Serialization
 {
+	using System.IO;
+
+	using ErrorType = JsonParseException.ErrorType;
 	/// <summary>
 	/// Represents a text scanner that reads one character at a time.
 	/// </summary>
 	internal sealed class TextScanner
 	{
 		private TextPosition position;
-		private TextReader reader;
+		private readonly TextReader reader;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TextScanner"/> class.
@@ -68,24 +69,26 @@ namespace LightJson.Serialization
 		{
 			var next = this.reader.Read();
 
-			switch (next)
+			if (next == -1)
 			{
 				throw new JsonParseException(
-					JsonParseException.ErrorType.IncompleteMessage,
+					ErrorType.IncompleteMessage,
 					this.position);
-			}
-
-			if (next == '\n')
-			{
-				this.position.Line += 1;
-				this.position.Column = 0;
 			}
 			else
 			{
-				this.position.Column += 1;
-			}
+				if (next == '\n')
+				{
+					this.position.Line += 1;
+					this.position.Column = 0;
+				}
+				else
+				{
+					this.position.Column += 1;
+				}
 
-			return (char)next;
+				return (char)next;
+			}
 		}
 
 		/// <summary>

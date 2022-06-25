@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -42,11 +43,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType returnType, bool returnIsRefReadOnly,
 			ImmutableArray<IType?> parameterTypes, ImmutableArray<ReferenceKind> parameterReferenceKinds)
 		{
-			// If FunctionPointers are not enabled in the TS, we still use FunctionPointerType instances;
-			// but have them act as if they were aliases for UIntPtr.
-			return (module.TypeSystemOptions & TypeSystemOptions.FunctionPointers) != 0
-				? null
-				: module.Compilation.FindType(KnownTypeCode.UIntPtr)?.GetDefinition();
+			this.module = module;
+			this.CallingConvention = callingConvention;
+			this.CustomCallingConventions = customCallingConventions;
+			this.ReturnType = returnType;
+			this.ReturnIsRefReadOnly = returnIsRefReadOnly;
+			this.ParameterTypes = parameterTypes;
+			this.ParameterReferenceKinds = parameterReferenceKinds;
+			Debug.Assert(parameterTypes.Length == parameterReferenceKinds.Length);
 		}
 
 		public override string Name => "delegate*";
@@ -137,18 +141,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitChildren(TypeVisitor? visitor)
 		{
-			IType r = ReturnType?.AcceptVisitor(visitor);
+			IType? r = ReturnType?.AcceptVisitor(visitor);
 			// Keep ta == null as long as no elements changed, allocate the array only if necessary.
 			IType[]? pt = (r != ReturnType) ? new IType[ParameterTypes.Length] : null;
 			for (int i = 0; i < ParameterTypes.Length; i++)
 			{
-				IType p = ParameterTypes[i].AcceptVisitor(visitor);
+				IType? p = ParameterTypes[i]?.AcceptVisitor(visitor);
 				if (p == null)
 					throw new NullReferenceException("TypeVisitor.Visit-method returned null");
 				if (pt == null && p != ParameterTypes[i])
 				{
 					// we found a difference, so we need to allocate the array
-					pt = new IType?[ParameterTypes.Length];
+					pt = new IType[ParameterTypes.Length];
 					for (int j = 0; j < i; j++)
 					{
 						pt[j] = ParameterTypes[j];

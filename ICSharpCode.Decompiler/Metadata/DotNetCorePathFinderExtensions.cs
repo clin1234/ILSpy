@@ -45,9 +45,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			return DetectTargetFrameworkId(assembly.Metadata, assembly.FileName);
 		}
 
-		public static string DetectTargetFrameworkId(this MetadataReader metadata, string assemblyPath = null)
+		public static string DetectTargetFrameworkId(this MetadataReader metadata, string? assemblyPath = null)
 		{
-			ArgumentNullException.ThrowIfNull(metadata);
+			if (metadata is null) throw new ArgumentNullException(nameof(metadata));
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 
@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		private static bool IsReferenceAssembly(this PEReader assembly, string assemblyPath)
 		{
-			ArgumentNullException.ThrowIfNull(assembly);
+			if (assembly is null) throw new ArgumentNullException(nameof(assembly));
 
 			var metadata = assembly.GetMetadataReader();
 			if (metadata.GetCustomAttributes(Handle.AssemblyDefinition)
@@ -196,13 +196,13 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			// Try to detect reference assembly through specific path pattern
 			var refPathMatch =
-				Regex.Match(assemblyPath!, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+				Regex.Match(assemblyPath, RefPathPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			return refPathMatch.Success;
 		}
 
 		public static string DetectRuntimePack(this PEFile? assembly)
 		{
-			ArgumentNullException.ThrowIfNull(assembly);
+			if (assembly is null) throw new ArgumentNullException(nameof(assembly));
 
 			var metadata = assembly.Metadata;
 

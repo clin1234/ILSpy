@@ -144,7 +144,7 @@ Examples:
 					{
 						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(file), Path.GetFileNameWithoutExtension(file) + ".csproj");
 						Directory.CreateDirectory(Path.GetDirectoryName(projectFileName));
-						ProjectId projectId = DecompileAsProject(file, projectFileName);
+						ProjectId? projectId = DecompileAsProject(file, projectFileName);
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid,
 							projectId.TypeGuid));
 					}
@@ -224,28 +224,20 @@ Examples:
 						output = File.CreateText(Path.Combine(outputDirectory,
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
 					}
-				else
-				{
-					if (outputDirectory != null)
-					{
-						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory,
-							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
-					}
-
+					
 					return Decompile(fileName, output, TypeName);
 				}
+
 			}
 		}
 
 		private static string? ResolveOutputDirectory(string outputDirectory)
 		{
 			// path is not set
-			if (string.IsNullOrWhiteSpace(outputDirectory))
-				return null;
-			// resolve relative path, backreferences ('.' and '..') and other
-			// platform-specific path elements, like '~'.
-			return Path.GetFullPath(outputDirectory);
+			return string.IsNullOrWhiteSpace(outputDirectory) ? null :
+				// resolve relative path, backreferences ('.' and '..') and other
+				// platform-specific path elements, like '~'.
+				Path.GetFullPath(outputDirectory);
 		}
 
 		DecompilerSettings GetSettings(PEFile module)
@@ -299,7 +291,7 @@ Examples:
 			return 0;
 		}
 
-		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
+		ProjectId? DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver =

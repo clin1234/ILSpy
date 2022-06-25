@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// </summary>
 		public bool IsLocal { get; }
 
-		public AssemblyList AssemblyList { get; }
+		public AssemblyList? AssemblyList { get; }
 
 		public ISymbol AnalyzedSymbol { get; }
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		readonly Accessibility effectiveAccessibility;
 
-		public AnalyzerScope(AssemblyList assemblyList, IEntity entity)
+		public AnalyzerScope(AssemblyList? assemblyList, IEntity entity)
 		{
 			AssemblyList = assemblyList;
 			assemblyListSnapshot = assemblyList.GetSnapshot();

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// <summary>
 	/// Outputs the AST.
 	/// </summary>
-	internal sealed class CSharpOutputVisitor : IAstVisitor
+	public sealed class CSharpOutputVisitor : IAstVisitor
 	{
 		private readonly Stack<AstNode?> containerStack = new();
 		private readonly CSharpFormattingOptions policy;
@@ -42,15 +42,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public CSharpOutputVisitor(TextWriter textWriter, CSharpFormattingOptions formattingPolicy)
 		{
-			ArgumentNullException.ThrowIfNull(textWriter);
-			ArgumentNullException.ThrowIfNull(formattingPolicy);
+			if (textWriter is null) throw new ArgumentNullException(nameof(textWriter));
+			if (formattingPolicy is null) throw new ArgumentNullException(nameof(formattingPolicy));
 			this.writer = TokenWriter.Create(textWriter, formattingPolicy.IndentationString);
 			this.policy = formattingPolicy;
 		}
 
 		public CSharpOutputVisitor(TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
-			ArgumentNullException.ThrowIfNull(writer);
+			if (writer is null) throw new ArgumentNullException(nameof(writer));
 
 			this.writer = new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(writer));
 			this.policy = formattingPolicy ?? throw new ArgumentNullException(nameof(formattingPolicy));

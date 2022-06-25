@@ -41,10 +41,7 @@ namespace ICSharpCode.ILSpy
 		public static string GetWindowText(IntPtr hWnd, int maxLength)
 		{
 			StringBuilder b = new StringBuilder(maxLength + 1);
-			if (GetWindowText(hWnd, b, b.Capacity) != 0)
-				return b.ToString();
-			else
-				return string.Empty;
+			return GetWindowText(hWnd, b, b.Capacity) != 0 ? b.ToString() : string.Empty;
 		}
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -69,10 +66,18 @@ namespace ICSharpCode.ILSpy
 		/// Decodes a command line into an array of arguments according to the CommandLineToArgvW rules.
 		/// </summary>
 		/// <remarks>
-		/// Command line parsing rules:
-		/// - 2n backslashes followed by a quotation mark produce n backslashes, and the quotation mark is considered to be the end of the argument.
-		/// - (2n) + 1 backslashes followed by a quotation mark again produce n backslashes followed by a quotation mark.
-		/// - n backslashes not followed by a quotation mark simply produce n backslashes.
+		/// Command line parsing rules
+		/// <list type="bullet">
+		/// <item><description>
+		/// 2n backslashes followed by a quotation mark produce n backslashes, and the quotation mark is considered to be the end of the argument.
+		/// </description></item>
+		/// <item><description>
+		/// (2n) + 1 backslashes followed by a quotation mark again produce n backslashes followed by a quotation mark.
+		/// </description></item>
+		/// <item><description>
+		/// n backslashes not followed by a quotation mark simply produce n backslashes.
+		/// </description></item>
+		/// </list>
 		/// </remarks>
 		public static unsafe string[] CommandLineToArgumentArray(string commandLine)
 		{

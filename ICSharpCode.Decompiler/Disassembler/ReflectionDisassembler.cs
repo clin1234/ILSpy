@@ -67,12 +67,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public bool ShowMetadataTokens {
 			get => methodBodyDisassembler.ShowMetadataTokens;
-			set => methodBodyDisassembler.ShowMetadataTokens = value;
+			init => methodBodyDisassembler.ShowMetadataTokens = value;
 		}
 
 		public bool ShowMetadataTokensInBase10 {
 			get => methodBodyDisassembler.ShowMetadataTokensInBase10;
-			set => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
+			init => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
 		}
 
 		public bool ShowRawRVAOffsetAndBytes {
@@ -85,9 +85,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.DebugInfo = value;
 		}
 
-		public bool ExpandMemberDefinitions { get; set; } = false;
+		public bool ExpandMemberDefinitions { get; init; }
 
-		public IAssemblyResolver AssemblyResolver { get; init; }
+		public IAssemblyResolver AssemblyResolver { get; set; }
 
 		public void DisassembleNamespace(string? nameSpace, PEFile? module, IEnumerable<TypeDefinitionHandle> types)
 		{
@@ -515,7 +515,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 
 				output.Write("/* ");
-				string format = base10 ? null : "X8";
+				string? format = base10 ? null : "X8";
 				if (handle == null || !handle.Value.IsEntityHandle())
 				{
 					output.Write(metadataToken.ToString(format));
@@ -687,7 +687,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				this.module = module;
 			}
 
-			public (PrimitiveTypeCode, string) GetPrimitiveType(PrimitiveTypeCode typeCode)
+			public (PrimitiveTypeCode, string?) GetPrimitiveType(PrimitiveTypeCode typeCode)
 			{
 				return (typeCode, null);
 			}

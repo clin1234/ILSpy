@@ -57,9 +57,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public sealed class Comment : AstNode
 	{
-		CommentType commentType;
+		readonly CommentType commentType;
 
-		string content;
+		readonly string content;
 
 		TextLocation endLocation;
 

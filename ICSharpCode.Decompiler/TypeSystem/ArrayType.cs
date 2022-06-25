@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return TypeKind.Array; }
 		}
 
-		internal int Dimensions { get; }
+		public int Dimensions { get; }
 
 		public override Nullability Nullability { get; }
 

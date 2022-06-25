@@ -20,7 +20,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			{
 				menuItem.Visible = false;
 
-				var selectedItem = owner.DTE.SelectedItems.Item(1);
+				var selectedItem = ILSpyAddInPackage.DTE.SelectedItems.Item(1);
 				menuItem.Visible = (ProjectItemForILSpy.Detect(owner, selectedItem) != null);
 			}
 		}
@@ -29,9 +29,9 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			if (owner.DTE.SelectedItems.Count != 1)
+			if (ILSpyAddInPackage.DTE.SelectedItems.Count != 1)
 				return;
-			var projectItemWrapper = ProjectItemForILSpy.Detect(owner, owner.DTE.SelectedItems.Item(1));
+			var projectItemWrapper = ProjectItemForILSpy.Detect(owner, ILSpyAddInPackage.DTE.SelectedItems.Item(1));
 			if (projectItemWrapper != null)
 			{
 				OpenAssembliesInILSpy(projectItemWrapper.GetILSpyParameters(owner));

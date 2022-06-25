@@ -11,7 +11,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	/// </summary>
 	public sealed partial class HexFilterControl
 	{
-		TextBox textBox;
+		TextBox? textBox;
 
 		public HexFilterControl()
 		{
@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
 		{
-			var text = ((TextBox)sender)?.Text;
+			var text = (sender as TextBox)?.Text;
 
 			Filter = new ContentFilter(text);
 		}
@@ -53,12 +53,14 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		sealed class ContentFilter : IContentFilter
 		{
+			readonly string? filter;
+
 			public ContentFilter(string filter)
 			{
-				this.Value = filter;
+				this.filter = filter;
 			}
 
-			public bool IsMatch(object value)
+			public bool IsMatch(object? value)
 			{
 				if (string.IsNullOrWhiteSpace(Value))
 					return true;
@@ -68,7 +70,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				return $"{value:x8}".IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
 			}
 
-			public string Value { get; }
+			public string? Value => filter;
 		}
 	}
 }

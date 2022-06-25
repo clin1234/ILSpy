@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static readonly string[][] names;
 
-		OperatorType operatorType;
+		readonly OperatorType operatorType;
 
 		static OperatorDeclaration()
 		{

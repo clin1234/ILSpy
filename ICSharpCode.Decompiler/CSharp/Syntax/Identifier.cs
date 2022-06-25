@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public string? Name {
 			get { return this.name; }
 			set {
-				ArgumentNullException.ThrowIfNull(value);
+				if (value is null) throw new ArgumentNullException(nameof(value));
 				ThrowIfFrozen();
 				this.name = value;
 			}

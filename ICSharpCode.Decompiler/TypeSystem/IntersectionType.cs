@@ -74,35 +74,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool? IsReferenceType {
 			get {
-				foreach (var t in Types)
+				foreach (var isReferenceType in Types.Select(static t => t.IsReferenceType)
+					         .Where(static isReferenceType => isReferenceType.HasValue))
 				{
-					bool? isReferenceType = t.IsReferenceType;
-					if (isReferenceType.HasValue)
-						return isReferenceType.Value;
+					return isReferenceType.Value;
 				}
 
 				return null;
 			}
-		}
-
-		public override IEnumerable<IType> DirectBaseTypes {
-			get { return Types; }
-		}
-
-		public static IType Create(IEnumerable<IType> types)
-		{
-			IType[] arr = types.Distinct().ToArray();
-			foreach (IType? type in arr)
-			{
-				if (type == null)
-					throw new ArgumentNullException();
-			}
-
-			return arr.Length switch {
-				0 => SpecialType.UnknownType,
-				1 => arr[0],
-				_ => new IntersectionType(arr)
-			};
 		}
 
 		public override IEnumerable<IType> DirectBaseTypes {

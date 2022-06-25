@@ -25,6 +25,8 @@ using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Util;
 
+using CollectionExtensions = ICSharpCode.Decompiler.Util.CollectionExtensions;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -306,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			// find the default section, and ensure it has only one incoming edge
 			var switchInst = (SwitchInstruction)switchContainer.EntryPoint.Instructions.Single();
-			var defaultSection = Enumerable.MaxBy(switchInst.Sections, s => s.Labels.Count());
+			var defaultSection = switchInst.Sections.MaxBy(static s => s.Labels.Count());
 			if (!defaultSection.Body.MatchBranch(out var defaultBlock) || defaultBlock.IncomingEdgeCount != 1)
 				return false;
 			if (defaultBlock.Parent != switchContainer)

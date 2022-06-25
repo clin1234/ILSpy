@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public IReadOnlyList<IType>? MethodTypeArguments { get; }
 
-		internal override IType VisitTypeParameter(ITypeParameter type)
+		public override IType VisitTypeParameter(ITypeParameter type)
 		{
 			int index = type.Index;
 			if (ClassTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition)
@@ -84,17 +84,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return base.VisitTypeParameter(type);
 		}
 
-		internal override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (type is NullabilityAnnotatedTypeParameter tp)
 			{
-				if (tp.Nullability == Nullability.Nullable)
-				{
-					return VisitTypeParameter(tp).ChangeNullability(Nullability.Nullable);
-				}
-
-				// T! substituted with T=oblivious string should result in oblivious string
-				return VisitTypeParameter(tp);
+				return tp.Nullability == Nullability.Nullable ? VisitTypeParameter(tp).ChangeNullability(Nullability.Nullable) :
+					// T! substituted with T=oblivious string should result in oblivious string
+					VisitTypeParameter(tp);
 			}
 
 			return base.VisitNullabilityAnnotatedType(type);

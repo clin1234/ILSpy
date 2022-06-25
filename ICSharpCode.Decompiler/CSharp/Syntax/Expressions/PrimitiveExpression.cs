@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		TextLocation startLocation;
 
-		object value;
+		readonly object value;
 
 		public PrimitiveExpression(object value)
 		{

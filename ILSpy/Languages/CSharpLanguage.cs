@@ -484,7 +484,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		sealed class ILSpyWholeProjectDecompiler : WholeProjectDecompiler
+		public sealed class ILSpyWholeProjectDecompiler : WholeProjectDecompiler
 		{
 			readonly LoadedAssembly assembly;
 			readonly DecompilationOptions options;

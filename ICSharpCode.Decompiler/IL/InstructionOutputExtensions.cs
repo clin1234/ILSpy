@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL
 				return;
 			}
 
-			ArgumentNullException.ThrowIfNull(module);
+			if (module is null) throw new ArgumentNullException(nameof(module));
 			var metadata = module.Metadata;
 			Action<ILNameSyntax> signature;
 			MethodSignature<Action<ILNameSyntax>> methodSignature;

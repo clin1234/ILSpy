@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Statement ReplaceWith(Func<Statement, Statement> replaceFunction)
 		{
-			ArgumentNullException.ThrowIfNull(replaceFunction);
+			if (replaceFunction is null) throw new ArgumentNullException(nameof(replaceFunction));
 			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
 		}
 

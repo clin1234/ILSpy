@@ -26,7 +26,7 @@ namespace ICSharpCode.TreeView
 {
 	static class ExtensionMethods
 	{
-		public static T FindAncestor<T>(this DependencyObject d) where T : class
+		public static T? FindAncestor<T>(this DependencyObject d) where T : class
 		{
 			return AncestorsAndSelf(d).OfType<T>().FirstOrDefault();
 		}

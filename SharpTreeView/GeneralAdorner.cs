@@ -29,9 +29,9 @@ namespace ICSharpCode.TreeView
 		{
 		}
 
-		FrameworkElement child;
+		FrameworkElement? child;
 
-		public FrameworkElement Child {
+		public FrameworkElement? Child {
 			get {
 				return child;
 			}
@@ -52,7 +52,7 @@ namespace ICSharpCode.TreeView
 			get { return child == null ? 0 : 1; }
 		}
 
-		protected override Visual GetVisualChild(int index)
+		protected override Visual? GetVisualChild(int index)
 		{
 			return child;
 		}

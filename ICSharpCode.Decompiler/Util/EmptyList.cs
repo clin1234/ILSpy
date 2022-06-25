@@ -114,9 +114,9 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 
-	internal static class Empty<T>
+	public static class Empty<T>
 	{
-		internal static readonly T[] Array = System.Array.Empty<T>();
+		public static readonly T[] Array = System.Array.Empty<T>();
 	}
 
 	public struct Unit

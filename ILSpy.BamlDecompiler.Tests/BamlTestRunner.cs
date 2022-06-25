@@ -194,11 +194,11 @@ namespace ILSpy.BamlDecompiler.Tests
 			return line.Trim();
 		}
 
-		Stream LoadBaml(Resource res, string name)
+		Stream? LoadBaml(Resource res, string name)
 		{
 			if (res.ResourceType != ResourceType.Embedded)
 				return null;
-			Stream s = res.TryOpenStream();
+			Stream? s = res.TryOpenStream();
 			if (s == null)
 				return null;
 			s.Position = 0;
@@ -214,7 +214,7 @@ namespace ILSpy.BamlDecompiler.Tests
 			foreach (var entry in resources.OrderBy(static e => e.Key)
 				         .Where(entry => entry.Key == name))
 			{
-				switch (entry.Value)
+				if (entry.Key == name)
 				{
 					switch (entry.Value)
 					{

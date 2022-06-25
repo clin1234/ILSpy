@@ -389,7 +389,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
-			HighlightingColor color = value switch {
+			HighlightingColor? color = value switch {
 				null => valueKeywordColor,
 				true or false => trueKeywordColor,
 				_ => null

@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		static BitSet GetActiveVariableBitSet(ILFunction scope, Predicate<ILVariable> pred)
 		{
-			ArgumentNullException.ThrowIfNull(scope);
+			if (scope is null) throw new ArgumentNullException(nameof(scope));
 			BitSet activeVariables = new(scope.Variables.Count);
 			for (int vi = 0; vi < scope.Variables.Count; vi++)
 			{

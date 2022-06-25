@@ -34,7 +34,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty TextBackgroundProperty =
-			DependencyProperty.Register("TextBackground", typeof(Brush), typeof(SharpTreeNodeView));
+			DependencyProperty.Register(nameof(TextBackground), typeof(Brush), typeof(SharpTreeNodeView));
 
 		public Brush TextBackground {
 			get { return (Brush)GetValue(TextBackgroundProperty); }
@@ -45,10 +45,10 @@ namespace ICSharpCode.TreeView
 			get { return DataContext as SharpTreeNode; }
 		}
 
-		public SharpTreeViewItem ParentItem { get; private set; }
+		public SharpTreeViewItem? ParentItem { get; private set; }
 
 		public static readonly DependencyProperty CellEditorProperty =
-			DependencyProperty.Register("CellEditor", typeof(Control), typeof(SharpTreeNodeView),
+			DependencyProperty.Register(nameof(CellEditor), typeof(Control), typeof(SharpTreeNodeView),
 										new FrameworkPropertyMetadata());
 
 		public Control? CellEditor {
@@ -60,7 +60,7 @@ namespace ICSharpCode.TreeView
 			get { return ParentItem.ParentTreeView; }
 		}
 
-		internal LinesRenderer LinesRenderer { get; private set; }
+		internal LinesRenderer? LinesRenderer { get; private set; }
 
 		public override void OnApplyTemplate()
 		{

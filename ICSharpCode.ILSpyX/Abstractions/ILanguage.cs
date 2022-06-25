@@ -16,12 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpyX.Abstractions
 {
-	internal interface ILanguage
+	public interface ILanguage
 	{
+		string GetEntityName(PEFile module, System.Reflection.Metadata.EntityHandle handle, bool fullName, bool omitGenerics);
 		bool ShowMember(IEntity member);
 	}
 }

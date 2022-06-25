@@ -27,11 +27,11 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// Settings for the decompiler.
 	/// </summary>
-	public sealed class DecompilerSettings : INotifyPropertyChanged
+	public class DecompilerSettings : INotifyPropertyChanged
 	{
 		bool aggressiveInlining;
 
-		bool aggressiveScalarReplacementOfAggregates;
+		readonly bool aggressiveScalarReplacementOfAggregates;
 
 		bool alwaysCastTargetsOfExplicitInterfaceImplementationCalls;
 
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler
 
 		bool anonymousTypes = true;
 
-		bool arrayInitializers = true;
+		readonly bool arrayInitializers = true;
 
 		bool asyncAwait = true;
 
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler
 
 		bool asyncUsingAndForEachStatement = true;
 
-		bool automaticEvents = true;
+		readonly bool automaticEvents = true;
 
 		bool automaticProperties = true;
 
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler
 
 		CSharpFormattingOptions? csharpFormattingOptions;
 
-		bool decimalConstants = true;
+		readonly bool decimalConstants = true;
 
 		bool decompileMemberBodies = true;
 
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler
 
 		bool foldBraces;
 
-		bool forEachStatement = true;
+		readonly bool forEachStatement = true;
 
 		bool forEachWithGetEnumeratorExtension = true;
 
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler
 
 		bool useLambdaSyntax = true;
 
-		bool useNestedDirectoriesForNamespaces;
+		readonly bool useNestedDirectoriesForNamespaces;
 
 		bool usePrimaryConstructorSyntax = true;
 
@@ -1869,7 +1869,7 @@ namespace ICSharpCode.Decompiler
 
 		#region Options to aid F# decompilation
 
-		bool removeDeadCode;
+		readonly bool removeDeadCode;
 
 		[Category("DecompilerSettings.FSpecificOptions")]
 		[Description("DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution")]
@@ -1884,7 +1884,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool removeDeadStores;
+		readonly bool removeDeadStores;
 
 		[Category("DecompilerSettings.FSpecificOptions")]
 		[Description("DecompilerSettings.RemoveDeadStores")]
@@ -1917,7 +1917,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool throwOnAssemblyResolveErrors = true;
+		readonly bool throwOnAssemblyResolveErrors = true;
 
 		[Browsable(false)]
 		public bool ThrowOnAssemblyResolveErrors {

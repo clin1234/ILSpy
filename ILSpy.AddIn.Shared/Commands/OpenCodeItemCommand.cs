@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				if (GetRoslynDocument() == null)
 					return;
 
-				var document = owner.DTE.ActiveDocument;
+				var document = ILSpyAddInPackage.DTE.ActiveDocument;
 				menuItem.Visible =
 					(document?.ProjectItem?.ContainingProject?.ConfigurationManager != null) &&
 					!string.IsNullOrEmpty(document.ProjectItem.ContainingProject.FileName);
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 
-			var document = owner.DTE.ActiveDocument;
+			var document = ILSpyAddInPackage.DTE.ActiveDocument;
 			var id = owner.Workspace?.CurrentSolution.GetDocumentIdsWithFilePath(document.FullName).FirstOrDefault();
 			if (id == null)
 				return null;
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var symbolAssemblyName = symbol.ContainingAssembly?.Identity?.Name;
 
 			// Add our own project as well (not among references)
-			var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
+			var project = FindProject(ILSpyAddInPackage.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 
 			if (project == null)
 			{
@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 						Environment.NewLine, symbolAssemblyName, invalidSymbolReference.AssemblyFile
 						) == (int)MessageButtonResult.IDYES)
 					{
-						owner.DTE.ExecuteCommand("Build.BuildSolution");
+						ILSpyAddInPackage.DTE.ExecuteCommand("Build.BuildSolution");
 					}
 				}
 				else

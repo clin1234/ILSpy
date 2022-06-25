@@ -39,7 +39,7 @@ using System.Xml;
 
 namespace ICSharpCode.Decompiler.Util
 {
-	internal sealed class ResXResourceWriter : IDisposable
+	public sealed class ResXResourceWriter : IDisposable
 	{
 		const string WinFormsAssemblyName =
 			", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
@@ -189,9 +189,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void AddResource(string name, byte[]? value)
 		{
-			ArgumentNullException.ThrowIfNull(name);
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
-			ArgumentNullException.ThrowIfNull(value);
+			if (value is null) throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.Util
 				return;
 			}
 
-			ArgumentNullException.ThrowIfNull(name);
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -278,9 +278,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		private void AddResource(string name, string? value, string? comment)
 		{
-			ArgumentNullException.ThrowIfNull(name);
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
-			ArgumentNullException.ThrowIfNull(value);
+			if (value is null) throw new ArgumentNullException(nameof(value));
 
 			if (written)
 				throw new InvalidOperationException("The resource is already generated.");
@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public ResXResourceWriter(Stream? stream)
 		{
-			ArgumentNullException.ThrowIfNull(stream);
+			if (stream is null) throw new ArgumentNullException(nameof(stream));
 
 			if (!stream.CanWrite)
 				throw new ArgumentException("stream is not writable.", nameof(stream));

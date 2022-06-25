@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		ShortVariable
 	}
 
-	internal static partial class ILOpCodeExtensions
+	public static partial class ILOpCodeExtensions
 	{
 		public static readonly HashSet<string> ILKeywords;
 

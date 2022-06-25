@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 	}
 
-	internal static class AnnotationExtensions
+	public static class AnnotationExtensions
 	{
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression? expression,
 			ILInstruction instruction)
@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Represents a reference to a local variable.
 	/// </summary>
-	internal sealed class ILVariableResolveResult : ResolveResult
+	public sealed class ILVariableResolveResult : ResolveResult
 	{
 		public readonly ILVariable Variable;
 

@@ -27,7 +27,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	internal static class Roles
+	public static class Roles
 	{
 		// some pre defined constants for common roles
 		public static readonly Role<Identifier?> Identifier = new("Identifier", Syntax.Identifier.Null);

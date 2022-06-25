@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public sealed class AnalyzerContext
 	{
-		public AssemblyList AssemblyList { get; internal init; }
+		public AssemblyList? AssemblyList { get; internal init; }
 
 		/// <summary>
 		/// CancellationToken. Currently Analyzers do not support cancellation from the UI, but it should be checked nonetheless.

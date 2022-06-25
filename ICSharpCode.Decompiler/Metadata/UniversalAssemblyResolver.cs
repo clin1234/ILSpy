@@ -63,7 +63,6 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		static readonly List<string> gac_paths = GetGacPaths();
 		static readonly DecompilerRuntime decompilerRuntime;
-		readonly string? baseDirectory;
 		readonly List<string?> directories = new();
 
 		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
@@ -116,7 +115,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			string? runtimePack = null, PEStreamOptions streamOptions = PEStreamOptions.Default,
 			MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
-			string? baseDirectory = null;
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.throwOnError = throwOnError;
 			this.streamOptions = streamOptions;
@@ -347,7 +345,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? ResolveInternal(IAssemblyReference name)
 		{
-			ArgumentNullException.ThrowIfNull(name);
+			if (name is null) throw new ArgumentNullException(nameof(name));
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)

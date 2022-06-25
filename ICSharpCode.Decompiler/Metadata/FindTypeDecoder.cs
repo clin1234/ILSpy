@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	internal sealed class FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
+	public sealed class FindTypeDecoder : ISignatureTypeProvider<bool, Unit>
 	{
 		readonly MetadataModule? currentModule;
 		readonly PEFile? declaringModule;

@@ -60,7 +60,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty RootProperty =
-			DependencyProperty.Register("Root", typeof(SharpTreeNode), typeof(SharpTreeView));
+			DependencyProperty.Register(nameof(Root), typeof(SharpTreeNode), typeof(SharpTreeView));
 
 		public SharpTreeNode? Root {
 			get { return (SharpTreeNode)GetValue(RootProperty); }
@@ -68,7 +68,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty ShowRootProperty =
-			DependencyProperty.Register("ShowRoot", typeof(bool), typeof(SharpTreeView),
+			DependencyProperty.Register(nameof(ShowRoot), typeof(bool), typeof(SharpTreeView),
 										new FrameworkPropertyMetadata(true));
 
 		public bool ShowRoot {
@@ -77,7 +77,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty ShowRootExpanderProperty =
-			DependencyProperty.Register("ShowRootExpander", typeof(bool), typeof(SharpTreeView),
+			DependencyProperty.Register(nameof(ShowRootExpander), typeof(bool), typeof(SharpTreeView),
 										new FrameworkPropertyMetadata(false));
 
 		public bool ShowRootExpander {
@@ -86,7 +86,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty AllowDropOrderProperty =
-			DependencyProperty.Register("AllowDropOrder", typeof(bool), typeof(SharpTreeView));
+			DependencyProperty.Register(nameof(AllowDropOrder), typeof(bool), typeof(SharpTreeView));
 
 		public bool AllowDropOrder {
 			get { return (bool)GetValue(AllowDropOrderProperty); }
@@ -94,7 +94,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty ShowLinesProperty =
-			DependencyProperty.Register("ShowLines", typeof(bool), typeof(SharpTreeView),
+			DependencyProperty.Register(nameof(ShowLines), typeof(bool), typeof(SharpTreeView),
 										new FrameworkPropertyMetadata(true));
 
 		public bool ShowLines {
@@ -166,12 +166,12 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		void flattener_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void flattener_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			// Deselect nodes that are being hidden, if any remain in the tree
 			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0)
 			{
-				List<SharpTreeNode> selectedOldItems = null;
+				List<SharpTreeNode>? selectedOldItems = null;
 				foreach (var node in e.OldItems.Cast<SharpTreeNode>().Where(static node => node.IsSelected))
 				{
 					selectedOldItems ??= new List<SharpTreeNode>();
@@ -232,7 +232,7 @@ namespace ICSharpCode.TreeView
 			SharpTreeNode lastVisibleChild = node;
 			while (true)
 			{
-				SharpTreeNode tmp = lastVisibleChild.Children.LastOrDefault(c => c.IsVisible);
+				SharpTreeNode? tmp = lastVisibleChild.Children.LastOrDefault(c => c.IsVisible);
 				if (tmp != null)
 				{
 					lastVisibleChild = tmp;
@@ -585,7 +585,7 @@ namespace ICSharpCode.TreeView
 
 		void TryAddDropTarget(List<DropTarget> targets, SharpTreeViewItem item, DropPlace place, DragEventArgs e)
 		{
-			GetNodeAndIndex(item, place, out SharpTreeNode node, out int index);
+			GetNodeAndIndex(item, place, out SharpTreeNode? node, out int index);
 
 			if (node != null)
 			{

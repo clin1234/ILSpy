@@ -91,7 +91,7 @@ namespace ICSharpCode.TreeView
 			get { return false; }
 		}
 
-		public int IndexOf(SharpTreeNode node)
+		public int IndexOf(SharpTreeNode? node)
 		{
 			if (node == null || node.modelParent != parent)
 				return -1;

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	/// would incorrectly result in "2 * 1 + 1". By running InsertParenthesesVisitor, the necessary
 	/// parentheses are inserted: "2 * (1 + 1)".
 	/// </summary>
-	internal sealed class InsertParenthesesVisitor : DepthFirstAstVisitor
+	public sealed class InsertParenthesesVisitor : DepthFirstAstVisitor
 	{
 		/// <summary>
 		/// Gets/Sets whether the visitor should insert parentheses to make the code better looking.

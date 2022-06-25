@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				var roslynProject = owner.Workspace?.CurrentSolution.GetProject(projectReference.ProjectId);
 				if (roslynProject != null)
 				{
-					var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
+					var project = FindProject(ILSpyAddInPackage.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 					if (project != null)
 					{
 						dict.Add(roslynProject.AssemblyName,

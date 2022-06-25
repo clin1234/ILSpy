@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace ICSharpCode.Decompiler.Util
@@ -57,15 +58,9 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Show(string? name = null)
 		{
-			Show(null);
-		}
-
-		public void Show(string? name)
-		{
 			name ??= Title;
 			if (name != null)
-				foreach (char c in Path.GetInvalidFileNameChars())
-					name = name.Replace(c, '-');
+				name = Path.GetInvalidFileNameChars().Aggregate(name, static (current, c) => current.Replace(c, '-'));
 			string fileName = name != null ? Path.Combine(Path.GetTempPath(), name) : Path.GetTempFileName();
 			Save(fileName + ".gv");
 			Process.Start("dot", "\"" + fileName + ".gv\" -Tpng -o \"" + fileName + ".png\"").WaitForExit();
@@ -119,7 +114,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(TextWriter writer)
 		{
-			ArgumentNullException.ThrowIfNull(writer);
+			if (writer is null) throw new ArgumentNullException(nameof(writer));
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);

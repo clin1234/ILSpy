@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static string DetectTargetFrameworkId(Mono.Cecil.AssemblyDefinition assembly, string? assemblyPath = null)
 		{
-			ArgumentNullException.ThrowIfNull(assembly);
+			if (assembly is null) throw new ArgumentNullException(nameof(assembly));
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
 

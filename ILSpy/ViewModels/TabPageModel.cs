@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
-		public ViewState GetState()
+		public ViewState? GetState()
 		{
 			return (Content as IHaveState)?.GetState();
 		}
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			return action(textView);
 		}
 
-		public static Task ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
+		public static Task? ShowTextViewAsync(this TabPageModel tabPage, Func<DecompilerTextView, Task> action)
 		{
 			if (tabPage.Content is not DecompilerTextView textView)
 			{

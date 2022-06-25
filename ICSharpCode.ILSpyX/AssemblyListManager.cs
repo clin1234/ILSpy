@@ -72,16 +72,16 @@ namespace ICSharpCode.ILSpyX
 		/// Loads an assembly list from the ILSpySettings.
 		/// If no list with the specified name is found, the default list is loaded instead.
 		/// </summary>
-		public AssemblyList LoadList(string? listName)
+		public AssemblyList? LoadList(string? listName)
 		{
 			this.settingsProvider = this.settingsProvider.Load();
-			AssemblyList list = DoLoadList(listName);
+			AssemblyList? list = DoLoadList(listName);
 			if (!AssemblyLists.Contains(list.ListName))
 				AssemblyLists.Add(list.ListName);
 			return list;
 		}
 
-		AssemblyList DoLoadList(string? listName)
+		AssemblyList? DoLoadList(string? listName)
 		{
 			XElement doc = this.settingsProvider["AssemblyLists"];
 			if (listName != null)
@@ -217,7 +217,7 @@ namespace ICSharpCode.ILSpyX
 			}
 		}
 
-		public AssemblyList CreateList(string name)
+		public AssemblyList? CreateList(string name)
 		{
 			return new AssemblyList(this, name);
 		}

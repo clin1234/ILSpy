@@ -56,13 +56,11 @@ namespace ICSharpCode.ILSpy.AddIn
 			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
 		}
 
-		OleMenuCommandService? menuService;
-		public OleMenuCommandService? MenuService => menuService;
+		public OleMenuCommandService? MenuService { get; private set; }
 
-		VisualStudioWorkspace? workspace;
-		public VisualStudioWorkspace? Workspace => workspace;
+		public VisualStudioWorkspace? Workspace { get; private set; }
 
-		public EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(DTE));
+		public static EnvDTE80.DTE2 DTE => (EnvDTE80.DTE2)GetGlobalService(typeof(DTE));
 
 
 		/////////////////////////////////////////////////////////////////////////////
@@ -86,11 +84,11 @@ namespace ICSharpCode.ILSpy.AddIn
 			Assumes.Present(componentModel);
 
 			// Add our command handlers for menu (commands must exist in the .vsct file)
-			this.menuService = (OleMenuCommandService)await GetServiceAsync(typeof(IMenuCommandService));
-			Assumes.Present(menuService);
+			this.MenuService = (OleMenuCommandService)await GetServiceAsync(typeof(IMenuCommandService));
+			Assumes.Present(MenuService);
 
-			this.workspace = componentModel.GetService<VisualStudioWorkspace>();
-			Assumes.Present(workspace);
+			this.Workspace = componentModel.GetService<VisualStudioWorkspace>();
+			Assumes.Present(Workspace);
 
 			OpenILSpyCommand.Register(this);
 			OpenProjectOutputCommand.Register(this);

@@ -12,7 +12,7 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
-	internal static partial class SRMExtensions
+	public static partial class SRMExtensions
 	{
 		public static bool HasFlag(this SRM.TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler
 
 		public static int GetCodeSize(this SRM.MethodBodyBlock? body)
 		{
-			ArgumentNullException.ThrowIfNull(body);
+			if (body is null) throw new ArgumentNullException(nameof(body));
 
 			return body.GetILReader().Length;
 		}
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler
 				reader.GetString(td.Name), out var typeParameterCount);
 			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil)
 			{
-				string? @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
+				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
 				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			}
 
@@ -439,7 +439,7 @@ namespace ICSharpCode.Decompiler
 				return outerType.GetFullTypeName(metadata).NestedType(name, typeParameterCount);
 			}
 
-			string? ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
+			string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
 			return new TopLevelTypeName(ns, name, typeParameterCount);
 		}
 

@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy
 {
 	public static class TaskHelper
 	{
-		public static readonly Task CompletedTask = FromResult<object>(null);
+		public static readonly Task? CompletedTask = FromResult<object>(null);
 
 		public static Task<T> FromResult<T>(T result)
 		{
@@ -159,7 +159,7 @@ namespace ICSharpCode.ILSpy
 		/// If the input task ran successfully, the returned task completes successfully.
 		/// If the input task was cancelled, the returned task is cancelled as well.
 		/// </returns>
-		public static Task Catch<TException>(this Task task, Action<TException> action) where TException : Exception
+		public static Task Catch<TException>(this Task? task, Action<TException> action) where TException : Exception
 		{
 			ArgumentNullException.ThrowIfNull(action);
 			return task.ContinueWith(t => {
@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Handle exceptions by displaying the error message in the text view.
 		/// </summary>
-		public static void HandleExceptions(this Task task)
+		public static void HandleExceptions(this Task? task)
 		{
 			task.Catch<Exception>(exception => MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();

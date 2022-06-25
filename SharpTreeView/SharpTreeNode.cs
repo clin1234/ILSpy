@@ -28,8 +28,8 @@ namespace ICSharpCode.TreeView
 {
 	public partial class SharpTreeNode : INotifyPropertyChanged
 	{
-		SharpTreeNodeCollection modelChildren;
-		internal SharpTreeNode modelParent;
+		SharpTreeNodeCollection? modelChildren;
+		internal SharpTreeNode? modelParent;
 
 		void UpdateIsVisible(bool parentIsVisible, bool updateFlattener)
 		{
@@ -177,7 +177,7 @@ namespace ICSharpCode.TreeView
 					while (removeEnd.modelChildren is { Count: > 0 })
 						removeEnd = removeEnd.modelChildren.Last();
 
-					List<SharpTreeNode> removedNodes = null;
+					List<SharpTreeNode>? removedNodes = null;
 					int visibleIndexOfRemoval = 0;
 					if (node.IsVisible)
 					{
@@ -227,7 +227,7 @@ namespace ICSharpCode.TreeView
 
 		#region Expanding / LazyLoading
 
-		public virtual object ExpandedIcon {
+		public virtual object? ExpandedIcon {
 			get { return Icon; }
 		}
 
@@ -683,7 +683,7 @@ namespace ICSharpCode.TreeView
 		{
 			// used for keyboard navigation
 			object? text = this.Text;
-			return text != null ? text.ToString() : string.Empty;
+			return (text != null ? text.ToString() : string.Empty)!;
 		}
 	}
 }

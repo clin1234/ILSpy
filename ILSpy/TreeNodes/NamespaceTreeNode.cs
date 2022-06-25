@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public NamespaceTreeNode(string name)
 		{
-			this.name = name ?? throw new ArgumentNullException(nameof(name));
+			Name = name ?? throw new ArgumentNullException(nameof(name));
 		}
 
 		public override object Text {

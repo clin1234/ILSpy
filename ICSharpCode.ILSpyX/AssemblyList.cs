@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpyX
 		/// <summary>
 		/// Creates a copy of an assembly list.
 		/// </summary>
-		public AssemblyList(AssemblyList list, string newName)
+		public AssemblyList(AssemblyList? list, string newName)
 			: this(list.manager, newName)
 		{
 			lock (lockObj)

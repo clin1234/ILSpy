@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Expression? ReplaceWith(Func<Expression?, Expression> replaceFunction)
 		{
-			ArgumentNullException.ThrowIfNull(replaceFunction);
+			if (replaceFunction is null) throw new ArgumentNullException(nameof(replaceFunction));
 			return (Expression)base.ReplaceWith(node => replaceFunction((Expression)node));
 		}
 

@@ -157,11 +157,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 
-		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver)
-			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
-		{
-		}
-
 		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 			: this(mainModule, assemblyResolver,
 				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))))
@@ -169,10 +164,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public DecompilerTypeSystem(PEFile? mainModule, IAssemblyResolver assemblyResolver,
-			TypeSystemOptions typeSystemOptions)
+			TypeSystemOptions typeSystemOptions = TypeSystemOptions.Default)
 		{
-			ArgumentNullException.ThrowIfNull(mainModule);
-			ArgumentNullException.ThrowIfNull(assemblyResolver);
+			if (mainModule is null) throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver is null) throw new ArgumentNullException(nameof(assemblyResolver));
 			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
 		}
 
@@ -206,12 +201,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return typeSystemOptions;
 		}
 
-		public static Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver)
-		{
-			return CreateAsync(mainModule, assemblyResolver,
-				GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))));
-		}
-
 		public static Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule, IAssemblyResolver assemblyResolver,
 			DecompilerSettings settings)
 		{
@@ -220,10 +209,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public static async Task<DecompilerTypeSystem> CreateAsync(PEFile? mainModule,
-			IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+			IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions = TypeSystemOptions.Default)
 		{
-			ArgumentNullException.ThrowIfNull(mainModule);
-			ArgumentNullException.ThrowIfNull(assemblyResolver);
+			if (mainModule is null) throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver is null) throw new ArgumentNullException(nameof(assemblyResolver));
 			var ts = new DecompilerTypeSystem();
 			await ts.InitializeAsync(mainModule, assemblyResolver, typeSystemOptions)
 				.ConfigureAwait(false);
@@ -343,7 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
 
-			this.MainModule = (MetadataModule)base.MainModule;
+			this.MainModule = base.MainModule as MetadataModule;
 
 			void AddToQueue(bool isAssembly, PEFile? mainModule, object reference)
 			{
@@ -351,7 +340,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					// Immediately start loading the referenced module as we add the entry to the queue.
 					// This allows loading multiple modules in parallel.
-					Task<PEFile> asm = isAssembly
+					Task<PEFile?> asm = isAssembly
 						? assemblyResolver.ResolveAsync((IAssemblyReference)reference)
 						: assemblyResolver.ResolveModuleAsync(mainModule, (string)reference);
 					assemblyReferenceQueue.Enqueue((isAssembly, mainModule, reference, asm));

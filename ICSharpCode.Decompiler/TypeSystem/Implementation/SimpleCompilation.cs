@@ -108,8 +108,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		protected void Init(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
 		{
-			ArgumentNullException.ThrowIfNull(mainAssembly);
-			ArgumentNullException.ThrowIfNull(assemblyReferences);
+			if (mainAssembly is null) throw new ArgumentNullException(nameof(mainAssembly));
+			if (assemblyReferences is null) throw new ArgumentNullException(nameof(assemblyReferences));
 			var context = new SimpleTypeResolveContext(this);
 			this.mainModule = mainAssembly.Resolve(context);
 			List<IModule?> assemblies = new() { this.mainModule };

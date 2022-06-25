@@ -32,17 +32,17 @@ namespace ICSharpCode.TreeView
 
 		static readonly Pen pen;
 
-		SharpTreeNodeView NodeView {
+		SharpTreeNodeView? NodeView {
 			get { return TemplatedParent as SharpTreeNodeView; }
 		}
 
 		protected override void OnRender(DrawingContext dc)
 		{
-			if (NodeView.Node == null)
+			if (NodeView?.Node == null)
 			{
 				// This seems to happen sometimes with DataContext==DisconnectedItem,
 				// though I'm not sure why WPF would call OnRender() on a disconnected node
-				Debug.WriteLine($"LinesRenderer.OnRender() called with DataContext={NodeView.DataContext}");
+				Debug.WriteLine($"LinesRenderer.OnRender() called with DataContext={NodeView?.DataContext}");
 				return;
 			}
 			var indent = NodeView.CalculateIndent();

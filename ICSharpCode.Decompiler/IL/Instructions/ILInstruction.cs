@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IEnumerable<ILInstruction> Ancestors {
 			get {
-				for (ILInstruction node = this; node != null; node = node.Parent)
+				for (ILInstruction? node = this; node != null; node = node.Parent)
 				{
 					yield return node;
 				}
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void ValidateChild(ILInstruction inst)
 		{
-			ArgumentNullException.ThrowIfNull(inst);
+			if (inst is null) throw new ArgumentNullException(nameof(inst));
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public bool IsDescendantOf(ILInstruction possibleAncestor)
 		{
-			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+			for (ILInstruction? ancestor = this; ancestor != null; ancestor = ancestor.Parent)
 			{
 				if (ancestor == possibleAncestor)
 					return true;
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILInstruction GetCommonParent(ILInstruction other)
 		{
-			ArgumentNullException.ThrowIfNull(other);
+			if (other is null) throw new ArgumentNullException(nameof(other));
 
 			ILInstruction a = this;
 			ILInstruction b = other;
@@ -357,10 +357,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsBefore(ILInstruction other)
 		{
-			ArgumentNullException.ThrowIfNull(other);
+			if (other is null) throw new ArgumentNullException(nameof(other));
 
 			ILInstruction a = this;
-			ILInstruction? b = other;
+			ILInstruction b = other;
 
 			int levelA = a.CountAncestors();
 			int levelB = b.CountAncestors();
@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.IL
 		private int CountAncestors()
 		{
 			int level = 0;
-			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent)
+			for (ILInstruction? ancestor = this; ancestor != null; ancestor = ancestor.Parent)
 			{
 				level++;
 			}
@@ -434,7 +434,7 @@ namespace ICSharpCode.Decompiler.IL
 		private protected void MakeDirty()
 		{
 #if DEBUG
-			for (ILInstruction inst = this; inst is { IsDirty: false }; inst = inst.Parent)
+			for (ILInstruction? inst = this; inst is { IsDirty: false }; inst = inst.Parent)
 			{
 				inst.IsDirty = true;
 			}
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void InvalidateFlags()
 		{
-			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
+			for (ILInstruction? inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
 				inst.flags = invalidFlags;
 		}
 

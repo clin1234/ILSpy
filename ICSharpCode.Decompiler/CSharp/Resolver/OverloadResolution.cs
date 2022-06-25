@@ -52,8 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public OverloadResolution(ICompilation compilation, ResolveResult[]? arguments, string[]? argumentNames = null,
 			IType[]? typeArguments = null, CSharpConversions? conversions = null)
 		{
-			ArgumentNullException.ThrowIfNull(compilation);
-			ArgumentNullException.ThrowIfNull(arguments);
+			if (compilation is null) throw new ArgumentNullException(nameof(compilation));
+			if (arguments is null) throw new ArgumentNullException(nameof(arguments));
 			if (argumentNames == null)
 				argumentNames = new string[arguments.Length];
 			else if (argumentNames.Length != arguments.Length)
@@ -314,7 +314,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		internal OverloadResolutionErrors AddCandidate(IParameterizedMember member,
 			OverloadResolutionErrors additionalErrors = OverloadResolutionErrors.None)
 		{
-			ArgumentNullException.ThrowIfNull(member);
+			if (member is null) throw new ArgumentNullException(nameof(member));
 
 			Candidate c = new(member, false);
 			c.AddError(additionalErrors);
@@ -401,7 +401,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="methodLists">The methods, grouped by declaring type. Base types must come first in the list.</param>
 		public void AddMethodLists(IReadOnlyList<MethodListWithDeclaringType> methodLists)
 		{
-			ArgumentNullException.ThrowIfNull(methodLists);
+			if (methodLists is null) throw new ArgumentNullException(nameof(methodLists));
 			// Base types come first, so go through the list backwards (derived types first)
 			bool[] isHiddenByDerivedType = methodLists.Count > 1 ? new bool[methodLists.Count] : null;
 			for (int i = methodLists.Count - 1; i >= 0; i--)
@@ -540,7 +540,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.conversions = overloadResolution.conversions;
 			}
 
-			internal override IType VisitParameterizedType(ParameterizedType type)
+			public override IType VisitParameterizedType(ParameterizedType type)
 			{
 				IType newType = base.VisitParameterizedType(type);
 				if (newType != type && ConstraintsValid)
@@ -602,8 +602,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public static bool ValidateConstraints(ITypeParameter typeParameter, IType typeArgument,
 			TypeVisitor? substitution = null)
 		{
-			ArgumentNullException.ThrowIfNull(typeParameter);
-			ArgumentNullException.ThrowIfNull(typeArgument);
+			if (typeParameter is null) throw new ArgumentNullException(nameof(typeParameter));
+			if (typeArgument is null) throw new ArgumentNullException(nameof(typeArgument));
 			return ValidateConstraints(typeParameter, typeArgument, substitution,
 				CSharpConversions.Get(typeParameter.Owner.Compilation));
 		}

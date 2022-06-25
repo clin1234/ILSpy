@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	public class ByteArrayResource : Resource
 	{
 		public override string Name { get; }
-		byte[] data;
+		readonly byte[] data;
 
 		public ByteArrayResource(string? name, byte[] data)
 		{

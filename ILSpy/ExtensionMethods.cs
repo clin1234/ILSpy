@@ -151,8 +151,7 @@ namespace ICSharpCode.ILSpy
 
 		public static void SelectItem(this DataGrid view, object item)
 		{
-			var container = (DataGridRow)view.ItemContainerGenerator.ContainerFromItem(item);
-			if (container != null)
+			if (view.ItemContainerGenerator.ContainerFromItem(item) is DataGridRow container)
 				container.IsSelected = true;
 			view.Focus();
 		}

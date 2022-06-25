@@ -156,10 +156,10 @@ namespace ICSharpCode.ILSpy
 			PEFile module = types.FirstOrDefault()?.ParentModule.PEFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
-			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
+			dis.DisassembleNamespace(nameSpace, module, types.Select(static t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 
-		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();

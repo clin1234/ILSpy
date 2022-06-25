@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	{
 		public static byte[] HexStringToBytes(string hex)
 		{
-			ArgumentNullException.ThrowIfNull(hex);
+			if (hex is null) throw new ArgumentNullException(nameof(hex));
 			var result = new byte[hex.Length / 2];
 			for (int i = 0; i < hex.Length / 2; i++)
 			{

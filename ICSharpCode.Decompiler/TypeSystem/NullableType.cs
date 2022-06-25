@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		internal static bool IsNullable(IType type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type is null) throw new ArgumentNullException(nameof(type));
 			return type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
 			       pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		internal static IType GetUnderlyingType(IType type)
 		{
-			ArgumentNullException.ThrowIfNull(type);
+			if (type is null) throw new ArgumentNullException(nameof(type));
 			if (type.SkipModifiers() is ParameterizedType { TypeParameterCount: 1 } pt &&
 			    pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
 				return pt.GetTypeArgument(0);
@@ -58,8 +58,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		internal static IType Create(ICompilation compilation, IType elementType)
 		{
-			ArgumentNullException.ThrowIfNull(compilation);
-			ArgumentNullException.ThrowIfNull(elementType);
+			if (compilation is null) throw new ArgumentNullException(nameof(compilation));
+			if (elementType is null) throw new ArgumentNullException(nameof(elementType));
 
 			IType nullableType = compilation.FindType(KnownTypeCode.NullableOfT);
 			ITypeDefinition nullableTypeDef = nullableType?.GetDefinition();
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		internal static ParameterizedTypeReference Create(ITypeReference elementType)
 		{
-			ArgumentNullException.ThrowIfNull(elementType);
+			if (elementType is null) throw new ArgumentNullException(nameof(elementType));
 			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT),
 				new[] { elementType });
 		}

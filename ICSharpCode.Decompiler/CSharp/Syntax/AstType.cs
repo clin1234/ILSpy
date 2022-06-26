@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsVar()
 		{
 			SimpleType st = this as SimpleType;
-			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
+			return st is { Identifier: "var" } && st.TypeArguments.Count == 0;
 		}
 
 		/// <summary>

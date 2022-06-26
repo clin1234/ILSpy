@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.targetResult = targetResult;
 			this.member = member;
 			var thisRR = targetResult as ThisResolveResult;
-			this.isVirtualCall = member.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
+			this.isVirtualCall = member.IsOverridable && !(thisRR is { CausesNonVirtualInvocation: true });
 
 			IField field = member as IField;
 			if (field != null)

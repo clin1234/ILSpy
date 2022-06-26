@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				default:
 					var typeDef = v.Type.GetDefinition();
-					if (context.Settings.WithExpressions && typeDef?.IsReferenceType == false && typeDef.IsRecord)
+					if (context.Settings.WithExpressions && typeDef is { IsReferenceType: false, IsRecord: true })
 					{
 						instType = v.Type;
 						blockKind = BlockKind.WithInitializer;

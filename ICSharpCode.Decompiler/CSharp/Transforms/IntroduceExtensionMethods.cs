@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (firstArgument is NamedArgumentExpression)
 				return false;
 			target = firstArgument.GetResolveResult();
-			if (target is ConstantResolveResult crr && crr.ConstantValue == null)
+			if (target is ConstantResolveResult { ConstantValue: null } crr)
 			{
 				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
 			}

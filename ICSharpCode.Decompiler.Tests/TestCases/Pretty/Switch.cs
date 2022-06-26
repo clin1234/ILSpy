@@ -1161,7 +1161,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIntervalIf(char c)
 		{
-			if (c >= 'A' && c <= 'Z')
+			if (c is >= 'A' and <= 'Z')
 			{
 				Console.WriteLine("alphabet");
 			}
@@ -1172,7 +1172,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			if (b)
 			{
-				while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+				while (c is >= 'a' and <= 'z' || c is >= 'A' and <= 'Z')
 				{
 					c = getChar();
 				}

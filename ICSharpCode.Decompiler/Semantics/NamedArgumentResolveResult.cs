@@ -53,25 +53,17 @@ namespace ICSharpCode.Decompiler.Semantics
 		public NamedArgumentResolveResult(IParameter parameter, ResolveResult argument, IParameterizedMember member = null)
 			: base(argument.Type)
 		{
-			if (parameter == null)
-				throw new ArgumentNullException(nameof(parameter));
-			if (argument == null)
-				throw new ArgumentNullException(nameof(argument));
 			this.Member = member;
-			this.Parameter = parameter;
+			this.Parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
 			this.ParameterName = parameter.Name;
-			this.Argument = argument;
+			this.Argument = argument ?? throw new ArgumentNullException(nameof(argument));
 		}
 
 		public NamedArgumentResolveResult(string parameterName, ResolveResult argument)
 			: base(argument.Type)
 		{
-			if (parameterName == null)
-				throw new ArgumentNullException(nameof(parameterName));
-			if (argument == null)
-				throw new ArgumentNullException(nameof(argument));
-			this.ParameterName = parameterName;
-			this.Argument = argument;
+			this.ParameterName = parameterName ?? throw new ArgumentNullException(nameof(parameterName));
+			this.Argument = argument ?? throw new ArgumentNullException(nameof(argument));
 		}
 
 		public override IEnumerable<ResolveResult> GetChildResults()

@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			// enhanced using variables need special-casing here, because we omit the block syntax from the
 			// text output, so we cannot use positions of opening/closing braces here.
-			bool isEnhancedUsing = blockStatement.Parent is UsingStatement us && us.IsEnhanced;
+			bool isEnhancedUsing = blockStatement.Parent is UsingStatement { IsEnhanced: true };
 			if (!isEnhancedUsing)
 			{
 				var blockContainer = blockStatement.Annotation<BlockContainer>();
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					StartSequencePoint(blockStatement.LBraceToken);
 					int intervalStart;
-					if (blockContainer.Parent is TryCatchHandler handler && !handler.ExceptionSpecifierILRange.IsEmpty)
+					if (blockContainer.Parent is TryCatchHandler { ExceptionSpecifierILRange.IsEmpty: false } handler)
 					{
 						// if this block container is part of a TryCatchHandler, do not steal the
 						// exception-specifier IL range
@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (catchClause.Condition.IsNull)
 			{
 				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
-				if (tryCatchHandler != null && !tryCatchHandler.ExceptionSpecifierILRange.IsEmpty)
+				if (tryCatchHandler is { ExceptionSpecifierILRange.IsEmpty: false })
 				{
 					StartSequencePoint(catchClause.CatchToken);
 					var function = tryCatchHandler.Ancestors.OfType<ILFunction>().FirstOrDefault();

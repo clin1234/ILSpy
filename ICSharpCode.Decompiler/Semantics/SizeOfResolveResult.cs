@@ -33,9 +33,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public SizeOfResolveResult(IType int32, IType referencedType, int? constantValue)
 			: base(int32)
 		{
-			if (referencedType == null)
-				throw new ArgumentNullException(nameof(referencedType));
-			this.referencedType = referencedType;
+			this.referencedType = referencedType ?? throw new ArgumentNullException(nameof(referencedType));
 			this.constantValue = constantValue;
 		}
 

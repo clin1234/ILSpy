@@ -37,12 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNodeCollection(AstNode node, Role<T> role)
 		{
-			if (node == null)
-				throw new ArgumentNullException(nameof(node));
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
-			this.node = node;
-			this.role = role;
+			this.node = node ?? throw new ArgumentNullException(nameof(node));
+			this.role = role ?? throw new ArgumentNullException(nameof(role));
 		}
 
 		public int Count {

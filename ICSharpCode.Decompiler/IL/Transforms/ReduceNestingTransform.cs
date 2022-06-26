@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (trueRangeIsEmpty || falseRangeIsEmpty || falseRangeStart >= trueRangeStart)
 				return;
 
-			if (block.Instructions.Last() is Leave leave && !leave.IsLeavingFunction && leave.TargetContainer.Kind == ContainerKind.Normal)
+			if (block.Instructions.Last() is Leave { IsLeavingFunction: false } leave && leave.TargetContainer.Kind == ContainerKind.Normal)
 			{
 				// non-keyword leave. Can't move out of the last position in the block (fall-through) without introducing goto, unless it can be replaced with a keyword (return/continue)
 				if (!CanDuplicateExit(block.Instructions.Last(), continueTarget, out var keywordExit))
@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.IL
 		private bool ReduceSwitchNesting(Block parentBlock, BlockContainer switchContainer, ILInstruction exitInst)
 		{
 			// break; from outer container cannot be brought inside the switch as the meaning would change
-			if (exitInst is Leave leave && !leave.IsLeavingFunction)
+			if (exitInst is Leave { IsLeavingFunction: false })
 				return false;
 
 			// find the default section, and ensure it has only one incoming edge
@@ -524,7 +524,7 @@ namespace ICSharpCode.Decompiler.IL
 					// add the nested body
 					ComputeStats(containerBody, ref numStatements, ref maxDepth, currentDepth + 1);
 					break;
-				case IfInstruction ifInst when ifInst.ResultType == StackType.Void:
+				case IfInstruction { ResultType: StackType.Void } ifInst:
 					Debug.Assert(isStatement);
 					// nested then instruction
 					ComputeStats(ifInst.TrueInst, ref numStatements, ref maxDepth, currentDepth + 1);

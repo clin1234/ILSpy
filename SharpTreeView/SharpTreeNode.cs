@@ -226,7 +226,7 @@ namespace ICSharpCode.TreeView
 					node.UpdateIsVisible(isVisible && isExpanded, false);
 					//Debug.WriteLine("Inserting {0} after {1}", node, insertionPos);
 
-					while (insertionPos != null && insertionPos.modelChildren != null && insertionPos.modelChildren.Count > 0)
+					while (insertionPos is { modelChildren: { } } && insertionPos.modelChildren.Count > 0)
 					{
 						insertionPos = insertionPos.modelChildren.Last();
 					}

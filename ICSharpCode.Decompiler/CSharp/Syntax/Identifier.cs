@@ -118,9 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected Identifier(string name, TextLocation location)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.Name = name;
+			this.Name = name ?? throw new ArgumentNullException(nameof(name));
 			this.startLocation = location;
 		}
 
@@ -167,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			Identifier o = other as Identifier;
-			return o != null && !o.IsNull && MatchString(this.Name, o.Name);
+			return o is { IsNull: false } && MatchString(this.Name, o.Name);
 		}
 	}
 }

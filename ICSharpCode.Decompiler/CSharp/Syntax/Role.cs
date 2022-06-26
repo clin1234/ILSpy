@@ -91,9 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Obsolete("Use the other overload explicitly specifying the nullObject.")]
 		public Role(string name)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.name = name;
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.nullObject = null!;
 		}
 

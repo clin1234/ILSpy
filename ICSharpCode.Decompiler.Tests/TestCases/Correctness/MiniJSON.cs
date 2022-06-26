@@ -538,7 +538,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							break;
 						default:
 							int codepoint = Convert.ToInt32(c);
-							if ((codepoint >= 32) && (codepoint <= 126))
+							if (codepoint is >= 32 and <= 126)
 							{
 								builder.Append(c);
 							}

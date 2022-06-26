@@ -44,15 +44,9 @@ namespace ICSharpCode.Decompiler
 
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			if (settings == null)
-				throw new ArgumentNullException(nameof(settings));
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
-			this.output = output;
-			this.settings = settings;
-			this.typeSystem = typeSystem;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
+			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 		}
 
 		public override void WriteIdentifier(Identifier identifier)
@@ -124,7 +118,7 @@ namespace ICSharpCode.Decompiler
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
 			{
 				var declaringType = member.DeclaringType;
-				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
+				if (declaringType is { Kind: TypeKind.Delegate })
 					return null;
 			}
 			return FilterMember(symbol);

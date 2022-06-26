@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					foreach (var attribute in attributeSection.Attributes)
 					{
 						var t = attribute.Type.GetSymbol() as IType;
-						if (t != null && t.Name == "DecimalConstantAttribute" && t.Namespace == "System.Runtime.CompilerServices")
+						if (t is { Name: "DecimalConstantAttribute", Namespace: "System.Runtime.CompilerServices" })
 						{
 							attribute.Remove();
 							if (attributeSection.Attributes.Count == 0)

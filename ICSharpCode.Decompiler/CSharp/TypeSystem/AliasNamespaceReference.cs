@@ -38,9 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public AliasNamespaceReference(string identifier)
 		{
-			if (identifier == null)
-				throw new ArgumentNullException(nameof(identifier));
-			this.identifier = identifier;
+			this.identifier = identifier ?? throw new ArgumentNullException(nameof(identifier));
 		}
 
 		public string Identifier {

@@ -37,12 +37,8 @@ namespace ICSharpCode.Decompiler.Semantics
 		public TypeIsResolveResult(ResolveResult input, IType targetType, IType booleanType)
 			: base(booleanType)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			if (targetType == null)
-				throw new ArgumentNullException(nameof(targetType));
-			this.Input = input;
-			this.TargetType = targetType;
+			this.Input = input ?? throw new ArgumentNullException(nameof(input));
+			this.TargetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
 		}
 	}
 }

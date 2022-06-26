@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ldelema.Indices[0] = new LdObj(call.Arguments[0], call.Method.DeclaringType);
 				return true;
 			}
-			else if (index is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.IsLifted && !bni.CheckForOverflow)
+			else if (index is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub, IsLifted: false, CheckForOverflow: false } bni)
 			{
 				// ldelema T(ldloc array, binary.sub.i4(ldlen.i4(ldloc array), ...))
 				// -> withsystemindex.ldelema T(ldloc array, newobj System.Index(..., fromEnd: true))
@@ -421,11 +421,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (inst == block)
 						break;
 				}
-				if (rangeCtorCall == null)
+				if (rangeCtorCall is not { Parent: CallInstruction { Method: SyntheticRangeIndexAccessor } slicingCall })
 					return;
 				// Now match the pattern that TransformSlicing() generated in the IndexKind.FromStart case
-				if (!(rangeCtorCall.Parent is CallInstruction { Method: SyntheticRangeIndexAccessor } slicingCall))
-					return;
 				if (!MatchContainerVar(slicingCall.Arguments[0], ref containerVar))
 					return;
 				if (!slicingCall.IsDescendantOf(block.Instructions[pos]))
@@ -631,9 +629,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(containerVar != null);
 				return init.MatchLdLoc(lengthVar);
 			}
-			if (!(init is CallInstruction call))
-				return false;
-			if (call.ResultType != StackType.I4)
+			if (!(init is CallInstruction { ResultType: StackType.I4 } call))
 				return false;
 			if (!(call.Method.IsAccessor && call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter))
 				return false;
@@ -725,7 +721,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				indexLoad = call.Arguments[0];
 				return IndexKind.RefSystemIndex;
 			}
-			else if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub)
+			else if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } bni)
 			{
 				if (bni.CheckForOverflow || bni.ResultType != StackType.I4 || bni.IsLifted)
 					return IndexKind.FromStart;
@@ -749,7 +745,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			endIndexKind = default;
 			endIndexLoad = default;
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub)
+			if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } bni)
 			{
 				if (bni.CheckForOverflow || bni.ResultType != StackType.I4 || bni.IsLifted)
 					return false;

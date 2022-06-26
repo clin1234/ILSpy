@@ -42,12 +42,8 @@ namespace ICSharpCode.Decompiler.Semantics
 		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion)
 			: base(targetType)
 		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-			if (conversion == null)
-				throw new ArgumentNullException(nameof(conversion));
-			this.Input = input;
-			this.Conversion = conversion;
+			this.Input = input ?? throw new ArgumentNullException(nameof(input));
+			this.Conversion = conversion ?? throw new ArgumentNullException(nameof(conversion));
 		}
 
 		public ConversionResolveResult(IType targetType, ResolveResult input, Conversion conversion, bool checkForOverflow)

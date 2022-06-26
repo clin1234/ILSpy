@@ -41,9 +41,7 @@ namespace ICSharpCode.Decompiler
 
 		public PlainTextOutput(TextWriter writer)
 		{
-			if (writer == null)
-				throw new ArgumentNullException(nameof(writer));
-			this.writer = writer;
+			this.writer = writer ?? throw new ArgumentNullException(nameof(writer));
 		}
 
 		public PlainTextOutput()

@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 				case CompoundTargetKind.Property:
 					Debug.Assert(target.OpCode is OpCode.Call or OpCode.CallVirt);
 					var owner = ((CallInstruction)target).Method.AccessorOwner as IProperty;
-					Debug.Assert(owner != null && owner.CanSet);
+					Debug.Assert(owner is { CanSet: true });
 					break;
 				case CompoundTargetKind.Dynamic:
 					Debug.Assert(target.OpCode is OpCode.DynamicGetMemberInstruction or OpCode.DynamicGetIndexInstruction);
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				// "target.intptr *= 2;" is compiler error, but
 				// "target.intptr *= (nint)2;" works
-				if (settings != null && !settings.NativeIntegers)
+				if (settings is { NativeIntegers: false })
 				{
 					// But if native integers are not available, we cannot use compound assignment.
 					return false;

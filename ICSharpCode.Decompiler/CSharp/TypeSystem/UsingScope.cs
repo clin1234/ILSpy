@@ -67,12 +67,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// <param name="shortName">The short namespace name.</param>
 		public UsingScope(UsingScope parent, string shortName)
 		{
-			if (parent == null)
-				throw new ArgumentNullException(nameof(parent));
-			if (shortName == null)
-				throw new ArgumentNullException(nameof(shortName));
-			this.parent = parent;
-			this.shortName = shortName;
+			this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
+			this.shortName = shortName ?? throw new ArgumentNullException(nameof(shortName));
 		}
 
 		public UsingScope Parent {

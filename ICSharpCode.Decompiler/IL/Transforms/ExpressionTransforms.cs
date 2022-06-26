@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array).WithILRange(inst.Left));
 					inst.Right = rightWithoutConv;
 				}
-				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.O)
+				else if (inst.Left is Conv { TargetType: PrimitiveType.I } conv && conv.Argument.ResultType == StackType.O)
 				{
 					// C++/CLI sometimes uses this weird comparison with null:
 					context.Step("comp(conv o->i (ldloc obj) == conv i4->i <sign extend>(ldc.i4 0))", inst);
@@ -171,8 +171,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array).WithILRange(inst));
 				return;
 			}
-			if (inst.TargetType.IsFloatType() && inst.Argument is Conv conv
-				&& conv.Kind == ConversionKind.IntToFloat && conv.TargetType == PrimitiveType.R)
+			if (inst.TargetType.IsFloatType() && inst.Argument is Conv { Kind: ConversionKind.IntToFloat, TargetType: PrimitiveType.R } conv)
 			{
 				// IL conv.r.un does not indicate whether to convert the target type to R4 or R8,
 				// so the C# compiler usually follows it with an explicit conv.r4 or conv.r8.
@@ -213,9 +212,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			foreach (ILInstruction index in indices)
 			{
-				if (index is Conv conv && conv.ResultType == StackType.I
-					&& (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
-					    || conv.Kind is ConversionKind.ZeroExtend or ConversionKind.SignExtend)
+				if (index is Conv { ResultType: StackType.I } conv 
+				    && (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
+				        || conv.Kind is ConversionKind.ZeroExtend or ConversionKind.SignExtend)
 				)
 				{
 					context.Step("Remove conv.i from array index", index);
@@ -309,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					stmt = stmt.Parent;
 				}
 				// Special case to eliminate extra store
-				if (stmt.GetNextSibling() is StLoc storeStmt && storeStmt.Value is LdLoc)
+				if (stmt.GetNextSibling() is StLoc { Value: LdLoc })
 					ILInlining.InlineIfPossible(block, stmt.ChildIndex, context);
 				return;
 			}
@@ -384,7 +383,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				locallocSpan = new LocAllocSpan(newObj.Arguments[1], type);
 				return true;
 			}
-			if (newObj.Arguments[0] is Block initializer && initializer.Kind == BlockKind.StackAllocInitializer)
+			if (newObj.Arguments[0] is Block { Kind: BlockKind.StackAllocInitializer } initializer)
 			{
 				if (!initializer.Instructions[0].MatchStLoc(out var initializerVariable, out var value))
 					return false;
@@ -711,9 +710,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			trueInst = Block.Unwrap(trueInst);
 			falseInst = Block.Unwrap(falseInst);
-			if (!(falseInst is DynamicCompoundAssign dynamicCompoundAssign))
-				return false;
-			if (!(dynamicCompoundAssign.Target is DynamicGetMemberInstruction getMember))
+			if (!(falseInst is DynamicCompoundAssign { Target: DynamicGetMemberInstruction getMember } dynamicCompoundAssign))
 				return false;
 			if (!SemanticHelper.IsPure(isEvent.Argument.Flags))
 				return false;
@@ -760,9 +757,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
 				return;
-			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp))
-				return;
-			if (!(binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember))
+			if (!(inst.Value is DynamicBinaryOperatorInstruction { Left: DynamicGetMemberInstruction dynamicGetMember } binaryOp))
 				return;
 			if (!dynamicGetMember.Target.Match(inst.Target).Success)
 				return;
@@ -785,9 +780,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
 				return;
-			if (!(inst.Arguments.LastOrDefault() is DynamicBinaryOperatorInstruction binaryOp))
-				return;
-			if (!(binaryOp.Left is DynamicGetIndexInstruction dynamicGetIndex))
+			if (!(inst.Arguments.LastOrDefault() is DynamicBinaryOperatorInstruction { Left: DynamicGetIndexInstruction dynamicGetIndex } binaryOp))
 				return;
 			if (inst.Arguments.Count != dynamicGetIndex.Arguments.Count + 1)
 				return;

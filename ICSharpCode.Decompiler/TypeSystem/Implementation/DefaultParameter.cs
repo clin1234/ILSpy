@@ -39,24 +39,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public DefaultParameter(IType type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.type = type;
-			this.name = name;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
 								ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.type = type;
-			this.name = name;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.owner = owner;
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.referenceKind = referenceKind;

@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Move ILRanges of special nop instructions to the previous non-nop instruction.
 			for (int i = block.Instructions.Count - 1; i > 0; i--)
 			{
-				if (block.Instructions[i] is Nop nop && nop.Kind == NopKind.Pop)
+				if (block.Instructions[i] is Nop { Kind: NopKind.Pop } nop)
 				{
 					block.Instructions[i - 1].AddILRange(nop);
 				}

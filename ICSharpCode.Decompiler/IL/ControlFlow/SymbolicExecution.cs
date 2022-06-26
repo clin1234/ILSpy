@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public SymbolicValue Eval(ILInstruction inst)
 		{
-			if (inst is BinaryNumericInstruction bni && bni.Operator == BinaryNumericOperator.Sub && !bni.CheckForOverflow)
+			if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub, CheckForOverflow: false } bni)
 			{
 				var left = Eval(bni.Left);
 				var right = Eval(bni.Right);

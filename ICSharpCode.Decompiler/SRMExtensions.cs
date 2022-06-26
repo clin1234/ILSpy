@@ -595,7 +595,7 @@ namespace ICSharpCode.Decompiler
 					{
 						continue;
 					}
-					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is byte b && b <= 2)
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is byte b and <= 2)
 					{
 						return (Nullability)b;
 					}

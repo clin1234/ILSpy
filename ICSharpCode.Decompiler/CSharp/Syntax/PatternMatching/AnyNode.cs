@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		public override bool DoMatch(INode other, Match match)
 		{
 			match.Add(this.groupName, other);
-			return other != null && !other.IsNull;
+			return other is { IsNull: false };
 		}
 	}
 

@@ -88,9 +88,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (unaryOperatorExpression.Operator == UnaryOperatorType.Dereference)
 			{
 				var bop = unaryOperatorExpression.Expression as BinaryOperatorExpression;
-				if (bop != null && bop.Operator == BinaryOperatorType.Add
-					&& bop.GetResolveResult() is OperatorResolveResult orr
-					&& orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
+				if (bop is { Operator: BinaryOperatorType.Add } 
+				    && bop.GetResolveResult() is OperatorResolveResult orr 
+				    && orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
 				{
 					// transform "*(ptr + int)" to "ptr[int]"
 					IndexerExpression indexer = new() {
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
 			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
-			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
+			if (uoe is { Operator: UnaryOperatorType.Dereference })
 			{
 				PointerReferenceExpression pre = new() {
 					Target = uoe.Expression.Detach(),

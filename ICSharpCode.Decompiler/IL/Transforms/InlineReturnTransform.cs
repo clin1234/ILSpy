@@ -79,9 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructionsToModify = new();
 			foreach (var inst in returnVar.StoreInstructions)
 			{
-				if (!(inst is StLoc store))
-					return false;
-				if (!(store.Parent is Block storeBlock))
+				if (!(inst is StLoc { Parent: Block storeBlock } store))
 					return false;
 				if (store.ChildIndex + 2 != storeBlock.Instructions.Count)
 					return false;

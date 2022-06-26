@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IModule valueTupleAssembly)
 		{
 			int remainder = (elementTypes.Length - 1) % (RestPosition - 1) + 1;
-			Debug.Assert(remainder >= 1 && remainder < RestPosition);
+			Debug.Assert(remainder is >= 1 and < RestPosition);
 			int pos = elementTypes.Length - remainder;
 			var type = new ParameterizedType(
 				FindValueTupleType(compilation, valueTupleAssembly, remainder),
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (type.Namespace == "System" && type.Name == "ValueTuple")
 					{
 						int tpc = type.TypeParameterCount;
-						if (tpc > 0 && tpc < RestPosition)
+						if (tpc is > 0 and < RestPosition)
 						{
 							tupleCardinality = tpc;
 							return true;
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							if (output == null)
 								output = new();
 							int tpc = type.TypeParameterCount;
-							if (tpc > 0 && tpc < RestPosition)
+							if (tpc is > 0 and < RestPosition)
 							{
 								output.AddRange(type.TypeArguments);
 								return true;

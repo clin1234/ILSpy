@@ -375,7 +375,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			result = default(CompOrDecimal);
 			result.Instruction = inst;
-			if (inst is Comp comp && !comp.IsLifted)
+			if (inst is Comp { IsLifted: false } comp)
 			{
 				result.Kind = comp.Kind;
 				result.Left = comp.Left;
@@ -647,9 +647,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				trueInstNegated = !trueInstNegated;
 				trueInst = arg;
 			}
-			if (trueInst is Call call && !call.IsLifted
-			  && CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method)
-			  && falseInst.MatchLdcI4((call.Method.Name == "op_Inequality") ^ trueInstNegated ? 1 : 0))
+			if (trueInst is Call { IsLifted: false } call 
+			    && CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method) 
+			    && falseInst.MatchLdcI4((call.Method.Name == "op_Inequality") ^ trueInstNegated ? 1 : 0))
 			{
 				// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
 				var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
@@ -765,8 +765,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// don't lift if a nullableVar doesn't contribute to the result
 					return null;
 				}
-				Debug.Assert(lifted is ILiftableInstruction liftable && liftable.IsLifted
-					&& liftable.UnderlyingResultType == exprToLift.ResultType);
+				Debug.Assert(lifted is ILiftableInstruction { IsLifted: true } liftable 
+				             && liftable.UnderlyingResultType == exprToLift.ResultType);
 			}
 			if (isNullCoalescingWithNonNullableFallback)
 			{
@@ -866,10 +866,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (newInst, bits);
 				}
 			}
-			else if (inst is Comp comp && !comp.IsLifted && comp.Kind == ComparisonKind.Equality
-			  && MatchGetValueOrDefault(comp.Left, out ILVariable v) && nullableVars.Contains(v)
-			  && NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean)
-			  && comp.Right.MatchLdcI4(0)
+			else if (inst is Comp { IsLifted: false, Kind: ComparisonKind.Equality } comp 
+			         && MatchGetValueOrDefault(comp.Left, out ILVariable v) && nullableVars.Contains(v) 
+			         && NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean) 
+			         && comp.Right.MatchLdcI4(0)
 		  )
 			{
 				// C# doesn't support ComparisonLiftingKind.ThreeValuedLogic,

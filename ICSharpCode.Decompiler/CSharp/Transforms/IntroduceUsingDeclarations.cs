@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			if (context.Settings.UsingDeclarations)
 			{
-				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
+				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective { Type: PreProcessorDirectiveType.Define });
 
 				// Now add using declarations for those namespaces:
 				IOrderedEnumerable<string> sortedImports = requiredImports.ImportedNamespaces

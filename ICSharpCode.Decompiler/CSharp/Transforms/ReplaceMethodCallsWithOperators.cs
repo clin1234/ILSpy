@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool IsInstantiableTypeParameter(IType type)
 		{
-			return type is ITypeParameter tp && tp.HasDefaultConstructorConstraint;
+			return type is ITypeParameter { HasDefaultConstructorConstraint: true };
 		}
 
 		bool CheckArgumentsForStringConcat(Expression[] arguments)
@@ -256,9 +256,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		private bool IsStringConcat(IParameterizedMember member)
 		{
-			return member is IMethod method
-				&& method.Name == "Concat"
-				&& method.DeclaringType.IsKnownType(KnownTypeCode.String);
+			return member is IMethod { Name: "Concat" } method 
+			       && method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
 
 		static readonly Pattern ToStringCallPattern = new Choice {

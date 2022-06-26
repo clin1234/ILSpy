@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			QueryExpression o = other as QueryExpression;
-			return o != null && !o.IsNull && this.Clauses.DoMatch(o.Clauses, match);
+			return o is { IsNull: false } && this.Clauses.DoMatch(o.Clauses, match);
 		}
 	}
 

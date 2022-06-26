@@ -115,9 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public SignatureComparer(StringComparer nameComparer)
 		{
-			if (nameComparer == null)
-				throw new ArgumentNullException(nameof(nameComparer));
-			this.nameComparer = nameComparer;
+			this.nameComparer = nameComparer ?? throw new ArgumentNullException(nameof(nameComparer));
 		}
 
 		/// <summary>

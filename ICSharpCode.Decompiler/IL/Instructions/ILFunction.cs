@@ -232,12 +232,12 @@ namespace ICSharpCode.Decompiler.IL
 				case ILFunctionKind.Delegate:
 					Debug.Assert(DelegateType != null);
 					Debug.Assert(DeclarationScope == null);
-					Debug.Assert(!(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1));
+					Debug.Assert(!(DelegateType is { FullName: "System.Linq.Expressions.Expression", TypeParameterCount: 1 }));
 					break;
 				case ILFunctionKind.ExpressionTree:
 					Debug.Assert(DelegateType != null);
 					Debug.Assert(DeclarationScope == null);
-					Debug.Assert(DelegateType?.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1);
+					Debug.Assert(DelegateType is { FullName: "System.Linq.Expressions.Expression", TypeParameterCount: 1 });
 					break;
 				case ILFunctionKind.LocalFunction:
 					Debug.Assert(Parent is ILFunction && SlotInfo == LocalFunctionsSlot);

@@ -397,8 +397,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		static bool MatchCall(ILInstruction inst, string name, out InstructionCollection<ILInstruction> args)
 		{
-			if (inst is CallInstruction call && call.OpCode is OpCode.Call or OpCode.CallVirt
-				&& call.Method.Name == name && !call.Method.IsStatic)
+			if (inst is CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call 
+			    && call.Method.Name == name && !call.Method.IsStatic)
 			{
 				args = call.Arguments;
 				return args.Count > 0;
@@ -1554,7 +1554,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static ILInstruction UnwrapConvUnknown(ILInstruction inst)
 		{
-			if (inst is Conv conv && conv.TargetType == PrimitiveType.Unknown)
+			if (inst is Conv { TargetType: PrimitiveType.Unknown } conv)
 			{
 				return conv.Argument;
 			}

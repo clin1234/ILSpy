@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
 		{
-			if (typeArguments != null && typeArguments.Count > 0)
+			if (typeArguments is { Count: > 0 })
 			{
 				filter = FilterTypeParameterCount(typeArguments.Count).And(filter);
 			}
@@ -133,12 +133,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			ParameterizedType pt = baseType as ParameterizedType;
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == 0
-				&& (pt != null || (methodTypeArguments != null && methodTypeArguments.Count > 0)))
+				&& (pt != null || methodTypeArguments is { Count: > 0 }))
 			{
 				TypeParameterSubstitution substitution = null;
 				foreach (IMethod m in declaredMethods)
 				{
-					if (methodTypeArguments != null && methodTypeArguments.Count > 0)
+					if (methodTypeArguments is { Count: > 0 })
 					{
 						if (m.TypeParameters.Count != methodTypeArguments.Count)
 							continue;

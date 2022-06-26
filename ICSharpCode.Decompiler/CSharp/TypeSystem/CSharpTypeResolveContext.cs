@@ -32,9 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public CSharpTypeResolveContext(IModule module, ResolvedUsingScope usingScope = null, ITypeDefinition typeDefinition = null, IMember member = null)
 		{
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
-			this.module = module;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.currentUsingScope = usingScope;
 			this.currentTypeDefinition = typeDefinition;
 			this.currentMember = member;

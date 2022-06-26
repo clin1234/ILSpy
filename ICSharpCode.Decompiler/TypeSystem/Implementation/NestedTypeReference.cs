@@ -43,12 +43,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </remarks>
 		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount, bool? isReferenceType = null)
 		{
-			if (declaringTypeRef == null)
-				throw new ArgumentNullException(nameof(declaringTypeRef));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.declaringTypeRef = declaringTypeRef;
-			this.name = name;
+			this.declaringTypeRef = declaringTypeRef ?? throw new ArgumentNullException(nameof(declaringTypeRef));
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.additionalTypeParameterCount = additionalTypeParameterCount;
 			this.isReferenceType = isReferenceType;
 		}

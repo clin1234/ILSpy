@@ -32,9 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsComImport(ITypeDefinition typeDefinition)
 		{
-			return typeDefinition != null
-				&& typeDefinition.Kind == TypeKind.Interface
-				&& typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
+			return typeDefinition is { Kind: TypeKind.Interface } 
+			       && typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
 		}
 
 		/// <summary>
@@ -47,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (typeDefinition == null)
 				return SpecialType.UnknownType;
 			var coClassAttribute = typeDefinition.GetAttribute(KnownAttribute.CoClass, inherit: false);
-			if (coClassAttribute != null && coClassAttribute.FixedArguments.Length == 1)
+			if (coClassAttribute is { FixedArguments.Length: 1 })
 			{
 				if (coClassAttribute.FixedArguments[0].Value is IType ty)
 					return ty;

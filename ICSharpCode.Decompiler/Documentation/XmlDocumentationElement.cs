@@ -51,9 +51,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public XmlDocumentationElement(XElement element, IEntity? declaringEntity, Func<string, IEntity?>? crefResolver)
 		{
-			if (element == null)
-				throw new ArgumentNullException(nameof(element));
-			this.element = element;
+			this.element = element ?? throw new ArgumentNullException(nameof(element));
 			this.declaringEntity = declaringEntity;
 			this.crefResolver = crefResolver;
 		}
@@ -63,10 +61,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public XmlDocumentationElement(string text, IEntity? declaringEntity)
 		{
-			if (text == null)
-				throw new ArgumentNullException(nameof(text));
 			this.declaringEntity = declaringEntity;
-			this.textContent = text;
+			this.textContent = text ?? throw new ArgumentNullException(nameof(text));
 		}
 
 		/// <summary>

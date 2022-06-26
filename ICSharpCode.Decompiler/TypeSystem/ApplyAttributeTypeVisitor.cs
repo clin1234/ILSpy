@@ -113,11 +113,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						{
 							var arg = ctor.FixedArguments[0];
 							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
-								&& values.All(v => v.Value is byte b && b <= 2))
+								&& values.All(v => v.Value is byte and <= 2))
 							{
 								nullableAttributeData = values.SelectArray(v => (Nullability)(byte)v.Value);
 							}
-							else if (arg.Value is byte b && b <= 2)
+							else if (arg.Value is byte b and <= 2)
 							{
 								nullability = (Nullability)b;
 							}

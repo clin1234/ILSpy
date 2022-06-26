@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				if (methodDefinition.DeclaringType.TypeParameterCount == 0)
 					return methodDefinition;
-				if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
+				if (substitution.MethodTypeArguments is { Count: > 0 })
 					substitution = new(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
 			}
 			return new SpecializedMethod(methodDefinition, substitution);

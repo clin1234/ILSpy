@@ -49,9 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </param>
 		public TypeSystemAstBuilder(CSharpResolver resolver)
 		{
-			if (resolver == null)
-				throw new ArgumentNullException(nameof(resolver));
-			this.resolver = resolver;
+			this.resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
 			InitProperties();
 		}
 
@@ -376,7 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					astType.Parameters.Add(paramDecl);
 				}
 				astType.ReturnType = ConvertType(fpt.ReturnType);
-				if (fpt.ReturnIsRefReadOnly && astType.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+				if (fpt.ReturnIsRefReadOnly && astType.ReturnType is ComposedType { HasRefSpecifier: true } ct)
 				{
 					ct.HasReadOnlySpecifier = true;
 				}
@@ -703,7 +701,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (resolver == null)
 				return true; // just assume namespaces are valid if we don't have a resolver
 			nrr = resolver.ResolveSimpleName(firstNamespacePart, EmptyList<IType>.Instance) as NamespaceResolveResult;
-			return nrr != null && !nrr.IsError && nrr.NamespaceName == firstNamespacePart;
+			return nrr is { IsError: false } && nrr.NamespaceName == firstNamespacePart;
 		}
 
 		static SimpleType MakeSimpleType(string name)
@@ -1906,7 +1904,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new TypeResolveResult(d));
 			}
 			decl.ReturnType = ConvertType(invokeMethod.ReturnType);
-			if (invokeMethod.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+			if (invokeMethod.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType { HasRefSpecifier: true } ct)
 			{
 				ct.HasReadOnlySpecifier = true;
 			}
@@ -2065,7 +2063,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, property));
 			}
 			decl.ReturnType = ConvertType(property.ReturnType);
-			if (property.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+			if (property.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType { HasRefSpecifier: true } ct)
 			{
 				ct.HasReadOnlySpecifier = true;
 			}
@@ -2106,7 +2104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, indexer));
 			}
 			decl.ReturnType = ConvertType(indexer.ReturnType);
-			if (indexer.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+			if (indexer.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType { HasRefSpecifier: true } ct)
 			{
 				ct.HasReadOnlySpecifier = true;
 			}
@@ -2178,7 +2176,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.AddAnnotation(new MemberResolveResult(null, method));
 			}
 			decl.ReturnType = ConvertType(method.ReturnType);
-			if (method.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+			if (method.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType { HasRefSpecifier: true } ct)
 			{
 				ct.HasReadOnlySpecifier = true;
 			}
@@ -2224,7 +2222,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				OperatorType = opType.Value,
 				ReturnType = ConvertType(op.ReturnType)
 			};
-			if (op.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier)
+			if (op.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType { HasRefSpecifier: true } ct)
 			{
 				ct.HasReadOnlySpecifier = true;
 			}
@@ -2338,8 +2336,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					{
 						m |= Modifiers.Static;
 					}
-					if (member is IMethod method && method.ThisIsRefReadOnly
-						&& method.DeclaringTypeDefinition?.IsReadOnly == false)
+					if (member is IMethod { ThisIsRefReadOnly: true, DeclaringTypeDefinition.IsReadOnly: false })
 					{
 						m |= Modifiers.Readonly;
 					}
@@ -2348,8 +2345,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (declaringType.Kind == TypeKind.Interface)
 					{
 						if (!member.IsStatic && !member.IsVirtual && !member.IsAbstract && !member.IsOverride
-							&& member.Accessibility != Accessibility.Private
-							&& member is IMethod method2 && method2.HasBody)
+						    && member.Accessibility != Accessibility.Private
+						    && member is IMethod { HasBody: true })
 						{
 							m |= Modifiers.Sealed;
 						}
@@ -2447,7 +2444,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		static bool IsObjectOrValueType(IType type)
 		{
 			ITypeDefinition d = type.GetDefinition();
-			return d != null && d.KnownTypeCode is KnownTypeCode.Object or KnownTypeCode.ValueType;
+			return d is { KnownTypeCode: KnownTypeCode.Object or KnownTypeCode.ValueType };
 		}
 		#endregion
 

@@ -77,9 +77,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ByReferenceTypeReference(ITypeReference elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			this.elementType = elementType;
+			this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
 		public ITypeReference ElementType {

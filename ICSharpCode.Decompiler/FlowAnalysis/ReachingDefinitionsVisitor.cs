@@ -276,12 +276,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		public ReachingDefinitionsVisitor(ILFunction scope, BitSet analyzedVariables, CancellationToken cancellationToken)
 		{
-			if (scope == null)
-				throw new ArgumentNullException(nameof(scope));
-			if (analyzedVariables == null)
-				throw new ArgumentNullException(nameof(analyzedVariables));
-			this.scope = scope;
-			this.analyzedVariables = analyzedVariables;
+			this.scope = scope ?? throw new ArgumentNullException(nameof(scope));
+			this.analyzedVariables = analyzedVariables ?? throw new ArgumentNullException(nameof(analyzedVariables));
 			base.flagsRequiringManualImpl |= InstructionFlags.MayWriteLocals;
 
 			// Fill `allStores` and `storeIndexMap` and `firstStoreIndexForVariable`.

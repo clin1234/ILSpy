@@ -61,9 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Constructor
 		public TypeInference(ICompilation compilation)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			this.compilation = compilation;
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.conversions = CSharpConversions.Get(compilation);
 		}
 
@@ -233,9 +231,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public TP(ITypeParameter typeParameter)
 			{
-				if (typeParameter == null)
-					throw new ArgumentNullException(nameof(typeParameter));
-				this.TypeParameter = typeParameter;
+				this.TypeParameter = typeParameter ?? throw new ArgumentNullException(nameof(typeParameter));
 			}
 
 			public void AddExactBound(IType type)
@@ -399,7 +395,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			// C# 4.0 spec: §7.5.2.3 Input types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
-			if (lrr != null && lrr.IsImplicitlyTyped || e is MethodGroupResolveResult)
+			if (lrr is { IsImplicitlyTyped: true } || e is MethodGroupResolveResult)
 			{
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null)
@@ -645,7 +641,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
-			if (tp != null && tp.IsFixed == false)
+			if (tp is { IsFixed: false })
 			{
 				Log.WriteLine(" Add exact bound '" + U + "' to " + tp);
 				tp.AddExactBound(U);
@@ -731,7 +727,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
-			if (tp != null && tp.IsFixed == false)
+			if (tp is { IsFixed: false })
 			{
 				Log.WriteLine("  Add lower bound '" + U + "' to " + tp);
 				tp.LowerBounds.Add(U);
@@ -865,7 +861,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// If V is one of the unfixed Xi then U is added to the set of bounds for Xi.
 			TP tp = GetTPForType(V);
-			if (tp != null && tp.IsFixed == false)
+			if (tp is { IsFixed: false })
 			{
 				Log.WriteLine("  Add upper bound '" + U + "' to " + tp);
 				tp.UpperBounds.Add(U);

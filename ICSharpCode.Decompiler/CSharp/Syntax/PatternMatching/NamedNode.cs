@@ -38,10 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public NamedNode(string groupName, INode childNode)
 		{
-			if (childNode == null)
-				throw new ArgumentNullException(nameof(childNode));
 			this.groupName = groupName;
-			this.childNode = childNode;
+			this.childNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
 		}
 
 		public override bool DoMatch(INode other, Match match)

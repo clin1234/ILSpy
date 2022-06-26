@@ -126,11 +126,11 @@ namespace ICSharpCode.Decompiler.Metadata
 				builder.Append("PublicKeyToken=");
 
 				var pk_token = PublicKeyToken;
-				if (pk_token != null && pk_token.Length > 0)
+				if (pk_token is { Length: > 0 })
 				{
-					for (int i = 0; i < pk_token.Length; i++)
+					foreach (var t in pk_token)
 					{
-						builder.Append(pk_token[i].ToString("x2"));
+						builder.Append(t.ToString("x2"));
 					}
 				}
 				else
@@ -277,11 +277,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
 		{
-			if (metadata == null)
-				throw new ArgumentNullException(nameof(metadata));
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
-			Metadata = metadata;
+			Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
 			Handle = handle;
 			entry = metadata.GetAssemblyReference(handle);
 		}

@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var type = inst.Method.DeclaringType;
 			if (type.IsKnownType(KnownTypeCode.SpanOfT) || type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
 			{
-				if (inst.Arguments.Count == 2 && inst.Arguments[0] is Block b && b.Kind == BlockKind.StackAllocInitializer)
+				if (inst.Arguments.Count == 2 && inst.Arguments[0] is Block { Kind: BlockKind.StackAllocInitializer } b)
 				{
 					return TranslateStackAllocInitializer(b, type.TypeArguments[0]);
 				}
@@ -574,7 +574,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (parent is Conv conv)
 				parent = conv.Parent;
-			if (value >= 0 && value <= 9)
+			if (value is >= 0 and <= 9)
 				return false;
 			if (value < 0 && type.GetSign() == Sign.Signed)
 				return false;
@@ -1001,11 +1001,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
 			// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
 			if (left.ResolveResult.IsCompileTimeConstant &&
-				left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
-				(left.ResolveResult.ConstantValue as int?) == 0 &&
-				NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
-				right.Expression is BinaryOperatorExpression binaryExpr &&
-				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
+			    left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
+			    (left.ResolveResult.ConstantValue as int?) == 0 &&
+			    NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
+			    right.Expression is BinaryOperatorExpression { Operator: BinaryOperatorType.BitwiseAnd })
 			{
 				return AdjustConstantExpressionToType(left, compilation.FindType(KnownTypeCode.Int32));
 			}
@@ -1058,7 +1057,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// attempt comparison without any additional casts
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
-			if (rr != null && !rr.IsError)
+			if (rr is { IsError: false })
 			{
 				IType compUType = NullableType.GetUnderlyingType(rr.Operands[0].Type);
 				if (compUType.GetSign() == inst.Sign && compUType.GetStackType() == inst.InputType)
@@ -1281,8 +1280,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				ILInstruction offsetInst = PointerArithmeticOffset.Detect(inst.Right, brt?.ElementType, inst.CheckForOverflow);
 				if (offsetInst != null)
 				{
-					if (settings.FixedBuffers && inst.Operator == BinaryNumericOperator.Add && inst.Left is LdFlda ldFlda
-						&& ldFlda.Target is LdFlda nestedLdFlda && CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
+					if (settings.FixedBuffers && inst.Operator == BinaryNumericOperator.Add && inst.Left is LdFlda { Target: LdFlda nestedLdFlda } && CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
 					{
 						Expression fieldAccess = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
 						var mrr = (MemberResolveResult)fieldAccess.GetResolveResult();
@@ -1417,7 +1415,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(inst.Operator == BinaryNumericOperator.Div);
 			if (inst.CheckForOverflow || inst.LeftInputType != StackType.I)
 				return null;
-			if (!(inst.Left is BinaryNumericInstruction sub && sub.Operator == BinaryNumericOperator.Sub))
+			if (!(inst.Left is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub } sub))
 				return null;
 			if (sub.CheckForOverflow)
 				return null;
@@ -2487,9 +2485,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// (ref x).member => x.member
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}
-					else if (translatedTarget.Expression is UnaryOperatorExpression uoe
-					  && uoe.Operator == UnaryOperatorType.NullConditional
-					  && uoe.Expression is DirectionExpression)
+					else if (translatedTarget.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional, Expression: DirectionExpression } uoe)
 					{
 						// (ref x)?.member => x?.member
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)uoe.Expression).Expression);
@@ -2617,7 +2613,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (target.Type is PointerType pointerType)
 				{
-					if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf)
+					if (target.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } uoe)
 					{
 						// We can dereference the pointer by stripping away the '&'
 						result = target.UnwrapChild(uoe.Expression);
@@ -2713,7 +2709,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				if (pointer.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf)
+				if (pointer.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } uoe)
 				{
 					// *&ptr -> ptr
 					target = pointer.UnwrapChild(uoe.Expression);
@@ -3126,7 +3122,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(defaultVal)
 						.WithRR(new TypeResolveResult(defaultVal.Type));
 					break;
-				case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
+				case Block { Kind: BlockKind.CallWithNamedArgs } callWithNamedArgs:
 					expr = TranslateCallWithNamedArgs(callWithNamedArgs);
 					initObjRR = new(expr.Type);
 					break;
@@ -3252,7 +3248,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
 			TranslatedExpression value;
-			if (memberPath.Member is IMethod method && method.Name == "Add")
+			if (memberPath.Member is IMethod { Name: "Add" })
 			{
 				value = new ArrayInitializerExpression(values.Select(v => v.Expression))
 					.WithRR(new(SpecialType.UnknownType))

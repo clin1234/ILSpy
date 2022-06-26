@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							}
 							case "System.Runtime.CompilerServices.CompilationRelaxationsAttribute":
 							{
-								if (arguments.Count == 1 && arguments.First() is PrimitiveExpression expr && expr.Value is int value && value == 8)
+								if (arguments.Count == 1 && arguments.First() is PrimitiveExpression { Value: int and 8 })
 									attribute.Remove();
 								break;
 							}
@@ -95,9 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (arguments.Count != 1)
 									break;
-								if (!(arguments.First() is NamedExpression { Name: "WrapNonExceptionThrows" } expr1))
-									break;
-								if (!(expr1.Expression is PrimitiveExpression { Value: bool and true }))
+								if (!(arguments.First() is NamedExpression { Name: "WrapNonExceptionThrows", Expression: PrimitiveExpression { Value: bool and true } }))
 									break;
 								attribute.Remove();
 								break;
@@ -111,11 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								if (arguments.Count != 2)
 									break;
-								if (!(arguments.First() is MemberReferenceExpression { MemberName: "RequestMinimum" } expr1))
-									break;
-								if (!(expr1.NextSibling is NamedExpression { Name: "SkipVerification" } expr2))
-									break;
-								if (!(expr2.Expression is PrimitiveExpression { Value: bool and true }))
+								if (!(arguments.First() is MemberReferenceExpression { MemberName: "RequestMinimum", NextSibling: NamedExpression { Name: "SkipVerification", Expression: PrimitiveExpression { Value: bool and true } } }))
 									break;
 								attribute.Remove();
 								break;

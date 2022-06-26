@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					case InvocationExpression invocation:
 						if (!(invocation.Target is MemberReferenceExpression { MemberName: ".ctor" } mre))
 							return;
-						if (!(invocation.GetSymbol() is IMethod ctor && ctor.IsConstructor))
+						if (!(invocation.GetSymbol() is IMethod { IsConstructor: true } ctor))
 							return;
 						ci = new();
 						var target = mre.Target;
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
 				ITypeDefinition declaringTypeDefinition = ctorMethodDef?.DeclaringTypeDefinition;
-				if (ctorMethodDef != null && declaringTypeDefinition?.IsReferenceType == false && !declaringTypeDefinition.IsRecord)
+				if (ctorMethodDef != null && declaringTypeDefinition is { IsReferenceType: false, IsRecord: false })
 					return;
 
 				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
@@ -418,7 +418,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							case uint ui:
 								value = new(ui);
 								return true;
-							case int[] bits when bits.Length == 4 && (bits[3] & 0x7F00FFFF) == 0 && (bits[3] & 0xFF000000) <= 0x1C000000:
+							case int[] { Length: 4 } bits when (bits[3] & 0x7F00FFFF) == 0 && (bits[3] & 0xFF000000) <= 0x1C000000:
 								value = new(bits);
 								return true;
 							default:

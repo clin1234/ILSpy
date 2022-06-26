@@ -282,7 +282,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 		protected static bool IsHex(char digit)
 		{
-			return Char.IsDigit(digit) || ('A' <= digit && digit <= 'F') || ('a' <= digit && digit <= 'f');
+			return Char.IsDigit(digit) || digit is >= 'A' and <= 'F' || digit is >= 'a' and <= 'f';
 		}
 
 		protected int GetHexNumber(char digit)
@@ -291,11 +291,11 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				return digit - '0';
 			}
-			if ('A' <= digit && digit <= 'F')
+			if (digit is >= 'A' and <= 'F')
 			{
 				return digit - 'A' + 0xA;
 			}
-			if ('a' <= digit && digit <= 'f')
+			if (digit is >= 'a' and <= 'f')
 			{
 				return digit - 'a' + 0xA;
 			}

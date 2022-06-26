@@ -78,18 +78,12 @@ namespace ICSharpCode.Decompiler.Util
 
 		public ResXResourceWriter(TextWriter textWriter)
 		{
-			if (textWriter == null)
-				throw new ArgumentNullException(nameof(textWriter));
-
-			this.textwriter = textWriter;
+			this.textwriter = textWriter ?? throw new ArgumentNullException(nameof(textWriter));
 		}
 
 		public ResXResourceWriter(string fileName)
 		{
-			if (fileName == null)
-				throw new ArgumentNullException(nameof(fileName));
-
-			this.filename = fileName;
+			this.filename = fileName ?? throw new ArgumentNullException(nameof(fileName));
 		}
 
 		~ResXResourceWriter()

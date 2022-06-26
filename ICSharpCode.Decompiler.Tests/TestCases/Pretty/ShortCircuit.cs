@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex2(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || i == 42)
+			if (i > 1000 || i is >= 1 and <= 8 || i == 42)
 			{
 				M1();
 			}
@@ -248,7 +248,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex3(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || (i >= 100 && i <= 200) || i == 42)
+			if (i > 1000 || i is >= 1 and <= 8 || i is >= 100 and <= 200 || i == 42)
 			{
 				M1();
 			}
@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StmtComplex4(int i)
 		{
-			if (i > 1000 || (i >= 1 && i <= 8) || i is 42 or 23)
+			if (i > 1000 || i is >= 1 and <= 8 || i is 42 or 23)
 			{
 				M1();
 			}

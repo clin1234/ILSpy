@@ -32,9 +32,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public TypeOfResolveResult(IType systemType, IType referencedType)
 			: base(systemType)
 		{
-			if (referencedType == null)
-				throw new ArgumentNullException(nameof(referencedType));
-			this.referencedType = referencedType;
+			this.referencedType = referencedType ?? throw new ArgumentNullException(nameof(referencedType));
 		}
 
 		/// <summary>

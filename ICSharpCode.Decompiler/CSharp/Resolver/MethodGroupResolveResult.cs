@@ -86,11 +86,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType> typeArguments)
 			: base(SpecialType.NoType)
 		{
-			if (methods == null)
-				throw new ArgumentNullException(nameof(methods));
 			this.targetResult = targetResult;
 			this.methodName = methodName;
-			this.methodLists = methods;
+			this.methodLists = methods ?? throw new ArgumentNullException(nameof(methods));
 			this.typeArguments = typeArguments ?? EmptyList<IType>.Instance;
 		}
 

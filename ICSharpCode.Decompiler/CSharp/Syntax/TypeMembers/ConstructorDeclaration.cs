@@ -183,9 +183,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ConstructorInitializer o = other as ConstructorInitializer;
-			return o != null && !o.IsNull
-				&& (this.ConstructorInitializerType == ConstructorInitializerType.Any || this.ConstructorInitializerType == o.ConstructorInitializerType)
-				&& this.Arguments.DoMatch(o.Arguments, match);
+			return o is { IsNull: false } 
+			       && (this.ConstructorInitializerType == ConstructorInitializerType.Any || this.ConstructorInitializerType == o.ConstructorInitializerType) 
+			       && this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }

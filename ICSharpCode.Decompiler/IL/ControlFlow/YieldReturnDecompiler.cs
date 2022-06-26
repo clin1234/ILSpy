@@ -713,10 +713,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			for (int i = 0; i < body.EntryPoint.Instructions.Count; i++)
 			{
 				if (body.EntryPoint.Instructions[i] is StLoc store
-					&& store.Variable.IsSingleDefinition
-					&& store.Value is LdObj ldobj
-					&& ldobj.Target is LdFlda ldflda
-					&& ldflda.Target.MatchLdThis())
+				    && store.Variable.IsSingleDefinition
+				    && store.Value is LdObj { Target: LdFlda ldflda } && ldflda.Target.MatchLdThis())
 				{
 					if (!mutableFields.Contains(ldflda.Field))
 					{
@@ -1040,14 +1038,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap, isCompiledWithMono);
 				}
-				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null)
+				if (inst is LdObj { Target: LdLoca ldloca } ldobj && ldloca.Variable.StateMachineField != null)
 				{
 					LdLoc ldloc = new(ldloca.Variable);
 					ldloc.AddILRange(ldobj);
 					ldloc.AddILRange(ldloca);
 					inst.ReplaceWith(ldloc);
 				}
-				else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null)
+				else if (inst is StObj { Target: LdLoca ldloca2 } stobj && ldloca2.Variable.StateMachineField != null)
 				{
 					StLoc stloc = new(ldloca2.Variable, stobj.Value);
 					stloc.AddILRange(stobj);

@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		DisplayClass DetectDisplayClassInitializer(ILVariable v)
 		{
-			if (v.StoreInstructions.Count != 1 || !(v.StoreInstructions[0] is StLoc store && store.Parent is Block initializerBlock && initializerBlock.Kind == BlockKind.ObjectInitializer))
+			if (v.StoreInstructions.Count != 1 || !(v.StoreInstructions[0] is StLoc { Parent: Block { Kind: BlockKind.ObjectInitializer } initializerBlock } store))
 				return null;
 			if (!(store.Value is NewObj newObj))
 				return null;
@@ -767,7 +767,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (displayClasses.TryGetValue(inst.Variable, out displayClass) && displayClass.Initializer == inst)
 				{
 					// inline contents of object initializer block
-					if (inst.Value is Block initBlock && initBlock.Kind == BlockKind.ObjectInitializer)
+					if (inst.Value is Block { Kind: BlockKind.ObjectInitializer } initBlock)
 					{
 						context.Step($"Remove initializer of {inst.Variable.Name}", inst);
 						for (int i = 1; i < initBlock.Instructions.Count; i++)
@@ -819,9 +819,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return;
 					}
 				}
-				if (inst.Value is LdLoc ldLoc && ldLoc.Variable is { IsSingleDefinition: true, CaptureScope: null }
-					&& ldLoc.Variable.StoreInstructions.FirstOrDefault() is StLoc stloc
-					&& stloc.Parent is Block block)
+				if (inst.Value is LdLoc { Variable: { IsSingleDefinition: true, CaptureScope: null } } ldLoc 
+				    && ldLoc.Variable.StoreInstructions.FirstOrDefault() is StLoc { Parent: Block block } stloc)
 				{
 					ILInlining.InlineOneIfPossible(block, stloc.ChildIndex, InliningOptions.None, context);
 				}

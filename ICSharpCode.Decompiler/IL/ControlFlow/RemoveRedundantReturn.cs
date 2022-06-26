@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			bool result = false;
 			switch (inst)
 			{
-				case BlockContainer c when c.Kind == ContainerKind.Normal:
+				case BlockContainer { Kind: ContainerKind.Normal } c:
 					// body of try block, or similar: recurse into last instruction in container
 					// Note: no need to handle loops/switches here; those already were handled by DetectExitPoints
 					Block lastBlock = c.Blocks.Last();
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					result |= ConvertReturnToFallthrough(ifInstruction.TrueInst);
 					result |= ConvertReturnToFallthrough(ifInstruction.FalseInst);
 					break;
-				case Block block when block.Kind == BlockKind.ControlFlow:
+				case Block { Kind: BlockKind.ControlFlow } block:
 				{
 					var lastInst = block.Instructions.LastOrDefault();
 					if (lastInst is Leave { IsLeavingFunction: true, Value: Nop })

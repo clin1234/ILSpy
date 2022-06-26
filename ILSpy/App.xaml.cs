@@ -199,7 +199,7 @@ namespace ICSharpCode.ILSpy
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			var output = new StringBuilder();
-			if (MainWindow.FormatExceptions(StartupExceptions.ToArray(), output))
+			if (ILSpy.MainWindow.FormatExceptions(StartupExceptions.ToArray(), output))
 			{
 				MessageBox.Show(output.ToString(), "Sorry we crashed!");
 				Environment.Exit(1);
@@ -342,7 +342,7 @@ namespace ICSharpCode.ILSpy
 
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
-			MainWindow.Instance.NavigateTo(e);
+			ILSpy.MainWindow.Instance.NavigateTo(e);
 		}
 	}
 }

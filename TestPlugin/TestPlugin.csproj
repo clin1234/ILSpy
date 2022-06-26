@@ -5,6 +5,7 @@
     <AssemblyName>Test.Plugin</AssemblyName>
     <UseWpf>true</UseWpf>
     <LangVersion>default</LangVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

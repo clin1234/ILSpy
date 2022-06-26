@@ -930,13 +930,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return combineMethod.DeclaringType.FullName == "System.Delegate";
 		}
 
-		static readonly string[] attributeTypesToRemoveFromAutoEvents = new[] {
+		static readonly string[] attributeTypesToRemoveFromAutoEvents = {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute",
 			"System.Runtime.CompilerServices.MethodImplAttribute"
 		};
 
-		internal static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+		internal static readonly string[] attributeTypesToRemoveFromAutoProperties = {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};

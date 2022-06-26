@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		internal static string intel = "Intel";
 		internal static string gas = "AT & T";
-		internal static string[] disassemblyFormats = new string[] { intel, gas };
+		internal static string[] disassemblyFormats = { intel, gas };
 
 		public static string GetDisassemblyFormat(ILSpySettings settings)
 		{

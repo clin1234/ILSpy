@@ -255,15 +255,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static readonly string RefAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
 
-		static readonly string[] defaultReferences = new[] {
+		static readonly string[] defaultReferences = {
 			"System.dll",
 			"System.Core.dll",
 			"System.Xml.dll",
 			"Microsoft.CSharp.dll"
 		};
 
-		static readonly string[] coreDefaultReferences = new[]
-			{
+		static readonly string[] coreDefaultReferences = {
 				"netstandard.dll",
 				"mscorlib.dll",
 				"System.dll",

@@ -59,11 +59,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		static readonly string[] LookupPaths = new string[] {
+		static readonly string[] LookupPaths = {
 			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
-		static readonly string[] RuntimePacks = new[] {
+		static readonly string[] RuntimePacks = {
 			"Microsoft.NETCore.App",
 			"Microsoft.WindowsDesktop.App",
 			"Microsoft.AspNetCore.App",

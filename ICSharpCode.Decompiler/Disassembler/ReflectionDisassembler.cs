@@ -82,9 +82,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public ReflectionDisassembler(ITextOutput output, MethodBodyDisassembler methodBodyDisassembler, CancellationToken cancellationToken)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			this.output = output;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
 			this.cancellationToken = cancellationToken;
 			this.methodBodyDisassembler = methodBodyDisassembler;
 		}

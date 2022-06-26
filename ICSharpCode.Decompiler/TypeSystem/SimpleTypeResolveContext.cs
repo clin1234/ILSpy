@@ -32,9 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public SimpleTypeResolveContext(ICompilation compilation)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			this.compilation = compilation;
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 		}
 
 		public SimpleTypeResolveContext(IModule module)

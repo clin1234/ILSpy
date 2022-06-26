@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static void WriteTo(this IMember member, ITextOutput output)
 		{
-			if (member is IMethod method && method.IsConstructor)
+			if (member is IMethod { IsConstructor: true } method)
 				output.WriteReference(member, method.DeclaringType?.Name + "." + method.Name);
 			else
 				output.WriteReference(member, member.Name);

@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					var attrVal = customAttribute.DecodeValue(module.TypeProvider);
 					if (attrVal.FixedArguments.Length == 1)
 					{
-						if (attrVal.FixedArguments[0].Value is byte b && b <= 2)
+						if (attrVal.FixedArguments[0].Value is byte b and <= 2)
 						{
 							return (Nullability)b;
 						}

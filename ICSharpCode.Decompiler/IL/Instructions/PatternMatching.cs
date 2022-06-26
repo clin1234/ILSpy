@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchReturn([NotNullWhen(true)] out ILInstruction? value)
 		{
 			var inst = this as Leave;
-			if (inst != null && inst.IsLeavingFunction)
+			if (inst is { IsLeavingFunction: true })
 			{
 				value = inst.Value;
 				return true;
@@ -322,9 +322,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool MatchLogicNot([NotNullWhen(true)] out ILInstruction? arg)
 		{
-			if (this is Comp comp && comp.Kind == ComparisonKind.Equality
-				&& comp.LiftingKind == ComparisonLiftingKind.None
-				&& comp.Right.MatchLdcI4(0))
+			if (this is Comp { Kind: ComparisonKind.Equality, LiftingKind: ComparisonLiftingKind.None } comp 
+			    && comp.Right.MatchLdcI4(0))
 			{
 				arg = comp.Left;
 				return true;
@@ -459,7 +458,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchLdFld([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? field)
 		{
-			if (this is LdObj ldobj && ldobj.Target is LdFlda ldflda && ldobj.UnalignedPrefix == 0 && !ldobj.IsVolatile)
+			if (this is LdObj { Target: LdFlda ldflda, UnalignedPrefix: 0, IsVolatile: false })
 			{
 				field = ldflda.Field;
 				if (field.DeclaringType.IsReferenceType == true || !ldflda.Target.MatchAddressOf(out target, out _))
@@ -475,7 +474,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchLdsFld([NotNullWhen(true)] out IField? field)
 		{
-			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda && ldobj.UnalignedPrefix == 0 && !ldobj.IsVolatile)
+			if (this is LdObj { Target: LdsFlda ldsflda, UnalignedPrefix: 0, IsVolatile: false })
 			{
 				field = ldsflda.Field;
 				return true;
@@ -491,7 +490,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchStsFld([NotNullWhen(true)] out IField? field, [NotNullWhen(true)] out ILInstruction? value)
 		{
-			if (this is StObj stobj && stobj.Target is LdsFlda ldsflda && stobj.UnalignedPrefix == 0 && !stobj.IsVolatile)
+			if (this is StObj { Target: LdsFlda ldsflda, UnalignedPrefix: 0, IsVolatile: false } stobj)
 			{
 				field = ldsflda.Field;
 				value = stobj.Value;
@@ -504,7 +503,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchStFld([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? field, [NotNullWhen(true)] out ILInstruction? value)
 		{
-			if (this is StObj stobj && stobj.Target is LdFlda ldflda && stobj.UnalignedPrefix == 0 && !stobj.IsVolatile)
+			if (this is StObj { Target: LdFlda ldflda, UnalignedPrefix: 0, IsVolatile: false } stobj)
 			{
 				target = ldflda.Target;
 				field = ldflda.Field;

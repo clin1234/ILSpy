@@ -670,9 +670,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!MatchAppendCallWithValue(body.Instructions[4], "}"))
 				return false;
 			// leave IL_0000 (callvirt ToString(ldloc stringBuilder))
-			if (!(body.Instructions[5] is Leave leave))
-				return false;
-			if (!(leave.Value is CallVirt { Method: { Name: "ToString" } } toStringCall))
+			if (!(body.Instructions[5] is Leave { Value: CallVirt { Method: { Name: "ToString" } } toStringCall }))
 				return false;
 			if (toStringCall.Arguments.Count != 1)
 				return false;
@@ -689,7 +687,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				//Roslyn 4.0.0-3.final start to use char for 1 length string
 				if (call.Method.Parameters[0].Type.IsKnownType(KnownTypeCode.Char))
 				{
-					return val != null && val.Length == 1 && call.Arguments[1].MatchLdcI4(val[0]);
+					return val is { Length: 1 } && call.Arguments[1].MatchLdcI4(val[0]);
 				}
 				return call.Arguments[1].MatchLdStr(out string val1) && val1 == val;
 			}
@@ -858,9 +856,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		private static bool IsEqualityComparerGetDefaultCall(ILInstruction inst, IType type)
 		{
-			if (!(inst is Call { Method: { Name: "get_Default", IsStatic: true } } call))
-				return false;
-			if (!(call.Method.DeclaringType is { Name: "EqualityComparer", Namespace: "System.Collections.Generic" }))
+			if (!(inst is Call { Method: { Name: "get_Default", IsStatic: true, DeclaringType: { Name: "EqualityComparer", Namespace: "System.Collections.Generic" } } } call))
 				return false;
 			if (call.Method.DeclaringType.TypeArguments.Count != 1)
 				return false;

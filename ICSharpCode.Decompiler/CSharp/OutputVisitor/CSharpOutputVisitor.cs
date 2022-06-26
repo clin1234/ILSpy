@@ -60,12 +60,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				throw new ArgumentNullException(nameof(writer));
 			}
-			if (formattingPolicy == null)
-			{
-				throw new ArgumentNullException(nameof(formattingPolicy));
-			}
+
 			this.writer = new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(writer));
-			this.policy = formattingPolicy;
+			this.policy = formattingPolicy ?? throw new ArgumentNullException(nameof(formattingPolicy));
 		}
 
 		#region StartNode/EndNode
@@ -108,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		protected virtual void OptionalComma(AstNode pos)
 		{
 			// Look if there's a comma after the current node, and insert it if it exists.
-			while (pos != null && pos.NodeType == NodeType.Whitespace)
+			while (pos is { NodeType: NodeType.Whitespace })
 			{
 				pos = pos.NextSibling;
 			}
@@ -124,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		protected virtual void OptionalSemicolon(AstNode pos)
 		{
 			// Look if there's a semicolon after the current node, and insert it if it exists.
-			while (pos != null && pos.NodeType == NodeType.Whitespace)
+			while (pos is { NodeType: NodeType.Whitespace })
 			{
 				pos = pos.PrevSibling;
 			}
@@ -303,7 +300,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			int callChainLength = 0;
 			var node = expr;
 
-			while (node.Target is InvocationExpression invocation && invocation.Target is MemberReferenceExpression mre && callChainLength < 4)
+			while (node.Target is InvocationExpression { Target: MemberReferenceExpression mre } && callChainLength < 4)
 			{
 				node = mre;
 				callChainLength++;
@@ -673,7 +670,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// "int a; new List<int> { a = 1 };" is an object initalizers and invalid, but
 			// "int a; new List<int> { { a = 1 } };" is a valid collection initializer.
 			AssignmentExpression ae = expr as AssignmentExpression;
-			return ae != null && ae.Operator == AssignmentOperatorType.Assign;
+			return ae is { Operator: AssignmentOperatorType.Assign };
 		}
 
 		protected bool IsObjectOrCollectionInitializer(AstNode node)

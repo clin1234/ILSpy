@@ -761,7 +761,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeCode.Object:
 				case TypeCode.Empty:
 					var typeDef = type.GetDefinition();
-					if (typeDef != null && typeDef.Kind == TypeKind.Enum)
+					if (typeDef is { Kind: TypeKind.Enum })
 						return DecodeArrayInitializer(typeDef.EnumUnderlyingType, initialValue, arrayLength, output);
 					return false;
 				default:

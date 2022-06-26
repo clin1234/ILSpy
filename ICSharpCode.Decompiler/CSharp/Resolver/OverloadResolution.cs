@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.argumentNames = argumentNames;
 
 			// keep explicitlyGivenTypeArguments==null when no type arguments were specified
-			if (typeArguments != null && typeArguments.Length > 0)
+			if (typeArguments is { Length: > 0 })
 				this.explicitlyGivenTypeArguments = typeArguments;
 
 			this.conversions = conversions ?? CSharpConversions.Get(compilation);
@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (candidate.IsExpandedForm && i == candidate.Parameters.Count - 1)
 				{
 					ArrayType arrayType = type as ArrayType;
-					if (arrayType != null && arrayType.Dimensions == 1)
+					if (arrayType is { Dimensions: 1 })
 						type = arrayType.ElementType;
 					else
 						return false; // error: cannot unpack params-array. abort considering the expanded form for this candidate
@@ -583,7 +583,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (typeParameter.HasDefaultConstructorConstraint)
 			{
 				ITypeDefinition def = typeArgument.GetDefinition();
-				if (def != null && def.IsAbstract)
+				if (def is { IsAbstract: true })
 					return false;
 				var ctors = typeArgument.GetConstructors(
 					m => m.Parameters.Count == 0 && m.Accessibility == Accessibility.Public,
@@ -933,7 +933,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public IReadOnlyList<IType> InferredTypeArguments {
 			get {
-				if (bestCandidate != null && bestCandidate.InferredTypes != null)
+				if (bestCandidate is { InferredTypes: { } })
 					return bestCandidate.InferredTypes;
 				else
 					return EmptyList<IType>.Instance;
@@ -945,7 +945,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public IList<Conversion> ArgumentConversions {
 			get {
-				if (bestCandidate != null && bestCandidate.ArgumentConversions != null)
+				if (bestCandidate is { ArgumentConversions: { } })
 					return bestCandidate.ArgumentConversions;
 				else
 					return Enumerable.Repeat(Conversion.None, arguments.Length).ToList();

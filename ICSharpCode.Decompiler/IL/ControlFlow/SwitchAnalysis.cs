@@ -283,10 +283,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool MatchSwitchVar(ILInstruction inst, out long sub)
 		{
-			if (inst is BinaryNumericInstruction bn
-				&& bn.Operator == BinaryNumericOperator.Sub
-				&& !bn.CheckForOverflow && !bn.IsLifted
-				&& bn.Right.MatchLdcI(out sub))
+			if (inst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Sub, CheckForOverflow: false, IsLifted: false } bn 
+			    && bn.Right.MatchLdcI(out sub))
 			{
 				return MatchSwitchVar(bn.Left);
 			}

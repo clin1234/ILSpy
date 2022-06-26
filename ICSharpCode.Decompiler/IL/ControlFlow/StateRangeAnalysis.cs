@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				default:
 					// User code - abort analysis
-					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave l && l.IsLeavingFunction))
+					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave { IsLeavingFunction: true }))
 					{
 						throw new SymbolicAnalysisFailedException("Unexpected instruction in Iterator.Dispose()");
 					}

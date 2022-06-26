@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpyX.Search
 				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
 				var value = lexer.NextToken();
 
-				if (value != null && value.LiteralValue != null)
+				if (value is { LiteralValue: { } })
 				{
 					TypeCode valueType = Type.GetTypeCode(value.LiteralValue.GetType());
 					switch (valueType)
@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpyX.Search
 			{
 				case TypeCode.Int64:
 					TypeCode tc = Type.GetTypeCode(val.GetType());
-					if (tc >= TypeCode.SByte && tc <= TypeCode.UInt64)
+					if (tc is >= TypeCode.SByte and <= TypeCode.UInt64)
 						return CSharpPrimitiveCast.Cast(TypeCode.Int64, val, false).Equals(searchTermLiteralValue);
 					else
 						return false;

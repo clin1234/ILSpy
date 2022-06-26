@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public bool IsEnabled(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is IEntity;
+				return context.Reference is { Reference: IEntity };
 			foreach (IMemberTreeNode node in context.SelectedTreeNodes)
 			{
 				if (!IsValidReference(node.Member))
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 					analyzerTreeView.Analyze(node.Member);
 				}
 			}
-			else if (context.Reference != null && context.Reference.Reference is IEntity entity)
+			else if (context.Reference is { Reference: IEntity entity })
 			{
 				analyzerTreeView.Analyze(entity);
 			}

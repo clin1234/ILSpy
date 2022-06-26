@@ -33,9 +33,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public ResolveResult(IType type)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
 		}
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods",

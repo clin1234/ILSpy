@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static bool IsArgList(this AstType type)
 		{
 			var simpleType = type as SimpleType;
-			return simpleType != null && simpleType.Identifier == "__arglist";
+			return simpleType is { Identifier: "__arglist" };
 		}
 
 		public static void AddNamedArgument(this Attribute attribute, string name, Expression argument)
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static Expression UnwrapInDirectionExpression(this Expression expr)
 		{
-			if (!(expr is DirectionExpression dir && dir.FieldDirection == FieldDirection.In))
+			if (!(expr is DirectionExpression { FieldDirection: FieldDirection.In } dir))
 				return expr;
 			return dir.Expression.Detach();
 		}

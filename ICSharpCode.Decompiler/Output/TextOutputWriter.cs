@@ -28,9 +28,7 @@ namespace ICSharpCode.Decompiler
 
 		public TextOutputWriter(ITextOutput output)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			this.output = output;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
 		}
 
 		public override Encoding Encoding {

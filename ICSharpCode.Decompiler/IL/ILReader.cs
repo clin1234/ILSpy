@@ -64,9 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </param>
 		public ILReader(MetadataModule module)
 		{
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
-			this.module = module;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.compilation = module.Compilation;
 			this.metadata = module.metadata;
 			this.SequencePointCandidates = new();
@@ -535,7 +533,7 @@ namespace ICSharpCode.Decompiler.IL
 			ReadInstructions(cancellationToken);
 			foreach (var inst in instructionBuilder)
 			{
-				if (inst is StLoc stloc && stloc.IsStackAdjustment)
+				if (inst is StLoc { IsStackAdjustment: true })
 				{
 					output.Write("          ");
 					inst.WriteTo(output, new());

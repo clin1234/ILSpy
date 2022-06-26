@@ -218,9 +218,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal static bool IsDeconstructMethod(IMethod? method)
 		{
-			if (method == null)
-				return false;
-			if (method.Name != "Deconstruct")
+			if (method is not { Name: "Deconstruct" })
 				return false;
 			if (method.ReturnType.Kind != TypeKind.Void)
 				return false;

@@ -281,7 +281,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public bool AllHidden {
 				get {
-					if (NestedTypes != null && NestedTypes.Count > 0)
+					if (NestedTypes is { Count: > 0 })
 						return false;
 					return NonMethodIsHidden && MethodsAreHidden;
 				}
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			lookupGroups.RemoveAll(g => g.AllHidden);
-			Debug.Assert(lookupGroups.All(g => g.NestedTypes != null && g.NestedTypes.Count > 0));
+			Debug.Assert(lookupGroups.All(g => g.NestedTypes is { Count: > 0 }));
 
 			if (lookupGroups.Count == 0)
 			{
@@ -645,7 +645,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (IsInterfaceOrSystemObject(classLookupGroup.DeclaringType))
 					continue;
 				// The current lookup groups contains class members that might hide interface members
-				bool hasNestedTypes = classLookupGroup.NestedTypes != null && classLookupGroup.NestedTypes.Count > 0;
+				bool hasNestedTypes = classLookupGroup.NestedTypes is { Count: > 0 };
 				if (hasNestedTypes || !classLookupGroup.NonMethodIsHidden)
 				{
 					// Hide all members from interface types
@@ -691,7 +691,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (type.Kind == TypeKind.Interface)
 				return true;
 			ITypeDefinition d = type.GetDefinition();
-			return d != null && d.KnownTypeCode == KnownTypeCode.Object;
+			return d is { KnownTypeCode: KnownTypeCode.Object };
 		}
 		#endregion
 
@@ -731,7 +731,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// If there are ambiguities, report the most-derived result (last group)
 			LookupGroup resultGroup = lookupGroups[lookupGroups.Count - 1];
-			if (resultGroup.NestedTypes != null && resultGroup.NestedTypes.Count > 0)
+			if (resultGroup.NestedTypes is { Count: > 0 })
 			{
 				if (resultGroup.NestedTypes.Count > 1 || !resultGroup.NonMethodIsHidden || lookupGroups.Count > 1)
 					return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
@@ -753,7 +753,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (isInEnumMemberInitializer)
 				{
 					IField field = resultGroup.NonMethod as IField;
-					if (field != null && field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Kind == TypeKind.Enum)
+					if (field is { DeclaringTypeDefinition: { Kind: TypeKind.Enum } })
 					{
 						return new MemberResolveResult(
 							targetResolveResult, field,

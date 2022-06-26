@@ -166,8 +166,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (block.Instructions[pos] is IfInstruction ifInst && ifInst.FalseInst.MatchNop())
 			{
-				if (ifInst.Condition is Comp comp && comp.Kind == ComparisonKind.Inequality
-					&& comp.Left.MatchLdLoc(out var testedVar) && comp.Right.MatchLdNull())
+				if (ifInst.Condition is Comp { Kind: ComparisonKind.Inequality } comp 
+				    && comp.Left.MatchLdLoc(out var testedVar) && comp.Right.MatchLdNull())
 				{
 					TryNullPropForVoidCall(testedVar, Mode.ReferenceType, ifInst.TrueInst as Block, ifInst);
 				}
@@ -498,7 +498,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nullInst = null;
 
 			// leave (constrained[type].call_instruction(ldloc target, ...))
-			if (!(block.Instructions[pos + 3] is Leave leave && leave.IsLeavingFunction))
+			if (!(block.Instructions[pos + 3] is Leave { IsLeavingFunction: true } leave))
 				return false;
 			nonNullInst = leave.Value;
 			// Analyze Block fallbackBlock

@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly PEStreamOptions streamOptions;
 		readonly MetadataReaderOptions metadataOptions;
 		readonly string? mainAssemblyFileName;
-		readonly string? baseDirectory;
+		readonly string? baseDirectory;	
 		readonly List<string?> directories = new();
 		static readonly List<string> gac_paths = GetGacPaths();
 		static readonly DecompilerRuntime decompilerRuntime;
@@ -656,9 +656,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static string? GetAssemblyInMonoGac(IAssemblyReference reference)
 		{
-			for (int i = 0; i < gac_paths.Count; i++)
+			foreach (var gac_path in gac_paths)
 			{
-				var gac_path = gac_paths[i];
 				var file = GetAssemblyFile(reference, string.Empty, gac_path);
 				if (File.Exists(file))
 					return file;
@@ -674,9 +673,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			for (int i = 0; i < gac_paths.Count; i++)
 			{
-				for (int j = 0; j < gacs.Length; j++)
+				foreach (var g in gacs)
 				{
-					var gac = Path.Combine(gac_paths[i], gacs[j]);
+					var gac = Path.Combine(gac_paths[i], g);
 					var file = GetAssemblyFile(reference, prefixes[i], gac);
 					if (File.Exists(file))
 						return file;

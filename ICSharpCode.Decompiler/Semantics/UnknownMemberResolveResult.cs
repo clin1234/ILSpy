@@ -38,9 +38,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public UnknownMemberResolveResult(IType targetType, string memberName, IEnumerable<IType> typeArguments)
 			: base(SpecialType.UnknownType)
 		{
-			if (targetType == null)
-				throw new ArgumentNullException(nameof(targetType));
-			this.targetType = targetType;
+			this.targetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
 			this.memberName = memberName;
 			this.typeArguments = new(typeArguments.ToArray());
 		}

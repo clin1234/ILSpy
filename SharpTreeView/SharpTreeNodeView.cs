@@ -115,7 +115,7 @@ namespace ICSharpCode.TreeView
 					foreach (var child in Node.VisibleDescendantsAndSelf())
 					{
 						var container = ParentTreeView.ItemContainerGenerator.ContainerFromItem(child) as SharpTreeViewItem;
-						if (container != null && container.NodeView != null)
+						if (container is { NodeView: { } })
 						{
 							container.NodeView.LinesRenderer.InvalidateVisual();
 						}

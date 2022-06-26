@@ -34,9 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public LocalFunctionMethod(IMethod baseMethod, string name, bool isStaticLocalFunction, int numberOfCompilerGeneratedParameters, int numberOfCompilerGeneratedTypeParameters)
 		{
-			if (baseMethod == null)
-				throw new ArgumentNullException(nameof(baseMethod));
-			this.baseMethod = baseMethod;
+			this.baseMethod = baseMethod ?? throw new ArgumentNullException(nameof(baseMethod));
 			this.Name = name;
 			this.IsStaticLocalFunction = isStaticLocalFunction;
 			this.NumberOfCompilerGeneratedParameters = numberOfCompilerGeneratedParameters;

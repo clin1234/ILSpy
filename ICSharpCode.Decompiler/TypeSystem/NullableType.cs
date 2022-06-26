@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
-			return pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
+			return pt is { TypeParameterCount: 1 } && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
 
 		public static bool IsNonNullableValueType(IType type)
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
+			if (pt is { TypeParameterCount: 1 } && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
 				return pt.GetTypeArgument(0);
 			else
 				return type;

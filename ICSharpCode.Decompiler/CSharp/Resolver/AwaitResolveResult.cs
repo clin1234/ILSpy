@@ -58,12 +58,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType, IProperty isCompletedProperty, IMethod onCompletedMethod, IMethod getResultMethod)
 			: base(resultType)
 		{
-			if (awaiterType == null)
-				throw new ArgumentNullException(nameof(awaiterType));
-			if (getAwaiterInvocation == null)
-				throw new ArgumentNullException(nameof(getAwaiterInvocation));
-			this.GetAwaiterInvocation = getAwaiterInvocation;
-			this.AwaiterType = awaiterType;
+			this.GetAwaiterInvocation = getAwaiterInvocation ?? throw new ArgumentNullException(nameof(getAwaiterInvocation));
+			this.AwaiterType = awaiterType ?? throw new ArgumentNullException(nameof(awaiterType));
 			this.IsCompletedProperty = isCompletedProperty;
 			this.OnCompletedMethod = onCompletedMethod;
 			this.GetResultMethod = getResultMethod;

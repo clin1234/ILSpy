@@ -42,9 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public CSharpConversions(ICompilation compilation)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			this.compilation = compilation;
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 		}
 
 		/// <summary>
@@ -383,19 +381,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					_ => to
 				};
 			}
-			if (to >= TypeCode.Single && to <= TypeCode.Decimal)
+			if (to is >= TypeCode.Single and <= TypeCode.Decimal)
 			{
 				// Conversions to float/double/decimal exist from all integral types,
 				// and there's a conversion from float to double.
-				return from >= TypeCode.Char && from <= TypeCode.UInt64
+				return from is >= TypeCode.Char and <= TypeCode.UInt64
 					|| from == TypeCode.Single && to == TypeCode.Double;
 			}
 			else
 			{
 				// Conversions to integral types: look at the table
-				return from >= TypeCode.Char && from <= TypeCode.UInt64
-					&& to >= TypeCode.Int16 && to <= TypeCode.UInt64
-					&& implicitNumericConversionLookup[from - TypeCode.Char, to - TypeCode.Int16];
+				return from is >= TypeCode.Char and <= TypeCode.UInt64 
+				       && to is >= TypeCode.Int16 and <= TypeCode.UInt64 
+				       && implicitNumericConversionLookup[from - TypeCode.Char, to - TypeCode.Int16];
 			}
 		}
 
@@ -408,7 +406,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return true;
 			}
 			TypeCode c = ReflectionHelper.GetTypeCode(type);
-			return c >= TypeCode.Char && c <= TypeCode.Decimal;
+			return c is >= TypeCode.Char and <= TypeCode.Decimal;
 		}
 
 		bool AnyNumericConversion(IType fromType, IType toType)
@@ -424,7 +422,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §6.1.3
 			Debug.Assert(rr.IsCompileTimeConstant);
 			TypeCode constantType = ReflectionHelper.GetTypeCode(rr.Type);
-			if (constantType >= TypeCode.SByte && constantType <= TypeCode.Decimal && Convert.ToDouble(rr.ConstantValue) == 0)
+			if (constantType is >= TypeCode.SByte and <= TypeCode.Decimal && Convert.ToDouble(rr.ConstantValue) == 0)
 			{
 				if (NullableType.GetUnderlyingType(toType).Kind == TypeKind.Enum)
 				{
@@ -810,13 +808,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				switch (toTypeCode)
 				{
 					case TypeCode.SByte:
-						return val >= SByte.MinValue && val <= SByte.MaxValue;
+						return val is >= SByte.MinValue and <= SByte.MaxValue;
 					case TypeCode.Byte:
-						return val >= Byte.MinValue && val <= Byte.MaxValue;
+						return val is >= Byte.MinValue and <= Byte.MaxValue;
 					case TypeCode.Int16:
-						return val >= Int16.MinValue && val <= Int16.MaxValue;
+						return val is >= Int16.MinValue and <= Int16.MaxValue;
 					case TypeCode.UInt16:
-						return val >= UInt16.MinValue && val <= UInt16.MaxValue;
+						return val is >= UInt16.MinValue and <= UInt16.MaxValue;
 					case TypeCode.UInt32:
 					case TypeCode.UInt64:
 						return val >= 0;
@@ -911,7 +909,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return true;
 			}
 			TypeCode c = ReflectionHelper.GetTypeCode(type);
-			return c >= TypeCode.SByte && c <= TypeCode.UInt64;
+			return c is >= TypeCode.SByte and <= TypeCode.UInt64;
 		}
 		#endregion
 
@@ -1238,7 +1236,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		static IType UnpackExpressionTreeType(IType type)
 		{
 			ParameterizedType pt = type as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Expression" && pt.Namespace == "System.Linq.Expressions")
+			if (pt is { TypeParameterCount: 1, Name: "Expression", Namespace: "System.Linq.Expressions" })
 			{
 				return pt.GetTypeArgument(0);
 			}
@@ -1286,7 +1284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				IMethod method = (IMethod)or.GetBestCandidateWithSubstitutedTypeArguments();
 				var thisRR = rr.TargetResult as ThisResolveResult;
-				bool isVirtual = method.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
+				bool isVirtual = method.IsOverridable && !(thisRR is { CausesNonVirtualInvocation: true });
 				bool isValid = !or.IsAmbiguous && IsDelegateCompatible(method, invoke, or.IsExtensionMethodInvocation);
 				bool delegateCapturesFirstArgument = or.IsExtensionMethodInvocation || !method.IsStatic;
 				if (isValid)
@@ -1477,7 +1475,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		static IType UnpackTask(IType type)
 		{
 			ParameterizedType pt = type as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Task" && pt.Namespace == "System.Threading.Tasks")
+			if (pt is { TypeParameterCount: 1, Name: "Task", Namespace: "System.Threading.Tasks" })
 			{
 				return pt.GetTypeArgument(0);
 			}

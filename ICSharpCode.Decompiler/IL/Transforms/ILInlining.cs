@@ -363,9 +363,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (method.AccessorKind == MethodSemanticsAttributes.Getter)
 						{
 							// C# doesn't allow property compound assignments on temporary structs
-							return !(inst.Parent.Parent is CompoundAssignmentInstruction cai
-								&& cai.TargetKind == CompoundTargetKind.Property
-								&& cai.Target == inst.Parent);
+							return !(inst.Parent.Parent is CompoundAssignmentInstruction { TargetKind: CompoundTargetKind.Property } cai 
+							         && cai.Target == inst.Parent);
 						}
 						else
 						{
@@ -527,7 +526,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// inline into nullable ctor call in lifted operator
 				parent = parent.Parent;
 			}
-			if (parent is ILiftableInstruction liftable && liftable.IsLifted)
+			if (parent is ILiftableInstruction { IsLifted: true })
 			{
 				return true; // inline into lifted operators
 			}

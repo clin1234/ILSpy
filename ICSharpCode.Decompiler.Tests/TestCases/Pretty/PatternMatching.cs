@@ -202,11 +202,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void NotTypePatternVariableUsedOutsideTrueBranch(object x)
 		{
 			string text = x as string;
-			if (text != null && text.Length > 5)
+			if (text is { Length: > 5 })
 			{
 				Console.WriteLine("pattern matches");
 			}
-			if (text != null && text.Length > 10)
+			if (text is { Length: > 10 })
 			{
 				Console.WriteLine("other use!");
 			}

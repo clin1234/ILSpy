@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						FindInsertionPointForVariable(rr.Variable);
 					}
-					else if (identExpr.Annotation<ILFunction>() is { } localFunction && localFunction.Kind == ILFunctionKind.LocalFunction)
+					else if (identExpr.Annotation<ILFunction>() is { Kind: ILFunctionKind.LocalFunction } localFunction)
 					{
 						foreach (var v in localFunction.CapturedVariables)
 						{
@@ -583,7 +583,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					}
-					if (v.ILVariable.IsRefReadOnly && type is ComposedType composedType && composedType.HasRefSpecifier)
+					if (v.ILVariable.IsRefReadOnly && type is ComposedType { HasRefSpecifier: true } composedType)
 					{
 						composedType.HasReadOnlySpecifier = true;
 					}

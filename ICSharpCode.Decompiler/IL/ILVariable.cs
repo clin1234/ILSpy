@@ -455,10 +455,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
 			this.Kind = kind;
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
 			this.StackType = type.GetStackType();
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
@@ -471,10 +469,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILVariable(VariableKind kind, IType type, StackType stackType, int? index = null)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
 			this.Kind = kind;
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
 			this.StackType = stackType;
 			this.Index = index;
 			if (kind == VariableKind.Parameter)

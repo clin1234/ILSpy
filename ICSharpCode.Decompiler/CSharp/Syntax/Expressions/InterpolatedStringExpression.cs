@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
 			InterpolatedStringExpression o = other as InterpolatedStringExpression;
-			return o != null && !o.IsNull && this.Content.DoMatch(o.Content, match);
+			return o is { IsNull: false } && this.Content.DoMatch(o.Content, match);
 		}
 	}
 

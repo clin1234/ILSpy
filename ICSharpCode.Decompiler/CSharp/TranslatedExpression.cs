@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return unwrapped;
 				return unwrapped.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
-			if (Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional && targetType.IsReferenceType == true)
+			if (Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional } uoe && targetType.IsReferenceType == true)
 			{
 				// "(T)(x?).AccessChain" is invalid, but "((T)x)?.AccessChain" is valid and equivalent
 				return new UnaryOperatorExpression(
@@ -441,7 +441,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// convert from reference to pointer
 				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
 				var pointerType = new PointerType(((ByReferenceType)type).ElementType);
-				if (arg is UnaryOperatorExpression argUOE && argUOE.Operator == UnaryOperatorType.Dereference)
+				if (arg is UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } argUOE)
 				{
 					// &*ptr -> ptr
 					return new TranslatedExpression(argUOE).UnwrapChild(argUOE.Expression)
@@ -484,7 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// First, convert to the corresponding pointer type:
 				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
 				ResolveResult elementRR;
-				if (arg.Expression is UnaryOperatorExpression unary && unary.Operator == UnaryOperatorType.AddressOf)
+				if (arg.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.AddressOf } unary)
 				{
 					// If we already have an address -> unwrap
 					expr = arg.UnwrapChild(unary.Expression);

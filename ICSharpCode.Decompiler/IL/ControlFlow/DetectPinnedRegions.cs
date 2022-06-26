@@ -367,7 +367,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (ifInst == null)
 				return false;
 			var condition = ifInst.Condition as Comp;
-			if (!(condition != null && condition.Kind == ComparisonKind.Equality && condition.Left.MatchLdLoc(out v) && condition.Right.MatchLdNull()))
+			if (!(condition is { Kind: ComparisonKind.Equality } && condition.Left.MatchLdLoc(out v) && condition.Right.MatchLdNull()))
 				return false;
 			bool usingPreviousVar = false;
 			if (v.Kind == VariableKind.StackSlot)
@@ -782,11 +782,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return; // variable access that is not LdLoc
 				}
 			}
-			if (ldloc == null)
+			if (ldloc is not { Parent: GetPinnableReference arrayToPointer })
 				return;
-			if (!(ldloc.Parent is GetPinnableReference arrayToPointer))
-				return;
-			if (!(arrayToPointer.Parent is Conv conv && conv.Kind == ConversionKind.StopGCTracking))
+			if (!(arrayToPointer.Parent is Conv { Kind: ConversionKind.StopGCTracking } conv))
 				return;
 			Debug.Assert(arrayToPointer.IsDescendantOf(pinnedRegion));
 			ILVariable oldVar = pinnedRegion.Variable;
@@ -806,7 +804,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
 		{
 			Debug.Assert(newVar.StackType == StackType.I);
-			if (inst is Conv conv && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar) && conv.ResultType == newVar.StackType)
+			if (inst is Conv { Kind: ConversionKind.StopGCTracking } conv && conv.Argument.MatchLdLoc(oldVar) && conv.ResultType == newVar.StackType)
 			{
 				// conv ref->i (ldloc oldVar)
 				//  => ldloc newVar

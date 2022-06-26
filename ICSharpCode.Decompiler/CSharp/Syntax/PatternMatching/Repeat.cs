@@ -37,9 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public Repeat(INode childNode)
 		{
-			if (childNode == null)
-				throw new ArgumentNullException(nameof(childNode));
-			this.childNode = childNode;
+			this.childNode = childNode ?? throw new ArgumentNullException(nameof(childNode));
 			this.MinCount = 0;
 			this.MaxCount = int.MaxValue;
 		}

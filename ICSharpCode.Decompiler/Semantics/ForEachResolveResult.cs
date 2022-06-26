@@ -64,18 +64,10 @@ namespace ICSharpCode.Decompiler.Semantics
 		public ForEachResolveResult(ResolveResult getEnumeratorCall, IType collectionType, IType enumeratorType, IType elementType, IProperty currentProperty, IMethod moveNextMethod, IType voidType)
 			: base(voidType)
 		{
-			if (getEnumeratorCall == null)
-				throw new ArgumentNullException(nameof(getEnumeratorCall));
-			if (collectionType == null)
-				throw new ArgumentNullException(nameof(collectionType));
-			if (enumeratorType == null)
-				throw new ArgumentNullException(nameof(enumeratorType));
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
-			this.GetEnumeratorCall = getEnumeratorCall;
-			this.CollectionType = collectionType;
-			this.EnumeratorType = enumeratorType;
-			this.ElementType = elementType;
+			this.GetEnumeratorCall = getEnumeratorCall ?? throw new ArgumentNullException(nameof(getEnumeratorCall));
+			this.CollectionType = collectionType ?? throw new ArgumentNullException(nameof(collectionType));
+			this.EnumeratorType = enumeratorType ?? throw new ArgumentNullException(nameof(enumeratorType));
+			this.ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 			this.CurrentProperty = currentProperty;
 			this.MoveNextMethod = moveNextMethod;
 		}

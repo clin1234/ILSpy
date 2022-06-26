@@ -95,15 +95,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (expr is PrimitiveExpression primitive)
 			{
 				var value = primitive.Value;
-				if (value is int i && i < 0)
+				if (value is int and < 0)
 					return PrecedenceLevel.Unary;
-				if (value is long l && l < 0)
+				if (value is long and < 0)
 					return PrecedenceLevel.Unary;
-				if (value is float f && f < 0)
+				if (value is float and < 0)
 					return PrecedenceLevel.Unary;
-				if (value is double d && d < 0)
+				if (value is double and < 0)
 					return PrecedenceLevel.Unary;
-				if (value is decimal de && de < 0)
+				if (value is decimal and < 0)
 					return PrecedenceLevel.Unary;
 				return PrecedenceLevel.Primary;
 			}
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			// The above issue can also happen with PrimitiveExpressions representing negative values:
 			PrimitiveExpression pe = castExpression.Expression as PrimitiveExpression;
-			if (pe != null && pe.Value != null && TypeCanBeMisinterpretedAsExpression(castExpression.Type))
+			if (pe is { Value: { } } && TypeCanBeMisinterpretedAsExpression(castExpression.Type))
 			{
 				TypeCode typeCode = Type.GetTypeCode(pe.Value.GetType());
 				switch (typeCode)

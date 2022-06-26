@@ -47,9 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public TextWriterTokenWriter(TextWriter textWriter)
 		{
-			if (textWriter == null)
-				throw new ArgumentNullException(nameof(textWriter));
-			this.textWriter = textWriter;
+			this.textWriter = textWriter ?? throw new ArgumentNullException(nameof(textWriter));
 			this.IndentationString = "\t";
 			this.line = 1;
 			this.column = 1;

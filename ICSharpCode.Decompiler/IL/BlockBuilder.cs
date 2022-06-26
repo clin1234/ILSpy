@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		static bool IsStackAdjustment(ILInstruction inst)
 		{
-			return inst is StLoc stloc && stloc.IsStackAdjustment;
+			return inst is StLoc { IsStackAdjustment: true };
 		}
 
 		private void FinalizeCurrentBlock(int currentILOffset, bool fallthrough)

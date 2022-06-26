@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (ie != null)
 				return IsWithoutSideEffects(ie.Target) && ie.Arguments.All(IsWithoutSideEffects);
 			UnaryOperatorExpression uoe = left as UnaryOperatorExpression;
-			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
+			if (uoe is { Operator: UnaryOperatorType.Dereference })
 				return IsWithoutSideEffects(uoe.Expression);
 			return IsWithoutSideEffects(left);
 		}

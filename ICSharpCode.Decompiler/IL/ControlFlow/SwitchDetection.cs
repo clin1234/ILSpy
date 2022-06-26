@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static void AdjustLabels(SwitchInstruction sw, ILTransformContext context)
 		{
-			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out long val))
+			if (sw.Value is BinaryNumericInstruction { CheckForOverflow: false } bop && bop.Right.MatchLdcI(out long val))
 			{
 				// Move offset into labels:
 				context.Step("Move offset into switch labels", bop);

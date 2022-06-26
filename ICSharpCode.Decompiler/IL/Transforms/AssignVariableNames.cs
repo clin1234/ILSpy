@@ -713,7 +713,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
-			if (existingVariable != null && !existingVariable.HasGeneratedName)
+			if (existingVariable is { HasGeneratedName: false })
 			{
 				return existingVariable.Name;
 			}

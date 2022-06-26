@@ -1130,7 +1130,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				initExpr = exprBuilder.Translate(inst.Init, typeHint: refType).ConvertTo(refType, exprBuilder);
 				if (initExpr is DirectionExpression dirExpr)
 				{
-					if (dirExpr.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.Dereference)
+					if (dirExpr.Expression is UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } uoe)
 					{
 						initExpr = uoe.Expression.Detach();
 					}

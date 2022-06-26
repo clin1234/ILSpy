@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 					// Remove unreachable pattern blocks
 					// TODO : sanity check
-					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0)
+					if (result.NextBlockOrExitContainer is Block { IncomingEdgeCount: 0 } nextBlock)
 					{
 						List<Block> dependentBlocks = new();
 						Block current = nextBlock;
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.StepEndGroup(keepIfEmpty: true);
 				}
 
-				if (switchInstructionOpt != null && switchInstructionOpt.Parent is Block b && b.IncomingEdgeCount > 0)
+				if (switchInstructionOpt is { Parent: Block { IncomingEdgeCount: > 0 } b })
 				{
 					var defaultSection = switchInstructionOpt.GetDefaultSection();
 

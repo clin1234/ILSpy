@@ -32,12 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public DefaultVariable(IType type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.type = type;
-			this.name = name;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 		}
 
 		public DefaultVariable(IType type, string name,

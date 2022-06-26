@@ -133,8 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					if (!useImplicitlyTypedOut)
 						return expression;
-					if (expression.GetResolveResult() is ByReferenceResolveResult brrr
-						&& brrr.IsOut)
+					if (expression.GetResolveResult() is ByReferenceResolveResult { IsOut: true })
 					{
 						expression.AddAnnotation(UseImplicitlyTypedOutAnnotation.Instance);
 					}
@@ -221,7 +220,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// This can't really be represented in C#, but at least in the case where
 				// the class is sealed, we can equivalently call the interface member instead:
 				var interfaceMembers = method.ExplicitlyImplementedInterfaceMembers.ToList();
-				if (method.DeclaringTypeDefinition?.Kind == TypeKind.Class && method.DeclaringTypeDefinition.IsSealed && interfaceMembers.Count == 1)
+				if (method.DeclaringTypeDefinition is { Kind: TypeKind.Class, IsSealed: true } && interfaceMembers.Count == 1)
 				{
 					method = (IMethod)interfaceMembers.Single();
 					callOpCode = OpCode.CallVirt;
@@ -842,10 +841,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				len = 0;
 				t = null;
 				if (arg.ResolveResult is CSharpInvocationResolveResult csirr &&
-					csirr.Arguments.Count == 0 && csirr.Member is IMethod emptyMethod &&
-					emptyMethod.IsStatic &&
-					"System.Array.Empty" == emptyMethod.FullName &&
-					emptyMethod.TypeArguments.Count == 1)
+				    csirr.Arguments.Count == 0 && csirr.Member is IMethod { IsStatic: true, FullName: "System.Array.Empty" } emptyMethod &&
+				    emptyMethod.TypeArguments.Count == 1)
 				{
 					t = emptyMethod.TypeArguments[0];
 					return true;
@@ -1103,7 +1100,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static bool IsNullConditional(Expression expr)
 		{
-			return expr is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional;
+			return expr is UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional };
 		}
 
 		private void ModifyReturnTypeOfLambda(LambdaExpression lambda)
@@ -1866,13 +1863,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (argumentList.Length != 2)
 					return false;
-				if (!(argumentList.Arguments[1].Expression is PrimitiveExpression pe && pe.Value is true))
+				if (!(argumentList.Arguments[1].Expression is PrimitiveExpression { Value: true }))
 					return false;
 				result = new UnaryOperatorExpression(UnaryOperatorType.IndexFromEnd, argumentList.Arguments[0])
 					.WithRR(new MemberResolveResult(null, method));
 				return true;
 			}
-			else if (method is SyntheticRangeIndexAccessor rangeIndexAccessor && rangeIndexAccessor.IsSlicing)
+			else if (method is SyntheticRangeIndexAccessor { IsSlicing: true })
 			{
 				// For slicing the method is called Slice()/Substring(), but we still need to output indexer notation.
 				// So special-case range-based slicing here.

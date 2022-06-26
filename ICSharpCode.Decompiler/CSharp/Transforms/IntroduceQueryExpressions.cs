@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool IsNullConditional(Expression target)
 		{
-			return target is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional;
+			return target is UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional };
 		}
 
 		/// <summary>

@@ -42,9 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
 			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
-			if (attributeType == null)
-				throw new ArgumentNullException(nameof(attributeType));
-			this.attributeType = attributeType;
+			this.attributeType = attributeType ?? throw new ArgumentNullException(nameof(attributeType));
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
 		}
@@ -53,9 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments,
 			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
-			if (constructor == null)
-				throw new ArgumentNullException(nameof(constructor));
-			this.constructor = constructor;
+			this.constructor = constructor ?? throw new ArgumentNullException(nameof(constructor));
 			this.attributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;

@@ -49,9 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Constructor
 		public CSharpResolver(ICompilation compilation)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
-			this.compilation = compilation;
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.conversions = CSharpConversions.Get(compilation);
 			this.context = new(compilation.MainModule);
 		}
@@ -462,7 +460,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					// C# 4.0 spec: §7.6.9 Postfix increment and decrement operators
 					// C# 4.0 spec: §7.7.5 Prefix increment and decrement operators
 					TypeCode code = ReflectionHelper.GetTypeCode(type);
-					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind is TypeKind.Enum or TypeKind.Pointer || type.IsCSharpNativeIntegerType())
+					if (code is >= TypeCode.Char and <= TypeCode.Decimal || type.Kind is TypeKind.Enum or TypeKind.Pointer || type.IsCSharpNativeIntegerType())
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					else
 						return new ErrorResolveResult(expression.Type);
@@ -584,7 +582,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					goto case UnaryOperatorType.Plus;
 				case UnaryOperatorType.Plus:
 				case UnaryOperatorType.BitNot:
-					if (code >= TypeCode.Char && code <= TypeCode.UInt16)
+					if (code is >= TypeCode.Char and <= TypeCode.UInt16)
 					{
 						type = compilation.FindType(KnownTypeCode.Int32);
 						return Convert(expression, MakeNullable(type, isNullable),
@@ -1094,19 +1092,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				rhsCode = TypeCode.UInt32;
 			}
 			// if one of the inputs is the null literal, promote that to the type of the other operand
-			if (isNullable && lhs.Type.Kind == TypeKind.Null && rhsCode >= TypeCode.Boolean && rhsCode <= TypeCode.Decimal)
+			if (isNullable && lhs.Type.Kind == TypeKind.Null && rhsCode is >= TypeCode.Boolean and <= TypeCode.Decimal)
 			{
 				lhs = CastTo(rhsCode, isNullable, lhs, allowNullableConstants);
 				lhsCode = rhsCode;
 			}
-			else if (isNullable && rhs.Type.Kind == TypeKind.Null && lhsCode >= TypeCode.Boolean && lhsCode <= TypeCode.Decimal)
+			else if (isNullable && rhs.Type.Kind == TypeKind.Null && lhsCode is >= TypeCode.Boolean and <= TypeCode.Decimal)
 			{
 				rhs = CastTo(lhsCode, isNullable, rhs, allowNullableConstants);
 				rhsCode = lhsCode;
 			}
 			bool bindingError = false;
-			if (lhsCode >= TypeCode.Char && lhsCode <= TypeCode.Decimal
-				&& rhsCode >= TypeCode.Char && rhsCode <= TypeCode.Decimal)
+			if (lhsCode is >= TypeCode.Char and <= TypeCode.Decimal 
+			    && rhsCode is >= TypeCode.Char and <= TypeCode.Decimal)
 			{
 				TypeCode targetType;
 				if (lhsCode == TypeCode.Decimal || rhsCode == TypeCode.Decimal)
@@ -1271,7 +1269,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (operatorName == null)
 				return EmptyList<IMethod>.Instance;
 			TypeCode c = ReflectionHelper.GetTypeCode(type);
-			if (TypeCode.Boolean <= c && c <= TypeCode.Decimal)
+			if (c is >= TypeCode.Boolean and <= TypeCode.Decimal)
 			{
 				// The .NET framework contains some of C#'s built-in operators as user-defined operators.
 				// However, we must not use those as user-defined operators (we would skip numeric promotion).
@@ -1391,7 +1389,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				IType underlyingType = targetType.GetEnumUnderlyingType();
 				TypeCode code = ReflectionHelper.GetTypeCode(underlyingType);
-				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null)
+				if (code is >= TypeCode.Boolean and <= TypeCode.Decimal && expression.ConstantValue != null)
 				{
 					if (expression.ConstantValue is string)
 					{
@@ -1861,8 +1859,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public MemberLookup CreateMemberLookup()
 		{
 			ITypeDefinition currentTypeDefinition = this.CurrentTypeDefinition;
-			bool isInEnumMemberInitializer = this.CurrentMember != null && this.CurrentMember.SymbolKind == SymbolKind.Field
-				&& currentTypeDefinition != null && currentTypeDefinition.Kind == TypeKind.Enum;
+			bool isInEnumMemberInitializer = this.CurrentMember is { SymbolKind: SymbolKind.Field } 
+			                                 && currentTypeDefinition is { Kind: TypeKind.Enum };
 			return new(currentTypeDefinition, this.Compilation.MainModule, isInEnumMemberInitializer);
 		}
 
@@ -2060,7 +2058,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (!lookup.IsAccessible(method, false))
 						continue;
 					IType[] inferredTypes;
-					if (typeArguments != null && typeArguments.Count > 0)
+					if (typeArguments is { Count: > 0 })
 					{
 						if (method.TypeParameters.Count != typeArguments.Count)
 							continue;
@@ -2553,7 +2551,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					or.AddCandidate(ctor, OverloadResolutionErrors.Inaccessible);
 			}
 
-			if (allApplicable != null && allApplicable.Count > 1)
+			if (allApplicable is { Count: > 1 })
 			{
 				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable constructor.
 				return new DynamicInvocationResolveResult(new MethodGroupResolveResult(null, allApplicable[0].Name, new[] { new MethodListWithDeclaringType(type, allApplicable) }, null), DynamicInvocationType.ObjectCreation, AddArgumentNamesIfNecessary(arguments, argumentNames), initializerStatements);

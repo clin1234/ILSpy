@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& call.Method.FullNameIs("System.Linq.Expressions.Expression", "Lambda")
 				&& call.Arguments.Count == 2))
 				return false;
-			if (!(IsEmptyParameterList(call.Arguments[1]) || (call.Arguments[1] is Block block && block.Kind == BlockKind.ArrayInitializer)))
+			if (!(IsEmptyParameterList(call.Arguments[1]) || call.Arguments[1] is Block { Kind: BlockKind.ArrayInitializer }))
 				return false;
 			//if (!ILInlining.CanUninline(call, stmt))
 			//	return false;
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				return false;
 			}
-			if (instruction is Block block && block.Kind == BlockKind.ControlFlow)
+			if (instruction is Block { Kind: BlockKind.ControlFlow })
 				return false;  // don't look into nested blocks
 			foreach (var child in instruction.Children)
 			{
@@ -435,13 +435,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool IsExpressionTree(IType delegateType) => delegateType is ParameterizedType pt
-			&& pt.FullName == "System.Linq.Expressions.Expression"
-			&& pt.TypeArguments.Count == 1;
+		bool IsExpressionTree(IType delegateType) => delegateType is ParameterizedType { FullName: "System.Linq.Expressions.Expression" } pt 
+		                                             && pt.TypeArguments.Count == 1;
 
 		IType UnwrapExpressionTree(IType delegateType)
 		{
-			if (delegateType is ParameterizedType pt && pt.FullName == "System.Linq.Expressions.Expression" && pt.TypeArguments.Count == 1)
+			if (delegateType is ParameterizedType { FullName: "System.Linq.Expressions.Expression" } pt && pt.TypeArguments.Count == 1)
 			{
 				return pt.TypeArguments[0];
 			}
@@ -753,7 +752,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (() => new Call((IMethod)method) { Arguments = { left(), right() } }, isLiftedToNull != 0 ? NullableType.Create(method.Compilation, method.ReturnType) : method.ReturnType);
 			}
 			var rr = resolver.ResolveBinaryOperator(kind.ToBinaryOperatorType(), new(leftType), new(rightType)) as OperatorResolveResult;
-			if (rr != null && !rr.IsError && rr.UserDefinedOperatorMethod != null)
+			if (rr is { IsError: false, UserDefinedOperatorMethod: { } })
 			{
 				return (() => new Call(rr.UserDefinedOperatorMethod) { Arguments = { left(), right() } }, rr.UserDefinedOperatorMethod.ReturnType);
 			}
@@ -1489,7 +1488,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction> arguments)
 		{
 			arguments = null;
-			if (!(inst is Block block && block.Kind == BlockKind.ArrayInitializer))
+			if (!(inst is Block { Kind: BlockKind.ArrayInitializer } block))
 			{
 				if (IsEmptyParameterList(inst))
 				{

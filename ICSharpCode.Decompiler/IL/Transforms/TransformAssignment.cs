@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, out Conv conv)
 		{
 			conv = inst as Conv;
-			if (conv != null && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType())
+			if (conv is { Kind: ConversionKind.Truncate } && conv.TargetType.IsSmallIntegerType())
 			{
 				// for compound assignments to small integers, the compiler emits a "conv" instruction
 				return conv.Argument;
@@ -438,7 +438,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun(); // moving stloc to top-level might trigger inlining
 			}
 			compoundStore.ReplaceWith(newInst);
-			if (newInst.Parent is Block inlineAssignBlock && inlineAssignBlock.Kind == BlockKind.CallInlineAssign)
+			if (newInst.Parent is Block { Kind: BlockKind.CallInlineAssign } inlineAssignBlock)
 			{
 				// It's possible that we first replaced the instruction in an inline-assign helper block.
 				// In such a situation, we know from the block invariant that we're have a storeInSetter.
@@ -523,14 +523,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case KnownTypeCode.Boolean:
 						return !(val is 0 or 1);
 					case KnownTypeCode.Byte:
-						return !(val >= byte.MinValue && val <= byte.MaxValue);
+						return !(val is >= byte.MinValue and <= byte.MaxValue);
 					case KnownTypeCode.SByte:
-						return !(val >= sbyte.MinValue && val <= sbyte.MaxValue);
+						return !(val is >= sbyte.MinValue and <= sbyte.MaxValue);
 					case KnownTypeCode.Int16:
-						return !(val >= short.MinValue && val <= short.MaxValue);
+						return !(val is >= short.MinValue and <= short.MaxValue);
 					case KnownTypeCode.UInt16:
 					case KnownTypeCode.Char:
-						return !(val >= ushort.MinValue && val <= ushort.MaxValue);
+						return !(val is >= ushort.MinValue and <= ushort.MaxValue);
 				}
 			}
 			else if (value is Conv conv)
@@ -623,7 +623,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = stobj.Value;
 				return SemanticHelper.IsPure(stobj.Target.Flags);
 			}
-			else if (inst is CallInstruction call && call.OpCode is OpCode.Call or OpCode.CallVirt)
+			else if (inst is CallInstruction { OpCode: OpCode.Call or OpCode.CallVirt } call)
 			{
 				if (call.Method.Parameters.Count == 0)
 				{

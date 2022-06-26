@@ -1327,7 +1327,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			stringValue = null;
 			variable = null;
 			isVBCompareString = false;
-			while (condition is Comp comp && comp.Kind == ComparisonKind.Inequality && comp.Right.MatchLdcI4(0))
+			while (condition is Comp { Kind: ComparisonKind.Inequality } comp && comp.Right.MatchLdcI4(0))
 			{
 				// if (x != 0) == if (x)
 				condition = comp.Left;

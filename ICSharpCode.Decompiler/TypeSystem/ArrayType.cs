@@ -35,11 +35,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1, Nullability nullability = Nullability.Oblivious) : base(elementType)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException(nameof(compilation));
 			if (dimensions <= 0)
 				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
-			this.compilation = compilation;
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.dimensions = dimensions;
 			this.nullability = nullability;
 
@@ -179,11 +177,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ArrayTypeReference(ITypeReference elementType, int dimensions = 1)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException(nameof(elementType));
 			if (dimensions <= 0)
 				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
-			this.elementType = elementType;
+			this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 			this.dimensions = dimensions;
 		}
 

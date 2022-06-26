@@ -1760,7 +1760,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter))
 			{
 				var variable = parameter.Annotation<ILVariableResolveResult>()?.Variable;
-				if (variable != null && variable.HasNullCheck)
+				if (variable is { HasNullCheck: true })
 				{
 					parameter.HasNullCheck = true;
 				}
@@ -1897,7 +1897,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			type = null;
 			elementCount = 0;
 			IAttribute attr = field.GetAttribute(KnownAttribute.FixedBuffer, inherit: false);
-			if (attr != null && attr.FixedArguments.Length == 2)
+			if (attr is { FixedArguments.Length: 2 })
 			{
 				if (attr.FixedArguments[0].Value is IType trr && attr.FixedArguments[1].Value is int length)
 				{

@@ -35,12 +35,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public TopLevelTypeName(string namespaceName, string name, int typeParameterCount = 0)
 		{
-			if (namespaceName == null)
-				throw new ArgumentNullException(nameof(namespaceName));
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			this.namespaceName = namespaceName;
-			this.name = name;
+			this.namespaceName = namespaceName ?? throw new ArgumentNullException(nameof(namespaceName));
+			this.name = name ?? throw new ArgumentNullException(nameof(name));
 			this.typeParameterCount = typeParameterCount;
 		}
 

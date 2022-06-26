@@ -34,9 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public Backreference(string referencedGroupName)
 		{
-			if (referencedGroupName == null)
-				throw new ArgumentNullException(nameof(referencedGroupName));
-			this.referencedGroupName = referencedGroupName;
+			this.referencedGroupName = referencedGroupName ?? throw new ArgumentNullException(nameof(referencedGroupName));
 		}
 
 		public override bool DoMatch(INode other, Match match)

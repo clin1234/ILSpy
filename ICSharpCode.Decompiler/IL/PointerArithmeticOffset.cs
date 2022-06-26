@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (pointerElementType == null)
 				return null;
-			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I)
+			if (byteOffsetInst is Conv { InputType: StackType.I8, ResultType: StackType.I } conv)
 			{
 				byteOffsetInst = conv.Argument;
 			}
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return byteOffsetInst;
 			}
-			else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul)
+			else if (byteOffsetInst is BinaryNumericInstruction { Operator: BinaryNumericOperator.Mul } mul)
 			{
 				if (mul.IsLifted)
 					return null;

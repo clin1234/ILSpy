@@ -559,9 +559,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!parameter.IsRef)
 				return false;
 			var type = ((ByReferenceType)parameter.Type).ElementType.GetDefinition();
-			return type != null
-				&& type.Kind == TypeKind.Struct
-				&& TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
+			return type is { Kind: TypeKind.Struct } 
+			       && TransformDisplayClassUsage.IsPotentialClosure(context.CurrentTypeDefinition, type);
 		}
 
 		static IType UnwrapByRef(IType type)
@@ -577,7 +576,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			while (inst.Parent != null)
 			{
-				if (inst.Parent is Block b && b.Kind == BlockKind.ControlFlow)
+				if (inst.Parent is Block { Kind: BlockKind.ControlFlow })
 					return inst;
 				inst = inst.Parent;
 			}

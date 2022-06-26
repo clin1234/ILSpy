@@ -62,8 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							v.Kind = VariableKind.DisplayClassLocal;
 						}
 						if (v.IsSingleDefinition
-							&& v.StoreInstructions.SingleOrDefault() is StLoc store
-							&& store.Value is NewObj)
+						    && v.StoreInstructions.SingleOrDefault() is StLoc { Value: NewObj } store)
 						{
 							v.CaptureScope = BlockContainer.FindClosestContainer(store);
 						}

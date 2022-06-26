@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(condition);
 					Debug.Assert(init2 is NewObj or DefaultValue 
 					             || (init2 is CallInstruction c && c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1) 
-					             || (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
+					             || init2 is Block { Kind: BlockKind.CallWithNamedArgs });
 					switch (init2)
 					{
 						case NewObj newObj:
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL
 						case DefaultValue defaultValue:
 							type2 = defaultValue.Type;
 							break;
-						case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
+						case Block { Kind: BlockKind.CallWithNamedArgs } callWithNamedArgs:
 							type2 = ((CallInstruction)callWithNamedArgs.FinalInstruction).Method.ReturnType;
 							break;
 						case CallInstruction ci2 when TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci2):

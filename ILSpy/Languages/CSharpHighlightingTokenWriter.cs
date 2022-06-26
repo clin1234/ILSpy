@@ -460,7 +460,7 @@ namespace ICSharpCode.ILSpy
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
 			{
 				var declaringType = member.DeclaringType;
-				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
+				if (declaringType is { Kind: TypeKind.Delegate })
 					return null;
 			}
 			return symbol;

@@ -39,8 +39,8 @@ namespace ILSpy.BamlDecompiler
 		{
 			TypeSystem = typeSystem;
 			NodeMap = new Dictionary<BamlRecord, BamlBlockNode>();
-			XmlNs = new XmlnsDictionary();
-			XClassNames = new List<string>();
+			XmlNs = new();
+			XClassNames = new();
 		}
 
 		Dictionary<ushort, XamlType> typeMap = new Dictionary<ushort, XamlType>();

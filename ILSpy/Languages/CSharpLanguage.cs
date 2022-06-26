@@ -556,8 +556,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeToString(IType type, bool includeNamespace)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
+			ArgumentNullException.ThrowIfNull(type);
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
 			if (includeNamespace)
@@ -583,29 +582,25 @@ namespace ICSharpCode.ILSpy
 
 		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 			return EntityToString(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
+			ArgumentNullException.ThrowIfNull(property);
 			return EntityToString(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (method == null)
-				throw new ArgumentNullException(nameof(method));
+			ArgumentNullException.ThrowIfNull(method);
 			return EntityToString(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (@event == null)
-				throw new ArgumentNullException(nameof(@event));
+			ArgumentNullException.ThrowIfNull(@event);
 			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 

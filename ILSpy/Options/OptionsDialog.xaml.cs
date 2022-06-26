@@ -64,8 +64,7 @@ namespace ICSharpCode.ILSpy.Options
 
 				tabControl.Items.Add(tabItem);
 
-				IOptionPage page = optionPage.Value as IOptionPage;
-				if (page != null)
+				if (optionPage.Value is IOptionPage page)
 					page.Load(settings);
 			}
 		}
@@ -76,8 +75,7 @@ namespace ICSharpCode.ILSpy.Options
 				delegate (XElement root) {
 					foreach (var optionPage in optionPages)
 					{
-						IOptionPage page = optionPage.Value as IOptionPage;
-						if (page != null)
+						if (optionPage.Value is IOptionPage page)
 							page.Save(root);
 					}
 				});
@@ -89,8 +87,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			if (MessageBox.Show(Properties.Resources.ResetToDefaultsConfirmationMessage, "ILSpy", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
 			{
-				var page = tabControl.SelectedValue as IOptionPage;
-				if (page != null)
+				if (tabControl.SelectedValue is IOptionPage page)
 					page.LoadDefaults();
 			}
 		}

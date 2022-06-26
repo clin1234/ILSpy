@@ -42,10 +42,8 @@ namespace ILSpy.BamlDecompiler
 
 		public BamlDecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
 		{
-			if (mainModule == null)
-				throw new ArgumentNullException(nameof(mainModule));
-			if (assemblyResolver == null)
-				throw new ArgumentNullException(nameof(assemblyResolver));
+			ArgumentNullException.ThrowIfNull(mainModule);
+			ArgumentNullException.ThrowIfNull(assemblyResolver);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<PEFile>();

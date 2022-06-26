@@ -38,8 +38,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
-			if (isLink == null)
-				throw new ArgumentNullException(nameof(isLink));
+			ArgumentNullException.ThrowIfNull(isLink);
 			this.isLink = isLink;
 		}
 

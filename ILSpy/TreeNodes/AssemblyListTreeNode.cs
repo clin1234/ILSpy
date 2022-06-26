@@ -97,8 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Drop(DragEventArgs e, int index)
 		{
-			string[] files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
-			if (files == null)
+			if (e.Data.GetData(AssemblyTreeNode.DataFormat) is not string[] files)
 				files = e.Data.GetData(DataFormats.FileDrop) as string[];
 			if (files != null)
 			{

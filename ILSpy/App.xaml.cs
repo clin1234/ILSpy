@@ -238,8 +238,7 @@ namespace ICSharpCode.ILSpy
 
 		static void ShowErrorBox(object sender, UnhandledExceptionEventArgs e)
 		{
-			Exception ex = e.ExceptionObject as Exception;
-			if (ex != null)
+			if (e.ExceptionObject is Exception ex)
 			{
 				UnhandledException(ex);
 			}
@@ -253,8 +252,7 @@ namespace ICSharpCode.ILSpy
 			Debug.WriteLine(exception.ToString());
 			for (Exception ex = exception; ex != null; ex = ex.InnerException)
 			{
-				ReflectionTypeLoadException rtle = ex as ReflectionTypeLoadException;
-				if (rtle != null && rtle.LoaderExceptions.Length > 0)
+				if (ex is ReflectionTypeLoadException rtle && rtle.LoaderExceptions.Length > 0)
 				{
 					exception = rtle.LoaderExceptions[0];
 					Debug.WriteLine(exception.ToString());

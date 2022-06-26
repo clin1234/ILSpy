@@ -68,8 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null && containsMetadata)
+			if (parentAssembly.Parent is AssemblyListTreeNode assemblyListNode && containsMetadata)
 			{
 				var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
 				var mainModule = parentAssembly.LoadedAssembly.GetPEFileOrNull();

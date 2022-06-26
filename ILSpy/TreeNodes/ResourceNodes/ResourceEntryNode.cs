@@ -47,10 +47,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public ResourceEntryNode(string key, Func<Stream> openStream)
 		{
-			if (key == null)
-				throw new ArgumentNullException(nameof(key));
-			if (openStream == null)
-				throw new ArgumentNullException(nameof(openStream));
+			ArgumentNullException.ThrowIfNull(key);
+			ArgumentNullException.ThrowIfNull(openStream);
 			this.key = key;
 			this.openStream = openStream;
 		}

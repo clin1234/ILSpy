@@ -37,8 +37,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public NamespaceTreeNode(string name)
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
+			ArgumentNullException.ThrowIfNull(name);
 			this.name = name;
 		}
 

@@ -103,8 +103,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		static void CalculateZoomButtonCollapsed(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
-			ZoomScrollViewer z = d as ZoomScrollViewer;
-			if (z != null)
+			if (d is ZoomScrollViewer z)
 				z.ComputedZoomButtonCollapsed = (z.AlwaysShowZoomButtons == false) && (z.CurrentZoom == 1.0);
 		}
 
@@ -117,9 +116,8 @@ namespace ICSharpCode.ILSpy.Controls
 				newZoom = Math.Max(this.MinimumZoom, Math.Min(this.MaximumZoom, newZoom));
 
 				// adjust scroll position so that mouse stays over the same virtual coordinate
-				ContentPresenter presenter = Template.FindName("PART_Presenter", this) as ContentPresenter;
 				Vector relMousePos;
-				if (presenter != null)
+				if (Template.FindName("PART_Presenter", this) is ContentPresenter presenter)
 				{
 					Point mousePos = e.GetPosition(presenter);
 					relMousePos = new Vector(mousePos.X / presenter.ActualWidth, mousePos.Y / presenter.ActualHeight);

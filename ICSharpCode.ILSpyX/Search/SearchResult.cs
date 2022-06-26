@@ -42,21 +42,21 @@ namespace ICSharpCode.ILSpyX.Search
 
 		public float Fitness { get; set; }
 
-		public string Name { get; set; }
-		public string Location { get; set; }
-		public string Assembly { get; set; }
+		public string? Name { get; set; }
+		public string? Location { get; set; }
+		public string? Assembly { get; set; }
 		public object? ToolTip { get; set; }
-		public object Image { get; set; }
-		public object LocationImage { get; set; }
+		public object? Image { get; set; }
+		public object? LocationImage { get; set; }
 
-		public object AssemblyImage { get; set; }
+		public object? AssemblyImage { get; set; }
 
 		public override string ToString()
 		{
 			return Name;
 		}
 
-		class SearchResultNameComparer : IComparer<SearchResult>
+		sealed class SearchResultNameComparer : IComparer<SearchResult>
 		{
 			public int Compare(SearchResult? x, SearchResult? y)
 			{
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpyX.Search
 			}
 		}
 
-		class SearchResultFitnessComparer : IComparer<SearchResult>
+		sealed class SearchResultFitnessComparer : IComparer<SearchResult>
 		{
 			public int Compare(SearchResult? x, SearchResult? y)
 			{
@@ -74,27 +74,27 @@ namespace ICSharpCode.ILSpyX.Search
 		}
 	}
 
-	public class MemberSearchResult : SearchResult
+	public sealed class MemberSearchResult : SearchResult
 	{
-		public IEntity Member { get; set; }
+		public IEntity? Member { get; set; }
 		public override object Reference => Member;
 	}
 
-	public class ResourceSearchResult : SearchResult
+	public sealed class ResourceSearchResult : SearchResult
 	{
-		public Resource Resource { get; set; }
+		public Resource? Resource { get; set; }
 		public override object Reference => ValueTuple.Create(Resource, Name);
 	}
 
-	public class AssemblySearchResult : SearchResult
+	public sealed class AssemblySearchResult : SearchResult
 	{
-		public PEFile Module { get; set; }
+		public PEFile? Module { get; set; }
 		public override object Reference => Module;
 	}
 
-	public class NamespaceSearchResult : SearchResult
+	public sealed class NamespaceSearchResult : SearchResult
 	{
-		public INamespace Namespace { get; set; }
+		public INamespace? Namespace { get; set; }
 		public override object Reference => Namespace;
 	}
 }

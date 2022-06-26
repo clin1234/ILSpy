@@ -178,8 +178,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var textView = (DecompilerTextView)Docking.DockWorkspace.Instance.ActiveTabPage.Content;
 			if (stringTableEntries.Count != 0)
 			{
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
-				if (null != smartOutput)
+				if (output is ISmartTextOutput smartOutput)
 				{
 					smartOutput.AddUIElement(
 						delegate {
@@ -192,8 +191,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			if (otherEntries.Count != 0)
 			{
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
-				if (null != smartOutput)
+				if (output is ISmartTextOutput smartOutput)
 				{
 					smartOutput.AddUIElement(
 						delegate {

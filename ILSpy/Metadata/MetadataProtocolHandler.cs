@@ -33,8 +33,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			newTabPage = true;
 			if (protocol != "metadata")
 				return null;
-			var assemblyTreeNode = MainWindow.Instance.FindTreeNode(module) as AssemblyTreeNode;
-			if (assemblyTreeNode == null)
+			if (MainWindow.Instance.FindTreeNode(module) is not AssemblyTreeNode assemblyTreeNode)
 				return null;
 			var mxNode = assemblyTreeNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();
 			if (mxNode != null)

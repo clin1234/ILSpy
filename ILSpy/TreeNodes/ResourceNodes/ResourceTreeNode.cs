@@ -44,8 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ResourceTreeNode(Resource r)
 		{
-			if (r == null)
-				throw new ArgumentNullException(nameof(r));
+			ArgumentNullException.ThrowIfNull(r);
 			this.Resource = r;
 		}
 
@@ -69,8 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", Resource.Name, Resource.ResourceType, Resource.Attributes));
 
-			ISmartTextOutput smartOutput = output as ISmartTextOutput;
-			if (smartOutput != null)
+			if (output is ISmartTextOutput smartOutput)
 			{
 				smartOutput.AddButton(Images.Save, Resources.Save, delegate { Save(Docking.DockWorkspace.Instance.ActiveTabPage); });
 				output.WriteLine();

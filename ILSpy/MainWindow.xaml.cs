@@ -562,8 +562,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnSourceInitialized(e);
 			PresentationSource source = PresentationSource.FromVisual(this);
-			HwndSource hwndSource = source as HwndSource;
-			if (hwndSource != null)
+			if (source is HwndSource hwndSource)
 			{
 				hwndSource.AddHook(WndProc);
 			}
@@ -1201,8 +1200,7 @@ namespace ICSharpCode.ILSpy
 					break;
 				bestMatch = node;
 				node.EnsureLazyChildren();
-				var ilSpyTreeNode = node as ILSpyTreeNode;
-				if (ilSpyTreeNode != null)
+				if (node is ILSpyTreeNode ilSpyTreeNode)
 					ilSpyTreeNode.EnsureChildrenFiltered();
 				node = node.Children.FirstOrDefault(c => c.ToString() == element);
 			}
@@ -1372,8 +1370,7 @@ namespace ICSharpCode.ILSpy
 
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
-			if (fileNames == null)
-				throw new ArgumentNullException(nameof(fileNames));
+			ArgumentNullException.ThrowIfNull(fileNames);
 
 			if (focusNode)
 				AssemblyTreeView.UnselectAll();
@@ -1486,8 +1483,7 @@ namespace ICSharpCode.ILSpy
 
 			if (AssemblyTreeView.SelectedItems.Count == 1)
 			{
-				ILSpyTreeNode node = AssemblyTreeView.SelectedItem as ILSpyTreeNode;
-				if (node != null && node.View(DockWorkspace.Instance.ActiveTabPage))
+				if (AssemblyTreeView.SelectedItem is ILSpyTreeNode node && node.View(DockWorkspace.Instance.ActiveTabPage))
 					return;
 			}
 			if (newState?.ViewedUri != null)

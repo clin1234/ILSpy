@@ -549,7 +549,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			else
 			{
 				string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
-				string[] frameworkPaths = new[] {
+				string[] frameworkPaths = {
 					Path.Combine(rootPath, "Framework"),
 					Path.Combine(rootPath, "Framework64")
 				};

@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			try
 			{
-				int[] array = new int[] { 1, 2, 3 };
+				int[] array = { 1, 2, 3 };
 				for (int i = 0; i < array.Length; i++)
 				{
 					Console.WriteLine(array[i]);

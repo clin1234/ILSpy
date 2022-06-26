@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			InitializeAsync(mainModule, assemblyResolver, typeSystemOptions).GetAwaiter().GetResult();
 		}
 
-		static readonly string[] implicitReferences = new[] {
+		static readonly string[] implicitReferences = {
 			"System.Runtime.InteropServices",
 			"System.Runtime.CompilerServices.Unsafe"
 		};

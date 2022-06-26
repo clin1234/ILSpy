@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 	public static class DisassemblerHelpers
 	{
-		static readonly char[] _validNonLetterIdentifierCharacter = new char[] { '_', '$', '@', '?', '`', '.' };
+		static readonly char[] _validNonLetterIdentifierCharacter = { '_', '$', '@', '?', '`', '.' };
 
 		public static string OffsetToString(int offset)
 		{

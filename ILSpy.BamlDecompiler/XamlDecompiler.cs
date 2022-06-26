@@ -38,7 +38,7 @@ namespace ILSpy.BamlDecompiler
 {
 	public class XamlDecompiler
 	{
-		static readonly IRewritePass[] rewritePasses = new IRewritePass[] {
+		static readonly IRewritePass[] rewritePasses = {
 			new XClassRewritePass(),
 			new MarkupExtensionRewritePass(),
 			new AttributeRewritePass(),

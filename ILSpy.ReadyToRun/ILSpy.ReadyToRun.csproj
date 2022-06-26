@@ -11,6 +11,7 @@
     <UseWpf>true</UseWpf>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

@@ -16,6 +16,7 @@
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
 
     <LangVersion>default</LangVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

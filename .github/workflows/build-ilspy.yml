@@ -94,7 +94,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ILSpy VS Addin for VS 2017-2019 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.AddIn\bin\${{ matrix.configuration }}\net472\*.vsix
+        path: ILSpy.AddIn\bin\${{ matrix.configuration }}\net48\*.vsix
         if-no-files-found: error
 
     - name: Upload VSIX (VS 2022) release build artifacts
@@ -102,7 +102,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ILSpy VS Addin for VS 2022 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net472\*.vsix
+        path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net48\*.vsix
         if-no-files-found: error
 
     - name: Upload Decompiler NuGet release build artifacts

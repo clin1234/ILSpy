@@ -41,7 +41,7 @@ namespace TestPlugin
 		{
 			Options s = (Options)this.DataContext;
 			// Save the options back into XML:
-			XElement section = new XElement(ns + "CustomOptions");
+			XElement section = new(ns + "CustomOptions");
 			section.SetAttributeValue("useless1", s.UselessOption1);
 			section.SetAttributeValue("useless2", s.UselessOption2);
 
@@ -65,7 +65,7 @@ namespace TestPlugin
 				if (uselessOption1 != value)
 				{
 					uselessOption1 = value;
-					OnPropertyChanged("UselessOption1");
+					OnPropertyChanged(nameof(UselessOption1));
 				}
 			}
 		}
@@ -78,7 +78,7 @@ namespace TestPlugin
 				if (uselessOption2 != value)
 				{
 					uselessOption2 = value;
-					OnPropertyChanged("UselessOption2");
+					OnPropertyChanged(nameof(UselessOption2));
 				}
 			}
 		}
@@ -87,10 +87,7 @@ namespace TestPlugin
 
 		protected virtual void OnPropertyChanged(string propertyName)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 	}
 }

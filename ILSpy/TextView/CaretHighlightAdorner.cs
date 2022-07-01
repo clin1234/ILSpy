@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.TextView
 			CaretHighlightAdorner adorner = new(textArea);
 			layer.Add(adorner);
 
-			DispatcherTimer timer = new DispatcherTimer();
+			DispatcherTimer timer = new();
 			timer.Interval = TimeSpan.FromSeconds(1);
 			timer.Tick += delegate {
 				timer.Stop();

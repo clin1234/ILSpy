@@ -263,8 +263,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			internal ILVariable GetNewVariable(IInstructionWithVariableOperand inst)
 			{
 				var representative = unionFind.Find(inst);
-				ILVariable v;
-				if (!newVariables.TryGetValue(representative, out v))
+				if (!newVariables.TryGetValue(representative, out ILVariable v))
 				{
 					v = new(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index) {
 						Name = inst.Variable.Name,

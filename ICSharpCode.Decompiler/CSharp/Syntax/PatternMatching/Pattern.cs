@@ -48,21 +48,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 
-		bool INode.IsNull {
-			get { return false; }
-		}
+		bool INode.IsNull => false;
 
-		Role INode.Role {
-			get { return null; }
-		}
+		Role INode.Role => null;
 
-		INode INode.NextSibling {
-			get { return null; }
-		}
+		INode INode.NextSibling => null;
 
-		INode INode.FirstChild {
-			get { return null; }
-		}
+		INode INode.FirstChild => null;
 
 		public abstract bool DoMatch(INode other, Match match);
 

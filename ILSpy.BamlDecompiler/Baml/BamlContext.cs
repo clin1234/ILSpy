@@ -37,7 +37,7 @@ namespace ILSpy.BamlDecompiler.Baml
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public KnownThings KnownThings { get; }
 
-		Dictionary<ushort, (string FullAssemblyName, IModule Assembly)> assemblyMap = new Dictionary<ushort, (string FullAssemblyName, IModule Assembly)>();
+		Dictionary<ushort, (string FullAssemblyName, IModule Assembly)> assemblyMap = new();
 
 		public Dictionary<ushort, AssemblyInfoRecord> AssemblyIdMap { get; }
 		public Dictionary<ushort, AttributeInfoRecord> AttributeIdMap { get; }

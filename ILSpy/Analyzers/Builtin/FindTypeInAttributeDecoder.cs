@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public PrimitiveTypeCode GetUnderlyingEnumType(TokenSearchResult type)
 		{
 			TokenSearchResult typeCode = type & TokenSearchResult.TypeCodeMask;
-			if (typeCode == 0 || typeCode == TokenSearchResult.SystemType)
+			if (typeCode is 0 or TokenSearchResult.SystemType)
 				throw new EnumUnderlyingTypeResolveException();
 			return (PrimitiveTypeCode)typeCode;
 		}

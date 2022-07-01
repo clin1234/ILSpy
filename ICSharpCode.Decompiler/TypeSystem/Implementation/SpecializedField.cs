@@ -45,21 +45,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			AddSubstitution(substitution);
 		}
 
-		public bool IsReadOnly {
-			get { return fieldDefinition.IsReadOnly; }
-		}
+		public bool IsReadOnly => fieldDefinition.IsReadOnly;
 
-		public bool IsVolatile {
-			get { return fieldDefinition.IsVolatile; }
-		}
+		public bool IsVolatile => fieldDefinition.IsVolatile;
 
-		IType IVariable.Type {
-			get { return this.ReturnType; }
-		}
+		IType IVariable.Type => this.ReturnType;
 
-		public bool IsConst {
-			get { return fieldDefinition.IsConst; }
-		}
+		public bool IsConst => fieldDefinition.IsConst;
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{

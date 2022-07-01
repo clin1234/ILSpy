@@ -197,20 +197,12 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool CanBeReference(ILOpCode code)
 		{
-			switch (code)
-			{
-				case ILOpCode.Ldfld:
-				case ILOpCode.Ldsfld:
-					return !showWrites;
-				case ILOpCode.Stfld:
-				case ILOpCode.Stsfld:
-					return showWrites;
-				case ILOpCode.Ldflda:
-				case ILOpCode.Ldsflda:
-					return true; // always show address-loading
-				default:
-					return false;
-			}
+			return code switch {
+				ILOpCode.Ldfld or ILOpCode.Ldsfld => !showWrites,
+				ILOpCode.Stfld or ILOpCode.Stsfld => showWrites,
+				ILOpCode.Ldflda or ILOpCode.Ldsflda => true,// always show address-loading
+				_ => false,
+			};
 		}
 	}
 }

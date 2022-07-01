@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </remarks>
 	public class EscapeInvalidIdentifiers : IAstTransform
 	{
-		bool IsValid(char ch)
+		static bool IsValid(char ch)
 		{
 			if (char.IsLetterOrDigit(ch))
 				return true;
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return false;
 		}
 
-		string ReplaceInvalid(string s)
+		static string ReplaceInvalid(string s)
 		{
 			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : $"_{(int)ch:X4}"));
 			if (name.Length >= 1 && !(char.IsLetter(name[0]) || name[0] == '_'))

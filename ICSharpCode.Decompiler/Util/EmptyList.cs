@@ -35,13 +35,9 @@ namespace ICSharpCode.Decompiler.Util
 			set { throw new ArgumentOutOfRangeException(nameof(index)); }
 		}
 
-		public int Count {
-			get { return 0; }
-		}
+		public int Count => 0;
 
-		bool ICollection<T>.IsReadOnly {
-			get { return true; }
-		}
+		bool ICollection<T>.IsReadOnly => true;
 
 		int IList<T>.IndexOf(T item)
 		{
@@ -91,13 +87,9 @@ namespace ICSharpCode.Decompiler.Util
 			return this;
 		}
 
-		T IEnumerator<T>.Current {
-			get { throw new NotSupportedException(); }
-		}
+		T IEnumerator<T>.Current => throw new NotSupportedException();
 
-		object IEnumerator.Current {
-			get { throw new NotSupportedException(); }
-		}
+		object IEnumerator.Current => throw new NotSupportedException();
 
 		void IDisposable.Dispose()
 		{

@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			return default(CSharpArgumentInfo);
+			return default;
 		}
 	}
 
@@ -493,18 +493,10 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Operand, OperandArgumentInfo));
 		}
 
-		public override StackType ResultType {
-			get {
-				switch (Operation)
-				{
-					case ExpressionType.IsFalse:
-					case ExpressionType.IsTrue:
-						return StackType.I4; // bool
-					default:
-						return StackType.O;
-				}
-			}
-		}
+		public override StackType ResultType => Operation switch {
+			ExpressionType.IsFalse or ExpressionType.IsTrue => StackType.I4,// bool
+			_ => StackType.O,
+		};
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -572,7 +564,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			return default(CSharpArgumentInfo);
+			return default;
 		}
 	}
 }

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
 			{
-				if (!(tryCatch.Parent?.Parent is BlockContainer container))
+				if (tryCatch.Parent?.Parent is not BlockContainer container)
 					continue;
 				// 	} catch exceptionVariable : 02000078 System.Object when (ldc.i4 1) BlockContainer {
 				// 		Block IL_004a (incoming: 1) {
@@ -117,8 +117,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (noThrowBlock == null || exceptionCaptureBlock == null)
 					continue;
 
-				var initOfStateVariable = tryCatch.Parent.Children.ElementAtOrDefault(tryCatch.ChildIndex - 1) as StLoc;
-				if (initOfStateVariable == null || !initOfStateVariable.Value.MatchLdcI4(0))
+				if (tryCatch.Parent.Children.ElementAtOrDefault(tryCatch.ChildIndex - 1) is not StLoc initOfStateVariable || !initOfStateVariable.Value.MatchLdcI4(0))
 					continue;
 
 				var stateVariable = initOfStateVariable.Variable;

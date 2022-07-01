@@ -33,7 +33,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 
 		public BamlElement Translate(XamlContext ctx, BamlNode node, BamlElement parent)
 		{
-			var record = (OptimizedStaticResourceRecord)((BamlRecordNode)node).Record;
+			_ = (OptimizedStaticResourceRecord)((BamlRecordNode)node).Record;
 			var key = XamlResourceKey.FindKeyInSiblings(node);
 
 			key.StaticResources.Add(node);

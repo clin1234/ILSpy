@@ -34,13 +34,9 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ns = ns;
 		}
 
-		public INamespace Namespace {
-			get { return ns; }
-		}
+		public INamespace Namespace => ns;
 
-		public string NamespaceName {
-			get { return ns.FullName; }
-		}
+		public string NamespaceName => ns.FullName;
 
 		public override string ToString()
 		{

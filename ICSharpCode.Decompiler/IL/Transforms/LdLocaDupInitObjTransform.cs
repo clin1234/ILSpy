@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private bool TryTransform(Block block, int i, ILTransformContext context)
+		private static bool TryTransform(Block block, int i, ILTransformContext context)
 		{
 			if (block.Instructions[i] is not StLoc { Variable: var s, Value: LdLoca { Variable: var v } } inst1)
 			{

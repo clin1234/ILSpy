@@ -32,25 +32,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<ConstructorInitializer> InitializerRole = new("Initializer", ConstructorInitializer.Null);
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Constructor; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Constructor;
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole(Roles.Parameter);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole(Roles.Colon); }
-		}
+		public CSharpTokenNode ColonToken => GetChildByRole(Roles.Colon);
 
 		public ConstructorInitializer Initializer {
 			get { return GetChildByRole(InitializerRole); }
@@ -79,8 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ConstructorDeclaration o = other as ConstructorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match) && this.Parameters.DoMatch(o.Parameters, match)
+			return other is ConstructorDeclaration o && this.MatchAttributesAndModifiers(o, match) && this.Parameters.DoMatch(o.Parameters, match)
 				&& this.Initializer.DoMatch(o.Initializer, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}
@@ -100,17 +89,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly new ConstructorInitializer Null = new NullConstructorInitializer();
 		class NullConstructorInitializer : ConstructorInitializer
 		{
-			public override NodeType NodeType {
-				get {
-					return NodeType.Unknown;
-				}
-			}
+			public override NodeType NodeType => NodeType.Unknown;
 
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -133,11 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public ConstructorInitializerType ConstructorInitializerType {
 			get;
@@ -153,17 +130,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Argument); }
-		}
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole(Roles.Argument);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{

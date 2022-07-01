@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				evalContext.AddStateVariable(cachedStateVar);
 		}
 
-		public IEnumerable<ILVariable> CachedStateVars { get => evalContext.StateVariables; }
+		public IEnumerable<ILVariable> CachedStateVars => evalContext.StateVariables;
 
 		/// <summary>
 		/// Creates a new StateRangeAnalysis with the same settings, including any cached state vars

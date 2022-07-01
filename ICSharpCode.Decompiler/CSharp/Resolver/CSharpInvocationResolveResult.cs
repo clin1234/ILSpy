@@ -70,9 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.argumentToParameterMap = argumentToParameterMap;
 		}
 
-		public override bool IsError {
-			get { return this.OverloadResolutionErrors != OverloadResolutionErrors.None; }
-		}
+		public override bool IsError => this.OverloadResolutionErrors != OverloadResolutionErrors.None;
 
 		/// <summary>
 		/// Gets an array that maps argument indices to parameter indices.
@@ -106,8 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 					else
 					{
-						var narr = Arguments[i] as NamedArgumentResolveResult;
-						if (narr != null)
+						if (Arguments[i] is NamedArgumentResolveResult narr)
 							results[mappedTo] = narr.Argument;
 						else
 							results[mappedTo] = Arguments[i];
@@ -116,7 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			if (IsExpandedForm)
 			{
-				IType arrayType = Member.Parameters.Last().Type;
+				IType arrayType = Member.Parameters[Member.Parameters.Count - 1].Type;
 				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
 				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
 				results[results.Length - 1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);

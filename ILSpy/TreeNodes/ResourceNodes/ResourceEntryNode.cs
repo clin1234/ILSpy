@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool Save(ViewModels.TabPageModel tabPage)
 		{
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(key));
 			if (dlg.ShowDialog() == true)
 			{

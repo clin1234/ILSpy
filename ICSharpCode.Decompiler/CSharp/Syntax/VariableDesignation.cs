@@ -29,11 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullVariableDesignation : VariableDesignation
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -102,17 +98,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ParenthesizedVariableDesignation : VariableDesignation
 	{
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<VariableDesignation> VariableDesignations {
-			get { return GetChildrenByRole(Roles.VariableDesignationRole); }
-		}
+		public AstNodeCollection<VariableDesignation> VariableDesignations => GetChildrenByRole(Roles.VariableDesignationRole);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{

@@ -39,11 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly new BlockStatement Null = new NullBlockStatement();
 		sealed class NullBlockStatement : BlockStatement
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -82,9 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -113,17 +107,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
-		public AstNodeCollection<Statement> Statements {
-			get { return GetChildrenByRole(StatementRole); }
-		}
+		public AstNodeCollection<Statement> Statements => GetChildrenByRole(StatementRole);
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{

@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static T TestGenericReturn<T>()
 		{
-			return default(T);
+			return default;
 		}
 
 		public static void TestGenericParam<T>()

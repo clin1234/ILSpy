@@ -137,11 +137,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 
 		bool EqualSignature(CallIndirect other)
 		{

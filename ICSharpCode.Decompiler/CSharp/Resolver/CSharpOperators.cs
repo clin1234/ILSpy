@@ -68,8 +68,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return result.ToArray();
 		}
 
-		IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
-		IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
+		readonly IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
+		readonly IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
 
 		void InitParameterArrays()
 		{
@@ -109,15 +109,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.compilation = compilation;
 			}
 
-			public IReadOnlyList<IParameter> Parameters {
-				get { return parameters; }
-			}
+			public IReadOnlyList<IParameter> Parameters => parameters;
 
 			public IType ReturnType { get; internal set; } = null!; // initialized by derived class ctor
 
-			public ICompilation Compilation {
-				get { return compilation; }
-			}
+			public ICompilation Compilation => compilation;
 
 			public virtual OperatorMethod? Lift(CSharpOperators operators)
 			{
@@ -126,70 +122,40 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public System.Reflection.Metadata.EntityHandle MetadataToken => default;
 
-			ITypeDefinition? IEntity.DeclaringTypeDefinition {
-				get { return null; }
-			}
+			ITypeDefinition? IEntity.DeclaringTypeDefinition => null;
 
 			public IType DeclaringType => SpecialType.UnknownType;
 
-			IMember IMember.MemberDefinition {
-				get { return this; }
-			}
+			IMember IMember.MemberDefinition => this;
 
-			IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers {
-				get { return EmptyList<IMember>.Instance; }
-			}
+			IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
 
-			bool IMember.IsVirtual {
-				get { return false; }
-			}
+			bool IMember.IsVirtual => false;
 
-			bool IMember.IsOverride {
-				get { return false; }
-			}
+			bool IMember.IsOverride => false;
 
-			bool IMember.IsOverridable {
-				get { return false; }
-			}
+			bool IMember.IsOverridable => false;
 
-			SymbolKind ISymbol.SymbolKind {
-				get { return SymbolKind.Operator; }
-			}
+			SymbolKind ISymbol.SymbolKind => SymbolKind.Operator;
 
 			IEnumerable<IAttribute> IEntity.GetAttributes()
 			{
 				return EmptyList<IAttribute>.Instance;
 			}
 
-			Accessibility IEntity.Accessibility {
-				get { return Accessibility.Public; }
-			}
+			Accessibility IEntity.Accessibility => Accessibility.Public;
 
-			bool IEntity.IsStatic {
-				get { return true; }
-			}
+			bool IEntity.IsStatic => true;
 
-			bool IEntity.IsAbstract {
-				get { return false; }
-			}
+			bool IEntity.IsAbstract => false;
 
-			bool IEntity.IsSealed {
-				get { return false; }
-			}
+			bool IEntity.IsSealed => false;
 
-			bool IMember.IsExplicitInterfaceImplementation {
-				get { return false; }
-			}
+			bool IMember.IsExplicitInterfaceImplementation => false;
 
-			IModule IEntity.ParentModule {
-				get { return compilation.MainModule; }
-			}
+			IModule IEntity.ParentModule => compilation.MainModule;
 
-			TypeParameterSubstitution IMember.Substitution {
-				get {
-					return TypeParameterSubstitution.Identity;
-				}
-			}
+			TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 			IMember IMember.Specialize(TypeParameterSubstitution substitution)
 			{
@@ -198,21 +164,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new NotSupportedException();
 			}
 
-			string INamedElement.FullName {
-				get { return "operator"; }
-			}
+			string INamedElement.FullName => "operator";
 
-			public string Name {
-				get { return "operator"; }
-			}
+			public string Name => "operator";
 
-			string INamedElement.Namespace {
-				get { return string.Empty; }
-			}
+			string INamedElement.Namespace => string.Empty;
 
-			string INamedElement.ReflectionName {
-				get { return "operator"; }
-			}
+			string INamedElement.ReflectionName => "operator";
 
 			public override string ToString()
 			{
@@ -238,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Unary operator class definitions
 		internal class UnaryOperatorMethod : OperatorMethod
 		{
-			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
+			public virtual bool CanEvaluateAtCompileTime => false;
 
 			public virtual object? Invoke(CSharpResolver resolver, object? input)
 			{
@@ -263,9 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.func = func;
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return true; }
-			}
+			public override bool CanEvaluateAtCompileTime => true;
 
 			public override object? Invoke(CSharpResolver resolver, object? input)
 			{
@@ -282,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, ILiftedOperator
 		{
-			UnaryOperatorMethod baseMethod;
+			readonly UnaryOperatorMethod baseMethod;
 
 			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(operators.compilation)
 			{
@@ -412,7 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Binary operator class definitions
 		internal class BinaryOperatorMethod : OperatorMethod
 		{
-			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
+			public virtual bool CanEvaluateAtCompileTime => false;
 			public virtual object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
 				throw new NotSupportedException();
@@ -442,9 +398,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.uncheckedFunc = uncheckedFunc;
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return true; }
-			}
+			public override bool CanEvaluateAtCompileTime => true;
 
 			public override object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
@@ -587,7 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		// not in this list, but handled manually: enum addition, delegate combination
 		sealed class StringConcatenation : BinaryOperatorMethod
 		{
-			bool canEvaluateAtCompileTime;
+			readonly bool canEvaluateAtCompileTime;
 
 			public StringConcatenation(CSharpOperators operators, TypeCode p1, TypeCode p2)
 				: base(operators.compilation)
@@ -598,9 +552,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(p2));
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return canEvaluateAtCompileTime; }
-			}
+			public override bool CanEvaluateAtCompileTime => canEvaluateAtCompileTime;
 
 			public override object? Invoke(CSharpResolver? resolver, object? lhs, object? rhs)
 			{
@@ -693,9 +645,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(type));
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return Type != TypeCode.Object; }
-			}
+			public override bool CanEvaluateAtCompileTime => Type != TypeCode.Object;
 
 			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
@@ -744,9 +694,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(p);
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return baseMethod.CanEvaluateAtCompileTime; }
-			}
+			public override bool CanEvaluateAtCompileTime => baseMethod.CanEvaluateAtCompileTime;
 
 			public override object Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
@@ -855,9 +803,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.func = func;
 			}
 
-			public override bool CanEvaluateAtCompileTime {
-				get { return true; }
-			}
+			public override bool CanEvaluateAtCompileTime => true;
 
 			public override object? Invoke(CSharpResolver resolver, object? lhs, object? rhs)
 			{
@@ -1134,8 +1080,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override bool Equals(object? obj)
 			{
-				LiftedUserDefinedOperator? op = obj as LiftedUserDefinedOperator;
-				return op != null && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
+				return obj is LiftedUserDefinedOperator op && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
 			}
 
 			public override int GetHashCode()

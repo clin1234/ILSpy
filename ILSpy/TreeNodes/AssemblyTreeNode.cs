@@ -48,8 +48,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
-		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
-		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new Dictionary<TypeDefinitionHandle, TypeTreeNode>();
+		readonly Dictionary<string, NamespaceTreeNode> namespaces = new();
+		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new();
 		ICompilation typeSystem;
 
 		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
@@ -284,8 +284,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (type == null)
 				return null;
 			EnsureLazyChildren();
-			TypeTreeNode node;
-			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
+			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out TypeTreeNode node))
 				return node;
 			else
 				return null;
@@ -299,8 +298,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (string.IsNullOrEmpty(namespaceName))
 				return null;
 			EnsureLazyChildren();
-			NamespaceTreeNode node;
-			if (namespaces.TryGetValue(namespaceName, out node))
+			if (namespaces.TryGetValue(namespaceName, out NamespaceTreeNode node))
 				return node;
 			else
 				return null;
@@ -337,7 +335,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override IDataObject Copy(SharpTreeNode[] nodes)
 		{
-			DataObject dataObject = new DataObject();
+			DataObject dataObject = new();
 			dataObject.SetData(DataFormat, nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly.FileName).ToArray());
 			return dataObject;
 		}
@@ -397,7 +395,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private void DecompilePackage(LoadedPackage package, ITextOutput output)
+		private static void DecompilePackage(LoadedPackage package, ITextOutput output)
 		{
 			switch (package.Kind)
 			{
@@ -424,7 +422,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Language language = this.Language;
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(LoadedAssembly.ShortName) + language.ProjectFileExtension;
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true)

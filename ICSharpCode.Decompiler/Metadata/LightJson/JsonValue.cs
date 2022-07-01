@@ -21,7 +21,7 @@ namespace LightJson
 		/// <summary>
 		/// Represents a null JsonValue.
 		/// </summary>
-		public static readonly JsonValue Null = new(JsonValueType.Null, default(double), null);
+		public static readonly JsonValue Null = new(JsonValueType.Null, default, null);
 
 		private readonly JsonValueType type;
 		private readonly object reference;
@@ -75,7 +75,7 @@ namespace LightJson
 		{
 			if (value != null)
 			{
-				this.value = default(double);
+				this.value = default;
 
 				this.type = JsonValueType.String;
 
@@ -95,7 +95,7 @@ namespace LightJson
 		{
 			if (value != null)
 			{
-				this.value = default(double);
+				this.value = default;
 
 				this.type = JsonValueType.Object;
 
@@ -115,7 +115,7 @@ namespace LightJson
 		{
 			if (value != null)
 			{
-				this.value = default(double);
+				this.value = default;
 
 				this.type = JsonValueType.Array;
 
@@ -150,31 +150,19 @@ namespace LightJson
 		/// Gets the type of this JsonValue.
 		/// </summary>
 		/// <value>The type of this JsonValue.</value>
-		public JsonValueType Type {
-			get {
-				return this.type;
-			}
-		}
+		public JsonValueType Type => this.type;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is Null.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue is Null.</value>
-		public bool IsNull {
-			get {
-				return this.Type == JsonValueType.Null;
-			}
-		}
+		public bool IsNull => this.Type == JsonValueType.Null;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is a Boolean.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue is a Boolean.</value>
-		public bool IsBoolean {
-			get {
-				return this.Type == JsonValueType.Boolean;
-			}
-		}
+		public bool IsBoolean => this.Type == JsonValueType.Boolean;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is an Integer.
@@ -196,78 +184,43 @@ namespace LightJson
 		/// Gets a value indicating whether this JsonValue is a Number.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue is a Number.</value>
-		public bool IsNumber {
-			get {
-				return this.Type == JsonValueType.Number;
-			}
-		}
+		public bool IsNumber => this.Type == JsonValueType.Number;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is a String.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue is a String.</value>
-		public bool IsString {
-			get {
-				return this.Type == JsonValueType.String;
-			}
-		}
+		public bool IsString => this.Type == JsonValueType.String;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is a JsonObject.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue is a JsonObject.</value>
-		public bool IsJsonObject {
-			get {
-				return this.Type == JsonValueType.Object;
-			}
-		}
+		public bool IsJsonObject => this.Type == JsonValueType.Object;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue is a JsonArray.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue is a JsonArray.</value>
-		public bool IsJsonArray {
-			get {
-				return this.Type == JsonValueType.Array;
-			}
-		}
+		public bool IsJsonArray => this.Type == JsonValueType.Array;
 
 		/// <summary>
 		/// Gets a value indicating whether this JsonValue represents a DateTime.
 		/// </summary>
 		/// <value>A value indicating whether this JsonValue represents a DateTime.</value>
-		public bool IsDateTime {
-			get {
-				return this.AsDateTime != null;
-			}
-		}
+		public bool IsDateTime => this.AsDateTime != null;
 
 		/// <summary>
 		/// Gets a value indicating whether this value is true or false.
 		/// </summary>
 		/// <value>This value as a Boolean type.</value>
-		public bool AsBoolean {
-			get {
-				switch (this.Type)
-				{
-					case JsonValueType.Boolean:
-						return this.value == 1;
-
-					case JsonValueType.Number:
-						return this.value != 0;
-
-					case JsonValueType.String:
-						return (string)this.reference != string.Empty;
-
-					case JsonValueType.Object:
-					case JsonValueType.Array:
-						return true;
-
-					default:
-						return false;
-				}
-			}
-		}
+		public bool AsBoolean => this.Type switch {
+			JsonValueType.Boolean => this.value == 1,
+			JsonValueType.Number => this.value != 0,
+			JsonValueType.String => (string)this.reference != string.Empty,
+			JsonValueType.Object or JsonValueType.Array => true,
+			_ => false,
+		};
 
 		/// <summary>
 		/// Gets this value as an Integer type.
@@ -329,40 +282,28 @@ namespace LightJson
 		/// Gets this value as a String type.
 		/// </summary>
 		/// <value>This value as a String type.</value>
-		public string AsString {
-			get {
-				return this.Type switch {
-					JsonValueType.Boolean => (this.value == 1) ? "true" : "false",
-					JsonValueType.Number => this.value.ToString(CultureInfo.InvariantCulture),
-					JsonValueType.String => (string)this.reference,
-					_ => null
-				};
-			}
-		}
+		public string AsString => this.Type switch {
+			JsonValueType.Boolean => (this.value == 1) ? "true" : "false",
+			JsonValueType.Number => this.value.ToString(CultureInfo.InvariantCulture),
+			JsonValueType.String => (string)this.reference,
+			_ => null
+		};
 
 		/// <summary>
 		/// Gets this value as an JsonObject.
 		/// </summary>
 		/// <value>This value as an JsonObject.</value>
-		public JsonObject AsJsonObject {
-			get {
-				return this.IsJsonObject
+		public JsonObject AsJsonObject => this.IsJsonObject
 					? (JsonObject)this.reference
 					: null;
-			}
-		}
 
 		/// <summary>
 		/// Gets this value as an JsonArray.
 		/// </summary>
 		/// <value>This value as an JsonArray.</value>
-		public JsonArray AsJsonArray {
-			get {
-				return this.IsJsonArray
+		public JsonArray AsJsonArray => this.IsJsonArray
 					? (JsonArray)this.reference
 					: null;
-			}
-		}
 
 		/// <summary>
 		/// Gets this value as a system.DateTime.
@@ -370,9 +311,8 @@ namespace LightJson
 		/// <value>This value as a system.DateTime.</value>
 		public DateTime? AsDateTime {
 			get {
-				DateTime value;
 
-				if (this.IsString && DateTime.TryParse((string)this.reference, out value))
+				if (this.IsString && DateTime.TryParse((string)this.reference, out DateTime value))
 				{
 					return value;
 				}
@@ -387,24 +327,11 @@ namespace LightJson
 		/// Gets this (inner) value as a System.object.
 		/// </summary>
 		/// <value>This (inner) value as a System.object.</value>
-		public object AsObject {
-			get {
-				switch (this.Type)
-				{
-					case JsonValueType.Boolean:
-					case JsonValueType.Number:
-						return this.value;
-
-					case JsonValueType.String:
-					case JsonValueType.Object:
-					case JsonValueType.Array:
-						return this.reference;
-
-					default:
-						return null;
-				}
-			}
-		}
+		public object AsObject => this.Type switch {
+			JsonValueType.Boolean or JsonValueType.Number => this.value,
+			JsonValueType.String or JsonValueType.Object or JsonValueType.Array => this.reference,
+			_ => null,
+		};
 
 		/// <summary>
 		/// Gets or sets the value associated with the specified key.
@@ -790,7 +717,7 @@ namespace LightJson
 		[ExcludeFromCodeCoverage]
 		private class JsonValueDebugView
 		{
-			private JsonValue jsonValue;
+			private readonly JsonValue jsonValue;
 
 			public JsonValueDebugView(JsonValue jsonValue)
 			{
@@ -825,11 +752,7 @@ namespace LightJson
 				}
 			}
 
-			public JsonValueType Type {
-				get {
-					return this.jsonValue.Type;
-				}
-			}
+			public JsonValueType Type => this.jsonValue.Type;
 
 			public object Value {
 				get {

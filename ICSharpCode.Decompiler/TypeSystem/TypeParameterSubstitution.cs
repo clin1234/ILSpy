@@ -57,17 +57,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the list of class type arguments.
 		/// Returns <c>null</c> if this substitution keeps class type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> ClassTypeArguments {
-			get { return classTypeArguments; }
-		}
+		public IReadOnlyList<IType> ClassTypeArguments => classTypeArguments;
 
 		/// <summary>
 		/// Gets the list of method type arguments.
 		/// Returns <c>null</c> if this substitution keeps method type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> MethodTypeArguments {
-			get { return methodTypeArguments; }
-		}
+		public IReadOnlyList<IType> MethodTypeArguments => methodTypeArguments;
 
 		#region Compose
 		/// <summary>
@@ -111,8 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(object obj)
 		{
-			TypeParameterSubstitution other = obj as TypeParameterSubstitution;
-			if (other == null)
+			if (obj is not TypeParameterSubstitution other)
 				return false;
 			return TypeListEquals(classTypeArguments, other.classTypeArguments)
 				&& TypeListEquals(methodTypeArguments, other.methodTypeArguments);

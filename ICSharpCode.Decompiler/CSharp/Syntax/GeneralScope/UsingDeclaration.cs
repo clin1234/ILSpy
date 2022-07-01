@@ -37,24 +37,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole UsingKeywordRole = new("using");
 		public static readonly Role<AstType> ImportRole = new("Import", AstType.Null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole(UsingKeywordRole); }
-		}
+		public CSharpTokenNode UsingToken => GetChildByRole(UsingKeywordRole);
 
 		public AstType Import {
 			get { return GetChildByRole(ImportRole); }
 			set { SetChildByRole(ImportRole, value); }
 		}
 
-		public string Namespace {
-			get { return ConstructNamespace(Import); }
-		}
+		public string Namespace => ConstructNamespace(Import);
 
 		internal static string ConstructNamespace(AstType type)
 		{
@@ -82,9 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return result.ToString();
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public UsingDeclaration()
 		{
@@ -117,8 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingDeclaration o = other as UsingDeclaration;
-			return o != null && this.Import.DoMatch(o.Import, match);
+			return other is UsingDeclaration o && this.Import.DoMatch(o.Import, match);
 		}
 	}
 }

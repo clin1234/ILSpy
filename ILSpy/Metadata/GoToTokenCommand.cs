@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.Commands
 			return context.DataGrid?.Name == "MetadataView" && GetSelectedToken(context.DataGrid, out _) != null;
 		}
 
-		private int? GetSelectedToken(DataGrid grid, out PEFile module)
+		private static int? GetSelectedToken(DataGrid grid, out PEFile module)
 		{
 			module = null;
 			if (grid == null)
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Commands
 			Type type = cell.Item.GetType();
 			var property = type.GetProperty(cell.Column.Header.ToString());
 			var moduleField = type.GetField("module", BindingFlags.NonPublic | BindingFlags.Instance);
-			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is StringFormatAttribute sf && sf.Format == "X8"))
+			if (property == null || property.PropertyType != typeof(int) || !property.GetCustomAttributes(false).Any(a => a is StringFormatAttribute { Format: "X8" }))
 				return null;
 			module = (PEFile)moduleField.GetValue(cell.Item);
 			return (int)property.GetValue(cell.Item);
@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy.Commands
 				&& GetSelectedCellContent(context.DataGrid, context.MousePosition) != null;
 		}
 
-		private string GetSelectedCellContent(DataGrid grid, Point position)
+		private static string GetSelectedCellContent(DataGrid grid, Point position)
 		{
 			position = grid.PointFromScreen(position);
 			var hit = VisualTreeHelper.HitTest(grid, position);

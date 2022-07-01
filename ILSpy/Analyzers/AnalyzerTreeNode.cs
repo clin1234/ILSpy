@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public override bool CanDelete()
 		{
-			return Parent != null && Parent.IsRoot;
+			return Parent is { IsRoot: true };
 		}
 
 		public override void DeleteCore()

@@ -58,15 +58,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			AstNode node = astBuilder.ConvertSymbol(symbol);
 			writer.StartNode(node);
-			EntityDeclaration entityDecl = node as EntityDeclaration;
-			if (entityDecl != null)
+			if (node is EntityDeclaration entityDecl)
 				PrintModifiers(entityDecl.Modifiers, writer);
 
 			if ((ConversionFlags & ConversionFlags.ShowDefinitionKeyword) == ConversionFlags.ShowDefinitionKeyword)
 			{
-				if (node is TypeDeclaration)
+				if (node is TypeDeclaration declaration)
 				{
-					switch (((TypeDeclaration)node).ClassType)
+					switch (declaration.ClassType)
 					{
 						case ClassType.Class:
 							writer.WriteKeyword(Roles.ClassKeyword, "class");
@@ -116,10 +115,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 
-			if (symbol is ITypeDefinition)
-				WriteTypeDeclarationName((ITypeDefinition)symbol, writer, formattingPolicy);
-			else if (symbol is IMember)
-				WriteMemberDeclarationName((IMember)symbol, writer, formattingPolicy);
+			if (symbol is ITypeDefinition definition)
+				WriteTypeDeclarationName(definition, writer, formattingPolicy);
+			else if (symbol is IMember member)
+				WriteMemberDeclarationName(member, writer, formattingPolicy);
 			else
 				writer.WriteIdentifier(Identifier.Create(symbol.Name));
 
@@ -173,10 +172,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 
-			if ((ConversionFlags & ConversionFlags.ShowBody) == ConversionFlags.ShowBody && !(node is TypeDeclaration))
+			if ((ConversionFlags & ConversionFlags.ShowBody) == ConversionFlags.ShowBody && node is not TypeDeclaration)
 			{
-				IProperty property = symbol as IProperty;
-				if (property != null)
+				if (symbol is IProperty property)
 				{
 					writer.Space();
 					writer.WriteToken(Roles.LBrace, "{");
@@ -205,19 +203,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		static bool HasParameters(ISymbol e)
 		{
-			switch (e.SymbolKind)
-			{
-				case SymbolKind.TypeDefinition:
-					return ((ITypeDefinition)e).Kind == TypeKind.Delegate;
-				case SymbolKind.Indexer:
-				case SymbolKind.Method:
-				case SymbolKind.Operator:
-				case SymbolKind.Constructor:
-				case SymbolKind.Destructor:
-					return true;
-				default:
-					return false;
-			}
+			return e.SymbolKind switch {
+				SymbolKind.TypeDefinition => ((ITypeDefinition)e).Kind == TypeKind.Delegate,
+				SymbolKind.Indexer or SymbolKind.Method or SymbolKind.Operator or SymbolKind.Constructor or SymbolKind.Destructor => true,
+				_ => false,
+			};
 		}
 
 		TypeSystemAstBuilder CreateAstBuilder()
@@ -264,7 +254,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			EntityDeclaration node = astBuilder.ConvertEntity(member);
-			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType && member.DeclaringType != null && !(member is LocalFunctionMethod))
+			if ((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType && member.DeclaringType != null && member is not LocalFunctionMethod)
 			{
 				ConvertType(member.DeclaringType, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");
@@ -329,14 +319,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				outputVisitor.WriteTypeParameters(typeParameters);
 			}
 
-			TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
+			static TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
 			{
 				decl.Variance = VarianceModifier.Invariant;
 				return decl;
 			}
 		}
 
-		void PrintModifiers(Modifiers modifiers, TokenWriter writer)
+		static void PrintModifiers(Modifiers modifiers, TokenWriter writer)
 		{
 			foreach (var m in CSharpModifierToken.AllModifiers)
 			{
@@ -348,7 +338,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		void WriteQualifiedName(string name, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		static void WriteQualifiedName(string name, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			var node = AstType.Create(name);
 			var outputVisitor = new CSharpOutputVisitor(writer, formattingPolicy);

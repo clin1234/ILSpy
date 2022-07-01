@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!block.Instructions[pos + 1].MatchStLoc(out var finalStore, out var value))
 			{
-				var otherLoadOfV = v.LoadInstructions.FirstOrDefault(l => !(l.Parent is Cpblk));
+				var otherLoadOfV = v.LoadInstructions.FirstOrDefault(l => l.Parent is not Cpblk);
 				if (otherLoadOfV == null)
 					return false;
 				finalStore = otherLoadOfV.Parent.Extract(context);
@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction locAllocInstruction, out IType elementType, out StObj[] values, out int instructionsToRemove)
+		static bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction locAllocInstruction, out IType elementType, out StObj[] values, out int instructionsToRemove)
 		{
 			int elementCount = 0;
 			long minExpectedOffset = 0;
@@ -346,7 +346,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				|| store.AddressCount != 0 || store.LoadCount > values.Length + 1)
 				return false;
 
-			if (store.LoadInstructions.Last().Parent is StLoc finalStore)
+			if (store.LoadInstructions[store.LoadInstructions.Count - 1].Parent is StLoc finalStore)
 			{
 				elementType = ((PointerType)finalStore.Variable.Type).ElementType;
 			}
@@ -355,7 +355,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return elementCount <= values.Length;
 		}
 
-		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
+		static ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
 		{
 			ILInstruction targetInst;
 			if (storeInstruction.Target.MatchLdLoc(out _))
@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return new StObj(targetInst, storeInstruction.Value, storeInstruction.Type);
 		}
 
-		ILInstruction StElemPtr(ILVariable target, int offset, LdcI4 value, IType type)
+		static ILInstruction StElemPtr(ILVariable target, int offset, LdcI4 value, IType type)
 		{
 			var targetInst = offset == 0 ? (ILInstruction)new LdLoc(target) : new BinaryNumericInstruction(
 				BinaryNumericOperator.Add,
@@ -545,7 +545,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
+		static bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
 		{
 			instructionsToRemove = 0;
 			finalStore = null;
@@ -592,7 +592,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchJaggedArrayStore(Block block, int pos, ILVariable store, int index, out ILInstruction initializer, out IType type)
+		static bool MatchJaggedArrayStore(Block block, int pos, ILVariable store, int index, out ILInstruction initializer, out IType type)
 		{
 			initializer = null;
 			type = null;
@@ -603,7 +603,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			if (!(tempAccess is LdElema elemLoad) || !elemLoad.Array.MatchLdLoc(store) || elemLoad.Indices.Count != 1
+			if (tempAccess is not LdElema elemLoad || !elemLoad.Array.MatchLdLoc(store) || elemLoad.Indices.Count != 1
 				|| !elemLoad.Indices[0].MatchLdcI4(index))
 			{
 				return false;
@@ -639,7 +639,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			length = null;
 			arrayType = null;
-			if (!(instruction is NewArr newArr))
+			if (instruction is not NewArr newArr)
 				return false;
 			arrayType = newArr.Type;
 			var args = newArr.Indices;
@@ -657,7 +657,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			array = null;
 			field = default;
-			if (!(instruction is Call call) || call.Arguments.Count != 2)
+			if (instruction is not Call call || call.Arguments.Count != 2)
 				return false;
 			IMethod method = call.Method;
 			if (!method.IsStatic || method.Name != "InitializeArray" || method.DeclaringTypeDefinition == null)
@@ -802,58 +802,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ITypeDefinition typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return new DefaultValue(elementType);
-			switch (typeDef.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.Char:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-					return new LdcI4(0);
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-					return new LdcI8(0);
-				case KnownTypeCode.Single:
-					return new LdcF4(0);
-				case KnownTypeCode.Double:
-					return new LdcF8(0);
-				case KnownTypeCode.Decimal:
-					return new LdcDecimal(0);
-				case KnownTypeCode.Void:
-					throw new ArgumentException("void is not a valid element type!");
-				case KnownTypeCode.IntPtr:
-				case KnownTypeCode.UIntPtr:
-				default:
-					return new DefaultValue(elementType);
-			}
+			return typeDef.KnownTypeCode switch {
+				KnownTypeCode.Boolean or KnownTypeCode.Char or KnownTypeCode.SByte or KnownTypeCode.Byte or KnownTypeCode.Int16 or KnownTypeCode.UInt16 or KnownTypeCode.Int32 or KnownTypeCode.UInt32 => new LdcI4(0),
+				KnownTypeCode.Int64 or KnownTypeCode.UInt64 => new LdcI8(0),
+				KnownTypeCode.Single => new LdcF4(0),
+				KnownTypeCode.Double => new LdcF8(0),
+				KnownTypeCode.Decimal => new LdcDecimal(0),
+				KnownTypeCode.Void => throw new ArgumentException("void is not a valid element type!"),
+				_ => new DefaultValue(elementType),
+			};
 		}
 
 		static int ElementSizeOf(TypeCode elementType)
 		{
-			switch (elementType)
-			{
-				case TypeCode.Boolean:
-				case TypeCode.Byte:
-				case TypeCode.SByte:
-					return 1;
-				case TypeCode.Char:
-				case TypeCode.Int16:
-				case TypeCode.UInt16:
-					return 2;
-				case TypeCode.Int32:
-				case TypeCode.UInt32:
-				case TypeCode.Single:
-					return 4;
-				case TypeCode.Int64:
-				case TypeCode.UInt64:
-				case TypeCode.Double:
-					return 8;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(elementType));
-			}
+			return elementType switch {
+				TypeCode.Boolean or TypeCode.Byte or TypeCode.SByte => 1,
+				TypeCode.Char or TypeCode.Int16 or TypeCode.UInt16 => 2,
+				TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Single => 4,
+				TypeCode.Int64 or TypeCode.UInt64 or TypeCode.Double => 8,
+				_ => throw new ArgumentOutOfRangeException(nameof(elementType)),
+			};
 		}
 	}
 }

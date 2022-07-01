@@ -166,9 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return result;
 		}
 
-		bool ICollection<T>.IsReadOnly {
-			get { return false; }
-		}
+		bool ICollection<T>.IsReadOnly => false;
 
 		public IEnumerator<T> GetEnumerator()
 		{
@@ -198,8 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override bool Equals(object obj)
 		{
-			AstNodeCollection<T> other = obj as AstNodeCollection<T>;
-			if (other == null)
+			if (obj is not AstNodeCollection<T> other)
 				return false;
 			return this.node == other.node && this.role == other.role;
 		}

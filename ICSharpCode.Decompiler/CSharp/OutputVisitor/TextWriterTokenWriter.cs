@@ -37,9 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public int Indentation { get; set; }
 
-		public TextLocation Location {
-			get { return new(line, column + (needsIndent ? Indentation * IndentationString.Length : 0)); }
-		}
+		public TextLocation Location => new(line, column + (needsIndent ? Indentation * IndentationString.Length : 0));
 
 		public string IndentationString { get; set; }
 
@@ -431,56 +429,24 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <remarks>This method does not convert ' or ".</remarks>
 		static string ConvertChar(char ch)
 		{
-			switch (ch)
-			{
-				case '\\':
-					return "\\\\";
-				case '\0':
-					return "\\0";
-				case '\a':
-					return "\\a";
-				case '\b':
-					return "\\b";
-				case '\f':
-					return "\\f";
-				case '\n':
-					return "\\n";
-				case '\r':
-					return "\\r";
-				case '\t':
-					return "\\t";
-				case '\v':
-					return "\\v";
-				case ' ':
-				case '_':
-				case '`':
-				case '^':
-					// ASCII characters we allow directly in the output even though we don't use
-					// other Unicode characters of the same category.
-					return null;
-				case '\ufffd':
-					return "\\u" + ((int)ch).ToString("x4");
-				default:
-					switch (char.GetUnicodeCategory(ch))
-					{
-						case UnicodeCategory.NonSpacingMark:
-						case UnicodeCategory.SpacingCombiningMark:
-						case UnicodeCategory.EnclosingMark:
-						case UnicodeCategory.LineSeparator:
-						case UnicodeCategory.ParagraphSeparator:
-						case UnicodeCategory.Control:
-						case UnicodeCategory.Format:
-						case UnicodeCategory.Surrogate:
-						case UnicodeCategory.PrivateUse:
-						case UnicodeCategory.ConnectorPunctuation:
-						case UnicodeCategory.ModifierSymbol:
-						case UnicodeCategory.OtherNotAssigned:
-						case UnicodeCategory.SpaceSeparator:
-							return "\\u" + ((int)ch).ToString("x4");
-						default:
-							return null;
-					}
-			}
+			return ch switch {
+				'\\' => "\\\\",
+				'\0' => "\\0",
+				'\a' => "\\a",
+				'\b' => "\\b",
+				'\f' => "\\f",
+				'\n' => "\\n",
+				'\r' => "\\r",
+				'\t' => "\\t",
+				'\v' => "\\v",
+				' ' or '_' or '`' or '^' => null,// ASCII characters we allow directly in the output even though we don't use
+												 // other Unicode characters of the same category.
+				'\ufffd' => "\\u" + ((int)ch).ToString("x4"),
+				_ => char.GetUnicodeCategory(ch) switch {
+					UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator or UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.Surrogate or UnicodeCategory.PrivateUse or UnicodeCategory.ConnectorPunctuation or UnicodeCategory.ModifierSymbol or UnicodeCategory.OtherNotAssigned or UnicodeCategory.SpaceSeparator => "\\u" + ((int)ch).ToString("x4"),
+					_ => null,
+				},
+			};
 		}
 
 		/// <summary>
@@ -563,25 +529,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case '^':
 					return true;
 			}
-			switch (char.GetUnicodeCategory(identifier, index))
-			{
-				case UnicodeCategory.NonSpacingMark:
-				case UnicodeCategory.SpacingCombiningMark:
-				case UnicodeCategory.EnclosingMark:
-				case UnicodeCategory.LineSeparator:
-				case UnicodeCategory.ParagraphSeparator:
-				case UnicodeCategory.Control:
-				case UnicodeCategory.Format:
-				case UnicodeCategory.Surrogate:
-				case UnicodeCategory.PrivateUse:
-				case UnicodeCategory.ConnectorPunctuation:
-				case UnicodeCategory.ModifierSymbol:
-				case UnicodeCategory.OtherNotAssigned:
-				case UnicodeCategory.SpaceSeparator:
-					return false;
-				default:
-					return true;
-			}
+			return char.GetUnicodeCategory(identifier, index) switch {
+				UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator or UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.Surrogate or UnicodeCategory.PrivateUse or UnicodeCategory.ConnectorPunctuation or UnicodeCategory.ModifierSymbol or UnicodeCategory.OtherNotAssigned or UnicodeCategory.SpaceSeparator => false,
+				_ => true,
+			};
 		}
 
 		public override void WritePrimitiveType(string type)

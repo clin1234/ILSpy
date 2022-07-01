@@ -37,9 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -67,8 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ExpressionStatement o = other as ExpressionStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is ExpressionStatement o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

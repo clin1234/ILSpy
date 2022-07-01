@@ -143,19 +143,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static bool SparseIntegerSwitch3(int i)
 		{
-			switch (i)
-			{
-				case 0:
-				case 10:
-				case 11:
-				case 12:
-				case 100:
-				case 101:
-				case 200:
-					return true;
-				default:
-					return false;
-			}
+			return i switch {
+				0 or 10 or 11 or 12 or 100 or 101 or 200 => true,
+				_ => false,
+			};
 		}
 
 		public static string SwitchOverNullableInt(int? i)
@@ -171,18 +162,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntNullCaseCombined(int? i)
 		{
-			switch (i)
-			{
-				case null:
-				case 0:
-					return "zero";
-				case 5:
-					return "five";
-				case 10:
-					return "ten";
-				default:
-					return "large";
-			}
+			return i switch {
+				null or 0 => "zero",
+				5 => "five",
+				10 => "ten",
+				_ => "large",
+			};
 		}
 
 		public static string SwitchOverNullableIntShifted(int? i)
@@ -198,18 +183,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static string SwitchOverNullableIntShiftedNullCaseCombined(int? i)
 		{
-			switch (i + 5)
-			{
-				case null:
-				case 0:
-					return "zero";
-				case 5:
-					return "five";
-				case 10:
-					return "ten";
-				default:
-					return "large";
-			}
+			return (i + 5) switch {
+				null or 0 => "zero",
+				5 => "five",
+				10 => "ten",
+				_ => "large",
+			};
 		}
 
 		public static string SwitchOverNullableIntNoNullCase(int? i)
@@ -305,26 +284,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-				case "2nd case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case null:
-					return null;
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text1",
+				"Second case" or "2nd case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				null => null,
+				_ => "Default",
+			};
 		}
 
 		public static string SwitchOverString2()
@@ -536,7 +505,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static SetProperty[] GetProperties()
 		{
-			return new SetProperty[0];
+			return Array.Empty<SetProperty>();
 		}
 
 		public static void SwitchOnStringInForLoop()
@@ -1278,23 +1247,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				return "5";
 			}
-			switch (x)
-			{
-				case 1:
-					return "1";
-				case 2:
-				case 6:
-				case 7:
-					return "2-6-7";
-				case 3:
-					return "3";
-				case 4:
-					return "4";
-				case 5:
-					return "unreachable";
-				default:
-					throw new();
-			}
+			return x switch {
+				1 => "1",
+				2 or 6 or 7 => "2-6-7",
+				3 => "3",
+				4 => "4",
+				5 => "unreachable",
+				_ => throw new(),
+			};
 		}
 
 		public static int Issue1602(string x)

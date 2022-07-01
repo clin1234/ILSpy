@@ -38,17 +38,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.TargetExpression, value); }
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
-		}
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole<Expression>(Roles.Argument);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -87,8 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			InvocationExpression o = other as InvocationExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
+			return other is InvocationExpression o && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }

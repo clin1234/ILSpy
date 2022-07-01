@@ -56,17 +56,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out typeParameterCount);
 		}
 
-		public string Namespace {
-			get { return namespaceName; }
-		}
+		public string Namespace => namespaceName;
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name => name;
 
-		public int TypeParameterCount {
-			get { return typeParameterCount; }
-		}
+		public int TypeParameterCount => typeParameterCount;
 
 		public string ReflectionName {
 			get {

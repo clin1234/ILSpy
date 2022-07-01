@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// We are only interested in store "statements" copying the exception variable
 				// without modifying it.
 				var statement = LocalFunctionDecompiler.GetStatement(load);
-				if (!(statement is StLoc stloc))
+				if (statement is not StLoc stloc)
 				{
 					i++;
 					continue;
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br falseBlock
 		/// }
 		/// </summary>
-		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
+		static bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
 		{
 			exceptionType = null;
 			exceptionSlot = null;
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br exitBlock
 		/// }
 		/// </summary>
-		bool MatchFalseBlock(BlockContainer container, Block falseBlock, out ILVariable returnVar, out Block exitBlock)
+		static bool MatchFalseBlock(BlockContainer container, Block falseBlock, out ILVariable returnVar, out Block exitBlock)
 		{
 			returnVar = null;
 			exitBlock = null;
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   leave container(ldloc returnVar)
 		/// }
 		/// </summary>
-		bool MatchExitBlock(BlockContainer container, Block exitBlock, ILVariable returnVar)
+		static bool MatchExitBlock(BlockContainer container, Block exitBlock, ILVariable returnVar)
 		{
 			if (exitBlock.IncomingEdgeCount != 2 || exitBlock.Instructions.Count != 1)
 				return false;

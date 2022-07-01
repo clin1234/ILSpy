@@ -78,9 +78,9 @@ Examples:
 		public (bool IsSet, string Value) InputPDBFile { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
-		public string[] EntityTypes { get; } = new string[0];
+		public string[] EntityTypes { get; } = Array.Empty<string>();
 
-		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
+		public static string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
 				Environment.NewLine
 				+ "ICSharpCode.Decompiler: " +
 				typeof(FullTypeName).Assembly.GetName().Version.ToString();
@@ -92,7 +92,7 @@ Examples:
 
 		[DirectoryExists]
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
-		public string[] ReferencePaths { get; } = new string[0];
+		public string[] ReferencePaths { get; } = Array.Empty<string>();
 
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
 		public bool RemoveDeadCode { get; }
@@ -323,7 +323,7 @@ Examples:
 			return 0;
 		}
 
-		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
+		static int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
 		{
 			using var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
 			using var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);

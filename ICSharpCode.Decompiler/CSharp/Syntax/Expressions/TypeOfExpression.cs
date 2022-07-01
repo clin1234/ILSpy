@@ -35,22 +35,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole TypeofKeywordRole = new("typeof");
 
-		public CSharpTokenNode TypeOfToken {
-			get { return GetChildByRole(TypeofKeywordRole); }
-		}
+		public CSharpTokenNode TypeOfToken => GetChildByRole(TypeofKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public TypeOfExpression()
 		{
@@ -78,8 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeOfExpression o = other as TypeOfExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is TypeOfExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

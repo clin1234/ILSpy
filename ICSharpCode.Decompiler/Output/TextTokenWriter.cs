@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler
 			return FilterMember(symbol);
 		}
 
-		ISymbol FilterMember(ISymbol symbol)
+		static ISymbol FilterMember(ISymbol symbol)
 		{
 			if (symbol is null or LocalFunctionMethod)
 				return null;
@@ -196,8 +196,7 @@ namespace ICSharpCode.Decompiler
 
 			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement)
 			{
-				var localFunction = node.Parent.GetResolveResult() as MemberResolveResult;
-				if (localFunction != null)
+				if (node.Parent.GetResolveResult() is MemberResolveResult localFunction)
 					return localFunction.Member;
 			}
 
@@ -320,7 +319,7 @@ namespace ICSharpCode.Decompiler
 					output.Write("*/");
 					break;
 				case CommentType.Documentation:
-					bool isLastLine = !(nodeStack.Peek().NextSibling is Comment);
+					bool isLastLine = nodeStack.Peek().NextSibling is not Comment;
 					if (!inDocumentationComment && !isLastLine)
 					{
 						inDocumentationComment = true;
@@ -433,7 +432,7 @@ namespace ICSharpCode.Decompiler
 			nodeStack.Push(node);
 		}
 
-		private bool IsUsingDeclaration(AstNode node)
+		private static bool IsUsingDeclaration(AstNode node)
 		{
 			return node is UsingDeclaration or UsingAliasDeclaration;
 		}
@@ -446,7 +445,7 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsDefinition(ref AstNode node)
 		{
-			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
+			if (node is EntityDeclaration && node.Parent is not LocalFunctionDeclarationStatement)
 				return true;
 			if (node is VariableInitializer && node.Parent is FieldDeclaration)
 			{

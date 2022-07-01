@@ -45,8 +45,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			var thisRR = targetResult as ThisResolveResult;
 			this.isVirtualCall = member.IsOverridable && !(thisRR is { CausesNonVirtualInvocation: true });
 
-			IField field = member as IField;
-			if (field != null)
+			if (member is IField field)
 			{
 				isConstant = field.IsConst;
 				if (isConstant)
@@ -60,8 +59,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.targetResult = targetResult;
 			this.member = member;
 			this.isVirtualCall = isVirtualCall;
-			IField field = member as IField;
-			if (field != null)
+			if (member is IField field)
 			{
 				isConstant = field.IsConst;
 				if (isConstant)
@@ -104,32 +102,22 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.isVirtualCall = isVirtualCall;
 		}
 
-		public ResolveResult TargetResult {
-			get { return targetResult; }
-		}
+		public ResolveResult TargetResult => targetResult;
 
 		/// <summary>
 		/// Gets the member.
 		/// This property never returns null.
 		/// </summary>
-		public IMember Member {
-			get { return member; }
-		}
+		public IMember Member => member;
 
 		/// <summary>
 		/// Gets whether this MemberResolveResult is a virtual call.
 		/// </summary>
-		public bool IsVirtualCall {
-			get { return isVirtualCall; }
-		}
+		public bool IsVirtualCall => isVirtualCall;
 
-		public override bool IsCompileTimeConstant {
-			get { return isConstant; }
-		}
+		public override bool IsCompileTimeConstant => isConstant;
 
-		public override object ConstantValue {
-			get { return constantValue; }
-		}
+		public override object ConstantValue => constantValue;
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{

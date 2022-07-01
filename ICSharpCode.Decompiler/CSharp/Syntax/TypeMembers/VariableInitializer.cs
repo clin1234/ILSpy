@@ -34,11 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullVariableInitializer : VariableInitializer
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -77,9 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -108,11 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public VariableInitializer()
 		{
@@ -142,9 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole(Roles.Assign);
 
 		public Expression Initializer {
 			get { return GetChildByRole(Roles.Expression); }
@@ -168,8 +156,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			VariableInitializer o = other as VariableInitializer;
-			return o != null && MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
+			return other is VariableInitializer o && MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

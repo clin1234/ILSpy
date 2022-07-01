@@ -57,13 +57,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.defaultValue = defaultValue;
 		}
 
-		SymbolKind ISymbol.SymbolKind {
-			get { return SymbolKind.Parameter; }
-		}
+		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
 
-		public IParameterizedMember Owner {
-			get { return owner; }
-		}
+		public IParameterizedMember Owner => owner;
 
 		public IEnumerable<IAttribute> GetAttributes() => attributes;
 
@@ -76,21 +72,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool IsOptional => isOptional;
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name => name;
 
-		public IType Type {
-			get { return type; }
-		}
+		public IType Type => type;
 
-		bool IVariable.IsConst {
-			get { return false; }
-		}
+		bool IVariable.IsConst => false;
 
-		public bool HasConstantValueInSignature {
-			get { return IsOptional; }
-		}
+		public bool HasConstantValueInSignature => IsOptional;
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{

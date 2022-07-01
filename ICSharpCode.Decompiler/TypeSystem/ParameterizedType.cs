@@ -51,13 +51,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentException("Cannot use ParameterizedType with 0 type arguments.");
 			if (genericType.TypeParameterCount != this.typeArguments.Length)
 				throw new ArgumentException("Number of type arguments must match the type definition's number of type parameters");
-			ICompilationProvider gp = genericType as ICompilationProvider;
 			for (int i = 0; i < this.typeArguments.Length; i++)
 			{
 				if (this.typeArguments[i] == null)
 					throw new ArgumentNullException("typeArguments[" + i + "]");
-				ICompilationProvider p = this.typeArguments[i] as ICompilationProvider;
-				if (p != null && gp != null && p.Compilation != gp.Compilation)
+				if (this.typeArguments[i] is ICompilationProvider p && genericType is ICompilationProvider gp && p.Compilation != gp.Compilation)
 					throw new InvalidOperationException("Cannot parameterize a type with type arguments from a different compilation.");
 			}
 		}
@@ -73,13 +71,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.typeArguments = typeArguments;
 		}
 
-		public TypeKind Kind {
-			get { return genericType.Kind; }
-		}
+		public TypeKind Kind => genericType.Kind;
 
-		public IType GenericType {
-			get { return genericType; }
-		}
+		public IType GenericType => genericType;
 
 		public bool? IsReferenceType => genericType.IsReferenceType;
 		public bool IsByRefLike => genericType.IsByRefLike;
@@ -108,21 +102,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public int TypeParameterCount {
-			get { return typeArguments.Length; }
-		}
+		public int TypeParameterCount => typeArguments.Length;
 
-		public string FullName {
-			get { return genericType.FullName; }
-		}
+		public string FullName => genericType.FullName;
 
-		public string Name {
-			get { return genericType.Name; }
-		}
+		public string Name => genericType.Name;
 
-		public string Namespace {
-			get { return genericType.Namespace; }
-		}
+		public string Namespace => genericType.Namespace;
 
 		public string ReflectionName {
 			get {
@@ -293,8 +279,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (this == other)
 				return true;
-			ParameterizedType c = other as ParameterizedType;
-			if (c == null || !genericType.Equals(c.genericType) || typeArguments.Length != c.typeArguments.Length)
+			if (other is not ParameterizedType c || !genericType.Equals(c.genericType) || typeArguments.Length != c.typeArguments.Length)
 				return false;
 			for (int i = 0; i < typeArguments.Length; i++)
 			{
@@ -375,15 +360,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public ITypeReference GenericType {
-			get { return genericType; }
-		}
+		public ITypeReference GenericType => genericType;
 
-		public IReadOnlyList<ITypeReference> TypeArguments {
-			get {
-				return typeArguments;
-			}
-		}
+		public IReadOnlyList<ITypeReference> TypeArguments => typeArguments;
 
 		public IType Resolve(ITypeResolveContext context)
 		{
@@ -434,8 +413,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ParameterizedTypeReference o = other as ParameterizedTypeReference;
-			if (o != null && genericType == o.genericType && typeArguments.Length == o.typeArguments.Length)
+			if (other is ParameterizedTypeReference o && genericType == o.genericType && typeArguments.Length == o.typeArguments.Length)
 			{
 				for (int i = 0; i < typeArguments.Length; i++)
 				{

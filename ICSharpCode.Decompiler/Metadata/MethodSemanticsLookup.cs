@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public (EntityHandle, MethodSemanticsAttributes) GetSemantics(MethodDefinitionHandle method)
 		{
-			int pos = entries.BinarySearch(new(0, method, default(EntityHandle)));
+			int pos = entries.BinarySearch(new(0, method, default));
 			if (pos >= 0)
 			{
 				return (entries[pos].Association, entries[pos].Semantics);

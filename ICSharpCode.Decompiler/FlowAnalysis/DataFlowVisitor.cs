@@ -229,8 +229,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 #if DEBUG
 		// For debugging, capture the input + output state at every instruction.
-		readonly Dictionary<ILInstruction, State> debugInputState = new Dictionary<ILInstruction, State>();
-		readonly Dictionary<ILInstruction, State> debugOutputState = new Dictionary<ILInstruction, State>();
+		readonly Dictionary<ILInstruction, State> debugInputState = new();
+		readonly Dictionary<ILInstruction, State> debugOutputState = new();
 
 		void DebugPoint(Dictionary<ILInstruction, State> debugDict, ILInstruction inst)
 		{

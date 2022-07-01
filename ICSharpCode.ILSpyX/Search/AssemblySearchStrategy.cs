@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpyX.Search
 				OnFoundResult(module);
 		}
 
-		string GetNameToMatch(PEFile module, AssemblySearchKind kind)
+		static string GetNameToMatch(PEFile module, AssemblySearchKind kind)
 		{
 			switch (kind)
 			{

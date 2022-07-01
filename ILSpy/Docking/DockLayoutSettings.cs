@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public DockLayoutSettings(XElement element)
 		{
-			if ((element != null) && element.HasElements)
+			if (element is { HasElements: true })
 			{
 				rawSettings = element.Elements().FirstOrDefault()?.ToString();
 			}
@@ -104,20 +104,16 @@ namespace ICSharpCode.ILSpy.Docking
 
 			void Deserialize(string settings)
 			{
-				using (StringReader reader = new StringReader(settings))
-				{
-					serializer.Deserialize(reader);
-				}
+				using StringReader reader = new(settings);
+				serializer.Deserialize(reader);
 			}
 		}
 
 		public void Serialize(XmlLayoutSerializer serializer)
 		{
-			using (StringWriter fs = new StringWriter())
-			{
-				serializer.Serialize(fs);
-				rawSettings = fs.ToString();
-			}
+			using StringWriter fs = new();
+			serializer.Serialize(fs);
+			rawSettings = fs.ToString();
 		}
 	}
 }

@@ -117,9 +117,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		#region Inner classes
 		sealed class InvalidConversion : Conversion
 		{
-			public override bool IsValid {
-				get { return false; }
-			}
+			public override bool IsValid => false;
 
 			public override string ToString()
 			{
@@ -140,25 +138,15 @@ namespace ICSharpCode.Decompiler.Semantics
 				this.isEnumeration = isEnumeration;
 			}
 
-			public override bool IsImplicit {
-				get { return isImplicit; }
-			}
+			public override bool IsImplicit => isImplicit;
 
-			public override bool IsExplicit {
-				get { return !isImplicit; }
-			}
+			public override bool IsExplicit => !isImplicit;
 
-			public override bool IsNumericConversion {
-				get { return !isEnumeration; }
-			}
+			public override bool IsNumericConversion => !isEnumeration;
 
-			public override bool IsEnumerationConversion {
-				get { return isEnumeration; }
-			}
+			public override bool IsEnumerationConversion => isEnumeration;
 
-			public override bool IsLifted {
-				get { return isLifted; }
-			}
+			public override bool IsLifted => isLifted;
 
 			public override string ToString()
 			{
@@ -170,8 +158,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 			public override bool Equals(Conversion other)
 			{
-				NumericOrEnumerationConversion o = other as NumericOrEnumerationConversion;
-				return o != null && isImplicit == o.isImplicit && isLifted == o.isLifted && isEnumeration == o.isEnumeration;
+				return other is NumericOrEnumerationConversion o && isImplicit == o.isImplicit && isLifted == o.isLifted && isEnumeration == o.isEnumeration;
 			}
 
 			public override int GetHashCode()
@@ -191,59 +178,33 @@ namespace ICSharpCode.Decompiler.Semantics
 				this.type = type;
 			}
 
-			public override bool IsImplicit {
-				get { return isImplicit; }
-			}
+			public override bool IsImplicit => isImplicit;
 
-			public override bool IsExplicit {
-				get { return !isImplicit; }
-			}
+			public override bool IsExplicit => !isImplicit;
 
-			public override bool IsIdentityConversion {
-				get { return type == 0; }
-			}
+			public override bool IsIdentityConversion => type == 0;
 
-			public override bool IsNullLiteralConversion {
-				get { return type == 1; }
-			}
+			public override bool IsNullLiteralConversion => type == 1;
 
-			public override bool IsConstantExpressionConversion {
-				get { return type == 2; }
-			}
+			public override bool IsConstantExpressionConversion => type == 2;
 
-			public override bool IsReferenceConversion {
-				get { return type == 3; }
-			}
+			public override bool IsReferenceConversion => type == 3;
 
-			public override bool IsDynamicConversion {
-				get { return type == 4; }
-			}
+			public override bool IsDynamicConversion => type == 4;
 
-			public override bool IsNullableConversion {
-				get { return type == 5; }
-			}
+			public override bool IsNullableConversion => type == 5;
 
-			public override bool IsPointerConversion {
-				get { return type == 6; }
-			}
+			public override bool IsPointerConversion => type == 6;
 
-			public override bool IsBoxingConversion {
-				get { return type == 7; }
-			}
+			public override bool IsBoxingConversion => type == 7;
 
-			public override bool IsUnboxingConversion {
-				get { return type == 8; }
-			}
+			public override bool IsUnboxingConversion => type == 8;
 
-			public override bool IsTryCast {
-				get { return type == 9; }
-			}
+			public override bool IsTryCast => type == 9;
 
 			public override bool IsInterpolatedStringConversion => type == 10;
 
-			public override bool IsThrowExpressionConversion {
-				get { return type == 11; }
-			}
+			public override bool IsThrowExpressionConversion => type == 11;
 
 			public override string ToString()
 			{
@@ -303,42 +264,25 @@ namespace ICSharpCode.Decompiler.Semantics
 				this.isValid = !isAmbiguous;
 			}
 
-			public override bool IsValid {
-				get { return isValid; }
-			}
+			public override bool IsValid => isValid;
 
-			public override bool IsImplicit {
-				get { return isImplicit; }
-			}
+			public override bool IsImplicit => isImplicit;
 
-			public override bool IsExplicit {
-				get { return !isImplicit; }
-			}
+			public override bool IsExplicit => !isImplicit;
 
-			public override bool IsLifted {
-				get { return isLifted; }
-			}
+			public override bool IsLifted => isLifted;
 
-			public override bool IsUserDefined {
-				get { return true; }
-			}
+			public override bool IsUserDefined => true;
 
-			public override Conversion ConversionBeforeUserDefinedOperator {
-				get { return conversionBeforeUserDefinedOperator; }
-			}
+			public override Conversion ConversionBeforeUserDefinedOperator => conversionBeforeUserDefinedOperator;
 
-			public override Conversion ConversionAfterUserDefinedOperator {
-				get { return conversionAfterUserDefinedOperator; }
-			}
+			public override Conversion ConversionAfterUserDefinedOperator => conversionAfterUserDefinedOperator;
 
-			public override IMethod Method {
-				get { return method; }
-			}
+			public override IMethod Method => method;
 
 			public override bool Equals(Conversion other)
 			{
-				UserDefinedConv o = other as UserDefinedConv;
-				return o != null && isLifted == o.isLifted && isImplicit == o.isImplicit && isValid == o.isValid && method.Equals(o.method);
+				return other is UserDefinedConv o && isLifted == o.isLifted && isImplicit == o.isImplicit && isValid == o.isValid && method.Equals(o.method);
 			}
 
 			public override int GetHashCode()
@@ -370,34 +314,21 @@ namespace ICSharpCode.Decompiler.Semantics
 				this.isValid = isValid;
 			}
 
-			public override bool IsValid {
-				get { return isValid; }
-			}
+			public override bool IsValid => isValid;
 
-			public override bool IsImplicit {
-				get { return true; }
-			}
+			public override bool IsImplicit => true;
 
-			public override bool IsMethodGroupConversion {
-				get { return true; }
-			}
+			public override bool IsMethodGroupConversion => true;
 
-			public override bool IsVirtualMethodLookup {
-				get { return isVirtualMethodLookup; }
-			}
+			public override bool IsVirtualMethodLookup => isVirtualMethodLookup;
 
-			public override bool DelegateCapturesFirstArgument {
-				get { return delegateCapturesFirstArgument; }
-			}
+			public override bool DelegateCapturesFirstArgument => delegateCapturesFirstArgument;
 
-			public override IMethod Method {
-				get { return method; }
-			}
+			public override IMethod Method => method;
 
 			public override bool Equals(Conversion other)
 			{
-				MethodGroupConv o = other as MethodGroupConv;
-				return o != null && method.Equals(o.method);
+				return other is MethodGroupConv o && method.Equals(o.method);
 			}
 
 			public override int GetHashCode()
@@ -449,136 +380,92 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// Gets whether the conversion is valid.
 		/// </summary>
-		public virtual bool IsValid {
-			get { return true; }
-		}
+		public virtual bool IsValid => true;
 
-		public virtual bool IsImplicit {
-			get { return false; }
-		}
+		public virtual bool IsImplicit => false;
 
-		public virtual bool IsExplicit {
-			get { return false; }
-		}
+		public virtual bool IsExplicit => false;
 
 		/// <summary>
 		/// Gets whether the conversion is an '<c>as</c>' cast.
 		/// </summary>
-		public virtual bool IsTryCast {
-			get { return false; }
-		}
+		public virtual bool IsTryCast => false;
 
-		public virtual bool IsThrowExpressionConversion {
-			get { return false; }
-		}
+		public virtual bool IsThrowExpressionConversion => false;
 
-		public virtual bool IsIdentityConversion {
-			get { return false; }
-		}
+		public virtual bool IsIdentityConversion => false;
 
-		public virtual bool IsNullLiteralConversion {
-			get { return false; }
-		}
+		public virtual bool IsNullLiteralConversion => false;
 
-		public virtual bool IsConstantExpressionConversion {
-			get { return false; }
-		}
+		public virtual bool IsConstantExpressionConversion => false;
 
-		public virtual bool IsNumericConversion {
-			get { return false; }
-		}
+		public virtual bool IsNumericConversion => false;
 
 		/// <summary>
 		/// Gets whether this conversion is a lifted version of another conversion.
 		/// </summary>
-		public virtual bool IsLifted {
-			get { return false; }
-		}
+		public virtual bool IsLifted => false;
 
 		/// <summary>
 		/// Gets whether the conversion is dynamic.
 		/// </summary>
-		public virtual bool IsDynamicConversion {
-			get { return false; }
-		}
+		public virtual bool IsDynamicConversion => false;
 
 		/// <summary>
 		/// Gets whether the conversion is a reference conversion.
 		/// </summary>
-		public virtual bool IsReferenceConversion {
-			get { return false; }
-		}
+		public virtual bool IsReferenceConversion => false;
 
 		/// <summary>
 		/// Gets whether the conversion is an enumeration conversion.
 		/// </summary>
-		public virtual bool IsEnumerationConversion {
-			get { return false; }
-		}
+		public virtual bool IsEnumerationConversion => false;
 
 		/// <summary>
 		/// Gets whether the conversion is a nullable conversion
 		/// (conversion between a nullable type and the regular type).
 		/// </summary>
-		public virtual bool IsNullableConversion {
-			get { return false; }
-		}
+		public virtual bool IsNullableConversion => false;
 
 		/// <summary>
 		/// Gets whether this conversion is user-defined (op_Implicit or op_Explicit).
 		/// </summary>
-		public virtual bool IsUserDefined {
-			get { return false; }
-		}
+		public virtual bool IsUserDefined => false;
 
 		/// <summary>
 		/// The conversion that is applied to the input before the user-defined conversion operator is invoked.
 		/// </summary>
-		public virtual Conversion ConversionBeforeUserDefinedOperator {
-			get { return null; }
-		}
+		public virtual Conversion ConversionBeforeUserDefinedOperator => null;
 
 		/// <summary>
 		/// The conversion that is applied to the result of the user-defined conversion operator.
 		/// </summary>
-		public virtual Conversion ConversionAfterUserDefinedOperator {
-			get { return null; }
-		}
+		public virtual Conversion ConversionAfterUserDefinedOperator => null;
 
 		/// <summary>
 		/// Gets whether this conversion is a boxing conversion.
 		/// </summary>
-		public virtual bool IsBoxingConversion {
-			get { return false; }
-		}
+		public virtual bool IsBoxingConversion => false;
 
 		/// <summary>
 		/// Gets whether this conversion is an unboxing conversion.
 		/// </summary>
-		public virtual bool IsUnboxingConversion {
-			get { return false; }
-		}
+		public virtual bool IsUnboxingConversion => false;
 
 		/// <summary>
 		/// Gets whether this conversion is a pointer conversion.
 		/// </summary>
-		public virtual bool IsPointerConversion {
-			get { return false; }
-		}
+		public virtual bool IsPointerConversion => false;
 
 		/// <summary>
 		/// Gets whether this conversion is a method group conversion.
 		/// </summary>
-		public virtual bool IsMethodGroupConversion {
-			get { return false; }
-		}
+		public virtual bool IsMethodGroupConversion => false;
 
 		/// <summary>
 		/// For method-group conversions, gets whether to perform a virtual method lookup at runtime.
 		/// </summary>
-		public virtual bool IsVirtualMethodLookup {
-			get { return false; }
-		}
+		public virtual bool IsVirtualMethodLookup => false;
 
 		/// <summary>
 		/// For method-group conversions, gets whether the conversion captures the first argument.
@@ -586,25 +473,19 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// For instance methods, this property always returns true for C# method-group conversions.
 		/// For static methods, this property returns true for method-group conversions of an extension method performed on an instance (eg. <c>Func&lt;int&gt; f = myEnumerable.Single</c>).
 		/// </summary>
-		public virtual bool DelegateCapturesFirstArgument {
-			get { return false; }
-		}
+		public virtual bool DelegateCapturesFirstArgument => false;
 
 		/// <summary>
 		/// Gets whether this conversion is an anonymous function conversion.
 		/// </summary>
-		public virtual bool IsAnonymousFunctionConversion {
-			get { return false; }
-		}
+		public virtual bool IsAnonymousFunctionConversion => false;
 
 		/// <summary>
 		/// Gets the method associated with this conversion.
 		/// For user-defined conversions, this is the method being called.
 		/// For method-group conversions, this is the method that was chosen from the group.
 		/// </summary>
-		public virtual IMethod Method {
-			get { return null; }
-		}
+		public virtual IMethod Method => null;
 
 		/// <summary>
 		/// Gets whether this conversion is a tuple conversion.
@@ -619,7 +500,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// For a tuple conversion, gets the individual tuple element conversions.
 		/// </summary>
-		public virtual ImmutableArray<Conversion> ElementConversions => default(ImmutableArray<Conversion>);
+		public virtual ImmutableArray<Conversion> ElementConversions => default;
 
 		public override sealed bool Equals(object obj)
 		{

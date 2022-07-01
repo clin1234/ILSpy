@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 
-		private bool DoTransform(Block block, ILTransformContext context)
+		private static bool DoTransform(Block block, ILTransformContext context)
 		{
 			if (!MatchBlock1(block, out var s, out int value, out var br))
 				return false;
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//  stloc s(ldc.i4 1)
 		//  br IL_0019
 		// }
-		private bool MatchBlock1(Block block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue, [NotNullWhen(true)] out Branch? branch)
+		private static bool MatchBlock1(Block block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue, [NotNullWhen(true)] out Branch? branch)
 		{
 			variable = null;
 			constantValue = 0;
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//     if (logic.not(ldloc s)) br IL_0027
 		//     br IL_001d
 		// }
-		bool MatchBlock2(Block block, ILVariable s, int constantValue, [NotNullWhen(true)] out ILInstruction? exitInst)
+		static bool MatchBlock2(Block block, ILVariable s, int constantValue, [NotNullWhen(true)] out ILInstruction? exitInst)
 		{
 			exitInst = null;
 			if (block.Instructions.Count != 2)

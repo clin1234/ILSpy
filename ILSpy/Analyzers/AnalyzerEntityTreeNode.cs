@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		public abstract IEntity Member { get; }
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
+		public override void ActivateItem(RoutedEventArgs e)
 		{
 			e.Handled = true;
 			if (this.Member.MetadataToken.IsNil)
@@ -53,8 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 			this.Children.RemoveAll(
 				delegate (SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
-					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+					return n is not AnalyzerTreeNode an || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});
 			return true;
 		}

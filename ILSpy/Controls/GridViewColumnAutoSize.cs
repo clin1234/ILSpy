@@ -55,9 +55,7 @@ namespace ICSharpCode.ILSpy.Controls
 			if (sender is not ListView grid)
 				return;
 			grid.SizeChanged += delegate (object listView, SizeChangedEventArgs e) {
-				if (listView is not ListView lv)
-					return;
-				if (lv.View is not GridView v)
+				if (listView is not ListView { View: GridView v } lv)
 					return;
 				CalculateSizes(v, GetAutoWidth(lv), e.NewSize.Width);
 			};
@@ -72,14 +70,13 @@ namespace ICSharpCode.ILSpy.Controls
 
 			if (sizes.Length != view.Columns.Count)
 				return;
-			Dictionary<int, Func<double, double>> percentages = new Dictionary<int, Func<double, double>>();
+			Dictionary<int, Func<double, double>> percentages = new();
 			double remainingWidth = fullWidth - 30; // 30 is a good offset for the scrollbar
 
 			for (int i = 0; i < view.Columns.Count; i++)
 			{
 				var column = view.Columns[i];
-				double size;
-				bool isPercentage = !double.TryParse(sizes[i], out size);
+				bool isPercentage = !double.TryParse(sizes[i], out double size);
 				if (isPercentage)
 				{
 					size = double.Parse(sizes[i].TrimEnd('%', ' '));

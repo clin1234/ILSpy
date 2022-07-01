@@ -44,9 +44,7 @@ namespace ICSharpCode.Decompiler.Util
 				this.objectList = objectList;
 			}
 
-			public bool Success {
-				get { return objectList != null; }
-			}
+			public bool Success => objectList != null;
 
 			public void Dispose()
 			{

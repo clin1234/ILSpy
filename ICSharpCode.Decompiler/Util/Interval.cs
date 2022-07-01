@@ -72,17 +72,9 @@ namespace ICSharpCode.Decompiler.Util
 		/// (Start==End==int.MinValue is a special case referring to [int.MinValue..int.MaxValue]),
 		/// integer overflow is not a problem here.
 		/// </remarks>
-		public int InclusiveEnd {
-			get {
-				return unchecked(End - 1);
-			}
-		}
+		public int InclusiveEnd => unchecked(End - 1);
 
-		public bool IsEmpty {
-			get {
-				return Start > InclusiveEnd;
-			}
-		}
+		public bool IsEmpty => Start > InclusiveEnd;
 
 		public bool Contains(int val)
 		{
@@ -100,7 +92,7 @@ namespace ICSharpCode.Decompiler.Util
 			if (start <= inclusiveEnd)
 				return new(start, unchecked(inclusiveEnd + 1));
 			else
-				return default(Interval);
+				return default;
 		}
 
 		public override string ToString()
@@ -208,17 +200,9 @@ namespace ICSharpCode.Decompiler.Util
 		/// (Start==End==int.MinValue is a special case referring to [int.MinValue..int.MaxValue]),
 		/// integer overflow is not a problem here.
 		/// </remarks>
-		public long InclusiveEnd {
-			get {
-				return unchecked(End - 1);
-			}
-		}
+		public long InclusiveEnd => unchecked(End - 1);
 
-		public bool IsEmpty {
-			get {
-				return Start > InclusiveEnd;
-			}
-		}
+		public bool IsEmpty => Start > InclusiveEnd;
 
 		public bool Contains(long val)
 		{
@@ -236,7 +220,7 @@ namespace ICSharpCode.Decompiler.Util
 			if (start <= inclusiveEnd)
 				return new(start, unchecked(inclusiveEnd + 1));
 			else
-				return default(LongInterval);
+				return default;
 		}
 
 		/// <summary>

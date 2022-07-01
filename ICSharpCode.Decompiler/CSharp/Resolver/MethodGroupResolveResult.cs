@@ -53,9 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		///  <c>new MethodListWithDeclaringType(Base) { Derived.M() }</c>,
 		///  <c>new MethodListWithDeclaringType(Derived) { Derived.M(int) }</c>
 		/// </remarks>
-		public IType DeclaringType {
-			get { return declaringType; }
-		}
+		public IType DeclaringType => declaringType;
 
 		public MethodListWithDeclaringType(IType declaringType)
 		{
@@ -95,47 +93,35 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the resolve result for the target object.
 		/// </summary>
-		public ResolveResult TargetResult {
-			get { return targetResult; }
-		}
+		public ResolveResult TargetResult => targetResult;
 
 		/// <summary>
 		/// Gets the type of the reference to the target object.
 		/// </summary>
-		public IType TargetType {
-			get { return targetResult != null ? targetResult.Type : SpecialType.UnknownType; }
-		}
+		public IType TargetType => targetResult != null ? targetResult.Type : SpecialType.UnknownType;
 
 		/// <summary>
 		/// Gets the name of the methods in this group.
 		/// </summary>
-		public string MethodName {
-			get { return methodName; }
-		}
+		public string MethodName => methodName;
 
 		/// <summary>
 		/// Gets the methods that were found.
 		/// This list does not include extension methods.
 		/// </summary>
-		public IEnumerable<IMethod> Methods {
-			get { return methodLists.SelectMany(m => m.Cast<IMethod>()); }
-		}
+		public IEnumerable<IMethod> Methods => methodLists.SelectMany(m => m.Cast<IMethod>());
 
 		/// <summary>
 		/// Gets the methods that were found, grouped by their declaring type.
 		/// This list does not include extension methods.
 		/// Base types come first in the list.
 		/// </summary>
-		public IEnumerable<MethodListWithDeclaringType> MethodsGroupedByDeclaringType {
-			get { return methodLists; }
-		}
+		public IEnumerable<MethodListWithDeclaringType> MethodsGroupedByDeclaringType => methodLists;
 
 		/// <summary>
 		/// Gets the type arguments that were explicitly provided.
 		/// </summary>
-		public IReadOnlyList<IType> TypeArguments {
-			get { return typeArguments; }
-		}
+		public IReadOnlyList<IType> TypeArguments => typeArguments;
 
 		/// <summary>
 		/// List of extension methods, used to avoid re-calculating it in ResolveInvocation() when it was already

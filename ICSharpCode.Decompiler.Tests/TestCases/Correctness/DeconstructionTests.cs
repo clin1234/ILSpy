@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public static implicit operator MyInt(int x)
 			{
 				Console.WriteLine("MyInt op_Implicit(int)");
-				return default(MyInt);
+				return default;
 			}
 		}
 
@@ -38,8 +38,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public void Deconstruct(out T a, out T2 b)
 			{
 				Console.WriteLine("Deconstruct");
-				a = default(T);
-				b = default(T2);
+				a = default;
+				b = default;
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public MyInt My {
 				get {
 					Console.WriteLine($"{id}.get_My()");
-					return default(MyInt);
+					return default;
 				}
 				set {
 					Console.WriteLine($"{id}.set_My({value})");
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public MyInt? NMy {
 				get {
 					Console.WriteLine($"{id}.get_NMy()");
-					return default(MyInt?);
+					return default;
 				}
 				set {
 					Console.WriteLine($"{id}.set_NMy({value})");
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public int IntProperty {
 				get {
 					Console.WriteLine($"{id}.get_IntProperty()");
-					return default(int);
+					return default;
 				}
 				set {
 					Console.WriteLine($"{id}.set_IntProperty({value})");
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			public uint UIntProperty {
 				get {
 					Console.WriteLine($"{id}.get_UIntProperty()");
-					return default(uint);
+					return default;
 				}
 				set {
 					Console.WriteLine($"{id}.set_UIntProperty({value})");
@@ -110,13 +110,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		private (T, T2) GetTuple<T, T2>()
 		{
 			Console.WriteLine("GetTuple<T, T2>()");
-			return default(ValueTuple<T, T2>);
+			return default;
 		}
 
 		private (T, T2, T3) GetTuple<T, T2, T3>()
 		{
 			Console.WriteLine("GetTuple<T, T2, T3>()");
-			return default(ValueTuple<T, T2, T3>);
+			return default;
 		}
 
 		private AssignmentTargets Get(int i)
@@ -161,9 +161,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("Property_IntToUIntConversion:");
 			AssignmentTargets t0 = Get(0);
 			AssignmentTargets t1 = Get(1);
-			int a;
-			uint b;
-			GetSource<int, uint>().Deconstruct(out a, out b);
+			GetSource<int, uint>().Deconstruct(out int a, out uint b);
 			t0.UIntProperty = (uint)a;
 			t1.IntProperty = (int)b;
 		}
@@ -172,9 +170,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("NoDeconstruction_NotUsingConver:");
 			AssignmentTargets t0 = Get(0);
-			int a;
-			uint b;
-			GetSource<int, uint>().Deconstruct(out a, out b);
+			GetSource<int, uint>().Deconstruct(out int a, out uint b);
 			long c = a;
 			t0.IntProperty = a;
 			t0.UIntProperty = b;

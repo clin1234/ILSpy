@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy
 					CSharpDecompiler decompiler = CreateDecompiler(module, options);
 					var st = decompiler.Decompile(handle);
 					WriteCode(csharpOutput, options.DecompilerSettings, st, decompiler.TypeSystem);
-					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => (kvp.Key.MoveNextMethod ?? kvp.Key.Method)?.MetadataToken == handle);
+					var mapping = CSharpDecompiler.CreateSequencePoints(st).FirstOrDefault(kvp => (kvp.Key.MoveNextMethod ?? kvp.Key.Method)?.MetadataToken == handle);
 					this.sequencePoints = mapping.Value ?? (IList<SequencePoint>)EmptyList<SequencePoint>.Instance;
 					this.codeLines = csharpOutput.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 					base.Disassemble(module, handle);
@@ -151,7 +151,7 @@ namespace ICSharpCode.ILSpy
 				base.WriteInstruction(output, metadata, methodHandle, ref blob, methodRva);
 			}
 
-			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
+			HighlightingColor gray = new() { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
 
 			void WriteHighlightedCommentLine(ISmartTextOutput output, string text, int startColumn, int endColumn, bool isSingleLine)
 			{
@@ -179,7 +179,7 @@ namespace ICSharpCode.ILSpy
 				output.WriteLine();
 			}
 
-			void WriteCommentLine(ITextOutput output, string text)
+			static void WriteCommentLine(ITextOutput output, string text)
 			{
 				output.WriteLine("// " + text);
 			}

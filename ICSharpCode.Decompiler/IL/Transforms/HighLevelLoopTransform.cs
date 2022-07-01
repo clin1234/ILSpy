@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// ...
 			condition = null;
 			loopBody = loop.EntryPoint;
-			if (!(loopBody.Instructions[0] is IfInstruction ifInstruction))
+			if (loopBody.Instructions[0] is not IfInstruction ifInstruction)
 				return false;
 
 			if (!ifInstruction.FalseInst.MatchNop())
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MightBeHeaderOfForEach(BlockContainer loop, List<ILInstruction> conditions)
+		static bool MightBeHeaderOfForEach(BlockContainer loop, List<ILInstruction> conditions)
 		{
 			if (conditions.Count <= 1)
 				return false;
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			return loop.Parent?.Parent?.Parent is UsingInstruction;
 
-			bool IsGetCurrentCall(ILInstruction inst)
+			static bool IsGetCurrentCall(ILInstruction inst)
 			{
 				return inst is CallInstruction getterCall
 					&& getterCall.Method.IsAccessor
@@ -313,9 +313,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (block.Instructions.Count < 2)
 				return false;
 			var last = block.Instructions.Last();
-			var ifInstruction = block.Instructions.SecondToLastOrDefault() as IfInstruction;
 			// no IfInstruction or already transformed?
-			if (ifInstruction == null || !ifInstruction.FalseInst.MatchNop())
+			if (block.Instructions.SecondToLastOrDefault() is not IfInstruction ifInstruction || !ifInstruction.FalseInst.MatchNop())
 				return false;
 			// the block ends in a return statement preceeded by an IfInstruction
 			// take a look at the nested block and check if that might be a condition block
@@ -360,7 +359,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 
 			var last = block.Instructions.Last();
-			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInstruction) || !ifInstruction.FalseInst.MatchNop())
+			if (block.Instructions.SecondToLastOrDefault() is not IfInstruction ifInstruction || !ifInstruction.FalseInst.MatchNop())
 				return false;
 
 			return (ifInstruction.TrueInst.MatchBranch(out target1) || ifInstruction.TrueInst.MatchReturn(out var _)) &&
@@ -497,19 +496,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool IsSimpleStatement(ILInstruction inst)
 		{
-			switch (inst.OpCode)
-			{
-				case OpCode.Call:
-				case OpCode.CallVirt:
-				case OpCode.NewObj:
-				case OpCode.StLoc:
-				case OpCode.StObj:
-				case OpCode.NumericCompoundAssign:
-				case OpCode.UserDefinedCompoundAssign:
-					return true;
-				default:
-					return false;
-			}
+			return inst.OpCode switch {
+				OpCode.Call or OpCode.CallVirt or OpCode.NewObj or OpCode.StLoc or OpCode.StObj or OpCode.NumericCompoundAssign or OpCode.UserDefinedCompoundAssign => true,
+				_ => false,
+			};
 		}
 	}
 }

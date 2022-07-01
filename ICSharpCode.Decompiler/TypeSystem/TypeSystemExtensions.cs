@@ -628,8 +628,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
 					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT))
 					{
-						ParameterizedType pt = baseType as ParameterizedType;
-						if (pt != null)
+						if (baseType is ParameterizedType pt)
 						{
 							isGeneric = true;
 							return pt.GetTypeArgument(0);

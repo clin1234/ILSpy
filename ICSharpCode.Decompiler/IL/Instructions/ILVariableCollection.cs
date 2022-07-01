@@ -137,18 +137,14 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public int Count {
-			get { return list.Count; }
-		}
+		public int Count => list.Count;
 
 		public void CopyTo(ILVariable[] array, int arrayIndex)
 		{
 			list.CopyTo(array, arrayIndex);
 		}
 
-		bool ICollection<ILVariable>.IsReadOnly {
-			get { return false; }
-		}
+		bool ICollection<ILVariable>.IsReadOnly => false;
 
 		public List<ILVariable>.Enumerator GetEnumerator()
 		{

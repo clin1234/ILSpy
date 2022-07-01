@@ -51,29 +51,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var typeDef = type.GetDefinition();
 			if (typeDef == null)
 				return 0;
-			switch (typeDef.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Byte:
-					return 1;
-				case KnownTypeCode.Char:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-					return 2;
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-				case KnownTypeCode.Single:
-					return 4;
-				case KnownTypeCode.IntPtr:
-				case KnownTypeCode.UIntPtr:
-					return NativeIntSize;
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-				case KnownTypeCode.Double:
-					return 8;
-			}
-			return 0;
+			return typeDef.KnownTypeCode switch {
+				KnownTypeCode.Boolean or KnownTypeCode.SByte or KnownTypeCode.Byte => 1,
+				KnownTypeCode.Char or KnownTypeCode.Int16 or KnownTypeCode.UInt16 => 2,
+				KnownTypeCode.Int32 or KnownTypeCode.UInt32 or KnownTypeCode.Single => 4,
+				KnownTypeCode.IntPtr or KnownTypeCode.UIntPtr => NativeIntSize,
+				KnownTypeCode.Int64 or KnownTypeCode.UInt64 or KnownTypeCode.Double => 8,
+				_ => 0,
+			};
 		}
 
 		/// <summary>
@@ -87,18 +72,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </returns>
 		public static int GetSize(this StackType type)
 		{
-			switch (type)
-			{
-				case StackType.I4:
-					return 4;
-				case StackType.I8:
-					return 8;
-				case StackType.I:
-				case StackType.Ref:
-					return NativeIntSize;
-				default:
-					return 0;
-			}
+			return type switch {
+				StackType.I4 => 4,
+				StackType.I8 => 8,
+				StackType.I or StackType.Ref => NativeIntSize,
+				_ => 0,
+			};
 		}
 
 		public static IType GetLargerType(IType type1, IType type2)
@@ -125,16 +104,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsCSharpSmallIntegerType(this IType type)
 		{
-			switch (type.GetDefinition()?.KnownTypeCode)
-			{
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-					return true;
-				default:
-					return false;
-			}
+			return (type.GetDefinition()?.KnownTypeCode) switch {
+				KnownTypeCode.Byte or KnownTypeCode.SByte or KnownTypeCode.Int16 or KnownTypeCode.UInt16 => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -144,14 +117,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsCSharpNativeIntegerType(this IType type)
 		{
-			switch (type.Kind)
-			{
-				case TypeKind.NInt:
-				case TypeKind.NUInt:
-					return true;
-				default:
-					return false;
-			}
+			return type.Kind switch {
+				TypeKind.NInt or TypeKind.NUInt => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -161,20 +130,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsCSharpPrimitiveIntegerType(this IType type)
 		{
-			switch (type.GetDefinition()?.KnownTypeCode)
-			{
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-					return true;
-				default:
-					return false;
-			}
+			return (type.GetDefinition()?.KnownTypeCode) switch {
+				KnownTypeCode.Byte or KnownTypeCode.SByte or KnownTypeCode.Int16 or KnownTypeCode.UInt16 or KnownTypeCode.Int32 or KnownTypeCode.UInt32 or KnownTypeCode.Int64 or KnownTypeCode.UInt64 => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -183,15 +142,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsIntegerType(this StackType type)
 		{
-			switch (type)
-			{
-				case StackType.I4:
-				case StackType.I:
-				case StackType.I8:
-					return true;
-				default:
-					return false;
-			}
+			return type switch {
+				StackType.I4 or StackType.I or StackType.I8 => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -200,14 +154,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsFloatType(this StackType type)
 		{
-			switch (type)
-			{
-				case StackType.F4:
-				case StackType.F8:
-					return true;
-				default:
-					return false;
-			}
+			return type switch {
+				StackType.F4 or StackType.F8 => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -286,32 +236,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ITypeDefinition typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return StackType.O;
-			switch (typeDef.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.Char:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-					return StackType.I4;
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-					return StackType.I8;
-				case KnownTypeCode.Single:
-					return StackType.F4;
-				case KnownTypeCode.Double:
-					return StackType.F8;
-				case KnownTypeCode.Void:
-					return StackType.Void;
-				case KnownTypeCode.IntPtr:
-				case KnownTypeCode.UIntPtr:
-					return StackType.I;
-				default:
-					return StackType.O;
-			}
+			return typeDef.KnownTypeCode switch {
+				KnownTypeCode.Boolean or KnownTypeCode.Char or KnownTypeCode.SByte or KnownTypeCode.Byte or KnownTypeCode.Int16 or KnownTypeCode.UInt16 or KnownTypeCode.Int32 or KnownTypeCode.UInt32 => StackType.I4,
+				KnownTypeCode.Int64 or KnownTypeCode.UInt64 => StackType.I8,
+				KnownTypeCode.Single => StackType.F4,
+				KnownTypeCode.Double => StackType.F8,
+				KnownTypeCode.Void => StackType.Void,
+				KnownTypeCode.IntPtr or KnownTypeCode.UIntPtr => StackType.I,
+				_ => StackType.O,
+			};
 		}
 
 		/// <summary>
@@ -349,28 +282,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return Sign.None;
-			switch (typeDef.KnownTypeCode)
-			{
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.IntPtr:
-				case KnownTypeCode.Single:
-				case KnownTypeCode.Double:
-				case KnownTypeCode.Decimal:
-					return Sign.Signed;
-				case KnownTypeCode.UIntPtr:
-				case KnownTypeCode.Char:
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.UInt32:
-				case KnownTypeCode.UInt64:
-					return Sign.Unsigned;
-				default:
-					return Sign.None;
-			}
+			return typeDef.KnownTypeCode switch {
+				KnownTypeCode.SByte or KnownTypeCode.Int16 or KnownTypeCode.Int32 or KnownTypeCode.Int64 or KnownTypeCode.IntPtr or KnownTypeCode.Single or KnownTypeCode.Double or KnownTypeCode.Decimal => Sign.Signed,
+				KnownTypeCode.UIntPtr or KnownTypeCode.Char or KnownTypeCode.Boolean or KnownTypeCode.Byte or KnownTypeCode.UInt16 or KnownTypeCode.UInt32 or KnownTypeCode.UInt64 => Sign.Unsigned,
+				_ => Sign.None,
+			};
 		}
 
 		/// <summary>
@@ -378,36 +294,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static PrimitiveType ToPrimitiveType(this KnownTypeCode knownTypeCode)
 		{
-			switch (knownTypeCode)
-			{
-				case KnownTypeCode.SByte:
-					return PrimitiveType.I1;
-				case KnownTypeCode.Int16:
-					return PrimitiveType.I2;
-				case KnownTypeCode.Int32:
-					return PrimitiveType.I4;
-				case KnownTypeCode.Int64:
-					return PrimitiveType.I8;
-				case KnownTypeCode.Single:
-					return PrimitiveType.R4;
-				case KnownTypeCode.Double:
-					return PrimitiveType.R8;
-				case KnownTypeCode.Byte:
-					return PrimitiveType.U1;
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.Char:
-					return PrimitiveType.U2;
-				case KnownTypeCode.UInt32:
-					return PrimitiveType.U4;
-				case KnownTypeCode.UInt64:
-					return PrimitiveType.U8;
-				case KnownTypeCode.IntPtr:
-					return PrimitiveType.I;
-				case KnownTypeCode.UIntPtr:
-					return PrimitiveType.U;
-				default:
-					return PrimitiveType.None;
-			}
+			return knownTypeCode switch {
+				KnownTypeCode.SByte => PrimitiveType.I1,
+				KnownTypeCode.Int16 => PrimitiveType.I2,
+				KnownTypeCode.Int32 => PrimitiveType.I4,
+				KnownTypeCode.Int64 => PrimitiveType.I8,
+				KnownTypeCode.Single => PrimitiveType.R4,
+				KnownTypeCode.Double => PrimitiveType.R8,
+				KnownTypeCode.Byte => PrimitiveType.U1,
+				KnownTypeCode.UInt16 or KnownTypeCode.Char => PrimitiveType.U2,
+				KnownTypeCode.UInt32 => PrimitiveType.U4,
+				KnownTypeCode.UInt64 => PrimitiveType.U8,
+				KnownTypeCode.IntPtr => PrimitiveType.I,
+				KnownTypeCode.UIntPtr => PrimitiveType.U,
+				_ => PrimitiveType.None,
+			};
 		}
 
 		/// <summary>
@@ -437,36 +338,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static KnownTypeCode ToKnownTypeCode(this PrimitiveType primitiveType)
 		{
-			switch (primitiveType)
-			{
-				case PrimitiveType.I1:
-					return KnownTypeCode.SByte;
-				case PrimitiveType.I2:
-					return KnownTypeCode.Int16;
-				case PrimitiveType.I4:
-					return KnownTypeCode.Int32;
-				case PrimitiveType.I8:
-					return KnownTypeCode.Int64;
-				case PrimitiveType.R4:
-					return KnownTypeCode.Single;
-				case PrimitiveType.R8:
-				case PrimitiveType.R:
-					return KnownTypeCode.Double;
-				case PrimitiveType.U1:
-					return KnownTypeCode.Byte;
-				case PrimitiveType.U2:
-					return KnownTypeCode.UInt16;
-				case PrimitiveType.U4:
-					return KnownTypeCode.UInt32;
-				case PrimitiveType.U8:
-					return KnownTypeCode.UInt64;
-				case PrimitiveType.I:
-					return KnownTypeCode.IntPtr;
-				case PrimitiveType.U:
-					return KnownTypeCode.UIntPtr;
-				default:
-					return KnownTypeCode.None;
-			}
+			return primitiveType switch {
+				PrimitiveType.I1 => KnownTypeCode.SByte,
+				PrimitiveType.I2 => KnownTypeCode.Int16,
+				PrimitiveType.I4 => KnownTypeCode.Int32,
+				PrimitiveType.I8 => KnownTypeCode.Int64,
+				PrimitiveType.R4 => KnownTypeCode.Single,
+				PrimitiveType.R8 or PrimitiveType.R => KnownTypeCode.Double,
+				PrimitiveType.U1 => KnownTypeCode.Byte,
+				PrimitiveType.U2 => KnownTypeCode.UInt16,
+				PrimitiveType.U4 => KnownTypeCode.UInt32,
+				PrimitiveType.U8 => KnownTypeCode.UInt64,
+				PrimitiveType.I => KnownTypeCode.IntPtr,
+				PrimitiveType.U => KnownTypeCode.UIntPtr,
+				_ => KnownTypeCode.None,
+			};
 		}
 
 		public static KnownTypeCode ToKnownTypeCode(this StackType stackType, Sign sign = Sign.None)

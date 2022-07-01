@@ -38,8 +38,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// The type referenced by the 'typeof'.
 		/// </summary>
-		public IType ReferencedType {
-			get { return referencedType; }
-		}
+		public IType ReferencedType => referencedType;
 	}
 }

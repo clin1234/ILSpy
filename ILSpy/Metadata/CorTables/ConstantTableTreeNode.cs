@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[StringFormat("X")]
 			public int Value => MetadataTokens.GetHeapOffset(constant.Value);
 
-			public string ValueTooltip {
+			public static string ValueTooltip {
 				get {
 					return null;
 				}

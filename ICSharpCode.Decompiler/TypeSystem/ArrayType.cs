@@ -41,22 +41,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.dimensions = dimensions;
 			this.nullability = nullability;
 
-			ICompilationProvider p = elementType as ICompilationProvider;
-			if (p != null && p.Compilation != compilation)
+			if (elementType is ICompilationProvider p && p.Compilation != compilation)
 				throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
 		}
 
-		public override TypeKind Kind {
-			get { return TypeKind.Array; }
-		}
+		public override TypeKind Kind => TypeKind.Array;
 
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
+		public ICompilation Compilation => compilation;
 
-		public int Dimensions {
-			get { return dimensions; }
-		}
+		public int Dimensions => dimensions;
 
 		public override Nullability Nullability => nullability;
 
@@ -68,15 +61,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ArrayType(compilation, elementType, dimensions, nullability);
 		}
 
-		public override string NameSuffix {
-			get {
-				return "[" + new string(',', dimensions - 1) + "]";
-			}
-		}
+		public override string NameSuffix => "[" + new string(',', dimensions - 1) + "]";
 
-		public override bool? IsReferenceType {
-			get { return true; }
-		}
+		public override bool? IsReferenceType => true;
 
 		public override int GetHashCode()
 		{
@@ -85,8 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			ArrayType a = other as ArrayType;
-			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;
+			return other is ArrayType a && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;
 		}
 
 		public override string ToString()
@@ -107,8 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (dimensions == 1 && elementType.Kind != TypeKind.Pointer)
 				{
 					// single-dimensional arrays implement IList<T>
-					ITypeDefinition def = compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
-					if (def != null)
+					if (compilation.FindType(KnownTypeCode.IListOfT) is ITypeDefinition def)
 						baseTypes.Add(new ParameterizedType(def, new[] { elementType }));
 					// And in .NET 4.5 they also implement IReadOnlyList<T>
 					def = compilation.FindType(KnownTypeCode.IReadOnlyListOfT) as ITypeDefinition;
@@ -183,13 +168,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.dimensions = dimensions;
 		}
 
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
+		public ITypeReference ElementType => elementType;
 
-		public int Dimensions {
-			get { return dimensions; }
-		}
+		public int Dimensions => dimensions;
 
 		public IType Resolve(ITypeResolveContext context)
 		{
@@ -208,8 +189,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ArrayTypeReference o = other as ArrayTypeReference;
-			return o != null && elementType == o.elementType && dimensions == o.dimensions;
+			return other is ArrayTypeReference o && elementType == o.elementType && dimensions == o.dimensions;
 		}
 	}
 }

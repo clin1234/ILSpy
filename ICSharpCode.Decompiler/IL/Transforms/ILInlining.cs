@@ -163,8 +163,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
-			StLoc stloc = block.Instructions[pos] as StLoc;
-			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
+			if (block.Instructions[pos] is not StLoc stloc || stloc.Variable.Kind == VariableKind.PinnedLocal)
 				return false;
 			ILVariable v = stloc.Variable;
 			// ensure the variable is accessed only a single time

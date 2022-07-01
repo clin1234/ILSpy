@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	sealed class GraphVizGraph
 	{
-		List<GraphVizNode> nodes = new List<GraphVizNode>();
-		List<GraphVizEdge> edges = new List<GraphVizEdge>();
+		List<GraphVizNode> nodes = new();
+		List<GraphVizEdge> edges = new();
 
 		public string? rankdir;
 		public string? Title;
@@ -51,8 +51,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(string fileName)
 		{
-			using (StreamWriter writer = new StreamWriter(fileName))
-				Save(writer);
+			using StreamWriter writer = new(fileName);
+			Save(writer);
 		}
 
 		public void Show()

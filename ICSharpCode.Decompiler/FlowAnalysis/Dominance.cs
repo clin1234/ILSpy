@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// Postcondition: a dominator tree is constructed for all nodes reachable from entryPoint,
 		/// and the visited flag remains false.
 		/// </remarks>
-		public static void ComputeDominance(ControlFlowNode entryPoint, CancellationToken cancellationToken = default(CancellationToken))
+		public static void ComputeDominance(ControlFlowNode entryPoint, CancellationToken cancellationToken = default)
 		{
 			// A Simple, Fast Dominance Algorithm
 			// Keith D. Cooper, Timothy J. Harvey and Ken Kennedy

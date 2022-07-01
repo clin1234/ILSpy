@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		public void Execute(TextViewContext context)
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			if (context.SelectedTreeNodes != null)
 			{
 				foreach (var node in context.SelectedTreeNodes)

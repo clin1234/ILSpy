@@ -77,9 +77,8 @@ namespace ICSharpCode.ILSpy
 		public static unsafe string[] CommandLineToArgumentArray(string commandLine)
 		{
 			if (string.IsNullOrEmpty(commandLine))
-				return new string[0];
-			int numberOfArgs;
-			char** arr = CommandLineToArgvW(commandLine, out numberOfArgs);
+				return Array.Empty<string>();
+			char** arr = CommandLineToArgvW(commandLine, out int numberOfArgs);
 			if (arr == null)
 				throw new Win32Exception();
 			try

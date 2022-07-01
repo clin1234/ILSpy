@@ -34,9 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		readonly ReadOnlyCollection<IType> types;
 
-		public ReadOnlyCollection<IType> Types {
-			get { return types; }
-		}
+		public ReadOnlyCollection<IType> Types => types;
 
 		private IntersectionType(IType[] types)
 		{
@@ -60,9 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new IntersectionType(arr);
 		}
 
-		public override TypeKind Kind {
-			get { return TypeKind.Intersection; }
-		}
+		public override TypeKind Kind => TypeKind.Intersection;
 
 		public override string Name {
 			get {
@@ -118,8 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			IntersectionType o = other as IntersectionType;
-			if (o != null && types.Count == o.types.Count)
+			if (other is IntersectionType o && types.Count == o.types.Count)
 			{
 				for (int i = 0; i < types.Count; i++)
 				{
@@ -131,9 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 
-		public override IEnumerable<IType> DirectBaseTypes {
-			get { return types; }
-		}
+		public override IEnumerable<IType> DirectBaseTypes => types;
 
 		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
 		{

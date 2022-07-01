@@ -34,13 +34,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole ContinueKeywordRole = new("continue");
 
-		public CSharpTokenNode ContinueToken {
-			get { return GetChildByRole(ContinueKeywordRole); }
-		}
+		public CSharpTokenNode ContinueToken => GetChildByRole(ContinueKeywordRole);
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -59,8 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ContinueStatement o = other as ContinueStatement;
-			return o != null;
+			return other is ContinueStatement o;
 		}
 	}
 }

@@ -80,17 +80,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.isReferenceType = isReferenceType;
 		}
 
-		public override string Name {
-			get { return name; }
-		}
+		public override string Name => name;
 
-		public override TypeKind Kind {
-			get { return kind; }
-		}
+		public override TypeKind Kind => kind;
 
-		public override bool? IsReferenceType {
-			get { return isReferenceType; }
-		}
+		public override bool? IsReferenceType => isReferenceType;
 
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{

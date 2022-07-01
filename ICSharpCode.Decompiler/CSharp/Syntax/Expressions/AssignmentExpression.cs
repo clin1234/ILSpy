@@ -78,9 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(LeftRole, value); }
 		}
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(GetOperatorRole(Operator)); }
-		}
+		public CSharpTokenNode OperatorToken => GetChildByRole(GetOperatorRole(Operator));
 
 		public Expression Right {
 			get { return GetChildByRole(RightRole); }
@@ -104,8 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AssignmentExpression o = other as AssignmentExpression;
-			return o != null && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)
+			return other is AssignmentExpression o && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)
 				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
 
@@ -175,34 +172,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static AssignmentOperatorType? GetAssignmentOperatorTypeFromExpressionType(ExpressionType expressionType)
 		{
-			switch (expressionType)
-			{
-				case ExpressionType.AddAssign:
-				case ExpressionType.AddAssignChecked:
-					return AssignmentOperatorType.Add;
-				case ExpressionType.AndAssign:
-					return AssignmentOperatorType.BitwiseAnd;
-				case ExpressionType.DivideAssign:
-					return AssignmentOperatorType.Divide;
-				case ExpressionType.ExclusiveOrAssign:
-					return AssignmentOperatorType.ExclusiveOr;
-				case ExpressionType.LeftShiftAssign:
-					return AssignmentOperatorType.ShiftLeft;
-				case ExpressionType.ModuloAssign:
-					return AssignmentOperatorType.Modulus;
-				case ExpressionType.MultiplyAssign:
-				case ExpressionType.MultiplyAssignChecked:
-					return AssignmentOperatorType.Multiply;
-				case ExpressionType.OrAssign:
-					return AssignmentOperatorType.BitwiseOr;
-				case ExpressionType.RightShiftAssign:
-					return AssignmentOperatorType.ShiftRight;
-				case ExpressionType.SubtractAssign:
-				case ExpressionType.SubtractAssignChecked:
-					return AssignmentOperatorType.Subtract;
-				default:
-					return null;
-			}
+			return expressionType switch {
+				ExpressionType.AddAssign or ExpressionType.AddAssignChecked => (AssignmentOperatorType?)AssignmentOperatorType.Add,
+				ExpressionType.AndAssign => (AssignmentOperatorType?)AssignmentOperatorType.BitwiseAnd,
+				ExpressionType.DivideAssign => (AssignmentOperatorType?)AssignmentOperatorType.Divide,
+				ExpressionType.ExclusiveOrAssign => (AssignmentOperatorType?)AssignmentOperatorType.ExclusiveOr,
+				ExpressionType.LeftShiftAssign => (AssignmentOperatorType?)AssignmentOperatorType.ShiftLeft,
+				ExpressionType.ModuloAssign => (AssignmentOperatorType?)AssignmentOperatorType.Modulus,
+				ExpressionType.MultiplyAssign or ExpressionType.MultiplyAssignChecked => (AssignmentOperatorType?)AssignmentOperatorType.Multiply,
+				ExpressionType.OrAssign => (AssignmentOperatorType?)AssignmentOperatorType.BitwiseOr,
+				ExpressionType.RightShiftAssign => (AssignmentOperatorType?)AssignmentOperatorType.ShiftRight,
+				ExpressionType.SubtractAssign or ExpressionType.SubtractAssignChecked => (AssignmentOperatorType?)AssignmentOperatorType.Subtract,
+				_ => null,
+			};
 		}
 	}
 

@@ -47,25 +47,15 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.methodTypeParameterNames = methodTypeParameterNames;
 		}
 
-		public ResolvedUsingScope CurrentUsingScope {
-			get { return currentUsingScope; }
-		}
+		public ResolvedUsingScope CurrentUsingScope => currentUsingScope;
 
-		public ICompilation Compilation {
-			get { return module.Compilation; }
-		}
+		public ICompilation Compilation => module.Compilation;
 
-		public IModule CurrentModule {
-			get { return module; }
-		}
+		public IModule CurrentModule => module;
 
-		public ITypeDefinition CurrentTypeDefinition {
-			get { return currentTypeDefinition; }
-		}
+		public ITypeDefinition CurrentTypeDefinition => currentTypeDefinition;
 
-		public IMember CurrentMember {
-			get { return currentMember; }
-		}
+		public IMember CurrentMember => currentMember;
 
 		public CSharpTypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{

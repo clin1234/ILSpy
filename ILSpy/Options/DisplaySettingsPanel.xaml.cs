@@ -41,11 +41,11 @@ namespace ICSharpCode.ILSpy.Options
 			DataObject.AddPastingHandler(tabSizeTextBox, OnPaste);
 			DataObject.AddPastingHandler(indentSizeTextBox, OnPaste);
 
-			Task<FontFamily[]> task = new Task<FontFamily[]>(FontLoader);
+			Task<FontFamily[]> task = new(FontLoader);
 			task.Start();
 			task.ContinueWith(
 				delegate (Task continuation) {
-					App.Current.Dispatcher.Invoke(
+					Application.Current.Dispatcher.Invoke(
 						DispatcherPriority.Normal,
 						(Action)(
 							() => {
@@ -80,10 +80,9 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			foreach (var tf in fontFamily.GetTypefaces())
 			{
-				GlyphTypeface glyph;
 				try
 				{
-					if (tf.TryGetGlyphTypeface(out glyph))
+					if (tf.TryGetGlyphTypeface(out GlyphTypeface glyph))
 						return glyph.Symbol;
 				}
 				catch (Exception)

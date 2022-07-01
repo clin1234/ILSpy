@@ -55,15 +55,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (GetTypeDefinition().Accessibility)
-				{
-					case Accessibility.Public:
-					case Accessibility.Protected:
-					case Accessibility.ProtectedOrInternal:
-						return true;
-					default:
-						return false;
-				}
+				return GetTypeDefinition().Accessibility switch {
+					Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+					_ => false,
+				};
 			}
 		}
 
@@ -161,22 +156,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
 		{
-			switch (type.Accessibility)
-			{
-				case Accessibility.Public:
-					return AccessOverlayIcon.Public;
-				case Accessibility.Internal:
-					return AccessOverlayIcon.Internal;
-				case Accessibility.ProtectedAndInternal:
-					return AccessOverlayIcon.PrivateProtected;
-				case Accessibility.Protected:
-				case Accessibility.ProtectedOrInternal:
-					return AccessOverlayIcon.Protected;
-				case Accessibility.Private:
-					return AccessOverlayIcon.Private;
-				default:
-					return AccessOverlayIcon.CompilerControlled;
-			}
+			return type.Accessibility switch {
+				Accessibility.Public => AccessOverlayIcon.Public,
+				Accessibility.Internal => AccessOverlayIcon.Internal,
+				Accessibility.ProtectedAndInternal => AccessOverlayIcon.PrivateProtected,
+				Accessibility.Protected or Accessibility.ProtectedOrInternal => AccessOverlayIcon.Protected,
+				Accessibility.Private => AccessOverlayIcon.Private,
+				_ => AccessOverlayIcon.CompilerControlled,
+			};
 		}
 
 		IEntity IMemberTreeNode.Member => TypeDefinition;

@@ -61,21 +61,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.currentMember = currentMember;
 		}
 
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
+		public ICompilation Compilation => compilation;
 
-		public IModule CurrentModule {
-			get { return currentModule; }
-		}
+		public IModule CurrentModule => currentModule;
 
-		public ITypeDefinition CurrentTypeDefinition {
-			get { return currentTypeDefinition; }
-		}
+		public ITypeDefinition CurrentTypeDefinition => currentTypeDefinition;
 
-		public IMember CurrentMember {
-			get { return currentMember; }
-		}
+		public IMember CurrentMember => currentMember;
 
 		public ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{

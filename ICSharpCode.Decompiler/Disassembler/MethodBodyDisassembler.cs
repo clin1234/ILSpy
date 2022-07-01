@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		HashSet<int> GetBranchTargets(BlobReader blob)
+		static HashSet<int> GetBranchTargets(BlobReader blob)
 		{
 			HashSet<int> branchTargets = new();
 			while (blob.RemainingBytes > 0)

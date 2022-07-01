@@ -157,8 +157,7 @@ namespace ICSharpCode.ILSpy
 
 			public MutexProtector(string name)
 			{
-				bool createdNew;
-				this.mutex = new Mutex(true, name, out createdNew);
+				this.mutex = new Mutex(true, name, out bool createdNew);
 				if (!createdNew)
 				{
 					try

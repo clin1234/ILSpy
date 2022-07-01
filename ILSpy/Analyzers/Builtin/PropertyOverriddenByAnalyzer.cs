@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
+		static IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public bool Show(ISymbol entity)
 		{
-			return entity is IProperty property && property.IsOverridable && property.DeclaringType.Kind != TypeKind.Interface;
+			return entity is IProperty { IsOverridable: true } property && property.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

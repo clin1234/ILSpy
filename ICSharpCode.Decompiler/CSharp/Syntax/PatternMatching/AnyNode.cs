@@ -27,9 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		readonly string groupName;
 
-		public string GroupName {
-			get { return groupName; }
-		}
+		public string GroupName => groupName;
 
 		public AnyNode(string groupName = null)
 		{

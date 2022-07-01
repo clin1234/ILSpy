@@ -436,8 +436,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			finally
 			{
-				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null)
+				if (enumerator is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
@@ -471,7 +470,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static T LastOrDefault<T>(IEnumerable<T> items)
 		{
-			T result = default(T);
+			T result = default;
 			foreach (T item in items)
 			{
 				result = item;
@@ -943,8 +942,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			for (int i = 0; i < ids.Length; i++)
 			{
-				Item item = null;
-				TryGetItem(ids[i], out item);
+				TryGetItem(ids[i], out Item item);
 				if (item == null)
 				{
 					break;

@@ -100,26 +100,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-				case "2nd case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case null:
-					return null;
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text1",
+				"Second case" or "2nd case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				null => null,
+				_ => "Default",
+			};
 		}
 
 		public static string SwitchOverString2()

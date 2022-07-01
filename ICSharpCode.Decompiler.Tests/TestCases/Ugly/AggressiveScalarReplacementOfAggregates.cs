@@ -165,7 +165,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 				field1 = i,
 				field2 = "Hello World!"
 			};
-			i = 42;
 			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
 		}
 
@@ -176,7 +175,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 				field1 = num,
 				field2 = "Hello World!"
 			};
-			num = 42;
 			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
 		}
 

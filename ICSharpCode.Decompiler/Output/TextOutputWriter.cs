@@ -31,9 +31,7 @@ namespace ICSharpCode.Decompiler
 			this.output = output ?? throw new ArgumentNullException(nameof(output));
 		}
 
-		public override Encoding Encoding {
-			get { return Encoding.UTF8; }
-		}
+		public override Encoding Encoding => Encoding.UTF8;
 
 		public override void Write(char value)
 		{

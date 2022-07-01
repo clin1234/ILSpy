@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// if (...) { ...; goto blockExit; } else { ... } blockExit;
 			// -> if (...) { ... } else { ... } blockExit;
 			context.Step("Remove redundant 'goto blockExit;' in then-branch", ifInst);
-			if (!(ifInst.TrueInst is Block trueBlock) || trueBlock.Instructions.Count == 1)
+			if (ifInst.TrueInst is not Block trueBlock || trueBlock.Instructions.Count == 1)
 				ifInst.TrueInst = new Nop().WithILRange(ifInst.TrueInst);
 			else
 				trueBlock.Instructions.RemoveAt(trueBlock.Instructions.Count - 1);
@@ -327,11 +327,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///   ...;
 		///   blockExit;
 		/// </summary>
-		private bool WillShortCircuit(Block block, IfInstruction ifInst, ILInstruction elseExit)
+		private static bool WillShortCircuit(Block block, IfInstruction ifInst, ILInstruction elseExit)
 		{
-			bool ThenInstIsSingleExit(ILInstruction inst) =>
+			static bool ThenInstIsSingleExit(ILInstruction inst) =>
 				inst.MatchIfInstruction(out var _, out var trueInst)
-				&& (!(trueInst is Block trueBlock) || trueBlock.Instructions.Count == 1)
+				&& (trueInst is not Block trueBlock || trueBlock.Instructions.Count == 1)
 				&& TryGetExit(trueInst, out var _);
 
 			if (!ThenInstIsSingleExit(ifInst))
@@ -569,7 +569,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Leave can be 'return', 'break' or a pinned container exit (try/using/lock etc)
 		/// All other instructions (throw, using, etc) are returned as Keyword.Other
 		/// </summary>
-		private bool IsKeywordExit(ILInstruction exitInst, out Keyword keyword)
+		private static bool IsKeywordExit(ILInstruction exitInst, out Keyword keyword)
 		{
 			keyword = Keyword.Other;
 			switch (exitInst)

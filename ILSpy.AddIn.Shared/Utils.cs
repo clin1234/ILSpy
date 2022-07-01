@@ -140,24 +140,20 @@ namespace ICSharpCode.ILSpy.AddIn
 				return null;
 			}
 
-			IVsTextView vTextView = null;
 			int mustHaveFocus = 1;
-			txtMgr.GetActiveView(mustHaveFocus, null, out vTextView);
-			IVsUserData userData = vTextView as IVsUserData;
-			if (userData == null)
+			txtMgr.GetActiveView(mustHaveFocus, null, out IVsTextView vTextView);
+			if (vTextView is not IVsUserData userData)
 				return null;
 
-			object holder;
 			Guid guidViewHost = DefGuidList.guidIWpfTextViewHost;
-			userData.GetData(ref guidViewHost, out holder);
+			userData.GetData(ref guidViewHost, out object holder);
 
 			return holder as IWpfTextViewHost;
 		}
 
 		public static ITextDocument GetTextDocument(this IWpfTextViewHost viewHost)
 		{
-			ITextDocument textDocument = null;
-			viewHost.TextView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
+			viewHost.TextView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument);
 			return textDocument;
 		}
 

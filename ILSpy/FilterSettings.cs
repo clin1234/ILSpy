@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 		/// the user first select C# 10, then switches to IL, then switches back to C#. After that we must be
 		/// able to restore the original selection (i.e., C# 10).
 		/// </summary>
-		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new Dictionary<Language, LanguageVersion>();
+		private readonly Dictionary<Language, LanguageVersion> languageVersionHistory = new();
 
 		public FilterSettings(XElement element)
 		{
@@ -156,7 +156,7 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value)
 				{
-					if (language != null && language.HasLanguageVersions)
+					if (language is { HasLanguageVersions: true })
 					{
 						languageVersionHistory[language] = languageVersion;
 					}
@@ -164,14 +164,7 @@ namespace ICSharpCode.ILSpy
 					OnPropertyChanged();
 					if (language.HasLanguageVersions)
 					{
-						if (languageVersionHistory.TryGetValue(value, out var version))
-						{
-							LanguageVersion = version;
-						}
-						else
-						{
-							LanguageVersion = Language.LanguageVersions.Last();
-						}
+						LanguageVersion = languageVersionHistory.TryGetValue(value, out var version) ? version : Language.LanguageVersions[^1];
 					}
 					else
 					{
@@ -209,10 +202,7 @@ namespace ICSharpCode.ILSpy
 
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		public FilterSettings Clone()

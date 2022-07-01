@@ -47,17 +47,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullAstNode : AstNode
 		{
-			public override NodeType NodeType {
-				get {
-					return NodeType.Unknown;
-				}
-			}
+			public override NodeType NodeType => NodeType.Unknown;
 
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -96,9 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -150,9 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				Freeze();
 		}
 
-		public bool IsFrozen {
-			get { return (flags & frozenBit) != 0; }
-		}
+		public bool IsFrozen => (flags & frozenBit) != 0;
 
 		public void Freeze()
 		{
@@ -174,11 +162,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 		}
 
-		public virtual bool IsNull {
-			get {
-				return false;
-			}
-		}
+		public virtual bool IsNull => false;
 
 		public virtual TextLocation StartLocation {
 			get {
@@ -198,9 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNode? Parent {
-			get { return parent; }
-		}
+		public AstNode? Parent => parent;
 
 		public Role Role {
 			get {
@@ -216,36 +198,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		internal uint RoleIndex {
-			get { return flags & roleIndexMask; }
-		}
+		internal uint RoleIndex => flags & roleIndexMask;
 
 		void SetRole(Role role)
 		{
 			flags = (flags & ~roleIndexMask) | role.Index;
 		}
 
-		public AstNode? NextSibling {
-			get { return nextSibling; }
-		}
+		public AstNode? NextSibling => nextSibling;
 
-		public AstNode? PrevSibling {
-			get { return prevSibling; }
-		}
+		public AstNode? PrevSibling => prevSibling;
 
-		public AstNode? FirstChild {
-			get { return firstChild; }
-		}
+		public AstNode? FirstChild => firstChild;
 
-		public AstNode? LastChild {
-			get { return lastChild; }
-		}
+		public AstNode? LastChild => lastChild;
 
-		public bool HasChildren {
-			get {
-				return firstChild != null;
-			}
-		}
+		public bool HasChildren => firstChild != null;
 
 		public IEnumerable<AstNode> Children {
 			get {
@@ -288,16 +256,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets all descendants of this node (excluding this node itself) in pre-order.
 		/// </summary>
-		public IEnumerable<AstNode> Descendants {
-			get { return GetDescendantsImpl(false); }
-		}
+		public IEnumerable<AstNode> Descendants => GetDescendantsImpl(false);
 
 		/// <summary>
 		/// Gets all descendants of this node (including this node itself) in pre-order.
 		/// </summary>
-		public IEnumerable<AstNode> DescendantsAndSelf {
-			get { return GetDescendantsImpl(true); }
-		}
+		public IEnumerable<AstNode> DescendantsAndSelf => GetDescendantsImpl(true);
 
 		public IEnumerable<AstNode> DescendantNodes(Func<AstNode, bool>? descendIntoChildren = null)
 		{
@@ -672,13 +636,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (pos == null || o != null) && DoMatch(o, match);
 		}
 
-		INode? INode.NextSibling {
-			get { return nextSibling; }
-		}
+		INode? INode.NextSibling => nextSibling;
 
-		INode? INode.FirstChild {
-			get { return firstChild; }
-		}
+		INode? INode.FirstChild => firstChild;
 
 		#endregion
 
@@ -726,7 +686,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return prev;
 		}
 		// filters all non c# nodes (comments, white spaces or pre processor directives)
-		public AstNode? GetCSharpNodeBefore(AstNode node)
+		public static AstNode? GetCSharpNodeBefore(AstNode node)
 		{
 			var n = node.PrevSibling;
 			while (n != null)

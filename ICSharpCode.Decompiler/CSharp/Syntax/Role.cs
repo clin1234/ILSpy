@@ -35,9 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		readonly uint index;
 
-		public uint Index {
-			get { return index; }
-		}
+		public uint Index => index;
 
 		// don't allow NRefactory consumers to derive from Role
 		internal Role()
@@ -79,9 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Roles used for non-collections should always have a null object, so that no AST property returns null.
 		/// However, if a role used for collections only, it may leave out the null object.
 		/// </remarks>
-		public T NullObject {
-			get { return nullObject; }
-		}
+		public T NullObject => nullObject;
 
 		public override bool IsValid(object node)
 		{

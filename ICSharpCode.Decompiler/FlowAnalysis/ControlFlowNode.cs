@@ -54,9 +54,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Gets whether this node is reachable. Requires that dominance is computed!
 		/// </summary>
-		public bool IsReachable {
-			get { return DominatorTreeChildren != null; }
-		}
+		public bool IsReachable => DominatorTreeChildren != null;
 
 		/// <summary>
 		/// Gets the immediate dominator (the parent in the dominator tree).
@@ -128,11 +126,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			if (labelFunc == null)
 			{
 				labelFunc = node => {
-					var block = node.UserData as IL.Block;
-					return block != null ? block.Label : node.UserData?.ToString();
+					return node.UserData is IL.Block block ? block.Label : node.UserData?.ToString();
 				};
 			}
-			GraphVizGraph g = new GraphVizGraph();
+			GraphVizGraph g = new();
 			GraphVizNode[] n = new GraphVizNode[nodes.Count];
 			for (int i = 0; i < n.Length; i++)
 			{

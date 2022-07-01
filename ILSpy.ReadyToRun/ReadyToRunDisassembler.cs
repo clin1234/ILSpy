@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 
 			string disassemblyFormat = ReadyToRunOptions.GetDisassemblyFormat(null);
-			Formatter formatter = null;
+			Formatter formatter;
 			if (disassemblyFormat.Equals(ReadyToRunOptions.intel))
 			{
 				formatter = new NasmFormatter();
@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private DebugInfoHelper WriteDebugInfo()
 		{
-			List<NativeVarInfoRecord> records = new List<NativeVarInfoRecord>();
+			List<NativeVarInfoRecord> records = new();
 			foreach (RuntimeFunction runtimeFunction in runtimeFunction.Method.RuntimeFunctions)
 			{
 				DebugInfo debugInfo = runtimeFunction.DebugInfo;
@@ -324,7 +324,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		private Dictionary<ulong, UnwindCode> WriteUnwindInfo()
 		{
-			Dictionary<ulong, UnwindCode> unwindCodes = new Dictionary<ulong, UnwindCode>();
+			Dictionary<ulong, UnwindCode> unwindCodes = new();
 			if (runtimeFunction.UnwindInfo is UnwindInfo amd64UnwindInfo)
 			{
 				string parsedFlags = "";
@@ -371,7 +371,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			if (debugRecords != null)
 			{
 				HashSet<Variable> variables;
-				InstructionInfoFactory factory = new InstructionInfoFactory();
+				InstructionInfoFactory factory = new();
 				InstructionInfo info = factory.GetInfo(instr);
 				ulong codeOffset = instr.IP - baseInstrIP;
 				debugRecords.Update(codeOffset);
@@ -381,8 +381,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 					int displacement;
 					unchecked
 					{ displacement = (int)usedMemInfo.Displacement; }
-					Dictionary<int, HashSet<Variable>> offsetToVariableMap;
-					if (debugRecords.registerRelativeVariables.TryGetValue(usedMemInfo.Base.ToString(), out offsetToVariableMap))
+					if (debugRecords.registerRelativeVariables.TryGetValue(usedMemInfo.Base.ToString(), out Dictionary<int, HashSet<Variable>> offsetToVariableMap))
 					{
 						if (offsetToVariableMap.TryGetValue(displacement, out variables))
 						{

@@ -30,9 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new("Element", TupleTypeElement.Null);
 
-		public AstNodeCollection<TupleTypeElement> Elements {
-			get { return GetChildrenByRole(ElementRole); }
-		}
+		public AstNodeCollection<TupleTypeElement> Elements => GetChildrenByRole(ElementRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -70,11 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullTupleTypeElement : TupleTypeElement
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{

@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine, string[] definedSymbols = null)
 		{
-			var collection1 = NormalizeAndSplitCode(input1, definedSymbols ?? new string[0]);
-			var collection2 = NormalizeAndSplitCode(input2, definedSymbols ?? new string[0]);
+			var collection1 = NormalizeAndSplitCode(input1, definedSymbols ?? Array.Empty<string>());
+			var collection2 = NormalizeAndSplitCode(input2, definedSymbols ?? Array.Empty<string>());
 			var diffSections = Diff.CalculateSections(
 				collection1, collection2, new CodeLineEqualityComparer(normalizeLine)
 			);
@@ -176,11 +176,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
 				{
-					return default(SyntaxTrivia); // delete
+					return default; // delete
 				}
 				if (trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia))
 				{
-					return default(SyntaxTrivia); // delete
+					return default; // delete
 				}
 				return base.VisitTrivia(trivia);
 			}

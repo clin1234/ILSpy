@@ -33,11 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public new static readonly Identifier Null = new NullIdentifier();
 		sealed class NullIdentifier : Identifier
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -60,29 +56,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Token;
-			}
-		}
+		public override NodeType NodeType => NodeType.Token;
 
 		string name;
 		public string Name {
 			get { return this.name; }
 			set {
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
 				ThrowIfFrozen();
-				this.name = value;
+				this.name = value ?? throw new ArgumentNullException(nameof(value));
 			}
 		}
 
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
+		public override TextLocation StartLocation => startLocation;
 
 		internal void SetStartLocation(TextLocation value)
 		{
@@ -105,11 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override TextLocation EndLocation {
-			get {
-				return new(StartLocation.Line, StartLocation.Column + (Name ?? "").Length + (IsVerbatim ? 1 : 0));
-			}
-		}
+		public override TextLocation EndLocation => new(StartLocation.Line, StartLocation.Column + (Name ?? "").Length + (IsVerbatim ? 1 : 0));
 
 		Identifier()
 		{

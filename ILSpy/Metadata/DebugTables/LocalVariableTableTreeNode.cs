@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[StringFormat("X8")]
 			public LocalVariableAttributes Attributes => localVar.Attributes;
 
-			public object AttributesTooltip => new FlagsTooltip() {
+			public static object AttributesTooltip => new FlagsTooltip() {
 				FlagGroup.CreateMultipleChoiceGroup(typeof(LocalVariableAttributes)),
 			};
 

@@ -50,8 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void ProcessInvocationExpression(InvocationExpression invocationExpression)
 		{
-			var method = invocationExpression.GetSymbol() as IMethod;
-			if (method == null)
+			if (invocationExpression.GetSymbol() is not IMethod method)
 				return;
 			var arguments = invocationExpression.Arguments.ToArray();
 
@@ -129,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case "System.Activator.CreateInstance":
 					if (arguments.Length == 0 && method.TypeArguments.Count == 1 && IsInstantiableTypeParameter(method.TypeArguments[0]))
 					{
-						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
+						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments[0])));
 					}
 					break;
 				case "System.Runtime.CompilerServices.RuntimeHelpers.GetSubArray":
@@ -200,12 +199,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return;
 		}
 
-		bool IsInstantiableTypeParameter(IType type)
+		static bool IsInstantiableTypeParameter(IType type)
 		{
 			return type is ITypeParameter { HasDefaultConstructorConstraint: true };
 		}
 
-		bool CheckArgumentsForStringConcat(Expression[] arguments)
+		static bool CheckArgumentsForStringConcat(Expression[] arguments)
 		{
 			if (arguments.Length < 2)
 				return false;
@@ -254,7 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				|| arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String);
 		}
 
-		private bool IsStringConcat(IParameterizedMember member)
+		private static bool IsStringConcat(IParameterizedMember member)
 		{
 			return member is IMethod { Name: "Concat" } method 
 			       && method.DeclaringType.IsKnownType(KnownTypeCode.String);
@@ -287,7 +286,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// generate additional ToString() calls in this case.
 				return expr;
 			}
-			var toStringMethod = m.Get<Expression>("call").Single().GetSymbol() as IMethod;
 			var target = m.Get<Expression>("target").Single();
 			var type = target.GetResolveResult().Type;
 			if (!(isLastArgument || ToStringIsKnownEffectFree(type)))
@@ -300,7 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// ToString() might throw NullReferenceException, but the builtin operator+ doesn't.
 				return expr;
 			}
-			if (!ToStringIsKnownEffectFree(type) && toStringMethod != null && IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(toStringMethod))
+			if (!ToStringIsKnownEffectFree(type) && m.Get<Expression>("call").Single().GetSymbol() is IMethod toStringMethod && IL.Transforms.ILInlining.MethodRequiresCopyForReadonlyLValue(toStringMethod))
 			{
 				// ToString() on a struct may mutate the struct.
 				// For operator+ the C# compiler creates a temporary copy before implicitly calling ToString(),
@@ -313,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// The C# compiler will generate an equivalent call if the code is recompiled.
 			return target;
 
-			bool IsStringParameter(IParameter p)
+			static bool IsStringParameter(IParameter p)
 			{
 				IType ty = p.Type;
 				if (p.IsParams && ty.Kind == TypeKind.Array)
@@ -325,28 +323,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static bool ToStringIsKnownEffectFree(IType type)
 		{
 			type = NullableType.GetUnderlyingType(type);
-			switch (type.GetDefinition()?.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.Char:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-				case KnownTypeCode.Single:
-				case KnownTypeCode.Double:
-				case KnownTypeCode.Decimal:
-				case KnownTypeCode.IntPtr:
-				case KnownTypeCode.UIntPtr:
-				case KnownTypeCode.String:
-					return true;
-				default:
-					return false;
-			}
+			return (type.GetDefinition()?.KnownTypeCode) switch {
+				KnownTypeCode.Boolean or KnownTypeCode.Char or KnownTypeCode.SByte or KnownTypeCode.Byte or KnownTypeCode.Int16 or KnownTypeCode.UInt16 or KnownTypeCode.Int32 or KnownTypeCode.UInt32 or KnownTypeCode.Int64 or KnownTypeCode.UInt64 or KnownTypeCode.Single or KnownTypeCode.Double or KnownTypeCode.Decimal or KnownTypeCode.IntPtr or KnownTypeCode.UIntPtr or KnownTypeCode.String => true,
+				_ => false,
+			};
 		}
 
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)
@@ -401,8 +381,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
 			if (m.Success)
 			{
-				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
-				if (m.Has("declaringType") && method != null)
+				if (m.Has("declaringType") && m.Get<AstNode>("method").Single().GetSymbol() is IMethod method)
 				{
 					Expression newNode = new MemberReferenceExpression(new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);
 					newNode = new InvocationExpression(newNode, method.Parameters.Select(p => new TypeReferenceExpression(context.TypeSystemAstBuilder.ConvertType(p.Type))));

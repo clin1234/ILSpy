@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			if (!(analyzedSymbol is ITypeDefinition attributeType))
+			if (analyzedSymbol is not ITypeDefinition attributeType)
 				return Empty<ISymbol>.Array;
 
 			var scope = context.GetScopeOf(attributeType);
@@ -48,32 +48,16 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		bool IsBuiltinAttribute(ITypeDefinition attributeType, out KnownAttribute knownAttribute)
+		static bool IsBuiltinAttribute(ITypeDefinition attributeType, out KnownAttribute knownAttribute)
 		{
 			knownAttribute = attributeType.IsBuiltinAttribute();
-			switch (knownAttribute)
-			{
-				case KnownAttribute.Serializable:
-				case KnownAttribute.ComImport:
-				case KnownAttribute.StructLayout:
-				case KnownAttribute.DllImport:
-				case KnownAttribute.PreserveSig:
-				case KnownAttribute.MethodImpl:
-				case KnownAttribute.FieldOffset:
-				case KnownAttribute.NonSerialized:
-				case KnownAttribute.MarshalAs:
-				case KnownAttribute.PermissionSet:
-				case KnownAttribute.Optional:
-				case KnownAttribute.In:
-				case KnownAttribute.Out:
-				case KnownAttribute.IndexerName:
-					return true;
-				default:
-					return false;
-			}
+			return knownAttribute switch {
+				KnownAttribute.Serializable or KnownAttribute.ComImport or KnownAttribute.StructLayout or KnownAttribute.DllImport or KnownAttribute.PreserveSig or KnownAttribute.MethodImpl or KnownAttribute.FieldOffset or KnownAttribute.NonSerialized or KnownAttribute.MarshalAs or KnownAttribute.PermissionSet or KnownAttribute.Optional or KnownAttribute.In or KnownAttribute.Out or KnownAttribute.IndexerName => true,
+				_ => false,
+			};
 		}
 
-		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope, CancellationToken ct)
+		static IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope, CancellationToken ct)
 		{
 			IEnumerable<ISymbol> ScanTypes(DecompilerTypeSystem ts)
 			{
@@ -148,7 +132,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<ISymbol> HandleCustomAttribute(ITypeDefinition attributeType, AnalyzerScope scope, CancellationToken ct)
+		static IEnumerable<ISymbol> HandleCustomAttribute(ITypeDefinition attributeType, AnalyzerScope scope, CancellationToken ct)
 		{
 			var genericContext = new GenericContext(); // type arguments do not matter for this analyzer.
 

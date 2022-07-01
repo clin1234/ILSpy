@@ -89,17 +89,11 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Returns the number of different keys.
 		/// </summary>
-		public int Count {
-			get { return dict.Count; }
-		}
+		public int Count => dict.Count;
 
-		public ICollection<TKey> Keys {
-			get { return dict.Keys; }
-		}
+		public ICollection<TKey> Keys => dict.Keys;
 
-		public IEnumerable<TValue> Values {
-			get { return dict.Values.SelectMany(list => list); }
-		}
+		public IEnumerable<TValue> Values => dict.Values.SelectMany(list => list);
 
 		IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] {
 			get { return this[key]; }
@@ -132,9 +126,7 @@ namespace ICSharpCode.Decompiler.Util
 				this.values = values;
 			}
 
-			public TKey Key {
-				get { return key; }
-			}
+			public TKey Key => key;
 
 			public IEnumerator<TValue> GetEnumerator()
 			{

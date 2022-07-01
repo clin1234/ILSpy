@@ -76,14 +76,14 @@ namespace ICSharpCode.Decompiler.Util
 		public static T? PopOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
-				return default(T);
+				return default;
 			return stack.Pop();
 		}
 
 		public static T? PeekOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
-				return default(T);
+				return default;
 			return stack.Peek();
 		}
 
@@ -353,7 +353,7 @@ namespace ICSharpCode.Decompiler.Util
 			foreach (var t in source)
 			{
 				if (any)
-					return default(T);
+					return default;
 				first = t;
 				any = true;
 			}

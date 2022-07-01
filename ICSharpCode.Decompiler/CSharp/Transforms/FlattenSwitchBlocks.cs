@@ -16,15 +16,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (switchSection.Statements.Count != 1)
 					continue;
 
-				var blockStatement = switchSection.Statements.First() as BlockStatement;
-				if (blockStatement == null || blockStatement.Statements.Any(ContainsLocalDeclaration))
+				if (switchSection.Statements.First() is not BlockStatement blockStatement || blockStatement.Statements.Any(ContainsLocalDeclaration))
 					continue;
 
 				blockStatement.Remove();
 				blockStatement.Statements.MoveTo(switchSection.Statements);
 			}
 
-			bool ContainsLocalDeclaration(AstNode node)
+			static bool ContainsLocalDeclaration(AstNode node)
 			{
 				if (node is VariableDeclarationStatement or LocalFunctionDeclarationStatement or OutVarDeclarationExpression)
 					return true;

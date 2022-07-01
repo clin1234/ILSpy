@@ -457,16 +457,11 @@ namespace ICSharpCode.ILSpy
 			{
 				symbol = node.Parent.GetSymbol();
 			}
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
-			{
-				var declaringType = member.DeclaringType;
-				if (declaringType is { Kind: TypeKind.Delegate })
-					return null;
-			}
+			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember { DeclaringType: { Kind: TypeKind.Delegate } }) return null;
 			return symbol;
 		}
 
-		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
+		readonly Stack<AstNode> nodeStack = new();
 
 		public override void StartNode(AstNode node)
 		{
@@ -480,8 +475,8 @@ namespace ICSharpCode.ILSpy
 			nodeStack.Pop();
 		}
 
-		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
-		HighlightingColor currentColor = new HighlightingColor();
+		readonly Stack<HighlightingColor> colorStack = new();
+		HighlightingColor currentColor = new();
 		int currentColorBegin = -1;
 		readonly ILocatable locatable;
 		readonly ISmartTextOutput textOutput;

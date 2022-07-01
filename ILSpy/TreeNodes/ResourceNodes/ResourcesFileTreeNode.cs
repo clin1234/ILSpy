@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 
-		public ILSpyTreeNode CreateNode(string key, object data)
+		public static ILSpyTreeNode CreateNode(string key, object data)
 		{
 			return null;
 		}
@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Stream s = Resource.TryOpenStream();
 			if (s == null)
 				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
 			dlg.Filter = Resources.ResourcesFileFilter;
 			if (dlg.ShowDialog() == true)
@@ -147,13 +147,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					case 2:
 						try
 						{
-							using (var fs = dlg.OpenFile())
-							using (var writer = new ResXResourceWriter(fs))
+							using var fs = dlg.OpenFile();
+							using var writer = new ResXResourceWriter(fs);
+							foreach (var entry in new ResourcesFile(s))
 							{
-								foreach (var entry in new ResourcesFile(s))
-								{
-									writer.AddResource(entry.Key, entry.Value);
-								}
+								writer.AddResource(entry.Key, entry.Value);
 							}
 						}
 						catch (BadImageFormatException)

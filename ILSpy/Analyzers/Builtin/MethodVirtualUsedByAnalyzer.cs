@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		public bool Show(ISymbol symbol) => symbol is IMethod method && method.IsVirtual;
+		public bool Show(ISymbol symbol) => symbol is IMethod { IsVirtual: true };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -100,9 +100,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, AnalyzerContext context)
+		static bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, AnalyzerContext context)
 		{
-			return ScanMethodBody(analyzedEntity, method, context.GetMethodBody(method));
+			return ScanMethodBody(analyzedEntity, method, AnalyzerContext.GetMethodBody(method));
 		}
 
 		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody)

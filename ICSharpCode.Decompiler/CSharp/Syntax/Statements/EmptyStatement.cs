@@ -37,17 +37,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public override TextLocation StartLocation {
-			get {
-				return Location;
-			}
-		}
+		public override TextLocation StartLocation => Location;
 
-		public override TextLocation EndLocation {
-			get {
-				return new(Location.Line, Location.Column + 1);
-			}
-		}
+		public override TextLocation EndLocation => new(Location.Line, Location.Column + 1);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -66,8 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			EmptyStatement o = other as EmptyStatement;
-			return o != null;
+			return other is EmptyStatement o;
 		}
 	}
 }

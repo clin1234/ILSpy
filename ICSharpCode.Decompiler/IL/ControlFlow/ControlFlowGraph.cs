@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// This may differ from the container currently holding a block,
 		/// because a transform could have moved the block since the CFG was created.
 		/// </summary>
-		public BlockContainer Container { get { return container; } }
+		public BlockContainer Container => container;
 
 		/// <summary>
 		/// Nodes array, indexed by original block index.
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Return statements, exceptions, or branches leaving the block container are not
 		/// modeled by the control flow graph.
 		/// </summary>
-		public ControlFlowGraph(BlockContainer container, CancellationToken cancellationToken = default(CancellationToken))
+		public ControlFlowGraph(BlockContainer container, CancellationToken cancellationToken = default)
 		{
 			this.container = container;
 			this.cfg = new ControlFlowNode[container.Blocks.Count];

@@ -12,7 +12,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	[ExportAnalyzer(Header = "Extension Methods", Order = 50)]
 	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition { IsStatic: false };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
+		static IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
 		{
 			if (!type.HasExtensionMethods)
 				yield break;

@@ -213,8 +213,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (!isStruct)
 				{
-					var baseCtorCall = body.Instructions.SecondToLastOrDefault() as CallInstruction;
-					if (baseCtorCall == null)
+					if (body.Instructions.SecondToLastOrDefault() is not CallInstruction baseCtorCall)
 						return false;
 				}
 
@@ -390,7 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Then all the fields are copied over
 			foreach (var member in orderedMembers)
 			{
-				if (!(member is IField field))
+				if (member is not IField field)
 				{
 					if (!autoPropertyToBackingField.TryGetValue((IProperty)member, out field))
 						continue;
@@ -443,7 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var body = DecompileBody(getter);
 			if (body == null || body.Instructions.Count != 1)
 				return false;
-			if (!(body.Instructions.Single() is Leave leave))
+			if (body.Instructions.Single() is not Leave leave)
 				return false;
 			// leave IL_0000 (call GetTypeFromHandle(ldtypetoken R))
 			if (!TransformExpressionTrees.MatchGetTypeFromHandle(leave.Value, out IType ty))
@@ -615,7 +614,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, out ILInstruction val)
+		private static bool MatchStringBuilderAppend(ILInstruction inst, ILVariable sb, out ILInstruction val)
 		{
 			val = null;
 			if (!(inst is CallVirt { Method: { Name: "Append", DeclaringType: { Namespace: "System.Text", Name: "StringBuilder" } } } call))

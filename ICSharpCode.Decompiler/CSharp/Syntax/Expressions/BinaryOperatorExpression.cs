@@ -80,9 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(LeftRole, value); }
 		}
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(GetOperatorRole(Operator)); }
-		}
+		public CSharpTokenNode OperatorToken => GetChildByRole(GetOperatorRole(Operator));
 
 		public Expression Right {
 			get { return GetChildByRole(RightRole); }
@@ -106,8 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BinaryOperatorExpression o = other as BinaryOperatorExpression;
-			return o != null && (this.Operator == BinaryOperatorType.Any || this.Operator == o.Operator)
+			return other is BinaryOperatorExpression o && (this.Operator == BinaryOperatorType.Any || this.Operator == o.Operator)
 				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
 

@@ -38,13 +38,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 
-		public AstNodeCollection<AstType> CallingConventions {
-			get { return GetChildrenByRole(CallingConventionRole); }
-		}
+		public AstNodeCollection<AstType> CallingConventions => GetChildrenByRole(CallingConventionRole);
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole(Roles.Parameter);
 
 		public AstType ReturnType {
 			get { return GetChildByRole(Roles.Type); }

@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (statement == null)
 				throw new ArgumentNullException(nameof(statement));
-			if (!(statement.Parent is Block parent))
+			if (statement.Parent is not Block parent)
 				throw new ArgumentException("ILInstruction must be a statement, i.e., direct child of a block.");
 			new ExpressionTransforms().Run(parent, statement.ChildIndex, new(new(context)));
 		}
@@ -225,7 +225,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void VisitLogicNot(Comp inst, ILInstruction arg)
 		{
-			ILInstruction lhs, rhs;
 			if (arg is Comp comp)
 			{
 				if ((!comp.InputType.IsFloatType() && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality())
@@ -237,7 +236,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				comp.AcceptVisitor(this);
 			}
-			else if (arg.MatchLogicAnd(out lhs, out rhs))
+			else if (arg.MatchLogicAnd(out ILInstruction lhs, out ILInstruction rhs))
 			{
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
@@ -332,14 +331,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// ldvirtdelegate System.Delegate TargetMethod(target)
 		/// </summary>
-		bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate ldVirtDelegate)
+		static bool TransformDelegateCtorLdVirtFtnToLdVirtDelegate(NewObj inst, out LdVirtDelegate ldVirtDelegate)
 		{
 			ldVirtDelegate = null;
 			if (inst.Method.DeclaringType.Kind != TypeKind.Delegate)
 				return false;
 			if (inst.Arguments.Count != 2)
 				return false;
-			if (!(inst.Arguments[1] is LdVirtFtn ldVirtFtn))
+			if (inst.Arguments[1] is not LdVirtFtn ldVirtFtn)
 				return false;
 			if (!SemanticHelper.IsPure(inst.Arguments[0].Flags))
 				return false;
@@ -369,7 +368,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		final: ldloc I_0
 		/// }
 		/// </summary>
-		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction locallocSpan)
+		static bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction locallocSpan)
 		{
 			locallocSpan = null;
 			IType type = newObj.Method.DeclaringType;
@@ -409,7 +408,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchesElementCount(ILInstruction sizeInBytesInstr, IType elementType, ILInstruction elementCountInstr2)
+		static bool MatchesElementCount(ILInstruction sizeInBytesInstr, IType elementType, ILInstruction elementCountInstr2)
 		{
 			var pointerType = new PointerType(elementType);
 			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType.ElementType, checkForOverflow: true, unwrapZeroExtension: true);
@@ -418,7 +417,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
+		static bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
 		{
 			IType t = inst.Method.DeclaringType;
 			result = null;
@@ -427,8 +426,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var args = inst.Arguments;
 			if (args.Count == 1)
 			{
-				int val;
-				if (args[0].MatchLdcI4(out val))
+				if (args[0].MatchLdcI4(out int val))
 				{
 					result = new(val);
 					return true;
@@ -436,10 +434,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else if (args.Count == 5)
 			{
-				int lo, mid, hi, isNegative, scale;
-				if (args[0].MatchLdcI4(out lo) && args[1].MatchLdcI4(out mid) &&
-					args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
-					args[4].MatchLdcI4(out scale))
+				if (args[0].MatchLdcI4(out int lo) && args[1].MatchLdcI4(out int mid) &&
+					args[2].MatchLdcI4(out int hi) && args[3].MatchLdcI4(out int isNegative) &&
+					args[4].MatchLdcI4(out int scale))
 				{
 					result = new(new(lo, mid, hi, isNegative != 0, (byte)scale));
 					return true;
@@ -448,7 +445,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal result)
+		static bool TransformDecimalFieldToConstant(LdObj inst, out LdcDecimal result)
 		{
 			if (inst.MatchLdsFld(out var field) && field.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
 			{
@@ -562,15 +559,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
 			// if (cond) stloc A(V1) else stloc A(V2) --> stloc A(if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || trueInst.Instructions.Count != 1)
+			if (inst.TrueInst is not Block trueInst || trueInst.Instructions.Count != 1)
 				return inst;
-			Block falseInst = inst.FalseInst as Block;
-			if (falseInst == null || falseInst.Instructions.Count != 1)
+			if (inst.FalseInst is not Block falseInst || falseInst.Instructions.Count != 1)
 				return inst;
-			ILVariable v;
-			ILInstruction value1, value2;
-			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2))
+			if (trueInst.Instructions[0].MatchStLoc(out ILVariable v, out ILInstruction value1) && falseInst.Instructions[0].MatchStLoc(v, out ILInstruction value2))
 			{
 				context.Step("conditional operator", inst);
 				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
@@ -706,7 +699,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return false;
-			if (!(condition is DynamicIsEventInstruction isEvent))
+			if (condition is not DynamicIsEventInstruction isEvent)
 				return false;
 			trueInst = Block.Unwrap(trueInst);
 			falseInst = Block.Unwrap(falseInst);
@@ -716,7 +709,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!isEvent.Argument.Match(getMember.Target).Success)
 				return false;
-			if (!(trueInst is DynamicInvokeMemberInstruction invokeMember))
+			if (trueInst is not DynamicInvokeMemberInstruction invokeMember)
 				return false;
 			if (!(invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSpecialName) && invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.ResultDiscarded)))
 				return false;

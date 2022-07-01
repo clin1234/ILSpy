@@ -225,10 +225,10 @@ namespace ICSharpCode.ILSpy
 
 		}
 
-		Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
+		static Button MakeToolbarItem(Lazy<ICommand, IToolbarCommandMetadata> command)
 		{
 			return new Button {
-				Style = ThemeManager.Current.CreateToolBarButtonStyle(),
+				Style = ThemeManager.CreateToolBarButtonStyle(),
 				Command = CommandWrapper.Unwrap(command.Value),
 				ToolTip = Properties.Resources.ResourceManager.GetString(command.Metadata.ToolTip),
 				Tag = command.Metadata.Tag,
@@ -270,7 +270,7 @@ namespace ICSharpCode.ILSpy
 						}
 						else
 						{
-							MenuItem menuItem = new MenuItem();
+							MenuItem menuItem = new();
 							menuItem.Command = CommandWrapper.Unwrap(entry.Value);
 							menuItem.Tag = entry.Metadata.MenuID;
 							menuItem.Header = GetResourceString(entry.Metadata.Header);
@@ -428,7 +428,7 @@ namespace ICSharpCode.ILSpy
 
 				MenuItem CreateMenuItem(ToolPaneModel pane)
 				{
-					MenuItem menuItem = new MenuItem();
+					MenuItem menuItem = new();
 					menuItem.Command = pane.AssociatedCommand ?? new ToolPaneCommand(pane.ContentId);
 					menuItem.Header = pane.Title;
 					menuItem.Tag = pane;
@@ -510,7 +510,7 @@ namespace ICSharpCode.ILSpy
 
 				MenuItem CreateMenuItem(TabPageModel pane)
 				{
-					MenuItem menuItem = new MenuItem();
+					MenuItem menuItem = new();
 					menuItem.Command = new TabPageCommand(pane);
 					menuItem.Header = pane.Title.Length > 20 ? pane.Title.Substring(20) + "..." : pane.Title;
 					menuItem.Tag = pane;
@@ -534,7 +534,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public void ShowInTopPane(string title, object content)
+		public static void ShowInTopPane(string title, object content)
 		{
 			var model = DockWorkspace.Instance.ToolPanes.OfType<LegacyToolPaneModel>().FirstOrDefault(p => p.Content == content);
 			if (model == null)
@@ -545,7 +545,7 @@ namespace ICSharpCode.ILSpy
 			model.Show();
 		}
 
-		public void ShowInBottomPane(string title, object content)
+		public static void ShowInBottomPane(string title, object content)
 		{
 			var model = DockWorkspace.Instance.ToolPanes.OfType<LegacyToolPaneModel>().FirstOrDefault(p => p.Content == content);
 			if (model == null)
@@ -590,12 +590,12 @@ namespace ICSharpCode.ILSpy
 			if (msg == NativeMethods.WM_COPYDATA)
 			{
 				CopyDataStruct* copyData = (CopyDataStruct*)lParam;
-				string data = new string((char*)copyData->Buffer, 0, copyData->Size / sizeof(char));
+				string data = new((char*)copyData->Buffer, 0, copyData->Size / sizeof(char));
 				if (data.StartsWith("ILSpy:\r\n", StringComparison.Ordinal))
 				{
 					data = data.Substring(8);
-					List<string> lines = new List<string>();
-					using (StringReader r = new StringReader(data))
+					List<string> lines = new();
+					using (StringReader r = new(data))
 					{
 						string line;
 						while ((line = r.ReadLine()) != null)
@@ -645,7 +645,7 @@ namespace ICSharpCode.ILSpy
 
 		public event NotifyCollectionChangedEventHandler CurrentAssemblyListChanged;
 
-		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
+		List<LoadedAssembly> commandLineLoadedAssemblies = new();
 
 		bool HandleCommandLineArguments(CommandLineArguments args)
 		{
@@ -774,8 +774,8 @@ namespace ICSharpCode.ILSpy
 
 		internal static IEntity FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
-			ITypeReference typeRef = null;
 			IMemberReference memberRef = null;
+			ITypeReference typeRef;
 			if (navigateTo.StartsWith("T:", StringComparison.Ordinal))
 			{
 				typeRef = IdStringProvider.ParseTypeName(navigateTo);
@@ -891,7 +891,7 @@ namespace ICSharpCode.ILSpy
 				DockWorkspace.Instance.ShowText(output);
 		}
 
-		bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
+		static bool FormatExceptions(App.ExceptionData[] exceptions, ITextOutput output)
 		{
 			var stringBuilder = new StringBuilder();
 			var result = FormatExceptions(exceptions, stringBuilder);
@@ -1050,12 +1050,12 @@ namespace ICSharpCode.ILSpy
 			System.Reflection.Assembly[] initialAssemblies = {
 				typeof(object).Assembly,
 				typeof(Uri).Assembly,
-				typeof(System.Linq.Enumerable).Assembly,
+				typeof(Enumerable).Assembly,
 				typeof(System.Xml.XmlDocument).Assembly,
 				typeof(System.Windows.Markup.MarkupExtension).Assembly,
-				typeof(System.Windows.Rect).Assembly,
-				typeof(System.Windows.UIElement).Assembly,
-				typeof(System.Windows.FrameworkElement).Assembly
+				typeof(Rect).Assembly,
+				typeof(UIElement).Assembly,
+				typeof(FrameworkElement).Assembly
 			};
 			foreach (System.Reflection.Assembly asm in initialAssemblies)
 				assemblyList.OpenAssembly(asm.Location);
@@ -1064,7 +1064,7 @@ namespace ICSharpCode.ILSpy
 		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			RefreshTreeViewFilter();
-			if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion")
+			if (e.PropertyName is "Language" or "LanguageVersion")
 			{
 				DecompileSelectedNodes(recordHistory: false);
 			}
@@ -1217,7 +1217,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (node == null)
 				return null;
-			List<string> path = new List<string>();
+			List<string> path = new();
 			while (node.Parent != null)
 			{
 				path.Add(node.ToString());
@@ -1229,31 +1229,19 @@ namespace ICSharpCode.ILSpy
 
 		public ILSpyTreeNode FindTreeNode(object reference)
 		{
-			switch (reference)
-			{
-				case LoadedAssembly lasm:
-					return assemblyListTreeNode.FindAssemblyNode(lasm);
-				case PEFile asm:
-					return assemblyListTreeNode.FindAssemblyNode(asm);
-				case Resource res:
-					return assemblyListTreeNode.FindResourceNode(res);
-				case ValueTuple<Resource, string> resName:
-					return assemblyListTreeNode.FindResourceNode(resName.Item1, resName.Item2);
-				case ITypeDefinition type:
-					return assemblyListTreeNode.FindTypeNode(type);
-				case IField fd:
-					return assemblyListTreeNode.FindFieldNode(fd);
-				case IMethod md:
-					return assemblyListTreeNode.FindMethodNode(md);
-				case IProperty pd:
-					return assemblyListTreeNode.FindPropertyNode(pd);
-				case IEvent ed:
-					return assemblyListTreeNode.FindEventNode(ed);
-				case INamespace nd:
-					return AssemblyListTreeNode.FindNamespaceNode(nd);
-				default:
-					return null;
-			}
+			return reference switch {
+				LoadedAssembly lasm => assemblyListTreeNode.FindAssemblyNode(lasm),
+				PEFile asm => assemblyListTreeNode.FindAssemblyNode(asm),
+				Resource res => assemblyListTreeNode.FindResourceNode(res),
+				ValueTuple<Resource, string> resName => assemblyListTreeNode.FindResourceNode(resName.Item1, resName.Item2),
+				ITypeDefinition type => assemblyListTreeNode.FindTypeNode(type),
+				IField fd => assemblyListTreeNode.FindFieldNode(fd),
+				IMethod md => assemblyListTreeNode.FindMethodNode(md),
+				IProperty pd => assemblyListTreeNode.FindPropertyNode(pd),
+				IEvent ed => assemblyListTreeNode.FindEventNode(ed),
+				INamespace nd => AssemblyListTreeNode.FindNamespaceNode(nd),
+				_ => null,
+			};
 		}
 
 		public void JumpToReference(object reference)
@@ -1358,7 +1346,7 @@ namespace ICSharpCode.ILSpy
 		void OpenCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
 			e.Handled = true;
-			OpenFileDialog dlg = new OpenFileDialog();
+			OpenFileDialog dlg = new();
 			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd|Nuget Packages (*.nupkg)|*.nupkg|All files|*.*";
 			dlg.Multiselect = true;
 			dlg.RestoreDirectory = true;
@@ -1493,7 +1481,7 @@ namespace ICSharpCode.ILSpy
 			}
 			var options = new DecompilationOptions() { TextViewState = newState };
 			decompilationTask = DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(
-				textView => textView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, options)
+				textView => textView.DecompileAsync(CurrentLanguage, this.SelectedNodes, options)
 			);
 		}
 
@@ -1522,9 +1510,9 @@ namespace ICSharpCode.ILSpy
 		}
 
 		public Language CurrentLanguage => DockWorkspace.Instance.ActiveTabPage.FilterSettings.Language;
-		public LanguageVersion CurrentLanguageVersion => DockWorkspace.Instance.ActiveTabPage.FilterSettings.LanguageVersion;
+		public static LanguageVersion CurrentLanguageVersion => DockWorkspace.Instance.ActiveTabPage.FilterSettings.LanguageVersion;
 
-		public bool SupportsLanguageSwitching => DockWorkspace.Instance.ActiveTabPage.SupportsLanguageSwitching;
+		public static bool SupportsLanguageSwitching => DockWorkspace.Instance.ActiveTabPage.SupportsLanguageSwitching;
 
 		public event SelectionChangedEventHandler SelectionChanged;
 
@@ -1615,14 +1603,12 @@ namespace ICSharpCode.ILSpy
 				};
 				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath))
 				{
-					using (StreamReader r = new StreamReader(s))
+					using StreamReader r = new(s);
+					string line;
+					while ((line = r.ReadLine()) != null)
 					{
-						string line;
-						while ((line = r.ReadLine()) != null)
-						{
-							output.Write(line);
-							output.WriteLine();
-						}
+						output.Write(line);
+						output.WriteLine();
 					}
 				}
 				RecordHistory();
@@ -1649,7 +1635,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnStateChanged(e);
 			// store window state in settings only if it's not minimized
-			if (this.WindowState != System.Windows.WindowState.Minimized)
+			if (this.WindowState != WindowState.Minimized)
 				sessionSettings.WindowState = this.WindowState;
 		}
 
@@ -1665,7 +1651,7 @@ namespace ICSharpCode.ILSpy
 			sessionSettings.Save();
 		}
 
-		private string GetAutoLoadedAssemblyNode(SharpTreeNode node)
+		private static string GetAutoLoadedAssemblyNode(SharpTreeNode node)
 		{
 			if (node == null)
 				return null;

@@ -79,9 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Gets the substitution belonging to this specialized member.
 		/// </summary>
-		public TypeParameterSubstitution Substitution {
-			get { return substitution; }
-		}
+		public TypeParameterSubstitution Substitution => substitution;
 
 		public IType DeclaringType {
 			get {
@@ -89,8 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				IType definitionDeclaringType = baseMember.DeclaringType;
-				ITypeDefinition definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
-				if (definitionDeclaringTypeDef != null && definitionDeclaringType.TypeParameterCount > 0)
+				if (definitionDeclaringType is ITypeDefinition definitionDeclaringTypeDef && definitionDeclaringType.TypeParameterCount > 0)
 				{
 					if (substitution.ClassTypeArguments != null && substitution.ClassTypeArguments.Count == definitionDeclaringType.TypeParameterCount)
 					{
@@ -117,9 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IMember MemberDefinition {
-			get { return baseMember.MemberDefinition; }
-		}
+		public IMember MemberDefinition => baseMember.MemberDefinition;
 
 		public IType ReturnType {
 			get {
@@ -141,79 +136,44 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public System.Reflection.Metadata.EntityHandle MetadataToken => baseMember.MetadataToken;
 
-		public bool IsVirtual {
-			get { return baseMember.IsVirtual; }
-		}
+		public bool IsVirtual => baseMember.IsVirtual;
 
-		public bool IsOverride {
-			get { return baseMember.IsOverride; }
-		}
+		public bool IsOverride => baseMember.IsOverride;
 
-		public bool IsOverridable {
-			get { return baseMember.IsOverridable; }
-		}
+		public bool IsOverridable => baseMember.IsOverridable;
 
-		public SymbolKind SymbolKind {
-			get { return baseMember.SymbolKind; }
-		}
+		public SymbolKind SymbolKind => baseMember.SymbolKind;
 
-		public ITypeDefinition DeclaringTypeDefinition {
-			get { return baseMember.DeclaringTypeDefinition; }
-		}
+		public ITypeDefinition DeclaringTypeDefinition => baseMember.DeclaringTypeDefinition;
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMember.GetAttributes();
 
-		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
-			get {
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers =>
 				// Note: if the interface is generic, then the interface members should already be specialized,
 				// so we only need to append our substitution.
-				return baseMember.ExplicitlyImplementedInterfaceMembers.Select(m => m.Specialize(substitution));
-			}
-		}
+				baseMember.ExplicitlyImplementedInterfaceMembers.Select(m => m.Specialize(substitution));
 
-		public bool IsExplicitInterfaceImplementation {
-			get { return baseMember.IsExplicitInterfaceImplementation; }
-		}
+		public bool IsExplicitInterfaceImplementation => baseMember.IsExplicitInterfaceImplementation;
 
-		public Accessibility Accessibility {
-			get { return baseMember.Accessibility; }
-		}
+		public Accessibility Accessibility => baseMember.Accessibility;
 
-		public bool IsStatic {
-			get { return baseMember.IsStatic; }
-		}
+		public bool IsStatic => baseMember.IsStatic;
 
-		public bool IsAbstract {
-			get { return baseMember.IsAbstract; }
-		}
+		public bool IsAbstract => baseMember.IsAbstract;
 
-		public bool IsSealed {
-			get { return baseMember.IsSealed; }
-		}
+		public bool IsSealed => baseMember.IsSealed;
 
-		public string FullName {
-			get { return baseMember.FullName; }
-		}
+		public string FullName => baseMember.FullName;
 
-		public string Name {
-			get { return baseMember.Name; }
-		}
+		public string Name => baseMember.Name;
 
-		public string Namespace {
-			get { return baseMember.Namespace; }
-		}
+		public string Namespace => baseMember.Namespace;
 
-		public string ReflectionName {
-			get { return baseMember.ReflectionName; }
-		}
+		public string ReflectionName => baseMember.ReflectionName;
 
-		public ICompilation Compilation {
-			get { return baseMember.Compilation; }
-		}
+		public ICompilation Compilation => baseMember.Compilation;
 
-		public IModule ParentModule {
-			get { return baseMember.ParentModule; }
-		}
+		public IModule ParentModule => baseMember.ParentModule;
 
 		public virtual IMember Specialize(TypeParameterSubstitution newSubstitution)
 		{
@@ -222,8 +182,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMember other = obj as SpecializedMember;
-			if (other == null)
+			if (obj is not SpecializedMember other)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
 				&& this.substitution.Equals(other.substitution, typeNormalization);
@@ -231,8 +190,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			SpecializedMember other = obj as SpecializedMember;
-			if (other == null)
+			if (obj is not SpecializedMember other)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitution.Equals(other.substitution);
 		}

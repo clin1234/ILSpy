@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (this.result == null)
 				return;
 
-			BackgroundGeometryBuilder builder = new BackgroundGeometryBuilder();
+			BackgroundGeometryBuilder builder = new();
 
 			builder.CornerRadius = 1;
 

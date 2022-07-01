@@ -38,28 +38,16 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		bool CanMatch(IMember member)
 		{
-			switch (member.SymbolKind)
-			{
-				case SymbolKind.Field:
-					return memberType == 'F';
-				case SymbolKind.Property:
-				case SymbolKind.Indexer:
-					return memberType == 'P';
-				case SymbolKind.Event:
-					return memberType == 'E';
-				case SymbolKind.Method:
-				case SymbolKind.Operator:
-				case SymbolKind.Constructor:
-				case SymbolKind.Destructor:
-					return memberType == 'M';
-				default:
-					throw new NotSupportedException(member.SymbolKind.ToString());
-			}
+			return member.SymbolKind switch {
+				SymbolKind.Field => memberType == 'F',
+				SymbolKind.Property or SymbolKind.Indexer => memberType == 'P',
+				SymbolKind.Event => memberType == 'E',
+				SymbolKind.Method or SymbolKind.Operator or SymbolKind.Constructor or SymbolKind.Destructor => memberType == 'M',
+				_ => throw new NotSupportedException(member.SymbolKind.ToString()),
+			};
 		}
 
-		public ITypeReference DeclaringTypeReference {
-			get { return declaringTypeReference; }
-		}
+		public ITypeReference DeclaringTypeReference => declaringTypeReference;
 
 		public IMember Resolve(ITypeResolveContext context)
 		{

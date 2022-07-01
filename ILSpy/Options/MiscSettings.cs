@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.Options
 				&& Registry.CurrentUser.OpenSubKey(string.Format(fullPath, "exefile")) != null;
 		}
 
-		public string AddRemoveShellIntegrationText {
+		public static string AddRemoveShellIntegrationText {
 			get {
 				return RegistryEntriesExist() ? Properties.Resources.RemoveShellIntegration : Properties.Resources.AddShellIntegration;
 			}

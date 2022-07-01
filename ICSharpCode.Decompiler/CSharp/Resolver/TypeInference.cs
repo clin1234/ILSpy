@@ -221,13 +221,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public readonly ITypeParameter TypeParameter;
 			public IType FixedTo;
 
-			public bool IsFixed {
-				get { return FixedTo != null; }
-			}
+			public bool IsFixed => FixedTo != null;
 
-			public bool HasBounds {
-				get { return LowerBounds.Count > 0 || UpperBounds.Count > 0 || ExactBound != null; }
-			}
+			public bool HasBounds => LowerBounds.Count > 0 || UpperBounds.Count > 0 || ExactBound != null;
 
 			public TP(ITypeParameter typeParameter)
 			{
@@ -391,7 +387,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Input Types / Output Types (§7.5.2.3 + §7.5.2.4)
-		IType[] InputTypes(ResolveResult e, IType t)
+		static IType[] InputTypes(ResolveResult e, IType t)
 		{
 			// C# 4.0 spec: §7.5.2.3 Input types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
@@ -411,7 +407,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return Empty<IType>.Array;
 		}
 
-		IType[] OutputTypes(ResolveResult e, IType t)
+		static IType[] OutputTypes(ResolveResult e, IType t)
 		{
 			// C# 4.0 spec: §7.5.2.4 Output types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
@@ -521,8 +517,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteLine(" MakeOutputTypeInference from " + e + " to " + t);
 			// If E is an anonymous function with inferred return type  U (§7.5.2.12) and T is a delegate type or expression
 			// tree type with return type Tb, then a lower-bound inference (§7.5.2.9) is made from U to Tb.
-			LambdaResolveResult lrr = e as LambdaResolveResult;
-			if (lrr != null)
+			if (e is LambdaResolveResult lrr)
 			{
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null)
@@ -553,8 +548,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// with parameter types T1…Tk and return type Tb, and overload resolution
 			// of E with the types T1…Tk yields a single method with return type U, then a lower­-bound
 			// inference is made from U to Tb.
-			MethodGroupResolveResult mgrr = e as MethodGroupResolveResult;
-			if (mgrr != null)
+			if (e is MethodGroupResolveResult mgrr)
 			{
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null)
@@ -647,26 +641,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				tp.AddExactBound(U);
 				return;
 			}
-			// Handle by reference types:
-			ByReferenceType brU = U as ByReferenceType;
-			ByReferenceType brV = V as ByReferenceType;
-			if (brU != null && brV != null)
+			if (U is ByReferenceType brU && V is ByReferenceType brV)
 			{
 				MakeExactInference(brU.ElementType, brV.ElementType);
 				return;
 			}
-			// Handle array types:
-			ArrayType arrU = U as ArrayType;
-			ArrayType arrV = V as ArrayType;
-			if (arrU != null && arrV != null && arrU.Dimensions == arrV.Dimensions)
+			if (U is ArrayType arrU && V is ArrayType arrV && arrU.Dimensions == arrV.Dimensions)
 			{
 				MakeExactInference(arrU.ElementType, arrV.ElementType);
 				return;
 			}
-			// Handle parameterized type:
-			ParameterizedType pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-			ParameterizedType pV = V.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-			if (pU != null && pV != null
+			if (U.TupleUnderlyingTypeOrSelf() is ParameterizedType pU && V.TupleUnderlyingTypeOrSelf() is ParameterizedType pV
 				&& Equals(pU.GenericType, pV.GenericType)
 				&& pU.TypeParameterCount == pV.TypeParameterCount)
 			{
@@ -739,19 +724,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				MakeLowerBoundInference(NullableType.GetUnderlyingType(U), NullableType.GetUnderlyingType(V));
 				return;
 			}
-			// Handle by reference types:
-			ByReferenceType brU = U as ByReferenceType;
-			ByReferenceType brV = V as ByReferenceType;
-			if (brU != null && brV != null)
+			if (U is ByReferenceType brU && V is ByReferenceType brV)
 			{
 				MakeExactInference(brU.ElementType, brV.ElementType);
 				return;
 			}
 			// Handle array types:
 			ArrayType arrU = U as ArrayType;
-			ArrayType arrV = V as ArrayType;
 			ParameterizedType pV = V.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-			if (arrU != null && arrV != null && arrU.Dimensions == arrV.Dimensions)
+			if (arrU != null && V is ArrayType arrV && arrU.Dimensions == arrV.Dimensions)
 			{
 				MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
@@ -767,8 +748,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseU in U.GetAllBaseTypes())
 				{
-					ParameterizedType pU = baseU.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-					if (pU != null && Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
+					if (baseU.TupleUnderlyingTypeOrSelf() is ParameterizedType pU && Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
 					{
 						if (uniqueBaseType == null)
 							uniqueBaseType = pU;
@@ -831,17 +811,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (rt is not { TypeParameterCount: 1 })
 				return false;
-			switch (rt.GetDefinition()?.KnownTypeCode)
-			{
-				case KnownTypeCode.IEnumerableOfT:
-				case KnownTypeCode.ICollectionOfT:
-				case KnownTypeCode.IListOfT:
-				case KnownTypeCode.IReadOnlyCollectionOfT:
-				case KnownTypeCode.IReadOnlyListOfT:
-					return true;
-				default:
-					return false;
-			}
+			return (rt.GetDefinition()?.KnownTypeCode) switch {
+				KnownTypeCode.IEnumerableOfT or KnownTypeCode.ICollectionOfT or KnownTypeCode.IListOfT or KnownTypeCode.IReadOnlyCollectionOfT or KnownTypeCode.IReadOnlyListOfT => true,
+				_ => false,
+			};
 		}
 		#endregion
 
@@ -869,10 +842,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			// Handle array types:
-			ArrayType arrU = U as ArrayType;
 			ArrayType arrV = V as ArrayType;
 			ParameterizedType pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-			if (arrV != null && arrU != null && arrU.Dimensions == arrV.Dimensions)
+			if (arrV != null && U is ArrayType arrU && arrU.Dimensions == arrV.Dimensions)
 			{
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
@@ -888,8 +860,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseV in V.GetAllBaseTypes())
 				{
-					ParameterizedType pV = baseV.TupleUnderlyingTypeOrSelf() as ParameterizedType;
-					if (pV != null && Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
+					if (baseV.TupleUnderlyingTypeOrSelf() is ParameterizedType pV && Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount)
 					{
 						if (uniqueBaseType == null)
 							uniqueBaseType = pV;
@@ -1124,12 +1095,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 				{
 					Log.WriteLine("Inferring arguments for candidate type definition: " + candidateDef);
-					bool success;
 					IType[] result = InferTypeArgumentsFromBounds(
 						candidateDef.TypeParameters,
 						new ParameterizedType(candidateDef, candidateDef.TypeParameters),
 						lowerBounds, upperBounds,
-						out success);
+						out bool success);
 					if (success)
 					{
 						candidate = new ParameterizedType(candidateDef, result);

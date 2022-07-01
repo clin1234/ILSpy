@@ -132,11 +132,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 
 		protected internal override void InstructionCollectionUpdateComplete()
 		{
@@ -224,7 +220,7 @@ namespace ICSharpCode.Decompiler.IL
 							return false;
 						}
 					}
-					expectedType = call.Method.Parameters.Last().Type;
+					expectedType = call.Method.Parameters[call.Method.Parameters.Count - 1].Type;
 					value = call.Arguments.Last();
 					return true;
 				case StLoc stloc:

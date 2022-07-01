@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpy.Controls
 					currentProgress = 1.0 - currentProgress;
 				}
 
-				DoubleAnimation animation = new DoubleAnimation();
+				DoubleAnimation animation = new();
 				animation.To = isCollapsed ? 0.0 : 1.0;
 				animation.Duration = TimeSpan.FromSeconds(Duration.TotalSeconds * currentProgress);
 				animation.FillBehavior = FillBehavior.HoldEnd;

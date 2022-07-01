@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				get {
 					if (debugInfo.SequencePointsBlob.IsNil)
 						return null;
-					StringBuilder sb = new StringBuilder();
+					StringBuilder sb = new();
 					foreach (var p in debugInfo.GetSequencePoints())
 					{
 						sb.AppendLine($"document='{MetadataTokens.GetToken(p.Document):X8}', offset={p.Offset}, start={p.StartLine};{p.StartColumn}, end={p.EndLine};{p.EndColumn}, hidden={p.IsHidden}");

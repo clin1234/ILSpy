@@ -34,22 +34,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole DefaultKeywordRole = new("default");
 
-		public CSharpTokenNode DefaultToken {
-			get { return GetChildByRole(DefaultKeywordRole); }
-		}
+		public CSharpTokenNode DefaultToken => GetChildByRole(DefaultKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public DefaultValueExpression()
 		{
@@ -77,8 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DefaultValueExpression o = other as DefaultValueExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is DefaultValueExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

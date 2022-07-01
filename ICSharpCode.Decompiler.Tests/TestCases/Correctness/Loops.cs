@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public T Current {
 				get {
-					return default(T);
+					return default;
 				}
 			}
 
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static T CallWithSideEffect<T>()
 		{
 			Console.WriteLine("CallWithSideEffect");
-			return default(T);
+			return default;
 		}
 
 		static void Main()
@@ -157,8 +157,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			finally
 			{
-				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null)
+				if (enumerator is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
@@ -206,7 +205,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static T FirstOrDefault<T>(IEnumerable<T> items)
 		{
-			T result = default(T);
+			T result = default;
 			foreach (T item in items)
 			{
 				result = item;
@@ -218,11 +217,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static T NoForeachDueToMultipleCurrentAccess<T>(IEnumerable<T> items)
 		{
 			Console.WriteLine("NoForeachDueToMultipleCurrentAccess:");
-			T result = default(T);
 			using IEnumerator<T> enumerator = items.GetEnumerator();
 			while (enumerator.MoveNext())
 			{
-				result = enumerator.Current;
+				T result = enumerator.Current;
 				Console.WriteLine("result: " + result);
 			}
 			return enumerator.Current;

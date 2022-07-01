@@ -35,22 +35,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole YieldKeywordRole = new("yield");
 		public static readonly TokenRole ReturnKeywordRole = new("return");
 
-		public CSharpTokenNode YieldToken {
-			get { return GetChildByRole(YieldKeywordRole); }
-		}
+		public CSharpTokenNode YieldToken => GetChildByRole(YieldKeywordRole);
 
-		public CSharpTokenNode ReturnToken {
-			get { return GetChildByRole(ReturnKeywordRole); }
-		}
+		public CSharpTokenNode ReturnToken => GetChildByRole(ReturnKeywordRole);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -69,8 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			YieldReturnStatement o = other as YieldReturnStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is YieldReturnStatement o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

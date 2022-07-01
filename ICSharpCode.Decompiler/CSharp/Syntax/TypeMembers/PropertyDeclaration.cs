@@ -37,9 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Accessor> SetterRole = new("Setter", Accessor.Null);
 		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Property; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Property;
 
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
@@ -50,9 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(PrivateImplementationTypeRole, value); }
 		}
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
 		public Accessor Getter {
 			get { return GetChildByRole(GetterRole); }
@@ -64,13 +60,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(SetterRole, value); }
 		}
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole(Roles.Assign);
 
 		public Expression Initializer {
 			get { return GetChildByRole(Roles.Expression); }
@@ -99,8 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PropertyDeclaration o = other as PropertyDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
+			return other is PropertyDeclaration o && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
 				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)

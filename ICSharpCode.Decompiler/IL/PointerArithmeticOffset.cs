@@ -89,28 +89,14 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static int? ComputeSizeOf(IType type)
 		{
-			switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode)
-			{
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Byte:
-					return 1;
-				case KnownTypeCode.Char:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-					return 2;
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-				case KnownTypeCode.Single:
-					return 4;
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-				case KnownTypeCode.Double:
-					return 8;
-				case KnownTypeCode.Decimal:
-					return 16;
-			}
-			return null;
+			return (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode) switch {
+				KnownTypeCode.Boolean or KnownTypeCode.SByte or KnownTypeCode.Byte => 1,
+				KnownTypeCode.Char or KnownTypeCode.Int16 or KnownTypeCode.UInt16 => 2,
+				KnownTypeCode.Int32 or KnownTypeCode.UInt32 or KnownTypeCode.Single => 4,
+				KnownTypeCode.Int64 or KnownTypeCode.UInt64 or KnownTypeCode.Double => 8,
+				KnownTypeCode.Decimal => 16,
+				_ => null,
+			};
 		}
 
 

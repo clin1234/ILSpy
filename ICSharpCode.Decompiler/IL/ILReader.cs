@@ -92,8 +92,6 @@ namespace ICSharpCode.Decompiler.IL
 
 		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body, GenericContext genericContext)
 		{
-			if (body == null)
-				throw new ArgumentNullException(nameof(body));
 			if (methodDefinitionHandle.IsNil)
 				throw new ArgumentException("methodDefinitionHandle.IsNil");
 			this.method = module.GetDefinition(methodDefinitionHandle);
@@ -108,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL
 				this.method = this.method.Specialize(genericContext.ToSubstitution());
 			}
 			this.genericContext = genericContext;
-			this.body = body;
+			this.body = body ?? throw new ArgumentNullException(nameof(body));
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new();
@@ -156,8 +154,7 @@ namespace ICSharpCode.Decompiler.IL
 		IField ReadAndDecodeFieldReference()
 		{
 			var fieldReference = ReadAndDecodeMetadataToken();
-			var f = module.ResolveEntity(fieldReference, genericContext) as IField;
-			if (f == null)
+			if (module.ResolveEntity(fieldReference, genericContext) is not IField f)
 				throw new BadImageFormatException("Invalid field token");
 			return f;
 		}
@@ -249,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL
 			return ilVar;
 		}
 
-		ILVariable CreateILVariable(int index, IType parameterType, string name)
+		static ILVariable CreateILVariable(int index, IType parameterType, string name)
 		{
 			Debug.Assert(!parameterType.IsUnbound());
 			ITypeDefinition def = parameterType.GetDefinition();
@@ -353,7 +350,7 @@ namespace ICSharpCode.Decompiler.IL
 			return a.IsEmpty && b.IsEmpty;
 		}
 
-		private bool IsValidTypeStackTypeMerge(StackType stackType1, StackType stackType2)
+		private static bool IsValidTypeStackTypeMerge(StackType stackType1, StackType stackType2)
 		{
 			if (stackType1 == StackType.I && stackType2 == StackType.I4)
 				return true;
@@ -391,7 +388,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionRegions)
 			{
-				ImmutableStack<ILVariable> ehStack = null;
+				ImmutableStack<ILVariable> ehStack;
 				if (eh.Kind == ExceptionRegionKind.Catch)
 				{
 					var catchType = module.ResolveType(eh.CatchType, genericContext);
@@ -610,9 +607,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		static ILInstruction UnpackPush(ILInstruction inst)
 		{
-			ILVariable v;
-			ILInstruction inner;
-			if (inst.MatchStLoc(out v, out inner) && v.Kind == VariableKind.StackSlot)
+			if (inst.MatchStLoc(out ILVariable v, out ILInstruction inner) && v.Kind == VariableKind.StackSlot)
 				return inner;
 			else
 				return inst;
@@ -1189,8 +1184,7 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
 			}
-			ILVariable v;
-			currentStack = currentStack.Pop(out v);
+			currentStack = currentStack.Pop(out ILVariable v);
 			return new LdLoc(v);
 		}
 
@@ -1457,8 +1451,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			constrainedPrefix = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
-			var call = UnpackPush(inst) as CallInstruction;
-			if (call != null)
+			if (UnpackPush(inst) is CallInstruction call)
 				Debug.Assert(call.ConstrainedTo == constrainedPrefix);
 			else
 				Warn("Ignored invalid 'constrained' prefix");
@@ -1469,8 +1462,7 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction DecodeTailCall()
 		{
 			var inst = DecodeInstruction();
-			var call = UnpackPush(inst) as CallInstruction;
-			if (call != null)
+			if (UnpackPush(inst) is CallInstruction call)
 				call.IsTail = true;
 			else
 				Warn("Ignored invalid 'tail' prefix");
@@ -1481,8 +1473,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			byte alignment = reader.ReadByte();
 			var inst = DecodeInstruction();
-			var sup = UnpackPush(inst) as ISupportsUnalignedPrefix;
-			if (sup != null)
+			if (UnpackPush(inst) is ISupportsUnalignedPrefix sup)
 				sup.UnalignedPrefix = alignment;
 			else
 				Warn("Ignored invalid 'unaligned' prefix");
@@ -1492,8 +1483,7 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction DecodeVolatile()
 		{
 			var inst = DecodeInstruction();
-			var svp = UnpackPush(inst) as ISupportsVolatilePrefix;
-			if (svp != null)
+			if (UnpackPush(inst) is ISupportsVolatilePrefix svp)
 				svp.IsVolatile = true;
 			else
 				Warn("Ignored invalid 'volatile' prefix");
@@ -1503,8 +1493,7 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction DecodeReadonly()
 		{
 			var inst = DecodeInstruction();
-			var ldelema = UnpackPush(inst) as LdElema;
-			if (ldelema != null)
+			if (UnpackPush(inst) is LdElema ldelema)
 				ldelema.IsReadOnly = true;
 			else
 				Warn("Ignored invalid 'readonly' prefix");

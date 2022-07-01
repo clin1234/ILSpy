@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 			if (!this.treeNodes.SetEquals(other.treeNodes))
 				return false;
 
-			if (object.ReferenceEquals(this.ViewState, other.ViewState))
+			if (ReferenceEquals(this.ViewState, other.ViewState))
 				return true;
 
 			if (this.ViewState == null)

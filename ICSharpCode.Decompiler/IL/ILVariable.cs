@@ -95,20 +95,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static bool IsLocal(this VariableKind kind)
 		{
-			switch (kind)
-			{
-				case VariableKind.Local:
-				case VariableKind.ExceptionLocal:
-				case VariableKind.ForeachLocal:
-				case VariableKind.UsingLocal:
-				case VariableKind.PatternLocal:
-				case VariableKind.PinnedLocal:
-				case VariableKind.PinnedRegionLocal:
-				case VariableKind.DisplayClassLocal:
-					return true;
-				default:
-					return false;
-			}
+			return kind switch {
+				VariableKind.Local or VariableKind.ExceptionLocal or VariableKind.ForeachLocal or VariableKind.UsingLocal or VariableKind.PatternLocal or VariableKind.PinnedLocal or VariableKind.PinnedRegionLocal or VariableKind.DisplayClassLocal => true,
+				_ => false,
+			};
 		}
 	}
 
@@ -305,13 +295,13 @@ namespace ICSharpCode.Decompiler.IL
 		internal void RemoveStoreInstruction(IStoreInstruction inst) => RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList, inst);
 		internal void RemoveAddressInstruction(LdLoca inst) => RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList, inst);
 
-		int AddInstruction<T>(List<T> list, T inst) where T : class, IInstructionWithVariableOperand
+		static int AddInstruction<T>(List<T> list, T inst) where T : class, IInstructionWithVariableOperand
 		{
 			list.Add(inst);
 			return list.Count - 1;
 		}
 
-		void RemoveInstruction<T>(List<T> list, int index, T? inst) where T : class, IInstructionWithVariableOperand
+		static void RemoveInstruction<T>(List<T> list, int index, T? inst) where T : class, IInstructionWithVariableOperand
 		{
 			Debug.Assert(list[index] == inst);
 			int indexToMove = list.Count - 1;
@@ -410,22 +400,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// For example: for parameters, IsSingleDefinition will only return true if
 		/// the parameter is never assigned to within the function.
 		/// </remarks>
-		public bool IsSingleDefinition {
-			get {
-				return StoreCount == 1 && AddressCount == 0;
-			}
-		}
+		public bool IsSingleDefinition => StoreCount == 1 && AddressCount == 0;
 
 		/// <summary>
 		/// Gets whether the variable is dead - unused.
 		/// </summary>
-		public bool IsDead {
-			get {
-				return StoreInstructions.Count == 0
+		public bool IsDead => StoreInstructions.Count == 0
 					&& LoadCount == 0
 					&& AddressCount == 0;
-			}
-		}
 
 		/// <summary>
 		/// The field which was converted to a local variable.

@@ -220,8 +220,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (target is LambdaResolveResult)
 				return false;
-			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
-			if (rr == null)
+			if (resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) is not MethodGroupResolveResult rr)
 				return false;
 			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments, argumentNames, allowExtensionMethods: true);
 			if (or == null || or.IsAmbiguous)

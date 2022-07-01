@@ -64,9 +64,9 @@ namespace ICSharpCode.ILSpy.Metadata
 			readonly MetadataReader metadata;
 			readonly AssemblyDefinition assembly;
 
-			public int RID => MetadataTokens.GetRowNumber(EntityHandle.AssemblyDefinition);
+			public static int RID => MetadataTokens.GetRowNumber(EntityHandle.AssemblyDefinition);
 
-			public int Token => MetadataTokens.GetToken(EntityHandle.AssemblyDefinition);
+			public static int Token => MetadataTokens.GetToken(EntityHandle.AssemblyDefinition);
 
 			public int Offset => metadataOffset
 				+ metadata.GetTableMetadataOffset(TableIndex.Assembly)

@@ -11,9 +11,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole OpenQuote = new("$\"");
 		public static readonly TokenRole CloseQuote = new("\"");
 
-		public AstNodeCollection<InterpolatedStringContent> Content {
-			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
-		}
+		public AstNodeCollection<InterpolatedStringContent> Content => GetChildrenByRole(InterpolatedStringContent.Role);
 
 		public InterpolatedStringExpression()
 		{
@@ -49,11 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullInterpolatedStringContent : InterpolatedStringContent
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -90,9 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole LBrace = new("{");
 		public static readonly TokenRole RBrace = new("}");
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(LBrace);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -101,9 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string Suffix { get; }
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(RBrace);
 
 		public Interpolation()
 		{
@@ -133,8 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			Interpolation o = other as Interpolation;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is Interpolation o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 
@@ -169,8 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
-			InterpolatedStringText o = other as InterpolatedStringText;
-			return o != null && o.Text == this.Text;
+			return other is InterpolatedStringText o && o.Text == this.Text;
 		}
 	}
 }

@@ -33,9 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode WithToken {
-			get { return GetChildByRole(WithKeywordRole); }
-		}
+		public CSharpTokenNode WithToken => GetChildByRole(WithKeywordRole);
 
 		public ArrayInitializerExpression Initializer {
 			get { return GetChildByRole(InitializerRole); }

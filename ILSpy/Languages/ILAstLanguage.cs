@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy
 				if (!methodDef.HasBody())
 					return;
 				var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-				ILReader reader = new ILReader(typeSystem.MainModule);
+				ILReader reader = new(typeSystem.MainModule);
 				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 				reader.WriteTypedIL((SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, output, cancellationToken: options.CancellationToken);
 			}

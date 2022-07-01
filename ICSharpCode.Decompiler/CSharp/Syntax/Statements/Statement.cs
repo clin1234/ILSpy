@@ -34,11 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullStatement : Statement
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -77,9 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -120,8 +114,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
 		}
 
-		public override NodeType NodeType {
-			get { return NodeType.Statement; }
-		}
+		public override NodeType NodeType => NodeType.Statement;
 	}
 }

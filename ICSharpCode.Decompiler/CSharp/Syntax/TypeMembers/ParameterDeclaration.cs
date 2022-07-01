@@ -61,9 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -92,15 +90,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole(AttributeRole); }
-		}
+		public AstNodeCollection<AttributeSection> Attributes => GetChildrenByRole(AttributeRole);
 
 		bool hasThisModifier;
 
@@ -175,9 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole(Roles.Assign);
 
 		public Expression DefaultExpression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -201,8 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			var o = other as ParameterDeclaration;
-			return o != null && this.Attributes.DoMatch(o.Attributes, match) && this.ParameterModifier == o.ParameterModifier
+			return other is ParameterDeclaration o && this.Attributes.DoMatch(o.Attributes, match) && this.ParameterModifier == o.ParameterModifier
 				&& this.Type.DoMatch(o.Type, match) && MatchString(this.Name, o.Name)
 				&& this.HasNullCheck == o.HasNullCheck
 				&& this.DefaultExpression.DoMatch(o.DefaultExpression, match);

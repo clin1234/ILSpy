@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			foreach (var row in metadata.ExportedTypes)
 			{
-				ExportedTypeEntry entry = new ExportedTypeEntry(module.Reader.PEHeaders.MetadataStartOffset, module, row, metadata.GetExportedType(row));
+				ExportedTypeEntry entry = new(module.Reader.PEHeaders.MetadataStartOffset, module, row, metadata.GetExportedType(row));
 				if (entry.RID == this.scrollTarget)
 				{
 					scrollTargetEntry = entry;

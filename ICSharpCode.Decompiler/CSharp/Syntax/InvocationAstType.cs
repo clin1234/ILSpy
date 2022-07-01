@@ -31,9 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class InvocationAstType : AstType
 	{
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole(Roles.Expression);
 
 		public AstType BaseType {
 			get { return GetChildByRole(Roles.Type); }

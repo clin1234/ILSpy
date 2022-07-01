@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return Conversion.None;
 				for (int i = 0; i < parameterTypes.Length; ++i)
 				{
-					if (!conversions.IdentityConversion(parameterTypes[i], this.Parameters[i].Type))
+					if (!CSharpConversions.IdentityConversion(parameterTypes[i], this.Parameters[i].Type))
 					{
 						if (IsImplicitlyTyped)
 						{
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 				}
 			}
-			if (conversions.IdentityConversion(this.ReturnType, returnType)
+			if (CSharpConversions.IdentityConversion(this.ReturnType, returnType)
 				|| conversions.ImplicitConversion(this.InferredReturnType, returnType).IsValid)
 			{
 				return LambdaConversion.Instance;

@@ -54,12 +54,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				CombineQueries(child, fromOrLetIdentifiers);
 			}
-			QueryExpression query = node as QueryExpression;
-			if (query != null)
+			if (node is QueryExpression query)
 			{
 				QueryFromClause fromClause = (QueryFromClause)query.Clauses.First();
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
-				if (innerQuery != null)
+				if (fromClause.Expression is QueryExpression innerQuery)
 				{
 					if (TryRemoveTransparentIdentifier(query, fromClause, innerQuery, fromOrLetIdentifiers))
 					{
@@ -104,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause, QueryExpression innerQuery, Dictionary<string, object> letClauses)
+		static bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause, QueryExpression innerQuery, Dictionary<string, object> letClauses)
 		{
 			if (!CSharpDecompiler.IsTransparentIdentifier(fromClause.Identifier))
 				return false;
@@ -166,11 +164,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				RemoveTransparentIdentifierReferences(child, fromOrLetIdentifiers);
 			}
-			MemberReferenceExpression mre = node as MemberReferenceExpression;
-			if (mre != null)
+			if (node is MemberReferenceExpression mre)
 			{
-				IdentifierExpression ident = mre.Target as IdentifierExpression;
-				if (ident != null && CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
+				if (mre.Target is IdentifierExpression ident && CSharpDecompiler.IsTransparentIdentifier(ident.Identifier))
 				{
 					IdentifierExpression newIdent = new(mre.MemberName);
 					mre.TypeArguments.MoveTo(newIdent.TypeArguments);

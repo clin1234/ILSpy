@@ -61,8 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static void Freeze(object item)
 		{
-			IFreezable f = item as IFreezable;
-			if (f != null)
+			if (item is IFreezable f)
 				f.Freeze();
 		}
 
@@ -95,9 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <summary>
 		/// Gets if this instance is frozen. Frozen instances are immutable and thus thread-safe.
 		/// </summary>
-		public bool IsFrozen {
-			get { return isFrozen; }
-		}
+		public bool IsFrozen => isFrozen;
 
 		/// <summary>
 		/// Freezes this instance.

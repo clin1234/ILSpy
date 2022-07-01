@@ -171,8 +171,7 @@ namespace ILSpy.BamlDecompiler.Rewrite
 
 			foreach (var child in ctxElement.Nodes())
 			{
-				var elem = child as XElement;
-				if (elem == null)
+				if (child is not XElement elem)
 					return null;
 
 				if (elem.Name == ctor)

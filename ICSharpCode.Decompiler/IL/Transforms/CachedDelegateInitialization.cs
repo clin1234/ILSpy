@@ -69,9 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationWithField(IfInstruction inst)
 		{
-
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
+			if (inst.TrueInst is not Block trueInst || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
 				return false;
 			var storeInst = trueInst.Instructions[0];
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdsFld(out IField field) || !right.MatchLdNull())
@@ -100,8 +98,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
+			if (inst.TrueInst is not Block trueInst || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable v) || !right.MatchLdNull())
 				return false;
@@ -115,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// do not transform if the first assignment is not assigning null:
 			var otherStore = v.StoreInstructions.OfType<StLoc>().SingleOrDefault(store => store != storeInst);
-			if (otherStore == null || !otherStore.Value.MatchLdNull() || !(otherStore.Parent is Block))
+			if (otherStore == null || !otherStore.Value.MatchLdNull() || otherStore.Parent is not Block)
 				return false;
 			// do not transform if there is no usage directly afterwards
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
@@ -140,18 +137,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationRoslynInStaticWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
+			if (inst.TrueInst is not Block trueInst || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
 				return false;
-			var storeInst = trueInst.Instructions.Last() as StLoc;
-			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-			if (storeBeforeIf == null || storeInst == null || storeBeforeIf.Variable != s || storeInst.Variable != s)
+			if (inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) is not StLoc storeBeforeIf || trueInst.Instructions.Last() is not StLoc storeInst || storeBeforeIf.Variable != s || storeInst.Variable != s)
 				return false;
-			if (!(storeInst.Value is StObj stobj) || !(storeBeforeIf.Value is LdObj ldobj))
+			if (storeInst.Value is not StObj stobj || storeBeforeIf.Value is not LdObj ldobj)
 				return false;
-			if (!(stobj.Value is NewObj))
+			if (stobj.Value is not NewObj)
 				return false;
 			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
 				return false;
@@ -172,18 +166,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
+			if (inst.TrueInst is not Block trueInst || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
 				return false;
-			var storeInst = trueInst.Instructions.Last() as StLoc;
-			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-			if (storeBeforeIf == null || storeInst == null || storeBeforeIf.Variable != s || storeInst.Variable != s)
+			if (inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) is not StLoc storeBeforeIf || trueInst.Instructions.Last() is not StLoc storeInst || storeBeforeIf.Variable != s || storeInst.Variable != s)
 				return false;
-			if (!(storeInst.Value is StObj stobj) || !(storeBeforeIf.Value is LdObj ldobj))
+			if (storeInst.Value is not StObj stobj || storeBeforeIf.Value is not LdObj ldobj)
 				return false;
-			if (!(stobj.Value is NewObj))
+			if (stobj.Value is not NewObj)
 				return false;
 			if (!stobj.Target.MatchLdFlda(out var _, out var field1) || !ldobj.Target.MatchLdFlda(out var __, out var field2) || !field1.Equals(field2))
 				return false;
@@ -216,9 +207,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (s.Kind != VariableKind.StackSlot || s.StoreCount != 2 || s.LoadCount != 1)
 				return false;
-			if (!(trueInitValue is StObj stobj) || !(falseInitValue is LdObj ldobj))
+			if (trueInitValue is not StObj stobj || falseInitValue is not LdObj ldobj)
 				return false;
-			if (!(stobj.Value is NewObj delegateConstruction))
+			if (stobj.Value is not NewObj delegateConstruction)
 				return false;
 			if (!stobj.Target.MatchLdsFlda(out var field1)
 				|| !ldobj.Target.MatchLdsFlda(out var field2)

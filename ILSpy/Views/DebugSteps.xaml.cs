@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void WritingOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			DecompileAsync(lastSelectedStep);
 		}
@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy
 			});
 		}
 
-		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 #if DEBUG
 			if (e.PropertyName == "Language")
@@ -133,8 +133,8 @@ namespace ICSharpCode.ILSpy
 			lastSelectedStep = step;
 			var window = MainWindow.Instance;
 			var state = DockWorkspace.Instance.ActiveTabPage.GetState();
-			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
-				new DecompilationOptions(window.CurrentLanguageVersion) {
+			DockWorkspace.Instance.ActiveTabPage.ShowTextViewAsync(textView => textView.DecompileAsync(MainWindow.Instance.CurrentLanguage, window.SelectedNodes,
+				new DecompilationOptions(MainWindow.CurrentLanguageVersion) {
 					StepLimit = step,
 					IsDebug = isDebug,
 					TextViewState = state as TextView.DecompilerTextViewState
@@ -143,7 +143,7 @@ namespace ICSharpCode.ILSpy
 
 		private void tree_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Enter || e.Key == Key.Return)
+			if (e.Key is Key.Enter or Key.Return)
 			{
 				if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
 					ShowStateBefore_Click(sender, e);

@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.Docking
 	public class PaneCollection<T> : INotifyCollectionChanged, ICollection<T>
 		where T : PaneModel
 	{
-		private ObservableCollection<T> observableCollection = new ObservableCollection<T>();
+		private ObservableCollection<T> observableCollection = new();
 
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
 

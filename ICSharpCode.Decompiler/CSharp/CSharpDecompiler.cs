@@ -60,8 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly MetadataReader metadata;
 		readonly DecompilerSettings settings;
 		SyntaxTree syntaxTree;
-
-		List<IILTransform> ilTransforms = GetILTransforms();
+		readonly List<IILTransform> ilTransforms = GetILTransforms();
 
 		/// <summary>
 		/// Pre-yield/await transforms.
@@ -170,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
-		List<IAstTransform> astTransforms = GetAstTransforms();
+		readonly List<IAstTransform> astTransforms = GetAstTransforms();
 
 		/// <summary>
 		/// Returns all built-in transforms of the C# AST pipeline.
@@ -220,16 +219,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// IL transforms.
 		/// </summary>
-		public IList<IILTransform> ILTransforms {
-			get { return ilTransforms; }
-		}
+		public IList<IILTransform> ILTransforms => ilTransforms;
 
 		/// <summary>
 		/// C# AST transforms.
 		/// </summary>
-		public IList<IAstTransform> AstTransforms {
-			get { return astTransforms; }
-		}
+		public IList<IAstTransform> AstTransforms => astTransforms;
 
 		/// <summary>
 		/// Creates a new <see cref="CSharpDecompiler"/> instance from the given <paramref name="fileName"/> using the given <paramref name="settings"/>.
@@ -439,7 +434,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Determines whether a given type requires that its methods be ordered precisely as they were originally defined.
 		/// </summary>
 		/// <param name="typeDef">The type whose members may need native ordering.</param>
-		internal bool RequiresNativeOrdering(ITypeDefinition typeDef)
+		internal static bool RequiresNativeOrdering(ITypeDefinition typeDef)
 		{
 			// The main scenario for requiring the native method ordering is COM interop, where the V-table is fixed by the ABI
 			return ComHelper.IsComImport(typeDef);
@@ -452,9 +447,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		/// <param name="typeDef">The type whose members to order using their method's MetadataToken</param>
 		/// <returns>A sequence of all members ordered by MetadataToken</returns>
-		internal IEnumerable<IMember> GetMembersWithNativeOrdering(ITypeDefinition typeDef)
+		internal static IEnumerable<IMember> GetMembersWithNativeOrdering(ITypeDefinition typeDef)
 		{
-			EntityHandle GetOrderingHandle(IMember member)
+			static EntityHandle GetOrderingHandle(IMember member)
 			{
 				// Note! Technically COM interfaces could define property getters and setters out of order or interleaved with other
 				// methods, but C# doesn't support this so we can't define it that way.
@@ -1077,7 +1072,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return syntaxTree;
 		}
 
-		ITypeDefinition FindCommonDeclaringTypeDefinition(ITypeDefinition a, ITypeDefinition b)
+		static ITypeDefinition FindCommonDeclaringTypeDefinition(ITypeDefinition a, ITypeDefinition b)
 		{
 			if (a == null || b == null)
 				return null;
@@ -1157,7 +1152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Expression ForwardParameter(ParameterDeclaration p)
+		static Expression ForwardParameter(ParameterDeclaration p)
 		{
 			return p.ParameterModifier switch {
 				ParameterModifier.Ref => new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name)),
@@ -1170,7 +1165,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Sets new modifier if the member hides some other member from a base type.
 		/// </summary>
 		/// <param name="member">The node of the member which new modifier state should be determined.</param>
-		void SetNewModifier(EntityDeclaration member)
+		static void SetNewModifier(EntityDeclaration member)
 		{
 			var entity = (IEntity)member.GetSymbol();
 			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentModule);
@@ -1232,7 +1227,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void FixParameterNames(EntityDeclaration entity)
+		static void FixParameterNames(EntityDeclaration entity)
 		{
 			int i = 0;
 			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter))
@@ -1257,8 +1252,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
-				var typeDecl = entityDecl as TypeDeclaration;
-				if (typeDecl == null)
+				if (entityDecl is not TypeDeclaration typeDecl)
 				{
 					// e.g. DelegateDeclaration
 					return entityDecl;
@@ -1789,7 +1783,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return found;
 		}
 
-		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute attribute)
+		static bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute attribute)
 		{
 			attribute = null;
 			foreach (var section in entityDecl.Attributes)
@@ -1812,8 +1806,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var call in function.Descendants.OfType<CallInstruction>())
 			{
 				var attr = call.Method.GetAttribute(KnownAttribute.Conditional, inherit: true);
-				var symbolName = attr?.FixedArguments.FirstOrDefault().Value as string;
-				if (symbolName == null || !decompileRun.DefinedSymbols.Add(symbolName))
+				if (attr?.FixedArguments.FirstOrDefault().Value is not string symbolName || !decompileRun.DefinedSymbols.Add(symbolName))
 					continue;
 				syntaxTree.InsertChildAfter(null, new(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
 			}
@@ -1924,10 +1917,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				FixParameterNames(propertyDecl);
 				Accessor getter, setter;
-				if (propertyDecl is PropertyDeclaration)
+				if (propertyDecl is PropertyDeclaration declaration)
 				{
-					getter = ((PropertyDeclaration)propertyDecl).Getter;
-					setter = ((PropertyDeclaration)propertyDecl).Setter;
+					getter = declaration.Getter;
+					setter = declaration.Setter;
 				}
 				else
 				{
@@ -2029,7 +2022,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// 
 		/// This only works correctly when the nodes in the syntax tree have line/column information.
 		/// </summary>
-		public Dictionary<ILFunction, List<DebugInfo.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
+		public static Dictionary<ILFunction, List<DebugInfo.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
 		{
 			SequencePointBuilder spb = new();
 			syntaxTree.AcceptVisitor(spb);

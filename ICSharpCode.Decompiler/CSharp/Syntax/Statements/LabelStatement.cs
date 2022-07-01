@@ -46,9 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Identifier, value); }
 		}
 
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole(Roles.Colon); }
-		}
+		public CSharpTokenNode ColonToken => GetChildByRole(Roles.Colon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -67,8 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			LabelStatement o = other as LabelStatement;
-			return o != null && MatchString(this.Label, o.Label);
+			return other is LabelStatement o && MatchString(this.Label, o.Label);
 		}
 	}
 }

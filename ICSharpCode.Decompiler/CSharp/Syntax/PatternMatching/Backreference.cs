@@ -28,9 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		readonly string referencedGroupName;
 
-		public string ReferencedGroupName {
-			get { return referencedGroupName; }
-		}
+		public string ReferencedGroupName => referencedGroupName;
 
 		public Backreference(string referencedGroupName)
 		{

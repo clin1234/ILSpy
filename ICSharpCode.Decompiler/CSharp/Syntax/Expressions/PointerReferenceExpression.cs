@@ -39,9 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.TargetExpression, value); }
 		}
 
-		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole(ArrowRole); }
-		}
+		public CSharpTokenNode ArrowToken => GetChildByRole(ArrowRole);
 
 		public string MemberName {
 			get {
@@ -61,9 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole(Roles.TypeArgument);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -82,8 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PointerReferenceExpression o = other as PointerReferenceExpression;
-			return o != null && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is PointerReferenceExpression o && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}
 }

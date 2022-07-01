@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 
 namespace ICSharpCode.ILSpy.Controls
@@ -31,7 +32,7 @@ namespace ICSharpCode.ILSpy.Controls
 	{
 		// This class was copied from ICSharpCode.Core.Presentation.
 
-		static readonly ComponentResourceKey headerTemplateKey = new ComponentResourceKey(typeof(SortableGridViewColumn), "ColumnHeaderTemplate");
+		static readonly ComponentResourceKey headerTemplateKey = new(typeof(SortableGridViewColumn), "ColumnHeaderTemplate");
 
 		public SortableGridViewColumn()
 		{
@@ -46,7 +47,7 @@ namespace ICSharpCode.ILSpy.Controls
 				if (sortBy != value)
 				{
 					sortBy = value;
-					OnPropertyChanged(new PropertyChangedEventArgs("SortBy"));
+					OnPropertyChanged(new PropertyChangedEventArgs(nameof(SortBy)));
 				}
 			}
 		}
@@ -135,9 +136,9 @@ namespace ICSharpCode.ILSpy.Controls
 			if (sender is ListView grid)
 			{
 				if ((ListViewSortMode)args.NewValue != ListViewSortMode.None)
-					grid.AddHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
+					grid.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
 				else
-					grid.RemoveHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
+					grid.RemoveHandler(ButtonBase.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
 			}
 		}
 
@@ -183,7 +184,7 @@ namespace ICSharpCode.ILSpy.Controls
 				string sortBy = column.SortBy;
 				if (sortBy == null)
 				{
-					if (column.DisplayMemberBinding is Binding binding && binding.Path != null)
+					if (column.DisplayMemberBinding is Binding { Path: { } } binding)
 					{
 						sortBy = binding.Path.Path;
 					}

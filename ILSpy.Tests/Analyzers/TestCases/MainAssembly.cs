@@ -8,12 +8,12 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers.TestCases.Main
 {
 	class MainAssembly
 	{
-		public string UsesSystemStringEmpty()
+		public static string UsesSystemStringEmpty()
 		{
 			return string.Empty;
 		}
 
-		public int UsesInt32()
+		public static int UsesInt32()
 		{
 			return int.Parse("1234");
 		}

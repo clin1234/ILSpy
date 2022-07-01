@@ -60,7 +60,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				yield break;
 
 			int outerTypeParameterCount = outerTypeDef.TypeParameterCount;
-			ParameterizedType pt = outerType as ParameterizedType;
 			foreach (ITypeDefinition nestedType in outerTypeDef.NestedTypes)
 			{
 				int totalTypeParameterCount = nestedType.TypeParameterCount;
@@ -82,7 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					IType[] newTypeArguments = new IType[totalTypeParameterCount];
 					for (int i = 0; i < outerTypeParameterCount; i++)
 					{
-						newTypeArguments[i] = pt != null ? pt.GetTypeArgument(i) : outerTypeDef.TypeParameters[i];
+						newTypeArguments[i] = outerType is ParameterizedType pt ? pt.GetTypeArgument(i) : outerTypeDef.TypeParameters[i];
 					}
 					for (int i = outerTypeParameterCount; i < totalTypeParameterCount; i++)
 					{
@@ -207,8 +206,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredMembers;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
-			if (pt != null)
+			if (baseType is ParameterizedType pt)
 			{
 				var substitution = pt.GetSubstitution();
 				return declaredMembers.Select(m => new SpecializedMethod(m, substitution) { DeclaringType = pt });
@@ -241,8 +239,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredProperties;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
-			if (pt != null)
+			if (baseType is ParameterizedType pt)
 			{
 				var substitution = pt.GetSubstitution();
 				return declaredProperties.Select(m => new SpecializedProperty(m, substitution) { DeclaringType = pt });
@@ -275,8 +272,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredFields;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
-			if (pt != null)
+			if (baseType is ParameterizedType pt)
 			{
 				var substitution = pt.GetSubstitution();
 				return declaredFields.Select(m => new SpecializedField(m, substitution) { DeclaringType = pt });
@@ -309,8 +305,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredEvents;
 			}
 
-			ParameterizedType pt = baseType as ParameterizedType;
-			if (pt != null)
+			if (baseType is ParameterizedType pt)
 			{
 				var substitution = pt.GetSubstitution();
 				return declaredEvents.Select(m => new SpecializedEvent(m, substitution) { DeclaringType = pt });

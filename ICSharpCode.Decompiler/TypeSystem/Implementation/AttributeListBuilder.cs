@@ -209,46 +209,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				case "System.Runtime.CompilerServices":
 					var options = module.TypeSystemOptions;
-					switch (attributeType.Name)
-					{
-						case "DynamicAttribute":
-							return (options & TypeSystemOptions.Dynamic) != 0;
-						case "NativeIntegerAttribute":
-							return (options & TypeSystemOptions.NativeIntegers) != 0;
-						case "TupleElementNamesAttribute":
-							return (options & TypeSystemOptions.Tuple) != 0;
-						case "ExtensionAttribute":
-							return (options & TypeSystemOptions.ExtensionMethods) != 0;
-						case "DecimalConstantAttribute":
-							return (options & TypeSystemOptions.DecimalConstants) != 0 && target is SymbolKind.Field or SymbolKind.Parameter;
-						case "IsReadOnlyAttribute":
-							switch (target)
-							{
-								case SymbolKind.TypeDefinition:
-								case SymbolKind.Parameter:
-									return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
-								case SymbolKind.Method:
-								case SymbolKind.Accessor:
-									return (options & TypeSystemOptions.ReadOnlyMethods) != 0;
-								case SymbolKind.ReturnType:
-								case SymbolKind.Property:
-								case SymbolKind.Indexer:
-									return true;  // "ref readonly" is currently always active
-								default:
-									return false;
-							}
-						case "IsByRefLikeAttribute":
-							return (options & TypeSystemOptions.RefStructs) != 0 && target == SymbolKind.TypeDefinition;
-						case "IsUnmanagedAttribute":
-							return (options & TypeSystemOptions.UnmanagedConstraints) != 0 && target == SymbolKind.TypeParameter;
-						case "NullableAttribute":
-							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
-						case "NullableContextAttribute":
-							return (options & TypeSystemOptions.NullabilityAnnotations) != 0
-								&& (target == SymbolKind.TypeDefinition || IsMethodLike(target));
-						default:
-							return false;
-					}
+					return attributeType.Name switch {
+						"DynamicAttribute" => (options & TypeSystemOptions.Dynamic) != 0,
+						"NativeIntegerAttribute" => (options & TypeSystemOptions.NativeIntegers) != 0,
+						"TupleElementNamesAttribute" => (options & TypeSystemOptions.Tuple) != 0,
+						"ExtensionAttribute" => (options & TypeSystemOptions.ExtensionMethods) != 0,
+						"DecimalConstantAttribute" => (options & TypeSystemOptions.DecimalConstants) != 0 && target is SymbolKind.Field or SymbolKind.Parameter,
+						"IsReadOnlyAttribute" => target switch {
+							SymbolKind.TypeDefinition or SymbolKind.Parameter => (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0,
+							SymbolKind.Method or SymbolKind.Accessor => (options & TypeSystemOptions.ReadOnlyMethods) != 0,
+							SymbolKind.ReturnType or SymbolKind.Property or SymbolKind.Indexer => true,// "ref readonly" is currently always active
+							_ => false,
+						},
+						"IsByRefLikeAttribute" => (options & TypeSystemOptions.RefStructs) != 0 && target == SymbolKind.TypeDefinition,
+						"IsUnmanagedAttribute" => (options & TypeSystemOptions.UnmanagedConstraints) != 0 && target == SymbolKind.TypeParameter,
+						"NullableAttribute" => (options & TypeSystemOptions.NullabilityAnnotations) != 0,
+						"NullableContextAttribute" => (options & TypeSystemOptions.NullabilityAnnotations) != 0
+															&& (target == SymbolKind.TypeDefinition || IsMethodLike(target)),
+						_ => false,
+					};
 				case "System":
 					return attributeType.Name == "ParamArrayAttribute" && target == SymbolKind.Parameter;
 				default:
@@ -356,8 +335,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly ICompilation compilation;
 		readonly IType attributeType;
-		ImmutableArray<CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
-		ImmutableArray<CustomAttributeNamedArgument<IType>>.Builder namedArgs;
+		readonly ImmutableArray<CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
+		readonly ImmutableArray<CustomAttributeNamedArgument<IType>>.Builder namedArgs;
 
 		public AttributeBuilder(MetadataModule module, KnownAttribute attributeType)
 			: this(module, module.GetAttributeType(attributeType))

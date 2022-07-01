@@ -100,9 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IReadOnlyList<IType> TypeArguments {
-			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
-		}
+		public IReadOnlyList<IType> TypeArguments => this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance;
 
 		public IEnumerable<IAttribute> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
 		public bool ReturnTypeIsRefReadOnly => methodDefinition.ReturnTypeIsRefReadOnly;
@@ -110,45 +108,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMethod.ThisIsRefReadOnly => methodDefinition.ThisIsRefReadOnly;
 		bool IMethod.IsInitOnly => methodDefinition.IsInitOnly;
 
-		public IReadOnlyList<ITypeParameter> TypeParameters {
-			get {
-				return specializedTypeParameters ?? methodDefinition.TypeParameters;
-			}
-		}
+		public IReadOnlyList<ITypeParameter> TypeParameters => specializedTypeParameters ?? methodDefinition.TypeParameters;
 
-		public bool IsExtensionMethod {
-			get { return methodDefinition.IsExtensionMethod; }
-		}
+		public bool IsExtensionMethod => methodDefinition.IsExtensionMethod;
 
-		public bool IsLocalFunction {
-			get { return methodDefinition.IsLocalFunction; }
-		}
+		public bool IsLocalFunction => methodDefinition.IsLocalFunction;
 
-		public bool IsConstructor {
-			get { return methodDefinition.IsConstructor; }
-		}
+		public bool IsConstructor => methodDefinition.IsConstructor;
 
-		public bool IsDestructor {
-			get { return methodDefinition.IsDestructor; }
-		}
+		public bool IsDestructor => methodDefinition.IsDestructor;
 
-		public bool IsOperator {
-			get { return methodDefinition.IsOperator; }
-		}
+		public bool IsOperator => methodDefinition.IsOperator;
 
-		public bool HasBody {
-			get { return methodDefinition.HasBody; }
-		}
+		public bool HasBody => methodDefinition.HasBody;
 
-		public bool IsAccessor {
-			get { return methodDefinition.IsAccessor; }
-		}
+		public bool IsAccessor => methodDefinition.IsAccessor;
 
 		public MethodSemanticsAttributes AccessorKind => methodDefinition.AccessorKind;
 
-		public IMethod ReducedFrom {
-			get { return null; }
-		}
+		public IMethod ReducedFrom => null;
 
 		IMember accessorOwner;
 
@@ -175,8 +153,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
-			if (other == null)
+			if (obj is not SpecializedMethod other)
 				return false;
 			return this.baseMember.Equals(other.baseMember, typeNormalization)
 				&& this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters, typeNormalization);
@@ -184,8 +161,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
-			if (other == null)
+			if (obj is not SpecializedMethod other)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters);
 		}
@@ -270,8 +246,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override bool Equals(IType other)
 			{
 				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
-				SpecializedTypeParameter o = other as SpecializedTypeParameter;
-				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
+				return other is SpecializedTypeParameter o && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 
 			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;

@@ -25,9 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 
-		public CSharpTokenNode OutKeywordToken {
-			get { return GetChildByRole(OutKeywordRole); }
-		}
+		public CSharpTokenNode OutKeywordToken => GetChildByRole(OutKeywordRole);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
@@ -66,8 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as OutVarDeclarationExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Variable.DoMatch(o.Variable, match);
+			return other is OutVarDeclarationExpression o && this.Type.DoMatch(o.Type, match) && this.Variable.DoMatch(o.Variable, match);
 		}
 	}
 }

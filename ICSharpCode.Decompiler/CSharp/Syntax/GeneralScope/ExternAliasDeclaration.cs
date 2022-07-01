@@ -32,19 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ExternAliasDeclaration : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public CSharpTokenNode ExternToken {
-			get { return GetChildByRole(Roles.ExternKeyword); }
-		}
+		public CSharpTokenNode ExternToken => GetChildByRole(Roles.ExternKeyword);
 
-		public CSharpTokenNode AliasToken {
-			get { return GetChildByRole(Roles.AliasKeyword); }
-		}
+		public CSharpTokenNode AliasToken => GetChildByRole(Roles.AliasKeyword);
 
 		public string Name {
 			get {
@@ -64,9 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -85,8 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as ExternAliasDeclaration;
-			return o != null && MatchString(this.Name, o.Name);
+			return other is ExternAliasDeclaration o && MatchString(this.Name, o.Name);
 		}
 	}
 }

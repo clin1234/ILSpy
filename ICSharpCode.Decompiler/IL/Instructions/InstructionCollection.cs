@@ -36,9 +36,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.firstChildIndex = firstChildIndex;
 		}
 
-		public int Count {
-			get { return list.Count; }
-		}
+		public int Count => list.Count;
 
 		public T this[int index] {
 			get { return list[index]; }
@@ -116,9 +114,7 @@ namespace ICSharpCode.Decompiler.IL
 				pos = -1;
 			}
 
-			object System.Collections.IEnumerator.Current {
-				get { return this.Current; }
-			}
+			object System.Collections.IEnumerator.Current => this.Current;
 		}
 
 		IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -173,9 +169,7 @@ namespace ICSharpCode.Decompiler.IL
 			list.CopyTo(array, arrayIndex);
 		}
 
-		bool ICollection<T>.IsReadOnly {
-			get { return false; }
-		}
+		bool ICollection<T>.IsReadOnly => false;
 
 		public void Add(T value)
 		{

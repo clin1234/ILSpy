@@ -492,7 +492,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <param name="lookupGroups">List of existing lookup groups</param>
 		/// <param name="typeBaseTypes">The base types of 'type' (initialized on demand)</param>
 		/// <param name="newNestedTypes">The target list (created on demand).</param>
-		void AddNestedTypes(IType type, IEnumerable<IType> nestedTypes, int typeArgumentCount,
+		static void AddNestedTypes(IType type, IEnumerable<IType> nestedTypes, int typeArgumentCount,
 							List<LookupGroup> lookupGroups,
 							ref IEnumerable<IType> typeBaseTypes,
 							ref List<IType> newNestedTypes)
@@ -638,7 +638,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region RemoveInterfaceMembersHiddenByClassMembers
-		void RemoveInterfaceMembersHiddenByClassMembers(List<LookupGroup> lookupGroups)
+		static void RemoveInterfaceMembersHiddenByClassMembers(List<LookupGroup> lookupGroups)
 		{
 			foreach (var classLookupGroup in lookupGroups)
 			{

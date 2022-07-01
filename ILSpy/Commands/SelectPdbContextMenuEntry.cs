@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy
 			var assembly = (context.SelectedTreeNodes?.FirstOrDefault() as AssemblyTreeNode)?.LoadedAssembly;
 			if (assembly == null)
 				return;
-			OpenFileDialog dlg = new OpenFileDialog();
+			OpenFileDialog dlg = new();
 			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb";
 			dlg.Filter = Resources.PortablePDBPdbAllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);

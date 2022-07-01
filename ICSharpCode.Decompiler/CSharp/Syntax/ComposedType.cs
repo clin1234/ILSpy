@@ -42,9 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole NullableRole = new("?");
 		public static readonly TokenRole PointerRole = new("*");
 		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new("ArraySpecifier", null);
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole(AttributeRole); }
-		}
+		public AstNodeCollection<AttributeSection> Attributes => base.GetChildrenByRole(AttributeRole);
 
 		/// <summary>
 		/// Gets/sets whether this type has a 'ref' specifier.
@@ -88,17 +86,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public bool HasOnlyNullableSpecifier {
-			get {
-				return HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
-			}
-		}
+		public bool HasOnlyNullableSpecifier => HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
 
-		public CSharpTokenNode NullableSpecifierToken {
-			get {
-				return GetChildByRole(NullableRole);
-			}
-		}
+		public CSharpTokenNode NullableSpecifierToken => GetChildByRole(NullableRole);
 
 		public int PointerRank {
 			get {
@@ -121,13 +111,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<ArraySpecifier> ArraySpecifiers {
-			get { return GetChildrenByRole(ArraySpecifierRole); }
-		}
+		public AstNodeCollection<ArraySpecifier> ArraySpecifiers => GetChildrenByRole(ArraySpecifierRole);
 
-		public AstNodeCollection<CSharpTokenNode> PointerTokens {
-			get { return GetChildrenByRole(PointerRole); }
-		}
+		public AstNodeCollection<CSharpTokenNode> PointerTokens => GetChildrenByRole(PointerRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -146,8 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ComposedType o = other as ComposedType;
-			return o != null
+			return other is ComposedType o
 				&& this.HasNullableSpecifier == o.HasNullableSpecifier
 				&& this.PointerRank == o.PointerRank
 				&& this.HasRefSpecifier == o.HasRefSpecifier
@@ -232,11 +217,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ArraySpecifier : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public ArraySpecifier()
 		{
@@ -247,9 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Dimensions = dimensions;
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
+		public CSharpTokenNode LBracketToken => GetChildByRole(Roles.LBracket);
 
 		public int Dimensions {
 			get { return 1 + GetChildrenByRole(Roles.Comma).Count; }
@@ -268,9 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
+		public CSharpTokenNode RBracketToken => GetChildByRole(Roles.RBracket);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -289,8 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArraySpecifier o = other as ArraySpecifier;
-			return o != null && this.Dimensions == o.Dimensions;
+			return other is ArraySpecifier o && this.Dimensions == o.Dimensions;
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)

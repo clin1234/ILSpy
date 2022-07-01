@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			this.metadata = metadata;
 		}
 
-		internal void ScrollTo(Handle handle)
+		internal static void ScrollTo(Handle handle)
 		{
 			//this.scrollTarget = MetadataTokens.GetHeapOffset((EntityHandle)handle);
 		}

@@ -36,11 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly new Accessor Null = new NullAccessor();
 		sealed class NullAccessor : Accessor
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -63,13 +59,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Method; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Method;
 
 		/// <summary>
 		/// Gets the 'get'/'set'/'init'/'add'/'remove' keyword

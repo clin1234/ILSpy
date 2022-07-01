@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Controls
 		/// </summary>
 		public ControlColor(float val)
 		{
-			if (!(val >= 105 && val <= 255))
+			if (!(val is >= 105 and <= 255))
 				throw new ArgumentOutOfRangeException(nameof(val));
 			this.val = val;
 		}

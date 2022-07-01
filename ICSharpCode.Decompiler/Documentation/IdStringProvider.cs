@@ -71,14 +71,12 @@ namespace ICSharpCode.Decompiler.Documentation
 				b.Append('#');
 			}
 			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
-			IMethod method = member as IMethod;
-			if (method != null && method.TypeParameters.Count > 0)
+			if (member is IMethod method && method.TypeParameters.Count > 0)
 			{
 				b.Append("``");
 				b.Append(method.TypeParameters.Count);
 			}
-			IParameterizedMember parameterizedMember = member as IParameterizedMember;
-			if (parameterizedMember != null && parameterizedMember.Parameters.Count > 0)
+			if (member is IParameterizedMember parameterizedMember && parameterizedMember.Parameters.Count > 0)
 			{
 				b.Append('(');
 				var parameters = parameterizedMember.Parameters;
@@ -180,8 +178,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			int tpc = type.TypeParameterCount - outerTypeParameterCount;
 			if (tpc > 0)
 			{
-				ParameterizedType pt = type as ParameterizedType;
-				if (pt != null)
+				if (type is ParameterizedType pt)
 				{
 					b.Append('{');
 					var ta = pt.TypeArguments;
@@ -277,23 +274,10 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		static bool IsIDStringSpecialCharacter(char c)
 		{
-			switch (c)
-			{
-				case ':':
-				case '{':
-				case '}':
-				case '[':
-				case ']':
-				case '(':
-				case ')':
-				case '`':
-				case '*':
-				case '@':
-				case ',':
-					return true;
-				default:
-					return false;
-			}
+			return c switch {
+				':' or '{' or '}' or '[' or ']' or '(' or ')' or '`' or '*' or '@' or ',' => true,
+				_ => false,
+			};
 		}
 
 		static ITypeReference ParseTypeName(string typeName, ref int pos)

@@ -42,10 +42,7 @@ namespace ICSharpCode.Decompiler.Util
 		public void Dispose()
 		{
 			Action? a = Interlocked.Exchange(ref action, null);
-			if (a != null)
-			{
-				a();
-			}
+			a?.Invoke();
 		}
 	}
 }

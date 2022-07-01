@@ -99,8 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.nestedTypes = new NestedTypeName[parts.Length - 1];
 				for (int i = 0; i < nestedTypes.Length; i++)
 				{
-					int tpc;
-					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(parts[i + 1], out tpc);
+					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(parts[i + 1], out int tpc);
 					nestedTypes[i] = new(name, tpc);
 				}
 			}
@@ -109,27 +108,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the top-level type name.
 		/// </summary>
-		public TopLevelTypeName TopLevelTypeName {
-			get { return topLevelType; }
-		}
+		public TopLevelTypeName TopLevelTypeName => topLevelType;
 
 		/// <summary>
 		/// Gets whether this is a nested type.
 		/// </summary>
-		public bool IsNested {
-			get {
-				return nestedTypes != null;
-			}
-		}
+		public bool IsNested => nestedTypes != null;
 
 		/// <summary>
 		/// Gets the nesting level.
 		/// </summary>
-		public int NestingLevel {
-			get {
-				return nestedTypes != null ? nestedTypes.Length : 0;
-			}
-		}
+		public int NestingLevel => nestedTypes != null ? nestedTypes.Length : 0;
 
 		/// <summary>
 		/// Gets the name of the type.

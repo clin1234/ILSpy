@@ -45,9 +45,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Handles NullCoalescingInstruction case 1: reference types.
 		/// </summary>
-		bool TransformRefTypes(Block block, int pos, StatementTransformContext context)
+		static bool TransformRefTypes(Block block, int pos, StatementTransformContext context)
 		{
-			if (!(block.Instructions[pos] is StLoc stloc))
+			if (block.Instructions[pos] is not StLoc stloc)
 				return false;
 			if (stloc.Variable.Kind != VariableKind.StackSlot)
 				return false;
@@ -114,18 +114,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// ... Call(arg1, arg2, if.notnull(value, throw(...)), arg4) ...
 		/// </summary>
-		bool TransformThrowExpressionValueTypes(Block block, int pos, StatementTransformContext context)
+		static bool TransformThrowExpressionValueTypes(Block block, int pos, StatementTransformContext context)
 		{
 			if (pos + 2 >= block.Instructions.Count)
 				return false;
-			if (!(block.Instructions[pos] is StLoc stloc))
+			if (block.Instructions[pos] is not StLoc stloc)
 				return false;
 			ILVariable v = stloc.Variable;
 			if (!(v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 2))
 				return false;
 			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
-			if (!(Block.Unwrap(trueInst) is Throw throwInst))
+			if (Block.Unwrap(trueInst) is not Throw throwInst)
 				return false;
 			if (!condition.MatchLogicNot(out var arg))
 				return false;

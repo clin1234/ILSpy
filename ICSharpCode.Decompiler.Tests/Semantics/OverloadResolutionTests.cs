@@ -186,19 +186,19 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 			// Call: Foo<int>();
 			OverloadResolution o;
-			o = new(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int)) });
+			o = new(compilation, Array.Empty<ResolveResult>(), typeArguments: new[] { compilation.FindType(typeof(int)) });
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
 			Assert.AreSame(resolvedM1, o.BestCandidate);
 
 			// Call: Foo<string>();
-			o = new(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(string)) });
+			o = new(compilation, Array.Empty<ResolveResult>(), typeArguments: new[] { compilation.FindType(typeof(string)) });
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM2));
 			Assert.AreSame(resolvedM2, o.BestCandidate);
 
 			// Call: Foo<int?>();
-			o = new(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int?)) });
+			o = new(compilation, Array.Empty<ResolveResult>(), typeArguments: new[] { compilation.FindType(typeof(int?)) });
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM3));
@@ -208,8 +208,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		class SkeetEvilOverloadResolutionTestCase
 		{
 			class ClassConstraint<T> where T : class { }
-			static void Foo<T>(T? ignored = default(T?)) where T : struct { }
-			static void Foo<T>(ClassConstraint<T> ignored = default(ClassConstraint<T>)) where T : class { }
+			static void Foo<T>(T? ignored = default) where T : struct { }
+			static void Foo<T>(ClassConstraint<T> ignored = default) where T : class { }
 			static void Foo<T>() { }
 		}
 

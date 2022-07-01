@@ -248,7 +248,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void AddList(string type, IEnumerable<XmlDocumentationElement> items)
 		{
-			List list = new List();
+			List list = new();
 			AddBlock(list);
 			list.Margin = new Thickness(0, 5, 0, 5);
 			if (type == "number")
@@ -260,9 +260,9 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				foreach (var itemElement in items)
 				{
-					if (itemElement.Name == "listheader" || itemElement.Name == "item")
+					if (itemElement.Name is "listheader" or "item")
 					{
-						ListItem item = new ListItem();
+						ListItem item = new();
 						blockCollection = item.Blocks;
 						inlineCollection = null;
 						foreach (var prop in itemElement.Children)
@@ -280,7 +280,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		bool? ParseBool(string input)
+		static bool? ParseBool(string input)
 		{
 			if (bool.TryParse(input, out bool result))
 				return result;
@@ -310,7 +310,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void AddException(IEntity referencedEntity, IList<XmlDocumentationElement> children)
 		{
-			Span span = new Span();
+			Span span = new();
 			if (referencedEntity != null)
 				span.Inlines.Add(ConvertReference(referencedEntity));
 			else
@@ -322,7 +322,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void AddPermission(IEntity referencedEntity, IList<XmlDocumentationElement> children)
 		{
-			Span span = new Span();
+			Span span = new();
 			span.Inlines.Add("Permission");
 			if (referencedEntity != null)
 			{
@@ -344,7 +344,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void AddParam(string name, IEnumerable<XmlDocumentationElement> children)
 		{
-			Span span = new Span();
+			Span span = new();
 			span.Inlines.Add(new Run(name ?? string.Empty) { FontStyle = FontStyles.Italic });
 			span.Inlines.Add(": ");
 			AddSection(span, children);
@@ -378,7 +378,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (element.Children.Any())
 				{
-					Hyperlink link = new Hyperlink();
+					Hyperlink link = new();
 					link.Click += (sender, e) => {
 						MainWindow.Instance.JumpToReference(referencedEntity);
 					};
@@ -395,8 +395,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (element.GetAttribute("href") != null)
 			{
-				Uri uri;
-				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out uri))
+				if (Uri.TryCreate(element.GetAttribute("href"), UriKind.Absolute, out Uri uri))
 				{
 					if (element.Children.Any())
 					{
@@ -432,7 +431,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return cref;
 		}
 
-		FontFamily GetCodeFont()
+		static FontFamily GetCodeFont()
 		{
 			return DisplaySettingsPanel.CurrentDisplaySettings.SelectedFont;
 		}
@@ -528,7 +527,7 @@ namespace ICSharpCode.ILSpy.TextView
 			blockCollection.Add(block);
 		}
 
-		StringBuilder addedText = new StringBuilder();
+		StringBuilder addedText = new();
 		bool ignoreWhitespace;
 
 		public void AddLineBreak()
@@ -566,7 +565,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		bool IsEmptyLineBefore(string text, int i)
+		static bool IsEmptyLineBefore(string text, int i)
 		{
 			// Skip previous whitespace
 			do

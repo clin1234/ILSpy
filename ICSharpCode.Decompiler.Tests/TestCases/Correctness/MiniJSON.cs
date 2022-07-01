@@ -221,7 +221,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 					if (json.Peek() == -1)
 					{
-						parsing = false;
 						break;
 					}
 
@@ -290,13 +289,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 				if (number.IndexOf('.') == -1 && number.IndexOf('E') == -1 && number.IndexOf('e') == -1)
 				{
-					long parsedInt;
-					Int64.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out parsedInt);
+					Int64.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out long parsedInt);
 					return parsedInt;
 				}
 
-				double parsedDouble;
-				Double.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble);
+				Double.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double parsedDouble);
 				return parsedDouble;
 			}
 
@@ -425,15 +422,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			void SerializeValue(object value)
 			{
-				IList asList;
-				IDictionary asDict;
-				string asStr;
-
 				if (value == null)
 				{
 					builder.Append("null");
 				}
-				else if ((asStr = value as string) != null)
+				else if (value is string asStr)
 				{
 					SerializeString(asStr);
 				}
@@ -441,11 +434,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				{
 					builder.Append((bool)value ? "true" : "false");
 				}
-				else if ((asList = value as IList) != null)
+				else if (value is IList asList)
 				{
 					SerializeArray(asList);
 				}
-				else if ((asDict = value as IDictionary) != null)
+				else if (value is IDictionary asDict)
 				{
 					SerializeObject(asDict);
 				}

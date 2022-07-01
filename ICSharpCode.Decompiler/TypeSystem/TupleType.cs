@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ImmutableArray<string> ElementNames { get; }
 
 		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes,
-			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
+			ImmutableArray<string> elementNames = default,
 			IModule valueTupleAssembly = null)
 		{
 			this.Compilation = compilation;
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			else
 			{
-				return default(ImmutableArray<IType>);
+				return default;
 			}
 
 			bool Collect(IType type)
@@ -222,8 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			var o = other as TupleType;
-			if (o == null)
+			if (other is not TupleType o)
 				return false;
 			if (!UnderlyingType.Equals(o.UnderlyingType))
 				return false;
@@ -390,7 +389,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes,
-			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
+			ImmutableArray<string> elementNames = default,
 			IModuleReference valueTupleAssembly = null)
 		{
 			this.ValueTupleAssembly = valueTupleAssembly;

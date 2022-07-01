@@ -250,11 +250,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
 
 		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
 		{

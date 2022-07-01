@@ -36,22 +36,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ForeachKeywordRole = new("foreach");
 		public static readonly TokenRole InKeywordRole = new("in");
 
-		public CSharpTokenNode AwaitToken {
-			get { return GetChildByRole(AwaitRole); }
-		}
+		public CSharpTokenNode AwaitToken => GetChildByRole(AwaitRole);
 
 		public bool IsAsync {
 			get { return !GetChildByRole(AwaitRole).IsNull; }
 			set { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
 		}
 
-		public CSharpTokenNode ForeachToken {
-			get { return GetChildByRole(ForeachKeywordRole); }
-		}
+		public CSharpTokenNode ForeachToken => GetChildByRole(ForeachKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public AstType VariableType {
 			get { return GetChildByRole(Roles.Type); }
@@ -63,18 +57,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.VariableDesignationRole, value); }
 		}
 
-		public CSharpTokenNode InToken {
-			get { return GetChildByRole(InKeywordRole); }
-		}
+		public CSharpTokenNode InToken => GetChildByRole(InKeywordRole);
 
 		public Expression InExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
@@ -98,8 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ForeachStatement o = other as ForeachStatement;
-			return o != null && this.VariableType.DoMatch(o.VariableType, match) && this.VariableDesignation.DoMatch(o.VariableDesignation, match)
+			return other is ForeachStatement o && this.VariableType.DoMatch(o.VariableType, match) && this.VariableDesignation.DoMatch(o.VariableDesignation, match)
 				&& this.InExpression.DoMatch(o.InExpression, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}

@@ -82,8 +82,8 @@ namespace ICSharpCode.ILSpyX.Search
 	class Literal
 	{
 		internal readonly LiteralFormat literalFormat;
-		internal readonly object literalValue;
-		internal readonly string val;
+		internal readonly object? literalValue;
+		internal readonly string? val;
 		internal Literal next;
 
 		public LiteralFormat LiteralFormat {
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpyX.Search
 			get { return val; }
 		}
 
-		public Literal(string val, object literalValue, LiteralFormat literalFormat)
+		public Literal(string? val, object? literalValue, LiteralFormat literalFormat)
 		{
 			this.val = val;
 			this.literalValue = literalValue;
@@ -430,8 +430,7 @@ namespace ICSharpCode.ILSpyX.Search
 							}
 							else if (Char.IsLetterOrDigit(ch) || ch == '_')
 							{
-								bool canBeKeyword;
-								string s = ReadIdent(ch, out canBeKeyword);
+								string s = ReadIdent(ch, out bool canBeKeyword);
 								return new(null, null, LiteralFormat.None);
 							}
 							else
@@ -448,8 +447,7 @@ namespace ICSharpCode.ILSpyX.Search
 						{
 							int x = Col - 1; // Col was incremented above, but we want the start of the identifier
 							int y = Line;
-							bool canBeKeyword;
-							string s = ReadIdent(ch, out canBeKeyword);
+							string s = ReadIdent(ch, out bool canBeKeyword);
 							return new(null, null, LiteralFormat.None);
 						}
 						else if (Char.IsDigit(ch))
@@ -489,8 +487,7 @@ namespace ICSharpCode.ILSpyX.Search
 						Error(Line, Col, "Identifiers can only contain unicode escape sequences");
 					}
 					canBeKeyword = false;
-					string surrogatePair;
-					ReadEscapeSequence(out ch, out surrogatePair);
+					ReadEscapeSequence(out ch, out string surrogatePair);
 					if (surrogatePair != null)
 					{
 						if (!char.IsLetterOrDigit(surrogatePair, 0))
@@ -504,7 +501,7 @@ namespace ICSharpCode.ILSpyX.Search
 								identBuffer[curPos++] = surrogatePair[i];
 							}
 						}
-						ch = surrogatePair[surrogatePair.Length - 1];
+						ch = surrogatePair[^1];
 					}
 					else
 					{
@@ -693,8 +690,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 				if (isfloat)
 				{
-					float num;
-					if (float.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
+					if (float.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out float num))
 					{
 						return new(stringValue, num, LiteralFormat.DecimalNumber);
 					}
@@ -706,8 +702,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 				if (isdecimal)
 				{
-					decimal num;
-					if (decimal.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
+					if (decimal.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal num))
 					{
 						return new(stringValue, num, LiteralFormat.DecimalNumber);
 					}
@@ -719,8 +714,7 @@ namespace ICSharpCode.ILSpyX.Search
 				}
 				if (isdouble)
 				{
-					double num;
-					if (double.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out num))
+					if (double.TryParse(digit, NumberStyles.Any, CultureInfo.InvariantCulture, out double num))
 					{
 						return new(stringValue, num, LiteralFormat.DecimalNumber);
 					}
@@ -771,8 +765,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (isunsigned)
 					{
-						ulong num;
-						if (ulong.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (ulong.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out ulong num))
 						{
 							token = new(stringValue, num, literalFormat);
 						}
@@ -784,8 +777,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					else
 					{
-						long num;
-						if (long.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (long.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out long num))
 						{
 							token = new(stringValue, num, literalFormat);
 						}
@@ -800,8 +792,7 @@ namespace ICSharpCode.ILSpyX.Search
 				{
 					if (isunsigned)
 					{
-						uint num;
-						if (uint.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (uint.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out uint num))
 						{
 							token = new(stringValue, num, literalFormat);
 						}
@@ -813,8 +804,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					else
 					{
-						int num;
-						if (int.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+						if (int.TryParse(digit, ishex ? NumberStyles.HexNumber : NumberStyles.Number, CultureInfo.InvariantCulture, out int num))
 						{
 							token = new(stringValue, num, literalFormat);
 						}
@@ -854,8 +844,7 @@ namespace ICSharpCode.ILSpyX.Search
 				if (ch == '\\')
 				{
 					originalValue.Append('\\');
-					string surrogatePair;
-					originalValue.Append(ReadEscapeSequence(out ch, out surrogatePair));
+					originalValue.Append(ReadEscapeSequence(out ch, out string surrogatePair));
 					if (surrogatePair != null)
 					{
 						sb.Append(surrogatePair);
@@ -1066,8 +1055,7 @@ namespace ICSharpCode.ILSpyX.Search
 			string escapeSequence = String.Empty;
 			if (ch == '\\')
 			{
-				string surrogatePair;
-				escapeSequence = ReadEscapeSequence(out chValue, out surrogatePair);
+				escapeSequence = ReadEscapeSequence(out chValue, out string surrogatePair);
 				if (surrogatePair != null)
 				{
 					Error(y, x, "The unicode character must be represented by a surrogate pair and does not fit into a System.Char");

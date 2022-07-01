@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public StructData(int initialValue)
 			{
-				this = default(StructData);
+				this = default;
 				this.Field = initialValue;
 				this.Property = initialValue;
 			}

@@ -82,33 +82,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		static string GetTargetFrameworkMoniker(string frameworkIdentifier, int version)
 		{
 			// Reference: https://docs.microsoft.com/en-us/dotnet/standard/frameworks
-			switch (frameworkIdentifier)
-			{
-				case null:
-				case ".NETFramework":
-					return "net" + GetVersionString(version, withDots: false);
-
-				case ".NETCoreApp":
-					return "netcoreapp" + GetVersionString(version, withDots: true);
-
-				case ".NETStandard":
-					return "netstandard" + GetVersionString(version, withDots: true);
-
-				case "Silverlight":
-					return "sl" + version / 100;
-
-				case ".NETCore":
-					return "netcore" + GetVersionString(version, withDots: false);
-
-				case "WindowsPhone":
-					return "wp" + GetVersionString(version, withDots: false, omitMinorWhenZero: true);
-
-				case ".NETMicroFramework":
-					return "netmf";
-
-				default:
-					return null;
-			}
+			return frameworkIdentifier switch {
+				null or ".NETFramework" => "net" + GetVersionString(version, withDots: false),
+				".NETCoreApp" => "netcoreapp" + GetVersionString(version, withDots: true),
+				".NETStandard" => "netstandard" + GetVersionString(version, withDots: true),
+				"Silverlight" => "sl" + version / 100,
+				".NETCore" => "netcore" + GetVersionString(version, withDots: false),
+				"WindowsPhone" => "wp" + GetVersionString(version, withDots: false, omitMinorWhenZero: true),
+				".NETMicroFramework" => "netmf",
+				_ => null,
+			};
 		}
 
 		static string GetVersionString(int version, bool withDots, bool omitMinorWhenZero = false)

@@ -31,9 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		public int MinCount { get; set; }
 		public int MaxCount { get; set; }
 
-		public INode ChildNode {
-			get { return childNode; }
-		}
+		public INode ChildNode => childNode;
 
 		public Repeat(INode childNode)
 		{

@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<IEntity> AnalyzeType(IMethod analyzedEntity, ITypeDefinition type)
+		static IEnumerable<IEntity> AnalyzeType(IMethod analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.MetadataToken;
 			var declaringTypeToken = analyzedEntity.DeclaringTypeDefinition.MetadataToken;

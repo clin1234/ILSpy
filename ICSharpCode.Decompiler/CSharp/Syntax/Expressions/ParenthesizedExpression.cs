@@ -32,18 +32,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ParenthesizedExpression : Expression
 	{
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public ParenthesizedExpression()
 		{
@@ -71,8 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ParenthesizedExpression o = other as ParenthesizedExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is ParenthesizedExpression o && this.Expression.DoMatch(o.Expression, match);
 		}
 
 		/// <summary>

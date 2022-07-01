@@ -163,7 +163,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			}
 		}
 
-		public void Draw(ICSharpCode.AvalonEdit.Rendering.TextView textView, DrawingContext drawingContext)
+		public void Draw(TextView textView, DrawingContext drawingContext)
 		{
 			ArgumentNullException.ThrowIfNull(textView);
 			ArgumentNullException.ThrowIfNull(drawingContext);
@@ -178,7 +178,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			{
 				if (marker.BackgroundColor != null)
 				{
-					BackgroundGeometryBuilder geoBuilder = new BackgroundGeometryBuilder();
+					BackgroundGeometryBuilder geoBuilder = new();
 					geoBuilder.AlignToWholePixels = true;
 					geoBuilder.CornerRadius = 3;
 					geoBuilder.AddSegment(textView, marker);
@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 					if (geometry != null)
 					{
 						Color color = marker.BackgroundColor.Value;
-						SolidColorBrush brush = new SolidColorBrush(color);
+						SolidColorBrush brush = new(color);
 						brush.Freeze();
 						drawingContext.DrawGeometry(brush, null, geometry);
 					}
@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 
 							int count = Math.Max((int)((endPoint.X - startPoint.X) / offset) + 1, 4);
 
-							StreamGeometry geometry = new StreamGeometry();
+							StreamGeometry geometry = new();
 
 							using (StreamGeometryContext ctx = geometry.Open())
 							{
@@ -217,19 +217,19 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 
 							geometry.Freeze();
 
-							Pen usedPen = new Pen(usedBrush, 1);
+							Pen usedPen = new(usedBrush, 1);
 							usedPen.Freeze();
 							drawingContext.DrawGeometry(Brushes.Transparent, usedPen, geometry);
 						}
 						if ((marker.MarkerTypes & TextMarkerTypes.NormalUnderline) != 0)
 						{
-							Pen usedPen = new Pen(usedBrush, 1);
+							Pen usedPen = new(usedBrush, 1);
 							usedPen.Freeze();
 							drawingContext.DrawLine(usedPen, startPoint, endPoint);
 						}
 						if ((marker.MarkerTypes & TextMarkerTypes.DottedUnderline) != 0)
 						{
-							Pen usedPen = new Pen(usedBrush, 1);
+							Pen usedPen = new(usedBrush, 1);
 							usedPen.DashStyle = DashStyles.Dot;
 							usedPen.Freeze();
 							drawingContext.DrawLine(usedPen, startPoint, endPoint);
@@ -239,7 +239,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 			}
 		}
 
-		IEnumerable<Point> CreatePoints(Point start, Point end, double offset, int count)
+		static IEnumerable<Point> CreatePoints(Point start, Point end, double offset, int count)
 		{
 			for (int i = 0; i < count; i++)
 				yield return new Point(start.X + i * offset, start.Y - ((i + 1) % 2 == 0 ? offset : 0));

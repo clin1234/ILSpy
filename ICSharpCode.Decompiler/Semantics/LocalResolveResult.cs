@@ -43,28 +43,19 @@ namespace ICSharpCode.Decompiler.Semantics
 			IType type = variable.Type;
 			if (type.Kind == TypeKind.ByReference)
 			{
-				IParameter p = variable as IParameter;
-				if (p != null && p.ReferenceKind != ReferenceKind.None)
+				if (variable is IParameter p && p.ReferenceKind != ReferenceKind.None)
 					return ((ByReferenceType)type).ElementType;
 			}
 			return type;
 		}
 
-		public IVariable Variable {
-			get { return variable; }
-		}
+		public IVariable Variable => variable;
 
-		public bool IsParameter {
-			get { return variable is IParameter; }
-		}
+		public bool IsParameter => variable is IParameter;
 
-		public override bool IsCompileTimeConstant {
-			get { return variable.IsConst; }
-		}
+		public override bool IsCompileTimeConstant => variable.IsConst;
 
-		public override object ConstantValue {
-			get { return IsParameter ? null : variable.GetConstantValue(); }
-		}
+		public override object ConstantValue => IsParameter ? null : variable.GetConstantValue();
 
 		public override string ToString()
 		{

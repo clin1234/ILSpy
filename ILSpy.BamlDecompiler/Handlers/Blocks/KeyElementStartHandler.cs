@@ -39,7 +39,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 
 		public BamlElement TranslateDefer(XamlContext ctx, BamlNode node, BamlElement parent)
 		{
-			var record = (KeyElementStartRecord)((BamlBlockNode)node).Header;
+			_ = (KeyElementStartRecord)((BamlBlockNode)node).Header;
 			var key = (XamlResourceKey)node.Annotation;
 
 			var bamlElem = new BamlElement(node) {

@@ -25,57 +25,26 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static StackType GetStackType(this PrimitiveType primitiveType)
 		{
-			switch (primitiveType)
-			{
-				case PrimitiveType.I1:
-				case PrimitiveType.U1:
-				case PrimitiveType.I2:
-				case PrimitiveType.U2:
-				case PrimitiveType.I4:
-				case PrimitiveType.U4:
-					return StackType.I4;
-				case PrimitiveType.I8:
-				case PrimitiveType.U8:
-					return StackType.I8;
-				case PrimitiveType.I:
-				case PrimitiveType.U:
-					return StackType.I;
-				case PrimitiveType.R4:
-					return StackType.F4;
-				case PrimitiveType.R8:
-				case PrimitiveType.R:
-					return StackType.F8;
-				case PrimitiveType.Ref: // ByRef
-					return StackType.Ref;
-				case PrimitiveType.Unknown:
-					return StackType.Unknown;
-				default:
-					return StackType.O;
-			}
+			return primitiveType switch {
+				PrimitiveType.I1 or PrimitiveType.U1 or PrimitiveType.I2 or PrimitiveType.U2 or PrimitiveType.I4 or PrimitiveType.U4 => StackType.I4,
+				PrimitiveType.I8 or PrimitiveType.U8 => StackType.I8,
+				PrimitiveType.I or PrimitiveType.U => StackType.I,
+				PrimitiveType.R4 => StackType.F4,
+				PrimitiveType.R8 or PrimitiveType.R => StackType.F8,
+				// ByRef
+				PrimitiveType.Ref => StackType.Ref,
+				PrimitiveType.Unknown => StackType.Unknown,
+				_ => StackType.O,
+			};
 		}
 
 		public static Sign GetSign(this PrimitiveType primitiveType)
 		{
-			switch (primitiveType)
-			{
-				case PrimitiveType.I1:
-				case PrimitiveType.I2:
-				case PrimitiveType.I4:
-				case PrimitiveType.I8:
-				case PrimitiveType.R4:
-				case PrimitiveType.R8:
-				case PrimitiveType.R:
-				case PrimitiveType.I:
-					return Sign.Signed;
-				case PrimitiveType.U1:
-				case PrimitiveType.U2:
-				case PrimitiveType.U4:
-				case PrimitiveType.U8:
-				case PrimitiveType.U:
-					return Sign.Unsigned;
-				default:
-					return Sign.None;
-			}
+			return primitiveType switch {
+				PrimitiveType.I1 or PrimitiveType.I2 or PrimitiveType.I4 or PrimitiveType.I8 or PrimitiveType.R4 or PrimitiveType.R8 or PrimitiveType.R or PrimitiveType.I => Sign.Signed,
+				PrimitiveType.U1 or PrimitiveType.U2 or PrimitiveType.U4 or PrimitiveType.U8 or PrimitiveType.U => Sign.Unsigned,
+				_ => Sign.None,
+			};
 		}
 
 		/// <summary>
@@ -86,30 +55,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static int GetSize(this PrimitiveType type)
 		{
-			switch (type)
-			{
-				case PrimitiveType.I1:
-				case PrimitiveType.U1:
-					return 1;
-				case PrimitiveType.I2:
-				case PrimitiveType.U2:
-					return 2;
-				case PrimitiveType.I4:
-				case PrimitiveType.U4:
-				case PrimitiveType.R4:
-					return 4;
-				case PrimitiveType.I8:
-				case PrimitiveType.R8:
-				case PrimitiveType.U8:
-				case PrimitiveType.R:
-					return 8;
-				case PrimitiveType.I:
-				case PrimitiveType.U:
-				case PrimitiveType.Ref:
-					return TypeUtils.NativeIntSize;
-				default:
-					return 0;
-			}
+			return type switch {
+				PrimitiveType.I1 or PrimitiveType.U1 => 1,
+				PrimitiveType.I2 or PrimitiveType.U2 => 2,
+				PrimitiveType.I4 or PrimitiveType.U4 or PrimitiveType.R4 => 4,
+				PrimitiveType.I8 or PrimitiveType.R8 or PrimitiveType.U8 or PrimitiveType.R => 8,
+				PrimitiveType.I or PrimitiveType.U or PrimitiveType.Ref => TypeUtils.NativeIntSize,
+				_ => 0,
+			};
 		}
 
 		/// <summary>
@@ -130,15 +83,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static bool IsFloatType(this PrimitiveType type)
 		{
-			switch (type)
-			{
-				case PrimitiveType.R4:
-				case PrimitiveType.R8:
-				case PrimitiveType.R:
-					return true;
-				default:
-					return false;
-			}
+			return type switch {
+				PrimitiveType.R4 or PrimitiveType.R8 or PrimitiveType.R => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -191,16 +139,11 @@ namespace ICSharpCode.Decompiler.IL
 				case Comp comp:
 					if (compilation == null)
 						return SpecialType.UnknownType;
-					switch (comp.LiftingKind)
-					{
-						case ComparisonLiftingKind.None:
-						case ComparisonLiftingKind.CSharp:
-							return compilation.FindType(KnownTypeCode.Boolean);
-						case ComparisonLiftingKind.ThreeValuedLogic:
-							return NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
-						default:
-							return SpecialType.UnknownType;
-					}
+					return comp.LiftingKind switch {
+						ComparisonLiftingKind.None or ComparisonLiftingKind.CSharp => compilation.FindType(KnownTypeCode.Boolean),
+						ComparisonLiftingKind.ThreeValuedLogic => NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean)),
+						_ => SpecialType.UnknownType,
+					};
 				case BinaryNumericInstruction bni:
 					if (bni.IsLifted)
 						return SpecialType.UnknownType;

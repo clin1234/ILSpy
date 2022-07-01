@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.IL
 				ConditionDetection.InvertIf(block, ifInst, context);
 
 				// ensure the exit inst of the if instruction is a keyword
-				Debug.Assert(!(ifInst.TrueInst is Block));
+				Debug.Assert(ifInst.TrueInst is not Block);
 				if (!ifInst.TrueInst.Match(exitInst).Success)
 				{
 					Debug.Assert(ifInst.TrueInst is Leave);
@@ -320,7 +320,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (defaultTree.SelectMany(n => n.Successors).Any(n => !defaultNode.Dominates(n)))
 				return false;
 
-			if (defaultTree.Count > 1 && !(parentBlock.Parent is BlockContainer))
+			if (defaultTree.Count > 1 && parentBlock.Parent is not BlockContainer)
 				return false;
 
 			context.Step("Extract default case of switch", switchContainer);
@@ -383,7 +383,7 @@ namespace ICSharpCode.Decompiler.IL
 			// leave from a try/pinned/lock etc, check if the target (the instruction following the target container) is duplicable, if so, set keywordExit to that
 			ILInstruction leavingInst = leave.TargetContainer;
 			Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
-			while (!(leavingInst.Parent is Block b) || leavingInst == b.Instructions.Last())
+			while (leavingInst.Parent is not Block b || leavingInst == b.Instructions.Last())
 			{
 				if (leavingInst.Parent is TryFinally tryFinally)
 				{
@@ -406,7 +406,7 @@ namespace ICSharpCode.Decompiler.IL
 
 				leavingInst = leavingInst.Parent;
 				Debug.Assert(!leavingInst.HasFlag(InstructionFlags.EndPointUnreachable));
-				Debug.Assert(!(leavingInst is ILFunction));
+				Debug.Assert(leavingInst is not ILFunction);
 			}
 
 			var block = (Block)leavingInst.Parent;
@@ -421,7 +421,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="fallthroughExit">The next instruction to be executed (provided inst does not exit)</param>
 		private void EnsureEndPointUnreachable(ILInstruction inst, ILInstruction fallthroughExit)
 		{
-			if (!(inst is Block block))
+			if (inst is not Block block)
 			{
 				Debug.Assert(inst.HasFlag(InstructionFlags.EndPointUnreachable));
 				return;
@@ -451,7 +451,7 @@ namespace ICSharpCode.Decompiler.IL
 		///
 		/// [else-]if (parent-cond) else { ifInst }
 		/// </summary>
-		private IfInstruction GetElseIfParent(IfInstruction ifInst)
+		private static IfInstruction GetElseIfParent(IfInstruction ifInst)
 		{
 			Debug.Assert(ifInst.Parent is Block);
 			if (Block.Unwrap(ifInst.Parent) == ifInst && // only instruction in block
@@ -615,7 +615,7 @@ namespace ICSharpCode.Decompiler.IL
 			ifInst.FalseInst = new Nop();
 		}
 
-		private void EliminateRedundantTryFinally(TryFinally tryFinally, ILTransformContext context)
+		private static void EliminateRedundantTryFinally(TryFinally tryFinally, ILTransformContext context)
 		{
 			/* The C# compiler sometimes generates try-finally structures for fixed statements.
 				After our transforms runs, these are redundant and can be removed.
@@ -630,12 +630,12 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				==> PinnedRegion
 			*/
-			if (!(tryFinally.FinallyBlock is BlockContainer finallyContainer))
+			if (tryFinally.FinallyBlock is not BlockContainer finallyContainer)
 				return;
 			if (!finallyContainer.SingleInstruction().MatchLeave(finallyContainer))
 				return;
 			// Finally is empty and redundant. But we'll delete the block only if there's a PinnedRegion.
-			if (!(tryFinally.TryBlock is BlockContainer tryContainer))
+			if (tryFinally.TryBlock is not BlockContainer tryContainer)
 				return;
 			if (tryContainer.SingleInstruction() is PinnedRegion pinnedRegion)
 			{

@@ -30,7 +30,7 @@ namespace ICSharpCode.TreeView
 	public sealed class SharpTreeNodeCollection : IList<SharpTreeNode>, INotifyCollectionChanged
 	{
 		readonly SharpTreeNode parent;
-		List<SharpTreeNode> list = new List<SharpTreeNode>();
+		List<SharpTreeNode> list = new();
 		bool isRaisingEvent;
 
 		public SharpTreeNodeCollection(SharpTreeNode parent)
@@ -64,9 +64,9 @@ namespace ICSharpCode.TreeView
 		void ThrowIfValueIsNullOrHasParent(SharpTreeNode node)
 		{
 			if (node == null)
-				throw new ArgumentNullException("node");
+				throw new ArgumentNullException(nameof(node));
 			if (node.modelParent != null)
-				throw new ArgumentException("The node already has a parent", "node");
+				throw new ArgumentException("The node already has a parent", nameof(node));
 		}
 
 		public SharpTreeNode this[int index] {
@@ -111,7 +111,7 @@ namespace ICSharpCode.TreeView
 		public void InsertRange(int index, IEnumerable<SharpTreeNode> nodes)
 		{
 			if (nodes == null)
-				throw new ArgumentNullException("nodes");
+				throw new ArgumentNullException(nameof(nodes));
 			ThrowOnReentrancy();
 			List<SharpTreeNode> newNodes = nodes.ToList();
 			if (newNodes.Count == 0)
@@ -200,7 +200,7 @@ namespace ICSharpCode.TreeView
 		public void RemoveAll(Predicate<SharpTreeNode> match)
 		{
 			if (match == null)
-				throw new ArgumentNullException("match");
+				throw new ArgumentNullException(nameof(match));
 			ThrowOnReentrancy();
 			int firstToRemove = 0;
 			for (int i = 0; i < list.Count; i++)

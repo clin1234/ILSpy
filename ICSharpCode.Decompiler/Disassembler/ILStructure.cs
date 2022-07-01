@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// Multiple entries for the same source offset are possible (switch statements).
 		/// The result is sorted by source offset.
 		/// </summary>
-		(List<Branch> Branches, BitSet IsAfterUnconditionalBranch) FindAllBranches(BlobReader body)
+		static (List<Branch> Branches, BitSet IsAfterUnconditionalBranch) FindAllBranches(BlobReader body)
 		{
 			var result = new List<Branch>();
 			var bitset = new BitSet(body.Length + 1);
@@ -263,21 +263,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static bool IsUnconditionalBranch(ILOpCode opCode)
 		{
-			switch (opCode)
-			{
-				case ILOpCode.Br:
-				case ILOpCode.Br_s:
-				case ILOpCode.Ret:
-				case ILOpCode.Endfilter:
-				case ILOpCode.Endfinally:
-				case ILOpCode.Throw:
-				case ILOpCode.Rethrow:
-				case ILOpCode.Leave:
-				case ILOpCode.Leave_s:
-					return true;
-				default:
-					return false;
-			}
+			return opCode switch {
+				ILOpCode.Br or ILOpCode.Br_s or ILOpCode.Ret or ILOpCode.Endfilter or ILOpCode.Endfinally or ILOpCode.Throw or ILOpCode.Rethrow or ILOpCode.Leave or ILOpCode.Leave_s => true,
+				_ => false,
+			};
 		}
 
 		void SortChildren()

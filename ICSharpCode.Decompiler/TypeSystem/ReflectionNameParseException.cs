@@ -27,11 +27,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public class ReflectionNameParseException : Exception
 	{
-		int position;
+		readonly int position;
 
-		public int Position {
-			get { return position; }
-		}
+		public int Position => position;
 
 		public ReflectionNameParseException(int position)
 		{

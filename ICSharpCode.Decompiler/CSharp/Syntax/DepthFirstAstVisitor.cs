@@ -718,7 +718,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				next = child.NextSibling;
 				child.AcceptVisitor(this);
 			}
-			return default(T);
+			return default;
 		}
 
 		public virtual T VisitNullNode(AstNode nullNode)
@@ -727,7 +727,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			// We usually want to ignore null nodes.
 			// Older NR versions (before VisitNullNode was introduced) didn't call VisitChildren() with null nodes;
 			// so changing this might break VisitChildren() overrides that expect the node to be part of the AST.
-			return default(T);
+			return default;
 		}
 
 		public virtual T VisitSyntaxTree(SyntaxTree unit)
@@ -1396,7 +1396,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				next = child.NextSibling;
 				child.AcceptVisitor(this, data);
 			}
-			return default(S);
+			return default;
 		}
 
 		public virtual S VisitNullNode(AstNode nullNode, T data)
@@ -1405,7 +1405,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			// We usually want to ignore null nodes.
 			// Older NR versions (before VisitNullNode was introduced) didn't call VisitChildren() with null nodes;
 			// so changing this might break VisitChildren() overrides that expect the node to be part of the AST.
-			return default(S);
+			return default;
 		}
 
 		public virtual S VisitSyntaxTree(SyntaxTree unit, T data)

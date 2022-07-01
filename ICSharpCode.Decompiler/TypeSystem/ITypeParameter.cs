@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 	public readonly struct TypeConstraint
 	{
-		public SymbolKind SymbolKind => SymbolKind.Constraint;
+		public static SymbolKind SymbolKind => SymbolKind.Constraint;
 		public IType Type { get; }
 		public IReadOnlyList<IAttribute> Attributes { get; }
 

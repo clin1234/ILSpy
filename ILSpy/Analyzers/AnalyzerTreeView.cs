@@ -81,17 +81,17 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 			else
 			{
-				List<LoadedAssembly> removedAssemblies = new List<LoadedAssembly>();
+				List<LoadedAssembly> removedAssemblies = new();
 				if (e.OldItems != null)
 					removedAssemblies.AddRange(e.OldItems.Cast<LoadedAssembly>());
-				List<LoadedAssembly> addedAssemblies = new List<LoadedAssembly>();
+				List<LoadedAssembly> addedAssemblies = new();
 				if (e.NewItems != null)
 					addedAssemblies.AddRange(e.NewItems.Cast<LoadedAssembly>());
 				((AnalyzerRootNode)this.Root).HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 			}
 		}
 
-		public void Show()
+		public static void Show()
 		{
 			DockWorkspace.Instance.ShowToolPane(AnalyzerPaneModel.PaneContentId);
 		}
@@ -164,8 +164,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			{
 				this.Children.RemoveAll(
 					delegate (SharpTreeNode n) {
-						AnalyzerTreeNode an = n as AnalyzerTreeNode;
-						return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+						return n is not AnalyzerTreeNode an || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 					});
 				return true;
 			}

@@ -48,9 +48,7 @@ namespace ICSharpCode.TreeView
 
 		private SharpTreeViewTextSearch(SharpTreeView treeView)
 		{
-			if (treeView == null)
-				throw new ArgumentNullException(nameof(treeView));
-			this.treeView = treeView;
+			this.treeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
 			inputStack = new Stack<string>(8);
 			ClearState();
 		}
@@ -70,7 +68,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (!isActive || inputStack.Count == 0)
 				return false;
-			matchPrefix = matchPrefix.Substring(0, matchPrefix.Length - inputStack.Pop().Length);
+			matchPrefix = matchPrefix[..^inputStack.Pop().Length];
 			ResetTimeout();
 			return true;
 		}

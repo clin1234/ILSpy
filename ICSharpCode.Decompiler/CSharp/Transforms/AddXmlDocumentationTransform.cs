@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var provider = context.DecompileRun.DocumentationProvider;
 				foreach (var entityDecl in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>())
 				{
-					if (!(entityDecl.GetSymbol() is IEntity entity))
+					if (entityDecl.GetSymbol() is not IEntity entity)
 						continue;
 					string doc = provider.GetDocumentation(entity);
 					if (doc != null)

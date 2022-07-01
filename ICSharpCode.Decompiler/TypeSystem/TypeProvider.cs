@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new ArrayType(compilation, elementType);
 		}
 
-		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
+		static bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
 		{
 			return reader.ResolveSignatureTypeKind(handle, rawTypeKind) switch {
 				SRM.SignatureTypeKind.ValueType => false,

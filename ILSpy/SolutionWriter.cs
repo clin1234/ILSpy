@@ -203,20 +203,18 @@ namespace ICSharpCode.ILSpy
 
 			try
 			{
-				using (var projectFileWriter = new StreamWriter(projectFileName))
-				{
-					var projectFileOutput = new PlainTextOutput(projectFileWriter);
-					var options = new DecompilationOptions() {
-						FullDecompilation = true,
-						CancellationToken = ct,
-						SaveAsProjectDirectory = targetDirectory
-					};
+				using var projectFileWriter = new StreamWriter(projectFileName);
+				var projectFileOutput = new PlainTextOutput(projectFileWriter);
+				var options = new DecompilationOptions() {
+					FullDecompilation = true,
+					CancellationToken = ct,
+					SaveAsProjectDirectory = targetDirectory
+				};
 
-					var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
-					if (projectInfo != null)
-					{
-						projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid, projectInfo.TypeGuid));
-					}
+				var projectInfo = language.DecompileAssembly(loadedAssembly, projectFileOutput, options);
+				if (projectInfo != null)
+				{
+					projects.Add(new ProjectItem(projectFileName, projectInfo.PlatformName, projectInfo.Guid, projectInfo.TypeGuid));
 				}
 			}
 			catch (NotSupportedException e)

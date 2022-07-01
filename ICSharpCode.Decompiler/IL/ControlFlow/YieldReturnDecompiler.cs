@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// For each finally method, stores the target state when entering the finally block,
 		/// and the decompiled code of the finally method body.
 		/// </summary>
-		readonly Dictionary<IMethod, (int? outerState, ILFunction function)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, ILFunction body)>();
+		readonly Dictionary<IMethod, (int? outerState, ILFunction function)> decompiledFinallyMethods = new();
 
 		/// <summary>
 		/// Temporary stores for 'yield break'.
@@ -373,7 +373,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			enumeratorCtor = default;
 			enumeratorType = default;
 			// newobj(CurrentType/...::.ctor, ldc.i4(-2))
-			if (!(inst is NewObj newObj))
+			if (inst is not NewObj newObj)
 				return false;
 			if (newObj.Arguments.Count != 1)
 				return false;
@@ -391,7 +391,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		bool MatchMonoEnumeratorCreationNewObj(ILInstruction inst)
 		{
 			// mcs generates iterators that take no parameters in the ctor
-			if (!(inst is NewObj newObj))
+			if (inst is not NewObj newObj)
 				return false;
 			if (newObj.Arguments.Count != 0)
 				return false;
@@ -557,7 +557,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var function = CreateILAst(disposeMethod, context);
 				BlockContainer body = (BlockContainer)function.Body;
 
-				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++)
+				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && body.EntryPoint.Instructions[i] is not Branch; i++)
 				{
 					if (body.EntryPoint.Instructions[i] is StObj stobj
 						&& stobj.MatchStFld(out var target, out var field, out var value)
@@ -1271,7 +1271,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			foreach (var tryFinally in function.Descendants.OfType<TryFinally>())
 			{
-				if (!(tryFinally.FinallyBlock is BlockContainer container))
+				if (tryFinally.FinallyBlock is not BlockContainer container)
 					continue;
 				Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
 				if (entryPoint?.Instructions[0] is IfInstruction ifInst)

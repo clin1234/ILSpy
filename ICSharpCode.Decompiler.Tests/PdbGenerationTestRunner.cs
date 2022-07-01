@@ -85,18 +85,16 @@ namespace ICSharpCode.Decompiler.Tests
 				pdbStream.SetLength(0);
 				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new(), pdbStream, noLogo: true);
 				pdbStream.Position = 0;
-				using (Stream peStream = File.OpenRead(peFileName))
-				using (Stream expectedPdbStream = File.OpenRead(pdbFileName))
+				using Stream peStream = File.OpenRead(peFileName);
+				using Stream expectedPdbStream = File.OpenRead(pdbFileName);
+				using (StreamWriter writer = new(Path.ChangeExtension(pdbFileName, ".xml"), false, Encoding.UTF8))
 				{
-					using (StreamWriter writer = new(Path.ChangeExtension(pdbFileName, ".xml"), false, Encoding.UTF8))
-					{
-						PdbToXmlConverter.ToXml(writer, expectedPdbStream, peStream, options);
-					}
-					peStream.Position = 0;
-					using (StreamWriter writer = new(Path.ChangeExtension(xmlFile, ".generated.xml"), false, Encoding.UTF8))
-					{
-						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
-					}
+					PdbToXmlConverter.ToXml(writer, expectedPdbStream, peStream, options);
+				}
+				peStream.Position = 0;
+				using (StreamWriter writer = new(Path.ChangeExtension(xmlFile, ".generated.xml"), false, Encoding.UTF8))
+				{
+					PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
 				}
 			}
 			string expectedFileName = Path.ChangeExtension(xmlFile, ".expected.xml");
@@ -144,7 +142,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 		public StringWriterWithEncoding(Encoding encoding)
 		{
-			this.encoding = encoding ?? throw new ArgumentNullException("encoding");
+			this.encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 		}
 
 		public override Encoding Encoding => encoding;

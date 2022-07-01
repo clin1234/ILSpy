@@ -47,9 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -78,15 +76,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
+		public CSharpTokenNode LBracketToken => GetChildByRole(Roles.LBracket);
 
 		public string AttributeTarget {
 			get {
@@ -106,13 +98,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<Attribute> Attributes {
-			get { return base.GetChildrenByRole(Roles.Attribute); }
-		}
+		public AstNodeCollection<Attribute> Attributes => base.GetChildrenByRole(Roles.Attribute);
 
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
+		public CSharpTokenNode RBracketToken => GetChildByRole(Roles.RBracket);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -131,8 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AttributeSection o = other as AttributeSection;
-			return o != null && MatchString(this.AttributeTarget, o.AttributeTarget) && this.Attributes.DoMatch(o.Attributes, match);
+			return other is AttributeSection o && MatchString(this.AttributeTarget, o.AttributeTarget) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 
 		public AttributeSection()

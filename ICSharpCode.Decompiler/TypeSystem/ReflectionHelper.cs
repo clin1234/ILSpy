@@ -146,15 +146,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				else if (type == typeof(UnboundTypeArgument))
 					return SpecialType.UnboundTypeArgument;
 				ITypeReference baseTypeRef = ToTypeReference(type.DeclaringType);
-				int typeParameterCount;
-				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
+				string name = SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 				return new NestedTypeReference(baseTypeRef, name, typeParameterCount);
 			}
 			else
 			{
 				IModuleReference assemblyReference = new DefaultAssemblyReference(type.Assembly.FullName);
-				int typeParameterCount;
-				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
+				string name = SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 				return new GetClassTypeReference(assemblyReference, type.Namespace, name, typeParameterCount);
 			}
 		}
@@ -225,8 +223,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static TypeCode GetTypeCode(this IType type)
 		{
-			ITypeDefinition def = type as ITypeDefinition;
-			if (def != null)
+			if (type is ITypeDefinition def)
 			{
 				KnownTypeCode typeCode = def.KnownTypeCode;
 				if (typeCode <= KnownTypeCode.String && typeCode != KnownTypeCode.Void)
@@ -269,19 +266,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		static bool IsReflectionNameSpecialCharacter(char c)
 		{
-			switch (c)
-			{
-				case '+':
-				case '`':
-				case '[':
-				case ']':
-				case ',':
-				case '*':
-				case '&':
-					return true;
-				default:
-					return false;
-			}
+			return c switch {
+				'+' or '`' or '[' or ']' or ',' or '*' or '&' => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -502,8 +490,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					break;
 				pos++;
 			}
-			int tpc;
-			if (!int.TryParse(reflectionTypeName.Substring(startPos, pos - startPos), out tpc))
+			if (!int.TryParse(reflectionTypeName.Substring(startPos, pos - startPos), out int tpc))
 				throw new ReflectionNameParseException(pos, "Expected type parameter count");
 			return tpc;
 		}

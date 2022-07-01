@@ -64,9 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether this is an instance call (i.e. whether the first argument is the 'this' pointer).
 		/// </summary>
-		public bool IsInstanceCall {
-			get { return !(Method.IsStatic || OpCode == OpCode.NewObj); }
-		}
+		public bool IsInstanceCall => !(Method.IsStatic || OpCode == OpCode.NewObj);
 
 		/// <summary>
 		/// Gets the parameter for the argument with the specified index.
@@ -152,8 +150,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			CallInstruction? o = other as CallInstruction;
-			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
+			return other is CallInstruction o && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
 				&& Equals(this.ConstrainedTo, o.ConstrainedTo)
 				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}

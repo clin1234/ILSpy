@@ -101,8 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		protected void CloneAnnotations()
 		{
-			ICloneable cloneable = annotations as ICloneable;
-			if (cloneable != null)
+			if (annotations is ICloneable cloneable)
 				annotations = cloneable.Clone();
 		}
 
@@ -123,8 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					for (int i = 0; i < this.Count; i++)
 					{
 						object obj = this[i];
-						ICloneable c = obj as ICloneable;
-						copy.Add(c != null ? c.Clone() : obj);
+						copy.Add(obj is ICloneable c ? c.Clone() : obj);
 					}
 					return copy;
 				}
@@ -141,8 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return; // we successfully added a single annotation
 			}
-			AnnotationList list = oldAnnotation as AnnotationList;
-			if (list == null)
+			if (oldAnnotation is not AnnotationList list)
 			{
 				// we need to transform the old annotation into a list
 				list = new(4);
@@ -168,8 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			retry: // Retry until successful
 			object oldAnnotations = this.annotations;
-			AnnotationList list = oldAnnotations as AnnotationList;
-			if (list != null)
+			if (oldAnnotations is AnnotationList list)
 			{
 				lock (list)
 					list.RemoveAll(obj => obj is T);
@@ -190,8 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(type));
 			retry: // Retry until successful
 			object oldAnnotations = this.annotations;
-			AnnotationList list = oldAnnotations as AnnotationList;
-			if (list != null)
+			if (oldAnnotations is AnnotationList list)
 			{
 				lock (list)
 					list.RemoveAll(type.IsInstanceOfType);
@@ -209,15 +204,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public T Annotation<T>() where T : class
 		{
 			object annotations = this.annotations;
-			AnnotationList list = annotations as AnnotationList;
-			if (list != null)
+			if (annotations is AnnotationList list)
 			{
 				lock (list)
 				{
 					foreach (object obj in list)
 					{
-						T t = obj as T;
-						if (t != null)
+						if (obj is T t)
 							return t;
 					}
 					return null;
@@ -234,8 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			object annotations = this.annotations;
-			AnnotationList list = annotations as AnnotationList;
-			if (list != null)
+			if (annotations is AnnotationList list)
 			{
 				lock (list)
 				{
@@ -260,8 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IEnumerable<object> Annotations {
 			get {
 				object annotations = this.annotations;
-				AnnotationList list = annotations as AnnotationList;
-				if (list != null)
+				if (annotations is AnnotationList list)
 				{
 					lock (list)
 					{

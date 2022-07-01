@@ -43,15 +43,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Gets whether stepping of built-in transforms is supported in this build of ICSharpCode.Decompiler.
 		/// Usually only debug builds support transform stepping.
 		/// </summary>
-		public static bool SteppingAvailable {
-			get {
+		public static bool SteppingAvailable =>
 #if STEP
-				return true;
+				true;
 #else
-				return false;
+				false;
 #endif
-			}
-		}
+
 
 		public IList<Node> Steps => steps;
 

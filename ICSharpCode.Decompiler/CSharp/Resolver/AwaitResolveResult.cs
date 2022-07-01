@@ -65,9 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.GetResultMethod = getResultMethod;
 		}
 
-		public override bool IsError {
-			get { return this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic && (this.IsCompletedProperty == null || this.OnCompletedMethod == null || this.GetResultMethod == null)); }
-		}
+		public override bool IsError => this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic && (this.IsCompletedProperty == null || this.OnCompletedMethod == null || this.GetResultMethod == null));
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{

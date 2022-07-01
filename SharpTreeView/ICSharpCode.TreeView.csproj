@@ -27,4 +27,8 @@
     <PackageReference Include="TomsToolbox.Wpf.Styles" Version="$(WpfStylesToolboxVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
+  </ItemGroup>
+
 </Project>

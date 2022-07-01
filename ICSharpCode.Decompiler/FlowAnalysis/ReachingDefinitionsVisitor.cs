@@ -155,9 +155,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				}
 			}
 
-			public bool IsBottom {
-				get { return !bits[ReachableBit]; }
-			}
+			public bool IsBottom => !bits[ReachableBit];
 
 			public void ReplaceWithBottom()
 			{
@@ -166,9 +164,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.ClearAll();
 			}
 
-			public bool IsReachable {
-				get { return bits[ReachableBit]; }
-			}
+			public bool IsReachable => bits[ReachableBit];
 
 			/// <summary>
 			/// Clears all store bits between startStoreIndex (incl.) and endStoreIndex (excl.)

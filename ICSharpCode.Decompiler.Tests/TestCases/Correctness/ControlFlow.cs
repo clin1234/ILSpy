@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static string Issue1946()
 		{
-			string obj = "1";
+			string obj;
 			try
 			{
 				obj = "2";

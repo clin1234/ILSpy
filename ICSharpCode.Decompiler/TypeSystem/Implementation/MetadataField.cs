@@ -77,18 +77,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public Accessibility Accessibility {
-			get {
-				return (attributes & FieldAttributes.FieldAccessMask) switch {
-					FieldAttributes.Public => Accessibility.Public,
-					FieldAttributes.FamANDAssem => Accessibility.ProtectedAndInternal,
-					FieldAttributes.Assembly => Accessibility.Internal,
-					FieldAttributes.Family => Accessibility.Protected,
-					FieldAttributes.FamORAssem => Accessibility.ProtectedOrInternal,
-					_ => Accessibility.Private
-				};
-			}
-		}
+		public Accessibility Accessibility => (attributes & FieldAttributes.FieldAccessMask) switch {
+			FieldAttributes.Public => Accessibility.Public,
+			FieldAttributes.FamANDAssem => Accessibility.ProtectedAndInternal,
+			FieldAttributes.Assembly => Accessibility.Internal,
+			FieldAttributes.Family => Accessibility.Protected,
+			FieldAttributes.FamORAssem => Accessibility.ProtectedOrInternal,
+			_ => Accessibility.Private
+		};
 
 		public bool IsReadOnly => (attributes & FieldAttributes.InitOnly) != 0;
 		public bool IsStatic => (attributes & FieldAttributes.Static) != 0;

@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual && method.ParentModule is not null;
+		public bool Show(ISymbol symbol) => symbol is IMethod { IsVirtual: false, ParentModule: { } };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -105,9 +105,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		bool IsUsedInMethod(IMethod analyzedEntity, IMethod analyzedBaseMethod, IMethod method, AnalyzerContext context)
+		static bool IsUsedInMethod(IMethod analyzedEntity, IMethod analyzedBaseMethod, IMethod method, AnalyzerContext context)
 		{
-			return ScanMethodBody(analyzedEntity, method, analyzedBaseMethod, context.GetMethodBody(method));
+			return ScanMethodBody(analyzedEntity, method, analyzedBaseMethod, AnalyzerContext.GetMethodBody(method));
 		}
 
 		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, IMethod analyzedBaseMethod, MethodBodyBlock methodBody)
@@ -175,18 +175,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		static bool IsSupportedOpCode(ILOpCode opCode)
 		{
-			switch (opCode)
-			{
-				case ILOpCode.Call:
-				case ILOpCode.Callvirt:
-				case ILOpCode.Ldtoken:
-				case ILOpCode.Ldftn:
-				case ILOpCode.Ldvirtftn:
-				case ILOpCode.Newobj:
-					return true;
-				default:
-					return false;
-			}
+			return opCode switch {
+				ILOpCode.Call or ILOpCode.Callvirt or ILOpCode.Ldtoken or ILOpCode.Ldftn or ILOpCode.Ldvirtftn or ILOpCode.Newobj => true,
+				_ => false,
+			};
 		}
 
 		static bool IsSameMember(IMember analyzedMethod, IMember m)

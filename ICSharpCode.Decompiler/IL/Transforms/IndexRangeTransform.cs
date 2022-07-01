@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				if (rangeVar != null)
 					return;
-				if (!(startOffsetVar.LoadInstructions.Single().Parent is CallInstruction call))
+				if (startOffsetVar.LoadInstructions.Single().Parent is not CallInstruction call)
 					return;
 				if (call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter && call.Arguments.Count == 2)
 				{
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return; // this should only ever happen in the second step (ExtendSlicing)
 				}
-				if (!(sliceLengthVar.LoadInstructions.Single().Parent is CallInstruction call))
+				if (sliceLengthVar.LoadInstructions.Single().Parent is not CallInstruction call)
 					return;
 				if (!call.IsDescendantOf(block.Instructions[pos]))
 					return;
@@ -463,10 +463,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
+		private static bool MatchIndexImplicitConv(ILInstruction inst, out ILInstruction offsetInst)
 		{
 			offsetInst = null;
-			if (!(inst is CallInstruction call))
+			if (inst is not CallInstruction call)
 				return false;
 			if (!(call.Method.IsOperator && call.Method.Name == "op_Implicit"))
 				return false;
@@ -494,7 +494,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Check that the number of uses of the containerLengthVar variable matches those expected in the pattern.
 		/// </summary>
-		private bool CheckContainerLengthVariableUseCount(ILVariable containerLengthVar, IndexKind startIndexKind, IndexKind endIndexKind = IndexKind.FromStart)
+		private static bool CheckContainerLengthVariableUseCount(ILVariable containerLengthVar, IndexKind startIndexKind, IndexKind endIndexKind = IndexKind.FromStart)
 		{
 			int expectedUses = 0;
 			if (startIndexKind != IndexKind.FromStart && startIndexKind != IndexKind.TheStart)
@@ -518,11 +518,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (indexKind != IndexKind.RefSystemIndex)
 				return false;
-			if (!(indexLoad is AddressOf addressOf))
+			if (indexLoad is not AddressOf addressOf)
 				return false;
 			if (!addressOf.Type.IsKnownType(KnownTypeCode.Index))
 				return false;
-			if (!(addressOf.Value is Call call))
+			if (addressOf.Value is not Call call)
 				return false;
 			if (call.Method.Name != accessorName)
 				return false;
@@ -562,7 +562,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Gets whether the C# compiler will call `container[int]` when using `container[Index]`.
 		/// </summary>
-		private bool CSharpWillGenerateIndexer(IType declaringType, bool slicing)
+		private static bool CSharpWillGenerateIndexer(IType declaringType, bool slicing)
 		{
 			bool foundInt32Overload = false;
 			bool foundIndexOverload = false;
@@ -633,7 +633,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(call.Method.IsAccessor && call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter))
 				return false;
-			if (!(call.Method.AccessorOwner is IProperty lengthProp))
+			if (call.Method.AccessorOwner is not IProperty lengthProp)
 				return false;
 			if (lengthProp.Name == "Length")
 			{

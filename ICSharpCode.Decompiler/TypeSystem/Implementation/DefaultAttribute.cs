@@ -61,9 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IType AttributeType {
-			get { return attributeType; }
-		}
+		public IType AttributeType => attributeType;
 
 		bool IAttribute.HasDecodeErrors => false;
 

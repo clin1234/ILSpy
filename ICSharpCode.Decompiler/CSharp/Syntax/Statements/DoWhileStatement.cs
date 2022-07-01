@@ -35,35 +35,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole DoKeywordRole = new("do");
 		public static readonly TokenRole WhileKeywordRole = new("while");
 
-		public CSharpTokenNode DoToken {
-			get { return GetChildByRole(DoKeywordRole); }
-		}
+		public CSharpTokenNode DoToken => GetChildByRole(DoKeywordRole);
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
 			set { SetChildByRole(Roles.EmbeddedStatement, value); }
 		}
 
-		public CSharpTokenNode WhileToken {
-			get { return GetChildByRole(WhileKeywordRole); }
-		}
+		public CSharpTokenNode WhileToken => GetChildByRole(WhileKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public Expression Condition {
 			get { return GetChildByRole(Roles.Condition); }
 			set { SetChildByRole(Roles.Condition, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -82,8 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DoWhileStatement o = other as DoWhileStatement;
-			return o != null && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match) && this.Condition.DoMatch(o.Condition, match);
+			return other is DoWhileStatement o && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match) && this.Condition.DoMatch(o.Condition, match);
 		}
 
 		public DoWhileStatement()

@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		string PickNewName(ISet<string> memberNames, string name)
+		static string PickNewName(ISet<string> memberNames, string name)
 		{
 			if (!memberNames.Contains("m_" + name))
 				return "m_" + name;

@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			if (!(obj is LocalFunctionMethod other))
+			if (obj is not LocalFunctionMethod other)
 				return false;
 			return baseMethod.Equals(other.baseMethod, typeNormalization)
 				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			if (!(obj is LocalFunctionMethod other))
+			if (obj is not LocalFunctionMethod other)
 				return false;
 			return baseMethod.Equals(other.baseMethod)
 				&& NumberOfCompilerGeneratedParameters == other.NumberOfCompilerGeneratedParameters

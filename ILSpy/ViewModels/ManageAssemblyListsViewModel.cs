@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			PreconfiguredAssemblyLists = new List<PreconfiguredAssemblyList>(ResolvePreconfiguredAssemblyLists());
 		}
 
-		IEnumerable<PreconfiguredAssemblyList> ResolvePreconfiguredAssemblyLists()
+		static IEnumerable<PreconfiguredAssemblyList> ResolvePreconfiguredAssemblyLists()
 		{
 			yield return new PreconfiguredAssemblyList(AssemblyListManager.DotNet4List);
 			yield return new PreconfiguredAssemblyList(AssemblyListManager.DotNet35List);
@@ -62,8 +62,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (basePath == null)
 				yield break;
 
-			Dictionary<string, string> foundVersions = new Dictionary<string, string>();
-			Dictionary<string, int> latestRevision = new Dictionary<string, int>();
+			Dictionary<string, string> foundVersions = new();
+			Dictionary<string, int> latestRevision = new();
 
 			foreach (var sdkDir in Directory.GetDirectories(Path.Combine(basePath, "shared")))
 			{

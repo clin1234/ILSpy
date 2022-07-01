@@ -35,13 +35,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </remarks>
 	public class Constraint : AstNode
 	{
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public CSharpTokenNode WhereKeyword {
-			get { return GetChildByRole(Roles.WhereKeyword); }
-		}
+		public CSharpTokenNode WhereKeyword => GetChildByRole(Roles.WhereKeyword);
 
 		public SimpleType TypeParameter {
 			get {
@@ -52,11 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> BaseTypes {
-			get {
-				return GetChildrenByRole(Roles.BaseType);
-			}
-		}
+		public AstNodeCollection<AstType> BaseTypes => GetChildrenByRole(Roles.BaseType);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -75,8 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			Constraint o = other as Constraint;
-			return o != null && this.TypeParameter.DoMatch(o.TypeParameter, match) && this.BaseTypes.DoMatch(o.BaseTypes, match);
+			return other is Constraint o && this.TypeParameter.DoMatch(o.TypeParameter, match) && this.BaseTypes.DoMatch(o.BaseTypes, match);
 		}
 	}
 }

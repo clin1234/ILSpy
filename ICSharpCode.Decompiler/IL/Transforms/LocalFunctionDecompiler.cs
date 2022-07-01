@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private ILFunction GetDeclaringFunction(ILFunction localFunction)
+		private static ILFunction GetDeclaringFunction(ILFunction localFunction)
 		{
 			if (localFunction.DeclarationScope == null)
 				return null;
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		bool TryValidateSkipCount(LocalFunctionInfo info, out int skipCount)
+		static bool TryValidateSkipCount(LocalFunctionInfo info, out int skipCount)
 		{
 			skipCount = 0;
 			var localFunction = info.Definition;
@@ -374,21 +374,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					var callerMethod = useSite.Ancestors.OfType<ILFunction>().First().Method;
 					callerMethod = callerMethod.ReducedFrom ?? callerMethod;
-					IMethod m;
-					switch (useSite)
-					{
-						case NewObj newObj:
-							m = ((LdFtn)newObj.Arguments[1]).Method;
-							break;
-						case CallInstruction call:
-							m = call.Method;
-							break;
-						case LdFtn fnptr:
-							m = fnptr.Method;
-							break;
-						default:
-							throw new NotSupportedException();
-					}
+					IMethod m = useSite switch {
+						NewObj newObj => ((LdFtn)newObj.Arguments[1]).Method,
+						CallInstruction call => call.Method,
+						LdFtn fnptr => fnptr.Method,
+						_ => throw new NotSupportedException(),
+					};
 					var totalSkipCount = skipCount + m.DeclaringType.TypeParameterCount;
 					var methodSkippedArgs = m.DeclaringType.TypeArguments.Concat(m.TypeArguments).Take(totalSkipCount);
 					Debug.Assert(methodSkippedArgs.SequenceEqual(callerMethod.DeclaringType.TypeArguments.Concat(callerMethod.TypeArguments).Take(totalSkipCount)));
@@ -476,7 +467,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.DeclarationScope = (BlockContainer)rootFunction.Body;
 				function.CheckInvariant(ILPhase.Normal);
 				var nestedContext = new ILTransformContext(context, function);
-				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
+				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => t is not LocalFunctionDecompiler), nestedContext);
 				function.DeclarationScope = null;
 			}
 			function.ReducedMethod = ReduceToLocalFunction(function.Method, skipCount);
@@ -629,7 +620,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			useSite.Arguments[1].ReplaceWith(replacement);
 		}
 
-		void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
+		static void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
 		{
 			var specializeMethod = reducedMethod.Specialize(useSite.Method.Substitution);
 			bool wasInstanceCall = !useSite.Method.IsStatic;
@@ -690,7 +681,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, int parameterIndex, ILInstruction arg)
 		{
 			ILFunction function = info.Definition;
-			ILVariable closureVar;
 			if (parameterIndex >= 0)
 			{
 				if (!(parameterIndex < function.Method.Parameters.Count
@@ -699,7 +689,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				}
 			}
-			if (!(arg.MatchLdLoc(out closureVar) || arg.MatchLdLoca(out closureVar)))
+			if (!(arg.MatchLdLoc(out ILVariable closureVar) || arg.MatchLdLoca(out closureVar)))
 			{
 				closureVar = ResolveAncestorScopeReference(arg);
 				if (closureVar == null)
@@ -730,7 +720,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
 			return true;
 
-			ILInstruction GetClosureInitializer(ILVariable variable)
+			static ILInstruction GetClosureInitializer(ILVariable variable)
 			{
 				var type = UnwrapByRef(variable.Type).GetDefinition();
 				if (type == null)
@@ -744,7 +734,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool IsInNestedLocalFunction(BlockContainer declarationScope, ILFunction function)
+		static bool IsInNestedLocalFunction(BlockContainer declarationScope, ILFunction function)
 		{
 			return TreeTraversal.PreOrder(function, f => f.LocalFunctions).Any(f => declarationScope.IsDescendantOf(f.Body));
 		}

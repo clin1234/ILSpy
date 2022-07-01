@@ -54,9 +54,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Check if, we deal with a callsite cache field null check:
 				// if (comp(ldsfld <>p__3 == ldnull)) br IL_000c
 				// br IL_002b
-				if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
+				if (block.Instructions.SecondToLastOrDefault() is not IfInstruction ifInst)
 					continue;
-				if (!(block.Instructions.LastOrDefault() is Branch branchAfterInit))
+				if (block.Instructions.LastOrDefault() is not Branch branchAfterInit)
 					continue;
 				if (!MatchCallSiteCacheNullCheck(ifInst.Condition, out var callSiteCacheField, out var callSiteDelegate, out bool invertBranches))
 					continue;
@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
+		static ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
 		{
 			switch (callsite.Kind)
 			{
@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
 		{
-			callSiteInfo = default(CallSiteInfo);
+			callSiteInfo = default;
 			blockAfterInit = null;
 			int instCount = callSiteInitBlock.Instructions.Count;
 			if (callSiteInitBlock.IncomingEdgeCount != 1 || instCount < 2)
@@ -283,9 +283,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!callSiteInitBlock.Instructions[instCount - 2].MatchStsFld(out var field, out var value) || !field.Equals(callSiteCacheField))
 				return false;
-			if (!(value is Call createBinderCall) || createBinderCall.Method.TypeArguments.Count != 0 || createBinderCall.Arguments.Count != 1 || createBinderCall.Method.Name != "Create" || createBinderCall.Method.DeclaringType.FullName != CallSiteTypeName || createBinderCall.Method.DeclaringType.TypeArguments.Count != 1)
+			if (value is not Call createBinderCall || createBinderCall.Method.TypeArguments.Count != 0 || createBinderCall.Arguments.Count != 1 || createBinderCall.Method.Name != "Create" || createBinderCall.Method.DeclaringType.FullName != CallSiteTypeName || createBinderCall.Method.DeclaringType.TypeArguments.Count != 1)
 				return false;
-			if (!(createBinderCall.Arguments[0] is Call binderCall) || binderCall.Method.DeclaringType.FullName != CSharpBinderTypeName || binderCall.Method.DeclaringType.TypeParameterCount != 0)
+			if (createBinderCall.Arguments[0] is not Call binderCall || binderCall.Method.DeclaringType.FullName != CSharpBinderTypeName || binderCall.Method.DeclaringType.TypeParameterCount != 0)
 				return false;
 			callSiteInfo.DelegateType = callSiteDelegateType;
 			callSiteInfo.InitBlock = callSiteInitBlock;
@@ -535,7 +535,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var compileTimeTypes = invokeMethod.Parameters.SelectReadOnlyArray(p => p.Type);
 			foreach (var (_, arg) in arguments)
 			{
-				if (!(arg is Call createCall))
+				if (arg is not Call createCall)
 					return false;
 				if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
 					return false;
@@ -550,7 +550,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
+		static bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;
 			callSiteDelegate = null;

@@ -36,8 +36,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public object? GetShared(object key)
 		{
-			object? value;
-			sharedDict.TryGetValue(key, out value);
+			sharedDict.TryGetValue(key, out object? value);
 			return value;
 		}
 

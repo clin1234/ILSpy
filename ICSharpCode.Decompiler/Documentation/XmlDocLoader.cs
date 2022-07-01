@@ -43,9 +43,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				return null;
 		}
 
-		public static XmlDocumentationProvider MscorlibDocumentation {
-			get { return mscorlibDocumentation.Value; }
-		}
+		public static XmlDocumentationProvider MscorlibDocumentation => mscorlibDocumentation.Value;
 
 		public static XmlDocumentationProvider LoadDocumentation(PEFile module)
 		{
@@ -80,27 +78,16 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		static string FindXmlDocumentation(string assemblyFileName, TargetRuntime runtime)
 		{
-			string fileName;
-			switch (runtime)
-			{
-				case TargetRuntime.Net_1_0:
-					fileName = LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v1.0.3705", assemblyFileName));
-					break;
-				case TargetRuntime.Net_1_1:
-					fileName = LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v1.1.4322", assemblyFileName));
-					break;
-				case TargetRuntime.Net_2_0:
-					fileName = LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v2.0.50727", assemblyFileName))
-						?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.5"))
-						?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.0"))
-						?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v3.5\Profile\Client"));
-					break;
-				case TargetRuntime.Net_4_0:
-				default:
-					fileName = LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v4.0", assemblyFileName))
-						?? LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v4.0.30319", assemblyFileName));
-					break;
-			}
+			string fileName = runtime switch {
+				TargetRuntime.Net_1_0 => LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v1.0.3705", assemblyFileName)),
+				TargetRuntime.Net_1_1 => LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v1.1.4322", assemblyFileName)),
+				TargetRuntime.Net_2_0 => LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v2.0.50727", assemblyFileName))
+										?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.5"))
+										?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, "v3.0"))
+										?? LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v3.5\Profile\Client")),
+				_ => LookupLocalizedXmlDoc(Path.Combine(referenceAssembliesPath, @".NETFramework\v4.0", assemblyFileName))
+										?? LookupLocalizedXmlDoc(Path.Combine(frameworkPath, "v4.0.30319", assemblyFileName)),
+			};
 			return fileName;
 		}
 

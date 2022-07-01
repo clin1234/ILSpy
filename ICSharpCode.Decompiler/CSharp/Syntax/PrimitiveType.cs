@@ -41,16 +41,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public string Keyword {
 			get { return keyword; }
 			set {
-				if (value == null)
-					throw new ArgumentNullException();
 				ThrowIfFrozen();
-				keyword = value;
+				keyword = value ?? throw new ArgumentNullException();
 			}
 		}
 
-		public KnownTypeCode KnownTypeCode {
-			get { return GetTypeCodeForPrimitiveType(this.Keyword); }
-		}
+		public KnownTypeCode KnownTypeCode => GetTypeCodeForPrimitiveType(this.Keyword);
 
 		public PrimitiveType()
 		{
@@ -67,11 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.location = location;
 		}
 
-		public override TextLocation StartLocation {
-			get {
-				return location;
-			}
-		}
+		public override TextLocation StartLocation => location;
 
 		internal void SetStartLocation(TextLocation value)
 		{
@@ -79,11 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.location = value;
 		}
 
-		public override TextLocation EndLocation {
-			get {
-				return new(location.Line, location.Column + keyword.Length);
-			}
-		}
+		public override TextLocation EndLocation => new(location.Line, location.Column + keyword.Length);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -102,8 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveType o = other as PrimitiveType;
-			return o != null && MatchString(this.Keyword, o.Keyword);
+			return other is PrimitiveType o && MatchString(this.Keyword, o.Keyword);
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)

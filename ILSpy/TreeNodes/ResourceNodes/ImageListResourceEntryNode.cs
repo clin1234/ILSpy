@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 
-		public ILSpyTreeNode CreateNode(string key, object data)
+		public static ILSpyTreeNode CreateNode(string key, object data)
 		{
 			if (data is ImageListStreamer)
 				return new ImageListResourceEntryNode(key, (ImageListStreamer)data);

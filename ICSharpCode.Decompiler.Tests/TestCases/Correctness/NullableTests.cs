@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static T GetValue<T>()
 		{
 			Console.WriteLine("GetValue");
-			return default(T);
+			return default;
 		}
 
 		int intField;

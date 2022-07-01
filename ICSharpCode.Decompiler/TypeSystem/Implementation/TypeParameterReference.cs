@@ -54,11 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly SymbolKind ownerType;
 		readonly int index;
 
-		public int Index {
-			get {
-				return index;
-			}
-		}
+		public int Index => index;
 
 		public TypeParameterReference(SymbolKind ownerType, int index)
 		{
@@ -70,8 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (ownerType == SymbolKind.Method)
 			{
-				IMethod method = context.CurrentMember as IMethod;
-				if (method != null && index < method.TypeParameters.Count)
+				if (context.CurrentMember is IMethod method && index < method.TypeParameters.Count)
 				{
 					return method.TypeParameters[index];
 				}

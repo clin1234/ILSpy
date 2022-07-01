@@ -102,8 +102,8 @@ namespace ICSharpCode.ILSpy
 				reference = new() { Reference = dataGrid.SelectedItem };
 			else
 				reference = null;
-			var position = textView != null ? textView.GetPositionFromMousePosition() : null;
-			var selectedTreeNodes = treeView != null ? treeView.GetTopLevelSelection().ToArray() : null;
+			var position = textView?.GetPositionFromMousePosition();
+			var selectedTreeNodes = treeView?.GetTopLevelSelection().ToArray();
 			return new() {
 				ListBox = listBox,
 				DataGrid = dataGrid,
@@ -243,8 +243,7 @@ namespace ICSharpCode.ILSpy
 				e.Handled = true; // don't show the menu
 				return;
 			}
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			if (ShowContextMenu(context, out ContextMenu menu))
 				treeView.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -254,8 +253,7 @@ namespace ICSharpCode.ILSpy
 		void textView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(textView: textView);
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			if (ShowContextMenu(context, out ContextMenu menu))
 				textView.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -265,8 +263,7 @@ namespace ICSharpCode.ILSpy
 		void listBox_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(listBox: listBox);
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			if (ShowContextMenu(context, out ContextMenu menu))
 				listBox.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -276,8 +273,7 @@ namespace ICSharpCode.ILSpy
 		void dataGrid_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(dataGrid: dataGrid);
-			ContextMenu menu;
-			if (ShowContextMenu(context, out menu))
+			if (ShowContextMenu(context, out ContextMenu menu))
 				dataGrid.ContextMenu = menu;
 			else
 				// hide the context menu.
@@ -318,7 +314,7 @@ namespace ICSharpCode.ILSpy
 								parent.Add(new Separator());
 								needSeparatorForCategory = false;
 							}
-							MenuItem menuItem = new MenuItem();
+							MenuItem menuItem = new();
 							menuItem.Header = MainWindow.GetResourceString(entryPair.Metadata.Header);
 							menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 							if (!string.IsNullOrEmpty(entryPair.Metadata.Icon))

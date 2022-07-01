@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return context.TextView != null && context.TextView.FoldingManager != null;
+			return context.TextView is { FoldingManager: { } };
 		}
 
 		public void Execute(TextViewContext context)
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return context.TextView != null && context.TextView.FoldingManager != null;
+			return context.TextView is { FoldingManager: { } };
 		}
 
 		public void Execute(TextViewContext context)

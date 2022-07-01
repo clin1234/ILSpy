@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.isReferenceType = isReferenceType;
 			if (fullTypeName.Name == null)
 			{
-				Debug.Assert(fullTypeName == default(FullTypeName));
+				Debug.Assert(fullTypeName == default);
 				this.namespaceKnown = false;
 				this.fullTypeName = new TopLevelTypeName(string.Empty, "?", 0);
 			}
@@ -67,9 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public override TypeKind Kind {
-			get { return TypeKind.Unknown; }
-		}
+		public override TypeKind Kind => TypeKind.Unknown;
 
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
@@ -78,17 +76,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 
-		public override string Name {
-			get { return fullTypeName.Name; }
-		}
+		public override string Name => fullTypeName.Name;
 
-		public override string Namespace {
-			get { return fullTypeName.TopLevelTypeName.Namespace; }
-		}
+		public override string Namespace => fullTypeName.TopLevelTypeName.Namespace;
 
-		public override string ReflectionName {
-			get { return namespaceKnown ? fullTypeName.ReflectionName : "?"; }
-		}
+		public override string ReflectionName => namespaceKnown ? fullTypeName.ReflectionName : "?";
 
 		public FullTypeName FullTypeName => fullTypeName;
 
@@ -96,9 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override IReadOnlyList<ITypeParameter> TypeParameters => DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
 		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
 
-		public override bool? IsReferenceType {
-			get { return isReferenceType; }
-		}
+		public override bool? IsReferenceType => isReferenceType;
 
 		public override IType ChangeNullability(Nullability nullability)
 		{
@@ -115,8 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(IType other)
 		{
-			UnknownType o = other as UnknownType;
-			if (o == null)
+			if (other is not UnknownType o)
 				return false;
 			return this.namespaceKnown == o.namespaceKnown && this.fullTypeName == o.fullTypeName && this.isReferenceType == o.isReferenceType;
 		}

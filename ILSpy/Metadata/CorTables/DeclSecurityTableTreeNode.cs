@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[StringFormat("X")]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
-			public string PermissionSetTooltip {
+			public static string PermissionSetTooltip {
 				get {
 					return null;
 				}

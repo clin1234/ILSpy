@@ -99,8 +99,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static string ToInvariantCultureString(object value)
 		{
-			IConvertible convertible = value as IConvertible;
-			return (null != convertible)
+			return (value is IConvertible convertible)
 				? convertible.ToString(System.Globalization.CultureInfo.InvariantCulture)
 				: value.ToString();
 		}
@@ -180,8 +179,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (operand == null)
 				throw new ArgumentNullException(nameof(operand));
 
-			string s = operand as string;
-			if (s != null)
+			if (operand is string s)
 			{
 				WriteOperand(writer, s);
 			}

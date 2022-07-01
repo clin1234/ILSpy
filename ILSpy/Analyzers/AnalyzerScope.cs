@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		bool ModuleReferencesScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
+		static bool ModuleReferencesScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
 		{
 			bool hasRef = false;
 			foreach (var h in metadata.TypeReferences)
@@ -229,7 +229,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return hasRef;
 		}
 
-		bool ModuleForwardsScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
+		static bool ModuleForwardsScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
 		{
 			bool hasForward = false;
 			foreach (var h in metadata.ExportedTypes)

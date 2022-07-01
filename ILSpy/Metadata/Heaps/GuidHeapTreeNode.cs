@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int Index => metadata.GetHeapOffset(handle);
 
-			public int Length => 16;
+			public static int Length => 16;
 
 			public string Value => metadata.GetGuid(handle).ToString();
 

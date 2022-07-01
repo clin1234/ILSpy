@@ -12,8 +12,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080
 
 		private static void Test(object obj)
 		{
-			SpaceA.Type2 type = obj as SpaceA.Type2;
-			if (type != null)
+			if (obj is SpaceA.Type2 type)
 			{
 				ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC.Extensions.Extension(type);
 			}

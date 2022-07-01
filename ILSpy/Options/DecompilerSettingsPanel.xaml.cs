@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void Save(XElement root)
 		{
-			XElement section = new XElement("DecompilerSettings");
+			XElement section = new("DecompilerSettings");
 			var newSettings = ((DecompilerSettingsViewModel)this.DataContext).ToDecompilerSettings();
 			var properties = typeof(Decompiler.DecompilerSettings).GetProperties()
 				.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false);

@@ -32,11 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class FixedVariableInitializer : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public FixedVariableInitializer()
 		{
@@ -66,18 +62,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
+		public CSharpTokenNode LBracketToken => GetChildByRole(Roles.LBracket);
 
 		public Expression CountExpression {
 			get { return GetChildByRole(Roles.Expression); }
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
+		public CSharpTokenNode RBracketToken => GetChildByRole(Roles.RBracket);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -96,8 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as FixedVariableInitializer;
-			return o != null && MatchString(this.Name, o.Name) && this.CountExpression.DoMatch(o.CountExpression, match);
+			return other is FixedVariableInitializer o && MatchString(this.Name, o.Name) && this.CountExpression.DoMatch(o.CountExpression, match);
 		}
 	}
 }

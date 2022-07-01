@@ -654,7 +654,7 @@ namespace ICSharpCode.TreeView
 		public bool IsLast {
 			get {
 				return Parent == null ||
-					Parent.Children[Parent.Children.Count - 1] == this;
+					Parent.Children[^1] == this;
 			}
 		}
 
@@ -667,9 +667,9 @@ namespace ICSharpCode.TreeView
 					{
 						if (Children.Count > 1)
 						{
-							Children[Children.Count - 2].RaisePropertyChanged(nameof(IsLast));
+							Children[^2].RaisePropertyChanged(nameof(IsLast));
 						}
-						Children[Children.Count - 1].RaisePropertyChanged(nameof(IsLast));
+						Children[^1].RaisePropertyChanged(nameof(IsLast));
 					}
 					break;
 				case NotifyCollectionChangedAction.Remove:
@@ -677,7 +677,7 @@ namespace ICSharpCode.TreeView
 					{
 						if (Children.Count > 0)
 						{
-							Children[Children.Count - 1].RaisePropertyChanged(nameof(IsLast));
+							Children[^1].RaisePropertyChanged(nameof(IsLast));
 						}
 					}
 					break;
@@ -692,10 +692,7 @@ namespace ICSharpCode.TreeView
 
 		public void RaisePropertyChanged(string name)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new PropertyChangedEventArgs(name));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 
 		#endregion

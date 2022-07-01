@@ -51,9 +51,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return true;
 		}
 
-		bool IsValidReference(object reference)
+		static bool IsValidReference(object reference)
 		{
-			return reference is IEntity && !(reference is IField f && f.IsConst);
+			return reference is IEntity && !(reference is IField { IsConst: true });
 		}
 
 		public void Execute(TextViewContext context)
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public override bool CanExecute(object parameter)
 		{
 			AnalyzerTreeView analyzerTreeView = MainWindow.Instance.AnalyzerTreeView;
-			if (analyzerTreeView != null && analyzerTreeView.IsKeyboardFocusWithin)
+			if (analyzerTreeView is { IsKeyboardFocusWithin: true })
 			{
 				return analyzerTreeView.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
 			}
@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public override void Execute(object parameter)
 		{
 			AnalyzerTreeView analyzerTreeView = MainWindow.Instance.AnalyzerTreeView;
-			if (analyzerTreeView != null && analyzerTreeView.IsKeyboardFocusWithin)
+			if (analyzerTreeView is { IsKeyboardFocusWithin: true })
 			{
 				foreach (IMemberTreeNode node in MainWindow.Instance.AnalyzerTreeView.SelectedItems.OfType<IMemberTreeNode>().ToArray())
 				{

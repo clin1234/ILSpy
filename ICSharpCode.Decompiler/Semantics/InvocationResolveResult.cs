@@ -52,9 +52,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.InitializerStatements = initializerStatements ?? EmptyList<ResolveResult>.Instance;
 		}
 
-		public new IParameterizedMember Member {
-			get { return (IParameterizedMember)base.Member; }
-		}
+		public new IParameterizedMember Member => (IParameterizedMember)base.Member;
 
 		/// <summary>
 		/// Gets the arguments in the order they are being passed to the method.

@@ -105,11 +105,10 @@ namespace ICSharpCode.ILSpy.AddIn
 			fixed (char* buffer = message)
 			{
 				lParam.Buffer = (IntPtr)buffer;
-				IntPtr result;
 				// SendMessage with 3s timeout (e.g. when the target process is stopped in the debugger)
 				if (NativeMethods.SendMessageTimeout(
 					hWnd, NativeMethods.WM_COPYDATA, IntPtr.Zero, ref lParam,
-					SMTO_NORMAL, 3000, out result) != IntPtr.Zero)
+					SMTO_NORMAL, 3000, out IntPtr result) != IntPtr.Zero)
 				{
 					return result;
 				}

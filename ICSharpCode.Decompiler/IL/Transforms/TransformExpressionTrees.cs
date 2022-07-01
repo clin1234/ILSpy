@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType type, out string name)
+		static bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType type, out string name)
 		{
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
 			type = null;
@@ -80,8 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(initCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Parameter")))
 				return false;
-			CallInstruction typeArg = initCall.Arguments[0] as CallInstruction;
-			if (typeArg == null || typeArg.Arguments.Count != 1)
+			if (initCall.Arguments[0] is not CallInstruction typeArg || typeArg.Arguments.Count != 1)
 				return false;
 			if (!typeArg.Method.FullNameIs("System.Type", "GetTypeFromHandle"))
 				return false;
@@ -229,7 +228,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void SetExpressionTreeFlag(ILFunction lambda, CallInstruction call)
+		static void SetExpressionTreeFlag(ILFunction lambda, CallInstruction call)
 		{
 			lambda.Kind = IsExpressionTree(call.Method.ReturnType) ? ILFunctionKind.ExpressionTree : ILFunctionKind.Delegate;
 			lambda.DelegateType = call.Method.ReturnType;
@@ -299,101 +298,54 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (invocation.Method.DeclaringType.FullName != "System.Linq.Expressions.Expression")
 							return (null, SpecialType.UnknownType);
 
-						switch (invocation.Method.Name)
-						{
-							case "Add":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, false);
-							case "AddChecked":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, true);
-							case "And":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitAnd);
-							case "AndAlso":
-								return ConvertLogicOperator(invocation, true);
-							case "ArrayAccess":
-							case "ArrayIndex":
-								return ConvertArrayIndex(invocation);
-							case "ArrayLength":
-								return ConvertArrayLength(invocation);
-							case "Call":
-								return ConvertCall(invocation);
-							case "Coalesce":
-								return ConvertCoalesce(invocation);
-							case "Condition":
-								return ConvertCondition(invocation);
-							case "Constant":
-								return ConvertConstant(invocation);
-							case "Convert":
-								return ConvertCast(invocation, false);
-							case "ConvertChecked":
-								return ConvertCast(invocation, true);
-							case "Divide":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Div);
-							case "Equal":
-								return ConvertComparison(invocation, ComparisonKind.Equality);
-							case "ExclusiveOr":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor);
-							case "Field":
-								return ConvertField(invocation, typeHint);
-							case "GreaterThan":
-								return ConvertComparison(invocation, ComparisonKind.GreaterThan);
-							case "GreaterThanOrEqual":
-								return ConvertComparison(invocation, ComparisonKind.GreaterThanOrEqual);
-							case "Invoke":
-								return ConvertInvoke(invocation);
-							case "Lambda":
-								return ConvertLambda(invocation);
-							case "LeftShift":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftLeft);
-							case "LessThan":
-								return ConvertComparison(invocation, ComparisonKind.LessThan);
-							case "LessThanOrEqual":
-								return ConvertComparison(invocation, ComparisonKind.LessThanOrEqual);
-							case "ListInit":
-								return ConvertListInit(invocation);
-							case "MemberInit":
-								return ConvertMemberInit(invocation);
-							case "Modulo":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Rem);
-							case "Multiply":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, false);
-							case "MultiplyChecked":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, true);
-							case "Negate":
-								return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
-							case "NegateChecked":
-								return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
-							case "New":
-								return ConvertNewObject(invocation);
-							case "NewArrayBounds":
-								return ConvertNewArrayBounds(invocation);
-							case "NewArrayInit":
-								return ConvertNewArrayInit(invocation);
-							case "Not":
-								return ConvertNotOperator(invocation);
-							case "NotEqual":
-								return ConvertComparison(invocation, ComparisonKind.Inequality);
-							case "OnesComplement":
-								return ConvertNotOperator(invocation);
-							case "Or":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitOr);
-							case "OrElse":
-								return ConvertLogicOperator(invocation, false);
-							case "Property":
-								return ConvertProperty(invocation);
-							case "Quote":
-								return ConvertQuote(invocation);
-							case "RightShift":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight);
-							case "Subtract":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
-							case "SubtractChecked":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
-							case "TypeAs":
-								return ConvertTypeAs(invocation);
-							case "TypeIs":
-								return ConvertTypeIs(invocation);
-						}
-						return (null, SpecialType.UnknownType);
+						return invocation.Method.Name switch {
+							"Add" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, false),
+							"AddChecked" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, true),
+							"And" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitAnd),
+							"AndAlso" => ConvertLogicOperator(invocation, true),
+							"ArrayAccess" or "ArrayIndex" => ConvertArrayIndex(invocation),
+							"ArrayLength" => ConvertArrayLength(invocation),
+							"Call" => ConvertCall(invocation),
+							"Coalesce" => ConvertCoalesce(invocation),
+							"Condition" => ConvertCondition(invocation),
+							"Constant" => ConvertConstant(invocation),
+							"Convert" => ConvertCast(invocation, false),
+							"ConvertChecked" => ConvertCast(invocation, true),
+							"Divide" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Div),
+							"Equal" => ConvertComparison(invocation, ComparisonKind.Equality),
+							"ExclusiveOr" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor),
+							"Field" => ConvertField(invocation, typeHint),
+							"GreaterThan" => ConvertComparison(invocation, ComparisonKind.GreaterThan),
+							"GreaterThanOrEqual" => ConvertComparison(invocation, ComparisonKind.GreaterThanOrEqual),
+							"Invoke" => ConvertInvoke(invocation),
+							"Lambda" => ConvertLambda(invocation),
+							"LeftShift" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftLeft),
+							"LessThan" => ConvertComparison(invocation, ComparisonKind.LessThan),
+							"LessThanOrEqual" => ConvertComparison(invocation, ComparisonKind.LessThanOrEqual),
+							"ListInit" => ConvertListInit(invocation),
+							"MemberInit" => ConvertMemberInit(invocation),
+							"Modulo" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Rem),
+							"Multiply" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, false),
+							"MultiplyChecked" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, true),
+							"Negate" => ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, false),
+							"NegateChecked" => ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, true),
+							"New" => ConvertNewObject(invocation),
+							"NewArrayBounds" => ConvertNewArrayBounds(invocation),
+							"NewArrayInit" => ConvertNewArrayInit(invocation),
+							"Not" => ConvertNotOperator(invocation),
+							"NotEqual" => ConvertComparison(invocation, ComparisonKind.Inequality),
+							"OnesComplement" => ConvertNotOperator(invocation),
+							"Or" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitOr),
+							"OrElse" => ConvertLogicOperator(invocation, false),
+							"Property" => ConvertProperty(invocation),
+							"Quote" => ConvertQuote(invocation),
+							"RightShift" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight),
+							"Subtract" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, false),
+							"SubtractChecked" => ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, true),
+							"TypeAs" => ConvertTypeAs(invocation),
+							"TypeIs" => ConvertTypeIs(invocation),
+							_ => (null, SpecialType.UnknownType),
+						};
 					case ILFunction function:
 						ILFunction ApplyChangesToILFunction()
 						{
@@ -435,10 +387,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool IsExpressionTree(IType delegateType) => delegateType is ParameterizedType { FullName: "System.Linq.Expressions.Expression" } pt 
+		static bool IsExpressionTree(IType delegateType) => delegateType is ParameterizedType { FullName: "System.Linq.Expressions.Expression" } pt 
 		                                             && pt.TypeArguments.Count == 1;
 
-		IType UnwrapExpressionTree(IType delegateType)
+		static IType UnwrapExpressionTree(IType delegateType)
 		{
 			if (delegateType is ParameterizedType { FullName: "System.Linq.Expressions.Expression" } pt && pt.TypeArguments.Count == 1)
 			{
@@ -454,7 +406,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var (array, arrayType) = ConvertInstruction(invocation.Arguments[0]);
 			if (array == null)
 				return (null, SpecialType.UnknownType);
-			if (!(arrayType is ArrayType type))
+			if (arrayType is not ArrayType type)
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				arguments = new[] { invocation.Arguments[1] };
@@ -632,7 +584,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (BuildCall, method.ReturnType);
 		}
 
-		ILInstruction PrepareCallTarget(IType expectedType, ILInstruction target, IType targetType)
+		static ILInstruction PrepareCallTarget(IType expectedType, ILInstruction target, IType targetType)
 		{
 			switch (CallInstruction.ExpectedTypeForThisPointer(expectedType))
 			{
@@ -667,7 +619,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		ILInstruction UnpackConstant(ILInstruction inst)
+		static ILInstruction UnpackConstant(ILInstruction inst)
 		{
 			if (!(inst is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Constant" && call.Arguments.Count == 2))
 				return inst;
@@ -1117,7 +1069,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (BuildInitializer, arrayType);
 		}
 
-		bool MatchNew(CallInstruction invocation, out IMethod ctor)
+		static bool MatchNew(CallInstruction invocation, out IMethod ctor)
 		{
 			ctor = null;
 			if (invocation.Method.Name != "New")
@@ -1186,7 +1138,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (() => BuildNewObj(method, convertedArguments), member.DeclaringType);
 			}
 
-			ILInstruction BuildNewObj(IMethod method, Func<ILInstruction>[] args)
+			static ILInstruction BuildNewObj(IMethod method, Func<ILInstruction>[] args)
 			{
 				var newObj = new NewObj(method);
 				newObj.Arguments.AddRange(args.Select(f => f()));
@@ -1236,8 +1188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var member))
 				return (null, SpecialType.UnknownType);
-			IList<ILInstruction> arguments;
-			if (invocation.Arguments.Count != 3 || !MatchArgumentList(invocation.Arguments[2], out arguments))
+			if (invocation.Arguments.Count != 3 || !MatchArgumentList(invocation.Arguments[2], out IList<ILInstruction> arguments))
 			{
 				arguments = new List<ILInstruction>();
 			}
@@ -1394,14 +1345,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool IsClosureReference(ILVariable variable)
 		{
-			if (!variable.IsSingleDefinition || !(variable.StoreInstructions.SingleOrDefault() is StLoc store))
+			if (!variable.IsSingleDefinition || variable.StoreInstructions.SingleOrDefault() is not StLoc store)
 				return false;
-			if (!(store.Value is NewObj newObj))
+			if (store.Value is not NewObj newObj)
 				return false;
 			return TransformDisplayClassUsage.IsPotentialClosure(this.context, newObj);
 		}
 
-		bool IsExpressionTreeParameter(ILVariable variable)
+		static bool IsExpressionTreeParameter(ILVariable variable)
 		{
 			return variable.Type.FullName == "System.Linq.Expressions.ParameterExpression";
 		}
@@ -1430,7 +1381,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& getTypeCall.Arguments[0].MatchLdTypeToken(out type);
 		}
 
-		bool MatchGetMethodFromHandle(ILInstruction inst, out IMember member)
+		static bool MatchGetMethodFromHandle(ILInstruction inst, out IMember member)
 		{
 			member = null;
 			//castclass System.Reflection.MethodInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
@@ -1443,7 +1394,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember member)
+		static bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember member)
 		{
 			member = null;
 			//castclass System.Reflection.ConstructorInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
@@ -1456,7 +1407,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchFromHandleParameterList(call, out member);
 		}
 
-		bool MatchGetFieldFromHandle(ILInstruction inst, out IMember member)
+		static bool MatchGetFieldFromHandle(ILInstruction inst, out IMember member)
 		{
 			member = null;
 			if (!(inst is CallInstruction call && call.Method.FullName == "System.Reflection.FieldInfo.GetFieldFromHandle"))
@@ -1485,7 +1436,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction> arguments)
+		static bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction> arguments)
 		{
 			arguments = null;
 			if (!(inst is Block { Kind: BlockKind.ArrayInitializer } block))

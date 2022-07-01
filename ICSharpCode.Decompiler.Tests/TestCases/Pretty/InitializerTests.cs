@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 			public S this[int index] {
 				get {
-					return default(S);
+					return default;
 				}
 				set {
 				}
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 			public S this[object key] {
 				get {
-					return default(S);
+					return default;
 				}
 				set {
 				}
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 			public StructData(int initialValue)
 			{
-				this = default(StructData);
+				this = default;
 				Field = initialValue;
 				Property = initialValue;
 			}
@@ -914,7 +914,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void NotAStructInitializer_DefaultConstructor()
 		{
-			StructData structData = default(StructData);
+			StructData structData = default;
 			structData.Field = 1;
 			structData.Property = 2;
 			X(Y(), structData);

@@ -95,14 +95,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//  leave IL_0000 (newobj .ctor(exprToLift))
 			if (pos != block.Instructions.Count - 2)
 				return false;
-			if (!(block.Instructions[pos] is IfInstruction ifInst))
+			if (block.Instructions[pos] is not IfInstruction ifInst)
 				return false;
-			if (!(Block.Unwrap(ifInst.TrueInst) is Leave thenLeave))
+			if (Block.Unwrap(ifInst.TrueInst) is not Leave thenLeave)
 				return false;
 			if (!ifInst.FalseInst.MatchNop())
 				return false;
 
-			if (!(block.Instructions[pos + 1] is Leave elseLeave))
+			if (block.Instructions[pos + 1] is not Leave elseLeave)
 				return false;
 			if (elseLeave.TargetContainer != thenLeave.TargetContainer)
 				return false;
@@ -240,9 +240,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			ILVariable v;
 			// Handle equality comparisons with bool?:
-			if (MatchGetValueOrDefault(condition, out v)
+			if (MatchGetValueOrDefault(condition, out ILVariable v)
 				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
 			{
 				if (MatchHasValueCall(trueInst, v) && falseInst.MatchLdcI4(0))
@@ -334,7 +333,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private bool IsGenericNewPattern(ILInstruction compLeft, ILInstruction compRight, ILInstruction trueInst, ILInstruction falseInst)
+		private static bool IsGenericNewPattern(ILInstruction compLeft, ILInstruction compRight, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
 			return falseInst.MatchDefaultValue(out var type) &&
@@ -345,7 +344,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				compRight.MatchLdNull();
 		}
 
-		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
+		private static bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
 		{
 			// Try to match: nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)
 			nullable1 = null;
@@ -373,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#region CSharpComp
 		static bool MatchCompOrDecimal(ILInstruction inst, out CompOrDecimal result)
 		{
-			result = default(CompOrDecimal);
+			result = default;
 			result.Instruction = inst;
 			if (inst is Comp { IsLifted: false } comp)
 			{
@@ -604,7 +603,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				trueInstNegated = !trueInstNegated;
 				trueInst = arg;
 			}
-			if (!(trueInst is Call call))
+			if (trueInst is not Call call)
 				return null;
 			if (!(call.Method.IsOperator && call.Arguments.Count == 2))
 				return null;
@@ -972,7 +971,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction arg)
 		{
 			arg = null;
-			if (!(inst is Call call))
+			if (inst is not Call call)
 				return false;
 			if (call.Arguments.Count != 1)
 				return false;
@@ -1020,7 +1019,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			underlyingType = null;
 			arg = null;
-			if (!(inst is NewObj newobj))
+			if (inst is not NewObj newobj)
 				return false;
 			if (!newobj.Method.IsConstructor || newobj.Arguments.Count != 1)
 				return false;
@@ -1037,7 +1036,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction arg)
 		{
 			arg = null;
-			if (!(inst is Call call))
+			if (inst is not Call call)
 				return false;
 			if (call.Method.Name != "GetValueOrDefault" || call.Arguments.Count != 1)
 				return false;
@@ -1067,7 +1066,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool MatchNull(ILInstruction inst, out IType underlyingType)
 		{
-			underlyingType = null;
 			if (inst.MatchDefaultValue(out IType type))
 			{
 				underlyingType = NullableType.GetUnderlyingType(type);

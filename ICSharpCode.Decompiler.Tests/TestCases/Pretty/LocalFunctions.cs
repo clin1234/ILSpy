@@ -37,7 +37,7 @@ namespace LocalFunctions
 			public int MixedLocalFunction<T2>() where T2 : ICloneable, IConvertible
 			{
 #pragma warning disable CS0219
-				T2 t2 = default(T2);
+				T2 t2 = default;
 				object z = this;
 				for (int j = 0; j < 10; j++)
 				{
@@ -51,7 +51,7 @@ namespace LocalFunctions
 					int NonStaticMethod6<T3>(int unused)
 #endif
 					{
-						t2 = default(T2);
+						t2 = default;
 						int l = 0;
 						return NonStaticMethod6_1<T1>() + NonStaticMethod6_1<T2>() + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
@@ -117,7 +117,7 @@ namespace LocalFunctions
 
 			public int MixedLocalFunction2Delegate<T2>() where T2 : ICloneable, IConvertible
 			{
-				T2 t2 = default(T2);
+				T2 t2 = default;
 				object z = this;
 				for (int j = 0; j < 10; j++)
 				{
@@ -125,7 +125,7 @@ namespace LocalFunctions
 					i += StaticInvokeAsFunc(NonStaticMethod6<object>);
 					int NonStaticMethod6<T3>()
 					{
-						t2 = default(T2);
+						t2 = default;
 						int l = 0;
 						return StaticInvokeAsFunc(NonStaticMethod6_1<T1>) + StaticInvokeAsFunc(NonStaticMethod6_1<T2>) + z.GetHashCode();
 						int NonStaticMethod6_1<T4>()
@@ -207,20 +207,14 @@ namespace LocalFunctions
 
 			public static void Test_CaptureT<T2>()
 			{
-#pragma warning disable CS0219
-				T2 t2 = default(T2);
 				Method1<int>();
 				void Method1<T3>()
 				{
-					t2 = default(T2);
-					T2 t2x = t2;
-					T3 t3 = default(T3);
+					T2 t2 = default;
 					Method1_1();
 					void Method1_1()
 					{
-						t2 = default(T2);
-						t2x = t2;
-						t3 = default(T3);
+						t2 = default;
 					}
 				}
 #pragma warning restore CS0219

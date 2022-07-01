@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeKind.Class:
 					if (!v.IsSingleDefinition)
 						return null;
-					if (!(v.StoreInstructions.SingleOrDefault() is StLoc stloc))
+					if (v.StoreInstructions.SingleOrDefault() is not StLoc stloc)
 						return null;
 					if (stloc.Value is NewObj newObj && ValidateConstructor(newObj.Method))
 					{
@@ -339,7 +339,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		private Block FindDisplayStructInitBlock(ILVariable v)
+		private static Block FindDisplayStructInitBlock(ILVariable v)
 		{
 			var root = v.Function.Body;
 			return Visit(root)?.Ancestors.OfType<Block>().FirstOrDefault();
@@ -383,7 +383,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (v.StoreInstructions.Count != 1 || !(v.StoreInstructions[0] is StLoc { Parent: Block { Kind: BlockKind.ObjectInitializer } initializerBlock } store))
 				return null;
-			if (!(store.Value is NewObj newObj))
+			if (store.Value is not NewObj newObj)
 				return null;
 			var definition = newObj.Method.DeclaringType.GetDefinition();
 			if (!ValidateDisplayClassDefinition(definition))
@@ -394,7 +394,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!referenceVariable.IsSingleDefinition)
 				return null;
-			if (!(referenceVariable.StoreInstructions.SingleOrDefault() is StLoc))
+			if (referenceVariable.StoreInstructions.SingleOrDefault() is not StLoc)
 				return null;
 			var result = new DisplayClass(referenceVariable, definition) {
 				CaptureScope = referenceVariable.CaptureScope,
@@ -486,7 +486,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		ILOpCode DecodeOpCodeSkipNop(ref BlobReader reader)
+		static ILOpCode DecodeOpCodeSkipNop(ref BlobReader reader)
 		{
 			ILOpCode code;
 			do
@@ -750,7 +750,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitStLoc(StLoc inst)
 		{
-			DisplayClass displayClass;
 			if (inst.Parent is Block parentBlock && inst.Variable.IsSingleDefinition)
 			{
 				if (inst.Variable.Kind is VariableKind.Local or VariableKind.StackSlot && inst.Variable.LoadCount == 0)
@@ -764,7 +763,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					return;
 				}
-				if (displayClasses.TryGetValue(inst.Variable, out displayClass) && displayClass.Initializer == inst)
+				if (displayClasses.TryGetValue(inst.Variable, out DisplayClass displayClass) && displayClass.Initializer == inst)
 				{
 					// inline contents of object initializer block
 					if (inst.Value is Block { Kind: BlockKind.ObjectInitializer } initBlock)

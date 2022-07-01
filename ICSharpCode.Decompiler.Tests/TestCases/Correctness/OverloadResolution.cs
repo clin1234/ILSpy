@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Issue1281()
 		{
-			var arg = new object[0];
+			var arg = Array.Empty<object>();
 			TestCallIssue1281(arg);
 			TestCallIssue1281((object)arg);
 			TestCallIssue1281(new[] { arg });
@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static T Get<T>()
 		{
-			return default(T);
+			return default;
 		}
 		#endregion
 
@@ -266,10 +266,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void CallAmbiguousOutParam()
 		{
 			Console.WriteLine("CallAmbiguousOutParam:");
-			string a;
-			int b;
-			AmbiguousOutParam(out a);
-			AmbiguousOutParam(out b);
+			AmbiguousOutParam(out string a);
+			AmbiguousOutParam(out int b);
 		}
 		#endregion
 

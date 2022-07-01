@@ -60,7 +60,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty RootProperty =
-			DependencyProperty.Register("Root", typeof(SharpTreeNode), typeof(SharpTreeView));
+			DependencyProperty.Register(nameof(Root), typeof(SharpTreeNode), typeof(SharpTreeView));
 
 		public SharpTreeNode Root {
 			get { return (SharpTreeNode)GetValue(RootProperty); }
@@ -68,7 +68,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty ShowRootProperty =
-			DependencyProperty.Register("ShowRoot", typeof(bool), typeof(SharpTreeView),
+			DependencyProperty.Register(nameof(ShowRoot), typeof(bool), typeof(SharpTreeView),
 										new FrameworkPropertyMetadata(true));
 
 		public bool ShowRoot {
@@ -77,7 +77,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty ShowRootExpanderProperty =
-			DependencyProperty.Register("ShowRootExpander", typeof(bool), typeof(SharpTreeView),
+			DependencyProperty.Register(nameof(ShowRootExpander), typeof(bool), typeof(SharpTreeView),
 										new FrameworkPropertyMetadata(false));
 
 		public bool ShowRootExpander {
@@ -86,7 +86,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty AllowDropOrderProperty =
-			DependencyProperty.Register("AllowDropOrder", typeof(bool), typeof(SharpTreeView));
+			DependencyProperty.Register(nameof(AllowDropOrder), typeof(bool), typeof(SharpTreeView));
 
 		public bool AllowDropOrder {
 			get { return (bool)GetValue(AllowDropOrderProperty); }
@@ -94,7 +94,7 @@ namespace ICSharpCode.TreeView
 		}
 
 		public static readonly DependencyProperty ShowLinesProperty =
-			DependencyProperty.Register("ShowLines", typeof(bool), typeof(SharpTreeView),
+			DependencyProperty.Register(nameof(ShowLines), typeof(bool), typeof(SharpTreeView),
 										new FrameworkPropertyMetadata(true));
 
 		public bool ShowLines {
@@ -394,7 +394,7 @@ namespace ICSharpCode.TreeView
 		public void FocusNode(SharpTreeNode node)
 		{
 			if (node == null)
-				throw new ArgumentNullException("node");
+				throw new ArgumentNullException(nameof(node));
 			ScrollIntoView(node);
 			// WPF's ScrollIntoView() uses the same if/dispatcher construct, so we call OnFocusItem() after the item was brought into view.
 			if (this.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
@@ -410,7 +410,7 @@ namespace ICSharpCode.TreeView
 		public void ScrollIntoView(SharpTreeNode node)
 		{
 			if (node == null)
-				throw new ArgumentNullException("node");
+				throw new ArgumentNullException(nameof(node));
 			doNotScrollOnExpanding = true;
 			foreach (SharpTreeNode ancestor in node.Ancestors())
 				ancestor.IsExpanded = true;
@@ -420,8 +420,7 @@ namespace ICSharpCode.TreeView
 
 		object OnFocusItem(object item)
 		{
-			FrameworkElement element = this.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
-			if (element != null)
+			if (this.ItemContainerGenerator.ContainerFromItem(item) is FrameworkElement element)
 			{
 				element.Focus();
 			}
@@ -597,17 +596,15 @@ namespace ICSharpCode.TreeView
 			}
 			if (result.Count > 0)
 			{
-				result[result.Count - 1].Y = h;
+				result[^1].Y = h;
 			}
 			return result;
 		}
 
 		void TryAddDropTarget(List<DropTarget> targets, SharpTreeViewItem item, DropPlace place, DragEventArgs e)
 		{
-			SharpTreeNode node;
-			int index;
 
-			GetNodeAndIndex(item, place, out node, out index);
+			GetNodeAndIndex(item, place, out SharpTreeNode node, out int index);
 
 			if (node != null)
 			{

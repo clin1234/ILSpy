@@ -43,18 +43,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(ConditionRole, value); }
 		}
 
-		public CSharpTokenNode QuestionMarkToken {
-			get { return GetChildByRole(QuestionMarkRole); }
-		}
+		public CSharpTokenNode QuestionMarkToken => GetChildByRole(QuestionMarkRole);
 
 		public Expression TrueExpression {
 			get { return GetChildByRole(TrueRole); }
 			set { SetChildByRole(TrueRole, value); }
 		}
 
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole(ColonRole); }
-		}
+		public CSharpTokenNode ColonToken => GetChildByRole(ColonRole);
 
 		public Expression FalseExpression {
 			get { return GetChildByRole(FalseRole); }
@@ -89,8 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ConditionalExpression o = other as ConditionalExpression;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueExpression.DoMatch(o.TrueExpression, match) && this.FalseExpression.DoMatch(o.FalseExpression, match);
+			return other is ConditionalExpression o && this.Condition.DoMatch(o.Condition, match) && this.TrueExpression.DoMatch(o.TrueExpression, match) && this.FalseExpression.DoMatch(o.FalseExpression, match);
 		}
 	}
 }

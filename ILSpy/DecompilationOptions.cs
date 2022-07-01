@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy
 		internal bool IsDebug = false;
 
 		public DecompilationOptions()
-			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
+			: this(MainWindow.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
 		{
 		}
 
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy
 			newSettings.CSharpFormattingOptions.IndentationString = GetIndentationString(displaySettings);
 		}
 
-		private string GetIndentationString(DisplaySettings displaySettings)
+		private static string GetIndentationString(DisplaySettings displaySettings)
 		{
 			if (displaySettings.IndentationUseTabs)
 			{

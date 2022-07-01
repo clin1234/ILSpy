@@ -47,16 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private void Issue1881()
 		{
-#pragma warning disable CS0219
-			MyEnum enumLocal1 = MyEnum.VALUE1;
-			MyEnum enumLocal2 = (MyEnum)0;
-			enumLocal2 = MyEnum.VALUE1;
-			object enumLocal3 = MyEnum.VALUE2;
 			object enumLocal4 = new();
-			enumLocal4 = MyEnum.VALUE2;
-			ValueType enumLocal5 = MyEnum.VALUE1;
-			ValueType enumLocal6 = (MyEnum)0;
-			enumLocal6 = MyEnum.VALUE2;
 #pragma warning restore CS0219
 		}
 #endif

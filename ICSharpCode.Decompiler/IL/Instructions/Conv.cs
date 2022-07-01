@@ -188,33 +188,19 @@ namespace ICSharpCode.Decompiler.IL
 				case PrimitiveType.I2:
 				case PrimitiveType.U1:
 				case PrimitiveType.U2:
-					switch (inputType)
-					{
-						case StackType.I4:
-						case StackType.I8:
-						case StackType.I:
-							return ConversionKind.Truncate;
-						case StackType.F4:
-						case StackType.F8:
-							return ConversionKind.FloatToInt;
-						default:
-							return ConversionKind.Invalid;
-					}
+					return inputType switch {
+						StackType.I4 or StackType.I8 or StackType.I => ConversionKind.Truncate,
+						StackType.F4 or StackType.F8 => ConversionKind.FloatToInt,
+						_ => ConversionKind.Invalid,
+					};
 				case PrimitiveType.I4:
 				case PrimitiveType.U4:
-					switch (inputType)
-					{
-						case StackType.I4:
-							return ConversionKind.Nop;
-						case StackType.I:
-						case StackType.I8:
-							return ConversionKind.Truncate;
-						case StackType.F4:
-						case StackType.F8:
-							return ConversionKind.FloatToInt;
-						default:
-							return ConversionKind.Invalid;
-					}
+					return inputType switch {
+						StackType.I4 => ConversionKind.Nop,
+						StackType.I or StackType.I8 => ConversionKind.Truncate,
+						StackType.F4 or StackType.F8 => ConversionKind.FloatToInt,
+						_ => ConversionKind.Invalid,
+					};
 				case PrimitiveType.I8:
 				case PrimitiveType.U8:
 					switch (inputType)
@@ -259,60 +245,36 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.Invalid;
 					}
 				case PrimitiveType.R4:
-					switch (inputType)
-					{
-						case StackType.I4:
-						case StackType.I:
-						case StackType.I8:
-							return ConversionKind.IntToFloat;
-						case StackType.F4:
-							return ConversionKind.Nop;
-						case StackType.F8:
-							return ConversionKind.FloatPrecisionChange;
-						default:
-							return ConversionKind.Invalid;
-					}
+					return inputType switch {
+						StackType.I4 or StackType.I or StackType.I8 => ConversionKind.IntToFloat,
+						StackType.F4 => ConversionKind.Nop,
+						StackType.F8 => ConversionKind.FloatPrecisionChange,
+						_ => ConversionKind.Invalid,
+					};
 				case PrimitiveType.R:
 				case PrimitiveType.R8:
-					switch (inputType)
-					{
-						case StackType.I4:
-						case StackType.I:
-						case StackType.I8:
-							return ConversionKind.IntToFloat;
-						case StackType.F4:
-							return ConversionKind.FloatPrecisionChange;
-						case StackType.F8:
-							return ConversionKind.Nop;
-						default:
-							return ConversionKind.Invalid;
-					}
+					return inputType switch {
+						StackType.I4 or StackType.I or StackType.I8 => ConversionKind.IntToFloat,
+						StackType.F4 => ConversionKind.FloatPrecisionChange,
+						StackType.F8 => ConversionKind.Nop,
+						_ => ConversionKind.Invalid,
+					};
 				case PrimitiveType.Ref:
 					// There's no "conv.ref" in IL, but IL allows these conversions implicitly,
 					// whereas we represent them explicitly in the ILAst.
-					switch (inputType)
-					{
-						case StackType.I4:
-						case StackType.I:
-						case StackType.I8:
-							return ConversionKind.StartGCTracking;
-						case StackType.O:
-							return ConversionKind.ObjectInterior;
-						default:
-							return ConversionKind.Invalid;
-					}
+					return inputType switch {
+						StackType.I4 or StackType.I or StackType.I8 => ConversionKind.StartGCTracking,
+						StackType.O => ConversionKind.ObjectInterior,
+						_ => ConversionKind.Invalid,
+					};
 				default:
 					return ConversionKind.Invalid;
 			}
 		}
 
-		public override StackType ResultType {
-			get => IsLifted ? StackType.O : TargetType.GetStackType();
-		}
+		public override StackType ResultType => IsLifted ? StackType.O : TargetType.GetStackType();
 
-		public StackType UnderlyingResultType {
-			get => TargetType.GetStackType();
-		}
+		public StackType UnderlyingResultType => TargetType.GetStackType();
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{

@@ -34,26 +34,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole FixedKeywordRole = new("fixed");
 
-		public CSharpTokenNode FixedToken {
-			get { return GetChildByRole(FixedKeywordRole); }
-		}
+		public CSharpTokenNode FixedToken => GetChildByRole(FixedKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole(Roles.Variable); }
-		}
+		public AstNodeCollection<VariableInitializer> Variables => GetChildrenByRole(Roles.Variable);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
@@ -77,8 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			FixedStatement o = other as FixedStatement;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is FixedStatement o && this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

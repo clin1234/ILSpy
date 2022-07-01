@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler
 			this.Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		}
 
-		CSharp.TypeSystem.UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
+		static CSharp.TypeSystem.UsingScope CreateUsingScope(HashSet<string> requiredNamespacesSuperset)
 		{
 			var usingScope = new CSharp.TypeSystem.UsingScope();
 			foreach (var ns in requiredNamespacesSuperset)
@@ -41,9 +41,7 @@ namespace ICSharpCode.Decompiler
 				{
 					nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 				}
-				var reference = nsType.ToTypeReference(CSharp.Resolver.NameLookupMode.TypeInUsingDeclaration)
-					as CSharp.TypeSystem.TypeOrNamespaceReference;
-				if (reference != null)
+				if (nsType.ToTypeReference(CSharp.Resolver.NameLookupMode.TypeInUsingDeclaration) is CSharp.TypeSystem.TypeOrNamespaceReference reference)
 					usingScope.Usings.Add(reference);
 			}
 			return usingScope;

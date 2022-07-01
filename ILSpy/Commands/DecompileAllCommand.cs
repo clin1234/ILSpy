@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 		public override void Execute(object parameter)
 		{
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				Parallel.ForEach(
 					Partitioner.Create(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), loadBalance: true),
 					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy
 							{
 								try
 								{
-									new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
+									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
 								}
 								catch (Exception ex)
 								{
@@ -100,9 +100,9 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				w.Stop();
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				AvalonEditTextOutput output = new();
 				double msPerRun = w.Elapsed.TotalMilliseconds / numRuns;
-				output.Write($"Average time: {msPerRun.ToString("f1")}ms\n");
+				output.Write($"Average time: {msPerRun:f1}ms\n");
 				return output;
 			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}

@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy
 
 			Resources.RegisterDefaultStyles();
 
-			if (!System.Diagnostics.Debugger.IsAttached)
+			if (!Debugger.IsAttached)
 			{
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
@@ -278,7 +278,7 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region Pass Command Line Arguments to previous instance
-		bool SendToPreviousInstance(string message, bool activate)
+		static bool SendToPreviousInstance(string message, bool activate)
 		{
 			string ownProcessName;
 			using (var ownProcess = Process.GetCurrentProcess())
@@ -322,11 +322,10 @@ namespace ICSharpCode.ILSpy
 			fixed (char* buffer = message)
 			{
 				lParam.Buffer = (IntPtr)buffer;
-				IntPtr result;
 				// SendMessage with 3s timeout (e.g. when the target process is stopped in the debugger)
 				if (NativeMethods.SendMessageTimeout(
 					hWnd, NativeMethods.WM_COPYDATA, IntPtr.Zero, ref lParam,
-					SMTO_NORMAL, 3000, out result) != IntPtr.Zero)
+					SMTO_NORMAL, 3000, out IntPtr result) != IntPtr.Zero)
 				{
 					return result;
 				}

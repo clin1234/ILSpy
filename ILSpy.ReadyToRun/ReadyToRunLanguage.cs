@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 	[Export(typeof(Language))]
 	internal class ReadyToRunLanguage : Language
 	{
-		private static readonly ConditionalWeakTable<PEFile, ReadyToRunReaderCacheEntry> readyToRunReaders = new ConditionalWeakTable<PEFile, ReadyToRunReaderCacheEntry>();
+		private static readonly ConditionalWeakTable<PEFile, ReadyToRunReaderCacheEntry> readyToRunReaders = new();
 
 		public override string Name => "ReadyToRun";
 

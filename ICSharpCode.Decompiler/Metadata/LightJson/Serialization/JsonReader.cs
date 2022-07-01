@@ -15,7 +15,7 @@ namespace LightJson.Serialization
 	/// </summary>
 	internal sealed class JsonReader
 	{
-		private TextScanner scanner;
+		private readonly TextScanner scanner;
 
 		private JsonReader(TextReader reader)
 		{
@@ -69,32 +69,17 @@ namespace LightJson.Serialization
 				return this.ReadNumber();
 			}
 
-			switch (next)
-			{
-				case '{':
-					return this.ReadObject();
-
-				case '[':
-					return this.ReadArray();
-
-				case '"':
-					return this.ReadString();
-
-				case '-':
-					return this.ReadNumber();
-
-				case 't':
-				case 'f':
-					return this.ReadBoolean();
-
-				case 'n':
-					return this.ReadNull();
-
-				default:
-					throw new JsonParseException(
-						ErrorType.InvalidOrUnexpectedCharacter,
-						this.scanner.Position);
-			}
+			return next switch {
+				'{' => (JsonValue)this.ReadObject(),
+				'[' => (JsonValue)this.ReadArray(),
+				'"' => (JsonValue)this.ReadString(),
+				'-' => this.ReadNumber(),
+				't' or 'f' => this.ReadBoolean(),
+				'n' => this.ReadNull(),
+				_ => throw new JsonParseException(
+										ErrorType.InvalidOrUnexpectedCharacter,
+										this.scanner.Position),
+			};
 		}
 
 		private JsonValue ReadNull()

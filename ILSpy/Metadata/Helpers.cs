@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	{
 		public static DataGrid PrepareDataGrid(TabPageModel tabPage, ILSpyTreeNode selectedNode)
 		{
-			if (!(tabPage.Content is DataGrid view && view.Name == "MetadataView"))
+			if (!(tabPage.Content is DataGrid { Name: "MetadataView" } view))
 			{
 				view = new MetaDataGrid() {
 					Name = "MetadataView",
@@ -160,7 +160,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 		}
 
-		static readonly Dictionary<string, DataTemplate> linkCellTemplates = new Dictionary<string, DataTemplate>();
+		static readonly Dictionary<string, DataTemplate> linkCellTemplates = new();
 
 		private static DataTemplate GetOrCreateLinkCellTemplate(string name, PropertyDescriptor descriptor, Binding binding)
 		{
@@ -177,7 +177,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			hyper.AppendChild(run);
 			run.SetBinding(Run.TextProperty, binding);
 
-			DataTemplate dataTemplate = new DataTemplate() { VisualTree = tb };
+			DataTemplate dataTemplate = new() { VisualTree = tb };
 			linkCellTemplates.Add(name, dataTemplate);
 			return dataTemplate;
 

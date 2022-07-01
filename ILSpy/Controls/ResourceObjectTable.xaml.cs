@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		void ExecuteCopy(object sender, ExecutedRoutedEventArgs args)
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			foreach (var item in resourceListView.SelectedItems)
 			{
 				sb.AppendLine(item.ToString());

@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAfterSpace = false;
 		}
 
-		int GetCallChainLengthLimited(MemberReferenceExpression expr)
+		static int GetCallChainLengthLimited(MemberReferenceExpression expr)
 		{
 			int callChainLength = 0;
 			var node = expr;
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return callChainLength;
 		}
 
-		int ShouldInsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
+		static int ShouldInsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
 		{
 			int callChainLength = GetCallChainLengthLimited(expr);
 			if (callChainLength < 3)
@@ -444,17 +444,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				foreach (AstNode ancestor in context.Ancestors)
 				{
 					// with lambdas/anonymous methods,
-					if (ancestor is LambdaExpression)
+					switch (ancestor)
 					{
-						return ((LambdaExpression)ancestor).IsAsync;
-					}
-					if (ancestor is AnonymousMethodExpression)
-					{
-						return ((AnonymousMethodExpression)ancestor).IsAsync;
-					}
-					if (ancestor is EntityDeclaration)
-					{
-						return (((EntityDeclaration)ancestor).Modifiers & Modifiers.Async) == Modifiers.Async;
+						case LambdaExpression:
+							return ((LambdaExpression)ancestor).IsAsync;
+						case AnonymousMethodExpression:
+							return ((AnonymousMethodExpression)ancestor).IsAsync;
+						case EntityDeclaration:
+							return (((EntityDeclaration)ancestor).Modifiers & Modifiers.Async) == Modifiers.Async;
 					}
 				}
 			}
@@ -526,8 +523,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				NewLine();
 				return;
 			}
-			BlockStatement block = embeddedStatement as BlockStatement;
-			if (block != null)
+			if (embeddedStatement is BlockStatement block)
 			{
 				WriteBlock(block, policy.StatementBraceStyle);
 				if (nlp == NewLinePlacement.SameLine)
@@ -665,7 +661,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(arrayInitializerExpression);
 		}
 
-		protected bool CanBeConfusedWithObjectInitializer(Expression expr)
+		protected static bool CanBeConfusedWithObjectInitializer(Expression expr)
 		{
 			// "int a; new List<int> { a = 1 };" is an object initalizers and invalid, but
 			// "int a; new List<int> { { a = 1 } };" is a valid collection initializer.
@@ -673,9 +669,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return ae is { Operator: AssignmentOperatorType.Assign };
 		}
 
-		protected bool IsObjectOrCollectionInitializer(AstNode node)
+		protected static bool IsObjectOrCollectionInitializer(AstNode node)
 		{
-			if (!(node is ArrayInitializerExpression))
+			if (node is not ArrayInitializerExpression)
 			{
 				return false;
 			}
@@ -724,37 +720,22 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			bool IsSimpleExpression(Expression ex)
 			{
-				switch (ex)
-				{
-					case NullReferenceExpression:
-					case ThisReferenceExpression:
-					case PrimitiveExpression:
-					case IdentifierExpression:
-					case MemberReferenceExpression
-					{
+				return ex switch {
+					NullReferenceExpression or ThisReferenceExpression or PrimitiveExpression or IdentifierExpression or MemberReferenceExpression {
 						Target: ThisReferenceExpression
-							or IdentifierExpression
-							or BaseReferenceExpression
-					}:
-						return true;
-					default:
-						return false;
-				}
+												or IdentifierExpression
+												or BaseReferenceExpression
+					} => true,
+					_ => false,
+				};
 			}
 
 			bool IsComplexExpression(Expression ex)
 			{
-				switch (ex)
-				{
-					case AnonymousMethodExpression:
-					case LambdaExpression:
-					case AnonymousTypeCreateExpression:
-					case ObjectCreateExpression:
-					case NamedExpression:
-						return true;
-					default:
-						return false;
-				}
+				return ex switch {
+					AnonymousMethodExpression or LambdaExpression or AnonymousTypeCreateExpression or ObjectCreateExpression or NamedExpression => true,
+					_ => false,
+				};
 			}
 		}
 
@@ -791,51 +772,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(binaryOperatorExpression);
 			binaryOperatorExpression.Left.AcceptVisitor(this);
-			bool spacePolicy;
-			switch (binaryOperatorExpression.Operator)
-			{
-				case BinaryOperatorType.BitwiseAnd:
-				case BinaryOperatorType.BitwiseOr:
-				case BinaryOperatorType.ExclusiveOr:
-					spacePolicy = policy.SpaceAroundBitwiseOperator;
-					break;
-				case BinaryOperatorType.ConditionalAnd:
-				case BinaryOperatorType.ConditionalOr:
-					spacePolicy = policy.SpaceAroundLogicalOperator;
-					break;
-				case BinaryOperatorType.GreaterThan:
-				case BinaryOperatorType.GreaterThanOrEqual:
-				case BinaryOperatorType.LessThanOrEqual:
-				case BinaryOperatorType.LessThan:
-					spacePolicy = policy.SpaceAroundRelationalOperator;
-					break;
-				case BinaryOperatorType.Equality:
-				case BinaryOperatorType.InEquality:
-					spacePolicy = policy.SpaceAroundEqualityOperator;
-					break;
-				case BinaryOperatorType.Add:
-				case BinaryOperatorType.Subtract:
-					spacePolicy = policy.SpaceAroundAdditiveOperator;
-					break;
-				case BinaryOperatorType.Multiply:
-				case BinaryOperatorType.Divide:
-				case BinaryOperatorType.Modulus:
-					spacePolicy = policy.SpaceAroundMultiplicativeOperator;
-					break;
-				case BinaryOperatorType.ShiftLeft:
-				case BinaryOperatorType.ShiftRight:
-					spacePolicy = policy.SpaceAroundShiftOperator;
-					break;
-				case BinaryOperatorType.NullCoalescing:
-				case BinaryOperatorType.IsPattern:
-					spacePolicy = true;
-					break;
-				case BinaryOperatorType.Range:
-					spacePolicy = false;
-					break;
-				default:
-					throw new NotSupportedException("Invalid value for BinaryOperatorType");
-			}
+			var spacePolicy = binaryOperatorExpression.Operator switch {
+				BinaryOperatorType.BitwiseAnd or BinaryOperatorType.BitwiseOr or BinaryOperatorType.ExclusiveOr => policy.SpaceAroundBitwiseOperator,
+				BinaryOperatorType.ConditionalAnd or BinaryOperatorType.ConditionalOr => policy.SpaceAroundLogicalOperator,
+				BinaryOperatorType.GreaterThan or BinaryOperatorType.GreaterThanOrEqual or BinaryOperatorType.LessThanOrEqual or BinaryOperatorType.LessThan => policy.SpaceAroundRelationalOperator,
+				BinaryOperatorType.Equality or BinaryOperatorType.InEquality => policy.SpaceAroundEqualityOperator,
+				BinaryOperatorType.Add or BinaryOperatorType.Subtract => policy.SpaceAroundAdditiveOperator,
+				BinaryOperatorType.Multiply or BinaryOperatorType.Divide or BinaryOperatorType.Modulus => policy.SpaceAroundMultiplicativeOperator,
+				BinaryOperatorType.ShiftLeft or BinaryOperatorType.ShiftRight => policy.SpaceAroundShiftOperator,
+				BinaryOperatorType.NullCoalescing or BinaryOperatorType.IsPattern => true,
+				BinaryOperatorType.Range => false,
+				_ => throw new NotSupportedException("Invalid value for BinaryOperatorType"),
+			};
 			Space(spacePolicy);
 			TokenRole tokenRole = BinaryOperatorExpression.GetOperatorRole(binaryOperatorExpression.Operator);
 			if (tokenRole == BinaryOperatorExpression.IsKeywordRole)
@@ -981,7 +929,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			invocationExpression.Target.AcceptVisitor(this);
 			Space(policy.SpaceBeforeMethodCallParentheses);
 			WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses);
-			if (!(invocationExpression.Parent is MemberReferenceExpression))
+			if (invocationExpression.Parent is not MemberReferenceExpression)
 			{
 				if (invocationExpression.Target is MemberReferenceExpression mre)
 				{
@@ -1020,9 +968,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			Space();
 			WriteToken(Roles.Arrow);
-			if (lambdaExpression.Body is BlockStatement)
+			if (lambdaExpression.Body is BlockStatement statement)
 			{
-				WriteBlock((BlockStatement)lambdaExpression.Body, policy.AnonymousMethodBraceStyle);
+				WriteBlock(statement, policy.AnonymousMethodBraceStyle);
 			}
 			else
 			{
@@ -1032,7 +980,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(lambdaExpression);
 		}
 
-		protected bool LambdaNeedsParenthesis(LambdaExpression lambdaExpression)
+		protected static bool LambdaNeedsParenthesis(LambdaExpression lambdaExpression)
 		{
 			if (lambdaExpression.Parameters.Count != 1)
 			{
@@ -1050,7 +998,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.Dot);
 			WriteIdentifier(memberReferenceExpression.MemberNameToken);
 			WriteTypeArguments(memberReferenceExpression.TypeArguments);
-			if (insertedNewLine && !(memberReferenceExpression.Parent is InvocationExpression))
+			if (insertedNewLine && memberReferenceExpression.Parent is not InvocationExpression)
 			{
 				writer.Unindent();
 			}
@@ -1319,7 +1267,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				else
 				{
-					if (!(clause is QueryContinuationClause))
+					if (clause is not QueryContinuationClause)
 					{
 						NewLine();
 					}
@@ -2293,8 +2241,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(constructorDeclaration);
 			WriteAttributes(constructorDeclaration.Attributes);
 			WriteModifiers(constructorDeclaration.ModifierTokens);
-			TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
-			if (type != null && type.Name != constructorDeclaration.Name)
+			if (constructorDeclaration.Parent is TypeDeclaration type && type.Name != constructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
 				WriteIdentifier(constructorDeclaration.NameToken);
@@ -2339,8 +2286,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 			}
 			WriteToken(DestructorDeclaration.TildeRole);
-			TypeDeclaration type = destructorDeclaration.Parent as TypeDeclaration;
-			if (type != null && type.Name != destructorDeclaration.Name)
+			if (destructorDeclaration.Parent is TypeDeclaration type && type.Name != destructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
 				WriteIdentifier(destructorDeclaration.NameToken);
@@ -2881,8 +2827,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public virtual void VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode)
 		{
-			CSharpModifierToken mod = cSharpTokenNode as CSharpModifierToken;
-			if (mod != null)
+			if (cSharpTokenNode is CSharpModifierToken mod)
 			{
 				// ITokenWriter assumes that each node processed between a
 				// StartNode(parentNode)-EndNode(parentNode)-pair is a child of parentNode.
@@ -3001,41 +2946,35 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		void VisitNodeInPattern(INode childNode)
 		{
-			if (childNode is AstNode)
+			switch (childNode)
 			{
-				((AstNode)childNode).AcceptVisitor(this);
-			}
-			else if (childNode is IdentifierExpressionBackreference)
-			{
-				VisitIdentifierExpressionBackreference((IdentifierExpressionBackreference)childNode);
-			}
-			else if (childNode is Choice)
-			{
-				VisitChoice((Choice)childNode);
-			}
-			else if (childNode is AnyNode)
-			{
-				VisitAnyNode((AnyNode)childNode);
-			}
-			else if (childNode is Backreference)
-			{
-				VisitBackreference((Backreference)childNode);
-			}
-			else if (childNode is NamedNode)
-			{
-				VisitNamedNode((NamedNode)childNode);
-			}
-			else if (childNode is OptionalNode)
-			{
-				VisitOptionalNode((OptionalNode)childNode);
-			}
-			else if (childNode is Repeat)
-			{
-				VisitRepeat((Repeat)childNode);
-			}
-			else
-			{
-				writer.WritePrimitiveValue(childNode);
+				case AstNode:
+					((AstNode)childNode).AcceptVisitor(this);
+					break;
+				case IdentifierExpressionBackreference:
+					VisitIdentifierExpressionBackreference((IdentifierExpressionBackreference)childNode);
+					break;
+				case Choice:
+					VisitChoice((Choice)childNode);
+					break;
+				case AnyNode:
+					VisitAnyNode((AnyNode)childNode);
+					break;
+				case Backreference:
+					VisitBackreference((Backreference)childNode);
+					break;
+				case NamedNode:
+					VisitNamedNode((NamedNode)childNode);
+					break;
+				case OptionalNode:
+					VisitOptionalNode((OptionalNode)childNode);
+					break;
+				case Repeat:
+					VisitRepeat((Repeat)childNode);
+					break;
+				default:
+					writer.WritePrimitiveValue(childNode);
+					break;
 			}
 		}
 		#endregion

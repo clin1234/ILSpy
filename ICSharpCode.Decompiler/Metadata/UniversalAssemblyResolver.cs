@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return dotNetCorePathFinder;
 		}
 
-		string? FindWindowsMetadataFile(IAssemblyReference name)
+		static string? FindWindowsMetadataFile(IAssemblyReference name)
 		{
 			// Finding Windows Metadata (winmd) is currently only supported on Windows.
 			if (Environment.OSVersion.Platform != PlatformID.Win32NT)
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return file;
 		}
 
-		string? FindWindowsMetadataInSystemDirectory(IAssemblyReference name)
+		static string? FindWindowsMetadataInSystemDirectory(IAssemblyReference name)
 		{
 			string file = Path.Combine(Environment.SystemDirectory, "WinMetadata", name.Name + ".winmd");
 			if (File.Exists(file))
@@ -353,7 +353,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <summary>
 		/// This only works on Windows
 		/// </summary>
-		string? ResolveSilverlight(IAssemblyReference name, Version? version)
+		static string? ResolveSilverlight(IAssemblyReference name, Version? version)
 		{
 			string[] targetFrameworkSearchPaths = {
 				Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Silverlight"),
@@ -372,14 +372,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		string FindClosestVersionDirectory(string basePath, Version? version)
+		static string FindClosestVersionDirectory(string basePath, Version? version)
 		{
 			string? path = null;
 			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(d => DotNetCorePathFinder.ConvertToVersion(d.Name))
-				.Where(v => v.Item1 != null).OrderByDescending(v => v.Item1))
+				.Where(v => v.version != null).OrderByDescending(v => v.version))
 			{
-				if (path == null || version == null || folder.Item1 >= version)
-					path = folder.Item2;
+				if (path == null || version == null || folder.version >= version)
+					path = folder.directoryName;
 			}
 			return path ?? version?.ToString() ?? ".";
 		}
@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		#region .NET / mono GAC handling
-		string? SearchDirectory(IAssemblyReference name, IEnumerable<string?> directories)
+		static string? SearchDirectory(IAssemblyReference name, IEnumerable<string?> directories)
 		{
 			foreach (var directory in directories)
 			{
@@ -450,7 +450,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return IsZeroOrAllOnes(reference.Version) || reference.IsRetargetable;
 		}
 
-		string? SearchDirectory(IAssemblyReference name, string directory)
+		static string? SearchDirectory(IAssemblyReference name, string directory)
 		{
 			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".dll", ".exe" };
 			foreach (var extension in extensions)

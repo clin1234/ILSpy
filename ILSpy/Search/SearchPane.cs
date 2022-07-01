@@ -260,7 +260,7 @@ namespace ICSharpCode.ILSpy.Search
 
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new(await mainWindow.CurrentAssemblyList.GetAllAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage,
+					(SearchMode)searchModeComboBox.SelectedIndex, MainWindow.Instance.CurrentLanguage,
 					mainWindow.SessionSettings.FilterSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
@@ -283,7 +283,7 @@ namespace ICSharpCode.ILSpy.Search
 
 		sealed class RunningSearch
 		{
-			readonly CancellationTokenSource cts = new CancellationTokenSource();
+			readonly CancellationTokenSource cts = new();
 			readonly IList<LoadedAssembly> assemblies;
 			readonly SearchRequest searchRequest;
 			readonly SearchMode searchMode;
@@ -306,7 +306,7 @@ namespace ICSharpCode.ILSpy.Search
 				string[] parts = NativeMethods.CommandLineToArgumentArray(input);
 
 				SearchRequest request = new();
-				List<string> keywords = new List<string>();
+				List<string> keywords = new();
 				Regex regex = null;
 				request.Mode = searchMode;
 

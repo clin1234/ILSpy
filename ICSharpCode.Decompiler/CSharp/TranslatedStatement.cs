@@ -13,9 +13,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public readonly Statement Statement;
 
-		public IEnumerable<ILInstruction> ILInstructions {
-			get { return Statement.Annotations.OfType<ILInstruction>(); }
-		}
+		public IEnumerable<ILInstruction> ILInstructions => Statement.Annotations.OfType<ILInstruction>();
 
 		internal TranslatedStatement(Statement statement)
 		{

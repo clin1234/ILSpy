@@ -474,7 +474,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		public const MyEnum EnumFromThisAssembly = MyEnum.Second;
 		public const StringComparison EnumFromAnotherAssembly = StringComparison.OrdinalIgnoreCase;
-		public const MyEnum DefaultOfEnum = default(MyEnum);
+		public const MyEnum DefaultOfEnum = default;
 
 		public const int SOsb = sizeof(sbyte);
 		public const int SOb = sizeof(byte);

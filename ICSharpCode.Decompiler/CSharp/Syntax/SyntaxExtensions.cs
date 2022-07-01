@@ -28,18 +28,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static bool IsComparisonOperator(this OperatorType operatorType)
 		{
-			switch (operatorType)
-			{
-				case OperatorType.Equality:
-				case OperatorType.Inequality:
-				case OperatorType.GreaterThan:
-				case OperatorType.LessThan:
-				case OperatorType.GreaterThanOrEqual:
-				case OperatorType.LessThanOrEqual:
-					return true;
-				default:
-					return false;
-			}
+			return operatorType switch {
+				OperatorType.Equality or OperatorType.Inequality or OperatorType.GreaterThan or OperatorType.LessThan or OperatorType.GreaterThanOrEqual or OperatorType.LessThanOrEqual => true,
+				_ => false,
+			};
 		}
 
 		/// <summary>
@@ -53,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static Statement GetNextStatement(this Statement statement)
 		{
 			AstNode next = statement.NextSibling;
-			while (next != null && !(next is Statement))
+			while (next != null && next is not Statement)
 				next = next.NextSibling;
 			return (Statement)next;
 		}

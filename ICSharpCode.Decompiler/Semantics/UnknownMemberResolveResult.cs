@@ -46,21 +46,13 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// The type on which the method is being called.
 		/// </summary>
-		public IType TargetType {
-			get { return targetType; }
-		}
+		public IType TargetType => targetType;
 
-		public string MemberName {
-			get { return memberName; }
-		}
+		public string MemberName => memberName;
 
-		public ReadOnlyCollection<IType> TypeArguments {
-			get { return typeArguments; }
-		}
+		public ReadOnlyCollection<IType> TypeArguments => typeArguments;
 
-		public override bool IsError {
-			get { return true; }
-		}
+		public override bool IsError => true;
 
 		public override string ToString()
 		{
@@ -81,9 +73,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.parameters = new(parameters.ToArray());
 		}
 
-		public ReadOnlyCollection<IParameter> Parameters {
-			get { return parameters; }
-		}
+		public ReadOnlyCollection<IParameter> Parameters => parameters;
 	}
 
 	/// <summary>
@@ -101,17 +91,11 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.typeArgumentCount = typeArgumentCount;
 		}
 
-		public string Identifier {
-			get { return identifier; }
-		}
+		public string Identifier => identifier;
 
-		public int TypeArgumentCount {
-			get { return typeArgumentCount; }
-		}
+		public int TypeArgumentCount => typeArgumentCount;
 
-		public override bool IsError {
-			get { return true; }
-		}
+		public override bool IsError => true;
 
 		public override string ToString()
 		{

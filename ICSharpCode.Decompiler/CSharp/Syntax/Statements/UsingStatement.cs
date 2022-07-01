@@ -36,22 +36,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
 		public static readonly Role<AstNode> ResourceAcquisitionRole = new("ResourceAcquisition", AstNode.Null);
 
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole(UsingKeywordRole); }
-		}
+		public CSharpTokenNode UsingToken => GetChildByRole(UsingKeywordRole);
 
-		public CSharpTokenNode AwaitToken {
-			get { return GetChildByRole(AwaitRole); }
-		}
+		public CSharpTokenNode AwaitToken => GetChildByRole(AwaitRole);
 
 		public bool IsAsync {
 			get { return !GetChildByRole(AwaitRole).IsNull; }
 			set { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public bool IsEnhanced { get; set; }
 
@@ -63,9 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(ResourceAcquisitionRole, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public Statement EmbeddedStatement {
 			get { return GetChildByRole(Roles.EmbeddedStatement); }
@@ -89,8 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingStatement o = other as UsingStatement;
-			return o != null && this.IsAsync == o.IsAsync && this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
+			return other is UsingStatement o && this.IsAsync == o.IsAsync && this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}
 }

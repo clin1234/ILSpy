@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+using System.Windows;
 using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
@@ -59,7 +60,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, $"Detected TargetFramework-Id: {parentAssembly.LoadedAssembly.GetTargetFrameworkIdAsync().Result}");
 			language.WriteCommentLine(output, $"Detected RuntimePack: {parentAssembly.LoadedAssembly.GetRuntimePackAsync().Result}");
 
-			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
+			Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
 			output.WriteLine();
 			language.WriteCommentLine(output, "Referenced assemblies (in metadata order):");
 			// Show metadata order of references

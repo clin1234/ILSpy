@@ -65,7 +65,7 @@ namespace ICSharpCode.ILSpy
 			return GetAssembly(context) != null;
 		}
 
-		string? GetAssembly(TextViewContext context)
+		static string? GetAssembly(TextViewContext context)
 		{
 			if (context.Reference?.Reference is IEntity entity)
 				return entity.ParentModule?.AssemblyName;

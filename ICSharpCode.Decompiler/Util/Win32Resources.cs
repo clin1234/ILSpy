@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public override bool Equals(object? obj)
 		{
-			if (!(obj is Win32ResourceName name))
+			if (obj is not Win32ResourceName name)
 				return false;
 			return this == name;
 		}

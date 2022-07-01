@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							AddExistingName(reservedVariableNames, f.Method.Parameters[i].Name);
 						}
-						var lastParameter = f.Method.Parameters.Last();
+						var lastParameter = f.Method.Parameters[f.Method.Parameters.Count - 1];
 						switch (f.Method.AccessorOwner)
 						{
 							case IProperty prop:
@@ -180,17 +180,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return name.Length > 0 && char.ToLower(name[0]) == name[0];
 		}
 
-		bool IsSetOrEventAccessor(IMethod method)
+		static bool IsSetOrEventAccessor(IMethod method)
 		{
-			switch (method.AccessorKind)
-			{
-				case MethodSemanticsAttributes.Setter:
-				case MethodSemanticsAttributes.Adder:
-				case MethodSemanticsAttributes.Remover:
-					return true;
-				default:
-					return false;
-			}
+			return method.AccessorKind switch {
+				MethodSemanticsAttributes.Setter or MethodSemanticsAttributes.Adder or MethodSemanticsAttributes.Remover => true,
+				_ => false,
+			};
 		}
 
 		void PerformAssignment(ILFunction function)
@@ -297,16 +292,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		internal static bool IsSupportedInstruction(object arg)
 		{
-			switch (arg)
-			{
-				case LdObj:
-				case LdFlda:
-				case LdsFlda:
-				case CallInstruction:
-					return true;
-				default:
-					return false;
-			}
+			return arg switch {
+				LdObj or LdFlda or LdsFlda or CallInstruction => true,
+				_ => false,
+			};
 		}
 
 		bool ConflictWithLocal(ILVariable v)
@@ -369,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		HashSet<ILVariable> CollectLoopCounters(ILFunction function)
+		static HashSet<ILVariable> CollectLoopCounters(ILFunction function)
 		{
 			var loopCounters = new HashSet<ILVariable>();
 

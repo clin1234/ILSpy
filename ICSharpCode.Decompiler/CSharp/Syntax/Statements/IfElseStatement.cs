@@ -38,31 +38,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ElseKeywordRole = new("else");
 		public readonly static Role<Statement> FalseRole = new("False", Null);
 
-		public CSharpTokenNode IfToken {
-			get { return GetChildByRole(IfKeywordRole); }
-		}
+		public CSharpTokenNode IfToken => GetChildByRole(IfKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public Expression Condition {
 			get { return GetChildByRole(ConditionRole); }
 			set { SetChildByRole(ConditionRole, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public Statement TrueStatement {
 			get { return GetChildByRole(TrueRole); }
 			set { SetChildByRole(TrueRole, value); }
 		}
 
-		public CSharpTokenNode ElseToken {
-			get { return GetChildByRole(ElseKeywordRole); }
-		}
+		public CSharpTokenNode ElseToken => GetChildByRole(ElseKeywordRole);
 
 		public Statement FalseStatement {
 			get { return GetChildByRole(FalseRole); }
@@ -86,8 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IfElseStatement o = other as IfElseStatement;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);
+			return other is IfElseStatement o && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);
 		}
 
 		public IfElseStatement()

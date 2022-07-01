@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return LazyInit.GetOrSet(ref eventDefs[row], ev);
 		}
 
-		void HandleOutOfRange(EntityHandle handle)
+		static void HandleOutOfRange(EntityHandle handle)
 		{
 			throw new BadImageFormatException("Handle with invalid row number.");
 		}

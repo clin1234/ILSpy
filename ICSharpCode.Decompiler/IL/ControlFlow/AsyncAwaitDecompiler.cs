@@ -81,8 +81,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		IField builderField;
 		IField stateField;
 		int initialState;
-		Dictionary<IField, ILVariable> fieldToParameterMap = new();
-		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new();
+		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new();
+		readonly Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new();
 		IField disposeModeField; // 'disposeMode' field (IAsyncEnumerable/IAsyncEnumerator only)
 
 		// These fields are set by AnalyzeMoveNext():
@@ -99,14 +99,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		// These fields are set by AnalyzeStateMachine():
 		int smallestAwaiterVarIndex;
-		HashSet<Leave> moveNextLeaves = new();
+		readonly HashSet<Leave> moveNextLeaves = new();
 
 		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
 		// across the yield point.
-		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new();
+		readonly Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new();
 
 		int catchHandlerOffset;
-		List<AsyncDebugInfo.Await> awaitDebugInfos = new();
+		readonly List<AsyncDebugInfo.Await> awaitDebugInfos = new();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#region MatchTaskCreationPattern
 		bool MatchTaskCreationPattern(ILFunction function)
 		{
-			if (!(function.Body is BlockContainer blockContainer))
+			if (function.Body is not BlockContainer blockContainer)
 				return false;
 			if (blockContainer.Blocks.Count != 1)
 				return false;
@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// Check the second-to-last instruction (the start call) first, as we can get the most information from that
 			int pos = body.Count - 2;
-			if (!(body[pos] is CallInstruction startCall))
+			if (body[pos] is not CallInstruction startCall)
 				return false;
 			if (startCall.Method.Name != "Start")
 				return false;
@@ -438,7 +438,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 			underlyingReturnType = taskType.TypeArguments.Single();
-			if (!(function.Body is BlockContainer blockContainer))
+			if (function.Body is not BlockContainer blockContainer)
 				return false;
 			if (blockContainer.Blocks.Count != 1)
 				return false;
@@ -527,7 +527,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			initialState = default;
 			stateMachineType = default;
 			// newobj(CurrentType/...::.ctor, ldc.i4(-2))
-			if (!(inst is NewObj newObj))
+			if (inst is not NewObj newObj)
 				return false;
 			if (newObj.Arguments.Count != 1)
 				return false;
@@ -619,7 +619,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (moveNextMethod == null)
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);
-			if (!(moveNextFunction.Body is BlockContainer blockContainer))
+			if (moveNextFunction.Body is not BlockContainer blockContainer)
 				throw new SymbolicAnalysisFailedException();
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
@@ -746,7 +746,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return blockContainer.Blocks[setResultReturnBlockIndex];
 		}
 
-		private bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, out Block setResultAndExitBlock)
+		private static bool MatchDisposeCombinedTokens(BlockContainer blockContainer, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst, bool[] blocksAnalyzed, out Block setResultAndExitBlock)
 		{
 			setResultAndExitBlock = null;
 			// 	...
@@ -800,7 +800,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		private void MatchHoistedLocalCleanup(Block block, ref int pos)
+		private static void MatchHoistedLocalCleanup(Block block, ref int pos)
 		{
 			while (block.Instructions[pos].MatchStFld(out var target, out _, out var value))
 			{
@@ -872,13 +872,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (!handler.Filter.MatchLdcI4(1))
 				throw new SymbolicAnalysisFailedException();
-			if (!(handler.Body is BlockContainer handlerContainer))
+			if (handler.Body is not BlockContainer handlerContainer)
 				throw new SymbolicAnalysisFailedException();
 			bool[] blocksAnalyzed = new bool[handlerContainer.Blocks.Count];
 			var catchBlock = handlerContainer.EntryPoint;
 			catchHandlerOffset = catchBlock.StartILOffset;
 			// stloc exception(ldloc E_143)
-			if (!(catchBlock.Instructions[0] is StLoc stloc))
+			if (catchBlock.Instructions[0] is not StLoc stloc)
 				throw new SymbolicAnalysisFailedException();
 			if (!stloc.Value.MatchLdLoc(handler.Variable))
 				throw new SymbolicAnalysisFailedException();
@@ -1182,7 +1182,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// br nextBlock
 			if (block.Instructions.Count < 2)
 				return false;
-			if (!(block.Instructions.Last() is Branch branch))
+			if (block.Instructions.Last() is not Branch branch)
 				return false;
 			if (!block.Instructions[block.Instructions.Count - 2].MatchStFld(out var target, out var field, out var value))
 				return false;
@@ -1485,10 +1485,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (block.Instructions.Count < 3)
 				return;
 			// stloc awaiterVar(callvirt GetAwaiter(...))
-			if (!(block.Instructions[block.Instructions.Count - 3] is StLoc stLocAwaiter))
+			if (block.Instructions[block.Instructions.Count - 3] is not StLoc stLocAwaiter)
 				return;
 			ILVariable awaiterVar = stLocAwaiter.Variable;
-			if (!(stLocAwaiter.Value is CallInstruction getAwaiterCall))
+			if (stLocAwaiter.Value is not CallInstruction getAwaiterCall)
 				return;
 			if (!(getAwaiterCall.Method.Name == "GetAwaiter" && (!getAwaiterCall.Method.IsStatic || getAwaiterCall.Method.IsExtensionMethod)))
 				return;
@@ -1561,7 +1561,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return inst;
 		}
 
-		bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
+		static bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
 		{
 			// awaitBlock:
 			//   (pre-roslyn: save stack)
@@ -1666,18 +1666,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[pos].MatchBranch(completedBlock);
 		}
 
-		private bool RestoreStack(Block block, ref int pos, IField stackField)
+		private static bool RestoreStack(Block block, ref int pos, IField stackField)
 		{
 			if (stackField == null)
 			{
 				return true; // nothing to restore
 			}
 			// stloc temp(unbox.any T(ldfld <>t__stack(ldloc this)))
-			if (!(block.Instructions[pos] is StLoc stloc))
+			if (block.Instructions[pos] is not StLoc stloc)
 				return false;
 			if (!stloc.Variable.IsSingleDefinition)
 				return false;
-			if (!(stloc.Value is UnboxAny unbox))
+			if (stloc.Value is not UnboxAny unbox)
 				return false;
 			if (!unbox.Argument.MatchLdFld(out var target, out var field))
 				return false;

@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 		public static void SetDisassemblyOptions(XElement root, string disassemblyFormat, bool isShowUnwindInfo, bool isShowDebugInfo)
 		{
-			XElement section = new XElement(ns + "ReadyToRunOptions");
+			XElement section = new(ns + "ReadyToRunOptions");
 			section.SetAttributeValue("DisassemblyFormat", disassemblyFormat);
 			section.SetAttributeValue("IsShowUnwindInfo", isShowUnwindInfo);
 			section.SetAttributeValue("IsShowDebugInfo", isShowDebugInfo);

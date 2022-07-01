@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.Tests
 			ILVariable v = new(VariableKind.Local, SpecialType.UnknownType, 0);
 			ILFunction f = new(
 				returnType: SpecialType.UnknownType,
-				parameters: new IParameter[0],
+				parameters: Array.Empty<IParameter>(),
 				genericContext: new(),
 				body: new TryFinally(
 					new Nop(),

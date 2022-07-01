@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Navigation;
@@ -49,7 +50,7 @@ namespace ICSharpCode.ILSpy
 			);
 		}
 
-		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
+		static readonly Uri UpdateUrl = new("https://ilspy.net/updates.xml");
 		const string band = "stable";
 
 		static AvailableVersionInfo latestAvailableVersion;
@@ -67,7 +68,7 @@ namespace ICSharpCode.ILSpy
 
 			output.AddUIElement(
 			delegate {
-				StackPanel stackPanel = new StackPanel();
+				StackPanel stackPanel = new();
 				stackPanel.HorizontalAlignment = HorizontalAlignment.Center;
 				stackPanel.Orientation = Orientation.Horizontal;
 				if (latestAvailableVersion == null)
@@ -79,11 +80,11 @@ namespace ICSharpCode.ILSpy
 					// we already retrieved the latest version sometime earlier
 					ShowAvailableVersion(latestAvailableVersion, stackPanel);
 				}
-				CheckBox checkBox = new CheckBox();
+				CheckBox checkBox = new();
 				checkBox.Margin = new Thickness(4);
 				checkBox.Content = Resources.AutomaticallyCheckUpdatesEveryWeek;
 				UpdateSettings settings = new(ILSpySettings.Load());
-				checkBox.SetBinding(CheckBox.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
+				checkBox.SetBinding(ToggleButton.IsCheckedProperty, new Binding("AutomaticUpdateCheckEnabled") { Source = settings });
 				return new StackPanel {
 					Margin = new Thickness(0, 4, 0, 0),
 					Cursor = Cursors.Arrow,
@@ -98,13 +99,11 @@ namespace ICSharpCode.ILSpy
 			output.Address = new Uri("resource://AboutPage");
 			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), Resources.ILSpyAboutPageTxt))
 			{
-				using (StreamReader r = new StreamReader(s))
+				using StreamReader r = new(s);
+				string line;
+				while ((line = r.ReadLine()) != null)
 				{
-					string line;
-					while ((line = r.ReadLine()) != null)
-					{
-						output.WriteLine(line);
-					}
+					output.WriteLine(line);
 				}
 			}
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MIT License", "resource:license.txt"));
@@ -130,7 +129,7 @@ namespace ICSharpCode.ILSpy
 
 		static void AddUpdateCheckButton(StackPanel stackPanel, DecompilerTextView textView)
 		{
-			Button button = ThemeManager.Current.CreateButton();
+			Button button = ThemeManager.CreateButton();
 			button.Content = Resources.CheckUpdates;
 			button.Cursor = Cursors.Arrow;
 			stackPanel.Children.Add(button);
@@ -154,7 +153,7 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 
-		static readonly Version currentVersion = new Version(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
+		static readonly Version currentVersion = new(DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 
 		static void ShowAvailableVersion(AvailableVersionInfo availableVersion, StackPanel stackPanel)
 		{
@@ -182,7 +181,7 @@ namespace ICSharpCode.ILSpy
 					});
 				if (availableVersion.DownloadUrl != null)
 				{
-					Button button = ThemeManager.Current.CreateButton();
+					Button button = ThemeManager.CreateButton();
 					button.Content = Resources.Download;
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {
@@ -208,7 +207,7 @@ namespace ICSharpCode.ILSpy
 			XDocument doc = XDocument.Load(new StringReader(data));
 			var bands = doc.Root.Elements("band");
 			var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
-			Version version = new Version((string)currentBand.Element("latestVersion"));
+			Version version = new((string)currentBand.Element("latestVersion"));
 			string url = (string)currentBand.Element("downloadUrl");
 			if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
 				url = null; // don't accept non-urls
@@ -270,7 +269,7 @@ namespace ICSharpCode.ILSpy
 
 			public void Save()
 			{
-				XElement updateSettings = new XElement("UpdateSettings");
+				XElement updateSettings = new("UpdateSettings");
 				updateSettings.Add(new XElement("AutomaticUpdateCheckEnabled", automaticUpdateCheckEnabled));
 				if (lastSuccessfulUpdateCheck != null)
 					updateSettings.Add(new XElement("LastSuccessfulUpdateCheck", lastSuccessfulUpdateCheck));

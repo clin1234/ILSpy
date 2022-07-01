@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool View(TabPageModel tabPage)
 		{
 			Stream s = Resource.TryOpenStream();
-			if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit)
+			if (s is { Length: < DecompilerTextView.DefaultOutputLengthLimit })
 			{
 				s.Position = 0;
 				FileType type = GuessFileType.DetectFileType(s);
@@ -107,15 +107,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Stream s = Resource.TryOpenStream();
 			if (s == null)
 				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(Resource.Name));
 			if (dlg.ShowDialog() == true)
 			{
 				s.Position = 0;
-				using (var fs = dlg.OpenFile())
-				{
-					s.CopyTo(fs);
-				}
+				using var fs = dlg.OpenFile();
+				s.CopyTo(fs);
 			}
 			return true;
 		}

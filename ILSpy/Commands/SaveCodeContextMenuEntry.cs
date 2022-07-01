@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <returns>The full path of the selected target file, or <c>null</c> if the user canceled.</returns>
 		static string SelectSolutionFile()
 		{
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = "Solution.sln";
 			dlg.Filter = Resources.VisualStudioSolutionFileSlnAllFiles;
 
@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				directoryNotEmpty = Directory.EnumerateFileSystemEntries(selectedPath).Any();
 			}
-			catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.Security.SecurityException)
+			catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException)
 			{
 				MessageBox.Show(
 					"The directory cannot be accessed. Please ensure it exists and you have sufficient rights to access it.",

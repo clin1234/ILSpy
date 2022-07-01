@@ -43,9 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Label = label;
 		}
 
-		public CSharpTokenNode GotoToken {
-			get { return GetChildByRole(GotoKeywordRole); }
-		}
+		public CSharpTokenNode GotoToken => GetChildByRole(GotoKeywordRole);
 
 		public string Label {
 			get {
@@ -59,9 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -80,8 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			GotoStatement o = other as GotoStatement;
-			return o != null && MatchString(this.Label, o.Label);
+			return other is GotoStatement o && MatchString(this.Label, o.Label);
 		}
 	}
 
@@ -93,13 +88,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole GotoKeywordRole = new("goto");
 		public static readonly TokenRole CaseKeywordRole = new("case");
 
-		public CSharpTokenNode GotoToken {
-			get { return GetChildByRole(GotoKeywordRole); }
-		}
+		public CSharpTokenNode GotoToken => GetChildByRole(GotoKeywordRole);
 
-		public CSharpTokenNode CaseToken {
-			get { return GetChildByRole(CaseKeywordRole); }
-		}
+		public CSharpTokenNode CaseToken => GetChildByRole(CaseKeywordRole);
 
 		/// <summary>
 		/// Used for "goto case LabelExpression;"
@@ -109,9 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -130,8 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			GotoCaseStatement o = other as GotoCaseStatement;
-			return o != null && this.LabelExpression.DoMatch(o.LabelExpression, match);
+			return other is GotoCaseStatement o && this.LabelExpression.DoMatch(o.LabelExpression, match);
 		}
 	}
 
@@ -143,17 +131,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole GotoKeywordRole = new("goto");
 		public static readonly TokenRole DefaultKeywordRole = new("default");
 
-		public CSharpTokenNode GotoToken {
-			get { return GetChildByRole(GotoKeywordRole); }
-		}
+		public CSharpTokenNode GotoToken => GetChildByRole(GotoKeywordRole);
 
-		public CSharpTokenNode DefaultToken {
-			get { return GetChildByRole(DefaultKeywordRole); }
-		}
+		public CSharpTokenNode DefaultToken => GetChildByRole(DefaultKeywordRole);
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -172,8 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			GotoDefaultStatement o = other as GotoDefaultStatement;
-			return o != null;
+			return other is GotoDefaultStatement o;
 		}
 	}
 }

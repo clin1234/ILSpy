@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void DefaultValue()
 		{
-			ToCode(X(), () => new TimeSpan(1, 2, 3) == default(TimeSpan));
+			ToCode(X(), () => new TimeSpan(1, 2, 3) == default);
 		}
 
 		public void EnumConstant()
@@ -955,7 +955,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static DateTime ParseDateTime(this object str)
 		{
-			return default(DateTime);
+			return default;
 		}
 	}
 }

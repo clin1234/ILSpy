@@ -4632,7 +4632,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Issue1552Stmt(CustomStruct a, CustomStruct b)
 		{
 			CustomStruct customStruct = a + b;
-			++customStruct;
 		}
 
 		public void Issue1552StmtUseLater(CustomStruct a, CustomStruct b)
@@ -4663,7 +4662,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Issue1552StmtTwice(CustomStruct a, CustomStruct b)
 		{
 			CustomStruct customStruct = a + b;
-			++customStruct;
 			++customStruct;
 		}
 #endif

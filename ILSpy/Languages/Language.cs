@@ -84,9 +84,9 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the syntax highlighting used for this language.
 		/// </summary>
-		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting {
+		public virtual IHighlightingDefinition SyntaxHighlighting {
 			get {
-				return ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
+				return HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
 			}
 		}
 
@@ -455,7 +455,7 @@ namespace ICSharpCode.ILSpy
 		protected string GetDisplayName(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			string entityName;
-			if (entity is ITypeDefinition t && !t.MetadataToken.IsNil)
+			if (entity is ITypeDefinition { MetadataToken.IsNil: false } t)
 			{
 				MetadataReader metadata = t.ParentModule.PEFile.Metadata;
 				var typeDef = metadata.GetTypeDefinition((TypeDefinitionHandle)t.MetadataToken);
@@ -537,13 +537,13 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
+		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
 		{
-			var declaringType = (SRM.TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
+			var declaringType = (TypeDefinitionHandle)member.GetDeclaringType(module.Metadata);
 
-			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition)
+			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition)
 			{
-				declaringType = (SRM.TypeDefinitionHandle)member;
+				declaringType = (TypeDefinitionHandle)member;
 			}
 
 			return new CodeMappingInfo(module, declaringType);

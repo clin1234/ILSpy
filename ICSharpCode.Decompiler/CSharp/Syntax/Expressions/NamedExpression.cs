@@ -62,9 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole(Roles.Assign);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -88,8 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as NamedExpression;
-			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
+			return other is NamedExpression o && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

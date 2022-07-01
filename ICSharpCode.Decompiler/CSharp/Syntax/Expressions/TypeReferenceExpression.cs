@@ -56,8 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeReferenceExpression o = other as TypeReferenceExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is TypeReferenceExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

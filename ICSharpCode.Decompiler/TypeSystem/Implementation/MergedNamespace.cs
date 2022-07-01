@@ -62,48 +62,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.externAlias = parentNamespace.ExternAlias;
 		}
 
-		public string ExternAlias {
-			get { return externAlias; }
-		}
+		public string ExternAlias => externAlias;
 
-		public string FullName {
-			get { return namespaces[0].FullName; }
-		}
+		public string FullName => namespaces[0].FullName;
 
-		public string Name {
-			get { return namespaces[0].Name; }
-		}
+		public string Name => namespaces[0].Name;
 
-		public INamespace ParentNamespace {
-			get { return parentNamespace; }
-		}
+		public INamespace ParentNamespace => parentNamespace;
 
-		public IEnumerable<ITypeDefinition> Types {
-			get {
-				return namespaces.SelectMany(ns => ns.Types);
-			}
-		}
+		public IEnumerable<ITypeDefinition> Types => namespaces.SelectMany(ns => ns.Types);
 
-		public SymbolKind SymbolKind {
-			get { return SymbolKind.Namespace; }
-		}
+		public SymbolKind SymbolKind => SymbolKind.Namespace;
 
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
+		public ICompilation Compilation => compilation;
 
-		public IEnumerable<IModule> ContributingModules {
-			get { return namespaces.SelectMany(ns => ns.ContributingModules); }
-		}
+		public IEnumerable<IModule> ContributingModules => namespaces.SelectMany(ns => ns.ContributingModules);
 
-		public IEnumerable<INamespace> ChildNamespaces {
-			get { return GetChildNamespaces().Values; }
-		}
+		public IEnumerable<INamespace> ChildNamespaces => GetChildNamespaces().Values;
 
 		public INamespace GetChildNamespace(string name)
 		{
-			INamespace ns;
-			if (GetChildNamespaces().TryGetValue(name, out ns))
+			if (GetChildNamespaces().TryGetValue(name, out INamespace ns))
 				return ns;
 			else
 				return null;

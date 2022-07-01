@@ -123,11 +123,9 @@ namespace ICSharpCode.Decompiler.IL
 			return StackType.Unknown;
 		}
 
-		public StackType UnderlyingResultType { get => resultType; }
+		public StackType UnderlyingResultType => resultType;
 
-		public sealed override StackType ResultType {
-			get => IsLifted ? StackType.O : resultType;
-		}
+		public sealed override StackType ResultType => IsLifted ? StackType.O : resultType;
 
 		internal override void CheckInvariant(ILPhase phase)
 		{

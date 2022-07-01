@@ -46,9 +46,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		public int Count {
-			get { return items.Length; }
-		}
+		public int Count => items.Length;
 
 		public IEnumerator<TOutput> GetEnumerator()
 		{
@@ -90,9 +88,7 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 
-		public int Count {
-			get { return items.Length; }
-		}
+		public int Count => items.Length;
 
 		public IEnumerator<TOutput> GetEnumerator()
 		{

@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 
 		[Conditional("DEBUG")]
-		protected private void MakeDirty()
+private 		protected void MakeDirty()
 		{
 #if DEBUG
 			for (ILInstruction? inst = this; inst != null && !inst.IsDirty; inst = inst.parent)
@@ -420,11 +420,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// The ChildrenCollection does not actually store the list of children,
 		/// it merely allows accessing the children stored in the various slots.
 		/// </remarks>
-		public ChildrenCollection Children {
-			get {
-				return new(this);
-			}
-		}
+		public ChildrenCollection Children => new(this);
 
 		protected abstract int GetChildCount();
 		protected abstract ILInstruction GetChild(int index);
@@ -442,9 +438,7 @@ namespace ICSharpCode.Decompiler.IL
 				this.inst = inst!;
 			}
 
-			public int Count {
-				get { return inst.GetChildCount(); }
-			}
+			public int Count => inst.GetChildCount();
 
 			public ILInstruction this[int index] {
 				get { return inst.GetChild(index); }
@@ -514,11 +508,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			}
 
-			public ILInstruction Current {
-				get {
-					return inst!.GetChild(pos);
-				}
-			}
+			public ILInstruction Current => inst!.GetChild(pos);
 
 			public bool MoveNext()
 			{
@@ -536,9 +526,7 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			}
 
-			object System.Collections.IEnumerator.Current {
-				get { return this.Current; }
-			}
+			object System.Collections.IEnumerator.Current => this.Current;
 
 			void System.Collections.IEnumerator.Reset()
 			{
@@ -675,9 +663,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// of the ILAst; it does not make use of the <c>Parent</c> field so the considerations
 		/// about orphaned nodes and stale positions don't apply.
 		/// </remarks>
-		protected internal bool IsConnected {
-			get { return refCount > 0; }
-		}
+		protected internal bool IsConnected => refCount > 0;
 
 		/// <summary>
 		/// Called after the ILInstruction was connected to the root node of the ILAst.
@@ -723,9 +709,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// Note that is it is possible (though unusual) for a stale position to reference an orphaned node.
 		/// </remarks>
-		public ILInstruction? Parent {
-			get { return parent; }
-		}
+		public ILInstruction? Parent => parent;
 
 		/// <summary>
 		/// Gets the index of this node in the <c>Parent.Children</c> collection.

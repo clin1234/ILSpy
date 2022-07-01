@@ -44,25 +44,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.constantValue = constantValue;
 		}
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name => name;
 
-		public IType Type {
-			get { return type; }
-		}
+		public IType Type => type;
 
-		public bool IsConst {
-			get { return isConst; }
-		}
+		public bool IsConst => isConst;
 
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			return constantValue;
 		}
 
-		public SymbolKind SymbolKind {
-			get { return SymbolKind.Variable; }
-		}
+		public SymbolKind SymbolKind => SymbolKind.Variable;
 	}
 }

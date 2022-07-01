@@ -34,22 +34,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole SizeofKeywordRole = new("sizeof");
 
-		public CSharpTokenNode SizeOfToken {
-			get { return GetChildByRole(SizeofKeywordRole); }
-		}
+		public CSharpTokenNode SizeOfToken => GetChildByRole(SizeofKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public SizeOfExpression()
 		{
@@ -77,8 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SizeOfExpression o = other as SizeOfExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
+			return other is SizeOfExpression o && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

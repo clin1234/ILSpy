@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy
 
 			foreach (var node in context.SelectedTreeNodes)
 			{
-				if (node is TypeTreeNode typeNode && !typeNode.IsPublicAPI)
+				if (node is TypeTreeNode { IsPublicAPI: false })
 					return false;
 
 				if (node is EventTreeNode eventNode && (!eventNode.IsPublicAPI || !IsAccessible(eventNode.EventDefinition)))
@@ -68,33 +68,24 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		bool IsAccessible(IEntity entity)
+		static bool IsAccessible(IEntity entity)
 		{
 			if (entity.DeclaringTypeDefinition == null)
 				return false;
-			switch (entity.DeclaringTypeDefinition.Accessibility)
-			{
-				case Accessibility.Public:
-				case Accessibility.Protected:
-				case Accessibility.ProtectedOrInternal:
-					return true;
-				default:
-					return false;
-			}
+			return entity.DeclaringTypeDefinition.Accessibility switch {
+				Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+				_ => false,
+			};
 		}
 
-		bool IsDelegateOrEnumMember(IMember member)
+		static bool IsDelegateOrEnumMember(IMember member)
 		{
 			if (member.DeclaringTypeDefinition == null)
 				return false;
-			switch (member.DeclaringTypeDefinition.Kind)
-			{
-				case TypeKind.Delegate:
-				case TypeKind.Enum:
-					return true;
-				default:
-					return false;
-			}
+			return member.DeclaringTypeDefinition.Kind switch {
+				TypeKind.Delegate or TypeKind.Enum => true,
+				_ => false,
+			};
 		}
 
 		public void Execute(TextViewContext context)

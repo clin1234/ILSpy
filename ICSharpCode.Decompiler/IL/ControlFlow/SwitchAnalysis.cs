@@ -115,10 +115,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (block.Parent != RootBlock.Parent)
 					return false; // all blocks should belong to the same container
 			}
-			LongSet trueValues;
 			if (block.Instructions.Count >= 2
 				&& block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst)
-				&& AnalyzeCondition(condition, out trueValues)
+				&& AnalyzeCondition(condition, out LongSet trueValues)
 			)
 			{
 				if (!(tailOnly || block.Instructions.Count == 2))
@@ -126,8 +125,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				trueValues = trueValues.IntersectWith(inputValues);
 				if (trueValues.SetEquals(inputValues) || trueValues.IsEmpty)
 					return false;
-				Block trueBlock;
-				if (trueInst.MatchBranch(out trueBlock) && AnalyzeBlock(trueBlock, trueValues))
+				if (trueInst.MatchBranch(out Block trueBlock) && AnalyzeBlock(trueBlock, trueValues))
 				{
 					// OK, true block was further analyzed.
 					InnerBlocks.Add(trueBlock);
@@ -159,8 +157,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			var remainingValues = inputValues.ExceptWith(trueValues);
 			ILInstruction falseInst = block.Instructions.Last();
-			Block falseBlock;
-			if (falseInst.MatchBranch(out falseBlock) && AnalyzeBlock(falseBlock, remainingValues))
+			if (falseInst.MatchBranch(out Block falseBlock) && AnalyzeBlock(falseBlock, remainingValues))
 			{
 				// OK, false block was further analyzed.
 				InnerBlocks.Add(falseBlock);

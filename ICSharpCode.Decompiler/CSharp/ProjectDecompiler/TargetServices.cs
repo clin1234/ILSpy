@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static HashSet<string> dotNet30Assemblies = new(StringComparer.OrdinalIgnoreCase) {
+		static readonly HashSet<string> dotNet30Assemblies = new(StringComparer.OrdinalIgnoreCase) {
 			"ComSvcConfig, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
 			"infocard, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"Microsoft.Transactions.Bridge, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			"WsatConfig, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
 		};
 
-		static HashSet<string> dotNet35Assemblies = new(StringComparer.OrdinalIgnoreCase) {
+		static readonly HashSet<string> dotNet35Assemblies = new(StringComparer.OrdinalIgnoreCase) {
 			"AddInProcess, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"AddInProcess32, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"AddInUtil, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",

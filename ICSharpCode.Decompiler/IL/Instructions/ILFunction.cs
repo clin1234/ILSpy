@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					else
 					{
-						ctorCallStart = this.Descendants.FirstOrDefault(d => d is CallInstruction call && !(call is NewObj)
+						ctorCallStart = this.Descendants.FirstOrDefault(d => d is CallInstruction call && call is not NewObj
 							&& call.Method.IsConstructor
 							&& call.Method.DeclaringType.IsReferenceType == true
 							&& call.Parent is Block)?.StartILOffset ?? -1;
@@ -353,7 +353,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					usedILRanges.Add(new(inst.StartILOffset, inst.EndILOffset));
 				}
-				if (!(inst is ILFunction))
+				if (inst is not ILFunction)
 				{
 					foreach (var child in inst.Children)
 					{
@@ -370,11 +370,7 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
 
 		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
 		{

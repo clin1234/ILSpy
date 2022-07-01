@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Search
 			this.language = language;
 		}
 
-		float CalculateFitness(IEntity member)
+		static float CalculateFitness(IEntity member)
 		{
 			string text = member.Name;
 

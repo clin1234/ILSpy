@@ -44,9 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.targetILOffset = targetBlock.StartILOffset;
 		}
 
-		public int TargetILOffset {
-			get { return targetBlock != null ? targetBlock.StartILOffset : targetILOffset; }
-		}
+		public int TargetILOffset => targetBlock != null ? targetBlock.StartILOffset : targetILOffset;
 
 		public Block TargetBlock {
 			get {
@@ -66,9 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the BlockContainer that contains the target block.
 		/// </summary>
-		public BlockContainer TargetContainer {
-			get { return (BlockContainer)targetBlock?.Parent!; }
-		}
+		public BlockContainer TargetContainer => (BlockContainer)targetBlock?.Parent!;
 
 		protected override void Connected()
 		{
@@ -84,18 +80,12 @@ namespace ICSharpCode.Decompiler.IL
 				targetBlock.IncomingEdgeCount--;
 		}
 
-		public string TargetLabel {
-			get { return targetBlock != null ? targetBlock.Label : $"IL_{TargetILOffset:x4}"; }
-		}
+		public string TargetLabel => targetBlock != null ? targetBlock.Label : $"IL_{TargetILOffset:x4}";
 
 		/// <summary>
 		/// Gets whether this branch executes at least one finally block before jumping to the target block.
 		/// </summary>
-		public bool TriggersFinallyBlock {
-			get {
-				return GetExecutesFinallyBlock(this, TargetContainer);
-			}
-		}
+		public bool TriggersFinallyBlock => GetExecutesFinallyBlock(this, TargetContainer);
 
 		internal static bool GetExecutesFinallyBlock(ILInstruction? inst, BlockContainer? container)
 		{

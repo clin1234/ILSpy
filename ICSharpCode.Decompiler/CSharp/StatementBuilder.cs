@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement).WithILInstruction(inst);
 		}
 
-		internal IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
+		internal static IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -329,8 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!bodyInst.HasFlag(InstructionFlags.EndPointUnreachable))
 			{
 				// we need to insert 'break;'
-				BlockStatement block = body as BlockStatement;
-				if (block != null)
+				if (body is BlockStatement block)
 				{
 					block.Add(new BreakStatement());
 				}
@@ -427,8 +426,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)
 		{
 			var tryBlockConverted = Convert(tryBlock);
-			var tryCatch = tryBlockConverted as TryCatchStatement;
-			if (tryCatch != null && tryCatch.FinallyBlock.IsNull)
+			if (tryBlockConverted is TryCatchStatement tryCatch && tryCatch.FinallyBlock.IsNull)
 				return tryCatch; // extend existing try-catch
 			tryCatch = new() {
 				TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted }
@@ -544,19 +542,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					VariableKind.Local, disposeType,
 					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
 				);
-				Expression disposeInvocation = new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, disposeTypeMethodName));
+				Expression disposeInvocation = new InvocationExpression(new MemberReferenceExpression(ExpressionBuilder.ConvertVariable(disposeVariable).Expression, disposeTypeMethodName));
 				if (inst.IsAsync)
 				{
 					disposeInvocation = new UnaryOperatorExpression { Expression = disposeInvocation, Operator = UnaryOperatorType.Await };
 				}
 				return new BlockStatement {
-					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
+					new ExpressionStatement(new AssignmentExpression(ExpressionBuilder.ConvertVariable(var).Expression, resource.Detach())),
 					new TryCatchStatement {
 						TryBlock = ConvertAsBlock(inst.Body),
 						FinallyBlock = new() {
-							new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, new AsExpression(exprBuilder.ConvertVariable(var).Expression, exprBuilder.ConvertType(disposeType)))),
+							new ExpressionStatement(new AssignmentExpression(ExpressionBuilder.ConvertVariable(disposeVariable).Expression, new AsExpression(ExpressionBuilder.ConvertVariable(var).Expression, exprBuilder.ConvertType(disposeType)))),
 							new IfElseStatement {
-								Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
+								Condition = new BinaryOperatorExpression(ExpressionBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
 								TrueStatement = new ExpressionStatement(disposeInvocation)
 							}
 						}
@@ -626,7 +624,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return null;
 			}
 			// The using body must be a BlockContainer.
-			if (!(inst.Body is BlockContainer container))
+			if (inst.Body is not BlockContainer container)
 				return null;
 			bool isAsync = ((MemberReferenceExpression)((InvocationExpression)resource).Target).MemberName == "GetAsyncEnumerator";
 			if (isAsync != inst.IsAsync)
@@ -841,15 +839,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(a, b);
 		}
 
-		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
+		private static bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
 		{
-			if (!(expr is CastExpression cast))
+			if (expr is not CastExpression cast)
 			{
 				dynamicExpr = null;
 				return false;
 			}
 			dynamicExpr = cast.Expression;
-			if (!(expr.GetResolveResult() is ConversionResolveResult crr))
+			if (expr.GetResolveResult() is not ConversionResolveResult crr)
 				return false;
 			if (!crr.Type.IsKnownType(KnownTypeCode.IEnumerable))
 				return false;
@@ -864,7 +862,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Otherwise returns the unmodified container.
 		/// </summary>
 		/// <param name="optionalLeaveInst">If the leave is a return/break and has no side-effects, we can move the return out of the using-block and put it after the loop, otherwise returns null.</param>
-		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalLeaveInst)
+		static BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalLeaveInst)
 		{
 			optionalLeaveInst = null;
 			// Check block structure:
@@ -872,8 +870,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return container;
 			var nestedBlock = container.Blocks[0];
 			if (nestedBlock.Instructions.Count != 2 ||
-				!(nestedBlock.Instructions[0] is BlockContainer nestedContainer) ||
-				!(nestedBlock.Instructions[1] is Leave leave))
+				nestedBlock.Instructions[0] is not BlockContainer nestedContainer ||
+				nestedBlock.Instructions[1] is not Leave leave)
 				return container;
 			// If the leave has no value, just unwrap the BlockContainer.
 			if (leave.MatchLeave(container))
@@ -1036,7 +1034,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// or as target of ldobj.
 		/// (This only applies to value types.)
 		/// </summary>
-		bool VariableIsOnlyUsedInBlock(StLoc storeInst, BlockContainer usingContainer, BlockContainer loopContainer)
+		static bool VariableIsOnlyUsedInBlock(StLoc storeInst, BlockContainer usingContainer, BlockContainer loopContainer)
 		{
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(usingContainer)))
 				return false;
@@ -1066,14 +1064,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Returns true if singleGetter is a value type and its address is used as setter target.
 		/// </summary>
-		bool CurrentIsStructSetterTarget(ILInstruction inst, CallInstruction singleGetter)
+		static bool CurrentIsStructSetterTarget(ILInstruction inst, CallInstruction singleGetter)
 		{
-			if (!(inst.Parent is AddressOf addr))
+			if (inst.Parent is not AddressOf addr)
 				return false;
 			return IsTargetOfSetterCall(addr, singleGetter.Method.ReturnType);
 		}
 
-		bool IsTargetOfSetterCall(ILInstruction inst, IType targetType)
+		static bool IsTargetOfSetterCall(ILInstruction inst, IType targetType)
 		{
 			if (inst.ChildIndex != 0)
 				return false;
@@ -1095,7 +1093,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		bool ParentIsCurrentGetter(ILInstruction inst)
+		static bool ParentIsCurrentGetter(ILInstruction inst)
 		{
 			return inst.Parent is CallInstruction cv && cv.Method.IsAccessor &&
 				cv.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Getter;
@@ -1419,7 +1417,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (endContainerLabels.TryGetValue(container, out string label))
 			{
-				if (isLoop && !(blockStatement.LastOrDefault() is ContinueStatement))
+				if (isLoop && blockStatement.LastOrDefault() is not ContinueStatement)
 				{
 					blockStatement.Add(new ContinueStatement());
 				}

@@ -127,8 +127,8 @@ namespace ICSharpCode.ILSpy.Controls
 					relMousePos = new Vector(0.5, 0.5);
 				}
 
-				Point scrollOffset = new Point(this.HorizontalOffset, this.VerticalOffset);
-				Vector oldHalfViewport = new Vector(this.ViewportWidth / 2, this.ViewportHeight / 2);
+				Point scrollOffset = new(this.HorizontalOffset, this.VerticalOffset);
+				Vector oldHalfViewport = new(this.ViewportWidth / 2, this.ViewportHeight / 2);
 				Vector newHalfViewport = oldHalfViewport / newZoom * oldZoom;
 				Point oldCenter = scrollOffset + oldHalfViewport;
 				Point virtualMousePos = scrollOffset + new Vector(relMousePos.X * this.ViewportWidth, relMousePos.Y * this.ViewportHeight);

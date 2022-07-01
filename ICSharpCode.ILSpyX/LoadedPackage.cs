@@ -81,7 +81,7 @@ namespace ICSharpCode.ILSpyX
 				if (pos == -1)
 					return ("", filename); // file in root
 				else
-					return (filename.Substring(0, pos), filename.Substring(pos + 1));
+					return (filename[..pos], filename[(pos + 1)..]);
 			}
 
 			PackageFolder GetFolder(string name)

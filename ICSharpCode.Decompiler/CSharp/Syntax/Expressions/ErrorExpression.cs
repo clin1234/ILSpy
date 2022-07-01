@@ -31,17 +31,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public TextLocation Location { get; set; }
 
-		public override TextLocation StartLocation {
-			get {
-				return Location;
-			}
-		}
+		public override TextLocation StartLocation => Location;
 
-		public override TextLocation EndLocation {
-			get {
-				return Location;
-			}
-		}
+		public override TextLocation EndLocation => Location;
 
 		public string Error {
 			get;
@@ -74,8 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as ErrorExpression;
-			return o != null;
+			return other is ErrorExpression o;
 		}
 	}
 }

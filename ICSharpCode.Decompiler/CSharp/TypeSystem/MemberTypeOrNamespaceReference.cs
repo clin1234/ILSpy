@@ -46,21 +46,13 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.lookupMode = lookupMode;
 		}
 
-		public string Identifier {
-			get { return identifier; }
-		}
+		public string Identifier => identifier;
 
-		public TypeOrNamespaceReference Target {
-			get { return target; }
-		}
+		public TypeOrNamespaceReference Target => target;
 
-		public IList<ITypeReference> TypeArguments {
-			get { return typeArguments; }
-		}
+		public IList<ITypeReference> TypeArguments => typeArguments;
 
-		public NameLookupMode LookupMode {
-			get { return lookupMode; }
-		}
+		public NameLookupMode LookupMode => lookupMode;
 
 		/// <summary>
 		/// Adds a suffix to the identifier.
@@ -82,8 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		public override IType ResolveType(CSharpResolver resolver)
 		{
-			TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
-			return trr != null ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
+			return Resolve(resolver) is TypeResolveResult trr ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
 		}
 
 		public override string ToString()
@@ -109,8 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			MemberTypeOrNamespaceReference o = other as MemberTypeOrNamespaceReference;
-			return o != null && this.target == o.target
+			return other is MemberTypeOrNamespaceReference o && this.target == o.target
 				&& this.identifier == o.identifier && this.typeArguments == o.typeArguments
 				&& this.lookupMode == o.lookupMode;
 		}

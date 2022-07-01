@@ -7,7 +7,7 @@ namespace ICSharpCode.ILSpy.Themes
 	internal class ThemeManager
 	{
 		private bool _isDarkMode;
-		private readonly ResourceDictionary _themeDictionaryContainer = new ResourceDictionary();
+		private readonly ResourceDictionary _themeDictionaryContainer = new();
 
 
 		public static readonly ThemeManager Current = new();
@@ -30,19 +30,19 @@ namespace ICSharpCode.ILSpy.Themes
 			}
 		}
 
-		public Button CreateButton()
+		public static Button CreateButton()
 		{
 			return new Button {
 				Style = CreateButtonStyle()
 			};
 		}
 
-		public Style CreateButtonStyle()
+		public static Style CreateButtonStyle()
 		{
 			return new Style(typeof(Button), (Style)Application.Current.FindResource(typeof(Button)));
 		}
 
-		public Style CreateToolBarButtonStyle()
+		public static Style CreateToolBarButtonStyle()
 		{
 			return new Style(typeof(Button), (Style)Application.Current.FindResource(ToolBar.ButtonStyleKey));
 		}

@@ -52,8 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (o == null)
 					return false;
 			}
-			var trr = o.GetResolveResult() as TypeResolveResult;
-			return trr != null && trr.Type.Namespace == ns && trr.Type.Name == name;
+			return o.GetResolveResult() is TypeResolveResult trr && trr.Type.Namespace == ns && trr.Type.Name == name;
 		}
 
 		public override string ToString()
@@ -64,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 	sealed class LdTokenPattern : Pattern
 	{
-		AnyNode childNode;
+		readonly AnyNode childNode;
 
 		public LdTokenPattern(string groupName)
 		{
@@ -73,8 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			InvocationExpression ie = other as InvocationExpression;
-			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1)
+			if (other is InvocationExpression ie && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1)
 			{
 				return childNode.DoMatch(ie.Arguments.Single(), match);
 			}
@@ -92,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	sealed class TypeOfPattern : Pattern
 	{
-		INode childNode;
+		readonly INode childNode;
 
 		public TypeOfPattern(string groupName)
 		{

@@ -225,7 +225,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			}
 
-			ILInstruction switchValue = null;
 			if (isVBCompareString && string.IsNullOrEmpty(firstBlockValue))
 			{
 				if (!AddSwitchSection(null, firstBlock ?? firstBlockOrDefaultJump))
@@ -241,7 +240,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			bool removeExtraLoad = false;
 			bool keepAssignmentBefore = false;
-			if (i >= 1 && instructions[i - 1].MatchStLoc(switchValueVar, out switchValue))
+			if (i >= 1 && instructions[i - 1].MatchStLoc(switchValueVar, out ILInstruction switchValue))
 			{
 				// stloc switchValueVar(switchValue)
 				// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
@@ -358,7 +357,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool ValidateUsesOfSwitchValueVariable(ILVariable switchValueVar, HashSet<Block> caseBlocks)
+		private static bool ValidateUsesOfSwitchValueVariable(ILVariable switchValueVar, HashSet<Block> caseBlocks)
 		{
 			foreach (var use in switchValueVar.LoadInstructions)
 			{
@@ -457,7 +456,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool IsIsInternedCall(Call call, out ILInstruction argument)
+		static bool IsIsInternedCall(Call call, out ILInstruction argument)
 		{
 			if (call != null
 				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
@@ -487,7 +486,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The <paramref name="switchVariable"/> is updated if the value gets copied to a different variable.
 		/// See comments below for more info.
 		/// </summary>
-		ILInstruction MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out bool emptyStringEqualsNull, out ILInstruction caseBlockOrLeave)
+		static ILInstruction MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out bool emptyStringEqualsNull, out ILInstruction caseBlockOrLeave)
 		{
 			value = null;
 			caseBlockOrLeave = null;
@@ -571,8 +570,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			BlockContainer leaveContainer = null;
 			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(out leaveContainer))
 				return false;
-			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
-			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
+			if (instructions.ElementAtOrDefault(i + 1) is not Branch nextBlockJump || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
 				return false;
 			// match second block: checking compiler-generated Dictionary<string, int> for null
 			// if (comp(volatile.ldobj System.Collections.Generic.Dictionary`2[[System.String],[System.Int32]](ldsflda $$method0x600000c-1) != ldnull)) br caseNullBlock
@@ -687,7 +685,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool FixCasesWithoutValue(List<SwitchSection> sections, List<(string, int)> stringValues)
+		static bool FixCasesWithoutValue(List<SwitchSection> sections, List<(string, int)> stringValues)
 		{
 			bool HasLabel(SwitchSection section)
 			{
@@ -724,7 +722,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool AddNullSection(List<SwitchSection> sections, List<(string Value, int Index)> stringValues, Block nullValueCaseBlock)
+		static bool AddNullSection(List<SwitchSection> sections, List<(string Value, int Index)> stringValues, Block nullValueCaseBlock)
 		{
 			var label = new LongSet(stringValues.Max(item => item.Index) + 1);
 			var possibleConflicts = sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
@@ -744,10 +742,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'volatile.ldobj dictionaryType(ldsflda dictField)'
 		/// </summary>
-		bool MatchDictionaryFieldLoad(ILInstruction inst, Func<IType, bool> typeMatcher, out IField dictField, out IType dictionaryType)
+		static bool MatchDictionaryFieldLoad(ILInstruction inst, Func<IType, bool> typeMatcher, out IField dictField, out IType dictionaryType)
 		{
 			dictField = null;
-			dictionaryType = null;
 			return inst.MatchLdObj(out var dictionaryFieldLoad, out dictionaryType) &&
 				typeMatcher(dictionaryType) &&
 				dictionaryFieldLoad.MatchLdsFlda(out dictField) &&
@@ -757,7 +754,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches and extracts values from Add-call sequences.
 		/// </summary>
-		bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, out Block blockAfterInit, IType dictionaryType, IField dictionaryField, bool isHashtablePattern)
+		static bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, out Block blockAfterInit, IType dictionaryType, IField dictionaryField, bool isHashtablePattern)
 		{
 			values = null;
 			blockAfterInit = null;
@@ -806,7 +803,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -or-
 		/// call Add(ldloc dictVar, ldstr value, box System.Int32(ldc.i4 index))
 		/// </summary>
-		bool MatchAddCall(IType dictionaryType, ILInstruction inst, ILVariable dictVar, out int index, out string value)
+		static bool MatchAddCall(IType dictionaryType, ILInstruction inst, ILVariable dictVar, out int index, out string value)
 		{
 			value = null;
 			index = -1;
@@ -906,7 +903,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var sections = new List<SwitchSection>(switchInst.Sections);
 			// switch contains case null: 
-			if (!(nullCaseBlockBranch is Leave) && nullCaseBlock != defaultBlock)
+			if (nullCaseBlockBranch is not Leave && nullCaseBlock != defaultBlock)
 			{
 				if (!AddNullSection(sections, stringValues, nullCaseBlock))
 				{
@@ -985,8 +982,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (instructions[i].MatchIfInstruction(out var condition, out var exitBlockJump)
 				&& condition.MatchCompEqualsNull(out instForNullCheck))
 			{
-				var nextBlockJump = instructions[i + 1] as Branch;
-				if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
+				if (instructions[i + 1] is not Branch nextBlockJump || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
 					return false;
 				if (!exitBlockJump.MatchBranch(out nullValueCaseBlock))
 					return false;
@@ -1147,7 +1143,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	    br newDefaultBlock
 		/// }
 		/// </summary>
-		private bool IsNullCheckInDefaultBlock(ref Block exitOrDefaultBlock, ILVariable switchVar, out Block nullValueCaseBlock)
+		private static bool IsNullCheckInDefaultBlock(ref Block exitOrDefaultBlock, ILVariable switchVar, out Block nullValueCaseBlock)
 		{
 			nullValueCaseBlock = null;
 			if (exitOrDefaultBlock == null)
@@ -1173,7 +1169,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// if (call op_Equality(ldloc switchValueVar, stringValue)) br body
 		/// br exit
 		/// </summary>
-		bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock, out string stringValue, out bool emptyStringEqualsNull)
+		static bool MatchRoslynCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock, out string stringValue, out bool emptyStringEqualsNull)
 		{
 			bodyOrLeave = null;
 			defaultOrExitBlock = null;
@@ -1233,7 +1229,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	br exit
 		/// }
 		/// </summary>
-		bool MatchRoslynEmptyStringCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock)
+		static bool MatchRoslynEmptyStringCaseBlockHead(Block target, ILVariable switchValueVar, out ILInstruction bodyOrLeave, out Block defaultOrExitBlock)
 		{
 			bodyOrLeave = null;
 			defaultOrExitBlock = null;
@@ -1282,7 +1278,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// call get_Length(ldloc switchValueVar)
 		/// </summary>
-		bool MatchStringLengthCall(ILInstruction inst, ILVariable switchValueVar)
+		static bool MatchStringLengthCall(ILInstruction inst, ILVariable switchValueVar)
 		{
 			return inst is Call call
 				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
@@ -1303,7 +1299,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(value is Call c && c.Arguments.Count == 1 && c.Method.Name == "ComputeStringHash" && c.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()))
 				return false;
-			if (!(c.Arguments[0] is LdLoc))
+			if (c.Arguments[0] is not LdLoc)
 				return false;
 			switchValue = (LdLoc)c.Arguments[0];
 			return true;
@@ -1313,7 +1309,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches 'call string.op_Equality(ldloc(variable), ldstr(stringValue))'
 		///      or 'comp(ldloc(variable) == ldnull)'
 		/// </summary>
-		bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue, out bool isVBCompareString)
+		static bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue, out bool isVBCompareString)
 		{
 			return MatchStringEqualityComparison(condition, out var v, out stringValue, out isVBCompareString) && v == variable;
 		}
@@ -1322,7 +1318,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Matches 'call string.op_Equality(ldloc(variable), ldstr(stringValue))'
 		///      or 'comp(ldloc(variable) == ldnull)'
 		/// </summary>
-		bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue, out bool isVBCompareString)
+		static bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue, out bool isVBCompareString)
 		{
 			stringValue = null;
 			variable = null;

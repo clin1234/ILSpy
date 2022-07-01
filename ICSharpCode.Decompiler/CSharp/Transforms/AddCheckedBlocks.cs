@@ -241,8 +241,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public void Run(AstNode node, TransformContext context)
 		{
-			BlockStatement block = node as BlockStatement;
-			if (block == null)
+			if (node is not BlockStatement block)
 			{
 				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
 				{
@@ -348,8 +347,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				result.CostInUncheckedContext += childResult.CostInUncheckedContext;
 				result.NodesToInsertInUncheckedContext += childResult.NodesToInsertInUncheckedContext;
 			}
-			Expression expr = node as Expression;
-			if (expr != null)
+			if (node is Expression expr)
 			{
 				CheckedUncheckedAnnotation annotation = expr.Annotation<CheckedUncheckedAnnotation>();
 				if (annotation != null)

@@ -274,13 +274,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool IsValidObjectInitializerTarget(List<AccessPathElement> path)
+		static bool IsValidObjectInitializerTarget(List<AccessPathElement> path)
 		{
 			if (path.Count == 0)
 				return true;
 			var element = path.Last();
 			var previous = path.SkipLast(1).LastOrDefault();
-			if (!(element.Member is IProperty p))
+			if (element.Member is not IProperty p)
 				return true;
 			return !p.IsIndexer || NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(previous.Member?.ReturnType, element.Member.DeclaringType);
 		}

@@ -41,9 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			this.identifier = identifier ?? throw new ArgumentNullException(nameof(identifier));
 		}
 
-		public string Identifier {
-			get { return identifier; }
-		}
+		public string Identifier => identifier;
 
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
@@ -68,8 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			AliasNamespaceReference anr = other as AliasNamespaceReference;
-			return anr != null && this.identifier == anr.identifier;
+			return other is AliasNamespaceReference anr && this.identifier == anr.identifier;
 		}
 	}
 }

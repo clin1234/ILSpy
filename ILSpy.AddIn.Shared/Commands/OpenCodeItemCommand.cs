@@ -198,8 +198,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				if (symbol != null)
 					return symbol;
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 

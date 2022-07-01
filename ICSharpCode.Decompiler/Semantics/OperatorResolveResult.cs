@@ -53,31 +53,23 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// Gets the operator type.
 		/// </summary>
-		public ExpressionType OperatorType {
-			get { return operatorType; }
-		}
+		public ExpressionType OperatorType => operatorType;
 
 		/// <summary>
 		/// Gets the operands.
 		/// </summary>
-		public IList<ResolveResult> Operands {
-			get { return operands; }
-		}
+		public IList<ResolveResult> Operands => operands;
 
 		/// <summary>
 		/// Gets the user defined operator method.
 		/// Returns null if this is a predefined operator.
 		/// </summary>
-		public IMethod UserDefinedOperatorMethod {
-			get { return userDefinedOperatorMethod; }
-		}
+		public IMethod UserDefinedOperatorMethod => userDefinedOperatorMethod;
 
 		/// <summary>
 		/// Gets whether this is a lifted operator.
 		/// </summary>
-		public bool IsLiftedOperator {
-			get { return isLiftedOperator; }
-		}
+		public bool IsLiftedOperator => isLiftedOperator;
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{

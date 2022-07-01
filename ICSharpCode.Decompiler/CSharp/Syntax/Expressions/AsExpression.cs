@@ -39,9 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode AsToken {
-			get { return GetChildByRole(AsKeywordRole); }
-		}
+		public CSharpTokenNode AsToken => GetChildByRole(AsKeywordRole);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
@@ -75,8 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AsExpression o = other as AsExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.Type.DoMatch(o.Type, match);
+			return other is AsExpression o && this.Expression.DoMatch(o.Expression, match) && this.Type.DoMatch(o.Type, match);
 		}
 	}
 }

@@ -211,11 +211,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			readOnlyStruct.Method();
 		}
 
-		public void M(in DateTime a = default(DateTime))
+		public void M(in DateTime a = default)
 		{
 		}
 
-		public void M2<T>(in T a = default(T))
+		public void M2<T>(in T a = default)
 		{
 		}
 

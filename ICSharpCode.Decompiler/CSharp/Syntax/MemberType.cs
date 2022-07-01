@@ -69,9 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole(Roles.TypeArgument);
 
 		public MemberType()
 		{
@@ -114,8 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MemberType o = other as MemberType;
-			return o != null && this.IsDoubleColon == o.IsDoubleColon
+			return other is MemberType o && this.IsDoubleColon == o.IsDoubleColon
 				&& MatchString(this.MemberName, o.MemberName) && this.Target.DoMatch(o.Target, match)
 				&& this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
@@ -128,8 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			TypeOrNamespaceReference t;
 			if (this.IsDoubleColon)
 			{
-				SimpleType st = this.Target as SimpleType;
-				if (st != null)
+				if (this.Target is SimpleType st)
 				{
 					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
 				}

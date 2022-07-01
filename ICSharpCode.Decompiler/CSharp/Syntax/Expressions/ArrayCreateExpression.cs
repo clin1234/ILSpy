@@ -28,26 +28,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new("AdditionalArraySpecifier", null);
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new("Initializer", ArrayInitializerExpression.Null);
 
-		public CSharpTokenNode NewToken {
-			get { return GetChildByRole(NewKeywordRole); }
-		}
+		public CSharpTokenNode NewToken => GetChildByRole(NewKeywordRole);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Argument); }
-		}
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole(Roles.Argument);
 
 		/// <summary>
 		/// Gets additional array ranks (those without size info).
 		/// Empty for "new int[5,1]"; will contain a single element for "new int[5][]".
 		/// </summary>
-		public AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers {
-			get { return GetChildrenByRole(AdditionalArraySpecifierRole); }
-		}
+		public AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers => GetChildrenByRole(AdditionalArraySpecifierRole);
 
 		public ArrayInitializerExpression Initializer {
 			get { return GetChildByRole(InitializerRole); }
@@ -71,8 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArrayCreateExpression o = other as ArrayCreateExpression;
-			return o != null && this.Type.DoMatch(o.Type, match)
+			return other is ArrayCreateExpression o && this.Type.DoMatch(o.Type, match)
 				&& this.Arguments.DoMatch(o.Arguments, match)
 				&& this.AdditionalArraySpecifiers.DoMatch(o.AdditionalArraySpecifiers, match)
 				&& this.Initializer.DoMatch(o.Initializer, match);

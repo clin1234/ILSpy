@@ -28,13 +28,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		readonly string groupName;
 		readonly INode childNode;
 
-		public string GroupName {
-			get { return groupName; }
-		}
+		public string GroupName => groupName;
 
-		public INode ChildNode {
-			get { return childNode; }
-		}
+		public INode ChildNode => childNode;
 
 		public NamedNode(string groupName, INode childNode)
 		{

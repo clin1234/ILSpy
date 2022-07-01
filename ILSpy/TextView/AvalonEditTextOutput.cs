@@ -50,12 +50,11 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class DefinitionLookup
 	{
-		internal Dictionary<object, int> definitions = new Dictionary<object, int>();
+		internal Dictionary<object, int> definitions = new();
 
 		public int GetDefinitionPosition(object definition)
 		{
-			int val;
-			if (definitions.TryGetValue(definition, out val))
+			if (definitions.TryGetValue(definition, out int val))
 				return val;
 			else
 				return -1;
@@ -74,7 +73,7 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		int lastLineStart = 0;
 		int lineNumber = 1;
-		readonly StringBuilder b = new StringBuilder();
+		readonly StringBuilder b = new();
 
 		/// <summary>Current indentation level</summary>
 		int indent;
@@ -93,23 +92,23 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public Uri Address { get; set; }
 
-		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
+		internal readonly List<VisualLineElementGenerator> elementGenerators = new();
 
 		/// <summary>List of all references that were written to the output</summary>
-		TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
+		TextSegmentCollection<ReferenceSegment> references = new();
 
 		/// <summary>Stack of the fold markers that are open but not closed yet</summary>
-		Stack<(NewFolding, int startLine)> openFoldings = new Stack<(NewFolding, int startLine)>();
+		Stack<(NewFolding, int startLine)> openFoldings = new();
 
 		/// <summary>List of all foldings that were written to the output</summary>
-		internal readonly List<NewFolding> Foldings = new List<NewFolding>();
+		internal readonly List<NewFolding> Foldings = new();
 
 		internal readonly DefinitionLookup DefinitionLookup = new();
 
 		internal bool EnableHyperlinks { get; set; }
 
 		/// <summary>Embedded UIElements, see <see cref="UIElementGenerator"/>.</summary>
-		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new List<KeyValuePair<int, Lazy<UIElement>>>();
+		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new();
 
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 
@@ -342,8 +341,8 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
-		HighlightingColor currentColor = new HighlightingColor();
+		readonly Stack<HighlightingColor> colorStack = new();
+		HighlightingColor currentColor = new();
 		int currentColorBegin = -1;
 
 		public void BeginSpan(HighlightingColor highlightingColor)

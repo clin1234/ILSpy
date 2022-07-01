@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsDegenerateQuery(QueryExpression query)
+		static bool IsDegenerateQuery(QueryExpression query)
 		{
 			if (query == null)
 				return false;
@@ -106,8 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (invocation == null)
 				return null;
-			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
-			if (mre == null || IsNullConditional(mre.Target))
+			if (invocation.Target is not MemberReferenceExpression mre || IsNullConditional(mre.Target))
 				return null;
 			switch (mre.MemberName)
 			{
@@ -170,8 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						return null;
 					if (IsNullConditional(collectionSelector))
 						return null;
-					LambdaExpression lambda = invocation.Arguments.ElementAt(1) as LambdaExpression;
-					if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression)
+					if (invocation.Arguments.ElementAt(1) is LambdaExpression lambda && lambda.Parameters.Count == 2 && lambda.Body is Expression)
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
 						ParameterDeclaration p2 = lambda.Parameters.ElementAt(1);
@@ -261,8 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Expression innerLambda = invocation.Arguments.ElementAt(2);
 					if (!MatchSimpleLambda(innerLambda, out ParameterDeclaration element2, out Expression key2))
 						return null;
-					LambdaExpression lambda = invocation.Arguments.ElementAt(3) as LambdaExpression;
-					if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression)
+					if (invocation.Arguments.ElementAt(3) is LambdaExpression lambda && lambda.Parameters.Count == 2 && lambda.Body is Expression)
 					{
 						ParameterDeclaration p1 = lambda.Parameters.ElementAt(0);
 						ParameterDeclaration p2 = lambda.Parameters.ElementAt(1);
@@ -301,7 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return ((mre.Target is InvocationExpression && mre.Parent is InvocationExpression) || mre.Parent?.Parent is QueryClause);
 		}
 
-		QueryFromClause MakeFromClause(ParameterDeclaration parameter, Expression body)
+		static QueryFromClause MakeFromClause(ParameterDeclaration parameter, Expression body)
 		{
 			QueryFromClause fromClause = new() {
 				Identifier = parameter.Name,
@@ -313,8 +310,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		class ApplyAnnotationVisitor : DepthFirstAstVisitor<AstNode>
 		{
-			private LetIdentifierAnnotation annotation;
-			private string identifier;
+			private readonly LetIdentifierAnnotation annotation;
+			private readonly string identifier;
 
 			public ApplyAnnotationVisitor(LetIdentifierAnnotation annotation, string identifier)
 			{
@@ -330,7 +327,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsNullConditional(Expression target)
+		static bool IsNullConditional(Expression target)
 		{
 			return target is UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional };
 		}
@@ -341,7 +338,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// - the Select-call is explicit (see caller(s))
 		/// - the expression is a plain identifier matching the parameter name
 		/// </summary>
-		Expression WrapExpressionInParenthesesIfNecessary(Expression expression, string parameterName)
+		static Expression WrapExpressionInParenthesesIfNecessary(Expression expression, string parameterName)
 		{
 			if (expression is IdentifierExpression ident && parameterName.Equals(ident.Identifier, StringComparison.Ordinal))
 				return new ParenthesizedExpression(expression);
@@ -355,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (invocation == null || invocation.Arguments.Count != 1)
 				return false;
-			if (!(invocation.Target is MemberReferenceExpression mre))
+			if (invocation.Target is not MemberReferenceExpression mre)
 				return false;
 			if (!MatchSimpleLambda(invocation.Arguments.Single(), out ParameterDeclaration parameter, out _))
 				return false;
@@ -371,7 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
-		bool MatchSimpleLambda(Expression expr, out ParameterDeclaration parameter, out Expression body)
+		static bool MatchSimpleLambda(Expression expr, out ParameterDeclaration parameter, out Expression body)
 		{
 			if (expr is LambdaExpression lambda && lambda.Parameters.Count == 1 && lambda.Body is Expression)
 			{

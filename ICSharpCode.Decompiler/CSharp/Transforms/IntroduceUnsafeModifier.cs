@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				next = child.NextSibling;
 				result |= child.AcceptVisitor(this);
 			}
-			if (result && node is EntityDeclaration && !(node is Accessor))
+			if (result && node is EntityDeclaration && node is not Accessor)
 			{
 				((EntityDeclaration)node).Modifiers |= Modifiers.Unsafe;
 				return false;
@@ -196,17 +196,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		private bool ContainsPointer(IType type)
 		{
-			switch (type?.Kind)
-			{
-				case TypeKind.Pointer:
-				case TypeKind.FunctionPointer:
-					return true;
-				case TypeKind.ByReference:
-				case TypeKind.Array:
-					return IsUnsafeType(((Decompiler.TypeSystem.Implementation.TypeWithElementType)type).ElementType);
-				default:
-					return false;
-			}
+			return (type?.Kind) switch {
+				TypeKind.Pointer or TypeKind.FunctionPointer => true,
+				TypeKind.ByReference or TypeKind.Array => IsUnsafeType(((Decompiler.TypeSystem.Implementation.TypeWithElementType)type).ElementType),
+				_ => false,
+			};
 		}
 	}
 }

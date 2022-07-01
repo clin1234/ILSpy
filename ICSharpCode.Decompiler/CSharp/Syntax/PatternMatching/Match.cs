@@ -29,9 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		List<KeyValuePair<string, INode>> results;
 
-		public bool Success {
-			get { return results != null; }
-		}
+		public bool Success => results != null;
 
 		internal static Match CreateNew()
 		{

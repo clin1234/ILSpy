@@ -279,19 +279,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType DeclaringType => DeclaringTypeDefinition;
 
-		public bool? IsReferenceType {
-			get {
-				switch (Kind)
-				{
-					case TypeKind.Struct:
-					case TypeKind.Enum:
-					case TypeKind.Void:
-						return false;
-					default:
-						return true;
-				}
-			}
-		}
+		public bool? IsReferenceType => Kind switch {
+			TypeKind.Struct or TypeKind.Enum or TypeKind.Void => false,
+			_ => (bool?)true,
+		};
 
 		public int TypeParameterCount => TypeParameters.Count;
 
@@ -445,29 +436,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		public Accessibility Accessibility {
-			get {
-				switch (attributes & TypeAttributes.VisibilityMask)
-				{
-					case TypeAttributes.NotPublic:
-					case TypeAttributes.NestedAssembly:
-						return Accessibility.Internal;
-					case TypeAttributes.Public:
-					case TypeAttributes.NestedPublic:
-						return Accessibility.Public;
-					case TypeAttributes.NestedPrivate:
-						return Accessibility.Private;
-					case TypeAttributes.NestedFamily:
-						return Accessibility.Protected;
-					case TypeAttributes.NestedFamANDAssem:
-						return Accessibility.ProtectedAndInternal;
-					case TypeAttributes.NestedFamORAssem:
-						return Accessibility.ProtectedOrInternal;
-					default:
-						return Accessibility.None;
-				}
-			}
-		}
+		public Accessibility Accessibility => (attributes & TypeAttributes.VisibilityMask) switch {
+			TypeAttributes.NotPublic or TypeAttributes.NestedAssembly => Accessibility.Internal,
+			TypeAttributes.Public or TypeAttributes.NestedPublic => Accessibility.Public,
+			TypeAttributes.NestedPrivate => Accessibility.Private,
+			TypeAttributes.NestedFamily => Accessibility.Protected,
+			TypeAttributes.NestedFamANDAssem => Accessibility.ProtectedAndInternal,
+			TypeAttributes.NestedFamORAssem => Accessibility.ProtectedOrInternal,
+			_ => Accessibility.None,
+		};
 
 		public bool IsStatic => (attributes & (TypeAttributes.Abstract | TypeAttributes.Sealed)) == (TypeAttributes.Abstract | TypeAttributes.Sealed);
 		public bool IsAbstract => (attributes & TypeAttributes.Abstract) != 0;
@@ -544,7 +521,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region GetMembers()
-		IEnumerable<T> GetFiltered<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
+		static IEnumerable<T> GetFiltered<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
 		{
 			if (filter == null)
 				return input;
@@ -552,7 +529,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return ApplyFilter(input, filter);
 		}
 
-		IEnumerable<T> ApplyFilter<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
+		static IEnumerable<T> ApplyFilter<T>(IEnumerable<T> input, Predicate<T> filter) where T : class
 		{
 			foreach (var member in input)
 			{

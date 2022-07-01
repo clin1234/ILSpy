@@ -1921,10 +1921,7 @@ namespace ICSharpCode.Decompiler
 
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null)
-			{
-				PropertyChanged(this, new(propertyName));
-			}
+			PropertyChanged?.Invoke(this, new(propertyName));
 		}
 
 		public DecompilerSettings Clone()

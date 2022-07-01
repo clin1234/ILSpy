@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				stateVariables.Add(v);
 		}
 
-		public IEnumerable<ILVariable> StateVariables { get => stateVariables; }
+		public IEnumerable<ILVariable> StateVariables => stateVariables;
 
 		static readonly SymbolicValue Failed = new(SymbolicValueType.Unknown);
 

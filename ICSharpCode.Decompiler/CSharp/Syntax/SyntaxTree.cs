@@ -35,11 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<AstNode> MemberRole = new("Member", Null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		string fileName;
 
@@ -54,9 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstNode> Members {
-			get { return GetChildrenByRole(MemberRole); }
-		}
+		public AstNodeCollection<AstNode> Members => GetChildrenByRole(MemberRole);
 
 		IList<string> conditionalSymbols = null;
 
@@ -119,8 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SyntaxTree o = other as SyntaxTree;
-			return o != null && this.Members.DoMatch(o.Members, match);
+			return other is SyntaxTree o && this.Members.DoMatch(o.Members, match);
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

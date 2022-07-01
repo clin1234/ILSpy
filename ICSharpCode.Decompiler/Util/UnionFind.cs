@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	public class UnionFind<T> where T : notnull
 	{
-		Dictionary<T, Node> mapping;
+		readonly Dictionary<T, Node> mapping;
 
 		class Node
 		{

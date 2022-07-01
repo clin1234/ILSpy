@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// 
 		/// All other uses of V are in blocks dominated by trueBlock.
-		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
+		private static bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 				return false;
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
+		private static bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
 			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			var targetBlock = trueInst as Block;
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (match.type[T].notnull(V = testedOperand)) br unboxBlock
 		///		br falseBlock
 		///	}
-		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
+		private static bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!MatchIsInstBlock(block, out var type, out var testedOperand,
 				out var unboxBlock, out var falseBlock))
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	...
 		/// if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
 		/// br unboxBlock
-		private bool MatchIsInstBlock(Block block,
+		private static bool MatchIsInstBlock(Block block,
 			[NotNullWhen(true)] out IType? type,
 			[NotNullWhen(true)] out LdLoc? testedOperand,
 			[NotNullWhen(true)] out Block? unboxBlock,
@@ -330,7 +330,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V(unbox.any T(ldloc testedOperand))
 		/// 	...
 		/// }
-		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedOperand,
+		private static bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedOperand,
 			[NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out ILInstruction? storeToV)
 		{
 			v = null;

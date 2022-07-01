@@ -105,7 +105,7 @@ namespace ILSpy.BamlDecompiler.Baml
 			ReadData(reader, size - (int)(reader.BaseStream.Position - pos));
 		}
 
-		int SizeofEncodedInt(int val)
+		static int SizeofEncodedInt(int val)
 		{
 			if ((val & ~0x7F) == 0)
 			{
@@ -336,7 +336,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -366,7 +366,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -801,7 +801,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)
@@ -831,7 +831,7 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr)
 		{
-			bool keys = true;
+			bool keys;
 			do
 			{
 				switch (doc[index].Type)

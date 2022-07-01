@@ -32,21 +32,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
-		public CSharpTokenNode SwitchToken {
-			get { return GetChildByRole(SwitchKeywordRole); }
-		}
+		public CSharpTokenNode SwitchToken => GetChildByRole(SwitchKeywordRole);
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
-		public AstNodeCollection<SwitchExpressionSection> SwitchSections {
-			get { return GetChildrenByRole(SwitchSectionRole); }
-		}
+		public AstNodeCollection<SwitchExpressionSection> SwitchSections => GetChildrenByRole(SwitchSectionRole);
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -65,8 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchExpression o = other as SwitchExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
+			return other is SwitchExpression o && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
 		}
 	}
 
@@ -83,9 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(PatternRole, value); }
 		}
 
-		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole(Roles.Arrow); }
-		}
+		public CSharpTokenNode ArrowToken => GetChildByRole(Roles.Arrow);
 
 		public Expression Body {
 			get { return GetChildByRole(BodyRole); }
@@ -111,8 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchExpressionSection o = other as SwitchExpressionSection;
-			return o != null && this.Pattern.DoMatch(o.Pattern, match) && this.Body.DoMatch(o.Body, match);
+			return other is SwitchExpressionSection o && this.Pattern.DoMatch(o.Pattern, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}
 }

@@ -32,7 +32,7 @@ namespace ICSharpCode.TreeView
 		/// </summary>
 		internal SharpTreeNode root;
 		readonly bool includeRoot;
-		readonly object syncRoot = new object();
+		readonly object syncRoot = new();
 
 		public TreeFlattener(SharpTreeNode modelRoot, bool includeRoot)
 		{
@@ -79,7 +79,7 @@ namespace ICSharpCode.TreeView
 		public object this[int index] {
 			get {
 				if (index < 0 || index >= this.Count)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException(nameof(index));
 				return SharpTreeNode.GetNodeByVisibleIndex(root, includeRoot ? index : index + 1);
 			}
 			set {
@@ -95,8 +95,7 @@ namespace ICSharpCode.TreeView
 
 		public int IndexOf(object item)
 		{
-			SharpTreeNode node = item as SharpTreeNode;
-			if (node != null && node.IsVisible && node.GetListRoot() == root)
+			if (item is SharpTreeNode node && node.IsVisible && node.GetListRoot() == root)
 			{
 				if (includeRoot)
 					return SharpTreeNode.GetVisibleIndexForNode(node);

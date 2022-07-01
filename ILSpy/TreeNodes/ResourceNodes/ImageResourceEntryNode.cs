@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			try
 			{
 				AvalonEditTextOutput output = new();
-				BitmapImage image = new BitmapImage();
+				BitmapImage image = new();
 				image.BeginInit();
 				image.StreamSource = OpenStream();
 				image.EndInit();

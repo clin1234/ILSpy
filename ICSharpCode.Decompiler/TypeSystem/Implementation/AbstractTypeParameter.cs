@@ -53,31 +53,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.variance = variance;
 		}
 
-		SymbolKind ISymbol.SymbolKind {
-			get { return SymbolKind.TypeParameter; }
-		}
+		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
 
-		public SymbolKind OwnerType {
-			get { return ownerType; }
-		}
+		public SymbolKind OwnerType => ownerType;
 
-		public IEntity Owner {
-			get { return owner; }
-		}
+		public IEntity Owner => owner;
 
-		public int Index {
-			get { return index; }
-		}
+		public int Index => index;
 
 		public abstract IEnumerable<IAttribute> GetAttributes();
 
-		public VarianceModifier Variance {
-			get { return variance; }
-		}
+		public VarianceModifier Variance => variance;
 
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
+		public ICompilation Compilation => compilation;
 
 		volatile IType effectiveBaseClass;
 
@@ -169,9 +157,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract bool HasUnmanagedConstraint { get; }
 		public abstract Nullability NullabilityConstraint { get; }
 
-		public TypeKind Kind {
-			get { return TypeKind.TypeParameter; }
-		}
+		public TypeKind Kind => TypeKind.TypeParameter;
 
 		public bool? IsReferenceType {
 			get {
@@ -217,45 +203,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return new NullabilityAnnotatedTypeParameter(this, nullability);
 		}
 
-		IType IType.DeclaringType {
-			get { return null; }
-		}
+		IType IType.DeclaringType => null;
 
-		int IType.TypeParameterCount {
-			get { return 0; }
-		}
+		int IType.TypeParameterCount => 0;
 
-		IReadOnlyList<ITypeParameter> IType.TypeParameters {
-			get { return EmptyList<ITypeParameter>.Instance; }
-		}
+		IReadOnlyList<ITypeParameter> IType.TypeParameters => EmptyList<ITypeParameter>.Instance;
 
-		IReadOnlyList<IType> IType.TypeArguments {
-			get { return EmptyList<IType>.Instance; }
-		}
+		IReadOnlyList<IType> IType.TypeArguments => EmptyList<IType>.Instance;
 
-		public IEnumerable<IType> DirectBaseTypes {
-			get { return TypeConstraints.Select(t => t.Type); }
-		}
+		public IEnumerable<IType> DirectBaseTypes => TypeConstraints.Select(t => t.Type);
 
 		public abstract IReadOnlyList<TypeConstraint> TypeConstraints { get; }
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name => name;
 
-		string INamedElement.Namespace {
-			get { return string.Empty; }
-		}
+		string INamedElement.Namespace => string.Empty;
 
-		string INamedElement.FullName {
-			get { return name; }
-		}
+		string INamedElement.FullName => name;
 
-		public string ReflectionName {
-			get {
-				return (this.OwnerType == SymbolKind.Method ? "``" : "`") + index.ToString(CultureInfo.InvariantCulture);
-			}
-		}
+		public string ReflectionName => (this.OwnerType == SymbolKind.Method ? "``" : "`") + index.ToString(CultureInfo.InvariantCulture);
 
 		ITypeDefinition IType.GetDefinition()
 		{

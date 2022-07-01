@@ -144,8 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveExpression o = other as PrimitiveExpression;
-			return o != null && (this.Value == AnyValue || Equals(this.Value, o.Value));
+			return other is PrimitiveExpression o && (this.Value == AnyValue || Equals(this.Value, o.Value));
 		}
 	}
 }

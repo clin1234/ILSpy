@@ -38,8 +38,8 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public partial class OpenFromGacDialog : Window
 	{
-		ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
-		ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
+		ObservableCollection<GacEntry> gacEntries = new();
+		ObservableCollection<GacEntry> filteredEntries = new();
 		Predicate<GacEntry> filterMethod = _ => true;
 		volatile bool cancelFetchThread;
 
@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy
 
 			public string PublicKeyToken {
 				get {
-					StringBuilder s = new StringBuilder();
+					StringBuilder s = new();
 					foreach (byte b in r.PublicKeyToken)
 						s.Append(b.ToString("x2"));
 					return s.ToString();
@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpy
 
 		void FetchGacContents()
 		{
-			HashSet<string> fullNames = new HashSet<string>();
+			HashSet<string> fullNames = new();
 			UpdateProgressBar(pg => { pg.Visibility = Visibility.Visible; pg.IsIndeterminate = true; });
 			var list = UniversalAssemblyResolver.EnumerateGac().TakeWhile(_ => !cancelFetchThread).ToList();
 			UpdateProgressBar(pg => { pg.IsIndeterminate = false; pg.Maximum = list.Count; });

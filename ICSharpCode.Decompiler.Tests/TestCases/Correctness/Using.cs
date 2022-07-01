@@ -87,8 +87,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			finally
 			{
-				IDisposable disposable = (object)printOnDispose as IDisposable;
-				if (disposable != null)
+				if ((object)printOnDispose is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
@@ -97,7 +96,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Clear<T>(ref T t)
 		{
-			t = default(T);
+			t = default;
 		}
 
 		public static void NoUsingDueToByRefCall()
@@ -110,8 +109,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			finally
 			{
-				IDisposable disposable = (object)printOnDispose as IDisposable;
-				if (disposable != null)
+				if ((object)printOnDispose is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
@@ -146,8 +144,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			finally
 			{
-				IDisposable disposable = (object)obj as IDisposable;
-				if (disposable != null)
+				if ((object)obj is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
@@ -167,8 +164,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			finally
 			{
-				IDisposable disposable = (object)obj as IDisposable;
-				if (disposable != null)
+				if ((object)obj is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
@@ -184,8 +180,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			finally
 			{
-				IDisposable disposable = obj as IDisposable;
-				if (disposable != null)
+				if (obj is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}

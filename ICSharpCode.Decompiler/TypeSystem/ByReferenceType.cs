@@ -28,19 +28,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 
-		public override TypeKind Kind {
-			get { return TypeKind.ByReference; }
-		}
+		public override TypeKind Kind => TypeKind.ByReference;
 
-		public override string NameSuffix {
-			get {
-				return "&";
-			}
-		}
+		public override string NameSuffix => "&";
 
-		public override bool? IsReferenceType {
-			get { return null; }
-		}
+		public override bool? IsReferenceType => null;
 
 		public override bool IsByRefLike => true;
 
@@ -51,8 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			ByReferenceType a = other as ByReferenceType;
-			return a != null && elementType.Equals(a.elementType);
+			return other is ByReferenceType a && elementType.Equals(a.elementType);
 		}
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
@@ -80,9 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
+		public ITypeReference ElementType => elementType;
 
 		public IType Resolve(ITypeResolveContext context)
 		{
@@ -101,8 +90,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ByReferenceTypeReference brt = other as ByReferenceTypeReference;
-			return brt != null && this.elementType == brt.elementType;
+			return other is ByReferenceTypeReference brt && this.elementType == brt.elementType;
 		}
 	}
 }

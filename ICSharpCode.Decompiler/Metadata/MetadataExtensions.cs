@@ -234,13 +234,9 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// An attribute type provider that can be used to decode attribute signatures
 		/// that only mention built-in types.
 		/// </summary>
-		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
-			get => minimalCorlibTypeProvider;
-		}
+		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider => minimalCorlibTypeProvider;
 
-		public static ISignatureTypeProvider<IType, GenericContext> MinimalSignatureTypeProvider {
-			get => minimalCorlibTypeProvider;
-		}
+		public static ISignatureTypeProvider<IType, GenericContext> MinimalSignatureTypeProvider => minimalCorlibTypeProvider;
 
 		/// <summary>
 		/// Converts <see cref="KnownTypeCode"/> to <see cref="PrimitiveTypeCode"/>.

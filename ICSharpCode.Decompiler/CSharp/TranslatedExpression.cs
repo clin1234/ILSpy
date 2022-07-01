@@ -39,9 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public readonly Expression Expression;
 
-		public IEnumerable<ILInstruction> ILInstructions {
-			get { return Expression.Annotations.OfType<ILInstruction>(); }
-		}
+		public IEnumerable<ILInstruction> ILInstructions => Expression.Annotations.OfType<ILInstruction>();
 
 		internal ExpressionWithILInstruction(Expression expression)
 		{
@@ -67,9 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		// in this struct instead of accessing it through the list of annotations.
 		public readonly ResolveResult ResolveResult;
 
-		public IType Type {
-			get { return ResolveResult.Type; }
-		}
+		public IType Type => ResolveResult.Type;
 
 		internal ExpressionWithResolveResult(Expression expression)
 		{
@@ -109,13 +105,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		// in this struct instead of accessing it through the list of annotations.
 		public readonly ResolveResult ResolveResult;
 
-		public IEnumerable<ILInstruction> ILInstructions {
-			get { return Expression.Annotations.OfType<ILInstruction>(); }
-		}
+		public IEnumerable<ILInstruction> ILInstructions => Expression.Annotations.OfType<ILInstruction>();
 
-		public IType Type {
-			get { return ResolveResult.Type; }
-		}
+		public IType Type => ResolveResult.Type;
 
 		internal TranslatedExpression(Expression expression)
 		{
@@ -608,7 +600,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
 		/// The existing cast is classified in 'conversion'.
 		/// </summary>
-		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
+		static bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
 		{
 			if (!conversion.IsImplicit)
 			{
@@ -630,10 +622,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
 					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
-			return conversions.IdentityConversion(oldTargetType, newTargetType);
+			return Resolver.CSharpConversions.IdentityConversion(oldTargetType, newTargetType);
 		}
 
-		TranslatedExpression LdcI4(ICompilation compilation, int val)
+		static TranslatedExpression LdcI4(ICompilation compilation, int val)
 		{
 			return new PrimitiveExpression(val)
 				.WithoutILInstruction()
@@ -648,7 +640,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!this.Type.IsKnownType(KnownTypeCode.Boolean))
 				return this;
-			if (!(this.ResolveResult is ConversionResolveResult rr))
+			if (this.ResolveResult is not ConversionResolveResult rr)
 				return this;
 			if (!(rr.Conversion.IsUserDefined && rr.Conversion.IsImplicit))
 				return this;

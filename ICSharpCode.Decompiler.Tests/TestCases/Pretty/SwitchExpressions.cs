@@ -69,19 +69,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static bool SparseIntegerSwitch3(int i)
 		{
 			// not using a switch expression because we'd have to duplicate the 'true' branch
-			switch (i)
-			{
-				case 0:
-				case 10:
-				case 11:
-				case 12:
-				case 100:
-				case 101:
-				case 200:
-					return true;
-				default:
-					return false;
-			}
+			return i switch {
+				0 or 10 or 11 or 12 or 100 or 101 or 200 => true,
+				_ => false,
+			};
 		}
 
 		public static string SwitchOverNullableInt(int? i, int? j)
@@ -128,26 +119,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
 			// Cannot use switch expression, because "return Text2;" would need to be duplicated
-			switch (text)
-			{
-				case "First case":
-					return "Text1";
-				case "Second case":
-				case "2nd case":
-					return "Text2";
-				case "Third case":
-					return "Text3";
-				case "Fourth case":
-					return "Text4";
-				case "Fifth case":
-					return "Text5";
-				case "Sixth case":
-					return "Text6";
-				case null:
-					return null;
-				default:
-					return "Default";
-			}
+			return text switch {
+				"First case" => "Text1",
+				"Second case" or "2nd case" => "Text2",
+				"Third case" => "Text3",
+				"Fourth case" => "Text4",
+				"Fifth case" => "Text5",
+				"Sixth case" => "Text6",
+				null => null,
+				_ => "Default",
+			};
 		}
 
 		public static string Issue2222()

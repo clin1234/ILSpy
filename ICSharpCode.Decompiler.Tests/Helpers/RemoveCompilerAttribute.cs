@@ -48,8 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			var typeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
-			if (typeDefinition == null || !attributeNames.Contains(typeDefinition.FullName))
+			if (typeDeclaration.GetSymbol() is not ITypeDefinition typeDefinition || !attributeNames.Contains(typeDefinition.FullName))
 				return;
 			if (typeDeclaration.Parent is NamespaceDeclaration ns && ns.Members.Count == 1)
 				ns.Remove();

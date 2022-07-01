@@ -43,7 +43,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public ICompilation Compilation { get; }
-		CorlibTypeDefinition[] typeDefinitions;
+
+		readonly CorlibTypeDefinition[] typeDefinitions;
 		readonly CorlibNamespace rootNamespace;
 		readonly Version asmVersion = new(0, 0, 0, 0);
 
@@ -178,21 +179,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			TypeKind IType.Kind => typeKind;
 
-			bool? IType.IsReferenceType {
-				get {
-					switch (typeKind)
-					{
-						case TypeKind.Class:
-						case TypeKind.Interface:
-							return true;
-						case TypeKind.Struct:
-						case TypeKind.Enum:
-							return false;
-						default:
-							return null;
-					}
-				}
-			}
+			bool? IType.IsReferenceType => typeKind switch {
+				TypeKind.Class or TypeKind.Interface => true,
+				TypeKind.Struct or TypeKind.Enum => false,
+				_ => null,
+			};
 
 			bool IType.IsByRefLike => false;
 			Nullability IType.Nullability => Nullability.Oblivious;

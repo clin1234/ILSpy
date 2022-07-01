@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			try
 			{
 				AvalonEditTextOutput output = new();
-				BitmapImage image = new BitmapImage();
+				BitmapImage image = new();
 				byte[] curData;
 				using (var data = OpenStream())
 				{

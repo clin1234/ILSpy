@@ -62,9 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(GetOperatorRole(Operator)); }
-		}
+		public CSharpTokenNode OperatorToken => GetChildByRole(GetOperatorRole(Operator));
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -88,78 +86,44 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UnaryOperatorExpression o = other as UnaryOperatorExpression;
-			return o != null && (this.Operator == UnaryOperatorType.Any || this.Operator == o.Operator)
+			return other is UnaryOperatorExpression o && (this.Operator == UnaryOperatorType.Any || this.Operator == o.Operator)
 				&& this.Expression.DoMatch(o.Expression, match);
 		}
 
 		public static TokenRole GetOperatorRole(UnaryOperatorType op)
 		{
-			switch (op)
-			{
-				case UnaryOperatorType.Not:
-					return NotRole;
-				case UnaryOperatorType.BitNot:
-					return BitNotRole;
-				case UnaryOperatorType.Minus:
-					return MinusRole;
-				case UnaryOperatorType.Plus:
-					return PlusRole;
-				case UnaryOperatorType.Increment:
-				case UnaryOperatorType.PostIncrement:
-					return IncrementRole;
-				case UnaryOperatorType.PostDecrement:
-				case UnaryOperatorType.Decrement:
-					return DecrementRole;
-				case UnaryOperatorType.Dereference:
-					return DereferenceRole;
-				case UnaryOperatorType.AddressOf:
-					return AddressOfRole;
-				case UnaryOperatorType.Await:
-					return AwaitRole;
-				case UnaryOperatorType.NullConditional:
-					return NullConditionalRole;
-				case UnaryOperatorType.NullConditionalRewrap:
-				case UnaryOperatorType.IsTrue:
-					return null; // no syntax
-				case UnaryOperatorType.SuppressNullableWarning:
-					return SuppressNullableWarningRole;
-				case UnaryOperatorType.IndexFromEnd:
-					return IndexFromEndRole;
-				default:
-					throw new NotSupportedException("Invalid value for UnaryOperatorType");
-			}
+			return op switch {
+				UnaryOperatorType.Not => NotRole,
+				UnaryOperatorType.BitNot => BitNotRole,
+				UnaryOperatorType.Minus => MinusRole,
+				UnaryOperatorType.Plus => PlusRole,
+				UnaryOperatorType.Increment or UnaryOperatorType.PostIncrement => IncrementRole,
+				UnaryOperatorType.PostDecrement or UnaryOperatorType.Decrement => DecrementRole,
+				UnaryOperatorType.Dereference => DereferenceRole,
+				UnaryOperatorType.AddressOf => AddressOfRole,
+				UnaryOperatorType.Await => AwaitRole,
+				UnaryOperatorType.NullConditional => NullConditionalRole,
+				UnaryOperatorType.NullConditionalRewrap or UnaryOperatorType.IsTrue => null,// no syntax
+				UnaryOperatorType.SuppressNullableWarning => SuppressNullableWarningRole,
+				UnaryOperatorType.IndexFromEnd => IndexFromEndRole,
+				_ => throw new NotSupportedException("Invalid value for UnaryOperatorType"),
+			};
 		}
 
 		public static ExpressionType GetLinqNodeType(UnaryOperatorType op, bool checkForOverflow)
 		{
-			switch (op)
-			{
-				case UnaryOperatorType.Not:
-					return ExpressionType.Not;
-				case UnaryOperatorType.BitNot:
-					return ExpressionType.OnesComplement;
-				case UnaryOperatorType.Minus:
-					return checkForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate;
-				case UnaryOperatorType.Plus:
-					return ExpressionType.UnaryPlus;
-				case UnaryOperatorType.Increment:
-					return ExpressionType.PreIncrementAssign;
-				case UnaryOperatorType.Decrement:
-					return ExpressionType.PreDecrementAssign;
-				case UnaryOperatorType.PostIncrement:
-					return ExpressionType.PostIncrementAssign;
-				case UnaryOperatorType.PostDecrement:
-					return ExpressionType.PostDecrementAssign;
-				case UnaryOperatorType.Dereference:
-				case UnaryOperatorType.AddressOf:
-				case UnaryOperatorType.Await:
-				case UnaryOperatorType.SuppressNullableWarning:
-				case UnaryOperatorType.IndexFromEnd:
-					return ExpressionType.Extension;
-				default:
-					throw new NotSupportedException("Invalid value for UnaryOperatorType");
-			}
+			return op switch {
+				UnaryOperatorType.Not => ExpressionType.Not,
+				UnaryOperatorType.BitNot => ExpressionType.OnesComplement,
+				UnaryOperatorType.Minus => checkForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate,
+				UnaryOperatorType.Plus => ExpressionType.UnaryPlus,
+				UnaryOperatorType.Increment => ExpressionType.PreIncrementAssign,
+				UnaryOperatorType.Decrement => ExpressionType.PreDecrementAssign,
+				UnaryOperatorType.PostIncrement => ExpressionType.PostIncrementAssign,
+				UnaryOperatorType.PostDecrement => ExpressionType.PostDecrementAssign,
+				UnaryOperatorType.Dereference or UnaryOperatorType.AddressOf or UnaryOperatorType.Await or UnaryOperatorType.SuppressNullableWarning or UnaryOperatorType.IndexFromEnd => ExpressionType.Extension,
+				_ => throw new NotSupportedException("Invalid value for UnaryOperatorType"),
+			};
 		}
 	}
 

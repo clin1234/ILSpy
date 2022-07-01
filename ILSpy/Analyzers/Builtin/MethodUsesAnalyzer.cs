@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	[ExportAnalyzer(Header = "Uses", Order = 10)]
 	class MethodUsesAnalyzer : IAnalyzer
 	{
-		public bool Show(ISymbol symbol) => symbol is IMethod method && method.HasBody;
+		public bool Show(ISymbol symbol) => symbol is IMethod { HasBody: true };
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			throw new InvalidOperationException("Should never happen.");
 		}
 
-		IEnumerable<IEntity> ScanMethod(MethodDefinitionHandle handle, DecompilerTypeSystem typeSystem)
+		static IEnumerable<IEntity> ScanMethod(MethodDefinitionHandle handle, DecompilerTypeSystem typeSystem)
 		{
 			var module = typeSystem.MainModule;
 			var md = module.PEFile.Metadata.GetMethodDefinition(handle);
@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		class TypeDefinitionCollector : TypeVisitor
 		{
-			public readonly List<ITypeDefinition> UsedTypes = new List<ITypeDefinition>();
+			public readonly List<ITypeDefinition> UsedTypes = new();
 
 			public override IType VisitTypeDefinition(ITypeDefinition type)
 			{

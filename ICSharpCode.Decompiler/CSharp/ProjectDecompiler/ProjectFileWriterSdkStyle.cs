@@ -273,16 +273,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static string GetSdkString(ProjectType projectType)
 		{
-			switch (projectType)
-			{
-				case ProjectType.WinForms:
-				case ProjectType.Wpf:
-					return "Microsoft.NET.Sdk.WindowsDesktop";
-				case ProjectType.Web:
-					return "Microsoft.NET.Sdk.Web";
-				default:
-					return "Microsoft.NET.Sdk";
-			}
+			return projectType switch {
+				ProjectType.WinForms or ProjectType.Wpf => "Microsoft.NET.Sdk.WindowsDesktop",
+				ProjectType.Web => "Microsoft.NET.Sdk.Web",
+				_ => "Microsoft.NET.Sdk",
+			};
 		}
 
 		static ProjectType GetProjectType(PEFile module)

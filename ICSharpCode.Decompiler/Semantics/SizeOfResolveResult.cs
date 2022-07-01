@@ -40,26 +40,12 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// The type referenced by the 'sizeof'.
 		/// </summary>
-		public IType ReferencedType {
-			get { return referencedType; }
-		}
+		public IType ReferencedType => referencedType;
 
-		public override bool IsCompileTimeConstant {
-			get {
-				return constantValue != null;
-			}
-		}
+		public override bool IsCompileTimeConstant => constantValue != null;
 
-		public override object ConstantValue {
-			get {
-				return constantValue;
-			}
-		}
+		public override object ConstantValue => constantValue;
 
-		public override bool IsError {
-			get {
-				return referencedType.IsReferenceType != false;
-			}
-		}
+		public override bool IsError => referencedType.IsReferenceType != false;
 	}
 }

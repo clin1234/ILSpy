@@ -44,8 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitAssignmentExpression(assignment);
 			// Combine "x = x op y" into "x op= y"
-			BinaryOperatorExpression binary = assignment.Right as BinaryOperatorExpression;
-			if (binary != null && assignment.Operator == AssignmentOperatorType.Assign)
+			if (assignment.Right is BinaryOperatorExpression binary && assignment.Operator == AssignmentOperatorType.Assign)
 			{
 				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left))
 				{
@@ -99,11 +98,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static bool CanConvertToCompoundAssignment(Expression left)
 		{
-			MemberReferenceExpression mre = left as MemberReferenceExpression;
-			if (mre != null)
+			if (left is MemberReferenceExpression mre)
 				return IsWithoutSideEffects(mre.Target);
-			IndexerExpression ie = left as IndexerExpression;
-			if (ie != null)
+			if (left is IndexerExpression ie)
 				return IsWithoutSideEffects(ie.Target) && ie.Arguments.All(IsWithoutSideEffects);
 			UnaryOperatorExpression uoe = left as UnaryOperatorExpression;
 			if (uoe is { Operator: UnaryOperatorType.Dereference })

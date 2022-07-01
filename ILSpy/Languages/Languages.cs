@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy
 		// Start with a dummy list with an IL entry so that crashes
 		// in Initialize() (e.g. due to invalid plugins) don't lead to
 		// confusing follow-up errors in GetLanguage().
-		private static ReadOnlyCollection<Language> allLanguages = new ReadOnlyCollection<Language>(
+		private static ReadOnlyCollection<Language> allLanguages = new(
 			new Language[] { new ILLanguage() });
 
 		/// <summary>
@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy
 
 		internal static void Initialize(ExportProvider ep)
 		{
-			List<Language> languages = new List<Language>();
+			List<Language> languages = new();
 			languages.AddRange(ep.GetExportedValues<Language>());
 			languages.Sort((a, b) => a.Name.CompareTo(b.Name));
 #if DEBUG

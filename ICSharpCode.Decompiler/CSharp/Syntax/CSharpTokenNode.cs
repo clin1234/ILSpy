@@ -39,11 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static new readonly CSharpTokenNode Null = new NullCSharpTokenNode();
 		class NullCSharpTokenNode : CSharpTokenNode
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public NullCSharpTokenNode() : base(TextLocation.Empty, null)
 			{
@@ -70,18 +66,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Token;
-			}
-		}
+		public override NodeType NodeType => NodeType.Token;
 
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
+		public override TextLocation StartLocation => startLocation;
 
 		int TokenLength {
 			get {
@@ -94,11 +82,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override TextLocation EndLocation {
-			get {
-				return new(StartLocation.Line, StartLocation.Column + TokenLength);
-			}
-		}
+		public override TextLocation EndLocation => new(StartLocation.Line, StartLocation.Column + TokenLength);
 
 		public CSharpTokenNode(TextLocation location, TokenRole role)
 		{
@@ -135,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			CSharpTokenNode o = other as CSharpTokenNode;
-			return o is { IsNull: false } && !(o is CSharpModifierToken);
+			return o is { IsNull: false } && o is not CSharpModifierToken;
 		}
 	}
 }

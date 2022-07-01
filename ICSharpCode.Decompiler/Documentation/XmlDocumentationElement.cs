@@ -69,9 +69,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// Gets the entity on which this documentation was originally declared.
 		/// May return null.
 		/// </summary>
-		public IEntity? DeclaringEntity {
-			get { return declaringEntity; }
-		}
+		public IEntity? DeclaringEntity => declaringEntity;
 
 		IEntity? referencedEntity;
 		volatile bool referencedEntityInitialized;
@@ -103,11 +101,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Gets the element name.
 		/// </summary>
-		public string Name {
-			get {
-				return element != null ? element.Name.LocalName : string.Empty;
-			}
-		}
+		public string Name => element != null ? element.Name.LocalName : string.Empty;
 
 		/// <summary>
 		/// Gets the attribute value.
@@ -120,9 +114,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Gets whether this is a pure text node.
 		/// </summary>
-		public bool IsTextNode {
-			get { return element == null; }
-		}
+		public bool IsTextNode => element == null;
 
 		/// <summary>
 		/// Gets the text content.
@@ -165,18 +157,15 @@ namespace ICSharpCode.Decompiler.Documentation
 			List<XmlDocumentationElement> list = new();
 			foreach (var child in childObjects)
 			{
-				var childText = child as XText;
-				var childTag = child as XCData;
-				var childElement = child as XElement;
-				if (childText != null)
+				if (child is XText childText)
 				{
 					list.Add(new(childText.Value, declaringEntity));
 				}
-				else if (childTag != null)
+				else if (child is XCData childTag)
 				{
 					list.Add(new(childTag.Value, declaringEntity));
 				}
-				else if (childElement != null)
+				else if (child is XElement childElement)
 				{
 					if (nestingLevel < 5 && childElement.Name == "inheritdoc")
 					{
@@ -218,8 +207,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 								var inheritedChildren = doc.Nodes().Where(
 									inheritedObject => {
-										XElement? inheritedElement = inheritedObject as XElement;
-										return !(inheritedElement != null && doNotInherit.Contains(inheritedElement.Name.LocalName));
+										return !(inheritedObject is XElement inheritedElement && doNotInherit.Contains(inheritedElement.Name.LocalName));
 									});
 
 								list.AddRange(CreateElements(inheritedChildren, inheritedFrom, crefResolver, nestingLevel + 1));

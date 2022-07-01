@@ -80,9 +80,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override StackType ResultType {
-			get { return StackType.Void; }
-		}
+		public override StackType ResultType => StackType.Void;
 
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -92,11 +90,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags | InstructionFlags.ControlFlow;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
 
 		protected override int GetChildCount()
 		{
@@ -148,21 +142,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(this.IsDescendantOf(variable.Function!));
 		}
 
-		public override StackType ResultType {
-			get { return StackType.Void; }
-		}
+		public override StackType ResultType => StackType.Void;
 
 		protected override InstructionFlags ComputeFlags()
 		{
 			return filter.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
+		public override InstructionFlags DirectFlags =>
 				// the body is not evaluated if the filter returns 0
-				return InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
-			}
-		}
+				InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -226,11 +215,7 @@ namespace ICSharpCode.Decompiler.IL
 			finallyBlock.WriteTo(output, options);
 		}
 
-		public override StackType ResultType {
-			get {
-				return TryBlock.ResultType;
-			}
-		}
+		public override StackType ResultType => TryBlock.ResultType;
 
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -238,11 +223,7 @@ namespace ICSharpCode.Decompiler.IL
 			return TryBlock.Flags | finallyBlock.Flags | InstructionFlags.ControlFlow;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
 
 		protected override int GetChildCount()
 		{
@@ -315,9 +296,7 @@ namespace ICSharpCode.Decompiler.IL
 			faultBlock.WriteTo(output, options);
 		}
 
-		public override StackType ResultType {
-			get { return TryBlock.ResultType; }
-		}
+		public override StackType ResultType => TryBlock.ResultType;
 
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -325,11 +304,7 @@ namespace ICSharpCode.Decompiler.IL
 			return TryBlock.Flags | (faultBlock.Flags & ~InstructionFlags.EndPointUnreachable) | InstructionFlags.ControlFlow;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
 
 		protected override int GetChildCount()
 		{

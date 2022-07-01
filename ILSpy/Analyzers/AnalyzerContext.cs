@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// </summary>
 		public bool SortResults { get; set; }
 
-		public MethodBodyBlock GetMethodBody(IMethod method)
+		public static MethodBodyBlock GetMethodBody(IMethod method)
 		{
 			if (!method.HasBody || method.MetadataToken.IsNil)
 				return null;
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return new(AssemblyList, entity);
 		}
 
-		readonly ConcurrentDictionary<PEFile, DecompilerTypeSystem> typeSystemCache = new ConcurrentDictionary<PEFile, DecompilerTypeSystem>();
+		readonly ConcurrentDictionary<PEFile, DecompilerTypeSystem> typeSystemCache = new();
 
 		public DecompilerTypeSystem GetOrCreateTypeSystem(PEFile module)
 		{

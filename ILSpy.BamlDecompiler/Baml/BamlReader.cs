@@ -92,168 +92,59 @@ namespace ILSpy.BamlDecompiler.Baml
 				long pos = str.Position;
 				var type = (BamlRecordType)reader.ReadByte();
 				BamlRecord rec = null;
-				switch (type)
-				{
-					case BamlRecordType.AssemblyInfo:
-						rec = new AssemblyInfoRecord();
-						break;
-					case BamlRecordType.AttributeInfo:
-						rec = new AttributeInfoRecord();
-						break;
-					case BamlRecordType.ConstructorParametersStart:
-						rec = new ConstructorParametersStartRecord();
-						break;
-					case BamlRecordType.ConstructorParametersEnd:
-						rec = new ConstructorParametersEndRecord();
-						break;
-					case BamlRecordType.ConstructorParameterType:
-						rec = new ConstructorParameterTypeRecord();
-						break;
-					case BamlRecordType.ConnectionId:
-						rec = new ConnectionIdRecord();
-						break;
-					case BamlRecordType.ContentProperty:
-						rec = new ContentPropertyRecord();
-						break;
-					case BamlRecordType.DefAttribute:
-						rec = new DefAttributeRecord();
-						break;
-					case BamlRecordType.DefAttributeKeyString:
-						rec = new DefAttributeKeyStringRecord();
-						break;
-					case BamlRecordType.DefAttributeKeyType:
-						rec = new DefAttributeKeyTypeRecord();
-						break;
-					case BamlRecordType.DeferableContentStart:
-						rec = new DeferableContentStartRecord();
-						break;
-					case BamlRecordType.DocumentEnd:
-						rec = new DocumentEndRecord();
-						break;
-					case BamlRecordType.DocumentStart:
-						rec = new DocumentStartRecord();
-						break;
-					case BamlRecordType.ElementEnd:
-						rec = new ElementEndRecord();
-						break;
-					case BamlRecordType.ElementStart:
-						rec = new ElementStartRecord();
-						break;
-					case BamlRecordType.KeyElementEnd:
-						rec = new KeyElementEndRecord();
-						break;
-					case BamlRecordType.KeyElementStart:
-						rec = new KeyElementStartRecord();
-						break;
-					case BamlRecordType.LineNumberAndPosition:
-						rec = new LineNumberAndPositionRecord();
-						break;
-					case BamlRecordType.LinePosition:
-						rec = new LinePositionRecord();
-						break;
-					case BamlRecordType.LiteralContent:
-						rec = new LiteralContentRecord();
-						break;
-					case BamlRecordType.NamedElementStart:
-						rec = new NamedElementStartRecord();
-						break;
-					case BamlRecordType.OptimizedStaticResource:
-						rec = new OptimizedStaticResourceRecord();
-						break;
-					case BamlRecordType.PIMapping:
-						rec = new PIMappingRecord();
-						break;
-					case BamlRecordType.PresentationOptionsAttribute:
-						rec = new PresentationOptionsAttributeRecord();
-						break;
-					case BamlRecordType.Property:
-						rec = new PropertyRecord();
-						break;
-					case BamlRecordType.PropertyArrayEnd:
-						rec = new PropertyArrayEndRecord();
-						break;
-					case BamlRecordType.PropertyArrayStart:
-						rec = new PropertyArrayStartRecord();
-						break;
-					case BamlRecordType.PropertyComplexEnd:
-						rec = new PropertyComplexEndRecord();
-						break;
-					case BamlRecordType.PropertyComplexStart:
-						rec = new PropertyComplexStartRecord();
-						break;
-					case BamlRecordType.PropertyCustom:
-						rec = new PropertyCustomRecord();
-						break;
-					case BamlRecordType.PropertyDictionaryEnd:
-						rec = new PropertyDictionaryEndRecord();
-						break;
-					case BamlRecordType.PropertyDictionaryStart:
-						rec = new PropertyDictionaryStartRecord();
-						break;
-					case BamlRecordType.PropertyListEnd:
-						rec = new PropertyListEndRecord();
-						break;
-					case BamlRecordType.PropertyListStart:
-						rec = new PropertyListStartRecord();
-						break;
-					case BamlRecordType.PropertyStringReference:
-						rec = new PropertyStringReferenceRecord();
-						break;
-					case BamlRecordType.PropertyTypeReference:
-						rec = new PropertyTypeReferenceRecord();
-						break;
-					case BamlRecordType.PropertyWithConverter:
-						rec = new PropertyWithConverterRecord();
-						break;
-					case BamlRecordType.PropertyWithExtension:
-						rec = new PropertyWithExtensionRecord();
-						break;
-					case BamlRecordType.PropertyWithStaticResourceId:
-						rec = new PropertyWithStaticResourceIdRecord();
-						break;
-					case BamlRecordType.RoutedEvent:
-						rec = new RoutedEventRecord();
-						break;
-					case BamlRecordType.StaticResourceEnd:
-						rec = new StaticResourceEndRecord();
-						break;
-					case BamlRecordType.StaticResourceId:
-						rec = new StaticResourceIdRecord();
-						break;
-					case BamlRecordType.StaticResourceStart:
-						rec = new StaticResourceStartRecord();
-						break;
-					case BamlRecordType.StringInfo:
-						rec = new StringInfoRecord();
-						break;
-					case BamlRecordType.Text:
-						rec = new TextRecord();
-						break;
-					case BamlRecordType.TextWithConverter:
-						rec = new TextWithConverterRecord();
-						break;
-					case BamlRecordType.TextWithId:
-						rec = new TextWithIdRecord();
-						break;
-					case BamlRecordType.TypeInfo:
-						rec = new TypeInfoRecord();
-						break;
-					case BamlRecordType.TypeSerializerInfo:
-						rec = new TypeSerializerInfoRecord();
-						break;
-					case BamlRecordType.XmlnsProperty:
-						rec = new XmlnsPropertyRecord();
-						break;
-					case BamlRecordType.XmlAttribute:
-					case BamlRecordType.ProcessingInstruction:
-					case BamlRecordType.LastRecordType:
-					case BamlRecordType.EndAttributes:
-					case BamlRecordType.DefTag:
-					case BamlRecordType.ClrEvent:
-					case BamlRecordType.Comment:
-					default:
-						throw new NotSupportedException();
-				}
+				rec = type switch {
+					BamlRecordType.AssemblyInfo => new AssemblyInfoRecord(),
+					BamlRecordType.AttributeInfo => new AttributeInfoRecord(),
+					BamlRecordType.ConstructorParametersStart => new ConstructorParametersStartRecord(),
+					BamlRecordType.ConstructorParametersEnd => new ConstructorParametersEndRecord(),
+					BamlRecordType.ConstructorParameterType => new ConstructorParameterTypeRecord(),
+					BamlRecordType.ConnectionId => new ConnectionIdRecord(),
+					BamlRecordType.ContentProperty => new ContentPropertyRecord(),
+					BamlRecordType.DefAttribute => new DefAttributeRecord(),
+					BamlRecordType.DefAttributeKeyString => new DefAttributeKeyStringRecord(),
+					BamlRecordType.DefAttributeKeyType => new DefAttributeKeyTypeRecord(),
+					BamlRecordType.DeferableContentStart => new DeferableContentStartRecord(),
+					BamlRecordType.DocumentEnd => new DocumentEndRecord(),
+					BamlRecordType.DocumentStart => new DocumentStartRecord(),
+					BamlRecordType.ElementEnd => new ElementEndRecord(),
+					BamlRecordType.ElementStart => new ElementStartRecord(),
+					BamlRecordType.KeyElementEnd => new KeyElementEndRecord(),
+					BamlRecordType.KeyElementStart => new KeyElementStartRecord(),
+					BamlRecordType.LineNumberAndPosition => new LineNumberAndPositionRecord(),
+					BamlRecordType.LinePosition => new LinePositionRecord(),
+					BamlRecordType.LiteralContent => new LiteralContentRecord(),
+					BamlRecordType.NamedElementStart => new NamedElementStartRecord(),
+					BamlRecordType.OptimizedStaticResource => new OptimizedStaticResourceRecord(),
+					BamlRecordType.PIMapping => new PIMappingRecord(),
+					BamlRecordType.PresentationOptionsAttribute => new PresentationOptionsAttributeRecord(),
+					BamlRecordType.Property => new PropertyRecord(),
+					BamlRecordType.PropertyArrayEnd => new PropertyArrayEndRecord(),
+					BamlRecordType.PropertyArrayStart => new PropertyArrayStartRecord(),
+					BamlRecordType.PropertyComplexEnd => new PropertyComplexEndRecord(),
+					BamlRecordType.PropertyComplexStart => new PropertyComplexStartRecord(),
+					BamlRecordType.PropertyCustom => new PropertyCustomRecord(),
+					BamlRecordType.PropertyDictionaryEnd => new PropertyDictionaryEndRecord(),
+					BamlRecordType.PropertyDictionaryStart => new PropertyDictionaryStartRecord(),
+					BamlRecordType.PropertyListEnd => new PropertyListEndRecord(),
+					BamlRecordType.PropertyListStart => new PropertyListStartRecord(),
+					BamlRecordType.PropertyStringReference => new PropertyStringReferenceRecord(),
+					BamlRecordType.PropertyTypeReference => new PropertyTypeReferenceRecord(),
+					BamlRecordType.PropertyWithConverter => new PropertyWithConverterRecord(),
+					BamlRecordType.PropertyWithExtension => new PropertyWithExtensionRecord(),
+					BamlRecordType.PropertyWithStaticResourceId => new PropertyWithStaticResourceIdRecord(),
+					BamlRecordType.RoutedEvent => new RoutedEventRecord(),
+					BamlRecordType.StaticResourceEnd => new StaticResourceEndRecord(),
+					BamlRecordType.StaticResourceId => new StaticResourceIdRecord(),
+					BamlRecordType.StaticResourceStart => new StaticResourceStartRecord(),
+					BamlRecordType.StringInfo => new StringInfoRecord(),
+					BamlRecordType.Text => new TextRecord(),
+					BamlRecordType.TextWithConverter => new TextWithConverterRecord(),
+					BamlRecordType.TextWithId => new TextWithIdRecord(),
+					BamlRecordType.TypeInfo => new TypeInfoRecord(),
+					BamlRecordType.TypeSerializerInfo => new TypeSerializerInfoRecord(),
+					BamlRecordType.XmlnsProperty => new XmlnsPropertyRecord(),
+					_ => throw new NotSupportedException(),
+				};
 				rec.Position = pos;
 
 				rec.Read(reader);

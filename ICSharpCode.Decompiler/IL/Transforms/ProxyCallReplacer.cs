@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void Run(CallInstruction inst, ILTransformContext context)
+		static void Run(CallInstruction inst, ILTransformContext context)
 		{
 			if (inst.Method.IsStatic)
 				return;
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var proxyFunction = ilReader.ReadIL(handle, body, genericContext, ILFunctionKind.TopLevelFunction, context.CancellationToken);
 			var transformContext = new ILTransformContext(context, proxyFunction);
 			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);
-			if (!(proxyFunction.Body is BlockContainer blockContainer))
+			if (proxyFunction.Body is not BlockContainer blockContainer)
 				return;
 			if (blockContainer.Blocks.Count != 1)
 				return;

@@ -96,9 +96,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </code>
 		bool TransformInlineAssignmentStObjOrCall(Block block, int pos)
 		{
-			var inst = block.Instructions[pos] as StLoc;
 			// in some cases it can be a compiler-generated local
-			if (inst == null || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
+			if (block.Instructions[pos] is not StLoc inst || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
 				return false;
 			if (IsImplicitTruncation(inst.Value, inst.Variable.Type, context.TypeSystem))
 			{
@@ -159,8 +158,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
 					return false;
-				IProperty property = call.Method.AccessorOwner as IProperty;
-				if (property == null)
+				if (call.Method.AccessorOwner is not IProperty property)
 					return false;
 				if (!call.Method.Equals(property.Setter))
 					return false;
@@ -177,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!SemanticHelper.IsPure(arg.Flags) || inst.Variable.IsUsedWithin(arg))
 						return false;
 				}
-				if (IsImplicitTruncation(inst.Value, call.Method.Parameters.Last().Type, context.TypeSystem))
+				if (IsImplicitTruncation(inst.Value, call.Method.Parameters[call.Method.Parameters.Count - 1].Type, context.TypeSystem))
 				{
 					// setter call is implicitly truncating the value
 					return false;
@@ -186,7 +184,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("Inline assignment call", call);
 				block.Instructions.Remove(localStore);
 				block.Instructions.Remove(call);
-				var newVar = context.Function.RegisterVariable(VariableKind.StackSlot, call.Method.Parameters.Last().Type);
+				var newVar = context.Function.RegisterVariable(VariableKind.StackSlot, call.Method.Parameters[call.Method.Parameters.Count - 1].Type);
 				call.Arguments[call.Arguments.Count - 1] = new StLoc(newVar, inst.Value);
 				var inlineBlock = new Block(BlockKind.CallInlineAssign) {
 					Instructions = { call },
@@ -237,8 +235,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (setterCall.OpCode != getterCall.OpCode)
 				return false;
-			var owner = getterCall.Method.AccessorOwner as IProperty;
-			if (owner == null || !IsSameMember(getterCall.Method, owner.Getter) || !IsSameMember(setterCall.Method, owner.Setter))
+			if (getterCall.Method.AccessorOwner is not IProperty owner || !IsSameMember(getterCall.Method, owner.Getter) || !IsSameMember(setterCall.Method, owner.Setter))
 				return false;
 			if (setterCall.Arguments.Count != getterCall.Arguments.Count + 1)
 				return false;
@@ -462,9 +459,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </code>
 		bool TransformInlineAssignmentLocal(Block block, int pos)
 		{
-			var inst = block.Instructions[pos] as StLoc;
-			var nextInst = block.Instructions.ElementAtOrDefault(pos + 1) as StLoc;
-			if (inst == null || nextInst == null)
+			if (block.Instructions[pos] is not StLoc inst || block.Instructions.ElementAtOrDefault(pos + 1) is not StLoc nextInst)
 				return false;
 			if (inst.Variable.Kind != VariableKind.StackSlot)
 				return false;
@@ -640,7 +635,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					}
 				}
-				storeType = call.Method.Parameters.Last().Type;
+				storeType = call.Method.Parameters[call.Method.Parameters.Count - 1].Type;
 				value = call.Arguments.Last();
 				return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
 			}
@@ -844,9 +839,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		bool TransformPostIncDecOperator(Block block, int i)
 		{
-			var inst = block.Instructions[i] as StLoc;
 			var store = block.Instructions.ElementAtOrDefault(i + 1);
-			if (inst == null || store == null)
+			if (block.Instructions[i] is not StLoc inst || store == null)
 				return false;
 			var tmpVar = inst.Variable;
 			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem))

@@ -29,21 +29,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
-		public override string Name {
-			get { return elementType.Name + NameSuffix; }
-		}
+		public override string Name => elementType.Name + NameSuffix;
 
-		public override string Namespace {
-			get { return elementType.Namespace; }
-		}
+		public override string Namespace => elementType.Namespace;
 
-		public override string FullName {
-			get { return elementType.FullName + NameSuffix; }
-		}
+		public override string FullName => elementType.FullName + NameSuffix;
 
-		public override string ReflectionName {
-			get { return elementType.ReflectionName + NameSuffix; }
-		}
+		public override string ReflectionName => elementType.ReflectionName + NameSuffix;
 
 		public override string ToString()
 		{
@@ -52,9 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract string NameSuffix { get; }
 
-		public IType ElementType {
-			get { return elementType; }
-		}
+		public IType ElementType => elementType;
 
 		// Force concrete implementations to override VisitChildren - the base implementation
 		// in AbstractType assumes there are no children, but we know there is (at least) 1.

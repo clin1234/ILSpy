@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class ThisResolveResult : ResolveResult
 	{
-		bool causesNonVirtualInvocation;
+		readonly bool causesNonVirtualInvocation;
 
 		public ThisResolveResult(IType type, bool causesNonVirtualInvocation = false) : base(type)
 		{
@@ -36,8 +36,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// <summary>
 		/// Gets whether this resolve result causes member invocations to be non-virtual.
 		/// </summary>
-		public bool CausesNonVirtualInvocation {
-			get { return causesNonVirtualInvocation; }
-		}
+		public bool CausesNonVirtualInvocation => causesNonVirtualInvocation;
 	}
 }

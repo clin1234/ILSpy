@@ -51,9 +51,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.ReferenceKind = kind;
 		}
 
-		public IType ElementType {
-			get { return ((ByReferenceType)this.Type).ElementType; }
-		}
+		public IType ElementType => ((ByReferenceType)this.Type).ElementType;
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{

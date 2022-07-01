@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// leave (if (cond) value else if (cond2) value2 else value3)
 			if (trueInstruction is Block nestedBlock && nestedBlock.Instructions.Count == 2)
 				trueInstruction = CombineExits(nestedBlock);
-			if (!(trueInstruction is Leave leave))
+			if (trueInstruction is not Leave leave)
 				return null;
 			if (!(leave.IsLeavingFunction && leaveElse.IsLeavingFunction))
 				return null;

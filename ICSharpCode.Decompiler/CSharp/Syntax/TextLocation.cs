@@ -54,30 +54,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.column = column;
 		}
 
-		int column, line;
+		readonly int column, line;
 
 		/// <summary>
 		/// Gets the line number.
 		/// </summary>
-		public int Line {
-			get { return line; }
-		}
+		public int Line => line;
 
 		/// <summary>
 		/// Gets the column number.
 		/// </summary>
-		public int Column {
-			get { return column; }
-		}
+		public int Column => column;
 
 		/// <summary>
 		/// Gets whether the TextLocation instance is empty.
 		/// </summary>
-		public bool IsEmpty {
-			get {
-				return column < MinLine && line < MinColumn;
-			}
-		}
+		public bool IsEmpty => column < MinLine && line < MinColumn;
 
 		/// <summary>
 		/// Gets a string representation for debugging purposes.
@@ -100,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public override bool Equals(object obj)
 		{
-			if (!(obj is TextLocation))
+			if (obj is not TextLocation)
 				return false;
 			return (TextLocation)obj == this;
 		}

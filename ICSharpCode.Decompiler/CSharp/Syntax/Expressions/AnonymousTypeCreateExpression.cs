@@ -34,21 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole NewKeywordRole = new("new");
 
-		public CSharpTokenNode NewToken {
-			get { return GetChildByRole(NewKeywordRole); }
-		}
+		public CSharpTokenNode NewToken => GetChildByRole(NewKeywordRole);
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<Expression> Initializers {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		public AstNodeCollection<Expression> Initializers => GetChildrenByRole(Roles.Expression);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public AnonymousTypeCreateExpression()
 		{
@@ -83,8 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as AnonymousTypeCreateExpression;
-			return o != null && this.Initializers.DoMatch(o.Initializers, match);
+			return other is AnonymousTypeCreateExpression o && this.Initializers.DoMatch(o.Initializers, match);
 		}
 	}
 }

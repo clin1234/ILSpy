@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
+		static bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
 		{
 			if (statement.Condition.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable))
 				return true;
@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				)
 			)));
 
-		bool MatchLowerBound(int indexNum, out IL.ILVariable index, IL.ILVariable collection, Statement statement)
+		static bool MatchLowerBound(int indexNum, out IL.ILVariable index, IL.ILVariable collection, Statement statement)
 		{
 			index = null;
 			var m = variableAssignLowerBoundPattern.Match(statement);
@@ -441,14 +441,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return m.Get<IdentifierExpression>("collection").Single().GetILVariable() == collection;
 		}
 
-		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection, Statement firstInitializerStatement, out IdentifierExpression foreachVariable, out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
+		static bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection, Statement firstInitializerStatement, out IdentifierExpression foreachVariable, out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
 		{
 			int i = 0;
 			foreachVariable = null;
 			statements = null;
 			lowerBounds = new IL.ILVariable[upperBounds.Length];
 			Statement stmt = firstInitializerStatement;
-			Match m = default(Match);
+			Match m = default;
 			while (i < upperBounds.Length && MatchLowerBound(i, out IL.ILVariable indexVariable, collection, stmt))
 			{
 				m = forOnArrayMultiDimPattern.Match(stmt.GetNextStatement());
@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (upperBounds == null)
 				{
 					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
-					if (!(collection?.Type is ArrayType arrayType))
+					if (collection?.Type is not ArrayType arrayType)
 						break;
 					upperBounds = new IL.ILVariable[arrayType.Dimensions];
 				}
@@ -590,7 +590,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool CanTransformToAutomaticProperty(IProperty property, bool accessorsMustBeCompilerGenerated)
+		static bool CanTransformToAutomaticProperty(IProperty property, bool accessorsMustBeCompilerGenerated)
 		{
 			if (!property.CanGet)
 				return false;
@@ -606,7 +606,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
+		static PropertyDeclaration TransformAutomaticProperty(PropertyDeclaration propertyDeclaration)
 		{
 			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
 			if (!CanTransformToAutomaticProperty(property, !property.DeclaringTypeDefinition.Fields.Any(f => f.Name == "_" + property.Name && f.IsCompilerGenerated())))
@@ -657,19 +657,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
+		static void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
 		{
 			RemoveCompilerGeneratedAttribute(attributeSections, "System.Runtime.CompilerServices.CompilerGeneratedAttribute");
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections, params string[] attributesToRemove)
+		static void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections, params string[] attributesToRemove)
 		{
 			foreach (AttributeSection section in attributeSections)
 			{
 				foreach (var attr in section.Attributes)
 				{
-					var tr = attr.Type.GetSymbol() as IType;
-					if (tr != null && attributesToRemove.Contains(tr.FullName))
+					if (attr.Type.GetSymbol() is IType tr && attributesToRemove.Contains(tr.FullName))
 					{
 						attr.Remove();
 					}
@@ -739,8 +738,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var parent = identifier.Parent;
 				var mrr = parent.Annotation<MemberResolveResult>();
-				var field = mrr?.Member as IField;
-				if (field != null && IsBackingFieldOfAutomaticProperty(field, out var property)
+				if (mrr?.Member is IField field && IsBackingFieldOfAutomaticProperty(field, out var property)
 					&& CanTransformToAutomaticProperty(property, !(field.IsCompilerGenerated() && field.Name == "_" + property.Name))
 					&& currentMethod.AccessorOwner != property)
 				{
@@ -758,8 +756,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var parent = identifier.Parent;
 			var mrr = parent.Annotation<MemberResolveResult>();
-			var field = mrr?.Member as IField;
-			if (field == null)
+			if (mrr?.Member is not IField field)
 				return null;
 			var @event = field.DeclaringType.GetEvents(ev => ev.Name == field.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 			if (@event != null && currentMethod.AccessorOwner != @event)
@@ -900,7 +897,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration ev, bool isAddAccessor)
+		static bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration ev, bool isAddAccessor)
 		{
 			if (!m.Success)
 				return false;
@@ -924,8 +921,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// ignore tuple element names, dynamic and nullability
 			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(returnType, eventType))
 				return false;
-			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
-			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
+			if (m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() is not IMethod combineMethod || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;
 			return combineMethod.DeclaringType.FullName == "System.Delegate";
 		}
@@ -941,7 +937,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
-		bool CheckAutomaticEventV4(CustomEventDeclaration ev)
+		static bool CheckAutomaticEventV4(CustomEventDeclaration ev)
 		{
 			Match addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
@@ -965,7 +961,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool CheckAutomaticEventV2(CustomEventDeclaration ev)
+		static bool CheckAutomaticEventV2(CustomEventDeclaration ev)
 		{
 			Match addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, isAddAccessor: true))
@@ -976,7 +972,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev)
+		static bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev)
 		{
 			Match addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
@@ -1064,7 +1060,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
+		static DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
 		{
 			Match m = destructorBodyPattern.Match(dtorDef.Body);
 			if (m.Success)
@@ -1091,7 +1087,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Simplify nested 'try { try {} catch {} } finally {}'.
 		/// This transformation must run after the using/lock tranformations.
 		/// </summary>
-		TryCatchStatement TransformTryCatchFinally(TryCatchStatement tryFinally)
+		static TryCatchStatement TransformTryCatchFinally(TryCatchStatement tryFinally)
 		{
 			if (tryCatchFinallyPattern.IsMatch(tryFinally))
 			{
@@ -1122,7 +1118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		AstNode SimplifyCascadingIfElseStatements(IfElseStatement node)
+		static AstNode SimplifyCascadingIfElseStatements(IfElseStatement node)
 		{
 			Match m = cascadingIfElsePattern.Match(node);
 			if (m.Success)
@@ -1144,8 +1140,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case BinaryOperatorType.ConditionalAnd:
 				case BinaryOperatorType.ConditionalOr:
 					// a && (b && c) ==> (a && b) && c
-					var bAndC = expr.Right as BinaryOperatorExpression;
-					if (bAndC != null && bAndC.Operator == expr.Operator)
+					if (expr.Right is BinaryOperatorExpression bAndC && bAndC.Operator == expr.Operator)
 					{
 						// make bAndC the parent and expr the child
 						var b = bAndC.Left.Detach();
@@ -1200,10 +1195,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!context.Settings.UseEnhancedUsing)
 				return usingStatement;
 
-			if (usingStatement.GetNextStatement() != null || !(usingStatement.Parent is BlockStatement))
+			if (usingStatement.GetNextStatement() != null || usingStatement.Parent is not BlockStatement)
 				return usingStatement;
 
-			if (!(usingStatement.ResourceAcquisition is VariableDeclarationStatement))
+			if (usingStatement.ResourceAcquisition is not VariableDeclarationStatement)
 				return usingStatement;
 
 			usingStatement.IsEnhanced = true;

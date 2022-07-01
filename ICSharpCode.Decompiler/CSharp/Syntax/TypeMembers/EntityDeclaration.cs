@@ -29,15 +29,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<CSharpModifierToken> ModifierRole = new("Modifier", null);
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new("PrivateImplementationType", AstType.Null);
 
-		public override NodeType NodeType {
-			get { return NodeType.Member; }
-		}
+		public override NodeType NodeType => NodeType.Member;
 
 		public abstract SymbolKind SymbolKind { get; }
 
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole(AttributeRole); }
-		}
+		public AstNodeCollection<AttributeSection> Attributes => base.GetChildrenByRole(AttributeRole);
 
 		public Modifiers Modifiers {
 			get { return GetModifiers(this); }
@@ -49,9 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (Modifiers & mod) == mod;
 		}
 
-		public IEnumerable<CSharpModifierToken> ModifierTokens {
-			get { return GetChildrenByRole(ModifierRole); }
-		}
+		public IEnumerable<CSharpModifierToken> ModifierTokens => GetChildrenByRole(ModifierRole);
 
 		public virtual string Name {
 			get {
@@ -72,9 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Type, value); }
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole(Roles.Semicolon);
 
 		internal static Modifiers GetModifiers(AstNode node)
 		{

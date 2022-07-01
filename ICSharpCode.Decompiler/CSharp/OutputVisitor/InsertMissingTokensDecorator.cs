@@ -107,20 +107,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TextLocation start = locationProvider.Location;
 			CSharpTokenNode t = null;
-			if (role is TokenRole)
-				t = new(start, (TokenRole)role);
+			if (role is TokenRole role1)
+				t = new(start, role1);
 			else if (role == EntityDeclaration.ModifierRole)
 				t = new CSharpModifierToken(start, CSharpModifierToken.GetModifierValue(keyword));
 			else if (keyword == "this")
 			{
-				ThisReferenceExpression node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
-				if (node != null)
+				if (nodes.Peek().LastOrDefault() is ThisReferenceExpression node)
 					node.Location = start;
 			}
 			else if (keyword == "base")
 			{
-				BaseReferenceExpression node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
-				if (node != null)
+				if (nodes.Peek().LastOrDefault() is BaseReferenceExpression node)
 					node.Location = start;
 			}
 			if (t != null)
@@ -144,20 +142,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Expression node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
 			base.WritePrimitiveValue(value, format);
-			if (node is PrimitiveExpression)
+			if (node is PrimitiveExpression expression)
 			{
-				((PrimitiveExpression)node).SetLocation(startLocation, locationProvider.Location);
+				expression.SetLocation(startLocation, locationProvider.Location);
 			}
-			if (node is NullReferenceExpression)
+			if (node is NullReferenceExpression expression1)
 			{
-				((NullReferenceExpression)node).SetStartLocation(startLocation);
+				expression1.SetStartLocation(startLocation);
 			}
 		}
 
 		public override void WritePrimitiveType(string type)
 		{
-			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;
-			if (node != null)
+			if (nodes.Peek().LastOrDefault() is PrimitiveType node)
 				node.SetStartLocation(locationProvider.Location);
 			base.WritePrimitiveType(type);
 		}

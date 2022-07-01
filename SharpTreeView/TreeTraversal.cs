@@ -45,7 +45,7 @@ namespace ICSharpCode.TreeView
 		/// <returns>Iterator that enumerates the tree structure in pre-order.</returns>
 		public static IEnumerable<T> PreOrder<T>(IEnumerable<T> input, Func<T, IEnumerable<T>> recursion)
 		{
-			Stack<IEnumerator<T>> stack = new Stack<IEnumerator<T>>();
+			Stack<IEnumerator<T>> stack = new();
 			try
 			{
 				stack.Push(input.GetEnumerator());

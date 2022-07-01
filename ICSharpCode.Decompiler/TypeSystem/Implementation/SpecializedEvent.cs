@@ -46,30 +46,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			AddSubstitution(substitution);
 		}
 
-		public bool CanAdd {
-			get { return eventDefinition.CanAdd; }
-		}
+		public bool CanAdd => eventDefinition.CanAdd;
 
-		public bool CanRemove {
-			get { return eventDefinition.CanRemove; }
-		}
+		public bool CanRemove => eventDefinition.CanRemove;
 
-		public bool CanInvoke {
-			get { return eventDefinition.CanInvoke; }
-		}
+		public bool CanInvoke => eventDefinition.CanInvoke;
 
 		IMethod addAccessor, removeAccessor, invokeAccessor;
 
-		public IMethod AddAccessor {
-			get { return WrapAccessor(ref this.addAccessor, eventDefinition.AddAccessor); }
-		}
+		public IMethod AddAccessor => WrapAccessor(ref this.addAccessor, eventDefinition.AddAccessor);
 
-		public IMethod RemoveAccessor {
-			get { return WrapAccessor(ref this.removeAccessor, eventDefinition.RemoveAccessor); }
-		}
+		public IMethod RemoveAccessor => WrapAccessor(ref this.removeAccessor, eventDefinition.RemoveAccessor);
 
-		public IMethod InvokeAccessor {
-			get { return WrapAccessor(ref this.invokeAccessor, eventDefinition.InvokeAccessor); }
-		}
+		public IMethod InvokeAccessor => WrapAccessor(ref this.invokeAccessor, eventDefinition.InvokeAccessor);
 	}
 }

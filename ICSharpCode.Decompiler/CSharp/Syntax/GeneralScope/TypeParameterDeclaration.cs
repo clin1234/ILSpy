@@ -33,13 +33,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole OutVarianceKeywordRole = new("out");
 		public static readonly TokenRole InVarianceKeywordRole = new("in");
 
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole(AttributeRole); }
-		}
+		public AstNodeCollection<AttributeSection> Attributes => GetChildrenByRole(AttributeRole);
 
 		VarianceModifier variance;
 
@@ -48,15 +44,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { ThrowIfFrozen(); variance = value; }
 		}
 
-		public CSharpTokenNode VarianceToken {
-			get {
-				return Variance switch {
-					VarianceModifier.Covariant => GetChildByRole(OutVarianceKeywordRole),
-					VarianceModifier.Contravariant => GetChildByRole(InVarianceKeywordRole),
-					_ => CSharpTokenNode.Null
-				};
-			}
-		}
+		public CSharpTokenNode VarianceToken => Variance switch {
+			VarianceModifier.Covariant => GetChildByRole(OutVarianceKeywordRole),
+			VarianceModifier.Contravariant => GetChildByRole(InVarianceKeywordRole),
+			_ => CSharpTokenNode.Null
+		};
 
 		public string Name {
 			get {
@@ -102,8 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeParameterDeclaration o = other as TypeParameterDeclaration;
-			return o != null && this.Variance == o.Variance && MatchString(this.Name, o.Name) && this.Attributes.DoMatch(o.Attributes, match);
+			return other is TypeParameterDeclaration o && this.Variance == o.Variance && MatchString(this.Name, o.Name) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 	}
 }

@@ -58,9 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
-		public UsingScope UnresolvedUsingScope {
-			get { return usingScope; }
-		}
+		public UsingScope UnresolvedUsingScope => usingScope;
 
 		INamespace @namespace;
 
@@ -89,9 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
-		public ResolvedUsingScope Parent {
-			get { return parentContext.CurrentUsingScope; }
-		}
+		public ResolvedUsingScope Parent => parentContext.CurrentUsingScope;
 
 		IList<INamespace> usings;
 
@@ -151,9 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
-		public IList<string> ExternAliases {
-			get { return usingScope.ExternAliases; }
-		}
+		public IList<string> ExternAliases => usingScope.ExternAliases;
 
 		/// <summary>
 		/// Gets whether this using scope has an alias (either using or extern)
@@ -177,37 +171,21 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 			public string ExternAlias { get; set; }
 
-			string INamespace.FullName {
-				get { return NamespaceDeclaration.BuildQualifiedName(parentNamespace.FullName, name); }
-			}
+			string INamespace.FullName => NamespaceDeclaration.BuildQualifiedName(parentNamespace.FullName, name);
 
-			public string Name {
-				get { return name; }
-			}
+			public string Name => name;
 
-			SymbolKind ISymbol.SymbolKind {
-				get { return SymbolKind.Namespace; }
-			}
+			SymbolKind ISymbol.SymbolKind => SymbolKind.Namespace;
 
-			INamespace INamespace.ParentNamespace {
-				get { return parentNamespace; }
-			}
+			INamespace INamespace.ParentNamespace => parentNamespace;
 
-			IEnumerable<INamespace> INamespace.ChildNamespaces {
-				get { return EmptyList<INamespace>.Instance; }
-			}
+			IEnumerable<INamespace> INamespace.ChildNamespaces => EmptyList<INamespace>.Instance;
 
-			IEnumerable<ITypeDefinition> INamespace.Types {
-				get { return EmptyList<ITypeDefinition>.Instance; }
-			}
+			IEnumerable<ITypeDefinition> INamespace.Types => EmptyList<ITypeDefinition>.Instance;
 
-			IEnumerable<IModule> INamespace.ContributingModules {
-				get { return EmptyList<IModule>.Instance; }
-			}
+			IEnumerable<IModule> INamespace.ContributingModules => EmptyList<IModule>.Instance;
 
-			ICompilation ICompilationProvider.Compilation {
-				get { return parentNamespace.Compilation; }
-			}
+			ICompilation ICompilationProvider.Compilation => parentNamespace.Compilation;
 
 			INamespace INamespace.GetChildNamespace(string name)
 			{

@@ -45,9 +45,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.Location = location;
 		}
 
-		public override bool IsError {
-			get { return true; }
-		}
+		public override bool IsError => true;
 
 		public string Message { get; private set; }
 

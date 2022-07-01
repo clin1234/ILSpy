@@ -178,7 +178,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (asm == null)
 				return null;
-			App.Current.Dispatcher.VerifyAccess();
+			Application.Current.Dispatcher.VerifyAccess();
 			if (asm.ParentBundle != null)
 			{
 				var bundle = FindAssemblyNode(asm.ParentBundle);

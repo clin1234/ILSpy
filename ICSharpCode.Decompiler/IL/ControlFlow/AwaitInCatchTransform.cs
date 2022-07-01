@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
 			{
-				if (!(tryCatch.Parent?.Parent is BlockContainer container))
+				if (tryCatch.Parent?.Parent is not BlockContainer container)
 					continue;
 				// Detect all handlers that contain an await expression
 				AnalyzeHandlers(tryCatch.Handlers, out var catchHandlerIdentifier, out var transformableCatchBlocks);
@@ -361,7 +361,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				jumpTableEntry = null;
 				do
 				{
-					if (!(jumpTableEntryBlock.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
+					if (jumpTableEntryBlock.Instructions.SecondToLastOrDefault() is not IfInstruction ifInst)
 						return false;
 					ILInstruction lastInst = jumpTableEntryBlock.Instructions.Last();
 					if (ifInst.Condition.MatchCompEquals(out var left, out var right))
@@ -427,9 +427,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			throwBlock = null;
 			typedExceptionVariableStore = null;
 
-			var typedExceptionVariableStLoc = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
 
-			if (typedExceptionVariableStLoc == null
+			if (block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) is not StLoc typedExceptionVariableStLoc
 				|| !typedExceptionVariableStLoc.Value.MatchIsInst(out var arg, out var type)
 				|| !DerivesFromException(type)
 				|| !arg.MatchLdLoc(out var v))

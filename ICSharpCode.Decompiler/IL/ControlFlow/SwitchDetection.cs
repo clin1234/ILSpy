@@ -224,8 +224,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			// due to our of of basic blocks at this point,
 			// switch instructions can only appear as last insturction
-			var sw = block.Instructions.LastOrDefault() as SwitchInstruction;
-			if (sw == null)
+			if (block.Instructions.LastOrDefault() is not SwitchInstruction sw)
 				return;
 
 			// ControlFlowSimplification runs early (before any other control flow transforms).

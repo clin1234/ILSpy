@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy
 			if (bundleNode == null)
 				return;
 			var assembly = selectedNodes[0].PackageEntry;
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = Path.GetFileName(WholeProjectDecompiler.SanitizeFileName(assembly.Name));
 			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd" + Resources.AllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(bundleNode.LoadedAssembly.FileName);
@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy
 			}, ct)).Then(output => Docking.DockWorkspace.Instance.ShowText(output)).HandleExceptions();
 		}
 
-		void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
+		static void SaveEntry(ITextOutput output, PackageEntry entry, string targetFileName)
 		{
 			output.Write(entry.Name + ": ");
 			using Stream stream = entry.TryOpenStream();
@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy
 			}
 
 			stream.Position = 0;
-			using FileStream fileStream = new FileStream(targetFileName, FileMode.OpenOrCreate);
+			using FileStream fileStream = new(targetFileName, FileMode.OpenOrCreate);
 			stream.CopyTo(fileStream);
 			output.WriteLine("Written to " + targetFileName);
 		}

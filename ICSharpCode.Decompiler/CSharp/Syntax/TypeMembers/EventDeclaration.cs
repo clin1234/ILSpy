@@ -35,17 +35,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole EventKeywordRole = new("event");
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Event; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Event;
 
-		public CSharpTokenNode EventToken {
-			get { return GetChildByRole(EventKeywordRole); }
-		}
+		public CSharpTokenNode EventToken => GetChildByRole(EventKeywordRole);
 
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole(Roles.Variable); }
-		}
+		public AstNodeCollection<VariableInitializer> Variables => GetChildrenByRole(Roles.Variable);
 
 		// Hide .Name and .NameToken from users; the actual field names
 		// are stored in the VariableInitializer.
@@ -78,8 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			EventDeclaration o = other as EventDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
+			return other is EventDeclaration o && this.MatchAttributesAndModifiers(o, match)
 				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
 		}
 	}
@@ -93,9 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Accessor> AddAccessorRole = new("AddAccessor", Accessor.Null);
 		public static readonly Role<Accessor> RemoveAccessorRole = new("RemoveAccessor", Accessor.Null);
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Event; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Event;
 
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
@@ -106,9 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(PrivateImplementationTypeRole, value); }
 		}
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
 		public Accessor AddAccessor {
 			get { return GetChildByRole(AddAccessorRole); }
@@ -120,9 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(RemoveAccessorRole, value); }
 		}
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -141,8 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CustomEventDeclaration o = other as CustomEventDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
+			return other is CustomEventDeclaration o && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
 				&& this.AddAccessor.DoMatch(o.AddAccessor, match) && this.RemoveAccessor.DoMatch(o.RemoveAccessor, match);

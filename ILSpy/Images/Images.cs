@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy
 		static BitmapImage LoadImage(object part, string icon)
 		{
 			Uri uri = GetUri(part, icon);
-			BitmapImage image = new BitmapImage(uri);
+			BitmapImage image = new(uri);
 			if (image.CanFreeze)
 			{
 				image.Freeze();
@@ -264,7 +264,7 @@ namespace ICSharpCode.ILSpy
 
 		private abstract class IconCache<T>
 		{
-			private readonly Dictionary<(T, AccessOverlayIcon, bool), ImageSource> cache = new Dictionary<(T, AccessOverlayIcon, bool), ImageSource>();
+			private readonly Dictionary<(T, AccessOverlayIcon, bool), ImageSource> cache = new();
 
 			protected void PreloadPublicIconToCache(T icon, ImageSource image)
 			{
@@ -313,7 +313,7 @@ namespace ICSharpCode.ILSpy
 				return overlayImage;
 			}
 
-			private static readonly Rect iconRect = new Rect(0, 0, 16, 16);
+			private static readonly Rect iconRect = new(0, 0, 16, 16);
 
 			private static ImageSource CreateOverlayImage(ImageSource baseImage, ImageSource overlay, bool isStatic)
 			{

@@ -42,9 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode DotToken {
-			get { return GetChildByRole(Roles.Dot); }
-		}
+		public CSharpTokenNode DotToken => GetChildByRole(Roles.Dot);
 
 		public string MemberName {
 			get {
@@ -64,17 +62,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole(Roles.LChevron); }
-		}
+		public CSharpTokenNode LChevronToken => GetChildByRole(Roles.LChevron);
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole(Roles.TypeArgument);
 
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole(Roles.RChevron); }
-		}
+		public CSharpTokenNode RChevronToken => GetChildByRole(Roles.RChevron);
 
 		public MemberReferenceExpression()
 		{
@@ -114,8 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MemberReferenceExpression o = other as MemberReferenceExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is MemberReferenceExpression o && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}
 }

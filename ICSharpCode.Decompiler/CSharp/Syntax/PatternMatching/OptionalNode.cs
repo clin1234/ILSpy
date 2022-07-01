@@ -24,9 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		readonly INode childNode;
 
-		public INode ChildNode {
-			get { return childNode; }
-		}
+		public INode ChildNode => childNode;
 
 		public OptionalNode(INode childNode)
 		{

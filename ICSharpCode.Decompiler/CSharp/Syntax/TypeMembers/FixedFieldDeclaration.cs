@@ -32,17 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole FixedKeywordRole = new("fixed");
 		public static readonly Role<FixedVariableInitializer> VariableRole = new("FixedVariable", null);
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Field; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Field;
 
-		public CSharpTokenNode FixedToken {
-			get { return GetChildByRole(FixedKeywordRole); }
-		}
+		public CSharpTokenNode FixedToken => GetChildByRole(FixedKeywordRole);
 
-		public AstNodeCollection<FixedVariableInitializer> Variables {
-			get { return GetChildrenByRole(VariableRole); }
-		}
+		public AstNodeCollection<FixedVariableInitializer> Variables => GetChildrenByRole(VariableRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -61,8 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			var o = other as FixedFieldDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
+			return other is FixedFieldDeclaration o && this.MatchAttributesAndModifiers(o, match)
 				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
 		}
 	}

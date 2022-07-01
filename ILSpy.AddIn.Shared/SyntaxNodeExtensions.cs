@@ -25,8 +25,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			{
 				yield return current;
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 		}
@@ -42,8 +42,8 @@ namespace ICSharpCode.ILSpy.AddIn
 					yield return (TNode)current;
 				}
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 		}
@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			if (node == null)
 			{
-				return default(TNode);
+				return default;
 			}
 
 			return node.GetAncestors<TNode>().FirstOrDefault();
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			if (node == null)
 			{
-				return default(TNode);
+				return default;
 			}
 
 			return node.GetAncestorsOrThis<TNode>().FirstOrDefault();
@@ -81,8 +81,8 @@ namespace ICSharpCode.ILSpy.AddIn
 					yield return (TNode)current;
 				}
 
-				current = current is IStructuredTriviaSyntax
-					? ((IStructuredTriviaSyntax)current).ParentTrivia.Token.Parent
+				current = current is IStructuredTriviaSyntax syntax
+					? syntax.ParentTrivia.Token.Parent
 					: current.Parent;
 			}
 		}
@@ -100,8 +100,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				return false;
 			}
 
-			var parentNode = node.Parent as T;
-			if (parentNode == null)
+			if (node.Parent is not T parentNode)
 			{
 				return false;
 			}
@@ -181,7 +180,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					: blocks.Intersect(node.AncestorsAndSelf().Where(predicate));
 			}
 
-			return blocks == null ? null : blocks.First();
+			return blocks?.First();
 		}
 
 		public static TSyntaxNode FindInnermostCommonNode<TSyntaxNode>(this IEnumerable<SyntaxNode> nodes)
@@ -444,52 +443,26 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool IsBreakableConstruct(this SyntaxNode node)
 		{
-			switch (node.Kind())
-			{
-				case SyntaxKind.DoStatement:
-				case SyntaxKind.WhileStatement:
-				case SyntaxKind.SwitchStatement:
-				case SyntaxKind.ForStatement:
-				case SyntaxKind.ForEachStatement:
-					return true;
-			}
-
-			return false;
+			return node.Kind() switch {
+				SyntaxKind.DoStatement or SyntaxKind.WhileStatement or SyntaxKind.SwitchStatement or SyntaxKind.ForStatement or SyntaxKind.ForEachStatement => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsContinuableConstruct(this SyntaxNode node)
 		{
-			switch (node.Kind())
-			{
-				case SyntaxKind.DoStatement:
-				case SyntaxKind.WhileStatement:
-				case SyntaxKind.ForStatement:
-				case SyntaxKind.ForEachStatement:
-					return true;
-			}
-
-			return false;
+			return node.Kind() switch {
+				SyntaxKind.DoStatement or SyntaxKind.WhileStatement or SyntaxKind.ForStatement or SyntaxKind.ForEachStatement => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsReturnableConstruct(this SyntaxNode node)
 		{
-			switch (node.Kind())
-			{
-				case SyntaxKind.AnonymousMethodExpression:
-				case SyntaxKind.SimpleLambdaExpression:
-				case SyntaxKind.ParenthesizedLambdaExpression:
-				case SyntaxKind.MethodDeclaration:
-				case SyntaxKind.ConstructorDeclaration:
-				case SyntaxKind.DestructorDeclaration:
-				case SyntaxKind.GetAccessorDeclaration:
-				case SyntaxKind.SetAccessorDeclaration:
-				case SyntaxKind.OperatorDeclaration:
-				case SyntaxKind.AddAccessorDeclaration:
-				case SyntaxKind.RemoveAccessorDeclaration:
-					return true;
-			}
-
-			return false;
+			return node.Kind() switch {
+				SyntaxKind.AnonymousMethodExpression or SyntaxKind.SimpleLambdaExpression or SyntaxKind.ParenthesizedLambdaExpression or SyntaxKind.MethodDeclaration or SyntaxKind.ConstructorDeclaration or SyntaxKind.DestructorDeclaration or SyntaxKind.GetAccessorDeclaration or SyntaxKind.SetAccessorDeclaration or SyntaxKind.OperatorDeclaration or SyntaxKind.AddAccessorDeclaration or SyntaxKind.RemoveAccessorDeclaration => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsAnyArgumentList(this SyntaxNode node)
@@ -529,22 +502,10 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool IsCompoundAssignExpression(this SyntaxNode node)
 		{
-			switch (node.Kind())
-			{
-				case SyntaxKind.AddAssignmentExpression:
-				case SyntaxKind.SubtractAssignmentExpression:
-				case SyntaxKind.MultiplyAssignmentExpression:
-				case SyntaxKind.DivideAssignmentExpression:
-				case SyntaxKind.ModuloAssignmentExpression:
-				case SyntaxKind.AndAssignmentExpression:
-				case SyntaxKind.ExclusiveOrAssignmentExpression:
-				case SyntaxKind.OrAssignmentExpression:
-				case SyntaxKind.LeftShiftAssignmentExpression:
-				case SyntaxKind.RightShiftAssignmentExpression:
-					return true;
-			}
-
-			return false;
+			return node.Kind() switch {
+				SyntaxKind.AddAssignmentExpression or SyntaxKind.SubtractAssignmentExpression or SyntaxKind.MultiplyAssignmentExpression or SyntaxKind.DivideAssignmentExpression or SyntaxKind.ModuloAssignmentExpression or SyntaxKind.AndAssignmentExpression or SyntaxKind.ExclusiveOrAssignmentExpression or SyntaxKind.OrAssignmentExpression or SyntaxKind.LeftShiftAssignmentExpression or SyntaxKind.RightShiftAssignmentExpression => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsLeftSideOfAssignExpression(this SyntaxNode node)
@@ -594,49 +555,42 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static SyntaxNode GetParent(this SyntaxNode node)
 		{
-			return node != null ? node.Parent : null;
+			return node?.Parent;
 		}
 
 		public static ValueTuple<SyntaxToken, SyntaxToken> GetBraces(this SyntaxNode node)
 		{
-			var namespaceNode = node as NamespaceDeclarationSyntax;
-			if (namespaceNode != null)
+			if (node is NamespaceDeclarationSyntax namespaceNode)
 			{
 				return ValueTuple.Create(namespaceNode.OpenBraceToken, namespaceNode.CloseBraceToken);
 			}
 
-			var baseTypeNode = node as BaseTypeDeclarationSyntax;
-			if (baseTypeNode != null)
+			if (node is BaseTypeDeclarationSyntax baseTypeNode)
 			{
 				return ValueTuple.Create(baseTypeNode.OpenBraceToken, baseTypeNode.CloseBraceToken);
 			}
 
-			var accessorListNode = node as AccessorListSyntax;
-			if (accessorListNode != null)
+			if (node is AccessorListSyntax accessorListNode)
 			{
 				return ValueTuple.Create(accessorListNode.OpenBraceToken, accessorListNode.CloseBraceToken);
 			}
 
-			var blockNode = node as BlockSyntax;
-			if (blockNode != null)
+			if (node is BlockSyntax blockNode)
 			{
 				return ValueTuple.Create(blockNode.OpenBraceToken, blockNode.CloseBraceToken);
 			}
 
-			var switchStatementNode = node as SwitchStatementSyntax;
-			if (switchStatementNode != null)
+			if (node is SwitchStatementSyntax switchStatementNode)
 			{
 				return ValueTuple.Create(switchStatementNode.OpenBraceToken, switchStatementNode.CloseBraceToken);
 			}
 
-			var anonymousObjectCreationExpression = node as AnonymousObjectCreationExpressionSyntax;
-			if (anonymousObjectCreationExpression != null)
+			if (node is AnonymousObjectCreationExpressionSyntax anonymousObjectCreationExpression)
 			{
 				return ValueTuple.Create(anonymousObjectCreationExpression.OpenBraceToken, anonymousObjectCreationExpression.CloseBraceToken);
 			}
 
-			var initializeExpressionNode = node as InitializerExpressionSyntax;
-			if (initializeExpressionNode != null)
+			if (node is InitializerExpressionSyntax initializeExpressionNode)
 			{
 				return ValueTuple.Create(initializeExpressionNode.OpenBraceToken, initializeExpressionNode.CloseBraceToken);
 			}
@@ -686,7 +640,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 			}
 
-			return default(SyntaxTokenList);
+			return default;
 		}
 
 		public static SyntaxNode WithModifiers(this SyntaxNode member, SyntaxTokenList modifiers)
@@ -747,14 +701,12 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static bool CheckTopLevel(this SyntaxNode node, TextSpan span)
 		{
-			var block = node as BlockSyntax;
-			if (block != null)
+			if (node is BlockSyntax block)
 			{
 				return block.ContainsInBlockBody(span);
 			}
 
-			var field = node as FieldDeclarationSyntax;
-			if (field != null)
+			if (node is FieldDeclarationSyntax field)
 			{
 				foreach (var variable in field.Declaration.Variables)
 				{
@@ -765,14 +717,12 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 			}
 
-			var global = node as GlobalStatementSyntax;
-			if (global != null)
+			if (node is GlobalStatementSyntax)
 			{
 				return true;
 			}
 
-			var constructorInitializer = node as ConstructorInitializerSyntax;
-			if (constructorInitializer != null)
+			if (node is ConstructorInitializerSyntax constructorInitializer)
 			{
 				return constructorInitializer.ContainsInArgument(span);
 			}

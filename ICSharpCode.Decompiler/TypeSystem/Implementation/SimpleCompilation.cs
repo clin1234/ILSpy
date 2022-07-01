@@ -136,9 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new MergedNamespace(this, namespaces);
 		}
 
-		public CacheManager CacheManager {
-			get { return cacheManager; }
-		}
+		public CacheManager CacheManager => cacheManager;
 
 		public virtual INamespace GetNamespaceForExternAlias(string alias)
 		{
@@ -153,9 +151,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return knownTypeCache.FindType(typeCode);
 		}
 
-		public StringComparer NameComparer {
-			get { return StringComparer.Ordinal; }
-		}
+		public StringComparer NameComparer => StringComparer.Ordinal;
 
 		public override string ToString()
 		{

@@ -196,18 +196,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override StackType ResultType {
-			get {
-				return finalInstruction.ResultType;
-			}
-		}
+		public override StackType ResultType => finalInstruction.ResultType;
 
 		/// <summary>
 		/// Gets the name of this block.
 		/// </summary>
-		public string Label {
-			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.StartILOffset); }
-		}
+		public string Label => Disassembler.DisassemblerHelpers.OffsetToString(this.StartILOffset);
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -283,11 +277,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 
 		/// <summary>
 		/// Deletes this block from its parent container.

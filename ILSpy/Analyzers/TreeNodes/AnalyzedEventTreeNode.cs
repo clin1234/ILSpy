@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			}
 		}
 
-		bool TryFindBackingField(IEvent analyzedEvent, out IField backingField)
+		static bool TryFindBackingField(IEvent analyzedEvent, out IField backingField)
 		{
 			backingField = null;
 			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers))

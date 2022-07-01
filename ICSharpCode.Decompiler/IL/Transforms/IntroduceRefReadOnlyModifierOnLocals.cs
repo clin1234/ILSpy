@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// An ILVariable should be marked as readonly,
 		/// if it's a "by-ref-like" type and the initialized value is known to be readonly.
 		/// </summary>
-		bool IsUsedAsRefReadonly(ILVariable variable)
+		static bool IsUsedAsRefReadonly(ILVariable variable)
 		{
 			foreach (var store in variable.StoreInstructions.OfType<StLoc>())
 			{

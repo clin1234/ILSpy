@@ -257,27 +257,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			throw index switch {
+				_ => new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			throw index switch {
+				_ => new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			throw index switch {
+				_ => new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -288,11 +282,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.None;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -319,34 +309,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.argument;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.argument,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Argument = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Argument = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArgumentSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ArgumentSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -358,11 +338,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return argument.Flags | InstructionFlags.None;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -407,15 +383,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.left;
-				case 1:
-					return this.right;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.left,
+				1 => this.right,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -433,15 +405,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftSlot;
-				case 1:
-					return RightSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => LeftSlot,
+				1 => RightSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -454,11 +422,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return left.Flags | right.Flags | InstructionFlags.None;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -484,28 +448,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Arguments[index - 0];
-			}
+			return index switch {
+				_ => this.Arguments[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Arguments[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Arguments[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return ArgumentsSlot;
-			}
+			return index switch {
+				_ => ArgumentsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -518,11 +475,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 	}
 }
 namespace ICSharpCode.Decompiler.IL.Patterns
@@ -533,7 +486,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		protected PatternInstruction(OpCode opCode) : base(opCode)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Unknown; } }
+		public override StackType ResultType => StackType.Unknown;
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -565,15 +518,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.target;
-				case 1:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.target,
+				1 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -591,15 +540,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetSlot;
-				case 1:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TargetSlot,
+				1 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -612,11 +557,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return target.Flags | value.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -642,11 +583,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -662,11 +599,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.EndPointUnreachable;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.EndPointUnreachable;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.EndPointUnreachable;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitInvalidBranch(this);
@@ -681,8 +614,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as InvalidBranch;
-			return o != null;
+			return other is InvalidBranch o;
 		}
 	}
 }
@@ -699,11 +631,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitInvalidExpression(this);
@@ -718,8 +646,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as InvalidExpression;
-			return o != null;
+			return other is InvalidExpression o;
 		}
 	}
 }
@@ -731,7 +658,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Nop() : base(OpCode.Nop)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNop(this);
@@ -746,8 +673,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Nop;
-			return o != null;
+			return other is Nop o;
 		}
 	}
 }
@@ -773,13 +699,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.body;
-				default:
-					return this.LocalFunctions[index - 1];
-			}
+			return index switch {
+				0 => this.body,
+				_ => this.LocalFunctions[index - 1],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -795,13 +718,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return BodySlot;
-				default:
-					return LocalFunctionsSlot;
-			}
+			return index switch {
+				0 => BodySlot,
+				_ => LocalFunctionsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -812,7 +732,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.CloneVariables();
 			return clone;
 		}
-		public override StackType ResultType { get { return DelegateType?.GetStackType() ?? StackType.O; } }
+		public override StackType ResultType => DelegateType?.GetStackType() ?? StackType.O;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitILFunction(this);
@@ -827,8 +747,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as ILFunction;
-			return o != null && this.body.PerformMatch(o.body, ref match) && Patterns.ListMatch.DoMatch(this.LocalFunctions, o.LocalFunctions, ref match);
+			return other is ILFunction o && this.body.PerformMatch(o.body, ref match) && Patterns.ListMatch.DoMatch(this.LocalFunctions, o.LocalFunctions, ref match);
 		}
 	}
 }
@@ -837,7 +756,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class BlockContainer : ILInstruction
 	{
-		public override StackType ResultType { get { return this.ExpectedResultType; } }
+		public override StackType ResultType => this.ExpectedResultType;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitBlockContainer(this);
@@ -852,8 +771,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as BlockContainer;
-			return o != null && Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match);
+			return other is BlockContainer o && Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match);
 		}
 	}
 }
@@ -877,8 +795,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Block;
-			return o != null && this.Kind == o.Kind && Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match) && this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match);
+			return other is Block o && this.Kind == o.Kind && Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match) && this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match);
 		}
 	}
 }
@@ -893,7 +810,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Init = init;
 			this.Body = body;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		ILVariable variable;
 		public ILVariable Variable {
 			get { return variable; }
@@ -950,15 +867,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.init;
-				case 1:
-					return this.body;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.init,
+				1 => this.body,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -976,15 +889,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return InitSlot;
-				case 1:
-					return BodySlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => InitSlot,
+				1 => BodySlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -997,11 +906,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.MayWriteLocals | init.Flags | body.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayWriteLocals;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayWriteLocals;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -1028,8 +933,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as PinnedRegion;
-			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
+			return other is PinnedRegion o && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -1060,8 +964,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as BinaryNumericInstruction;
-			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted;
+			return other is BinaryNumericInstruction o && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted;
 		}
 	}
 }
@@ -1076,7 +979,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => type.GetStackType();
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNumericCompoundAssign(this);
@@ -1091,8 +994,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as NumericCompoundAssign;
-			return o != null && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return other is NumericCompoundAssign o && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1106,11 +1008,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitUserDefinedCompoundAssign(this);
@@ -1125,8 +1023,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as UserDefinedCompoundAssign;
-			return o != null && this.Method.Equals(o.Method) && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return other is UserDefinedCompoundAssign o && this.Method.Equals(o.Method) && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1135,16 +1032,12 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Common instruction for dynamic compound assignments.</summary>
 	public sealed partial class DynamicCompoundAssign : CompoundAssignmentInstruction
 	{
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicCompoundAssign(this);
@@ -1159,8 +1052,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicCompoundAssign;
-			return o != null && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+			return other is DynamicCompoundAssign o && this.EvalMode == o.EvalMode && this.TargetKind == o.TargetKind && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -1184,8 +1076,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as BitNot;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType;
+			return other is BitNot o && this.Argument.PerformMatch(o.Argument, ref match) && IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType;
 		}
 	}
 }
@@ -1197,7 +1088,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Arglist() : base(OpCode.Arglist)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitArglist(this);
@@ -1212,8 +1103,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Arglist;
-			return o != null;
+			return other is Arglist o;
 		}
 	}
 }
@@ -1222,16 +1112,12 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unconditional branch. <c>goto target;</c></summary>
 	public sealed partial class Branch : SimpleInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitBranch(this);
@@ -1246,8 +1132,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Branch;
-			return o != null && this.TargetBlock == o.TargetBlock;
+			return other is Branch o && this.TargetBlock == o.TargetBlock;
 		}
 	}
 }
@@ -1271,34 +1156,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Value = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -1306,7 +1181,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLeave(this);
@@ -1321,8 +1196,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Leave;
-			return o != null && this.value.PerformMatch(o.value, ref match) && this.TargetContainer == o.TargetContainer;
+			return other is Leave o && this.value.PerformMatch(o.value, ref match) && this.TargetContainer == o.TargetContainer;
 		}
 	}
 }
@@ -1364,17 +1238,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.condition;
-				case 1:
-					return this.trueInst;
-				case 2:
-					return this.falseInst;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.condition,
+				1 => this.trueInst,
+				2 => this.falseInst,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -1395,17 +1264,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ConditionSlot;
-				case 1:
-					return TrueInstSlot;
-				case 2:
-					return FalseInstSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ConditionSlot,
+				1 => TrueInstSlot,
+				2 => FalseInstSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -1429,8 +1293,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as IfInstruction;
-			return o != null && this.condition.PerformMatch(o.condition, ref match) && this.trueInst.PerformMatch(o.trueInst, ref match) && this.falseInst.PerformMatch(o.falseInst, ref match);
+			return other is IfInstruction o && this.condition.PerformMatch(o.condition, ref match) && this.trueInst.PerformMatch(o.trueInst, ref match) && this.falseInst.PerformMatch(o.falseInst, ref match);
 		}
 	}
 }
@@ -1463,15 +1326,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.valueInst;
-				case 1:
-					return this.fallbackInst;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.valueInst,
+				1 => this.fallbackInst,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -1489,15 +1348,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ValueInstSlot;
-				case 1:
-					return FallbackInstSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ValueInstSlot,
+				1 => FallbackInstSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -1520,8 +1375,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as NullCoalescingInstruction;
-			return o != null && this.valueInst.PerformMatch(o.valueInst, ref match) && this.fallbackInst.PerformMatch(o.fallbackInst, ref match);
+			return other is NullCoalescingInstruction o && this.valueInst.PerformMatch(o.valueInst, ref match) && this.fallbackInst.PerformMatch(o.fallbackInst, ref match);
 		}
 	}
 }
@@ -1545,8 +1399,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as SwitchInstruction;
-			return o != null && IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
+			return other is SwitchInstruction o && IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
 		}
 	}
 }
@@ -1570,34 +1423,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.body;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.body,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Body = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Body = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return BodySlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => BodySlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -1605,7 +1448,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitSwitchSection(this);
@@ -1620,8 +1463,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as SwitchSection;
-			return o != null && this.body.PerformMatch(o.body, ref match) && this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel;
+			return other is SwitchSection o && this.body.PerformMatch(o.body, ref match) && this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel;
 		}
 	}
 }
@@ -1645,8 +1487,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as TryCatch;
-			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && Patterns.ListMatch.DoMatch(Handlers, o.Handlers, ref match);
+			return other is TryCatch o && TryBlock.PerformMatch(o.TryBlock, ref match) && Patterns.ListMatch.DoMatch(Handlers, o.Handlers, ref match);
 		}
 	}
 }
@@ -1685,15 +1526,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.filter;
-				case 1:
-					return this.body;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.filter,
+				1 => this.body,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -1711,15 +1548,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return FilterSlot;
-				case 1:
-					return BodySlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => FilterSlot,
+				1 => BodySlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -1774,8 +1607,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as TryCatchHandler;
-			return o != null && this.filter.PerformMatch(o.filter, ref match) && this.body.PerformMatch(o.body, ref match) && variable == o.variable;
+			return other is TryCatchHandler o && this.filter.PerformMatch(o.filter, ref match) && this.body.PerformMatch(o.body, ref match) && variable == o.variable;
 		}
 	}
 }
@@ -1799,8 +1631,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as TryFinally;
-			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && finallyBlock.PerformMatch(o.finallyBlock, ref match);
+			return other is TryFinally o && TryBlock.PerformMatch(o.TryBlock, ref match) && finallyBlock.PerformMatch(o.finallyBlock, ref match);
 		}
 	}
 }
@@ -1824,8 +1655,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as TryFault;
-			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && faultBlock.PerformMatch(o.faultBlock, ref match);
+			return other is TryFault o && TryBlock.PerformMatch(o.TryBlock, ref match) && faultBlock.PerformMatch(o.faultBlock, ref match);
 		}
 	}
 }
@@ -1863,15 +1693,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.onExpression;
-				case 1:
-					return this.body;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.onExpression,
+				1 => this.body,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -1889,15 +1715,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return OnExpressionSlot;
-				case 1:
-					return BodySlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => OnExpressionSlot,
+				1 => BodySlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -1906,16 +1728,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return onExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLockInstruction(this);
@@ -1930,8 +1748,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LockInstruction;
-			return o != null && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
+			return other is LockInstruction o && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -2007,15 +1824,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.resourceExpression;
-				case 1:
-					return this.body;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.resourceExpression,
+				1 => this.body,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -2033,15 +1846,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ResourceExpressionSlot;
-				case 1:
-					return BodySlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ResourceExpressionSlot,
+				1 => BodySlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -2050,16 +1859,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayWriteLocals | resourceExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayWriteLocals | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayWriteLocals | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitUsingInstruction(this);
@@ -2074,8 +1879,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as UsingInstruction;
-			return o != null && variable == o.variable && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
+			return other is UsingInstruction o && variable == o.variable && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -2094,16 +1898,12 @@ namespace ICSharpCode.Decompiler.IL
 		public DebugBreak() : base(OpCode.DebugBreak)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDebugBreak(this);
@@ -2118,8 +1918,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DebugBreak;
-			return o != null;
+			return other is DebugBreak o;
 		}
 	}
 }
@@ -2143,8 +1942,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Comp;
-			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && this.Kind == o.Kind && this.Sign == o.Sign && this.LiftingKind == o.LiftingKind;
+			return other is Comp o && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && this.Kind == o.Kind && this.Sign == o.Sign && this.LiftingKind == o.LiftingKind;
 		}
 	}
 }
@@ -2214,8 +2012,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as CallIndirect;
-			return o != null && EqualSignature(o) && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match) && this.FunctionPointer.PerformMatch(o.FunctionPointer, ref match);
+			return other is CallIndirect o && EqualSignature(o) && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match) && this.FunctionPointer.PerformMatch(o.FunctionPointer, ref match);
 		}
 	}
 }
@@ -2227,16 +2024,12 @@ namespace ICSharpCode.Decompiler.IL
 		public Ckfinite(ILInstruction argument) : base(OpCode.Ckfinite, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitCkfinite(this);
@@ -2251,8 +2044,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Ckfinite;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is Ckfinite o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -2276,8 +2068,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Conv;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType && IsLifted == o.IsLifted;
+			return other is Conv o && this.Argument.PerformMatch(o.Argument, ref match) && CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType && IsLifted == o.IsLifted;
 		}
 	}
 }
@@ -2322,16 +2113,12 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 
-		public override StackType ResultType { get { return variable.StackType; } }
+		public override StackType ResultType => variable.StackType;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayReadLocals;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayReadLocals;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayReadLocals;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2353,8 +2140,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdLoc;
-			return o != null && variable == o.variable;
+			return other is LdLoc o && variable == o.variable;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -2373,7 +2159,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.variable = variable ?? throw new ArgumentNullException(nameof(variable));
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		ILVariable variable;
 		public ILVariable Variable {
 			get { return variable; }
@@ -2427,8 +2213,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdLoca;
-			return o != null && variable == o.variable;
+			return other is LdLoca o && variable == o.variable;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -2496,34 +2281,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Value = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -2531,16 +2306,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return variable.StackType; } }
+		public override StackType ResultType => variable.StackType;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayWriteLocals | value.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayWriteLocals;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayWriteLocals;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2565,8 +2336,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as StLoc;
-			return o != null && variable == o.variable && this.value.PerformMatch(o.value, ref match);
+			return other is StLoc o && variable == o.variable && this.value.PerformMatch(o.value, ref match);
 		}
 	}
 }
@@ -2595,34 +2365,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Value = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -2630,7 +2390,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type {
@@ -2641,11 +2401,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return value.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2670,8 +2426,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as AddressOf;
-			return o != null && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type);
+			return other is AddressOf o && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -2683,7 +2438,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ThreeValuedBoolAnd(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedBoolAnd, left, right)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitThreeValuedBoolAnd(this);
@@ -2698,8 +2453,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as ThreeValuedBoolAnd;
-			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
+			return other is ThreeValuedBoolAnd o && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
 		}
 	}
 }
@@ -2711,7 +2465,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ThreeValuedBoolOr(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedBoolOr, left, right)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitThreeValuedBoolOr(this);
@@ -2726,8 +2480,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as ThreeValuedBoolOr;
-			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
+			return other is ThreeValuedBoolOr o && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
 		}
 	}
 }
@@ -2747,11 +2500,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayUnwrapNull;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayUnwrapNull;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayUnwrapNull;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNullableUnwrap(this);
@@ -2766,8 +2515,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as NullableUnwrap;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is NullableUnwrap o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -2795,8 +2543,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as NullableRewrap;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is NullableRewrap o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -2810,7 +2557,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly string Value;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2832,8 +2579,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdStr;
-			return o != null && this.Value == o.Value;
+			return other is LdStr o && this.Value == o.Value;
 		}
 	}
 }
@@ -2847,7 +2593,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly int Value;
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2869,8 +2615,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdcI4;
-			return o != null && this.Value == o.Value;
+			return other is LdcI4 o && this.Value == o.Value;
 		}
 	}
 }
@@ -2884,7 +2629,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly long Value;
-		public override StackType ResultType { get { return StackType.I8; } }
+		public override StackType ResultType => StackType.I8;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2906,8 +2651,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdcI8;
-			return o != null && this.Value == o.Value;
+			return other is LdcI8 o && this.Value == o.Value;
 		}
 	}
 }
@@ -2921,7 +2665,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly float Value;
-		public override StackType ResultType { get { return StackType.F4; } }
+		public override StackType ResultType => StackType.F4;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2943,8 +2687,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdcF4;
-			return o != null && this.Value == o.Value;
+			return other is LdcF4 o && this.Value == o.Value;
 		}
 	}
 }
@@ -2958,7 +2701,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly double Value;
-		public override StackType ResultType { get { return StackType.F8; } }
+		public override StackType ResultType => StackType.F8;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2980,8 +2723,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdcF8;
-			return o != null && this.Value == o.Value;
+			return other is LdcF8 o && this.Value == o.Value;
 		}
 	}
 }
@@ -2995,7 +2737,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly decimal Value;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3017,8 +2759,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdcDecimal;
-			return o != null && this.Value == o.Value;
+			return other is LdcDecimal o && this.Value == o.Value;
 		}
 	}
 }
@@ -3030,7 +2771,7 @@ namespace ICSharpCode.Decompiler.IL
 		public LdNull() : base(OpCode.LdNull)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLdNull(this);
@@ -3045,8 +2786,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdNull;
-			return o != null;
+			return other is LdNull o;
 		}
 	}
 }
@@ -3062,7 +2802,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.I; } }
+		public override StackType ResultType => StackType.I;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3087,8 +2827,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdFtn;
-			return o != null && Equals(method, o.method);
+			return other is LdFtn o && Equals(method, o.method);
 		}
 	}
 }
@@ -3104,16 +2843,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.I; } }
+		public override StackType ResultType => StackType.I;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3141,8 +2876,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdVirtFtn;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && Equals(method, o.method);
+			return other is LdVirtFtn o && this.Argument.PerformMatch(o.Argument, ref match) && Equals(method, o.method);
 		}
 	}
 }
@@ -3165,16 +2899,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3204,8 +2934,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdVirtDelegate;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && Equals(method, o.method);
+			return other is LdVirtDelegate o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && Equals(method, o.method);
 		}
 	}
 }
@@ -3224,7 +2953,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3246,8 +2975,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdTypeToken;
-			return o != null && type.Equals(o.type);
+			return other is LdTypeToken o && type.Equals(o.type);
 		}
 	}
 }
@@ -3262,8 +2990,8 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		readonly IMember member;
 		/// <summary>Returns the token operand.</summary>
-		public IMember Member { get { return member; } }
-		public override StackType ResultType { get { return StackType.O; } }
+		public IMember Member => member;
+		public override StackType ResultType => StackType.O;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3285,8 +3013,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdMemberToken;
-			return o != null && member.Equals(o.member);
+			return other is LdMemberToken o && member.Equals(o.member);
 		}
 	}
 }
@@ -3298,16 +3025,12 @@ namespace ICSharpCode.Decompiler.IL
 		public LocAlloc(ILInstruction argument) : base(OpCode.LocAlloc, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.I; } }
+		public override StackType ResultType => StackType.I;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLocAlloc(this);
@@ -3322,8 +3045,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LocAlloc;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is LocAlloc o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -3342,16 +3064,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3376,8 +3094,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LocAllocSpan;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is LocAllocSpan o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -3425,17 +3142,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.destAddress;
-				case 1:
-					return this.sourceAddress;
-				case 2:
-					return this.size;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.destAddress,
+				1 => this.sourceAddress,
+				2 => this.size,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -3456,17 +3168,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return DestAddressSlot;
-				case 1:
-					return SourceAddressSlot;
-				case 2:
-					return SizeSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => DestAddressSlot,
+				1 => SourceAddressSlot,
+				2 => SizeSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -3480,16 +3187,12 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return destAddress.Flags | sourceAddress.Flags | size.Flags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3520,8 +3223,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Cpblk;
-			return o != null && this.destAddress.PerformMatch(o.destAddress, ref match) && this.sourceAddress.PerformMatch(o.sourceAddress, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+			return other is Cpblk o && this.destAddress.PerformMatch(o.destAddress, ref match) && this.sourceAddress.PerformMatch(o.sourceAddress, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -3576,17 +3278,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.address;
-				case 1:
-					return this.value;
-				case 2:
-					return this.size;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.address,
+				1 => this.value,
+				2 => this.size,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -3607,17 +3304,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return AddressSlot;
-				case 1:
-					return ValueSlot;
-				case 2:
-					return SizeSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => AddressSlot,
+				1 => ValueSlot,
+				2 => SizeSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -3631,16 +3323,12 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return address.Flags | value.Flags | size.Flags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3671,8 +3359,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Initblk;
-			return o != null && this.address.PerformMatch(o.address, ref match) && this.value.PerformMatch(o.value, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+			return other is Initblk o && this.address.PerformMatch(o.address, ref match) && this.value.PerformMatch(o.value, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -3708,34 +3395,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.target;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.target,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Target = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Target = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TargetSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -3746,17 +3423,13 @@ namespace ICSharpCode.Decompiler.IL
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
-		public override StackType ResultType { get { return target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref; } }
+		public IField Field => field;
+		public override StackType ResultType => target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
-			}
-		}
+		public override InstructionFlags DirectFlags => (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3783,8 +3456,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdFlda;
-			return o != null && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && field.Equals(o.field);
+			return other is LdFlda o && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && field.Equals(o.field);
 		}
 	}
 }
@@ -3797,10 +3469,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.field = field;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
+		public IField Field => field;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3822,8 +3494,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdsFlda;
-			return o != null && field.Equals(o.field);
+			return other is LdsFlda o && field.Equals(o.field);
 		}
 	}
 }
@@ -3842,16 +3513,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => type.GetStackType();
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3876,8 +3543,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as CastClass;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is CastClass o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -3896,7 +3562,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3921,8 +3587,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as IsInst;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is IsInst o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -3951,34 +3616,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.target;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.target,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Target = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Target = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TargetSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -3996,16 +3651,12 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => type.GetStackType();
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4034,8 +3685,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdObj;
-			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+			return other is LdObj o && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -4080,15 +3730,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.target;
-				case 1:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.target,
+				1 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -4106,15 +3752,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetSlot;
-				case 1:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TargetSlot,
+				1 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -4133,16 +3775,12 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return UnalignedPrefix == 0 ? type.GetStackType() : StackType.Void; } }
+		public override StackType ResultType => UnalignedPrefix == 0 ? type.GetStackType() : StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4173,8 +3811,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as StObj;
-			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+			return other is StObj o && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -4200,16 +3837,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4234,8 +3867,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Box;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is Box o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -4254,16 +3886,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4288,8 +3916,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Unbox;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is Unbox o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -4308,16 +3935,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => type.GetStackType();
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4342,8 +3965,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as UnboxAny;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is UnboxAny o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -4355,7 +3977,7 @@ namespace ICSharpCode.Decompiler.IL
 		public NewObj(IMethod method) : base(OpCode.NewObj, method)
 		{
 		}
-		public override StackType ResultType { get { return Method.DeclaringType.GetStackType(); } }
+		public override StackType ResultType => Method.DeclaringType.GetStackType();
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNewObj(this);
@@ -4395,28 +4017,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Indices[index - 0];
-			}
+			return index switch {
+				_ => this.Indices[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Indices[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Indices[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return IndicesSlot;
-			}
+			return index switch {
+				_ => IndicesSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -4425,16 +4040,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4467,8 +4078,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as NewArr;
-			return o != null && type.Equals(o.type) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match);
+			return other is NewArr o && type.Equals(o.type) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match);
 		}
 	}
 }
@@ -4487,7 +4097,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => type.GetStackType();
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4509,8 +4119,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DefaultValue;
-			return o != null && type.Equals(o.type);
+			return other is DefaultValue o && type.Equals(o.type);
 		}
 	}
 }
@@ -4522,16 +4131,12 @@ namespace ICSharpCode.Decompiler.IL
 		public Throw(ILInstruction argument) : base(OpCode.Throw, argument)
 		{
 		}
-		public override StackType ResultType { get { return this.resultType; } }
+		public override StackType ResultType => this.resultType;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitThrow(this);
@@ -4546,8 +4151,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Throw;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is Throw o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -4559,16 +4163,12 @@ namespace ICSharpCode.Decompiler.IL
 		public Rethrow() : base(OpCode.Rethrow)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitRethrow(this);
@@ -4583,8 +4183,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Rethrow;
-			return o != null;
+			return other is Rethrow o;
 		}
 	}
 }
@@ -4603,7 +4202,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4625,8 +4224,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as SizeOf;
-			return o != null && type.Equals(o.type);
+			return other is SizeOf o && type.Equals(o.type);
 		}
 	}
 }
@@ -4650,34 +4248,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.array;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.array,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Array = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Array = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArraySlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ArraySlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -4689,11 +4277,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return array.Flags | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLdLen(this);
@@ -4708,8 +4292,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdLen;
-			return o != null && this.array.PerformMatch(o.array, ref match);
+			return other is LdLen o && this.array.PerformMatch(o.array, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -4753,13 +4336,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.array;
-				default:
-					return this.Indices[index - 1];
-			}
+			return index switch {
+				0 => this.array,
+				_ => this.Indices[index - 1],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -4775,13 +4355,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArraySlot;
-				default:
-					return IndicesSlot;
-			}
+			return index switch {
+				0 => ArraySlot,
+				_ => IndicesSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -4793,18 +4370,14 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool WithSystemIndex;
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return array.Flags | Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
-			}
-		}
+		public override InstructionFlags DirectFlags => (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4840,8 +4413,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as LdElema;
-			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && this.WithSystemIndex == o.WithSystemIndex && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
+			return other is LdElema o && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && this.WithSystemIndex == o.WithSystemIndex && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
 		}
 	}
 }
@@ -4874,34 +4446,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.argument;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.argument,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Argument = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Argument = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArgumentSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ArgumentSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -4909,7 +4471,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Argument = this.argument.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		readonly IMethod? method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod? Method => method;
@@ -4917,11 +4479,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return argument.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4949,8 +4507,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as GetPinnableReference;
-			return o != null && this.argument.PerformMatch(o.argument, ref match) && Equals(method, o.method);
+			return other is GetPinnableReference o && this.argument.PerformMatch(o.argument, ref match) && Equals(method, o.method);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -4979,34 +4536,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.argument;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.argument,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Argument = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Argument = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArgumentSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ArgumentSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5014,16 +4561,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Argument = this.argument.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return argument.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitStringToInt(this);
@@ -5038,8 +4581,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as StringToInt;
-			return o != null && this.argument.PerformMatch(o.argument, ref match);
+			return other is StringToInt o && this.argument.PerformMatch(o.argument, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -5059,16 +4601,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => type.GetStackType();
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitExpressionTreeCast(this);
@@ -5083,8 +4621,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as ExpressionTreeCast;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && this.IsChecked == o.IsChecked;
+			return other is ExpressionTreeCast o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && this.IsChecked == o.IsChecked;
 		}
 	}
 }
@@ -5102,7 +4639,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public static readonly SlotInfo LeftSlot = new("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
@@ -5127,15 +4664,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.left;
-				case 1:
-					return this.right;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.left,
+				1 => this.right,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -5153,15 +4686,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftSlot;
-				case 1:
-					return RightSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => LeftSlot,
+				1 => RightSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5199,8 +4728,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as UserDefinedLogicOperator;
-			return o != null && Equals(method, o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+			return other is UserDefinedLogicOperator o && Equals(method, o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
 		}
 	}
 }
@@ -5233,15 +4761,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.left;
-				case 1:
-					return this.right;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.left,
+				1 => this.right,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -5259,15 +4783,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftSlot;
-				case 1:
-					return RightSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => LeftSlot,
+				1 => RightSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5290,8 +4810,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicLogicOperatorInstruction;
-			return o != null && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+			return other is DynamicLogicOperatorInstruction o && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
 		}
 	}
 }
@@ -5324,15 +4843,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.left;
-				case 1:
-					return this.right;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.left,
+				1 => this.right,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -5350,15 +4865,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return LeftSlot;
-				case 1:
-					return RightSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => LeftSlot,
+				1 => RightSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5371,11 +4882,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | left.Flags | right.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicBinaryOperatorInstruction(this);
@@ -5390,8 +4897,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicBinaryOperatorInstruction;
-			return o != null && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+			return other is DynamicBinaryOperatorInstruction o && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
 		}
 	}
 }
@@ -5415,34 +4921,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.operand;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.operand,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Operand = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Operand = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return OperandSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => OperandSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5454,11 +4950,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | operand.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicUnaryOperatorInstruction(this);
@@ -5473,8 +4965,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicUnaryOperatorInstruction;
-			return o != null && this.operand.PerformMatch(o.operand, ref match);
+			return other is DynamicUnaryOperatorInstruction o && this.operand.PerformMatch(o.operand, ref match);
 		}
 	}
 }
@@ -5504,34 +4995,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.argument;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.argument,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Argument = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Argument = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArgumentSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ArgumentSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5543,11 +5024,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | argument.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicConvertInstruction(this);
@@ -5562,8 +5039,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicConvertInstruction;
-			return o != null && type.Equals(o.type) && this.argument.PerformMatch(o.argument, ref match);
+			return other is DynamicConvertInstruction o && type.Equals(o.type) && this.argument.PerformMatch(o.argument, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -5592,34 +5068,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.target;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.target,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Target = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Target = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TargetSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5631,11 +5097,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | target.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicGetMemberInstruction(this);
@@ -5650,8 +5112,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicGetMemberInstruction;
-			return o != null && this.target.PerformMatch(o.target, ref match);
+			return other is DynamicGetMemberInstruction o && this.target.PerformMatch(o.target, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -5689,15 +5150,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.target;
-				case 1:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.target,
+				1 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -5715,15 +5172,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TargetSlot;
-				case 1:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => TargetSlot,
+				1 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5736,11 +5189,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | target.Flags | value.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicSetMemberInstruction(this);
@@ -5755,8 +5204,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicSetMemberInstruction;
-			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match);
+			return other is DynamicSetMemberInstruction o && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -5778,28 +5226,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Arguments[index - 0];
-			}
+			return index switch {
+				_ => this.Arguments[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Arguments[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Arguments[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return ArgumentsSlot;
-			}
+			return index switch {
+				_ => ArgumentsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5812,11 +5253,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicGetIndexInstruction(this);
@@ -5831,8 +5268,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicGetIndexInstruction;
-			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			return other is DynamicGetIndexInstruction o && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 }
@@ -5849,28 +5285,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Arguments[index - 0];
-			}
+			return index switch {
+				_ => this.Arguments[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Arguments[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Arguments[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return ArgumentsSlot;
-			}
+			return index switch {
+				_ => ArgumentsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5883,11 +5312,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicSetIndexInstruction(this);
@@ -5902,8 +5327,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicSetIndexInstruction;
-			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			return other is DynamicSetIndexInstruction o && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 }
@@ -5920,28 +5344,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Arguments[index - 0];
-			}
+			return index switch {
+				_ => this.Arguments[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Arguments[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Arguments[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return ArgumentsSlot;
-			}
+			return index switch {
+				_ => ArgumentsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -5954,11 +5371,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicInvokeMemberInstruction(this);
@@ -5973,8 +5386,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicInvokeMemberInstruction;
-			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			return other is DynamicInvokeMemberInstruction o && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 }
@@ -5991,28 +5403,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Arguments[index - 0];
-			}
+			return index switch {
+				_ => this.Arguments[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Arguments[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Arguments[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return ArgumentsSlot;
-			}
+			return index switch {
+				_ => ArgumentsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -6025,11 +5430,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicInvokeConstructorInstruction(this);
@@ -6044,8 +5445,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicInvokeConstructorInstruction;
-			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			return other is DynamicInvokeConstructorInstruction o && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 }
@@ -6062,28 +5462,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					return this.Arguments[index - 0];
-			}
+			return index switch {
+				_ => this.Arguments[index - 0],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					this.Arguments[index - 0] = (ILInstruction)value;
-					break;
-			}
+			this.Arguments[index - 0] = index switch {
+				_ => (ILInstruction)value,
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					return ArgumentsSlot;
-			}
+			return index switch {
+				_ => ArgumentsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -6096,11 +5489,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicInvokeInstruction(this);
@@ -6115,8 +5504,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicInvokeInstruction;
-			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+			return other is DynamicInvokeInstruction o && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 }
@@ -6140,34 +5528,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.argument;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.argument,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Argument = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Argument = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ArgumentSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ArgumentSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -6179,11 +5557,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | argument.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDynamicIsEventInstruction(this);
@@ -6198,8 +5572,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DynamicIsEventInstruction;
-			return o != null && this.argument.PerformMatch(o.argument, ref match);
+			return other is DynamicIsEventInstruction o && this.argument.PerformMatch(o.argument, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -6277,13 +5650,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.testedOperand;
-				default:
-					return this.SubPatterns[index - 1];
-			}
+			return index switch {
+				0 => this.testedOperand,
+				_ => this.SubPatterns[index - 1],
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
@@ -6299,13 +5669,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return TestedOperandSlot;
-				default:
-					return SubPatternsSlot;
-			}
+			return index switch {
+				0 => TestedOperandSlot,
+				_ => SubPatternsSlot,
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -6315,16 +5682,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.SubPatterns.AddRange(this.SubPatterns.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayWriteLocals | testedOperand.Flags | SubPatterns.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.SideEffect | InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayWriteLocals | InstructionFlags.SideEffect | InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayWriteLocals | InstructionFlags.SideEffect | InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitMatchInstruction(this);
@@ -6339,8 +5702,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as MatchInstruction;
-			return o != null && variable == o.variable && Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
+			return other is MatchInstruction o && variable == o.variable && Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -6366,7 +5728,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -6391,8 +5753,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as MakeRefAny;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is MakeRefAny o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -6404,7 +5765,7 @@ namespace ICSharpCode.Decompiler.IL
 		public RefAnyType(ILInstruction argument) : base(OpCode.RefAnyType, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitRefAnyType(this);
@@ -6419,8 +5780,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as RefAnyType;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is RefAnyType o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -6439,16 +5799,12 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
+		public override InstructionFlags DirectFlags => base.DirectFlags | InstructionFlags.MayThrow;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -6473,8 +5829,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as RefAnyValue;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return other is RefAnyValue o && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -6502,34 +5857,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Value = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -6537,16 +5882,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayBranch | InstructionFlags.SideEffect | value.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayBranch | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayBranch | InstructionFlags.SideEffect;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -6569,8 +5910,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as YieldReturn;
-			return o != null && this.value.PerformMatch(o.value, ref match);
+			return other is YieldReturn o && this.value.PerformMatch(o.value, ref match);
 		}
 	}
 }
@@ -6598,34 +5938,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => this.value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			this.Value = index switch {
+				0 => value,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			return index switch {
+				0 => ValueSlot,
+				_ => throw new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -6633,16 +5963,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown; } }
+		public override StackType ResultType => GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect | value.Flags;
 		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.SideEffect;
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -6665,8 +5991,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as Await;
-			return o != null && this.value.PerformMatch(o.value, ref match);
+			return other is Await o && this.value.PerformMatch(o.value, ref match);
 		}
 	}
 }
@@ -6675,7 +6000,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Deconstruction statement</summary>
 	public sealed partial class DeconstructInstruction : ILInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDeconstructInstruction(this);
@@ -6690,8 +6015,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DeconstructInstruction;
-			return o != null;
+			return other is DeconstructInstruction o;
 		}
 	}
 }
@@ -6715,8 +6039,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			var o = other as DeconstructResultInstruction;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return other is DeconstructResultInstruction o && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -6736,27 +6059,21 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index)
-			{
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			throw index switch {
+				_ => new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index)
-			{
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			throw index switch {
+				_ => new IndexOutOfRangeException(),
+			};
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index)
-			{
-				default:
-					throw new IndexOutOfRangeException();
-			}
+			throw index switch {
+				_ => new IndexOutOfRangeException(),
+			};
 		}
 		public sealed override ILInstruction Clone()
 		{
@@ -8077,8 +7394,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public bool MatchInvalidBranch()
 		{
-			var inst = this as InvalidBranch;
-			if (inst != null)
+			if (this is InvalidBranch inst)
 			{
 				return true;
 			}
@@ -8086,8 +7402,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchInvalidExpression()
 		{
-			var inst = this as InvalidExpression;
-			if (inst != null)
+			if (this is InvalidExpression inst)
 			{
 				return true;
 			}
@@ -8095,8 +7410,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchNop()
 		{
-			var inst = this as Nop;
-			if (inst != null)
+			if (this is Nop inst)
 			{
 				return true;
 			}
@@ -8104,23 +7418,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchPinnedRegion([NotNullWhen(true)] out ILVariable? variable, [NotNullWhen(true)] out ILInstruction? init, [NotNullWhen(true)] out ILInstruction? body)
 		{
-			var inst = this as PinnedRegion;
-			if (inst != null)
+			if (this is PinnedRegion inst)
 			{
 				variable = inst.Variable;
 				init = inst.Init;
 				body = inst.Body;
 				return true;
 			}
-			variable = default(ILVariable);
-			init = default(ILInstruction);
-			body = default(ILInstruction);
+			variable = default;
+			init = default;
+			body = default;
 			return false;
 		}
 		public bool MatchArglist()
 		{
-			var inst = this as Arglist;
-			if (inst != null)
+			if (this is Arglist inst)
 			{
 				return true;
 			}
@@ -8128,51 +7440,47 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchTryCatchHandler([NotNullWhen(true)] out ILInstruction? filter, [NotNullWhen(true)] out ILInstruction? body, [NotNullWhen(true)] out ILVariable? variable)
 		{
-			var inst = this as TryCatchHandler;
-			if (inst != null)
+			if (this is TryCatchHandler inst)
 			{
 				filter = inst.Filter;
 				body = inst.Body;
 				variable = inst.Variable;
 				return true;
 			}
-			filter = default(ILInstruction);
-			body = default(ILInstruction);
-			variable = default(ILVariable);
+			filter = default;
+			body = default;
+			variable = default;
 			return false;
 		}
 		public bool MatchLockInstruction([NotNullWhen(true)] out ILInstruction? onExpression, [NotNullWhen(true)] out ILInstruction? body)
 		{
-			var inst = this as LockInstruction;
-			if (inst != null)
+			if (this is LockInstruction inst)
 			{
 				onExpression = inst.OnExpression;
 				body = inst.Body;
 				return true;
 			}
-			onExpression = default(ILInstruction);
-			body = default(ILInstruction);
+			onExpression = default;
+			body = default;
 			return false;
 		}
 		public bool MatchUsingInstruction([NotNullWhen(true)] out ILVariable? variable, [NotNullWhen(true)] out ILInstruction? resourceExpression, [NotNullWhen(true)] out ILInstruction? body)
 		{
-			var inst = this as UsingInstruction;
-			if (inst != null)
+			if (this is UsingInstruction inst)
 			{
 				variable = inst.Variable;
 				resourceExpression = inst.ResourceExpression;
 				body = inst.Body;
 				return true;
 			}
-			variable = default(ILVariable);
-			resourceExpression = default(ILInstruction);
-			body = default(ILInstruction);
+			variable = default;
+			resourceExpression = default;
+			body = default;
 			return false;
 		}
 		public bool MatchDebugBreak()
 		{
-			var inst = this as DebugBreak;
-			if (inst != null)
+			if (this is DebugBreak inst)
 			{
 				return true;
 			}
@@ -8180,170 +7488,155 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchCkfinite([NotNullWhen(true)] out ILInstruction? argument)
 		{
-			var inst = this as Ckfinite;
-			if (inst != null)
+			if (this is Ckfinite inst)
 			{
 				argument = inst.Argument;
 				return true;
 			}
-			argument = default(ILInstruction);
+			argument = default;
 			return false;
 		}
 		public bool MatchLdLoc([NotNullWhen(true)] out ILVariable? variable)
 		{
-			var inst = this as LdLoc;
-			if (inst != null)
+			if (this is LdLoc inst)
 			{
 				variable = inst.Variable;
 				return true;
 			}
-			variable = default(ILVariable);
+			variable = default;
 			return false;
 		}
 		public bool MatchLdLoca([NotNullWhen(true)] out ILVariable? variable)
 		{
-			var inst = this as LdLoca;
-			if (inst != null)
+			if (this is LdLoca inst)
 			{
 				variable = inst.Variable;
 				return true;
 			}
-			variable = default(ILVariable);
+			variable = default;
 			return false;
 		}
 		public bool MatchStLoc([NotNullWhen(true)] out ILVariable? variable, [NotNullWhen(true)] out ILInstruction? value)
 		{
-			var inst = this as StLoc;
-			if (inst != null)
+			if (this is StLoc inst)
 			{
 				variable = inst.Variable;
 				value = inst.Value;
 				return true;
 			}
-			variable = default(ILVariable);
-			value = default(ILInstruction);
+			variable = default;
+			value = default;
 			return false;
 		}
 		public bool MatchAddressOf([NotNullWhen(true)] out ILInstruction? value, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as AddressOf;
-			if (inst != null)
+			if (this is AddressOf inst)
 			{
 				value = inst.Value;
 				type = inst.Type;
 				return true;
 			}
-			value = default(ILInstruction);
-			type = default(IType);
+			value = default;
+			type = default;
 			return false;
 		}
 		public bool MatchThreeValuedBoolAnd([NotNullWhen(true)] out ILInstruction? left, [NotNullWhen(true)] out ILInstruction? right)
 		{
-			var inst = this as ThreeValuedBoolAnd;
-			if (inst != null)
+			if (this is ThreeValuedBoolAnd inst)
 			{
 				left = inst.Left;
 				right = inst.Right;
 				return true;
 			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
+			left = default;
+			right = default;
 			return false;
 		}
 		public bool MatchThreeValuedBoolOr([NotNullWhen(true)] out ILInstruction? left, [NotNullWhen(true)] out ILInstruction? right)
 		{
-			var inst = this as ThreeValuedBoolOr;
-			if (inst != null)
+			if (this is ThreeValuedBoolOr inst)
 			{
 				left = inst.Left;
 				right = inst.Right;
 				return true;
 			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
+			left = default;
+			right = default;
 			return false;
 		}
 		public bool MatchNullableRewrap([NotNullWhen(true)] out ILInstruction? argument)
 		{
-			var inst = this as NullableRewrap;
-			if (inst != null)
+			if (this is NullableRewrap inst)
 			{
 				argument = inst.Argument;
 				return true;
 			}
-			argument = default(ILInstruction);
+			argument = default;
 			return false;
 		}
 		public bool MatchLdStr([NotNullWhen(true)] out string? value)
 		{
-			var inst = this as LdStr;
-			if (inst != null)
+			if (this is LdStr inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(string);
+			value = default;
 			return false;
 		}
 		public bool MatchLdcI4(out int value)
 		{
-			var inst = this as LdcI4;
-			if (inst != null)
+			if (this is LdcI4 inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(int);
+			value = default;
 			return false;
 		}
 		public bool MatchLdcI8(out long value)
 		{
-			var inst = this as LdcI8;
-			if (inst != null)
+			if (this is LdcI8 inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(long);
+			value = default;
 			return false;
 		}
 		public bool MatchLdcF4(out float value)
 		{
-			var inst = this as LdcF4;
-			if (inst != null)
+			if (this is LdcF4 inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(float);
+			value = default;
 			return false;
 		}
 		public bool MatchLdcF8(out double value)
 		{
-			var inst = this as LdcF8;
-			if (inst != null)
+			if (this is LdcF8 inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(double);
+			value = default;
 			return false;
 		}
 		public bool MatchLdcDecimal(out decimal value)
 		{
-			var inst = this as LdcDecimal;
-			if (inst != null)
+			if (this is LdcDecimal inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(decimal);
+			value = default;
 			return false;
 		}
 		public bool MatchLdNull()
 		{
-			var inst = this as LdNull;
-			if (inst != null)
+			if (this is LdNull inst)
 			{
 				return true;
 			}
@@ -8351,273 +7644,251 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchLdFtn([NotNullWhen(true)] out IMethod? method)
 		{
-			var inst = this as LdFtn;
-			if (inst != null)
+			if (this is LdFtn inst)
 			{
 				method = inst.Method;
 				return true;
 			}
-			method = default(IMethod);
+			method = default;
 			return false;
 		}
 		public bool MatchLdVirtFtn([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IMethod? method)
 		{
-			var inst = this as LdVirtFtn;
-			if (inst != null)
+			if (this is LdVirtFtn inst)
 			{
 				argument = inst.Argument;
 				method = inst.Method;
 				return true;
 			}
-			argument = default(ILInstruction);
-			method = default(IMethod);
+			argument = default;
+			method = default;
 			return false;
 		}
 		public bool MatchLdVirtDelegate([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type, [NotNullWhen(true)] out IMethod? method)
 		{
-			var inst = this as LdVirtDelegate;
-			if (inst != null)
+			if (this is LdVirtDelegate inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				method = inst.Method;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
-			method = default(IMethod);
+			argument = default;
+			type = default;
+			method = default;
 			return false;
 		}
 		public bool MatchLdTypeToken([NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as LdTypeToken;
-			if (inst != null)
+			if (this is LdTypeToken inst)
 			{
 				type = inst.Type;
 				return true;
 			}
-			type = default(IType);
+			type = default;
 			return false;
 		}
 		public bool MatchLdMemberToken([NotNullWhen(true)] out IMember? member)
 		{
-			var inst = this as LdMemberToken;
-			if (inst != null)
+			if (this is LdMemberToken inst)
 			{
 				member = inst.Member;
 				return true;
 			}
-			member = default(IMember);
+			member = default;
 			return false;
 		}
 		public bool MatchLocAlloc([NotNullWhen(true)] out ILInstruction? argument)
 		{
-			var inst = this as LocAlloc;
-			if (inst != null)
+			if (this is LocAlloc inst)
 			{
 				argument = inst.Argument;
 				return true;
 			}
-			argument = default(ILInstruction);
+			argument = default;
 			return false;
 		}
 		public bool MatchLocAllocSpan([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as LocAllocSpan;
-			if (inst != null)
+			if (this is LocAllocSpan inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchCpblk([NotNullWhen(true)] out ILInstruction? destAddress, [NotNullWhen(true)] out ILInstruction? sourceAddress, [NotNullWhen(true)] out ILInstruction? size)
 		{
-			var inst = this as Cpblk;
-			if (inst != null)
+			if (this is Cpblk inst)
 			{
 				destAddress = inst.DestAddress;
 				sourceAddress = inst.SourceAddress;
 				size = inst.Size;
 				return true;
 			}
-			destAddress = default(ILInstruction);
-			sourceAddress = default(ILInstruction);
-			size = default(ILInstruction);
+			destAddress = default;
+			sourceAddress = default;
+			size = default;
 			return false;
 		}
 		public bool MatchInitblk([NotNullWhen(true)] out ILInstruction? address, [NotNullWhen(true)] out ILInstruction? value, [NotNullWhen(true)] out ILInstruction? size)
 		{
-			var inst = this as Initblk;
-			if (inst != null)
+			if (this is Initblk inst)
 			{
 				address = inst.Address;
 				value = inst.Value;
 				size = inst.Size;
 				return true;
 			}
-			address = default(ILInstruction);
-			value = default(ILInstruction);
-			size = default(ILInstruction);
+			address = default;
+			value = default;
+			size = default;
 			return false;
 		}
 		public bool MatchLdFlda([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? field)
 		{
-			var inst = this as LdFlda;
-			if (inst != null)
+			if (this is LdFlda inst)
 			{
 				target = inst.Target;
 				field = inst.Field;
 				return true;
 			}
-			target = default(ILInstruction);
-			field = default(IField);
+			target = default;
+			field = default;
 			return false;
 		}
 		public bool MatchLdsFlda([NotNullWhen(true)] out IField? field)
 		{
-			var inst = this as LdsFlda;
-			if (inst != null)
+			if (this is LdsFlda inst)
 			{
 				field = inst.Field;
 				return true;
 			}
-			field = default(IField);
+			field = default;
 			return false;
 		}
 		public bool MatchCastClass([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as CastClass;
-			if (inst != null)
+			if (this is CastClass inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchIsInst([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as IsInst;
-			if (inst != null)
+			if (this is IsInst inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchLdObj([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as LdObj;
-			if (inst != null)
+			if (this is LdObj inst)
 			{
 				target = inst.Target;
 				type = inst.Type;
 				return true;
 			}
-			target = default(ILInstruction);
-			type = default(IType);
+			target = default;
+			type = default;
 			return false;
 		}
 		public bool MatchStObj([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out ILInstruction? value, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as StObj;
-			if (inst != null)
+			if (this is StObj inst)
 			{
 				target = inst.Target;
 				value = inst.Value;
 				type = inst.Type;
 				return true;
 			}
-			target = default(ILInstruction);
-			value = default(ILInstruction);
-			type = default(IType);
+			target = default;
+			value = default;
+			type = default;
 			return false;
 		}
 		public bool MatchBox([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as Box;
-			if (inst != null)
+			if (this is Box inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchUnbox([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as Unbox;
-			if (inst != null)
+			if (this is Unbox inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchUnboxAny([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as UnboxAny;
-			if (inst != null)
+			if (this is UnboxAny inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchNewArr([NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as NewArr;
-			if (inst != null)
+			if (this is NewArr inst)
 			{
 				type = inst.Type;
 				return true;
 			}
-			type = default(IType);
+			type = default;
 			return false;
 		}
 		public bool MatchDefaultValue([NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as DefaultValue;
-			if (inst != null)
+			if (this is DefaultValue inst)
 			{
 				type = inst.Type;
 				return true;
 			}
-			type = default(IType);
+			type = default;
 			return false;
 		}
 		public bool MatchThrow([NotNullWhen(true)] out ILInstruction? argument)
 		{
-			var inst = this as Throw;
-			if (inst != null)
+			if (this is Throw inst)
 			{
 				argument = inst.Argument;
 				return true;
 			}
-			argument = default(ILInstruction);
+			argument = default;
 			return false;
 		}
 		public bool MatchRethrow()
 		{
-			var inst = this as Rethrow;
-			if (inst != null)
+			if (this is Rethrow inst)
 			{
 				return true;
 			}
@@ -8625,128 +7896,118 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool MatchSizeOf([NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as SizeOf;
-			if (inst != null)
+			if (this is SizeOf inst)
 			{
 				type = inst.Type;
 				return true;
 			}
-			type = default(IType);
+			type = default;
 			return false;
 		}
 		public bool MatchLdElema([NotNullWhen(true)] out IType? type, [NotNullWhen(true)] out ILInstruction? array)
 		{
-			var inst = this as LdElema;
-			if (inst != null)
+			if (this is LdElema inst)
 			{
 				type = inst.Type;
 				array = inst.Array;
 				return true;
 			}
-			type = default(IType);
-			array = default(ILInstruction);
+			type = default;
+			array = default;
 			return false;
 		}
 		public bool MatchGetPinnableReference([NotNullWhen(true)] out ILInstruction? argument, out IMethod? method)
 		{
-			var inst = this as GetPinnableReference;
-			if (inst != null)
+			if (this is GetPinnableReference inst)
 			{
 				argument = inst.Argument;
 				method = inst.Method;
 				return true;
 			}
-			argument = default(ILInstruction);
-			method = default(IMethod?);
+			argument = default;
+			method = default;
 			return false;
 		}
 		public bool MatchUserDefinedLogicOperator([NotNullWhen(true)] out IMethod? method, [NotNullWhen(true)] out ILInstruction? left, [NotNullWhen(true)] out ILInstruction? right)
 		{
-			var inst = this as UserDefinedLogicOperator;
-			if (inst != null)
+			if (this is UserDefinedLogicOperator inst)
 			{
 				method = inst.Method;
 				left = inst.Left;
 				right = inst.Right;
 				return true;
 			}
-			method = default(IMethod);
-			left = default(ILInstruction);
-			right = default(ILInstruction);
+			method = default;
+			left = default;
+			right = default;
 			return false;
 		}
 		public bool MatchMatchInstruction([NotNullWhen(true)] out ILVariable? variable, out IMethod? method, [NotNullWhen(true)] out ILInstruction? testedOperand)
 		{
-			var inst = this as MatchInstruction;
-			if (inst != null)
+			if (this is MatchInstruction inst)
 			{
 				variable = inst.Variable;
 				method = inst.Method;
 				testedOperand = inst.TestedOperand;
 				return true;
 			}
-			variable = default(ILVariable);
-			method = default(IMethod?);
-			testedOperand = default(ILInstruction);
+			variable = default;
+			method = default;
+			testedOperand = default;
 			return false;
 		}
 		public bool MatchMakeRefAny([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as MakeRefAny;
-			if (inst != null)
+			if (this is MakeRefAny inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchRefAnyType([NotNullWhen(true)] out ILInstruction? argument)
 		{
-			var inst = this as RefAnyType;
-			if (inst != null)
+			if (this is RefAnyType inst)
 			{
 				argument = inst.Argument;
 				return true;
 			}
-			argument = default(ILInstruction);
+			argument = default;
 			return false;
 		}
 		public bool MatchRefAnyValue([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
-			var inst = this as RefAnyValue;
-			if (inst != null)
+			if (this is RefAnyValue inst)
 			{
 				argument = inst.Argument;
 				type = inst.Type;
 				return true;
 			}
-			argument = default(ILInstruction);
-			type = default(IType);
+			argument = default;
+			type = default;
 			return false;
 		}
 		public bool MatchYieldReturn([NotNullWhen(true)] out ILInstruction? value)
 		{
-			var inst = this as YieldReturn;
-			if (inst != null)
+			if (this is YieldReturn inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(ILInstruction);
+			value = default;
 			return false;
 		}
 		public bool MatchAwait([NotNullWhen(true)] out ILInstruction? value)
 		{
-			var inst = this as Await;
-			if (inst != null)
+			if (this is Await inst)
 			{
 				value = inst.Value;
 				return true;
 			}
-			value = default(ILInstruction);
+			value = default;
 			return false;
 		}
 	}

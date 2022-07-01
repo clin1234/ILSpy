@@ -24,9 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class TupleExpression : Expression
 	{
-		public AstNodeCollection<Expression> Elements {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		public AstNodeCollection<Expression> Elements => GetChildrenByRole(Roles.Expression);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{

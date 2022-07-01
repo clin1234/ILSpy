@@ -70,11 +70,7 @@ namespace ICSharpCode.Decompiler.IL
 			return value.Flags | InstructionFlags.ControlFlow | sectionFlags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -203,11 +199,7 @@ namespace ICSharpCode.Decompiler.IL
 			return body.Flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{

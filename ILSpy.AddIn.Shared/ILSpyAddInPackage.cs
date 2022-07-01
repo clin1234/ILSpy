@@ -124,7 +124,6 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 
 			Guid clsid = Guid.Empty;
-			int result;
 			ErrorHandler.ThrowOnFailure(
 				uiShell.ShowMessageBox(
 					0,
@@ -137,7 +136,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					defaultButton,
 					icon,
 					0,        // false
-					out result
+					out int result
 				)
 			);
 

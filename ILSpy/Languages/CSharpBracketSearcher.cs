@@ -133,7 +133,7 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region SearchBracketBackward
-		int SearchBracketBackward(IDocument document, int offset, char openBracket, char closingBracket)
+		static int SearchBracketBackward(IDocument document, int offset, char openBracket, char closingBracket)
 		{
 			if (offset + 1 >= document.TextLength)
 				return -1;
@@ -157,7 +157,7 @@ namespace ICSharpCode.ILSpy
 
 			// I don't see any possibility to parse a C# document backwards...
 			// We have to do it forwards and push all bracket positions on a stack.
-			Stack<int> bracketStack = new Stack<int>();
+			Stack<int> bracketStack = new();
 			bool blockComment = false;
 			bool lineComment = false;
 			bool inChar = false;
@@ -255,7 +255,7 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region SearchBracketForward
-		int SearchBracketForward(IDocument document, int offset, char openBracket, char closingBracket)
+		static int SearchBracketForward(IDocument document, int offset, char openBracket, char closingBracket)
 		{
 			bool inString = false;
 			bool inChar = false;
@@ -375,7 +375,7 @@ namespace ICSharpCode.ILSpy
 		}
 		#endregion
 
-		int QuickSearchBracketBackward(IDocument document, int offset, char openBracket, char closingBracket)
+		static int QuickSearchBracketBackward(IDocument document, int offset, char openBracket, char closingBracket)
 		{
 			int brackets = -1;
 			// first try "quick find" - find the matching bracket if there is no string/comment in the way
@@ -411,7 +411,7 @@ namespace ICSharpCode.ILSpy
 			return -1;
 		}
 
-		int QuickSearchBracketForward(IDocument document, int offset, char openBracket, char closingBracket)
+		static int QuickSearchBracketForward(IDocument document, int offset, char openBracket, char closingBracket)
 		{
 			int brackets = 1;
 			// try "quick find" - find the matching bracket if there is no string/comment in the way

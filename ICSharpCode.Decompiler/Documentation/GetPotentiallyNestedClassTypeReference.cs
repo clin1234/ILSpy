@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			return default;
 
-			bool IsEqualShortName(TypeDefinitionHandle h, MetadataReader metadata, string name)
+			static bool IsEqualShortName(TypeDefinitionHandle h, MetadataReader metadata, string name)
 			{
 				var nestedType = metadata.GetTypeDefinition(h);
 				return metadata.StringComparer.Equals(nestedType.Name, name);

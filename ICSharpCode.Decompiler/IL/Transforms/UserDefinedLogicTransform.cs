@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 		}
 
-		bool RoslynOptimized(Block block, int pos, StatementTransformContext context)
+		static bool RoslynOptimized(Block block, int pos, StatementTransformContext context)
 		{
 			// Roslyn, optimized pattern in combination with return statement:
 			//   if (logic.not(call op_False(ldloc lhsVar))) leave IL_0000 (call op_BitwiseAnd(ldloc lhsVar, rhsInst))
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool LegacyPattern(Block block, int pos, StatementTransformContext context)
+		static bool LegacyPattern(Block block, int pos, StatementTransformContext context)
 		{
 			// Legacy csc pattern:
 			//   stloc s(lhsInst)
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(s.Kind == VariableKind.StackSlot))
 				return false;
-			if (!(block.Instructions[pos + 1] is IfInstruction ifInst))
+			if (block.Instructions[pos + 1] is not IfInstruction ifInst)
 				return false;
 			if (!ifInst.Condition.MatchLogicNot(out var condition))
 				return false;
@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// Check falseInst:
-			if (!(falseInst is DynamicBinaryOperatorInstruction binary))
+			if (falseInst is not DynamicBinaryOperatorInstruction binary)
 				return null;
 			if (binary.Operation != expectedBitop)
 				return null;

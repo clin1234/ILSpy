@@ -129,17 +129,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		}
 
 		// per-run members
-		HashSet<string> directories = new(Platform.FileNameComparer);
+		readonly HashSet<string> directories = new(Platform.FileNameComparer);
 		readonly IProjectFileWriter projectWriter;
 
-		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
+		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default)
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
 			using var writer = new StreamWriter(projectFileName);
 			DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 		}
 
-		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public ProjectId DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default)
 		{
 			if (string.IsNullOrEmpty(targetDirectory))
 			{
@@ -662,34 +662,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static bool IsReservedFileSystemName(string name)
 		{
-			switch (name.ToUpperInvariant())
-			{
-				case "AUX":
-				case "COM1":
-				case "COM2":
-				case "COM3":
-				case "COM4":
-				case "COM5":
-				case "COM6":
-				case "COM7":
-				case "COM8":
-				case "COM9":
-				case "CON":
-				case "LPT1":
-				case "LPT2":
-				case "LPT3":
-				case "LPT4":
-				case "LPT5":
-				case "LPT6":
-				case "LPT7":
-				case "LPT8":
-				case "LPT9":
-				case "NUL":
-				case "PRN":
-					return true;
-				default:
-					return false;
-			}
+			return name.ToUpperInvariant() switch {
+				"AUX" or "COM1" or "COM2" or "COM3" or "COM4" or "COM5" or "COM6" or "COM7" or "COM8" or "COM9" or "CON" or "LPT1" or "LPT2" or "LPT3" or "LPT4" or "LPT5" or "LPT6" or "LPT7" or "LPT8" or "LPT9" or "NUL" or "PRN" => true,
+				_ => false,
+			};
 		}
 
 		public static bool CanUseSdkStyleProjectFormat(PEFile module)

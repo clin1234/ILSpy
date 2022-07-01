@@ -28,9 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		readonly string referencedGroupName;
 
-		public string ReferencedGroupName {
-			get { return referencedGroupName; }
-		}
+		public string ReferencedGroupName => referencedGroupName;
 
 		public IdentifierExpressionBackreference(string referencedGroupName)
 		{
@@ -39,8 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override bool DoMatch(PatternMatching.INode other, PatternMatching.Match match)
 		{
-			IdentifierExpression ident = other as IdentifierExpression;
-			if (ident == null || ident.TypeArguments.Any())
+			if (other is not IdentifierExpression ident || ident.TypeArguments.Any())
 				return false;
 			AstNode referenced = (AstNode)match.Get(referencedGroupName).Last();
 			if (referenced == null)

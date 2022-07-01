@@ -333,7 +333,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets whether there is an identity conversion from <paramref name="fromType"/> to <paramref name="toType"/>
 		/// </summary>
-		public bool IdentityConversion(IType fromType, IType toType)
+		public static bool IdentityConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.1
 			fromType = fromType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
@@ -357,7 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			/* ulong  */ { false, false, false, false, false, true  },
 		};
 
-		bool ImplicitNumericConversion(IType fromType, IType toType)
+		static bool ImplicitNumericConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.2
 
@@ -397,7 +397,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		bool IsNumericType(IType type)
+		static bool IsNumericType(IType type)
 		{
 			switch (type.Kind)
 			{
@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return c is >= TypeCode.Char and <= TypeCode.Decimal;
 		}
 
-		bool AnyNumericConversion(IType fromType, IType toType)
+		static bool AnyNumericConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.2 + §6.2.1
 			return IsNumericType(fromType) && IsNumericType(toType);
@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Enumeration Conversions
-		Conversion ImplicitEnumerationConversion(ResolveResult rr, IType toType)
+		static Conversion ImplicitEnumerationConversion(ResolveResult rr, IType toType)
 		{
 			// C# 4.0 spec: §6.1.3
 			Debug.Assert(rr.IsCompileTimeConstant);
@@ -432,7 +432,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return Conversion.None;
 		}
 
-		bool ExplicitEnumerationConversion(IType fromType, IType toType)
+		static bool ExplicitEnumerationConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.2.2
 			if (fromType.Kind == TypeKind.Enum)
@@ -448,7 +448,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Nullable Conversions
-		Conversion ImplicitNullableConversion(IType fromType, IType toType)
+		static Conversion ImplicitNullableConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.4
 			if (NullableType.IsNullable(toType))
@@ -463,7 +463,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return Conversion.None;
 		}
 
-		Conversion ExplicitNullableConversion(IType fromType, IType toType)
+		static Conversion ExplicitNullableConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.4
 			if (NullableType.IsNullable(toType) || NullableType.IsNullable(fromType))
@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Null Literal Conversion
-		bool NullLiteralConversion(IType fromType, IType toType)
+		static bool NullLiteralConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.5
 			if (fromType.Kind == TypeKind.Null)
@@ -513,11 +513,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (!(fromType.IsReferenceType == true && toType.IsReferenceType != false))
 				return false;
 
-			ArrayType fromArray = fromType as ArrayType;
-			if (fromArray != null)
+			if (fromType is ArrayType fromArray)
 			{
-				ArrayType toArray = toType as ArrayType;
-				if (toArray != null)
+				if (toType is ArrayType toArray)
 				{
 					// array covariance (the broken kind)
 					return fromArray.Dimensions == toArray.Dimensions
@@ -544,10 +542,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// For IList{T}, ICollection{T}, IEnumerable{T} and IReadOnlyList{T}, returns T.
 		/// Otherwise, returns null.
 		/// </summary>
-		IType UnpackGenericArrayInterface(IType interfaceType)
+		static IType UnpackGenericArrayInterface(IType interfaceType)
 		{
-			ParameterizedType pt = interfaceType as ParameterizedType;
-			if (pt != null)
+			if (interfaceType is ParameterizedType pt)
 			{
 				switch (pt.GetDefinition()?.KnownTypeCode)
 				{
@@ -740,7 +737,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		bool IsSealedReferenceType(IType type)
+		static bool IsSealedReferenceType(IType type)
 		{
 			TypeKind kind = type.Kind;
 			return kind == TypeKind.Class && type.GetDefinition().IsSealed
@@ -782,7 +779,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Implicit Constant-Expression Conversion
-		bool ImplicitConstantExpressionConversion(ResolveResult rr, IType toType)
+		static bool ImplicitConstantExpressionConversion(ResolveResult rr, IType toType)
 		{
 			if (rr is not { IsCompileTimeConstant: true })
 				return false;
@@ -887,7 +884,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return false;
 		}
 
-		bool ExplicitPointerConversion(IType fromType, IType toType)
+		static bool ExplicitPointerConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §18.4 Pointer conversions
 			if (fromType.Kind.IsAnyPointer())
@@ -900,7 +897,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		bool IsIntegerType(IType type)
+		static bool IsIntegerType(IType type)
 		{
 			switch (type.Kind)
 			{
@@ -1169,8 +1166,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		Conversion AnonymousFunctionConversion(ResolveResult resolveResult, IType toType)
 		{
 			// C# 5.0 spec §6.5 Anonymous function conversions
-			LambdaResolveResult f = resolveResult as LambdaResolveResult;
-			if (f == null)
+			if (resolveResult is not LambdaResolveResult f)
 				return Conversion.None;
 			if (!f.IsAnonymousMethod)
 			{
@@ -1251,8 +1247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		Conversion MethodGroupConversion(ResolveResult resolveResult, IType toType)
 		{
 			// C# 4.0 spec §6.6 Method group conversions
-			MethodGroupResolveResult rr = resolveResult as MethodGroupResolveResult;
-			if (rr == null)
+			if (resolveResult is not MethodGroupResolveResult rr)
 				return Conversion.None;
 			IMethod invoke = toType.GetDelegateInvokeMethod();
 			if (invoke == null)
@@ -1420,8 +1415,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <returns>0 = neither is better; 1 = t1 is better; 2 = t2 is better</returns>
 		public int BetterConversion(ResolveResult resolveResult, IType t1, IType t2)
 		{
-			LambdaResolveResult lambda = resolveResult as LambdaResolveResult;
-			if (lambda != null)
+			if (resolveResult is LambdaResolveResult lambda)
 			{
 				if (!lambda.IsAnonymousMethod)
 				{
@@ -1518,7 +1512,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return 0;
 		}
 
-		bool IsBetterIntegralType(TypeCode t1, TypeCode t2)
+		static bool IsBetterIntegralType(TypeCode t1, TypeCode t2)
 		{
 			// signed types are better than unsigned types
 			return t1 switch {

@@ -45,27 +45,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			AddSubstitution(substitution);
 		}
 
-		public bool CanGet {
-			get { return propertyDefinition.CanGet; }
-		}
+		public bool CanGet => propertyDefinition.CanGet;
 
-		public bool CanSet {
-			get { return propertyDefinition.CanSet; }
-		}
+		public bool CanSet => propertyDefinition.CanSet;
 
 		IMethod getter, setter;
 
-		public IMethod Getter {
-			get { return WrapAccessor(ref this.getter, propertyDefinition.Getter); }
-		}
+		public IMethod Getter => WrapAccessor(ref this.getter, propertyDefinition.Getter);
 
-		public IMethod Setter {
-			get { return WrapAccessor(ref this.setter, propertyDefinition.Setter); }
-		}
+		public IMethod Setter => WrapAccessor(ref this.setter, propertyDefinition.Setter);
 
-		public bool IsIndexer {
-			get { return propertyDefinition.IsIndexer; }
-		}
+		public bool IsIndexer => propertyDefinition.IsIndexer;
 
 		public bool ReturnTypeIsRefReadOnly => propertyDefinition.ReturnTypeIsRefReadOnly;
 	}

@@ -50,35 +50,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get; set;
 		}
 
-		public CSharpTokenNode UndocumentedToken {
-			get {
-				switch (UndocumentedExpressionType)
-				{
-					case UndocumentedExpressionType.ArgListAccess:
-					case UndocumentedExpressionType.ArgList:
-						return GetChildByRole(ArglistKeywordRole);
-					case UndocumentedExpressionType.RefValue:
-						return GetChildByRole(RefvalueKeywordRole);
-					case UndocumentedExpressionType.RefType:
-						return GetChildByRole(ReftypeKeywordRole);
-					case UndocumentedExpressionType.MakeRef:
-						return GetChildByRole(MakerefKeywordRole);
-				}
-				return CSharpTokenNode.Null;
-			}
-		}
+		public CSharpTokenNode UndocumentedToken => UndocumentedExpressionType switch {
+			UndocumentedExpressionType.ArgListAccess or UndocumentedExpressionType.ArgList => GetChildByRole(ArglistKeywordRole),
+			UndocumentedExpressionType.RefValue => GetChildByRole(RefvalueKeywordRole),
+			UndocumentedExpressionType.RefType => GetChildByRole(ReftypeKeywordRole),
+			UndocumentedExpressionType.MakeRef => GetChildByRole(MakerefKeywordRole),
+			_ => CSharpTokenNode.Null,
+		};
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Argument); }
-		}
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole(Roles.Argument);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -97,8 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UndocumentedExpression o = other as UndocumentedExpression;
-			return o != null && this.UndocumentedExpressionType == o.UndocumentedExpressionType && this.Arguments.DoMatch(o.Arguments, match);
+			return other is UndocumentedExpression o && this.UndocumentedExpressionType == o.UndocumentedExpressionType && this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }

@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!m.Success)
 						break;
 					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
-					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
+					if (fieldOrPropertyOrEvent is not IField && fieldOrPropertyOrEvent is not IProperty && fieldOrPropertyOrEvent is not IEvent)
 						break;
 					var fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent) as EntityDeclaration;
 					// Cannot transform if it is a custom event.
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsPropertyDeclaredByPrimaryCtor(IProperty p, RecordDecompiler record)
+		static bool IsPropertyDeclaredByPrimaryCtor(IProperty p, RecordDecompiler record)
 		{
 			if (p == null || record == null)
 				return false;
@@ -318,8 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					bool declaringTypeIsBeforeFieldInit = declaringType.HasFlag(TypeAttributes.BeforeFieldInit);
 					while (true)
 					{
-						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
-						if (es == null)
+						if (staticCtor.Body.Statements.FirstOrDefault() is not ExpressionStatement es)
 							break;
 						AssignmentExpression assignment = es.Expression as AssignmentExpression;
 						if (assignment is not { Operator: AssignmentOperatorType.Assign })
@@ -327,8 +326,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
 						if (!(fieldOrProperty is IField or IProperty) || !fieldOrProperty.IsStatic)
 							break;
-						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
-						if (fieldOrPropertyDecl == null)
+						if (members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) is not EntityDeclaration fieldOrPropertyDecl)
 							break;
 						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
 						{
@@ -383,7 +381,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Evaluates a call to the decimal-ctor.
 		/// </summary>
-		private bool TryEvaluateDecimalConstant(Semantics.ResolveResult expression, out decimal value)
+		private static bool TryEvaluateDecimalConstant(Semantics.ResolveResult expression, out decimal value)
 		{
 			value = 0;
 			if (!expression.Type.IsKnownType(KnownTypeCode.Decimal))

@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy
 
 		public WindowState WindowState = WindowState.Normal;
 		public Rect WindowBounds;
-		internal static Rect DefaultWindowBounds = new Rect(10, 10, 750, 550);
+		internal static Rect DefaultWindowBounds = new(10, 10, 750, 550);
 		/// <summary>
 		/// position of the left/right splitter
 		/// </summary>
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy
 
 		public void Save()
 		{
-			XElement doc = new XElement("SessionSettings");
+			XElement doc = new("SessionSettings");
 			doc.Add(this.FilterSettings.SaveAsXml());
 			if (this.ActiveAssemblyList != null)
 			{
@@ -164,12 +164,12 @@ namespace ICSharpCode.ILSpy
 			ILSpySettings.SaveSettings(doc);
 		}
 
-		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
+		static Regex regex = new("\\\\x(?<num>[0-9A-f]{4})");
 		private string activeAssemblyList;
 
 		static string Escape(string p)
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			foreach (char ch in p)
 			{
 				if (char.IsLetterOrDigit(ch))

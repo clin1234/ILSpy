@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public TupleResolveResult(ICompilation compilation,
 			ImmutableArray<ResolveResult> elements,
-			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
+			ImmutableArray<string> elementNames = default,
 			IModule valueTupleAssembly = null)
 		: base(GetTupleType(compilation, elements, elementNames, valueTupleAssembly))
 		{

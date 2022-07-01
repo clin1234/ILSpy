@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
+		static IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
 		{
 			if (analyzedType.Kind == TypeKind.Enum
 				&& type.MetadataToken == analyzedType.MetadataToken
@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IField field)
+		static bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IField field)
 		{
 			if (field.Accessibility == Accessibility.Private)
 				return false;
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return visitor.Found;
 		}
 
-		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IProperty property)
+		static bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IProperty property)
 		{
 			if (property.Accessibility == Accessibility.Private)
 			{
@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return visitor.Found;
 		}
 
-		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IEvent @event)
+		static bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IEvent @event)
 		{
 			if (@event.Accessibility == Accessibility.Private)
 			{
@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return visitor.Found;
 		}
 
-		bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IMethod method)
+		static bool TypeIsExposedBy(TypeDefinitionUsedVisitor visitor, IMethod method)
 		{
 			if (method.Accessibility == Accessibility.Private)
 			{

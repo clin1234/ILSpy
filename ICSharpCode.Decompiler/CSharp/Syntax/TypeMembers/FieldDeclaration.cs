@@ -33,13 +33,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class FieldDeclaration : EntityDeclaration
 	{
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Field; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Field;
 
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole(Roles.Variable); }
-		}
+		public AstNodeCollection<VariableInitializer> Variables => GetChildrenByRole(Roles.Variable);
 
 		// Hide .Name and .NameToken from users; the actual field names
 		// are stored in the VariableInitializer.
@@ -72,8 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			FieldDeclaration o = other as FieldDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
+			return other is FieldDeclaration o && this.MatchAttributesAndModifiers(o, match)
 				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
 		}
 	}

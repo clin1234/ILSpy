@@ -103,9 +103,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.ClearAll();
 			}
 
-			public bool IsBottom {
-				get { return !bits.Any(); }
-			}
+			public bool IsBottom => !bits.Any();
 
 			public void MarkVariableInitialized(int variableIndex)
 			{

@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		readonly ITextOutput output;
 		CancellationToken cancellationToken;
 		bool isInType;   // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
-		MethodBodyDisassembler methodBodyDisassembler;
+		readonly MethodBodyDisassembler methodBodyDisassembler;
 
 		public bool DetectControlStructure {
 			get => methodBodyDisassembler.DetectControlStructure;
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 
 		#region Disassemble Method
-		EnumNameCollection<MethodAttributes> methodAttributeFlags = new() {
+		readonly EnumNameCollection<MethodAttributes> methodAttributeFlags = new() {
 			{ MethodAttributes.Final, "final" },
 			{ MethodAttributes.HideBySig, "hidebysig" },
 			{ MethodAttributes.SpecialName, "specialname" },
@@ -103,8 +103,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.Static, "static" },
 			{ MethodAttributes.HasSecurity, null },	// ?? also invisible in ILDasm
 		};
-
-		EnumNameCollection<MethodAttributes> methodVisibility = new() {
+		readonly EnumNameCollection<MethodAttributes> methodVisibility = new() {
 			{ MethodAttributes.Private, "private" },
 			{ MethodAttributes.FamANDAssem, "famandassem" },
 			{ MethodAttributes.Assembly, "assembly" },
@@ -112,8 +111,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.FamORAssem, "famorassem" },
 			{ MethodAttributes.Public, "public" },
 		};
-
-		EnumNameCollection<SignatureCallingConvention> callingConvention = new() {
+		readonly EnumNameCollection<SignatureCallingConvention> callingConvention = new() {
 			{ SignatureCallingConvention.CDecl, "unmanaged cdecl" },
 			{ SignatureCallingConvention.StdCall, "unmanaged stdcall" },
 			{ SignatureCallingConvention.ThisCall, "unmanaged thiscall" },
@@ -121,15 +119,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ SignatureCallingConvention.VarArgs, "vararg" },
 			{ SignatureCallingConvention.Default, null },
 		};
-
-		EnumNameCollection<MethodImplAttributes> methodCodeType = new() {
+		readonly EnumNameCollection<MethodImplAttributes> methodCodeType = new() {
 			{ MethodImplAttributes.IL, "cil" },
 			{ MethodImplAttributes.Native, "native" },
 			{ MethodImplAttributes.OPTIL, "optil" },
 			{ MethodImplAttributes.Runtime, "runtime" },
 		};
-
-		EnumNameCollection<MethodImplAttributes> methodImpl = new() {
+		readonly EnumNameCollection<MethodImplAttributes> methodImpl = new() {
 			{ MethodImplAttributes.Synchronized, "synchronized" },
 			{ MethodImplAttributes.NoInlining, "noinlining" },
 			{ MethodImplAttributes.NoOptimization, "nooptimization" },
@@ -639,7 +635,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 
 			string currentAssemblyName = null;
-			string currentFullAssemblyName = null;
 			if (module.Metadata.IsAssembly)
 			{
 				try
@@ -650,9 +645,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				{
 					currentAssemblyName = "<ERR: invalid assembly name>";
 				}
+				string currentFullAssemblyName;
 				if (!module.Metadata.TryGetFullAssemblyName(out currentFullAssemblyName))
 				{
-					currentFullAssemblyName = "<ERR: invalid assembly name>";
 				}
 			}
 			int count = blob.ReadCompressedInteger();
@@ -1209,7 +1204,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Field
-		EnumNameCollection<FieldAttributes> fieldVisibility = new() {
+		readonly EnumNameCollection<FieldAttributes> fieldVisibility = new() {
 			{ FieldAttributes.Private, "private" },
 			{ FieldAttributes.FamANDAssem, "famandassem" },
 			{ FieldAttributes.Assembly, "assembly" },
@@ -1217,8 +1212,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.FamORAssem, "famorassem" },
 			{ FieldAttributes.Public, "public" },
 		};
-
-		EnumNameCollection<FieldAttributes> fieldAttributes = new() {
+		readonly EnumNameCollection<FieldAttributes> fieldAttributes = new() {
 			{ FieldAttributes.Static, "static" },
 			{ FieldAttributes.Literal, "literal" },
 			{ FieldAttributes.InitOnly, "initonly" },
@@ -1336,7 +1330,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return sectionPrefix;
 		}
 
-		char GetRVASectionPrefix(System.Reflection.PortableExecutable.PEHeaders headers, int rva)
+		static char GetRVASectionPrefix(System.Reflection.PortableExecutable.PEHeaders headers, int rva)
 		{
 			int sectionIndex = headers.GetContainingSectionIndex(rva);
 			if (sectionIndex < 0)
@@ -1351,7 +1345,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Property
-		EnumNameCollection<PropertyAttributes> propertyAttributes = new() {
+		readonly EnumNameCollection<PropertyAttributes> propertyAttributes = new() {
 			{ PropertyAttributes.SpecialName, "specialname" },
 			{ PropertyAttributes.RTSpecialName, "rtspecialname" },
 			{ PropertyAttributes.HasDefault, "hasdefault" },
@@ -1425,7 +1419,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Event
-		EnumNameCollection<EventAttributes> eventAttributes = new() {
+		readonly EnumNameCollection<EventAttributes> eventAttributes = new() {
 			{ EventAttributes.SpecialName, "specialname" },
 			{ EventAttributes.RTSpecialName, "rtspecialname" },
 		};
@@ -1490,7 +1484,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Type
-		EnumNameCollection<TypeAttributes> typeVisibility = new() {
+		readonly EnumNameCollection<TypeAttributes> typeVisibility = new() {
 			{ TypeAttributes.Public, "public" },
 			{ TypeAttributes.NotPublic, "private" },
 			{ TypeAttributes.NestedPublic, "nested public" },
@@ -1500,20 +1494,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.NestedFamANDAssem, "nested famandassem" },
 			{ TypeAttributes.NestedFamORAssem, "nested famorassem" },
 		};
-
-		EnumNameCollection<TypeAttributes> typeLayout = new() {
+		readonly EnumNameCollection<TypeAttributes> typeLayout = new() {
 			{ TypeAttributes.AutoLayout, "auto" },
 			{ TypeAttributes.SequentialLayout, "sequential" },
 			{ TypeAttributes.ExplicitLayout, "explicit" },
 		};
-
-		EnumNameCollection<TypeAttributes> typeStringFormat = new() {
+		readonly EnumNameCollection<TypeAttributes> typeStringFormat = new() {
 			{ TypeAttributes.AutoClass, "auto" },
 			{ TypeAttributes.AnsiClass, "ansi" },
 			{ TypeAttributes.UnicodeClass, "unicode" },
 		};
-
-		EnumNameCollection<TypeAttributes> typeAttributes = new() {
+		readonly EnumNameCollection<TypeAttributes> typeAttributes = new() {
 			{ TypeAttributes.Abstract, "abstract" },
 			{ TypeAttributes.Sealed, "sealed" },
 			{ TypeAttributes.SpecialName, "specialname" },
@@ -1667,7 +1658,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		void WriteTypeParameters(ITextOutput output, PEFile module, MetadataGenericContext context, GenericParameterHandleCollection p)
+		static void WriteTypeParameters(ITextOutput output, PEFile module, MetadataGenericContext context, GenericParameterHandleCollection p)
 		{
 			if (p.Count > 0)
 			{
@@ -1825,7 +1816,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
 		{
-			List<KeyValuePair<long, string>> names = new();
+			readonly List<KeyValuePair<long, string>> names = new();
 
 			public void Add(T flag, string name)
 			{

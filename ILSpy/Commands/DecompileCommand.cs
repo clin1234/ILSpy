@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Commands
 			return true;
 		}
 
-		bool IsValidReference(object reference)
+		static bool IsValidReference(object reference)
 		{
 			return reference is IEntity;
 		}

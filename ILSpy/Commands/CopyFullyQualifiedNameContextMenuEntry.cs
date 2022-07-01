@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 			Clipboard.SetText(member.ReflectionName);
 		}
 
-		private IMemberTreeNode GetMemberNodeFromContext(TextViewContext context)
+		private static IMemberTreeNode GetMemberNodeFromContext(TextViewContext context)
 		{
 			return context.SelectedTreeNodes?.Length == 1 ? context.SelectedTreeNodes[0] as IMemberTreeNode : null;
 		}

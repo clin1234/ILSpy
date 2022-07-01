@@ -53,11 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public class Comment : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Whitespace;
-			}
-		}
+		public override NodeType NodeType => NodeType.Whitespace;
 
 		CommentType commentType;
 
@@ -69,11 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Returns true if the <see cref="CommentType"/> is Documentation or MultiLineDocumentation.
 		/// </summary>
-		public bool IsDocumentation {
-			get {
-				return commentType is CommentType.Documentation or CommentType.MultiLineDocumentation;
-			}
-		}
+		public bool IsDocumentation => commentType is CommentType.Documentation or CommentType.MultiLineDocumentation;
 
 		bool startsLine;
 
@@ -90,18 +82,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
+		public override TextLocation StartLocation => startLocation;
 
 		TextLocation endLocation;
-		public override TextLocation EndLocation {
-			get {
-				return endLocation;
-			}
-		}
+		public override TextLocation EndLocation => endLocation;
 
 		internal void SetStartLocation(TextLocation value)
 		{
@@ -145,8 +129,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			Comment o = other as Comment;
-			return o != null && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
+			return other is Comment o && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
 		}
 	}
 }

@@ -108,7 +108,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(!a);
 			a &= b;
 			a |= b;
-			a ^= b;
 		}
 
 		public static void BoolValueComplex(bool? a, Func<bool> x)
@@ -130,8 +129,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(x() & a);
 			Console.WriteLine(x() | a);
 			Console.WriteLine(x() ^ a);
-			(new bool?[0])[0] ^= x();
-			(new bool?[0])[0] ^= a;
+			(Array.Empty<bool?>())[0] ^= x();
+			(Array.Empty<bool?>())[0] ^= a;
 		}
 
 		public static void BoolValueConst(bool? a)
@@ -287,7 +286,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a |= b;
 			a ^= b;
 			a <<= b;
-			a >>= b;
 		}
 
 		public static void IntValueComplex(int? a, Func<int> x)
@@ -323,7 +321,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a >>= x();
 
 			Console.WriteLine(x() + a);
-			(new int?[0])[0] += x();
+			(Array.Empty<int?>())[0] += x();
 		}
 
 		public static void IntValueConst(int? a)
@@ -681,7 +679,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a |= b;
 			a ^= b;
 			a <<= i;
-			a >>= i;
 		}
 
 		public static void StructValueComplex(TS? a, Func<TS> x, Func<int> i)

@@ -97,10 +97,10 @@ namespace ICSharpCode.ILSpyX.Search
 				switch (term[0])
 				{
 					case '+': // must contain
-						term = term.Substring(1);
+						term = term[1..];
 						goto default;
 					case '-': // should not contain
-						if (term.Length > 1 && text.IndexOf(term.Substring(1), StringComparison.OrdinalIgnoreCase) >= 0)
+						if (term.Length > 1 && text.Contains(term[1..], StringComparison.OrdinalIgnoreCase))
 							return false;
 						break;
 					case '=': // exact match
@@ -115,7 +115,7 @@ namespace ICSharpCode.ILSpyX.Search
 					}
 					break;
 					case '~':
-						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term.Substring(1).ToLower()))
+						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term[1..].ToLower()))
 							return false;
 						break;
 					default:
@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpyX.Search
 			return true;
 		}
 
-		bool IsNoncontiguousMatch(string text, string searchTerm)
+		static bool IsNoncontiguousMatch(string text, string searchTerm)
 		{
 			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm))
 			{

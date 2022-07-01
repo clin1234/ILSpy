@@ -76,14 +76,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (i < 2)
 				return false;
-			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 2] is StLoc objectStore) ||
+			if (block.Instructions[i] is not TryFinally body || block.Instructions[i - 2] is not StLoc objectStore ||
 				!MatchCall(block.Instructions[i - 1] as Call, "Enter", objectStore.Variable))
 				return false;
 			if (!objectStore.Variable.IsSingleDefinition)
 				return false;
-			if (!(body.TryBlock is BlockContainer tryContainer) || tryContainer.EntryPoint.Instructions.Count == 0 || tryContainer.EntryPoint.IncomingEdgeCount != 1)
+			if (body.TryBlock is not BlockContainer tryContainer || tryContainer.EntryPoint.Instructions.Count == 0 || tryContainer.EntryPoint.IncomingEdgeCount != 1)
 				return false;
-			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, null, objectStore.Variable))
+			if (body.FinallyBlock is not BlockContainer finallyContainer || !MatchExitBlock(finallyContainer.EntryPoint, null, objectStore.Variable))
 				return false;
 			if (objectStore.Variable.LoadCount > 2)
 				return false;
@@ -120,14 +120,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (i < 2)
 				return false;
-			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 2] is StLoc objectStore) ||
+			if (block.Instructions[i] is not TryFinally body || block.Instructions[i - 2] is not StLoc objectStore ||
 				!objectStore.Value.MatchLdLoc(out var tempVar) || !MatchCall(block.Instructions[i - 1] as Call, "Enter", tempVar))
 				return false;
 			if (!objectStore.Variable.IsSingleDefinition)
 				return false;
-			if (!(body.TryBlock is BlockContainer tryContainer) || tryContainer.EntryPoint.Instructions.Count == 0 || tryContainer.EntryPoint.IncomingEdgeCount != 1)
+			if (body.TryBlock is not BlockContainer tryContainer || tryContainer.EntryPoint.Instructions.Count == 0 || tryContainer.EntryPoint.IncomingEdgeCount != 1)
 				return false;
-			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, null, objectStore.Variable))
+			if (body.FinallyBlock is not BlockContainer finallyContainer || !MatchExitBlock(finallyContainer.EntryPoint, null, objectStore.Variable))
 				return false;
 			if (objectStore.Variable.LoadCount > 1)
 				return false;
@@ -166,13 +166,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (i < 1)
 				return false;
-			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 1] is StLoc flagStore))
+			if (block.Instructions[i] is not TryFinally body || block.Instructions[i - 1] is not StLoc flagStore)
 				return false;
 			if (!flagStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean) || !flagStore.Value.MatchLdcI4(0))
 				return false;
-			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, out StLoc objectStore))
+			if (body.TryBlock is not BlockContainer tryContainer || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, out StLoc objectStore))
 				return false;
-			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
+			if (body.FinallyBlock is not BlockContainer finallyContainer || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
 				return false;
 			if (objectStore.Variable.LoadCount > 1)
 				return false;
@@ -212,13 +212,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (i < 2)
 				return false;
-			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 1] is StLoc flagStore) || !(block.Instructions[i - 2] is StLoc objectStore))
+			if (block.Instructions[i] is not TryFinally body || block.Instructions[i - 1] is not StLoc flagStore || block.Instructions[i - 2] is not StLoc objectStore)
 				return false;
 			if (!objectStore.Variable.IsSingleDefinition || !flagStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean) || !flagStore.Value.MatchLdcI4(0))
 				return false;
-			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
+			if (body.TryBlock is not BlockContainer tryContainer || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
 				return false;
-			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
+			if (body.FinallyBlock is not BlockContainer finallyContainer || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
 				return false;
 			if (objectStore.Variable.LoadCount > 2)
 				return false;
@@ -230,13 +230,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchExitBlock(Block entryPoint, ILVariable flag, ILVariable obj)
+		static bool MatchExitBlock(Block entryPoint, ILVariable flag, ILVariable obj)
 		{
 			if (entryPoint.Instructions.Count != 2 || entryPoint.IncomingEdgeCount != 1)
 				return false;
 			if (flag != null)
 			{
-				if (!entryPoint.Instructions[0].MatchIfInstruction(out var cond, out var trueInst) || !(trueInst is Block trueBlock))
+				if (!entryPoint.Instructions[0].MatchIfInstruction(out var cond, out var trueInst) || trueInst is not Block trueBlock)
 					return false;
 				if (!(cond.MatchLdLoc(flag) || (cond.MatchCompNotEquals(out var left, out var right) && left.MatchLdLoc(flag) && right.MatchLdcI4(0))) || !MatchExitBlock(trueBlock, obj))
 					return false;
@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchExitBlock(Block exitBlock, ILVariable obj)
+		static bool MatchExitBlock(Block exitBlock, ILVariable obj)
 		{
 			if (exitBlock.Instructions.Count != 1)
 				return false;
@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, ILVariable obj)
+		static bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, ILVariable obj)
 		{
 			if (entryPoint.Instructions.Count == 0 || entryPoint.IncomingEdgeCount != 1)
 				return false;
@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc obj)
+		static bool MatchLockEntryPoint(Block entryPoint, ILVariable flag, out StLoc obj)
 		{
 			obj = null;
 			if (entryPoint.Instructions.Count == 0 || entryPoint.IncomingEdgeCount != 1)
@@ -279,20 +279,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc obj)
+		static bool MatchCall(Call call, string methodName, ILVariable flag, out StLoc obj)
 		{
 			obj = null;
 			const string ThreadingMonitor = "System.Threading.Monitor";
 			if (call == null || call.Method.Name != methodName || call.Method.DeclaringType.FullName != ThreadingMonitor ||
 				call.Method.TypeArguments.Count != 0 || call.Arguments.Count != 2)
 				return false;
-			if (!call.Arguments[1].MatchLdLoca(flag) || !(call.Arguments[0] is StLoc val))
+			if (!call.Arguments[1].MatchLdLoca(flag) || call.Arguments[0] is not StLoc val)
 				return false;
 			obj = val;
 			return true;
 		}
 
-		bool MatchCall(Call call, string methodName, params ILVariable[] variables)
+		static bool MatchCall(Call call, string methodName, params ILVariable[] variables)
 		{
 			const string ThreadingMonitor = "System.Threading.Monitor";
 			if (call == null || call.Method.Name != methodName || call.Method.DeclaringType.FullName != ThreadingMonitor ||

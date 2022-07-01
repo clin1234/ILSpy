@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsElseIf(Statement statement, Statement parent)
+		static bool IsElseIf(Statement statement, Statement parent)
 		{
 			return parent is IfElseStatement && statement.Role == IfElseStatement.FalseRole;
 		}
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (statement.IsNull)
 				return;
-			if (!(statement is BlockStatement))
+			if (statement is not BlockStatement)
 			{
 				var b = new BlockStatement();
 				statement.ReplaceWith(b);
@@ -134,26 +134,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsAllowedAsEmbeddedStatement(Statement statement, Statement parent)
+		static bool IsAllowedAsEmbeddedStatement(Statement statement, Statement parent)
 		{
-			switch (statement)
-			{
-				case IfElseStatement ies:
-					return parent is IfElseStatement && ies.Role == IfElseStatement.FalseRole;
-				case VariableDeclarationStatement vds:
-				case WhileStatement ws:
-				case DoWhileStatement dws:
-				case SwitchStatement ss:
-				case ForeachStatement fes:
-				case ForStatement fs:
-				case LockStatement ls:
-				case FixedStatement fxs:
-					return false;
-				case UsingStatement us:
-					return parent is UsingStatement && !us.IsEnhanced;
-				default:
-					return !(parent?.Parent is IfElseStatement);
-			}
+			return statement switch {
+				IfElseStatement ies => parent is IfElseStatement && ies.Role == IfElseStatement.FalseRole,
+				VariableDeclarationStatement or WhileStatement or DoWhileStatement or SwitchStatement or ForeachStatement or ForStatement or LockStatement or FixedStatement => false,
+				UsingStatement us => parent is UsingStatement && !us.IsEnhanced,
+				_ => parent?.Parent is not IfElseStatement,
+			};
 		}
 
 		void IAstTransform.Run(AstNode rootNode, TransformContext context)
@@ -209,7 +197,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		const Modifiers movableModifiers = Modifiers.Readonly;
 
-		void SimplifyPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		static void SimplifyPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
 			var m = CalculatedGetterOnlyPropertyPattern.Match(propertyDeclaration);
 			if (!m.Success)
@@ -221,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			propertyDeclaration.Getter.Remove();
 		}
 
-		void SimplifyIndexerDeclaration(IndexerDeclaration indexerDeclaration)
+		static void SimplifyIndexerDeclaration(IndexerDeclaration indexerDeclaration)
 		{
 			var m = CalculatedGetterOnlyIndexerPattern.Match(indexerDeclaration);
 			if (!m.Success)

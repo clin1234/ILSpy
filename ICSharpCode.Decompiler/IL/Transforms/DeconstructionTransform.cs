@@ -268,18 +268,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			testedOperand = null;
 			deconstructMethod = null;
 			deconstructionResults = null;
-			if (!(inst is CallInstruction call))
+			if (inst is not CallInstruction call)
 				return false;
 			if (!MatchInstruction.IsDeconstructMethod(call.Method))
 				return false;
 			if (call.Method.IsStatic || call.Method.DeclaringType.IsReferenceType == false)
 			{
-				if (!(call is Call))
+				if (call is not Call)
 					return false;
 			}
 			else
 			{
-				if (!(call is CallVirt))
+				if (call is not CallVirt)
 					return false;
 			}
 			if (call.Arguments.Count < 3)
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inputInstruction = null;
 			if (!inst.MatchStLoc(out outputVariable, out var value))
 				return false;
-			if (!(value is Conv conv))
+			if (value is not Conv conv)
 				return false;
 			info = new() {
 				inputType = conv.Argument.InferType(context.TypeSystem),

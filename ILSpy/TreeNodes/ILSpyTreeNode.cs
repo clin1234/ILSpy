@@ -184,9 +184,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
+		protected static string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
 
-		protected string GetSuffixString(EntityHandle handle)
+		protected static string GetSuffixString(EntityHandle handle)
 		{
 			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
 				return string.Empty;

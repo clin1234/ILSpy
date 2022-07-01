@@ -49,36 +49,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeDeclaration : EntityDeclaration
 	{
-		public override NodeType NodeType {
-			get { return NodeType.TypeDeclaration; }
-		}
+		public override NodeType NodeType => NodeType.TypeDeclaration;
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.TypeDefinition; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 
 		ClassType classType;
 
-		public CSharpTokenNode TypeKeyword {
-			get {
-				switch (classType)
-				{
-					case ClassType.Class:
-						return GetChildByRole(Roles.ClassKeyword);
-					case ClassType.Struct:
-					case ClassType.RecordStruct:
-						return GetChildByRole(Roles.StructKeyword);
-					case ClassType.Interface:
-						return GetChildByRole(Roles.InterfaceKeyword);
-					case ClassType.Enum:
-						return GetChildByRole(Roles.EnumKeyword);
-					case ClassType.RecordClass:
-						return GetChildByRole(Roles.RecordKeyword);
-					default:
-						return CSharpTokenNode.Null;
-				}
-			}
-		}
+		public CSharpTokenNode TypeKeyword => classType switch {
+			ClassType.Class => GetChildByRole(Roles.ClassKeyword),
+			ClassType.Struct or ClassType.RecordStruct => GetChildByRole(Roles.StructKeyword),
+			ClassType.Interface => GetChildByRole(Roles.InterfaceKeyword),
+			ClassType.Enum => GetChildByRole(Roles.EnumKeyword),
+			ClassType.RecordClass => GetChildByRole(Roles.RecordKeyword),
+			_ => CSharpTokenNode.Null,
+		};
 
 		public ClassType ClassType {
 			get { return classType; }
@@ -88,49 +72,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole(Roles.LChevron); }
-		}
+		public CSharpTokenNode LChevronToken => GetChildByRole(Roles.LChevron);
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole(Roles.TypeParameter); }
-		}
+		public AstNodeCollection<TypeParameterDeclaration> TypeParameters => GetChildrenByRole(Roles.TypeParameter);
 
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole(Roles.RChevron); }
-		}
+		public CSharpTokenNode RChevronToken => GetChildByRole(Roles.RChevron);
 
 
 
-		public CSharpTokenNode ColonToken {
-			get {
-				return GetChildByRole(Roles.Colon);
-			}
-		}
+		public CSharpTokenNode ColonToken => GetChildByRole(Roles.Colon);
 
-		public AstNodeCollection<AstType> BaseTypes {
-			get { return GetChildrenByRole(Roles.BaseType); }
-		}
+		public AstNodeCollection<AstType> BaseTypes => GetChildrenByRole(Roles.BaseType);
 
-		public AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		public AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters => GetChildrenByRole(Roles.Parameter);
 
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
+		public AstNodeCollection<Constraint> Constraints => GetChildrenByRole(Roles.Constraint);
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
-		public AstNodeCollection<EntityDeclaration> Members {
-			get { return GetChildrenByRole(Roles.TypeMemberRole); }
-		}
+		public AstNodeCollection<EntityDeclaration> Members => GetChildrenByRole(Roles.TypeMemberRole);
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -149,8 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeDeclaration o = other as TypeDeclaration;
-			return o != null && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
+			return other is TypeDeclaration o && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)
 				&& this.BaseTypes.DoMatch(o.BaseTypes, match) && this.Constraints.DoMatch(o.Constraints, match)
 				&& this.PrimaryConstructorParameters.DoMatch(o.PrimaryConstructorParameters, match)

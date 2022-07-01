@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public static TokenWriter WrapInWriterThatSetsLocationsInAST(TokenWriter writer)
 		{
-			if (!(writer is ILocatable))
+			if (writer is not ILocatable)
 				throw new InvalidOperationException("writer does not provide locations!");
 			return new InsertMissingTokensDecorator(writer, (ILocatable)writer);
 		}

@@ -201,19 +201,14 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			else if (type.Kind == TypeKind.Pointer)
 			{
-				switch (binary.Operator)
-				{
-					case BinaryNumericOperator.Add:
-					case BinaryNumericOperator.Sub:
-						// ensure that the byte offset is a multiple of the pointer size
-						return PointerArithmeticOffset.Detect(
-							binary.Right,
-							((PointerType)type).ElementType,
-							checkForOverflow: binary.CheckForOverflow
-						) != null;
-					default:
-						return false; // operator not supported on pointer types
-				}
+				return binary.Operator switch {
+					BinaryNumericOperator.Add or BinaryNumericOperator.Sub => PointerArithmeticOffset.Detect(
+												binary.Right,
+												((PointerType)type).ElementType,
+												checkForOverflow: binary.CheckForOverflow
+											) != null,// ensure that the byte offset is a multiple of the pointer size
+					_ => false,// operator not supported on pointer types
+				};
 			}
 			else if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
 			{
@@ -305,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL
 	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
 	{
 		public readonly IMethod Method;
-		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
+		public static bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
 
 		public UserDefinedCompoundAssign(IMethod method, CompoundEvalMode evalMode,
 			ILInstruction target, CompoundTargetKind targetKind, ILInstruction value)
@@ -377,14 +372,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		static CompoundEvalMode CompoundEvalModeFromOperation(ExpressionType op)
 		{
-			switch (op)
-			{
-				case ExpressionType.PostIncrementAssign:
-				case ExpressionType.PostDecrementAssign:
-					return CompoundEvalMode.EvaluatesToOldValue;
-				default:
-					return CompoundEvalMode.EvaluatesToNewValue;
-			}
+			return op switch {
+				ExpressionType.PostIncrementAssign or ExpressionType.PostDecrementAssign => CompoundEvalMode.EvaluatesToOldValue,
+				_ => CompoundEvalMode.EvaluatesToNewValue,
+			};
 		}
 	}
 }

@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						}
 						if (type.TypeArguments.Count == TupleType.RestPosition)
 						{
-							type = type.TypeArguments.Last() as ParameterizedType;
+							type = type.TypeArguments[type.TypeArguments.Count - 1] as ParameterizedType;
 							ExpectDummyNullabilityForGenericValueType();
 							dynamicTypeIndex++;
 							if (type != null && TupleType.IsTupleCompatible(type, out int nestedCardinality))

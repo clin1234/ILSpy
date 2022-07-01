@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy
 			return decompiler;
 		}
 
-		void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
+		static void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
 		{
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
@@ -173,7 +173,7 @@ namespace ICSharpCode.ILSpy
 		class SelectCtorTransform : IAstTransform
 		{
 			readonly IMethod ctor;
-			readonly HashSet<ISymbol> removedSymbols = new HashSet<ISymbol>();
+			readonly HashSet<ISymbol> removedSymbols = new();
 
 			public SelectCtorTransform(IMethod ctor)
 			{
@@ -437,7 +437,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.ILOnly) == 0)
+				if ((corHeader.Flags & CorFlags.ILOnly) == 0)
 				{
 					output.WriteLine("// This assembly contains unmanaged code.");
 				}
@@ -446,7 +446,7 @@ namespace ICSharpCode.ILSpy
 				{
 					output.WriteLine("// Runtime: " + runtimeName);
 				}
-				if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0)
+				if ((corHeader.Flags & CorFlags.StrongNameSigned) != 0)
 				{
 					output.WriteLine("// This assembly is signed with a strong name key.");
 				}
@@ -604,9 +604,9 @@ namespace ICSharpCode.ILSpy
 			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
-		string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)
+		static string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName, bool omitGenerics)
 		{
-			StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new();
 			var currentTypeDefHandle = handle;
 			var typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
 
@@ -742,7 +742,7 @@ namespace ICSharpCode.ILSpy
 			{
 				flags |= ConversionFlags.SupportInitAccessors;
 			}
-			if (entity is IMethod m && m.IsLocalFunction)
+			if (entity is IMethod { IsLocalFunction: true })
 			{
 				writer.WriteIdentifier(Identifier.Create("(local)"));
 			}

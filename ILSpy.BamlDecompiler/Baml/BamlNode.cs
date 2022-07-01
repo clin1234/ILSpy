@@ -37,74 +37,34 @@ namespace ILSpy.BamlDecompiler.Baml
 
 		public static bool IsHeader(BamlRecord rec)
 		{
-			switch (rec.Type)
-			{
-				case BamlRecordType.ConstructorParametersStart:
-				case BamlRecordType.DocumentStart:
-				case BamlRecordType.ElementStart:
-				case BamlRecordType.KeyElementStart:
-				case BamlRecordType.NamedElementStart:
-				case BamlRecordType.PropertyArrayStart:
-				case BamlRecordType.PropertyComplexStart:
-				case BamlRecordType.PropertyDictionaryStart:
-				case BamlRecordType.PropertyListStart:
-				case BamlRecordType.StaticResourceStart:
-					return true;
-			}
-			return false;
+			return rec.Type switch {
+				BamlRecordType.ConstructorParametersStart or BamlRecordType.DocumentStart or BamlRecordType.ElementStart or BamlRecordType.KeyElementStart or BamlRecordType.NamedElementStart or BamlRecordType.PropertyArrayStart or BamlRecordType.PropertyComplexStart or BamlRecordType.PropertyDictionaryStart or BamlRecordType.PropertyListStart or BamlRecordType.StaticResourceStart => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsFooter(BamlRecord rec)
 		{
-			switch (rec.Type)
-			{
-				case BamlRecordType.ConstructorParametersEnd:
-				case BamlRecordType.DocumentEnd:
-				case BamlRecordType.ElementEnd:
-				case BamlRecordType.KeyElementEnd:
-				case BamlRecordType.PropertyArrayEnd:
-				case BamlRecordType.PropertyComplexEnd:
-				case BamlRecordType.PropertyDictionaryEnd:
-				case BamlRecordType.PropertyListEnd:
-				case BamlRecordType.StaticResourceEnd:
-					return true;
-			}
-			return false;
+			return rec.Type switch {
+				BamlRecordType.ConstructorParametersEnd or BamlRecordType.DocumentEnd or BamlRecordType.ElementEnd or BamlRecordType.KeyElementEnd or BamlRecordType.PropertyArrayEnd or BamlRecordType.PropertyComplexEnd or BamlRecordType.PropertyDictionaryEnd or BamlRecordType.PropertyListEnd or BamlRecordType.StaticResourceEnd => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsMatch(BamlRecord header, BamlRecord footer)
 		{
-			switch (header.Type)
-			{
-				case BamlRecordType.ConstructorParametersStart:
-					return footer.Type == BamlRecordType.ConstructorParametersEnd;
-
-				case BamlRecordType.DocumentStart:
-					return footer.Type == BamlRecordType.DocumentEnd;
-
-				case BamlRecordType.KeyElementStart:
-					return footer.Type == BamlRecordType.KeyElementEnd;
-
-				case BamlRecordType.PropertyArrayStart:
-					return footer.Type == BamlRecordType.PropertyArrayEnd;
-
-				case BamlRecordType.PropertyComplexStart:
-					return footer.Type == BamlRecordType.PropertyComplexEnd;
-
-				case BamlRecordType.PropertyDictionaryStart:
-					return footer.Type == BamlRecordType.PropertyDictionaryEnd;
-
-				case BamlRecordType.PropertyListStart:
-					return footer.Type == BamlRecordType.PropertyListEnd;
-
-				case BamlRecordType.StaticResourceStart:
-					return footer.Type == BamlRecordType.StaticResourceEnd;
-
-				case BamlRecordType.ElementStart:
-				case BamlRecordType.NamedElementStart:
-					return footer.Type == BamlRecordType.ElementEnd;
-			}
-			return false;
+			return header.Type switch {
+				BamlRecordType.ConstructorParametersStart => footer.Type == BamlRecordType.ConstructorParametersEnd,
+				BamlRecordType.DocumentStart => footer.Type == BamlRecordType.DocumentEnd,
+				BamlRecordType.KeyElementStart => footer.Type == BamlRecordType.KeyElementEnd,
+				BamlRecordType.PropertyArrayStart => footer.Type == BamlRecordType.PropertyArrayEnd,
+				BamlRecordType.PropertyComplexStart => footer.Type == BamlRecordType.PropertyComplexEnd,
+				BamlRecordType.PropertyDictionaryStart => footer.Type == BamlRecordType.PropertyDictionaryEnd,
+				BamlRecordType.PropertyListStart => footer.Type == BamlRecordType.PropertyListEnd,
+				BamlRecordType.StaticResourceStart => footer.Type == BamlRecordType.StaticResourceEnd,
+				BamlRecordType.ElementStart or BamlRecordType.NamedElementStart => footer.Type == BamlRecordType.ElementEnd,
+				_ => false,
+			};
 		}
 
 		public static BamlNode Parse(BamlDocument document, CancellationToken token)

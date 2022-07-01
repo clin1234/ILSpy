@@ -27,11 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullQueryExpression : QueryExpression
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -55,9 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public AstNodeCollection<QueryClause> Clauses {
-			get { return GetChildrenByRole(ClauseRole); }
-		}
+		public AstNodeCollection<QueryClause> Clauses => GetChildrenByRole(ClauseRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -83,9 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public abstract class QueryClause : AstNode
 	{
-		public override NodeType NodeType {
-			get { return NodeType.QueryClause; }
-		}
+		public override NodeType NodeType => NodeType.QueryClause;
 	}
 
 	/// <summary>
@@ -116,9 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(PrecedingQueryRole, value); }
 		}
 
-		public CSharpTokenNode IntoKeyword {
-			get { return GetChildByRole(IntoKeywordRole); }
-		}
+		public CSharpTokenNode IntoKeyword => GetChildByRole(IntoKeywordRole);
 
 		public string Identifier {
 			get {
@@ -129,9 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier IdentifierToken {
-			get { return GetChildByRole(Roles.Identifier); }
-		}
+		public Identifier IdentifierToken => GetChildByRole(Roles.Identifier);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -150,8 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryContinuationClause o = other as QueryContinuationClause;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.PrecedingQuery.DoMatch(o.PrecedingQuery, match);
+			return other is QueryContinuationClause o && MatchString(this.Identifier, o.Identifier) && this.PrecedingQuery.DoMatch(o.PrecedingQuery, match);
 		}
 	}
 
@@ -160,9 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole FromKeywordRole = new("from");
 		public static readonly TokenRole InKeywordRole = new("in");
 
-		public CSharpTokenNode FromKeyword {
-			get { return GetChildByRole(FromKeywordRole); }
-		}
+		public CSharpTokenNode FromKeyword => GetChildByRole(FromKeywordRole);
 
 		public AstType Type {
 			get { return GetChildByRole(Roles.Type); }
@@ -178,13 +163,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier IdentifierToken {
-			get { return GetChildByRole(Roles.Identifier); }
-		}
+		public Identifier IdentifierToken => GetChildByRole(Roles.Identifier);
 
-		public CSharpTokenNode InKeyword {
-			get { return GetChildByRole(InKeywordRole); }
-		}
+		public CSharpTokenNode InKeyword => GetChildByRole(InKeywordRole);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -208,8 +189,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryFromClause o = other as QueryFromClause;
-			return o != null && this.Type.DoMatch(o.Type, match) && MatchString(this.Identifier, o.Identifier)
+			return other is QueryFromClause o && this.Type.DoMatch(o.Type, match) && MatchString(this.Identifier, o.Identifier)
 				&& this.Expression.DoMatch(o.Expression, match);
 		}
 	}
@@ -218,9 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole LetKeywordRole = new("let");
 
-		public CSharpTokenNode LetKeyword {
-			get { return GetChildByRole(LetKeywordRole); }
-		}
+		public CSharpTokenNode LetKeyword => GetChildByRole(LetKeywordRole);
 
 		public string Identifier {
 			get {
@@ -231,13 +209,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier IdentifierToken {
-			get { return GetChildByRole(Roles.Identifier); }
-		}
+		public Identifier IdentifierToken => GetChildByRole(Roles.Identifier);
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole(Roles.Assign);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -261,8 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryLetClause o = other as QueryLetClause;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.Expression.DoMatch(o.Expression, match);
+			return other is QueryLetClause o && MatchString(this.Identifier, o.Identifier) && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 
@@ -271,9 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole WhereKeywordRole = new("where");
 
-		public CSharpTokenNode WhereKeyword {
-			get { return GetChildByRole(WhereKeywordRole); }
-		}
+		public CSharpTokenNode WhereKeyword => GetChildByRole(WhereKeywordRole);
 
 		public Expression Condition {
 			get { return GetChildByRole(Roles.Condition); }
@@ -297,8 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryWhereClause o = other as QueryWhereClause;
-			return o != null && this.Condition.DoMatch(o.Condition, match);
+			return other is QueryWhereClause o && this.Condition.DoMatch(o.Condition, match);
 		}
 	}
 
@@ -319,13 +289,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole IntoKeywordRole = new("into");
 		public static readonly Role<Identifier> IntoIdentifierRole = new("IntoIdentifier", Identifier.Null);
 
-		public bool IsGroupJoin {
-			get { return !string.IsNullOrEmpty(this.IntoIdentifier); }
-		}
+		public bool IsGroupJoin => !string.IsNullOrEmpty(this.IntoIdentifier);
 
-		public CSharpTokenNode JoinKeyword {
-			get { return GetChildByRole(JoinKeywordRole); }
-		}
+		public CSharpTokenNode JoinKeyword => GetChildByRole(JoinKeywordRole);
 
 		public AstType Type {
 			get { return GetChildByRole(TypeRole); }
@@ -341,40 +307,30 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier JoinIdentifierToken {
-			get { return GetChildByRole(JoinIdentifierRole); }
-		}
+		public Identifier JoinIdentifierToken => GetChildByRole(JoinIdentifierRole);
 
-		public CSharpTokenNode InKeyword {
-			get { return GetChildByRole(InKeywordRole); }
-		}
+		public CSharpTokenNode InKeyword => GetChildByRole(InKeywordRole);
 
 		public Expression InExpression {
 			get { return GetChildByRole(InExpressionRole); }
 			set { SetChildByRole(InExpressionRole, value); }
 		}
 
-		public CSharpTokenNode OnKeyword {
-			get { return GetChildByRole(OnKeywordRole); }
-		}
+		public CSharpTokenNode OnKeyword => GetChildByRole(OnKeywordRole);
 
 		public Expression OnExpression {
 			get { return GetChildByRole(OnExpressionRole); }
 			set { SetChildByRole(OnExpressionRole, value); }
 		}
 
-		public CSharpTokenNode EqualsKeyword {
-			get { return GetChildByRole(EqualsKeywordRole); }
-		}
+		public CSharpTokenNode EqualsKeyword => GetChildByRole(EqualsKeywordRole);
 
 		public Expression EqualsExpression {
 			get { return GetChildByRole(EqualsExpressionRole); }
 			set { SetChildByRole(EqualsExpressionRole, value); }
 		}
 
-		public CSharpTokenNode IntoKeyword {
-			get { return GetChildByRole(IntoKeywordRole); }
-		}
+		public CSharpTokenNode IntoKeyword => GetChildByRole(IntoKeywordRole);
 
 		public string IntoIdentifier {
 			get {
@@ -385,9 +341,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier IntoIdentifierToken {
-			get { return GetChildByRole(IntoIdentifierRole); }
-		}
+		public Identifier IntoIdentifierToken => GetChildByRole(IntoIdentifierRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -406,8 +360,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryJoinClause o = other as QueryJoinClause;
-			return o != null && this.IsGroupJoin == o.IsGroupJoin
+			return other is QueryJoinClause o && this.IsGroupJoin == o.IsGroupJoin
 				&& this.Type.DoMatch(o.Type, match) && MatchString(this.JoinIdentifier, o.JoinIdentifier)
 				&& this.InExpression.DoMatch(o.InExpression, match) && this.OnExpression.DoMatch(o.OnExpression, match)
 				&& this.EqualsExpression.DoMatch(o.EqualsExpression, match)
@@ -420,13 +373,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole OrderbyKeywordRole = new("orderby");
 		public static readonly Role<QueryOrdering> OrderingRole = new("Ordering", null);
 
-		public CSharpTokenNode OrderbyToken {
-			get { return GetChildByRole(OrderbyKeywordRole); }
-		}
+		public CSharpTokenNode OrderbyToken => GetChildByRole(OrderbyKeywordRole);
 
-		public AstNodeCollection<QueryOrdering> Orderings {
-			get { return GetChildrenByRole(OrderingRole); }
-		}
+		public AstNodeCollection<QueryOrdering> Orderings => GetChildrenByRole(OrderingRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -445,8 +394,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryOrderClause o = other as QueryOrderClause;
-			return o != null && this.Orderings.DoMatch(o.Orderings, match);
+			return other is QueryOrderClause o && this.Orderings.DoMatch(o.Orderings, match);
 		}
 	}
 
@@ -455,9 +403,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole AscendingKeywordRole = new("ascending");
 		public readonly static TokenRole DescendingKeywordRole = new("descending");
 
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -469,9 +415,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public CSharpTokenNode DirectionToken {
-			get { return Direction == QueryOrderingDirection.Ascending ? GetChildByRole(AscendingKeywordRole) : GetChildByRole(DescendingKeywordRole); }
-		}
+		public CSharpTokenNode DirectionToken => Direction == QueryOrderingDirection.Ascending ? GetChildByRole(AscendingKeywordRole) : GetChildByRole(DescendingKeywordRole);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -490,8 +434,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryOrdering o = other as QueryOrdering;
-			return o != null && this.Direction == o.Direction && this.Expression.DoMatch(o.Expression, match);
+			return other is QueryOrdering o && this.Direction == o.Direction && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 
@@ -506,9 +449,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole SelectKeywordRole = new("select");
 
-		public CSharpTokenNode SelectKeyword {
-			get { return GetChildByRole(SelectKeywordRole); }
-		}
+		public CSharpTokenNode SelectKeyword => GetChildByRole(SelectKeywordRole);
 
 		public Expression Expression {
 			get { return GetChildByRole(Roles.Expression); }
@@ -532,8 +473,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QuerySelectClause o = other as QuerySelectClause;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
+			return other is QuerySelectClause o && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 
@@ -544,18 +484,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ByKeywordRole = new("by");
 		public static readonly Role<Expression> KeyRole = new("Key", Expression.Null);
 
-		public CSharpTokenNode GroupKeyword {
-			get { return GetChildByRole(GroupKeywordRole); }
-		}
+		public CSharpTokenNode GroupKeyword => GetChildByRole(GroupKeywordRole);
 
 		public Expression Projection {
 			get { return GetChildByRole(ProjectionRole); }
 			set { SetChildByRole(ProjectionRole, value); }
 		}
 
-		public CSharpTokenNode ByKeyword {
-			get { return GetChildByRole(ByKeywordRole); }
-		}
+		public CSharpTokenNode ByKeyword => GetChildByRole(ByKeywordRole);
 
 		public Expression Key {
 			get { return GetChildByRole(KeyRole); }
@@ -579,8 +515,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			QueryGroupClause o = other as QueryGroupClause;
-			return o != null && this.Projection.DoMatch(o.Projection, match) && this.Key.DoMatch(o.Key, match);
+			return other is QueryGroupClause o && this.Projection.DoMatch(o.Projection, match) && this.Key.DoMatch(o.Key, match);
 		}
 	}
 }

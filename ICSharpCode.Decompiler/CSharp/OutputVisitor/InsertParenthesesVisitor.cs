@@ -75,20 +75,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is UnaryOperatorExpression uoe)
 			{
-				switch (uoe.Operator)
-				{
-					case UnaryOperatorType.PostDecrement:
-					case UnaryOperatorType.PostIncrement:
-					case UnaryOperatorType.NullConditional:
-					case UnaryOperatorType.SuppressNullableWarning:
-						return PrecedenceLevel.Primary;
-					case UnaryOperatorType.NullConditionalRewrap:
-						return PrecedenceLevel.NullableRewrap;
-					case UnaryOperatorType.IsTrue:
-						return PrecedenceLevel.Conditional;
-					default:
-						return PrecedenceLevel.Unary;
-				}
+				return uoe.Operator switch {
+					UnaryOperatorType.PostDecrement or UnaryOperatorType.PostIncrement or UnaryOperatorType.NullConditional or UnaryOperatorType.SuppressNullableWarning => PrecedenceLevel.Primary,
+					UnaryOperatorType.NullConditionalRewrap => PrecedenceLevel.NullableRewrap,
+					UnaryOperatorType.IsTrue => PrecedenceLevel.Conditional,
+					_ => PrecedenceLevel.Unary,
+				};
 			}
 			if (expr is CastExpression)
 				return PrecedenceLevel.Unary;
@@ -109,45 +101,22 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is BinaryOperatorExpression boe)
 			{
-				switch (boe.Operator)
-				{
-					case BinaryOperatorType.Range:
-						return PrecedenceLevel.Range;
-					case BinaryOperatorType.Multiply:
-					case BinaryOperatorType.Divide:
-					case BinaryOperatorType.Modulus:
-						return PrecedenceLevel.Multiplicative;
-					case BinaryOperatorType.Add:
-					case BinaryOperatorType.Subtract:
-						return PrecedenceLevel.Additive;
-					case BinaryOperatorType.ShiftLeft:
-					case BinaryOperatorType.ShiftRight:
-						return PrecedenceLevel.Shift;
-					case BinaryOperatorType.GreaterThan:
-					case BinaryOperatorType.GreaterThanOrEqual:
-					case BinaryOperatorType.LessThan:
-					case BinaryOperatorType.LessThanOrEqual:
-						return PrecedenceLevel.RelationalAndTypeTesting;
-					case BinaryOperatorType.Equality:
-					case BinaryOperatorType.InEquality:
-						return PrecedenceLevel.Equality;
-					case BinaryOperatorType.BitwiseAnd:
-						return PrecedenceLevel.BitwiseAnd;
-					case BinaryOperatorType.ExclusiveOr:
-						return PrecedenceLevel.ExclusiveOr;
-					case BinaryOperatorType.BitwiseOr:
-						return PrecedenceLevel.BitwiseOr;
-					case BinaryOperatorType.ConditionalAnd:
-						return PrecedenceLevel.ConditionalAnd;
-					case BinaryOperatorType.ConditionalOr:
-						return PrecedenceLevel.ConditionalOr;
-					case BinaryOperatorType.NullCoalescing:
-						return PrecedenceLevel.NullCoalescing;
-					case BinaryOperatorType.IsPattern:
-						return PrecedenceLevel.RelationalAndTypeTesting;
-					default:
-						throw new NotSupportedException("Invalid value for BinaryOperatorType");
-				}
+				return boe.Operator switch {
+					BinaryOperatorType.Range => PrecedenceLevel.Range,
+					BinaryOperatorType.Multiply or BinaryOperatorType.Divide or BinaryOperatorType.Modulus => PrecedenceLevel.Multiplicative,
+					BinaryOperatorType.Add or BinaryOperatorType.Subtract => PrecedenceLevel.Additive,
+					BinaryOperatorType.ShiftLeft or BinaryOperatorType.ShiftRight => PrecedenceLevel.Shift,
+					BinaryOperatorType.GreaterThan or BinaryOperatorType.GreaterThanOrEqual or BinaryOperatorType.LessThan or BinaryOperatorType.LessThanOrEqual => PrecedenceLevel.RelationalAndTypeTesting,
+					BinaryOperatorType.Equality or BinaryOperatorType.InEquality => PrecedenceLevel.Equality,
+					BinaryOperatorType.BitwiseAnd => PrecedenceLevel.BitwiseAnd,
+					BinaryOperatorType.ExclusiveOr => PrecedenceLevel.ExclusiveOr,
+					BinaryOperatorType.BitwiseOr => PrecedenceLevel.BitwiseOr,
+					BinaryOperatorType.ConditionalAnd => PrecedenceLevel.ConditionalAnd,
+					BinaryOperatorType.ConditionalOr => PrecedenceLevel.ConditionalOr,
+					BinaryOperatorType.NullCoalescing => PrecedenceLevel.NullCoalescing,
+					BinaryOperatorType.IsPattern => PrecedenceLevel.RelationalAndTypeTesting,
+					_ => throw new NotSupportedException("Invalid value for BinaryOperatorType"),
+				};
 			}
 			if (expr is SwitchExpression)
 				return PrecedenceLevel.Switch;
@@ -217,8 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			ParenthesizeIfRequired(unaryOperatorExpression.Expression, GetPrecedence(unaryOperatorExpression));
-			UnaryOperatorExpression child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
-			if (child != null && InsertParenthesesForReadability)
+			if (unaryOperatorExpression.Expression is UnaryOperatorExpression child && InsertParenthesesForReadability)
 				Parenthesize(child);
 			base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 		}
@@ -226,14 +194,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitCastExpression(CastExpression castExpression)
 		{
 			// Even in readability mode, don't parenthesize casts of casts.
-			if (!(castExpression.Expression is CastExpression))
+			if (castExpression.Expression is not CastExpression)
 			{
 				ParenthesizeIfRequired(castExpression.Expression, InsertParenthesesForReadability ? PrecedenceLevel.NullableRewrap : PrecedenceLevel.Unary);
 			}
 			// There's a nasty issue in the C# grammar: cast expressions including certain operators are ambiguous in some cases
 			// "(int)-1" is fine, but "(A)-b" is not a cast.
-			UnaryOperatorExpression uoe = castExpression.Expression as UnaryOperatorExpression;
-			if (uoe != null && !(uoe.Operator is UnaryOperatorType.BitNot or UnaryOperatorType.Not))
+			if (castExpression.Expression is UnaryOperatorExpression uoe && !(uoe.Operator is UnaryOperatorType.BitNot or UnaryOperatorType.Not))
 			{
 				if (TypeCanBeMisinterpretedAsExpression(castExpression.Type))
 				{
@@ -285,8 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// SimpleTypes can always be misinterpreted as IdentifierExpressions
 			// MemberTypes can be misinterpreted as MemberReferenceExpressions if they don't use double colon
 			// PrimitiveTypes or ComposedTypes can never be misinterpreted as expressions.
-			MemberType mt = type as MemberType;
-			if (mt != null)
+			if (type is MemberType mt)
 				return !mt.IsDoubleColon;
 			else
 				return type is SimpleType;
@@ -349,10 +315,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return op is BinaryOperatorType.BitwiseAnd or BinaryOperatorType.BitwiseOr or BinaryOperatorType.ExclusiveOr;
 		}
 
-		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
+		static BinaryOperatorType? GetBinaryOperatorType(Expression expr)
 		{
-			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
-			if (boe != null)
+			if (expr is BinaryOperatorExpression boe)
 				return boe.Operator;
 			else
 				return null;
@@ -415,7 +380,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.VisitConditionalExpression(conditionalExpression);
 		}
 
-		private bool IsConditionalRefExpression(ConditionalExpression conditionalExpression)
+		private static bool IsConditionalRefExpression(ConditionalExpression conditionalExpression)
 		{
 			return conditionalExpression.TrueExpression is DirectionExpression
 				|| conditionalExpression.FalseExpression is DirectionExpression;
@@ -431,7 +396,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		private void HandleAssignmentRHS(Expression right)
 		{
-			if (InsertParenthesesForReadability && !(right is DirectionExpression))
+			if (InsertParenthesesForReadability && right is not DirectionExpression)
 			{
 				ParenthesizeIfRequired(right, PrecedenceLevel.Conditional + 1);
 			}

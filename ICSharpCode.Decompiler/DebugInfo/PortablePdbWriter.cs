@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				var sourceText = SyntaxTreeToString(syntaxTree, settings);
 
 				// Generate sequence points for the syntax tree
-				var sequencePoints = decompiler.CreateSequencePoints(syntaxTree);
+				var sequencePoints = CSharpDecompiler.CreateSequencePoints(syntaxTree);
 
 				// Generate other debug information
 				var debugInfoGen = new DebugInfoGenerator(decompiler.TypeSystem);
@@ -264,10 +264,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				byte[] buffer = memory.ToArray();
 				builder.WriteInt32(bytes.Length); // compressed
 				builder.WriteBytes(buffer);
-				using (var hasher = SHA256.Create())
-				{
-					sourceCheckSum = hasher.ComputeHash(bytes);
-				}
+				using var hasher = SHA256.Create();
+				sourceCheckSum = hasher.ComputeHash(bytes);
 			}
 
 			return metadata.GetOrAddBlob(builder);

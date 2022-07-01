@@ -426,17 +426,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 						break;
 					default:
-						switch (type.Kind)
-						{
-							case TypeKind.Dynamic:
-							case TypeKind.NInt:
-							case TypeKind.NUInt:
-								astType = new PrimitiveType(type.Name);
-								break;
-							default:
-								astType = MakeSimpleType(type.Name);
-								break;
-						}
+						astType = type.Kind switch {
+							TypeKind.Dynamic or TypeKind.NInt or TypeKind.NUInt => new PrimitiveType(type.Name),
+							_ => MakeSimpleType(type.Name),
+						};
 						break;
 				}
 				if (type.Nullability == Nullability.Nullable)
@@ -555,8 +548,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (!TypeDefMatches(typeDef, type.GetDefinition()))
 					return false;
-				ParameterizedType pt = type as ParameterizedType;
-				if (pt == null)
+				if (type is not ParameterizedType pt)
 				{
 					return typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument);
 				}
@@ -1156,7 +1148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return true;
 		}
 
-		Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new() {
+		readonly Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new() {
 			// byte:
 			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
 			// sbyte:
@@ -1196,7 +1188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue") },
 		};
 
-		bool IsFlagsEnum(ITypeDefinition type)
+		static bool IsFlagsEnum(ITypeDefinition type)
 		{
 			return type.HasAttribute(KnownAttribute.Flags, inherit: false);
 		}
@@ -1425,7 +1417,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return expr;
 		}
 
-		Expression MakeConstant(IType type, long c)
+		static Expression MakeConstant(IType type, long c)
 		{
 			return new PrimitiveExpression(CSharpPrimitiveCast.Cast(type.GetTypeCode(), c, checkForOverflow: true));
 		}
@@ -1701,8 +1693,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case SymbolKind.TypeParameter:
 					return ConvertTypeParameter((ITypeParameter)symbol);
 				default:
-					IEntity entity = symbol as IEntity;
-					if (entity != null)
+					if (symbol is IEntity entity)
 						return ConvertEntity(entity);
 					throw new ArgumentException("Invalid value for SymbolKind: " + symbol.SymbolKind);
 			}
@@ -2008,7 +1999,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetReturnTypeAttributes(), "return"));
 				if (addParameterAttribute && accessor.Parameters.Count > 0)
 				{
-					decl.Attributes.AddRange(ConvertAttributes(accessor.Parameters.Last().GetAttributes(), "param"));
+					decl.Attributes.AddRange(ConvertAttributes(accessor.Parameters[accessor.Parameters.Count - 1].GetAttributes(), "param"));
 				}
 			}
 			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
@@ -2294,7 +2285,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			};
 		}
 
-		bool NeedsAccessibility(IMember member)
+		static bool NeedsAccessibility(IMember member)
 		{
 			var declaringType = member.DeclaringType;
 			if (member.IsExplicitInterfaceImplementation)
@@ -2472,7 +2463,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		NamespaceDeclaration ConvertNamespaceDeclaration(INamespace ns)
+		static NamespaceDeclaration ConvertNamespaceDeclaration(INamespace ns)
 		{
 			return new(ns.FullName);
 		}

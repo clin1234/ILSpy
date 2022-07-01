@@ -37,12 +37,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	class ThreadingSupport
 	{
-		readonly Stopwatch stopwatch = new Stopwatch();
-		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+		readonly Stopwatch stopwatch = new();
+		CancellationTokenSource cancellationTokenSource = new();
 		Task<List<SharpTreeNode>> loadChildrenTask;
 
 		public bool IsRunning {
-			get { return loadChildrenTask != null && !loadChildrenTask.IsCompleted; }
+			get { return loadChildrenTask is { IsCompleted: false }; }
 		}
 
 		public long EllapsedMilliseconds => stopwatch.ElapsedMilliseconds;
@@ -69,12 +69,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Task<List<SharpTreeNode>> thisTask = null;
 			thisTask = new Task<List<SharpTreeNode>>(
 				delegate {
-					List<SharpTreeNode> result = new List<SharpTreeNode>();
+					List<SharpTreeNode> result = new();
 					foreach (SharpTreeNode child in fetchChildrenEnumerable)
 					{
 						ct.ThrowIfCancellationRequested();
 						result.Add(child);
-						App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action<SharpTreeNode>(
+						Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action<SharpTreeNode>(
 							delegate (SharpTreeNode newChild) {
 								// don't access "child" here,
 								// the background thread might already be running the next loop iteration
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			thisTask.Start();
 			thisTask.ContinueWith(
 				delegate (Task continuation) {
-					App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(
+					Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(
 						delegate {
 							if (loadChildrenTask == thisTask)
 							{
@@ -119,7 +119,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var loadChildrenTask = this.loadChildrenTask;
 			if (loadChildrenTask == null)
 			{
-				App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, ensureLazyChildren);
+				Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, ensureLazyChildren);
 				loadChildrenTask = this.loadChildrenTask;
 			}
 			if (loadChildrenTask != null)
@@ -187,7 +187,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			public void Execute(TextViewContext context)
 			{
-				StringBuilder builder = new StringBuilder();
+				StringBuilder builder = new();
 				if (context.SelectedTreeNodes != null)
 				{
 					foreach (var node in context.SelectedTreeNodes.OfType<ErrorTreeNode>())

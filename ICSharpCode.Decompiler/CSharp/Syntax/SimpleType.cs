@@ -39,11 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullSimpleType : SimpleType
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -122,9 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole(Roles.TypeArgument);
 
 		public override void AcceptVisitor(IAstVisitor visitor)
 		{
@@ -143,8 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SimpleType o = other as SimpleType;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
+			return other is SimpleType o && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)

@@ -115,65 +115,39 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.index = index;
 		}
 
-		SymbolKind ISymbol.SymbolKind {
-			get { return SymbolKind.TypeParameter; }
-		}
+		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
 
-		public override string Name {
-			get {
-				return (ownerType == SymbolKind.Method ? "!!" : "!") + index;
-			}
-		}
+		public override string Name => (ownerType == SymbolKind.Method ? "!!" : "!") + index;
 
-		public override string ReflectionName {
-			get {
-				return (ownerType == SymbolKind.Method ? "``" : "`") + index;
-			}
-		}
+		public override string ReflectionName => (ownerType == SymbolKind.Method ? "``" : "`") + index;
 
 		public override string ToString()
 		{
 			return ReflectionName + " (dummy)";
 		}
 
-		public override bool? IsReferenceType {
-			get { return null; }
-		}
+		public override bool? IsReferenceType => null;
 
-		public override TypeKind Kind {
-			get { return TypeKind.TypeParameter; }
-		}
+		public override TypeKind Kind => TypeKind.TypeParameter;
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
 			return visitor.VisitTypeParameter(this);
 		}
 
-		public int Index {
-			get { return index; }
-		}
+		public int Index => index;
 
 		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => EmptyList<IAttribute>.Instance;
 
-		SymbolKind ITypeParameter.OwnerType {
-			get { return ownerType; }
-		}
+		SymbolKind ITypeParameter.OwnerType => ownerType;
 
-		VarianceModifier ITypeParameter.Variance {
-			get { return VarianceModifier.Invariant; }
-		}
+		VarianceModifier ITypeParameter.Variance => VarianceModifier.Invariant;
 
-		IEntity ITypeParameter.Owner {
-			get { return null; }
-		}
+		IEntity ITypeParameter.Owner => null;
 
-		IType ITypeParameter.EffectiveBaseClass {
-			get { return SpecialType.UnknownType; }
-		}
+		IType ITypeParameter.EffectiveBaseClass => SpecialType.UnknownType;
 
-		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet {
-			get { return EmptyList<IType>.Instance; }
-		}
+		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet => EmptyList<IType>.Instance;
 
 		bool ITypeParameter.HasDefaultConstructorConstraint => false;
 		bool ITypeParameter.HasReferenceTypeConstraint => false;

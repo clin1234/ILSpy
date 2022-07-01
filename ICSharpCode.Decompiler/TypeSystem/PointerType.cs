@@ -28,19 +28,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 
-		public override TypeKind Kind {
-			get { return TypeKind.Pointer; }
-		}
+		public override TypeKind Kind => TypeKind.Pointer;
 
-		public override string NameSuffix {
-			get {
-				return "*";
-			}
-		}
+		public override string NameSuffix => "*";
 
-		public override bool? IsReferenceType {
-			get { return null; }
-		}
+		public override bool? IsReferenceType => null;
 
 		public override int GetHashCode()
 		{
@@ -49,8 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override bool Equals(IType other)
 		{
-			PointerType a = other as PointerType;
-			return a != null && elementType.Equals(a.elementType);
+			return other is PointerType a && elementType.Equals(a.elementType);
 		}
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
@@ -78,9 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
 		}
 
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
+		public ITypeReference ElementType => elementType;
 
 		public IType Resolve(ITypeResolveContext context)
 		{
@@ -99,8 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			PointerTypeReference o = other as PointerTypeReference;
-			return o != null && this.elementType == o.elementType;
+			return other is PointerTypeReference o && this.elementType == o.elementType;
 		}
 	}
 }

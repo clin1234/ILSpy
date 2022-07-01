@@ -38,21 +38,13 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods",
 														 Justification = "Unrelated to object.GetType()")]
-		public IType Type {
-			get { return type; }
-		}
+		public IType Type => type;
 
-		public virtual bool IsCompileTimeConstant {
-			get { return false; }
-		}
+		public virtual bool IsCompileTimeConstant => false;
 
-		public virtual object ConstantValue {
-			get { return null; }
-		}
+		public virtual object ConstantValue => null;
 
-		public virtual bool IsError {
-			get { return false; }
-		}
+		public virtual bool IsError => false;
 
 		public override string ToString()
 		{

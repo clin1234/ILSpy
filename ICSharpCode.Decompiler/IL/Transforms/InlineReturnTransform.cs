@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (store.ChildIndex + 2 != storeBlock.Instructions.Count)
 					return false;
-				if (!(storeBlock.Instructions[store.ChildIndex + 1] is Branch br))
+				if (storeBlock.Instructions[store.ChildIndex + 1] is not Branch br)
 					return false;
 				if (br.TargetBlock != leaveBlock)
 					return false;

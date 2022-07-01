@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy
 				MessageBox.Show(string.Format(Resources.CannotCreatePDBFile, Path.GetFileName(assembly.FileName)));
 				return;
 			}
-			SaveFileDialog dlg = new SaveFileDialog();
+			SaveFileDialog dlg = new();
 			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName) + ".pdb";
 			dlg.Filter = Resources.PortablePDBPdbAllFiles;
 			dlg.InitialDirectory = Path.GetDirectoryName(assembly.FileName);
@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy
 			Docking.DockWorkspace.Instance.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new();
 				Stopwatch stopwatch = Stopwatch.StartNew();
-				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write))
+				using (FileStream stream = new(fileName, FileMode.OpenOrCreate, FileAccess.Write))
 				{
 					try
 					{

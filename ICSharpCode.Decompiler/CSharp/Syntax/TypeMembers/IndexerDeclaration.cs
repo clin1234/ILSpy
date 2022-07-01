@@ -38,9 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Accessor> SetterRole = PropertyDeclaration.SetterRole;
 		public static readonly Role<Expression> ExpressionBodyRole = new("ExpressionBody", Expression.Null);
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Indexer; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Indexer;
 
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
@@ -62,25 +60,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { throw new NotSupportedException(); }
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
+		public CSharpTokenNode LBracketToken => GetChildByRole(Roles.LBracket);
 
-		public CSharpTokenNode ThisToken {
-			get { return GetChildByRole(ThisKeywordRole); }
-		}
+		public CSharpTokenNode ThisToken => GetChildByRole(ThisKeywordRole);
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole(Roles.Parameter);
 
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
+		public CSharpTokenNode RBracketToken => GetChildByRole(Roles.RBracket);
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
 		public Accessor Getter {
 			get { return GetChildByRole(GetterRole); }
@@ -92,9 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(SetterRole, value); }
 		}
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
 		public Expression ExpressionBody {
 			get { return GetChildByRole(ExpressionBodyRole); }
@@ -118,8 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IndexerDeclaration o = other as IndexerDeclaration;
-			return o != null
+			return other is IndexerDeclaration o
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
 				&& this.Parameters.DoMatch(o.Parameters, match)

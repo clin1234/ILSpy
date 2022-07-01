@@ -89,16 +89,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			public override DataTemplate SelectTemplate(object item, DependencyObject container)
 			{
 				var entry = (CustomDebugInformationEntry)item;
-				switch (entry.kind)
-				{
-					case CustomDebugInformationEntry.CustomDebugInformationKind.StateMachineHoistedLocalScopes:
-					case CustomDebugInformationEntry.CustomDebugInformationKind.CompilationMetadataReferences:
-					case CustomDebugInformationEntry.CustomDebugInformationKind.CompilationOptions:
-					case CustomDebugInformationEntry.CustomDebugInformationKind.TupleElementNames:
-						return (DataTemplate)MetadataTableViews.Instance["CustomDebugInformationDetailsDataGrid"];
-					default:
-						return (DataTemplate)MetadataTableViews.Instance["CustomDebugInformationDetailsTextBlob"];
-				}
+				return entry.kind switch {
+					CustomDebugInformationEntry.CustomDebugInformationKind.StateMachineHoistedLocalScopes or CustomDebugInformationEntry.CustomDebugInformationKind.CompilationMetadataReferences or CustomDebugInformationEntry.CustomDebugInformationKind.CompilationOptions or CustomDebugInformationEntry.CustomDebugInformationKind.TupleElementNames => (DataTemplate)MetadataTableViews.Instance["CustomDebugInformationDetailsDataGrid"],
+					_ => (DataTemplate)MetadataTableViews.Instance["CustomDebugInformationDetailsTextBlob"],
+				};
 			}
 		}
 

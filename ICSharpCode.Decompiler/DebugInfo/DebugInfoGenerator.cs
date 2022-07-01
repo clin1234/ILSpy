@@ -44,20 +44,18 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	class DebugInfoGenerator : DepthFirstAstVisitor
 	{
 		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer = new(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
-
-		IDecompilerTypeSystem typeSystem;
+		readonly IDecompilerTypeSystem typeSystem;
 		readonly ImportScopeInfo globalImportScope = new();
 		ImportScopeInfo currentImportScope;
-		List<ImportScopeInfo> importScopes = new();
+		readonly List<ImportScopeInfo> importScopes = new();
 		internal List<(MethodDefinitionHandle Method, ImportScopeInfo Import, int Offset, int Length, HashSet<ILVariable> Locals)> LocalScopes { get; } = new();
-		List<ILFunction> functions = new();
+
+		readonly List<ILFunction> functions = new();
 
 		/// <summary>
 		/// Gets all functions with bodies that were seen by the visitor so far.
 		/// </summary>
-		public IReadOnlyList<ILFunction> Functions {
-			get => functions;
-		}
+		public IReadOnlyList<ILFunction> Functions => functions;
 
 		public DebugInfoGenerator(IDecompilerTypeSystem typeSystem)
 		{

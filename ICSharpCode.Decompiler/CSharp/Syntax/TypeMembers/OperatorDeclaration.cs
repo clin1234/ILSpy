@@ -137,9 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			names[(int)OperatorType.Explicit] = new[] { "explicit", "op_Explicit" };
 		}
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Operator; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Operator;
 
 		OperatorType operatorType;
 
@@ -151,25 +149,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(OperatorKeywordRole); }
-		}
+		public CSharpTokenNode OperatorToken => GetChildByRole(OperatorKeywordRole);
 
-		public CSharpTokenNode OperatorTypeToken {
-			get { return GetChildByRole(GetRole(OperatorType)); }
-		}
+		public CSharpTokenNode OperatorTypeToken => GetChildByRole(GetRole(OperatorType));
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole(Roles.LPar);
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole(Roles.Parameter);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole(Roles.RPar);
 
 		public BlockStatement Body {
 			get { return GetChildByRole(Roles.Body); }
@@ -192,65 +180,33 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static TokenRole GetRole(OperatorType type)
 		{
-			switch (type)
-			{
-				case OperatorType.LogicalNot:
-					return LogicalNotRole;
-				case OperatorType.OnesComplement:
-					return OnesComplementRole;
-				case OperatorType.Increment:
-					return IncrementRole;
-				case OperatorType.Decrement:
-					return DecrementRole;
-				case OperatorType.True:
-					return TrueRole;
-				case OperatorType.False:
-					return FalseRole;
-
-				case OperatorType.Addition:
-				case OperatorType.UnaryPlus:
-					return AdditionRole;
-				case OperatorType.Subtraction:
-				case OperatorType.UnaryNegation:
-					return SubtractionRole;
-
-				case OperatorType.Multiply:
-					return MultiplyRole;
-				case OperatorType.Division:
-					return DivisionRole;
-				case OperatorType.Modulus:
-					return ModulusRole;
-				case OperatorType.BitwiseAnd:
-					return BitwiseAndRole;
-				case OperatorType.BitwiseOr:
-					return BitwiseOrRole;
-				case OperatorType.ExclusiveOr:
-					return ExclusiveOrRole;
-				case OperatorType.LeftShift:
-					return LeftShiftRole;
-				case OperatorType.RightShift:
-					return RightShiftRole;
-				case OperatorType.Equality:
-					return EqualityRole;
-				case OperatorType.Inequality:
-					return InequalityRole;
-				case OperatorType.GreaterThan:
-					return GreaterThanRole;
-				case OperatorType.LessThan:
-					return LessThanRole;
-				case OperatorType.GreaterThanOrEqual:
-					return GreaterThanOrEqualRole;
-				case OperatorType.LessThanOrEqual:
-					return LessThanOrEqualRole;
-
-				case OperatorType.Implicit:
-					return ImplicitRole;
-				case OperatorType.Explicit:
-					return ExplicitRole;
-
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			return type switch {
+				OperatorType.LogicalNot => LogicalNotRole,
+				OperatorType.OnesComplement => OnesComplementRole,
+				OperatorType.Increment => IncrementRole,
+				OperatorType.Decrement => DecrementRole,
+				OperatorType.True => TrueRole,
+				OperatorType.False => FalseRole,
+				OperatorType.Addition or OperatorType.UnaryPlus => AdditionRole,
+				OperatorType.Subtraction or OperatorType.UnaryNegation => SubtractionRole,
+				OperatorType.Multiply => MultiplyRole,
+				OperatorType.Division => DivisionRole,
+				OperatorType.Modulus => ModulusRole,
+				OperatorType.BitwiseAnd => BitwiseAndRole,
+				OperatorType.BitwiseOr => BitwiseOrRole,
+				OperatorType.ExclusiveOr => ExclusiveOrRole,
+				OperatorType.LeftShift => LeftShiftRole,
+				OperatorType.RightShift => RightShiftRole,
+				OperatorType.Equality => EqualityRole,
+				OperatorType.Inequality => InequalityRole,
+				OperatorType.GreaterThan => GreaterThanRole,
+				OperatorType.LessThan => LessThanRole,
+				OperatorType.GreaterThanOrEqual => GreaterThanOrEqualRole,
+				OperatorType.LessThanOrEqual => LessThanOrEqualRole,
+				OperatorType.Implicit => ImplicitRole,
+				OperatorType.Explicit => ExplicitRole,
+				_ => throw new ArgumentOutOfRangeException(),
+			};
 		}
 
 		/// <summary>
@@ -299,8 +255,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			OperatorDeclaration o = other as OperatorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match) && this.OperatorType == o.OperatorType
+			return other is OperatorDeclaration o && this.MatchAttributesAndModifiers(o, match) && this.OperatorType == o.OperatorType
 				&& this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}

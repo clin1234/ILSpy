@@ -43,9 +43,9 @@ namespace ILSpy.BamlDecompiler
 			XClassNames = new();
 		}
 
-		Dictionary<ushort, XamlType> typeMap = new Dictionary<ushort, XamlType>();
-		Dictionary<ushort, XamlProperty> propertyMap = new Dictionary<ushort, XamlProperty>();
-		Dictionary<string, XNamespace> xmlnsMap = new Dictionary<string, XNamespace>();
+		Dictionary<ushort, XamlType> typeMap = new();
+		Dictionary<ushort, XamlProperty> propertyMap = new();
+		Dictionary<string, XNamespace> xmlnsMap = new();
 
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public CancellationToken CancellationToken { get; private set; }
@@ -92,8 +92,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			foreach (var record in document)
 			{
-				var piMap = record as PIMappingRecord;
-				if (piMap == null)
+				if (record is not PIMappingRecord piMap)
 					continue;
 
 				XmlNs.SetPIMapping(piMap.XmlNamespace, piMap.ClrNamespace, Baml.ResolveAssembly(piMap.AssemblyId).FullAssemblyName);
@@ -194,7 +193,7 @@ namespace ILSpy.BamlDecompiler
 			if (assembly == null)
 				return null;
 
-			HashSet<string> possibleXmlNs = new HashSet<string>();
+			HashSet<string> possibleXmlNs = new();
 
 			foreach (var attr in assembly.GetAssemblyAttributes().Where(a => a.AttributeType.FullName == "System.Windows.Markup.XmlnsDefinitionAttribute"))
 			{

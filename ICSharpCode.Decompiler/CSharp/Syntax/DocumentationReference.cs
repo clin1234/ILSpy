@@ -71,9 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		/// <summary>
 		/// Gets/Sets the declaring type.
@@ -101,18 +99,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(ConversionOperatorReturnTypeRole, value); }
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole(Roles.TypeArgument);
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole(Roles.Parameter);
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DocumentationReference o = other as DocumentationReference;
-			if (!(o != null && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
+			if (!(other is DocumentationReference o && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
 				return false;
 			if (this.SymbolKind == SymbolKind.Operator)
 			{

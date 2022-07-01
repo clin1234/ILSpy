@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.Util
 				value = this.values[pos];
 				return true;
 			}
-			value = default(T);
+			value = default;
 			return false;
 		}
 

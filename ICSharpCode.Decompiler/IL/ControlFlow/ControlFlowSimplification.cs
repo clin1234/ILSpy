@@ -98,20 +98,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			bool IsSimple(ILInstruction inst)
+			static bool IsSimple(ILInstruction inst)
 			{
-				switch (inst.OpCode)
-				{
-					case OpCode.LdLoc:
-					case OpCode.LdStr: // C# 1.0 compiler sometimes emits redundant ldstr in switch-on-string pattern
-						return true;
-					default:
-						return false;
-				}
+				return inst.OpCode switch {
+					OpCode.LdLoc or OpCode.LdStr => true,
+					_ => false,
+				};
 			}
 		}
 
-		void InlineVariableInReturnBlock(Block block, ILTransformContext context)
+		static void InlineVariableInReturnBlock(Block block, ILTransformContext context)
 		{
 			// In debug mode, the C#-compiler generates 'return blocks' that
 			// unnecessarily store the return value to a local and then load it again:
@@ -200,7 +196,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		void CleanUpEmptyBlocks(ILFunction function, ILTransformContext context)
+		static void CleanUpEmptyBlocks(ILFunction function, ILTransformContext context)
 		{
 			foreach (var container in function.Descendants.OfType<BlockContainer>())
 			{
@@ -219,7 +215,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool IsBranchToReturnBlock(Branch branch)
+		static bool IsBranchToReturnBlock(Branch branch)
 		{
 			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1)
@@ -248,9 +244,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
 			if (block.Instructions.Count > 1 && block.Instructions[block.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch))
 				return false;
-			Branch br = block.Instructions.Last() as Branch;
 			// Check whether we can combine the target block with this block
-			if (br == null || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
+			if (block.Instructions.Last() is not Branch br || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
 				return false;
 			if (br.TargetBlock == block)
 				return false; // don't inline block into itself

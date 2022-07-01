@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpy
 	sealed class CommandLineArguments
 	{
 		// see /doc/Command Line.txt for details
-		public List<string> AssembliesToLoad = new List<string>();
+		public List<string> AssembliesToLoad = new();
 		public bool? SingleInstance;
 		public string NavigateTo;
 		public string Search;

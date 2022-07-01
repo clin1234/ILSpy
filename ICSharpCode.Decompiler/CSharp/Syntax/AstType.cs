@@ -35,11 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		sealed class NullAstType : AstType
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
+			public override bool IsNull => true;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -83,9 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
+			public override NodeType NodeType => NodeType.Pattern;
 
 			public override void AcceptVisitor(IAstVisitor visitor)
 			{
@@ -119,9 +113,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public override NodeType NodeType {
-			get { return NodeType.TypeReference; }
-		}
+		public override NodeType NodeType => NodeType.TypeReference;
 
 		public new AstType Clone()
 		{

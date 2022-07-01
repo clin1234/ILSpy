@@ -26,17 +26,9 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	public static class Platform
 	{
-		public static StringComparer FileNameComparer {
-			get {
-				switch (Environment.OSVersion.Platform)
-				{
-					case PlatformID.Unix:
-					case PlatformID.MacOSX:
-						return StringComparer.Ordinal;
-					default:
-						return StringComparer.OrdinalIgnoreCase;
-				}
-			}
-		}
+		public static StringComparer FileNameComparer => Environment.OSVersion.Platform switch {
+			PlatformID.Unix or PlatformID.MacOSX => StringComparer.Ordinal,
+			_ => StringComparer.OrdinalIgnoreCase,
+		};
 	}
 }

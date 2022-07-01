@@ -98,9 +98,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static readonly LongSet Universe = new(LongInterval.Inclusive(long.MinValue, long.MaxValue));
 
-		public bool IsEmpty {
-			get { return Intervals.IsEmpty; }
-		}
+		public bool IsEmpty => Intervals.IsEmpty;
 
 		/// <summary>
 		/// Gets the number of values in this LongSet.
@@ -341,9 +339,7 @@ namespace ICSharpCode.Decompiler.Util
 			return min;
 		}
 
-		public IEnumerable<long> Values {
-			get { return Intervals.SelectMany(i => i.Range()); }
-		}
+		public IEnumerable<long> Values => Intervals.SelectMany(i => i.Range());
 
 		public override string ToString()
 		{

@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// If this function returns true, <c>predecessor</c> can stay as-is, despite the move changing the evaluation order.
 		/// If this function returns false, <c>predecessor</c> will need to also move, to ensure the evaluation order stays unchanged.
 		/// </summary>
-		public bool CanReorderWithInstructionsBeingMoved(ILInstruction predecessor)
+		public static bool CanReorderWithInstructionsBeingMoved(ILInstruction predecessor)
 		{
 			// We could track the instructions being moved and be smarter about unnecessary moves,
 			// but given the limited scenarios where extraction is used so far,

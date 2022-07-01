@@ -52,9 +52,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.CheckForOverflow = checkForOverflow;
 		}
 
-		public override bool IsError {
-			get { return !Conversion.IsValid; }
-		}
+		public override bool IsError => !Conversion.IsValid;
 
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{

@@ -54,7 +54,7 @@ namespace ILSpy.BamlDecompiler
 
 	internal class XmlnsDictionary
 	{
-		Dictionary<string, NamespaceMap> piMappings = new Dictionary<string, NamespaceMap>();
+		Dictionary<string, NamespaceMap> piMappings = new();
 
 		public XmlnsDictionary() => CurrentScope = null;
 

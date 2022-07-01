@@ -238,35 +238,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		private static bool IsValidInStatementExpression(Expression expr)
 		{
-			switch (expr)
-			{
-				case InvocationExpression:
-				case ObjectCreateExpression:
-				case AssignmentExpression:
-				case ErrorExpression:
-					return true;
-				case UnaryOperatorExpression uoe:
-					switch (uoe.Operator)
-					{
-						case UnaryOperatorType.PostIncrement:
-						case UnaryOperatorType.PostDecrement:
-						case UnaryOperatorType.Increment:
-						case UnaryOperatorType.Decrement:
-						case UnaryOperatorType.Await:
-							return true;
-						case UnaryOperatorType.NullConditionalRewrap:
-							return IsValidInStatementExpression(uoe.Expression);
-						default:
-							return false;
-					}
-				default:
-					return false;
-			}
+			return expr switch {
+				InvocationExpression or ObjectCreateExpression or AssignmentExpression or ErrorExpression => true,
+				UnaryOperatorExpression uoe => uoe.Operator switch {
+					UnaryOperatorType.PostIncrement or UnaryOperatorType.PostDecrement or UnaryOperatorType.Increment or UnaryOperatorType.Decrement or UnaryOperatorType.Await => true,
+					UnaryOperatorType.NullConditionalRewrap => IsValidInStatementExpression(uoe.Expression),
+					_ => false,
+				},
+				_ => false,
+			};
 		}
 		#endregion
 
 		#region FindInsertionPoints
-		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new();
+		readonly List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new();
 
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`
@@ -298,8 +283,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				if (node is IdentifierExpression identExpr)
 				{
-					var rr = identExpr.GetResolveResult() as ILVariableResolveResult;
-					if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind))
+					if (identExpr.GetResolveResult() is ILVariableResolveResult rr && VariableNeedsDeclaration(rr.Variable.Kind))
 					{
 						FindInsertionPointForVariable(rr.Variable);
 					}
@@ -368,25 +352,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		internal static bool VariableNeedsDeclaration(VariableKind kind)
 		{
-			switch (kind)
-			{
-				case VariableKind.PinnedRegionLocal:
-				case VariableKind.Parameter:
-				case VariableKind.ExceptionLocal:
-				case VariableKind.ExceptionStackSlot:
-				case VariableKind.UsingLocal:
-				case VariableKind.ForeachLocal:
-				case VariableKind.PatternLocal:
-					return false;
-				default:
-					return true;
-			}
+			return kind switch {
+				VariableKind.PinnedRegionLocal or VariableKind.Parameter or VariableKind.ExceptionLocal or VariableKind.ExceptionStackSlot or VariableKind.UsingLocal or VariableKind.ForeachLocal or VariableKind.PatternLocal => false,
+				_ => true,
+			};
 		}
 
 		/// <summary>
 		/// Finds an insertion point in a common parent instruction.
 		/// </summary>
-		InsertionPoint FindCommonParent(InsertionPoint oldPoint, InsertionPoint newPoint)
+		static InsertionPoint FindCommonParent(InsertionPoint oldPoint, InsertionPoint newPoint)
 		{
 			// First ensure we're looking at nodes on the same level:
 			oldPoint = oldPoint.UpTo(newPoint.level);
@@ -441,7 +416,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// We can only insert variable declarations in blocks, but FindInsertionPoints() didn't
 				// guarantee that it finds only blocks.
 				// Fix that up now.
-				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement))
+				while (v.InsertionPoint.nextNode.Parent is not BlockStatement)
 				{
 					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault() && IsMatchingAssignment(v, out _))
 					{
@@ -537,7 +512,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
+		static bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
 		{
 			assignment = v.InsertionPoint.nextNode as AssignmentExpression;
 			if (assignment == null)
@@ -552,7 +527,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				&& identExpr.TypeArguments.Count == 0;
 		}
 
-		bool CombineDeclarationAndInitializer(VariableToDeclare v, TransformContext context)
+		static bool CombineDeclarationAndInitializer(VariableToDeclare v, TransformContext context)
 		{
 			if (v.Type.IsByRefLike)
 				return true; // by-ref-like variables always must be initialized at their declaration.
@@ -596,7 +571,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					init.AddAnnotation(assignment.Left.GetResolveResult());
 					foreach (object annotation in assignment.Left.Annotations.Concat(assignment.Annotations))
 					{
-						if (!(annotation is ResolveResult))
+						if (annotation is not ResolveResult)
 						{
 							init.AddAnnotation(annotation);
 						}

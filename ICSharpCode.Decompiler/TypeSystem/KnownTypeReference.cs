@@ -268,21 +268,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.baseType = baseType;
 		}
 
-		public KnownTypeCode KnownTypeCode {
-			get { return knownTypeCode; }
-		}
+		public KnownTypeCode KnownTypeCode => knownTypeCode;
 
-		public string Namespace {
-			get { return namespaceName; }
-		}
+		public string Namespace => namespaceName;
 
-		public string Name {
-			get { return name; }
-		}
+		public string Name => name;
 
-		public int TypeParameterCount {
-			get { return typeParameterCount; }
-		}
+		public int TypeParameterCount => typeParameterCount;
 
 		public TopLevelTypeName TypeName => new(namespaceName, name, typeParameterCount);
 

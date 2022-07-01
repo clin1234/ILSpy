@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler
 		{
 			return tr.ResolutionScope.Kind switch {
 				HandleKind.TypeReference => (TypeReferenceHandle)tr.ResolutionScope,
-				_ => default(TypeReferenceHandle)
+				_ => default
 			};
 		}
 
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			var ts = reader.GetTypeSpecification(handle);
-			return ts.DecodeSignature(new Metadata.FullTypeNameSignatureDecoder(reader), default(Unit));
+			return ts.DecodeSignature(new Metadata.FullTypeNameSignatureDecoder(reader), default);
 		}
 
 		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader)
@@ -652,30 +652,14 @@ namespace ICSharpCode.Decompiler
 
 			public int GetPrimitiveType(PrimitiveTypeCode typeCode)
 			{
-				switch (typeCode)
-				{
-					case PrimitiveTypeCode.Boolean:
-					case PrimitiveTypeCode.Byte:
-					case PrimitiveTypeCode.SByte:
-						return 1;
-					case PrimitiveTypeCode.Char:
-					case PrimitiveTypeCode.Int16:
-					case PrimitiveTypeCode.UInt16:
-						return 2;
-					case PrimitiveTypeCode.Int32:
-					case PrimitiveTypeCode.UInt32:
-					case PrimitiveTypeCode.Single:
-						return 4;
-					case PrimitiveTypeCode.Int64:
-					case PrimitiveTypeCode.UInt64:
-					case PrimitiveTypeCode.Double:
-						return 8;
-					case PrimitiveTypeCode.IntPtr:
-					case PrimitiveTypeCode.UIntPtr:
-						return pointerSize;
-					default:
-						return 0;
-				}
+				return typeCode switch {
+					PrimitiveTypeCode.Boolean or PrimitiveTypeCode.Byte or PrimitiveTypeCode.SByte => 1,
+					PrimitiveTypeCode.Char or PrimitiveTypeCode.Int16 or PrimitiveTypeCode.UInt16 => 2,
+					PrimitiveTypeCode.Int32 or PrimitiveTypeCode.UInt32 or PrimitiveTypeCode.Single => 4,
+					PrimitiveTypeCode.Int64 or PrimitiveTypeCode.UInt64 or PrimitiveTypeCode.Double => 8,
+					PrimitiveTypeCode.IntPtr or PrimitiveTypeCode.UIntPtr => pointerSize,
+					_ => 0,
+				};
 			}
 
 			public int GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle,

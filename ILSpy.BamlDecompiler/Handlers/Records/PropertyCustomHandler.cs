@@ -47,7 +47,7 @@ namespace ILSpy.BamlDecompiler.Handlers
 
 		string Deserialize(XamlContext ctx, XElement elem, KnownTypes ser, byte[] value)
 		{
-			using (BinaryReader reader = new BinaryReader(new MemoryStream(value)))
+			using (BinaryReader reader = new(new MemoryStream(value)))
 			{
 				switch (ser)
 				{

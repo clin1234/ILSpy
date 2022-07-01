@@ -57,10 +57,6 @@ namespace ICSharpCode.Decompiler.IL
 				| SemanticHelper.CombineBranches(InstructionFlags.None, right.Flags);
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
 	}
 }

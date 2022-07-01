@@ -149,7 +149,7 @@ namespace ICSharpCode.ILSpy.Docking
 		public void InitializeLayout(DockingManager manager)
 		{
 			manager.LayoutUpdateStrategy = this;
-			XmlLayoutSerializer serializer = new XmlLayoutSerializer(manager);
+			XmlLayoutSerializer serializer = new(manager);
 			serializer.LayoutSerializationCallback += LayoutSerializationCallback;
 			try
 			{

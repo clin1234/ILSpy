@@ -49,11 +49,7 @@ namespace ICSharpCode.Decompiler
 			this.writer = new StringWriter();
 		}
 
-		public TextLocation Location {
-			get {
-				return new(line, column + (needsIndent ? indent : 0));
-			}
-		}
+		public TextLocation Location => new(line, column + (needsIndent ? indent : 0));
 
 		public override string ToString()
 		{
@@ -152,8 +148,8 @@ namespace ICSharpCode.Decompiler
 
 	internal class TextOutputWithRollback : ITextOutput
 	{
-		List<Action<ITextOutput>> actions;
-		ITextOutput target;
+		readonly List<Action<ITextOutput>> actions;
+		readonly ITextOutput target;
 
 		public TextOutputWithRollback(ITextOutput target)
 		{

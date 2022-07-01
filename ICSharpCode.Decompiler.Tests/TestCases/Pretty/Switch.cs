@@ -536,7 +536,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static SetProperty[] GetProperties()
 		{
-			return new SetProperty[0];
+			return Array.Empty<SetProperty>();
 		}
 
 		public static void SwitchOnStringInForLoop()

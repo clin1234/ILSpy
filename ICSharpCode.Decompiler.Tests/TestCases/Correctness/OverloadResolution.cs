@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Issue1281()
 		{
-			var arg = new object[0];
+			var arg = Array.Empty<object>();
 			TestCallIssue1281(arg);
 			TestCallIssue1281((object)arg);
 			TestCallIssue1281(new[] { arg });

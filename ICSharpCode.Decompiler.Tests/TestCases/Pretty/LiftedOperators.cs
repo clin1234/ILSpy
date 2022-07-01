@@ -130,8 +130,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(x() & a);
 			Console.WriteLine(x() | a);
 			Console.WriteLine(x() ^ a);
-			(new bool?[0])[0] ^= x();
-			(new bool?[0])[0] ^= a;
+			(Array.Empty<bool?>())[0] ^= x();
+			(Array.Empty<bool?>())[0] ^= a;
 		}
 
 		public static void BoolValueConst(bool? a)
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a >>= x();
 
 			Console.WriteLine(x() + a);
-			(new int?[0])[0] += x();
+			(Array.Empty<int?>())[0] += x();
 		}
 
 		public static void IntValueConst(int? a)

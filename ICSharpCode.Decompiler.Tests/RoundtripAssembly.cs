@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.Tests
 				{
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+					await using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
 					PEFile module = new(file, fileStream, PEStreamOptions.PrefetchEntireImage);
 					var resolver = new TestAssemblyResolver(file, inputDir, module.Metadata.DetectTargetFrameworkId());
 					resolver.AddSearchDirectory(inputDir);

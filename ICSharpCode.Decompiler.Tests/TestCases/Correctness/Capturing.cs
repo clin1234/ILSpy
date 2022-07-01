@@ -81,8 +81,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase4(string capture)
 		{
 			Console.WriteLine("TestCase4");
-			List<Action> actions = new();
-			actions.Add(() => Console.WriteLine(capture));
+			List<Action> actions = new() { () => Console.WriteLine(capture) };
 			Console.WriteLine("----");
 			foreach (var action in actions)
 				action();
@@ -162,9 +161,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			int val; // declared outside loop
 					 // The decompiler can convert this to a foreach-loop, but the 'val'
 					 // variable must be declared outside.
-			for (int i = 0; i < array.Length; ++i)
+			foreach (var element in array)
 			{
-				int element = array[i];
 				val = element * 2;
 				functions.Add(() => val);
 			}
@@ -179,9 +177,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("InsideLoopOverArray2:");
 			var functions = new List<Func<int>>();
 			var array = new[] { 1, 2, 3 };
-			for (int i = 0; i < array.Length; ++i)
+			foreach (var element in array)
 			{
-				int element = array[i];
 				int val = element * 2;
 				functions.Add(() => val);
 			}

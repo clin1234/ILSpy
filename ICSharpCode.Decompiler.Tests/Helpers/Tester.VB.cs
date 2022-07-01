@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static async Task<CompilerResults> CompileVB(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new() { sourceFileName };
-			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
+			foreach (Match match in Regex.Matches(await File.ReadAllTextAsync(sourceFileName), @"#include ""([\w\d./]+)"""))
 			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}

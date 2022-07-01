@@ -61,129 +61,101 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		#region InstallRoot Properties
 
-		static string netFrameworkInstallRoot = null;
+		static string netFrameworkInstallRoot;
 		/// <summary>
 		/// Gets the installation root of the .NET Framework (@"C:\Windows\Microsoft.NET\Framework\")
 		/// </summary>
 		public static string NetFrameworkInstallRoot {
 			get {
-				if (netFrameworkInstallRoot == null)
-				{
-					netFrameworkInstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\.NETFramework", "InstallRoot") ?? string.Empty;
-				}
-				return netFrameworkInstallRoot;
+				return netFrameworkInstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\.NETFramework", "InstallRoot") ?? string.Empty;
 			}
 		}
 
-		static string netSdk20InstallRoot = null;
+		static string netSdk20InstallRoot;
 		/// <summary>
 		/// Location of the .NET 2.0 SDK install root.
 		/// </summary>
 		public static string NetSdk20InstallRoot {
 			get {
-				if (netSdk20InstallRoot == null)
-				{
-					netSdk20InstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\.NETFramework", "sdkInstallRootv2.0") ?? string.Empty;
-				}
-				return netSdk20InstallRoot;
+				return netSdk20InstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\.NETFramework", "sdkInstallRootv2.0") ?? string.Empty;
 			}
 		}
 
-		static string windowsSdk60InstallRoot = null;
+		static string windowsSdk60InstallRoot;
 		/// <summary>
 		/// Location of the .NET 3.0 SDK (Windows SDK 6.0) install root.
 		/// </summary>
 		public static string WindowsSdk60InstallRoot {
 			get {
-				if (windowsSdk60InstallRoot == null)
-				{
-					windowsSdk60InstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0", "InstallationFolder") ?? string.Empty;
-				}
-				return windowsSdk60InstallRoot;
+				return windowsSdk60InstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0", "InstallationFolder") ??
+				                                   string.Empty;
 			}
 		}
 
-		static string windowsSdk60aInstallRoot = null;
+		static string windowsSdk60aInstallRoot;
 		/// <summary>
 		/// Location of the Windows SDK Components in Visual Studio 2008 (.NET 3.5; Windows SDK 6.0a).
 		/// </summary>
 		public static string WindowsSdk60aInstallRoot {
 			get {
-				if (windowsSdk60aInstallRoot == null)
-				{
-					windowsSdk60aInstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0a", "InstallationFolder") ?? string.Empty;
-				}
-				return windowsSdk60aInstallRoot;
+				return windowsSdk60aInstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0a", "InstallationFolder") ??
+				                                    string.Empty;
 			}
 		}
 
-		static string windowsSdk61InstallRoot = null;
+		static string windowsSdk61InstallRoot;
 		/// <summary>
 		/// Location of the .NET 3.5 SDK (Windows SDK 6.1) install root.
 		/// </summary>
 		public static string WindowsSdk61InstallRoot {
 			get {
-				if (windowsSdk61InstallRoot == null)
-				{
-					windowsSdk61InstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.1", "InstallationFolder") ?? string.Empty;
-				}
-				return windowsSdk61InstallRoot;
+				return windowsSdk61InstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.1", "InstallationFolder") ??
+				                                   string.Empty;
 			}
 		}
 
-		static string windowsSdk70InstallRoot = null;
+		static string windowsSdk70InstallRoot;
 		/// <summary>
 		/// Location of the .NET 3.5 SP1 SDK (Windows SDK 7.0) install root.
 		/// </summary>
 		public static string WindowsSdk70InstallRoot {
 			get {
-				if (windowsSdk70InstallRoot == null)
-				{
-					windowsSdk70InstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0", "InstallationFolder") ?? string.Empty;
-				}
-				return windowsSdk70InstallRoot;
+				return windowsSdk70InstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0", "InstallationFolder") ??
+				                                   string.Empty;
 			}
 		}
 
-		static string windowsSdk71InstallRoot = null;
+		static string windowsSdk71InstallRoot;
 		/// <summary>
 		/// Location of the .NET 4.0 SDK (Windows SDK 7.1) install root.
 		/// </summary>
 		public static string WindowsSdk71InstallRoot {
 			get {
-				if (windowsSdk71InstallRoot == null)
-				{
-					windowsSdk71InstallRoot = GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1", "InstallationFolder") ?? string.Empty;
-				}
-				return windowsSdk71InstallRoot;
+				return windowsSdk71InstallRoot ??= GetPathFromRegistry(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1", "InstallationFolder") ??
+				                                   string.Empty;
 			}
 		}
 
-		static string windowsSdk80InstallRoot = null;
+		static string windowsSdk80InstallRoot;
 		/// <summary>
 		/// Location of the .NET 4.5 SDK (Windows SDK 8.0) install root.
 		/// </summary>
 		public static string WindowsSdk80NetFxTools {
 			get {
-				if (windowsSdk80InstallRoot == null)
-				{
-					windowsSdk80InstallRoot = GetPathFromRegistryX86(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.0A\WinSDK-NetFx40Tools", "InstallationFolder") ?? string.Empty;
-				}
-				return windowsSdk80InstallRoot;
+				return windowsSdk80InstallRoot ??= GetPathFromRegistryX86(@"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.0A\WinSDK-NetFx40Tools",
+					"InstallationFolder") ?? string.Empty;
 			}
 		}
 
-		static string WindowsSdk461InstallRoot = null;
+		static string WindowsSdk461InstallRoot;
 		/// <summary>
 		/// Location of the .NET 4.6.1 SDK install root.
 		/// </summary>
 		public static string WindowsSdk461NetFxTools {
 			get {
-				if (WindowsSdk461InstallRoot == null)
-				{
-					WindowsSdk461InstallRoot = GetPathFromRegistryX86(@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\NETFXSDK\4.6.1\WinSDK-NetFx40Tools", "InstallationFolder") ?? string.Empty;
-				}
-				return WindowsSdk461InstallRoot;
+				return WindowsSdk461InstallRoot ??= GetPathFromRegistryX86(
+					@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\NETFXSDK\4.6.1\WinSDK-NetFx40Tools",
+					"InstallationFolder") ?? string.Empty;
 			}
 		}
 		#endregion

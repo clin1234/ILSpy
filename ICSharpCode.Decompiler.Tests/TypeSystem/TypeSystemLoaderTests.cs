@@ -45,19 +45,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		static readonly Lazy<PEFile> mscorlib = new(
-			delegate {
-				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "mscorlib.dll"));
-			});
+			() => LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "mscorlib.dll")));
 
 		static readonly Lazy<PEFile> systemCore = new(
-			delegate {
-				return LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "System.Core.dll"));
-			});
+			() => LoadAssembly(Path.Combine(Helpers.Tester.RefAsmPath, "System.Core.dll")));
 
 		static readonly Lazy<PEFile> testAssembly = new(
-			delegate {
-				return LoadAssembly(typeof(SimplePublicClass).Assembly.Location);
-			});
+			() => LoadAssembly(typeof(SimplePublicClass).Assembly.Location));
 
 		public static PEFile Mscorlib { get { return mscorlib.Value; } }
 		public static PEFile SystemCore { get { return systemCore.Value; } }
@@ -81,7 +75,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void SimplePublicClassTest()
 		{
 			ITypeDefinition c = GetTypeDefinition(typeof(SimplePublicClass));
-			Assert.AreEqual(typeof(SimplePublicClass).Name, c.Name);
+			Assert.AreEqual(nameof(SimplePublicClass), c.Name);
 			Assert.AreEqual(typeof(SimplePublicClass).FullName, c.FullName);
 			Assert.AreEqual(typeof(SimplePublicClass).Namespace, c.Namespace);
 			Assert.AreEqual(typeof(SimplePublicClass).FullName, c.ReflectionName);
@@ -1559,19 +1553,19 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void ConstantFieldsSizeOf()
 		{
 			ITypeDefinition type = GetTypeDefinition(typeof(ConstantFieldTest));
-			AssertConstantField<int>(type, "SOsb", sizeof(sbyte));
-			AssertConstantField<int>(type, "SOb", sizeof(byte));
-			AssertConstantField<int>(type, "SOs", sizeof(short));
-			AssertConstantField<int>(type, "SOus", sizeof(ushort));
-			AssertConstantField<int>(type, "SOi", sizeof(int));
-			AssertConstantField<int>(type, "SOui", sizeof(uint));
-			AssertConstantField<int>(type, "SOl", sizeof(long));
-			AssertConstantField<int>(type, "SOul", sizeof(ulong));
-			AssertConstantField<int>(type, "SOc", sizeof(char));
-			AssertConstantField<int>(type, "SOf", sizeof(float));
-			AssertConstantField<int>(type, "SOd", sizeof(double));
-			AssertConstantField<int>(type, "SObl", sizeof(bool));
-			AssertConstantField<int>(type, "SOe", sizeof(MyEnum));
+			AssertConstantField(type, "SOsb", sizeof(sbyte));
+			AssertConstantField(type, "SOb", sizeof(byte));
+			AssertConstantField(type, "SOs", sizeof(short));
+			AssertConstantField(type, "SOus", sizeof(ushort));
+			AssertConstantField(type, "SOi", sizeof(int));
+			AssertConstantField(type, "SOui", sizeof(uint));
+			AssertConstantField(type, "SOl", sizeof(long));
+			AssertConstantField(type, "SOul", sizeof(ulong));
+			AssertConstantField(type, "SOc", sizeof(char));
+			AssertConstantField(type, "SOf", sizeof(float));
+			AssertConstantField(type, "SOd", sizeof(double));
+			AssertConstantField(type, "SObl", sizeof(bool));
+			AssertConstantField(type, "SOe", sizeof(MyEnum));
 		}
 
 		[Test]

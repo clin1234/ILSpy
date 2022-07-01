@@ -432,7 +432,7 @@ namespace ICSharpCode.Decompiler.Tests
 					options &= ~CompilerOptions.UseMcsMask;
 					options |= CompilerOptions.UseRoslynLatest;
 					// Also, add an .exe.config so that we consistently use the .NET 4.x runtime.
-					File.WriteAllText(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
+					await File.WriteAllTextAsync(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
 	<startup>
 		<supportedRuntime version=""v4.0"" sku="".NETFramework,Version=v4.0,Profile=Client"" />
@@ -449,10 +449,8 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 			finally
 			{
-				if (outputFile != null)
-					outputFile.DeleteTempFiles();
-				if (decompiledOutputFile != null)
-					decompiledOutputFile.DeleteTempFiles();
+				outputFile?.DeleteTempFiles();
+				decompiledOutputFile?.DeleteTempFiles();
 			}
 		}
 
@@ -488,13 +486,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		async Task RunIL(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
-			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;
 
 			try
 			{
 				options |= CompilerOptions.UseTestRunner;
-				outputFile = await Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions).ConfigureAwait(false);
+				string outputFile = await Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions).ConfigureAwait(false);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile, Tester.GetSettings(options)).ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 

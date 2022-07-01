@@ -266,11 +266,7 @@ namespace ICSharpCode.Decompiler.Tests
 		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
-			if (settings == null)
-			{
-				// never use file-scoped namespaces, unless explicitly specified
-				settings = new() { FileScopedNamespaces = false };
-			}
+			settings ??= new() { FileScopedNamespaces = false };
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 

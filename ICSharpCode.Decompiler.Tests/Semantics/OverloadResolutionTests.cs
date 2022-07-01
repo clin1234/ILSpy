@@ -58,8 +58,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var parameters = new List<IParameter>();
 			foreach (var typeOrDefaultValue in parameterTypesOrDefaultValues)
 			{
-				Type type = typeOrDefaultValue as Type;
-				if (type != null)
+				if (typeOrDefaultValue is Type type)
 					parameters.Add(new DefaultParameter(compilation.FindType(type), string.Empty, owner: m));
 				else if (Type.GetTypeCode(typeOrDefaultValue.GetType()) > TypeCode.Object)
 					parameters.Add(new DefaultParameter(compilation.FindType(typeOrDefaultValue.GetType()), string.Empty,
@@ -75,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			var m = (FakeMethod)MakeMethod(parameterTypesOrDefaultValues);
 			var parameters = m.Parameters.ToList();
-			parameters[parameters.Count - 1] = new DefaultParameter(
+			parameters[^1] = new DefaultParameter(
 				parameters.Last().Type, parameters.Last().Name,
 				isParams: true);
 			m.Parameters = parameters;
@@ -185,20 +184,19 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			IMethod resolvedM3 = container.GetMethods(m => m.Name == "Foo").Skip(2).First();
 
 			// Call: Foo<int>();
-			OverloadResolution o;
-			o = new(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int)) });
+			OverloadResolution o = new(compilation, Array.Empty<ResolveResult>(), typeArguments: new[] { compilation.FindType(typeof(int)) });
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
 			Assert.AreSame(resolvedM1, o.BestCandidate);
 
 			// Call: Foo<string>();
-			o = new(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(string)) });
+			o = new(compilation, Array.Empty<ResolveResult>(), typeArguments: new[] { compilation.FindType(typeof(string)) });
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM2));
 			Assert.AreSame(resolvedM2, o.BestCandidate);
 
 			// Call: Foo<int?>();
-			o = new(compilation, new ResolveResult[0], typeArguments: new[] { compilation.FindType(typeof(int?)) });
+			o = new(compilation, Array.Empty<ResolveResult>(), typeArguments: new[] { compilation.FindType(typeof(int?)) });
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM1));
 			Assert.AreEqual(OverloadResolutionErrors.ConstructedTypeDoesNotSatisfyConstraint, o.AddCandidate(resolvedM2));
 			Assert.AreEqual(OverloadResolutionErrors.None, o.AddCandidate(resolvedM3));

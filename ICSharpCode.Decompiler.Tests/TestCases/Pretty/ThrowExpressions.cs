@@ -14,12 +14,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public ArgumentCheckingCtor(object simpleObj, int? nullableInt)
 			{
-				this.simpleObj = simpleObj ?? throw new ArgumentNullException("simpleObj");
-				this.nullableInt = nullableInt ?? throw new ArgumentNullException("nullableInt");
+				this.simpleObj = simpleObj ?? throw new ArgumentNullException(nameof(simpleObj));
+				this.nullableInt = nullableInt ?? throw new ArgumentNullException(nameof(nullableInt));
 			}
 
 			public ArgumentCheckingCtor(string input)
-				: this(input, GetIntOrNull(input ?? throw new ArgumentNullException("input")))
+				: this(input, GetIntOrNull(input ?? throw new ArgumentNullException(nameof(input))))
 			{
 
 			}

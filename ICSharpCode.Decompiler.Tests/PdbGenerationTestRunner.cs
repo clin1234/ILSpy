@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 		public StringWriterWithEncoding(Encoding encoding)
 		{
-			this.encoding = encoding ?? throw new ArgumentNullException("encoding");
+			this.encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 		}
 
 		public override Encoding Encoding => encoding;

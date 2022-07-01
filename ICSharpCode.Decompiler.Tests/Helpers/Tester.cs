@@ -91,7 +91,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static readonly string TestCasePath;
 
 		static readonly string testRunnerBasePath;
-		static readonly string packagesPropsFile;
 		static readonly string roslynLatestVersion;
 		static readonly RoslynToolset roslynToolset;
 		static readonly VsWhereToolset vswhereToolset;
@@ -105,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 #else
 			testRunnerBasePath = Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net6.0-windows");
 #endif
-			packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
+			string packagesPropsFile = Path.Combine(TesterPath, "../../../../../packages.props");
 			roslynLatestVersion = XDocument.Load(packagesPropsFile).XPathSelectElement("//RoslynVersion").Value;
 			roslynToolset = new();
 			vswhereToolset = new();
@@ -190,9 +189,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler))
 			{
-				using var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read);
+				await using var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read);
 				using var peFile = new PEFile(sourceFileName, peFileStream);
-				using var writer = new StringWriter();
+				await using var writer = new StringWriter();
 				var metadata = peFile.Metadata;
 				var output = new PlainTextOutput(writer);
 				ReflectionDisassembler rd = new(output, CancellationToken.None) {
@@ -207,7 +206,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				output.WriteLine();
 				rd.WriteModuleContents(peFile);
 
-				File.WriteAllText(outputFile, ReplacePrivImplDetails(writer.ToString()));
+				await File.WriteAllTextAsync(outputFile, ReplacePrivImplDetails(writer.ToString()));
 				return outputFile;
 			}
 
@@ -227,7 +226,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			// Unlike the .imagebase directive (which is a fixed value when compiling with /deterministic),
 			// the image base comment still varies... ildasm putting a random number here?
-			string il = File.ReadAllText(outputFile);
+			string il = await File.ReadAllTextAsync(outputFile);
 			il = Regex.Replace(il, @"^// Image base: 0x[0-9A-F]+\r?\n", "", RegexOptions.Multiline);
 			// and while we're at it, also remove the MVID
 			il = Regex.Replace(il, @"^// MVID: \{[0-9A-F-]+\}\r?\n", "", RegexOptions.Multiline);
@@ -238,7 +237,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			// filename may contain full path
 			il = Regex.Replace(il, @"^// WARNING: Created Win32 resource file.*\r?\n", "", RegexOptions.Multiline);
 			il = ReplacePrivImplDetails(il);
-			File.WriteAllText(outputFile, il);
+			await File.WriteAllTextAsync(outputFile, il);
 
 			return outputFile;
 		}
@@ -376,7 +375,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static async Task<CompilerResults> CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new() { sourceFileName };
-			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
+			foreach (Match match in Regex.Matches(await File.ReadAllTextAsync(sourceFileName), @"#include ""([\w\d./]+)"""))
 			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
@@ -657,8 +656,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static Task<string> DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
-			if (settings == null)
-				settings = new();
+			settings ??= new();
 			using var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read);
 			var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
 			string targetFramework = module.Metadata.DetectTargetFrameworkId();
@@ -738,8 +736,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (output1 != output2)
 				{
 					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
-					File.WriteAllText(outputFileName + ".original.out", output1);
-					File.WriteAllText(outputFileName + ".decompiled.out", output2);
+					await File.WriteAllTextAsync(outputFileName + ".original.out", output1);
+					await File.WriteAllTextAsync(outputFileName + ".decompiled.out", output2);
 					int diffLine = 0;
 					string lastHeader = null;
 					Tuple<string, string> errorItem = null;

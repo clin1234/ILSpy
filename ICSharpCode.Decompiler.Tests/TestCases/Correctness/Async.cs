@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("StreamCopyToWithConfigureAwait:");
 			StreamCopyToWithConfigureAwait(new MemoryStream(new byte[1024]), 16);
 			Console.WriteLine("AwaitInForEach:");
-			await AwaitInForEach(Enumerable.Range(0, 100).Select(i => Task.FromResult(i)));
+			await AwaitInForEach(Enumerable.Range(0, 100).Select(Task.FromResult));
 			Console.WriteLine("TaskMethodWithoutAwaitButWithExceptionHandling:");
 			await TaskMethodWithoutAwaitButWithExceptionHandling();
 #if CS60
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			try
 			{
-				using (new StringWriter())
+				await using (new StringWriter())
 				{
 					Console.WriteLine("No Await");
 				}
